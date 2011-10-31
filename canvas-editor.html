@@ -2,117 +2,46 @@
 <html>
 <head>
 	<title>Canvas Video</title>
-	<style>
-	body {
-		background: #FFF;
-	}
-
-	#canvas, #editor {
-		position: absolute;
-		top: 48px;
-		left: 10px;
-		width: 600px;
-		height: 480px;
-	}
-
-	#toolbar div {
-		float: left;
-		width: 30px;
-		height: 30px;
-		margin-right: 2px;
-		border: 1px solid #DDD;
-		background: #DDD;
-		cursor: pointer;
-	}
-
-	#toolbar div.space {
-		background: none;
-		border: none;
-		width: 62px;
-	}
-
-	#toolbar div.active {
-		border-color: #000;
-	}
-
-	#toolbar div span {
-		display: block;
-		width: 26px;
-		height: 26px;
-		margin-left: 2px;
-		margin-top: 2px;
-		text-align: center;
-		font-family: Helvetica, Arial;
-		font-size: 26px;
-	}
-
-	#toolbar #draw {
-		width: 62px;
-	}
-
-	#toolbar #draw span {
-		width: 54px;
-		height: 54px;
-		font-size: 22px;
-		line-height: 26px;
-	}
-
-	#canvas {
-		z-index: 1;
-		cursor: crosshair;
-	}
-
-	#editor {
-		z-index: 2;
-		background: #FFF;
-	}
-
-	#canvas.canvas {
-		z-index: 2;
-  }
-
-	#editor.canvas {
-		z-index: 1;
-	}
-		
-	</style>
-	<script src="jquery.js"></script>
-<script type="text/javascript">
-    var require = {
-        paths: {
-            ace: "ace/lib/ace",
-            pilot: "ace/support/pilot/lib/pilot"
-        }
-    };
-</script>
-<script src="ace/demo/kitchen-sink/require.js" type="text/javascript" charset="utf-8"></script>
-<script type="text/javascript" charset="utf-8">
-    
-require(["ace/ace", "ace/mode/javascript"], function() {
-    var JavaScriptMode = require("ace/mode/javascript").Mode;
-		var editor = require("ace/ace").edit( "editor" );
-
-		editor.getSession().setMode(new JavaScriptMode());
-		editor.setTheme( "ace/theme/textmate" );
-});
-    
-</script>
+	<link rel="stylesheet" href="style.css"/>
+	<script src="js/jquery.js"></script>
+	<script src="js/require.js"></script>
+	<script src="js/canvas.js"></script>
 	<script id="code">
+	if ( typeof require !== "undefined" ) {
+		require.config({
+			paths: {
+				ace: "ace/lib/ace",
+				pilot: "ace/support/pilot/lib/pilot"
+			}
+		});
+		
+		require(["ace/ace", "ace/mode/javascript"], function() {
+			var JavaScriptMode = require("ace/mode/javascript").Mode;
+			var editor = require("ace/ace").edit( "editor" );
+
+			editor.getSession().setMode(new JavaScriptMode());
+			editor.setTheme( "ace/theme/textmate" );
+		});
+	}
+	
+	var canvas, ctx, down, x, y, prev, draw, line, colors;
+	
 	$(function(){
 		$("#editor").html( $("#code").html() );
 
-		var canvas = $("#canvas")[0];
-		var ctx = canvas.getContext("2d");
-		var down = false, x, y;
-		var prev = [];
-		var draw = [];
+		canvas = $("#canvas")[0];
+		ctx = canvas.getContext("2d");
+		down = false;
+		prev = [];
+		draw = [];
+		line = [];
 
 		ctx.shadowBlur = 4;
 		ctx.lineCap = "round";
 		ctx.lineJoin = "round";
 		ctx.lineWidth = 3;
 
-		var colors = {
+		colors = {
 			black: [ 0, 0, 0 ],
 			red: [ 255, 0, 0 ],
 			orange: [ 255, 165, 0 ],
@@ -122,17 +51,17 @@ require(["ace/ace", "ace/mode/javascript"], function() {
 			violet: [ 128, 0, 128 ]
 		};
 
-		setColor( "black", true );
+		Canvas.setColor( "black", true );
 
 		$("#toolbar div.color").each(function() {
 			$(this).children().css( "background-color", this.id );
 		});
 
 		$("#toolbar").delegate( "div.color", "click", function() {
-			setColor( this.id );
+			Canvas.setColor( this.id );
 		});
 
-		$("#draw").toggle( startDraw, endDraw );
+		$("#draw").toggle( Canvas.startDraw, Canvas.endDraw );
 
 		$(canvas).bind({
 			mousedown: function( e ) {
@@ -141,6 +70,7 @@ require(["ace/ace", "ace/mode/javascript"], function() {
 					x = e.offsetX * 2;
 					y = e.offsetY * 2;
 					prev = [];
+					line = [];
 					down = true;
 
 					e.preventDefault();
@@ -153,64 +83,19 @@ require(["ace/ace", "ace/mode/javascript"], function() {
 
 					if ( prev.length === 2 ) {
 						draw.push( prev );
+						line.push( prev ) ;
 						prev = [];
 					}
 				}
 			},
 			
 			mouseup: function() {
+				Canvas.undoStack.push({ name: "drawLine", args: [ x, y, line ] });
 				down = false;
 			}
 		});
 
-		setInterval( drawSegment, 16 );
-		
-		function drawSegment() {
-			if ( draw.length ) {
-				for ( var i = 0; i < draw.length; i++ ) {
-					var prev = draw[ i ];
-
-					// Only make a path if we're actually going to draw something
-					if ( prev[0].x !== prev[1].x || prev[0].y !== prev[1].y ) {
-						ctx.beginPath();
-						ctx.moveTo( x, y );
-						ctx.quadraticCurveTo( prev[0].x, prev[0].y, prev[1].x, prev[1].y );
-						ctx.stroke();
-						ctx.closePath();
-
-						x = prev[1].x;
-						y = prev[1].y;
-					}
-				}
-
-				draw.length = 0;
-			}
-		}
-
-		function setColor( color, init ) {
-			if ( !init ) {
-				startDraw();
-			}
-
-			ctx.shadowColor = "rgba(" + colors[color] + ",0.5)";
-			ctx.strokeStyle = "rgba(" + colors[color] + ",1.0)";
-
-			$("div.color.active").removeClass("active");
-			$("#" + color).addClass("active");
-		}
-
-		function startDraw() {
-			$("#canvas, #editor").addClass( "canvas" );
-			$("#draw span").text( "Code" );
-		}
-
-		function endDraw() {
-			// Clean off the canvas
-			ctx.clearRect( 0, 0, 1200, 960 );
-
-			$("#canvas, #editor").removeClass( "canvas" );
-			$("#draw span").text( "Draw" );
-		}
+		setInterval( Canvas.drawSegments, 16 );
 	});
 	</script>
 </head>

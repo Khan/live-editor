@@ -1,0 +1,71 @@
+body {
+	background: #FFF;
+}
+
+#canvas, #editor {
+	position: absolute;
+	top: 48px;
+	left: 10px;
+	width: 600px;
+	height: 480px;
+}
+
+#toolbar div {
+	float: left;
+	width: 30px;
+	height: 30px;
+	margin-right: 2px;
+	border: 1px solid #DDD;
+	background: #DDD;
+	cursor: pointer;
+}
+
+#toolbar div.space {
+	background: none;
+	border: none;
+	width: 62px;
+}
+
+#toolbar div.active {
+	border-color: #000;
+}
+
+#toolbar div span {
+	display: block;
+	width: 26px;
+	height: 26px;
+	margin-left: 2px;
+	margin-top: 2px;
+	text-align: center;
+	font-family: Helvetica, Arial;
+	font-size: 26px;
+}
+
+#toolbar #draw {
+	width: 62px;
+}
+
+#toolbar #draw span {
+	width: 54px;
+	height: 54px;
+	font-size: 22px;
+	line-height: 26px;
+}
+
+#canvas {
+	z-index: 1;
+	cursor: crosshair;
+}
+
+#editor {
+	z-index: 2;
+	background: #FFF;
+}
+
+#canvas.canvas {
+	z-index: 2;
+ }
+
+#editor.canvas {
+	z-index: 1;
+}
