@@ -2,7 +2,7 @@
 <html>
 <head>
 	<title>Canvas Video</title>
-	<link rel="stylesheet" href="style.css"/>
+	<link rel="stylesheet" href="css/style.css"/>
 	<script src="js/jquery.js"></script>
 	<script src="js/require.js"></script>
 	<script src="js/canvas.js"></script>
@@ -24,7 +24,7 @@
 		});
 	}
 	
-	var canvas, ctx, down, x, y, prev, draw, line, colors;
+	var canvas, ctx, down, x, y, firstX, firstY, prev, draw, line, colors;
 	
 	$(function(){
 		$("#editor").html( $("#code").html() );
@@ -51,8 +51,6 @@
 			violet: [ 128, 0, 128 ]
 		};
 
-		Canvas.setColor( "black", true );
-
 		$("#toolbar div.color").each(function() {
 			$(this).children().css( "background-color", this.id );
 		});
@@ -67,8 +65,8 @@
 			mousedown: function( e ) {
 				// Left mouse button
 				if ( e.button === 0 ) {
-					x = e.offsetX * 2;
-					y = e.offsetY * 2;
+					firstX = x = e.offsetX * 2;
+					firstY = y = e.offsetY * 2;
 					prev = [];
 					line = [];
 					down = true;
@@ -90,8 +88,28 @@
 			},
 			
 			mouseup: function() {
-				Canvas.undoStack.push({ name: "drawLine", args: [ x, y, line ] });
+				if ( !Canvas.undoRunning ) {
+					Canvas.undoStack.push({ name: "drawLine", args: [ firstX, firstY, line ] });
+				}
+				
 				down = false;
+			}
+		});
+		
+		$(document).keydown(function(e) {
+			// Backspace key
+			if ( e.which === 8 ) {
+				Canvas.undoStack.pop();
+				
+				if ( Canvas.undoStack.length === 0 ) {
+					Canvas.endDraw();
+				
+				} else {
+					Canvas.clear();
+					Canvas.redraw();
+				}
+				
+				e.preventDefault();
 			}
 		});
 

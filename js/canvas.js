@@ -1,11 +1,19 @@
 var Canvas = {
+	curColor: null,
+	
 	undoStack: [],
+	
+	undoRunning: false,
 
 	redraw: function() {
+		Canvas.undoRunning = true;
+		
 		for ( var i = 0, l = Canvas.undoStack.length; i < l; i++ ) {
-			var cmd = stack[i];
+			var cmd = Canvas.undoStack[i];
 			Canvas[ cmd.name ].apply( Canvas, cmd.args );
 		}
+		
+		Canvas.undoRunning = false;
 	},
 
 	drawLine: function( prevX, prevY, segments ) {
@@ -43,30 +51,49 @@ var Canvas = {
 		}
 	},
 
-	setColor: function( color, init ) {
-		if ( !init ) {
+	setColor: function( color ) {
+		Canvas.curColor = color;
+		
+		if ( color !== null ) {
 			Canvas.startDraw();
+
+			ctx.shadowColor = "rgba(" + colors[color] + ",0.5)";
+			ctx.strokeStyle = "rgba(" + colors[color] + ",1.0)";
 		}
 
-		ctx.shadowColor = "rgba(" + colors[color] + ",0.5)";
-		ctx.strokeStyle = "rgba(" + colors[color] + ",1.0)";
-
 		$("div.color.active").removeClass("active");
-		$("#" + color).addClass("active");
-
-		Canvas.undoStack.push({ name: "setColor", args: [ color, init ] });
+		
+		if ( color !== null ) {
+			$("#" + color).addClass("active");
+			
+			if ( !Canvas.undoRunning ) {
+				Canvas.undoStack.push({ name: "setColor", args: [ color ] });
+			}
+		}
+	},
+	
+	clear: function() {
+		// Clean off the canvas
+		ctx.clearRect( 0, 0, 1200, 960 );
 	},
 
-	startDraw: function() {
-		Canvas.undoStack = [];
+	startDraw: function( color ) {
+		if ( !Canvas.curColor ) {
+			if ( !Canvas.undoRunning ) {
+				Canvas.undoStack = [];
+			}
+			
+			Canvas.setColor( "black" );
+		}
 
 		$("#canvas, #editor").addClass( "canvas" );
 		$("#draw span").text( "Code" );
 	},
 
 	endDraw: function() {
-		// Clean off the canvas
-		ctx.clearRect( 0, 0, 1200, 960 );
+		Canvas.clear();
+		
+		Canvas.setColor( null );
 
 		$("#canvas, #editor").removeClass( "canvas" );
 		$("#draw span").text( "Draw" );
