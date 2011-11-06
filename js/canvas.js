@@ -1,12 +1,94 @@
 var Canvas = {
-	curColor: null,
+	colors: {
+		black: [ 0, 0, 0 ],
+		red: [ 255, 0, 0 ],
+		orange: [ 255, 165, 0 ],
+		green: [ 0, 128, 0 ],
+		blue: [ 0, 0, 255 ],
+		lightblue: [ 173, 216, 230 ],
+		violet: [ 128, 0, 128 ]
+	},
 	
-	undoStack: [],
+	init: function() {
+		if ( Canvas.drawInterval ) {
+			clearInterval( Canvas.drawInterval );
+		}
+		
+		Canvas.canvas = $("#canvas")[0];
+		Canvas.ctx = canvas.getContext("2d");
+		
+		Canvas.clear();
+		
+		Canvas.undoStack = [];
+		Canvas.draw = [];
+
+		Canvas.ctx.shadowBlur = 2;
+		Canvas.ctx.lineCap = "round";
+		Canvas.ctx.lineJoin = "round";
+		Canvas.ctx.lineWidth = 1;
+		
+		$(Canvas.canvas).bind({
+			mousedown: function( e ) {
+				// Left mouse button
+				if ( e.button === 0 ) {
+					Canvas.firstX = Canvas.x = e.layerX;
+					Canvas.firstY = Canvas.y = e.layerY;
+					Canvas.prev = [];
+					Canvas.line = [];
+					Canvas.down = true;
+
+					e.preventDefault();
+				}
+			},
+
+			mousemove: function( e ) {
+				if ( Canvas.down ) {
+					Canvas.prev.push({ x: e.layerX, y: e.layerY });
+
+					if ( Canvas.prev.length === 2 ) {
+						Canvas.draw.push( Canvas.prev );
+						Canvas.line.push( Canvas.prev ) ;
+						Canvas.prev = [];
+					}
+				}
+			},
+			
+			mouseup: function() {
+				if ( !Canvas.undoRunning ) {
+					Canvas.undoStack.push({ name: "drawLine", args: [ Canvas.firstX, Canvas.firstY, Canvas.line ] });
+				}
+				
+				Canvas.down = false;
+			}
+		});
+		
+		$(document).keydown(function(e) {
+			// Backspace key
+			if ( e.which === 8 ) {
+				Canvas.undo();
+				e.preventDefault();
+			}
+		});
+
+		// Draw segments every
+		Canvas.drawInterval = setInterval( Canvas.drawSegments, 16 );
+	},
 	
-	undoRunning: false,
+	undo: function() {
+		Canvas.undoStack.pop();
+		
+		if ( Canvas.undoStack.length === 0 ) {
+			Canvas.endDraw();
+		
+		} else {
+			Canvas.redraw();
+		}
+	},
 
 	redraw: function() {
 		Canvas.undoRunning = true;
+		
+		Canvas.clear();
 		
 		for ( var i = 0, l = Canvas.undoStack.length; i < l; i++ ) {
 			var cmd = Canvas.undoStack[i];
@@ -17,15 +99,15 @@ var Canvas = {
 	},
 
 	drawLine: function( prevX, prevY, segments ) {
-		x = prevX;
-		y = prevY;
+		Canvas.x = prevX;
+		Canvas.y = prevY;
 
 		Canvas.drawSegments( segments );
 	},
 
 	drawSegments: function( segments ) {
 		if ( typeof segments !== "object" ) {
-			segments = draw;
+			segments = Canvas.draw;
 		}
 
 		if ( segments.length ) {
@@ -34,21 +116,21 @@ var Canvas = {
 
 				// Only make a path if we're actually going to draw something
 				if ( prev[0].x !== prev[1].x || prev[0].y !== prev[1].y ) {
-					ctx.beginPath();
-					ctx.moveTo( x, y );
-					ctx.quadraticCurveTo( prev[0].x, prev[0].y, prev[1].x, prev[1].y );
-					ctx.stroke();
-					ctx.closePath();
+					Canvas.ctx.beginPath();
+					Canvas.ctx.moveTo( Canvas.x, Canvas.y );
+					Canvas.ctx.quadraticCurveTo( prev[0].x, prev[0].y, prev[1].x, prev[1].y );
+					Canvas.ctx.stroke();
+					Canvas.ctx.closePath();
 
-					x = prev[1].x;
-					y = prev[1].y;
+					Canvas.x = prev[1].x;
+					Canvas.y = prev[1].y;
 				}
 			}
 			
 			logger({ type: "drawSegments", style: "canvas", args: [ segments.slice(0) ], timeStamp: (new Date).getTime() });
 
-			if ( segments === draw ) {
-				draw.length = 0;
+			if ( segments === Canvas.draw ) {
+				Canvas.draw.length = 0;
 			}
 		}
 	},
@@ -59,8 +141,8 @@ var Canvas = {
 		if ( color !== null ) {
 			Canvas.startDraw();
 
-			ctx.shadowColor = "rgba(" + colors[color] + ",0.5)";
-			ctx.strokeStyle = "rgba(" + colors[color] + ",1.0)";
+			Canvas.ctx.shadowColor = "rgba(" + Canvas.colors[color] + ",0.5)";
+			Canvas.ctx.strokeStyle = "rgba(" + Canvas.colors[color] + ",1.0)";
 		}
 
 		$("div.color.active").removeClass("active");
@@ -77,7 +159,7 @@ var Canvas = {
 	
 	clear: function() {
 		// Clean off the canvas
-		ctx.clearRect( 0, 0, 1200, 960 );
+		Canvas.ctx.clearRect( 0, 0, 600, 480 );
 	},
 
 	startDraw: function() {

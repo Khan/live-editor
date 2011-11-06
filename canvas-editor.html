@@ -17,7 +17,6 @@
 		});
 	}
 	
-	var canvas, ctx, down, x, y, firstX, firstY, prev, draw, line, colors;
 	var log = [], playing = true;
 	
 	var playback = function() {
@@ -92,35 +91,13 @@
 		}
 		
 		buildEditor();
-
-		canvas = $("#canvas")[0];
-		ctx = canvas.getContext("2d");
-		down = false;
-		prev = [];
-		draw = [];
-		line = [];
-
-		ctx.shadowBlur = 2;
-		ctx.lineCap = "round";
-		ctx.lineJoin = "round";
-		ctx.lineWidth = 1;
-
-		colors = {
-			black: [ 0, 0, 0 ],
-			red: [ 255, 0, 0 ],
-			orange: [ 255, 165, 0 ],
-			green: [ 0, 128, 0 ],
-			blue: [ 0, 0, 255 ],
-			lightblue: [ 173, 216, 230 ],
-			violet: [ 128, 0, 128 ]
-		};
+		
+		Canvas.init();
 		
 		$("#canvas-editor").bind({
 			mousedown: logger,
 			mouseup: logger,
-			//mousemove: logger,
 			keypress: logger
-			//keydown: logger
 		});
 
 		$("#toolbar div.color").each(function() {
@@ -147,60 +124,6 @@
 			$(this).removeClass("recording").addClass("playing")
 				.find("span").text( "Playing" );
 		});
-
-		$(canvas).bind({
-			mousedown: function( e ) {
-				// Left mouse button
-				if ( e.button === 0 ) {
-					firstX = x = e.layerX;
-					firstY = y = e.layerY;
-					prev = [];
-					line = [];
-					down = true;
-
-					e.preventDefault();
-				}
-			},
-
-			mousemove: function( e ) {
-				if ( down ) {
-					prev.push({ x: e.layerX, y: e.layerY });
-
-					if ( prev.length === 2 ) {
-						draw.push( prev );
-						line.push( prev ) ;
-						prev = [];
-					}
-				}
-			},
-			
-			mouseup: function() {
-				if ( !Canvas.undoRunning ) {
-					Canvas.undoStack.push({ name: "drawLine", args: [ firstX, firstY, line ] });
-				}
-				
-				down = false;
-			}
-		});
-		
-		$(document).keydown(function(e) {
-			// Backspace key
-			if ( e.which === 8 ) {
-				Canvas.undoStack.pop();
-				
-				if ( Canvas.undoStack.length === 0 ) {
-					Canvas.endDraw();
-				
-				} else {
-					Canvas.clear();
-					Canvas.redraw();
-				}
-				
-				e.preventDefault();
-			}
-		});
-
-		setInterval( Canvas.drawSegments, 16 );
 	});
 	</script>
 </head>
