@@ -44,6 +44,8 @@ var Canvas = {
 					y = prev[1].y;
 				}
 			}
+			
+			logger({ type: "drawSegments", style: "canvas", args: [ segments.slice(0) ], timeStamp: (new Date).getTime() });
 
 			if ( segments === draw ) {
 				draw.length = 0;
@@ -67,6 +69,7 @@ var Canvas = {
 			$("#" + color).addClass("active");
 			
 			if ( !Canvas.undoRunning ) {
+				logger({ type: "setColor", style: "canvas", args: [ color ], timeStamp: (new Date).getTime() });
 				Canvas.undoStack.push({ name: "setColor", args: [ color ] });
 			}
 		}
@@ -77,7 +80,7 @@ var Canvas = {
 		ctx.clearRect( 0, 0, 1200, 960 );
 	},
 
-	startDraw: function( color ) {
+	startDraw: function() {
 		if ( !Canvas.curColor ) {
 			if ( !Canvas.undoRunning ) {
 				Canvas.undoStack = [];
@@ -91,6 +94,10 @@ var Canvas = {
 	},
 
 	endDraw: function() {
+		if ( !Canvas.undoRunning ) {
+			logger({ type: "endDraw", style: "canvas", args: [], timeStamp: (new Date).getTime() });
+		}
+		
 		Canvas.clear();
 		
 		Canvas.setColor( null );
