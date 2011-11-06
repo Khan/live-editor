@@ -152,8 +152,8 @@
 			mousedown: function( e ) {
 				// Left mouse button
 				if ( e.button === 0 ) {
-					firstX = x = e.offsetX;
-					firstY = y = e.offsetY;
+					firstX = x = e.layerX;
+					firstY = y = e.layerY;
 					prev = [];
 					line = [];
 					down = true;
@@ -164,7 +164,7 @@
 
 			mousemove: function( e ) {
 				if ( down ) {
-					prev.push({ x: e.offsetX, y: e.offsetY });
+					prev.push({ x: e.layerX, y: e.layerY });
 
 					if ( prev.length === 2 ) {
 						draw.push( prev );
