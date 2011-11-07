@@ -12,7 +12,19 @@ var Editor = {
 		Editor.reset();
 		
 		// Watch for mouse and key events
-		$("#canvas-editor").bind( "mousedown keypress", Editor.log );
+		$("#editor").bind({
+			mousedown: function( e ) {
+				Record.log({ x: e.layerX, y: e.layerY });
+			},
+			
+			keypress: function( e ) {
+				var text = String.fromCharCode( e.keyCode );
+				
+				if ( text ) {
+					Record.log({ text: text });
+				}
+			}
+		});
 	},
 	
 	create: function() {
@@ -26,7 +38,13 @@ var Editor = {
 			Editor.textarea = $("#editor textarea");
 			Editor.content = $("#editor div.ace_content");
 			
-			Editor.textarea.bind( "keydown", Editor.log );
+			Editor.offset = Editor.content.offset();
+			
+			Editor.textarea.bind( "keydown", function( e ) {
+				if ( e.keyCode && e.keyCode < 48 && e.keyCode !== 13 && e.keyCode !== 32 ) {
+					Record.log({ key: e.keyCode });
+				}
+			});
 		});
 	},
 	
@@ -37,89 +55,24 @@ var Editor = {
 	loadCode: function( code ) {
 		$("#editor").html( code );
 		Editor.create();
-	},
-	
-	record: function() {
-		Editor.commands = [];
-		Editor.playing = false;
-		Editor.startTime = (new Date).getTime();
-	},
-	
-	play: function() {
-		// Don't play if we're already playing
-		if ( Editor.playInterval ) {
-			return;
-		}
-		
-		Editor.playStart = (new Date).getTime() -
-			(Editor.playStart ? Editor.pauseTime - Editor.playStart : 0);
-		
-		// Figure out if we're just starting or resuming
-		if ( !Editor.playing ) {
-			Editor.playPos = 0;
-			Editor.playing = true;
-		}
-
-		Editor.playInterval = setInterval(function() {
-			var curTime = (new Date).getTime(),
-				evt = Editor.commands[ Editor.playPos ];
-
-			if ( evt && (curTime - Editor.playStart > evt.timeStamp - Editor.startTime) ) {
-				Editor.runCommand( evt );
-
-				if ( ++Editor.playPos === Editor.commands.length ) {
-					Editor.stop();
-
-					$("#record").removeClass("playing")
-						.find("span").text( "Record" );
-				}
-			}
-		}, 1 );
-	},
-	
-	pause: function() {
-		clearInterval( Editor.playInterval );
-		
-		Editor.playing = null;
-		Editor.playInterval = null;
-		Editor.pauseTime = (new Date).getTime();
-	},
-	
-	stop: function() {
-		Editor.pause();
-		Editor.playStart = null;
-	},
-	
-	runCommand: function( evt ) {
-		if ( evt.type === "keypress" ) {
-			var str = String.fromCharCode( evt.charCode );
-
-			if ( str ) {
-				var e = document.createEvent("TextEvent");
-				e.initTextEvent( "textInput", true, true, null, str );
-				Editor.textarea[0].dispatchEvent( e );
-			}
-
-		} else if ( evt.type === "keydown" ) {
-			if ( evt.keyCode && (evt.keyCode < 48 || evt.keyCode === 32) ) {
-				Editor.textarea.simulate( evt.type, { keyCode: evt.keyCode } );
-			}
-
-		} else if ( evt.style === "canvas" ) {
-			Canvas[ evt.type ].apply( Canvas, evt.args );
-		
-		} else if ( evt.type === "mousedown" ) {
-			Editor.content.simulate( evt.type, evt );
-			Editor.content.simulate( "mouseup", evt );
-
-		} else {
-			Editor.content.simulate( evt.type, evt );
-		}
-	},
-	
-	log: function( e ) {
-		if ( Editor.playing === false ) {
-			Editor.commands.push( e );
-		}
 	}
 };
+
+// Add in record playback handlers.
+jQuery.extend( Record.handlers, {
+	key: function( e ) {
+		Editor.textarea.simulate( "keydown", { keyCode: e.key } );
+	},
+	
+	text: function( e ) {
+		var evt = document.createEvent("TextEvent");
+		evt.initTextEvent( "textInput", true, true, null, e.text );
+		Editor.textarea[0].dispatchEvent( evt );
+	},
+	
+	x: function( e ) {
+		var evt = { clientX: Editor.offset.left + e.x, clientY: Editor.offset.top + e.y };
+		Editor.content.simulate( "mousedown", evt );
+		Editor.content.simulate( "mouseup", evt );
+	}
+});

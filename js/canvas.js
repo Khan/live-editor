@@ -123,9 +123,7 @@ var Canvas = {
 				}
 			}
 			
-			Editor.log({ type: "drawSegments", style: "canvas",
-				args: [ segments.slice(0), firstX, firstY ],
-				timeStamp: (new Date).getTime() });
+			Record.log({ canvas: "drawSegments", args: [ segments.slice(0), firstX, firstY ] });
 
 			if ( segments === Canvas.draw ) {
 				Canvas.draw.length = 0;
@@ -149,7 +147,7 @@ var Canvas = {
 			$("#" + color).addClass("active");
 			
 			if ( !Canvas.undoRunning ) {
-				Editor.log({ type: "setColor", style: "canvas", args: [ color ], timeStamp: (new Date).getTime() });
+				Record.log({ canvas: "setColor", args: [ color ] });
 				Canvas.undoStack.push({ name: "setColor", args: [ color ] });
 			}
 		}
@@ -175,7 +173,7 @@ var Canvas = {
 
 	endDraw: function() {
 		if ( !Canvas.undoRunning ) {
-			Editor.log({ type: "endDraw", style: "canvas", args: [], timeStamp: (new Date).getTime() });
+			Record.log({ canvas: "endDraw" });
 		}
 		
 		Canvas.clear();
@@ -185,4 +183,8 @@ var Canvas = {
 		$("#canvas, #editor").removeClass( "canvas" );
 		$("#draw span").text( "Draw" );
 	}
+};
+
+Record.handlers.canvas = function( e ) {
+	Canvas[ e.canvas ].apply( Canvas, e.args || [] );
 };

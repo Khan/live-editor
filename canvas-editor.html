@@ -5,6 +5,7 @@
 	<link rel="stylesheet" href="css/style.css"/>
 	<script src="js/jquery.js"></script>
 	<script src="js/require.js"></script>
+	<script src="js/record.js"></script>
 	<script src="js/editor.js"></script>
 	<script src="js/canvas.js"></script>
 	<script src="js/jquery.simulate.js"></script>
@@ -26,7 +27,7 @@
 		
 		$("#record").toggle(function() {
 			// Begin recording the user's interactions
-			Editor.record();
+			Record.record();
 			
 			$(this).addClass("recording")
 				.find("span").text( "Recording" );
@@ -37,7 +38,7 @@
 			Canvas.endDraw();
 			
 			// Begin playing back the editor and canvas commands
-			Editor.play();
+			Record.play();
 			
 			$(this).removeClass("recording").addClass("playing")
 				.find("span").text( "Playing" );
