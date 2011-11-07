@@ -33,8 +33,7 @@ var Record = {
 				if ( ++Record.playPos === Record.commands.length ) {
 					Record.stop();
 
-					$("#record").removeClass("playing")
-						.find("span").text( "Record" );
+					$(Record).trigger( "playEnded" );
 				}
 			}
 		}, 1 );
@@ -59,33 +58,6 @@ var Record = {
 				return Record.handlers[ handler ]( evt );
 			}
 		}
-	
-	/*
-		if ( evt.type === "keypress" ) {
-			var str = String.fromCharCode( evt.charCode );
-
-			if ( str ) {
-				var e = document.createEvent("TextEvent");
-				e.initTextEvent( "textInput", true, true, null, str );
-				Editor.textarea[0].dispatchEvent( e );
-			}
-
-		} else if ( evt.type === "keydown" ) {
-			if ( evt.keyCode && (evt.keyCode < 48 || evt.keyCode === 32) ) {
-				Editor.textarea.simulate( evt.type, { keyCode: evt.keyCode } );
-			}
-
-		} else if ( evt.style === "canvas" ) {
-			Canvas[ evt.type ].apply( Canvas, evt.args );
-	
-		} else if ( evt.type === "mousedown" ) {
-			Editor.content.simulate( evt.type, evt );
-			Editor.content.simulate( "mouseup", evt );
-
-		} else {
-			Editor.content.simulate( evt.type, evt );
-		}
-	*/
 	},
 
 	log: function( e ) {

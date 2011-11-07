@@ -9,10 +9,12 @@ if ( typeof require !== "undefined" ) {
 
 var Editor = {
 	init: function() {
+		Editor.editor = $("#editor");
+		
 		Editor.reset();
 		
 		// Watch for mouse and key events
-		$("#editor").bind({
+		Editor.editor.bind({
 			mousedown: function( e ) {
 				Record.log({ x: e.layerX, y: e.layerY });
 			},
@@ -35,8 +37,8 @@ var Editor = {
 			editor.getSession().setMode(new JavaScriptMode());
 			editor.setTheme( "ace/theme/textmate" );
 			
-			Editor.textarea = $("#editor textarea");
-			Editor.content = $("#editor div.ace_content");
+			Editor.textarea = Editor.editor.find("textarea");
+			Editor.content = Editor.editor.find("div.ace_content");
 			
 			Editor.offset = Editor.content.offset();
 			
@@ -49,11 +51,13 @@ var Editor = {
 	},
 	
 	reset: function() {
-		Editor.loadCode( $("#code").html() );
+		// NOTE: This method will probably go away
+		Editor.loadCode( jQuery("#code").html() );
 	},
 	
 	loadCode: function( code ) {
-		$("#editor").html( code );
+		// TODO: Find a better way to load code
+		Editor.editor.html( code );
 		Editor.create();
 	}
 };

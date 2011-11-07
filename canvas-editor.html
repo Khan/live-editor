@@ -4,11 +4,11 @@
 	<title>Canvas Video</title>
 	<link rel="stylesheet" href="css/style.css"/>
 	<script src="js/jquery.js"></script>
+	<script src="js/jquery.simulate.js"></script>
 	<script src="js/require.js"></script>
 	<script src="js/record.js"></script>
 	<script src="js/editor.js"></script>
 	<script src="js/canvas.js"></script>
-	<script src="js/jquery.simulate.js"></script>
 	<script id="code">	
 	$(function(){
 		// Start the editor and canvas drawing area
@@ -24,6 +24,26 @@
 		});
 
 		$("#draw").toggle( Canvas.startDraw, Canvas.endDraw );
+		
+		$(Canvas).bind({
+			drawStarted: function() {
+				$("#canvas, #editor").addClass( "canvas" );
+				$("#draw span").text( "Code" );
+			},
+			
+			drawEnded: function() {
+				$("#canvas, #editor").removeClass( "canvas" );
+				$("#draw span").text( "Draw" );
+			},
+			
+			colorSet: function( e, color ) {
+				$("div.color.active").removeClass("active");
+
+				if ( color != null ) {
+					$("#" + color).addClass("active");
+				}
+			}
+		});
 		
 		$("#record").toggle(function() {
 			// Begin recording the user's interactions
@@ -42,6 +62,13 @@
 			
 			$(this).removeClass("recording").addClass("playing")
 				.find("span").text( "Playing" );
+		});
+		
+		$(Record).bind({
+			playEnded: function() {
+				$("#record").removeClass("playing")
+					.find("span").text( "Record" );
+			}
 		});
 	});
 	</script>

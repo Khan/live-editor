@@ -27,7 +27,7 @@ var Canvas = {
 		Canvas.ctx.lineJoin = "round";
 		Canvas.ctx.lineWidth = 1;
 		
-		$(Canvas.canvas).bind({
+		jQuery(Canvas.canvas).bind({
 			mousedown: function( e ) {
 				// Left mouse button
 				if ( e.button === 0 ) {
@@ -62,7 +62,12 @@ var Canvas = {
 			}
 		});
 		
-		$(document).keydown(function(e) {
+		jQuery(document).keydown(function(e) {
+			// Stop if we aren't running
+			if ( !Canvas.curColor ) {
+				return;
+			}
+			
 			// Backspace key
 			if ( e.which === 8 ) {
 				Canvas.undo();
@@ -132,25 +137,23 @@ var Canvas = {
 	},
 
 	setColor: function( color ) {
+		if ( Canvas.curColor == null ) {
+			Canvas.startDraw( color );
+		}
+		
 		Canvas.curColor = color;
 		
-		if ( color !== null ) {
-			Canvas.startDraw();
-
+		if ( color != null ) {
 			Canvas.ctx.shadowColor = "rgba(" + Canvas.colors[color] + ",0.5)";
 			Canvas.ctx.strokeStyle = "rgba(" + Canvas.colors[color] + ",1.0)";
-		}
-
-		$("div.color.active").removeClass("active");
 		
-		if ( color !== null ) {
-			$("#" + color).addClass("active");
-			
 			if ( !Canvas.undoRunning ) {
 				Record.log({ canvas: "setColor", args: [ color ] });
 				Canvas.undoStack.push({ name: "setColor", args: [ color ] });
 			}
 		}
+		
+		jQuery(Canvas).trigger( "colorSet", color );
 	},
 	
 	clear: function() {
@@ -158,30 +161,32 @@ var Canvas = {
 		Canvas.ctx.clearRect( 0, 0, 600, 480 );
 	},
 
-	startDraw: function() {
+	startDraw: function( color ) {
 		if ( !Canvas.curColor ) {
 			if ( !Canvas.undoRunning ) {
 				Canvas.undoStack = [];
 			}
 			
-			Canvas.setColor( "black" );
+			if ( typeof color !== "string" ) {
+				Canvas.setColor( "black" );
+			}
+			
+			jQuery(Canvas).trigger( "drawStarted" );
 		}
-
-		$("#canvas, #editor").addClass( "canvas" );
-		$("#draw span").text( "Code" );
 	},
 
 	endDraw: function() {
-		if ( !Canvas.undoRunning ) {
-			Record.log({ canvas: "endDraw" });
+		if ( Canvas.curColor ) {
+			if ( !Canvas.undoRunning ) {
+				Record.log({ canvas: "endDraw" });
+			}
+		
+			Canvas.clear();
+		
+			Canvas.setColor( null );
+		
+			jQuery(Canvas).trigger( "drawEnded" );
 		}
-		
-		Canvas.clear();
-		
-		Canvas.setColor( null );
-
-		$("#canvas, #editor").removeClass( "canvas" );
-		$("#draw span").text( "Draw" );
 	}
 };
 
