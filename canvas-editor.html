@@ -5,100 +5,14 @@
 	<link rel="stylesheet" href="css/style.css"/>
 	<script src="js/jquery.js"></script>
 	<script src="js/require.js"></script>
+	<script src="js/editor.js"></script>
 	<script src="js/canvas.js"></script>
 	<script src="js/jquery.simulate.js"></script>
-	<script id="code">
-	if ( typeof require !== "undefined" ) {
-		require.config({
-			paths: {
-				ace: "ace/lib/ace",
-				pilot: "ace/support/pilot/lib/pilot"
-			}
-		});
-	}
-	
-	var log = [], playing = true;
-	
-	var playback = function() {
-		var start = log[0], pos = 1, startTime = (new Date).getTime(), evt;
-		
-		playing = true;
-		
-		var interval = setInterval(function() {
-			var curTime = (new Date).getTime(), evt = log[pos];
-		
-			if ( evt && (curTime - startTime) > (evt.timeStamp - start.timeStamp) ) {
-				if ( evt.type === "keypress" ) {
-					var str = String.fromCharCode( evt.charCode ),
-						textarea = $("#editor textarea");
-					
-					if ( str ) {
-						var e = document.createEvent("TextEvent");
-						e.initTextEvent( "textInput", true, true, null, String.fromCharCode( evt.charCode ) );
-						textarea[0].dispatchEvent( e );
-					}
-				} else if ( evt.type === "keydown" ) {
-					if ( evt.keyCode && (evt.keyCode < 48 || evt.keyCode === 32) ) {
-						$("#editor textarea").simulate( "keydown", { keyCode: evt.keyCode } );
-					}
-				
-				} else if ( evt.style === "canvas" ) {
-					Canvas[ evt.type ].apply( Canvas, evt.args );
-				
-				} else {
-					$("#editor div.ace_content").simulate( evt.type, evt );
-				}
-			
-				pos++;
-			
-				if ( pos === log.length ) {
-					clearInterval( interval );
-					playing = false;
-					log = [];
-					
-					$("#record").removeClass("playing")
-						.find("span").text( "Record" );
-				}
-			}
-		}, 1 );
-	};
-	
-	var record = function() {
-		playing = false;
-		logger({ type: "start", timeStamp: (new Date).getTime() });
-	};
-	
-	var logger = function( e ) {
-		if ( !playing ) {
-			log.push( e );
-		}
-	};
-	
+	<script id="code">	
 	$(function(){
-		function buildEditor() {
-			var origCode = $("#code").html();
-			$("#editor").html( origCode );
-		
-			require(["ace/ace", "ace/mode/javascript"], function() {
-				var JavaScriptMode = require("ace/mode/javascript").Mode;
-				var editor = require("ace/ace").edit( "editor" );
-
-				editor.getSession().setMode(new JavaScriptMode());
-				editor.setTheme( "ace/theme/textmate" );
-				
-				$("#editor textarea").bind( "keydown", logger );
-			});
-		}
-		
-		buildEditor();
-		
+		// Start the editor and canvas drawing area
+		Editor.init();
 		Canvas.init();
-		
-		$("#canvas-editor").bind({
-			mousedown: logger,
-			mouseup: logger,
-			keypress: logger
-		});
 
 		$("#toolbar div.color").each(function() {
 			$(this).children().css( "background-color", this.id );
@@ -111,15 +25,19 @@
 		$("#draw").toggle( Canvas.startDraw, Canvas.endDraw );
 		
 		$("#record").toggle(function() {
-			record();
+			// Begin recording the user's interactions
+			Editor.record();
 			
 			$(this).addClass("recording")
 				.find("span").text( "Recording" );
+
 		}, function() {
-			buildEditor();
+			// Reset the editor and canvas to its initial state
+			Editor.reset();
 			Canvas.endDraw();
 			
-			playback();
+			// Begin playing back the editor and canvas commands
+			Editor.play();
 			
 			$(this).removeClass("recording").addClass("playing")
 				.find("span").text( "Playing" );

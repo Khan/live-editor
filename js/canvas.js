@@ -55,7 +55,7 @@ var Canvas = {
 			
 			mouseup: function() {
 				if ( !Canvas.undoRunning ) {
-					Canvas.undoStack.push({ name: "drawLine", args: [ Canvas.firstX, Canvas.firstY, Canvas.line ] });
+					Canvas.undoStack.push({ name: "drawSegments", args: [ Canvas.line, Canvas.firstX, Canvas.firstY ] });
 				}
 				
 				Canvas.down = false;
@@ -98,36 +98,32 @@ var Canvas = {
 		Canvas.undoRunning = false;
 	},
 
-	drawLine: function( prevX, prevY, segments ) {
-		Canvas.x = prevX;
-		Canvas.y = prevY;
-
-		Canvas.drawSegments( segments );
-	},
-
-	drawSegments: function( segments ) {
+	drawSegments: function( segments, prevX, prevY ) {
 		if ( typeof segments !== "object" ) {
 			segments = Canvas.draw;
 		}
 
 		if ( segments.length ) {
+			prevX = prevX == null ? Canvas.x : prevX;
+			prevY = prevY == null ? Canvas.y : prevY;
+			
 			for ( var i = 0; i < segments.length; i++ ) {
 				var prev = segments[ i ];
 
 				// Only make a path if we're actually going to draw something
 				if ( prev[0].x !== prev[1].x || prev[0].y !== prev[1].y ) {
 					Canvas.ctx.beginPath();
-					Canvas.ctx.moveTo( Canvas.x, Canvas.y );
+					Canvas.ctx.moveTo( prevX, prevY );
 					Canvas.ctx.quadraticCurveTo( prev[0].x, prev[0].y, prev[1].x, prev[1].y );
 					Canvas.ctx.stroke();
 					Canvas.ctx.closePath();
 
-					Canvas.x = prev[1].x;
-					Canvas.y = prev[1].y;
+					prevX = Canvas.x = prev[1].x;
+					prevY = Canvas.y = prev[1].y;
 				}
 			}
 			
-			logger({ type: "drawSegments", style: "canvas", args: [ segments.slice(0) ], timeStamp: (new Date).getTime() });
+			Editor.log({ type: "drawSegments", style: "canvas", args: [ segments.slice(0), prevX, prevY ], timeStamp: (new Date).getTime() });
 
 			if ( segments === Canvas.draw ) {
 				Canvas.draw.length = 0;
@@ -151,7 +147,7 @@ var Canvas = {
 			$("#" + color).addClass("active");
 			
 			if ( !Canvas.undoRunning ) {
-				logger({ type: "setColor", style: "canvas", args: [ color ], timeStamp: (new Date).getTime() });
+				Editor.log({ type: "setColor", style: "canvas", args: [ color ], timeStamp: (new Date).getTime() });
 				Canvas.undoStack.push({ name: "setColor", args: [ color ] });
 			}
 		}
@@ -177,7 +173,7 @@ var Canvas = {
 
 	endDraw: function() {
 		if ( !Canvas.undoRunning ) {
-			logger({ type: "endDraw", style: "canvas", args: [], timeStamp: (new Date).getTime() });
+			Editor.log({ type: "endDraw", style: "canvas", args: [], timeStamp: (new Date).getTime() });
 		}
 		
 		Canvas.clear();
