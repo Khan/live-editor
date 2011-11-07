@@ -104,8 +104,8 @@ var Canvas = {
 		}
 
 		if ( segments.length ) {
-			prevX = prevX == null ? Canvas.x : prevX;
-			prevY = prevY == null ? Canvas.y : prevY;
+			var firstX = prevX = prevX == null ? Canvas.x : prevX,
+				firstY = prevY = prevY == null ? Canvas.y : prevY;
 			
 			for ( var i = 0; i < segments.length; i++ ) {
 				var prev = segments[ i ];
@@ -123,7 +123,9 @@ var Canvas = {
 				}
 			}
 			
-			Editor.log({ type: "drawSegments", style: "canvas", args: [ segments.slice(0), prevX, prevY ], timeStamp: (new Date).getTime() });
+			Editor.log({ type: "drawSegments", style: "canvas",
+				args: [ segments.slice(0), firstX, firstY ],
+				timeStamp: (new Date).getTime() });
 
 			if ( segments === Canvas.draw ) {
 				Canvas.draw.length = 0;
