@@ -14,14 +14,10 @@ var Record = {
 			return;
 		}
 		
+		Record.playing = true;
+		Record.playPos = Record.playPos || 0;
 		Record.playStart = (new Date).getTime() -
 			(Record.playStart ? Record.pauseTime - Record.playStart : 0);
-		
-		// Figure out if we're just starting or resuming
-		if ( !Record.playing ) {
-			Record.playPos = 0;
-			Record.playing = true;
-		}
 
 		Record.playInterval = setInterval(function() {
 			var curTime = (new Date).getTime(),
@@ -49,6 +45,8 @@ var Record = {
 	
 	stop: function() {
 		Record.pause();
+		
+		Record.playPos = null;
 		Record.playStart = null;
 	},
 
