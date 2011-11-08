@@ -2,8 +2,10 @@
 <html>
 <head>
 	<title>Canvas Video</title>
-	<link rel="stylesheet" href="css/style.css"/>
+	<link rel="stylesheet" href="css/style.css" />
+	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/ui-lightness/jquery-ui.css" />
 	<script src="js/jquery.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js"></script>
 	<script src="js/jquery.simulate.js"></script>
 	<script src="js/require.js"></script>
 	<script src="js/record.js"></script>
@@ -27,6 +29,32 @@
 		$("#draw").toggle( Canvas.startDraw, Canvas.endDraw );
 		
 		$("#clear").click( Canvas.clear );
+		
+		$("#test").click(function() {
+			var testObj = { test: "" };
+			
+			Record.log( testObj );
+			
+			var numTest = $("#tests h3").length + 1;
+			
+			$( $("#form-tmpl").html() )
+				.find( "a" ).text( "Exercise #" + numTest ).end()
+				.find( "input" ).val( "Exercise #" + numTest ).end()
+				.appendTo( "#tests" )
+				.find( "form" ).change(function( e ) {
+					var elem = e.target;
+					
+					console.log( e );
+					
+					testObj[ elem.name ] = elem.value;
+					
+					if ( elem.name === "title" ) {
+						$(this).parent().prev().find("a").text( elem.value );
+					}
+				});
+			
+			$("#tests").accordion( "destroy" ).accordion({ active: ":last" });
+		});
 		
 		$(Canvas).bind({
 			drawStarted: function() {
@@ -90,10 +118,22 @@
 		<div class="color" id="violet"><span class="icon"></span></div>
 		<div class="space"></div>
 		<div class="button" id="clear"><span class="icon"></span></div>
+		<div class="button wide" id="test"><span class="icon">Test</span></div>
 	</div>
 	<div id="canvas-editor">
 		<div id="editor" style="width: 600px; height: 480px;"></div>
 		<canvas id="canvas" width="600" height="480"></canvas>
 	</div>
+	<div id="tests"></div>
+	<script type="text/html" id="form-tmpl">
+		<h3><a href='#'>Exercise</a></h3>
+		<div>
+			<form action="" method="POST">
+				<input type="text" placeholder="Title" name="title" /><br/>
+				<textarea name="desc" placeholder="Description"></textarea><br/>
+				<textarea name="validate" placeholder="Validation"></textarea>
+			</form>
+		</div>
+	</script>
 </body>
 </html>

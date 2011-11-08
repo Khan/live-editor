@@ -90,3 +90,16 @@ body {
 #toolbar #clear .icon {
 	background: #FFF;
 }
+
+#tests {
+	position: absolute;
+	left: 660px;
+	width: 300px;
+	font-size: 12px;
+}
+
+#tests textarea {
+	width: 100%;
+	min-height: 100px;
+	margin-top: 10px;
+}

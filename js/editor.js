@@ -50,8 +50,7 @@ var Editor = {
 	},
 	
 	reset: function() {
-		// NOTE: This method will probably go away
-		Editor.loadCode( jQuery("#code").html() );
+		Editor.loadCode( "" );
 	},
 	
 	loadCode: function( code ) {
