@@ -9,12 +9,32 @@ if ( typeof require !== "undefined" ) {
 
 var Editor = {
 	init: function() {
-		Editor.editor = $("#editor");
+		Editor.editorElem = $("#editor");
 		
-		Editor.reset();
+		require(["ace/ace", "ace/mode/javascript"], function() {
+			Editor.editor = require("ace/ace").edit( "editor" );
+			
+			Editor.editor.setHighlightActiveLine( false );
+
+			Editor.editor.getSession().setMode(new (require("ace/mode/javascript").Mode)());
+			Editor.editor.setTheme( "ace/theme/textmate" );
+			
+			Editor.textarea = Editor.editorElem.find("textarea");
+			Editor.content = Editor.editorElem.find("div.ace_content");
+			
+			Editor.offset = Editor.content.offset();
+			
+			Editor.textarea.bind( "keydown", function( e ) {
+				if ( e.keyCode && e.keyCode < 48 && e.keyCode !== 13 && e.keyCode !== 32 ) {
+					Record.log({ key: e.keyCode });
+				}
+			});
+			
+			Editor.reset();
+		});
 		
 		// Watch for mouse and key events
-		Editor.editor.bind({
+		Editor.editorElem.bind({
 			mousedown: function( e ) {
 				Record.log({ x: e.layerX, y: e.layerY });
 			},
@@ -29,36 +49,13 @@ var Editor = {
 		});
 	},
 	
-	create: function() {
-		require(["ace/ace", "ace/mode/javascript"], function() {
-			var JavaScriptMode = require("ace/mode/javascript").Mode;
-			var editor = require("ace/ace").edit( "editor" );
-
-			editor.getSession().setMode(new JavaScriptMode());
-			editor.setTheme( "ace/theme/textmate" );
-			
-			Editor.textarea = Editor.editor.find("textarea");
-			Editor.content = Editor.editor.find("div.ace_content");
-			
-			Editor.offset = Editor.content.offset();
-			
-			Editor.textarea.bind( "keydown", function( e ) {
-				if ( e.keyCode && e.keyCode < 48 && e.keyCode !== 13 && e.keyCode !== 32 ) {
-					Record.log({ key: e.keyCode });
-				}
-			});
-		});
-	},
-	
 	reset: function() {
 		// NOTE: This method will probably go away
 		Editor.loadCode( jQuery("#code").html() );
 	},
 	
 	loadCode: function( code ) {
-		// TODO: Find a better way to load code
-		Editor.editor.html( code );
-		Editor.create();
+		Editor.editor.getSession().setValue( code );
 	}
 };
 
