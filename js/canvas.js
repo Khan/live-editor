@@ -181,8 +181,6 @@ var Canvas = {
 				Record.log({ canvas: "endDraw" });
 			}
 		
-			Canvas.clear();
-		
 			Canvas.setColor( null );
 		
 			jQuery(Canvas).trigger( "drawEnded" );

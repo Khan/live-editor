@@ -26,6 +26,8 @@
 
 		$("#draw").toggle( Canvas.startDraw, Canvas.endDraw );
 		
+		$("#clear").click( Canvas.clear );
+		
 		$(Canvas).bind({
 			drawStarted: function() {
 				$("#canvas, #editor").addClass( "canvas" );
@@ -86,6 +88,8 @@
 		<div class="color" id="blue"><span class="icon"></span></div>
 		<div class="color" id="lightblue"><span class="icon"></span></div>
 		<div class="color" id="violet"><span class="icon"></span></div>
+		<div class="space"></div>
+		<div class="button" id="clear"><span class="icon"></span></div>
 	</div>
 	<div id="canvas-editor">
 		<div id="editor" style="width: 600px; height: 480px;"></div>

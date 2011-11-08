@@ -21,15 +21,16 @@ body {
 #canvas {
 	z-index: 1;
 	cursor: crosshair;
+	opacity: 0.3;
 }
 
 #editor {
 	z-index: 2;
-	background: #FFF;
 }
 
 #canvas.canvas {
 	z-index: 2;
+	opacity: 1.0;
 }
 
 #editor.canvas {
@@ -84,4 +85,8 @@ body {
 
 #toolbar div.playing {
 	background: green;
+}
+
+#toolbar #clear .icon {
+	background: #FFF;
 }
