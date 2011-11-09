@@ -79,6 +79,10 @@ body {
 	line-height: 26px;
 }
 
+#toolbar div.drawing {
+	background: lightblue;
+}
+
 #toolbar div.recording {
 	background: red;
 }

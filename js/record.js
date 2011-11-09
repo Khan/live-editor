@@ -3,16 +3,32 @@ var Record = {
 	handlers: {},
 	
 	record: function() {
-		Record.commands = [];
-		Record.playing = false;
-		Record.startTime = (new Date).getTime();
+		if ( !Record.recording ) {
+			Record.stopPlayback();
+			
+			Record.commands = [];
+			Record.recording = true;
+			Record.startTime = (new Date).getTime();
+			
+			$(Record).trigger( "recordStarted" );
+		}
+	},
+	
+	stopRecord: function() {
+		if ( Record.recording ) {
+			Record.recording = false;
+		
+			$(Record).trigger( "recordEnded" );
+		}
 	},
 	
 	play: function() {
 		// Don't play if we're already playing
-		if ( Record.playInterval ) {
+		if ( Record.playing || !Record.commands ) {
 			return;
 		}
+		
+		Record.stopRecord();
 		
 		Record.playing = true;
 		Record.playPos = Record.playPos || 0;
@@ -27,27 +43,35 @@ var Record = {
 				Record.runCommand( evt );
 
 				if ( ++Record.playPos === Record.commands.length ) {
-					Record.stop();
+					Record.stopPlayback();
 
 					$(Record).trigger( "playEnded" );
 				}
 			}
 		}, 1 );
+		
+		$(Record).trigger( "playStarted" );
 	},
 	
-	pause: function() {
-		clearInterval( Record.playInterval );
+	pausePlayback: function() {
+		if ( Record.playing ) {
+			clearInterval( Record.playInterval );
 		
-		Record.playing = null;
-		Record.playInterval = null;
-		Record.pauseTime = (new Date).getTime();
+			Record.playing = false;
+			Record.playInterval = null;
+			Record.pauseTime = (new Date).getTime();
+		}
 	},
 	
-	stop: function() {
-		Record.pause();
+	stopPlayback: function() {
+		if ( Record.playing ) {
+			Record.pausePlayback();
 		
-		Record.playPos = null;
-		Record.playStart = null;
+			Record.playPos = null;
+			Record.playStart = null;
+			
+			$(Record).trigger( "playEnded" );
+		}
 	},
 
 	runCommand: function( evt ) {
@@ -59,9 +83,10 @@ var Record = {
 	},
 
 	log: function( e ) {
-		if ( Record.playing === false ) {
+		if ( !Record.playing && Record.recording ) {
 			e.time = (new Date).getTime() - Record.startTime;
 			Record.commands.push( e );
+			return true;
 		}
 	}
 };

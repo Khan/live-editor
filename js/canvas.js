@@ -14,13 +14,12 @@ var Canvas = {
 			clearInterval( Canvas.drawInterval );
 		}
 		
-		Canvas.canvas = $("#canvas")[0];
+		Canvas.canvas = jQuery("#canvas")[0];
 		Canvas.ctx = canvas.getContext("2d");
 		
-		Canvas.clear();
+		Canvas.clear( true );
 		
 		Canvas.undoStack = [];
-		Canvas.draw = [];
 
 		Canvas.ctx.shadowBlur = 2;
 		Canvas.ctx.lineCap = "round";
@@ -31,143 +30,141 @@ var Canvas = {
 			mousedown: function( e ) {
 				// Left mouse button
 				if ( e.button === 0 ) {
-					Canvas.firstX = Canvas.x = e.layerX;
-					Canvas.firstY = Canvas.y = e.layerY;
-					Canvas.prev = [];
-					Canvas.line = [];
-					Canvas.down = true;
+					Canvas.startLine( e.layerX, e.layerY );
 
 					e.preventDefault();
 				}
 			},
 
 			mousemove: function( e ) {
-				if ( Canvas.down ) {
-					Canvas.prev.push({ x: e.layerX, y: e.layerY });
-
-					if ( Canvas.prev.length === 2 ) {
-						Canvas.draw.push( Canvas.prev );
-						Canvas.line.push( Canvas.prev ) ;
-						Canvas.prev = [];
-					}
-				}
+				Canvas.drawLine( e.layerX, e.layerY );
 			},
 			
-			mouseup: function() {
-				if ( !Canvas.undoRunning ) {
-					Canvas.undoStack.push({ name: "drawSegments", args: [ Canvas.line, Canvas.firstX, Canvas.firstY ] });
-				}
-				
-				Canvas.down = false;
-			}
+			mouseup: Canvas.endLine
 		});
 		
 		jQuery(document).keydown(function(e) {
 			// Stop if we aren't running
-			if ( !Canvas.curColor ) {
+			if ( !Canvas.drawing ) {
 				return;
 			}
 			
 			// Backspace key
 			if ( e.which === 8 ) {
-				Canvas.undo();
 				e.preventDefault();
+				Canvas.undo();
 			}
 		});
-
-		// Draw segments every
-		Canvas.drawInterval = setInterval( Canvas.drawSegments, 16 );
 	},
 	
+	// TODO: Just use the Record log as an undo stack
 	undo: function() {
-		Canvas.undoStack.pop();
+		Record.log({ canvas: "undo" });
 		
-		if ( Canvas.undoStack.length === 0 ) {
-			Canvas.endDraw();
+		// TODO: Eventually allow for a "redo" stack
+		var cmd = Canvas.undoStack.pop();
 		
-		} else {
-			Canvas.redraw();
+		if ( cmd && cmd.name === "endLine" ) {
+			while ( cmd.name !== "startLine" ) {
+				cmd = Canvas.undoStack.pop();
+			}
 		}
+		
+		Canvas.redraw();
 	},
 
 	redraw: function() {
-		Canvas.undoRunning = true;
+		var stack = Canvas.undoStack.slice( 0 );
 		
-		Canvas.clear();
+		Canvas.clear( true );
 		
-		for ( var i = 0, l = Canvas.undoStack.length; i < l; i++ ) {
-			var cmd = Canvas.undoStack[i];
+		Canvas.undoStack = [];
+		
+		for ( var i = 0, l = stack.length; i < l; i++ ) {
+			var cmd = stack[i];
 			Canvas[ cmd.name ].apply( Canvas, cmd.args );
 		}
-		
-		Canvas.undoRunning = false;
 	},
-
-	drawSegments: function( segments, prevX, prevY ) {
-		if ( typeof segments !== "object" ) {
-			segments = Canvas.draw;
+	
+	startLine: function( x, y ) {
+		if ( !Canvas.down ) {
+			Canvas.down = true;
+			Canvas.x = x;
+			Canvas.y = y;
+			Canvas.prev = [];
+		
+			Canvas.log( "startLine", [ x, y ] );
 		}
+	},
+	
+	drawLine: function( x, y ) {
+		if ( Canvas.down ) {
+			Canvas.prev.push({ x: x, y: y });
 
-		if ( segments.length ) {
-			var firstX = prevX = prevX == null ? Canvas.x : prevX,
-				firstY = prevY = prevY == null ? Canvas.y : prevY;
-			
-			for ( var i = 0; i < segments.length; i++ ) {
-				var prev = segments[ i ];
+			if ( Canvas.prev.length === 2 ) {
+				var prev = Canvas.prev;
 
 				// Only make a path if we're actually going to draw something
 				if ( prev[0].x !== prev[1].x || prev[0].y !== prev[1].y ) {
 					Canvas.ctx.beginPath();
-					Canvas.ctx.moveTo( prevX, prevY );
+					Canvas.ctx.moveTo( Canvas.x, Canvas.y );
 					Canvas.ctx.quadraticCurveTo( prev[0].x, prev[0].y, prev[1].x, prev[1].y );
 					Canvas.ctx.stroke();
 					Canvas.ctx.closePath();
 
-					prevX = Canvas.x = prev[1].x;
-					prevY = Canvas.y = prev[1].y;
+					Canvas.x = prev[1].x;
+					Canvas.y = prev[1].y;
 				}
+				
+				Canvas.prev.length = 0;
 			}
 			
-			Record.log({ canvas: "drawSegments", args: [ segments.slice(0), firstX, firstY ] });
-
-			if ( segments === Canvas.draw ) {
-				Canvas.draw.length = 0;
-			}
+			Canvas.log( "drawLine", [ x, y ] );
 		}
 	},
-
-	setColor: function( color ) {
-		if ( Canvas.curColor == null ) {
-			Canvas.startDraw( color );
+	
+	endLine: function() {
+		if ( Canvas.down ) {
+			Canvas.down = false;
+			Canvas.log( "endLine" );
 		}
-		
-		Canvas.curColor = color;
-		
+	},
+	
+	log: function( name, args ) {
+		Record.log({ canvas: name, args: args });
+		Canvas.undoStack.push({ name: name, args: args });
+	},
+
+	setColor: function( color ) {		
 		if ( color != null ) {
+			if ( !Canvas.drawing ) {
+				Canvas.startDraw( true );
+			}
+			
 			Canvas.ctx.shadowColor = "rgba(" + Canvas.colors[color] + ",0.5)";
 			Canvas.ctx.strokeStyle = "rgba(" + Canvas.colors[color] + ",1.0)";
 		
-			if ( !Canvas.undoRunning ) {
-				Record.log({ canvas: "setColor", args: [ color ] });
-				Canvas.undoStack.push({ name: "setColor", args: [ color ] });
-			}
+			Canvas.log( "setColor", [ color ] );
 		}
 		
 		jQuery(Canvas).trigger( "colorSet", color );
 	},
 	
-	clear: function() {
+	clear: function( force ) {
 		// Clean off the canvas
 		Canvas.ctx.clearRect( 0, 0, 600, 480 );
+		
+		if ( force !== true ) {
+			Canvas.log( "clear" );
+		}
 	},
 
-	startDraw: function( color ) {
-		if ( !Canvas.curColor ) {
-			if ( !Canvas.undoRunning ) {
-				Canvas.undoStack = [];
-			}
+	startDraw: function( colorDone ) {
+		if ( !Canvas.drawing ) {
+			Canvas.drawing = true;
+			Canvas.undoStack = [];
 			
-			if ( typeof color !== "string" ) {
+			if ( colorDone !== true ) {
 				Canvas.setColor( "black" );
 			}
 			
@@ -176,10 +173,8 @@ var Canvas = {
 	},
 
 	endDraw: function() {
-		if ( Canvas.curColor ) {
-			if ( !Canvas.undoRunning ) {
-				Record.log({ canvas: "endDraw" });
-			}
+		if ( Canvas.drawing ) {
+			Canvas.drawing = false;
 		
 			Canvas.setColor( null );
 		

@@ -26,45 +26,25 @@
 			Canvas.setColor( this.id );
 		});
 
-		$("#draw").toggle( Canvas.startDraw, Canvas.endDraw );
+		$("#draw").click(function() {
+			if ( Canvas.drawing ) {
+				Canvas.endDraw();
+			} else {
+				Canvas.startDraw();
+			}
+		});
 		
 		$("#clear").click( Canvas.clear );
-		
-		$("#test").click(function() {
-			var testObj = { test: "" };
-			
-			Record.log( testObj );
-			
-			var numTest = $("#tests h3").length + 1;
-			
-			$( $("#form-tmpl").html() )
-				.find( "a" ).text( "Exercise #" + numTest ).end()
-				.find( "input" ).val( "Exercise #" + numTest ).end()
-				.appendTo( "#tests" )
-				.find( "form" ).change(function( e ) {
-					var elem = e.target;
-					
-					console.log( e );
-					
-					testObj[ elem.name ] = elem.value;
-					
-					if ( elem.name === "title" ) {
-						$(this).parent().prev().find("a").text( elem.value );
-					}
-				});
-			
-			$("#tests").accordion( "destroy" ).accordion({ active: ":last" });
-		});
 		
 		$(Canvas).bind({
 			drawStarted: function() {
 				$("#canvas, #editor").addClass( "canvas" );
-				$("#draw span").text( "Code" );
+				$("#draw").addClass("drawing");
 			},
 			
 			drawEnded: function() {
 				$("#canvas, #editor").removeClass( "canvas" );
-				$("#draw span").text( "Draw" );
+				$("#draw").removeClass("drawing");
 			},
 			
 			colorSet: function( e, color ) {
@@ -76,30 +56,73 @@
 			}
 		});
 		
-		$("#record").toggle(function() {
-			// Begin recording the user's interactions
-			Record.record();
-			
-			$(this).addClass("recording")
-				.find("span").text( "Recording" );
-
-		}, function() {
-			// Reset the editor and canvas to its initial state
-			Editor.reset();
-			Canvas.endDraw();
-			
-			// Begin playing back the editor and canvas commands
-			Record.play();
-			
-			$(this).removeClass("recording").addClass("playing")
-				.find("span").text( "Playing" );
+		$("#record").click(function() {
+			if ( Record.recording ) {
+				Record.stopRecord();
+			} else {
+				Record.record();
+			}
+		});
+		
+		$("#play").toggle( !!Record.commands );
+		
+		$("#play").click(function() {
+			if ( Record.playing ) {
+				Record.stopPlayback();
+			} else {
+				Record.play();
+			}
 		});
 		
 		$(Record).bind({
+			playStarted: function() {
+				// Reset the editor and canvas to its initial state
+				Editor.reset();
+				Canvas.clear();
+				Canvas.endDraw();
+				
+				$("#play").addClass("playing");
+			},
+			
 			playEnded: function() {
-				$("#record").removeClass("playing")
-					.find("span").text( "Record" );
+				$("#play").removeClass("playing");
+			},
+			
+			recordStarted: function() {
+				$("#play").hide();
+				$("#record").addClass("recording");
+			},
+			
+			recordEnded: function() {
+				$("#play").show();
+				$("#record").removeClass("recording");
 			}
+		});
+		
+		$("#test").click(function() {
+			var testObj = { test: "" };
+			
+			if ( !Record.log( testObj ) ) {
+				return false;
+			}
+			
+			var numTest = $("#tests h3").length + 1;
+			
+			$( $("#form-tmpl").html() )
+				.find( "a" ).text( "Exercise #" + numTest ).end()
+				.find( "input" ).val( "Exercise #" + numTest ).end()
+				.appendTo( "#tests" )
+				.find( "form" ).change(function( e ) {
+					var elem = e.target;
+					
+					testObj[ elem.name ] = elem.value;
+					
+					if ( elem.name === "title" ) {
+						$(this).parent().prev().find("a").text( elem.value );
+					}
+				});
+			
+			$("#tests").accordion( "destroy" ).accordion({ active: ":last" });
 		});
 	});
 	</script>
@@ -108,6 +131,7 @@
 	<div id="toolbar">
 		<div class="button wide" id="draw"><span class="icon">Draw</span></div>
 		<div class="button wide" id="record"><span class="icon">Record</span></div>
+		<div class="button wide" id="play"><span class="icon">Play</span></div>
 		<div class="space"></div>
 		<div class="color" id="black"><span class="icon"></span></div>
 		<div class="color" id="red"><span class="icon"></span></div>
