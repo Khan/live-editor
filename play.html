@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Play Canvas Editor</title>
+	<link rel="stylesheet" href="css/style.css" />
+	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/ui-lightness/jquery-ui.css" />
+	<script src="js/jquery.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js"></script>
+	<script src="js/jquery.simulate.js"></script>
+	<script src="js/require.js"></script>
+	<script src="js/record.js"></script>
+	<script src="js/editor.js"></script>
+	<script src="js/canvas.js"></script>
+	<script src="js/test.js"></script>
+	<script src="js/ui.js"></script>
+</head>
+<body>
+	<div id="toolbar">
+		<div class="button wide" id="play"><span class="icon">Play</span></div>
+	</div>
+	<div id="canvas-editor">
+		<div id="editor" style="width: 600px; height: 480px;"></div>
+		<canvas id="canvas" width="600" height="480"></canvas>
+	</div>
+	<div id="tests"></div>
+	<script type="text/html" id="form-tmpl">
+		<h3><a href='#'>Exercise</a></h3>
+		<div>
+			<p>Exercise description.</p>
+		</div>
+	</script>
+</body>
+</html>
