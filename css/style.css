@@ -48,6 +48,18 @@ body {
 	width: 30px;
 }
 
+#editor .ace_gutter {
+	background: #DEEDF7;
+}
+
+#editor .ace_scroller {
+	overflow-x: auto;
+}
+
+#editor .ace_sb {
+	overflow-y: auto;
+}
+
 #tests {
 	position: absolute;
 	width: 300px;
