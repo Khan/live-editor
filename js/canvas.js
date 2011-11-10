@@ -78,12 +78,14 @@ var Canvas = {
 		
 		Canvas.clear( true );
 		
-		Canvas.undoStack = [];
+		Canvas.undoStack.length = 0;
+		Canvas.undoRunning = true;
 		
 		for ( var i = 0, l = stack.length; i < l; i++ ) {
-			var cmd = stack[i];
-			Canvas[ cmd.name ].apply( Canvas, cmd.args );
+			Canvas[ stack[i].name ].apply( Canvas, stack[i].args );
 		}
+		
+		Canvas.undoRunning = false;
 	},
 	
 	startLine: function( x, y ) {
@@ -131,7 +133,12 @@ var Canvas = {
 	},
 	
 	log: function( name, args ) {
-		Record.log({ canvas: name, args: args });
+		args = args || [];
+		
+		if ( !Canvas.undoRunning ) {
+			Record.log({ canvas: name, args: args });
+		}
+		
 		Canvas.undoStack.push({ name: name, args: args });
 	},
 
@@ -162,7 +169,7 @@ var Canvas = {
 	startDraw: function( colorDone ) {
 		if ( !Canvas.drawing ) {
 			Canvas.drawing = true;
-			Canvas.undoStack = [];
+			Canvas.undoStack.length = 0;
 			
 			if ( colorDone !== true ) {
 				Canvas.setColor( "black" );
