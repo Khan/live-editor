@@ -85,24 +85,23 @@ $(function(){
 	});
 	
 	$("#test").click(function() {
-		var testObj = { test: "" };
+		var numTest = $("#tests h3").length + 1,
+			testObj = { test: "Exercise #" + numTest };
 		
 		if ( !Record.log( testObj ) ) {
 			return false;
 		}
 		
-		var numTest = $("#tests h3").length + 1;
-		
 		$( $("#form-tmpl").html() )
-			.find( "a" ).text( "Exercise #" + numTest ).end()
-			.find( "input" ).val( "Exercise #" + numTest ).end()
+			.find( "a" ).text( testObj.test ).end()
+			.find( "input" ).val( testObj.test ).end()
 			.appendTo( "#tests" )
 			.find( "form" ).change(function( e ) {
 				var elem = e.target;
 				
 				testObj[ elem.name ] = elem.value;
 				
-				if ( elem.name === "title" ) {
+				if ( elem.name === "test" ) {
 					$(this).parent().prev().find("a").text( elem.value );
 				}
 			});
