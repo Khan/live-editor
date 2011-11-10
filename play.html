@@ -3,7 +3,7 @@
 <head>
 	<title>Play Canvas Editor</title>
 	<link rel="stylesheet" href="css/style.css" />
-	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/ui-lightness/jquery-ui.css" />
+	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/cupertino/jquery-ui.css" />
 	<script src="js/jquery.js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js"></script>
 	<script src="js/jquery.simulate.js"></script>
@@ -15,14 +15,14 @@
 	<script src="js/ui.js"></script>
 </head>
 <body>
-	<div id="toolbar">
-		<div class="button wide" id="play"><span class="icon">Play</span></div>
+	<div class="toolbar ui-widget-header ui-corner-all">
+		<a href="" id="play" class="ui-state-disabled"><span class="ui-icon-play"></span></a>
 	</div>
 	<div id="canvas-editor">
 		<div id="editor" style="width: 600px; height: 480px;"></div>
 		<canvas id="canvas" width="600" height="480"></canvas>
+		<div id="tests"></div>
 	</div>
-	<div id="tests"></div>
 	<script type="text/html" id="form-tmpl">
 		<h3><a href='#'>Exercise</a></h3>
 		<div>

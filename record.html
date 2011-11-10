@@ -3,7 +3,7 @@
 <head>
 	<title>Record Canvas Editor</title>
 	<link rel="stylesheet" href="css/style.css" />
-	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/ui-lightness/jquery-ui.css" />
+	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/cupertino/jquery-ui.css" />
 	<script src="js/jquery.js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js"></script>
 	<script src="js/jquery.simulate.js"></script>
@@ -14,27 +14,29 @@
 	<script src="js/ui.js"></script>
 </head>
 <body>
-	<div id="toolbar">
-		<div class="button wide" id="draw"><span class="icon">Draw</span></div>
-		<div class="button wide" id="record"><span class="icon">Record</span></div>
-		<div class="button wide" id="play"><span class="icon">Play</span></div>
+	<div class="toolbar ui-widget-header ui-corner-all">
+		<a href="" id="record"><span class="ui-icon-video"></span></a>
+		<a href="" id="play" class="ui-state-disabled"><span class="ui-icon-play"></span></a>
 		<div class="space"></div>
-		<div class="color" id="black"><span class="icon"></span></div>
-		<div class="color" id="red"><span class="icon"></span></div>
-		<div class="color" id="orange"><span class="icon"></span></div>
-		<div class="color" id="green"><span class="icon"></span></div>
-		<div class="color" id="blue"><span class="icon"></span></div>
-		<div class="color" id="lightblue"><span class="icon"></span></div>
-		<div class="color" id="violet"><span class="icon"></span></div>
+		<a href="" id="test" class="ui-state-disabled"><span class="ui-icon-flag"></span></a>
+	</div>
+	<div class="toolbar ui-widget-header ui-corner-all">
+		<a href="" id="draw"><span class="ui-icon-pencil"></span></a>
+		<a href="" id="clear"><span class="ui-icon-cancel"></span></a>
 		<div class="space"></div>
-		<div class="button" id="clear"><span class="icon"></span></div>
-		<div class="button wide" id="test"><span class="icon">Test</span></div>
+		<a href="" class="color" id="black"><span></span></a>
+		<a href="" class="color" id="red"><span></span></a>
+		<a href="" class="color" id="orange"><span></span></a>
+		<a href="" class="color" id="green"><span></span></a>
+		<a href="" class="color" id="blue"><span></span></a>
+		<a href="" class="color" id="lightblue"><span></span></a>
+		<a href="" class="color" id="violet"><span></span></a>
 	</div>
 	<div id="canvas-editor">
 		<div id="editor" style="width: 600px; height: 480px;"></div>
 		<canvas id="canvas" width="600" height="480"></canvas>
+		<div id="tests"></div>
 	</div>
-	<div id="tests"></div>
 	<script type="text/html" id="form-tmpl">
 		<h3><a href='#'>Exercise</a></h3>
 		<div>

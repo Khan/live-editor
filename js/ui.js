@@ -2,12 +2,32 @@ $(function(){
 	// Start the editor and canvas drawing area
 	Editor.init();
 	Canvas.init();
+	
+	// Set up toolbar buttons
+	// (Use jQuery UI styling but different interaction model)
+	$(".toolbar a")
+		.addClass( "ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" )
+		.find("span").addClass( "ui-button-icon-primary ui-icon" ).end()
+		.append( "<span class='ui-button-text'>&nbsp;</span>" );
+	
+	$(".toolbar").delegate( "a", {
+		hover: function() {
+			if ( !$(this).hasClass( "ui-state-disabled" ) ) {
+				$(this).toggleClass( "ui-state-hover" );
+			}
+		},
 
-	$("#toolbar div.color").each(function() {
-		$(this).children().css( "background-color", this.id );
+		click: function() {
+			return false;
+		}
 	});
 
-	$("#toolbar").delegate( "div.color", "click", function() {
+	// Set up color button handling
+	$(".toolbar a.color").each(function() {
+		$(this).children(".ui-icon").css( "background", this.id );
+	});
+
+	$(".toolbar").delegate( "a.color", "click", function() {
 		Canvas.setColor( this.id );
 	});
 
@@ -19,24 +39,26 @@ $(function(){
 		}
 	});
 	
-	$("#clear").click( Canvas.clear );
+	$("#clear").click(function() {
+		Canvas.clear();
+	});
 	
 	$(Canvas).bind({
 		drawStarted: function() {
 			$("#canvas, #editor").addClass( "canvas" );
-			$("#draw").addClass("drawing");
+			$("#draw").addClass("ui-state-active");
 		},
 		
 		drawEnded: function() {
 			$("#canvas, #editor").removeClass( "canvas" );
-			$("#draw").removeClass("drawing");
+			$("#draw").removeClass("ui-state-active");
 		},
 		
 		colorSet: function( e, color ) {
-			$("div.color.active").removeClass("active");
+			$("a.color").removeClass("ui-state-active");
 
 			if ( color != null ) {
-				$("#" + color).addClass("active");
+				$("#" + color).addClass("ui-state-active");
 			}
 		}
 	});
@@ -49,8 +71,6 @@ $(function(){
 		}
 	});
 	
-	$("#play").toggle( !!Record.commands );
-	
 	$("#play").click(function() {
 		if ( Record.playing ) {
 			Record.stopPlayback();
@@ -59,6 +79,8 @@ $(function(){
 		}
 	});
 	
+	$("#play").toggleClass( "ui-state-disabled", !Record.commands );
+	
 	$(Record).bind({
 		playStarted: function() {
 			// Reset the editor and canvas to its initial state
@@ -66,21 +88,32 @@ $(function(){
 			Canvas.clear();
 			Canvas.endDraw();
 			
-			$("#play").addClass("playing");
+			$("#play").addClass( "ui-state-active" )
+				.find( ".ui-icon" )
+					.removeClass( "ui-icon-play" ).addClass( "ui-icon-pause" );
 		},
 		
 		playEnded: function() {
-			$("#play").removeClass("playing");
+			$("#play").removeClass( "ui-state-active" )
+				.find( ".ui-icon" )
+					.addClass( "ui-icon-play" ).removeClass( "ui-icon-pause" );
 		},
 		
 		recordStarted: function() {
-			$("#play").hide();
-			$("#record").addClass("recording");
+			// Reset the editor and canvas to its initial state
+			Editor.reset();
+			Canvas.clear();
+			Canvas.endDraw();
+			
+			$("#test").removeClass( "ui-state-disabled" );
+			$("#play").addClass( "ui-state-disabled" );
+			$("#record").addClass( "ui-state-active" );
 		},
 		
 		recordEnded: function() {
-			$("#play").show();
-			$("#record").removeClass("recording");
+			$("#test").addClass( "ui-state-disabled" );
+			$("#play").removeClass( "ui-state-disabled" );
+			$("#record").removeClass( "ui-state-active" );
 		}
 	});
 	

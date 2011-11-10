@@ -3,9 +3,7 @@ body {
 }
 
 #canvas-editor {
-	position: absolute;
-	top: 48px;
-	left: 10px;
+	position: relative;
 	width: 600px;
 	height: 480px;
 }
@@ -37,69 +35,25 @@ body {
 	z-index: 1;
 }
 
-#toolbar div {
-	float: left;
-	width: 30px;
-	height: 30px;
-	margin-right: 2px;
-	border: 1px solid #DDD;
-	background: #DDD;
-	cursor: pointer;
+.toolbar {
+	font-size: 12px;
+	width: 590px;
+	padding: 3px;
+	margin-bottom: 5px;
 }
 
-#toolbar div.space {
-	background: none;
-	border: none;
-	width: 62px;
-}
-
-#toolbar div.active {
-	border-color: #000;
-}
-
-#toolbar div span {
-	display: block;
-	width: 26px;
-	height: 26px;
-	margin: 2px;
-	text-align: center;
-	font-family: Helvetica, Arial;
-	font-size: 26px;
-}
-
-#toolbar .wide {
+.toolbar div.space {
 	display: inline-block;
-	width: auto;
-}
-
-#toolbar .wide span {
-	width: auto;
-	height: 54px;
-	font-size: 22px;
-	line-height: 26px;
-}
-
-#toolbar div.drawing {
-	background: lightblue;
-}
-
-#toolbar div.recording {
-	background: red;
-}
-
-#toolbar div.playing {
-	background: green;
-}
-
-#toolbar #clear .icon {
-	background: #FFF;
+	height: 1px;
+	width: 30px;
 }
 
 #tests {
 	position: absolute;
-	left: 660px;
 	width: 300px;
 	font-size: 12px;
+	top: 0px;
+	right: -310px;
 }
 
 #tests textarea {
