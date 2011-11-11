@@ -22,6 +22,27 @@ var Record = {
 		}
 	},
 	
+	seekTo: function( time ) {
+		Editor.reset();
+		Canvas.clear( true );
+		Canvas.endDraw();
+		
+		for  ( var i = 0, l = Record.commands.length; i < l; i++ ) {
+			var evt = Record.commands[ i ];
+			
+			if ( evt.time > time ) {
+				Record.pauseTime = (new Date).getTime();
+				Record.playStart = Record.pauseTime - time;
+				Record.playPos = i;
+				
+				break;
+				
+			} else {
+				Record.runCommand( evt );
+			}
+		}
+	},
+	
 	play: function() {
 		// Don't play if we're already playing
 		if ( Record.playing || !Record.commands ) {
@@ -36,10 +57,9 @@ var Record = {
 			(Record.playStart ? Record.pauseTime - Record.playStart : 0);
 
 		Record.playInterval = setInterval(function() {
-			var curTime = (new Date).getTime(),
-				evt = Record.commands[ Record.playPos ];
+			var evt = Record.commands[ Record.playPos ];
 
-			if ( evt && (curTime - Record.playStart >= evt.time) ) {
+			if ( evt && Record.currentTime() >= evt.time ) {
 				Record.runCommand( evt );
 
 				if ( ++Record.playPos === Record.commands.length ) {
@@ -72,6 +92,10 @@ var Record = {
 			Record.playPos = null;
 			Record.playStart = null;
 		}
+	},
+	
+	currentTime: function() {
+		return (new Date).getTime() - Record.playStart;
 	},
 
 	runCommand: function( evt ) {

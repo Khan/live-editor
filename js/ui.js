@@ -142,6 +142,80 @@ $(function(){
 		}
 	});
 	
+	$("#tests").delegate( "button.check", "click", function() {
+		var exercise = $(this).parent().prev().data( "exercise" ),
+			code = Editor.editor.getSession().getValue().replace(/\r/g, "\n"),
+			validate, pass = false;
+		 
+		try {
+			validate = new Function( code + "\nreturn " + exercise.validate );
+			pass = validate();
+		} catch( e ) {
+			// TODO: Show error message
+		}
+		
+		if ( pass ) {
+			$(this).next(".error").remove();
+			$(this).after( "<p><strong>Success!</strong> You answered the exercise correctly.</p>" );
+			$(this).remove();
+		
+		} else {
+			$(this).after( "<p class='error'><strong>Oops!</strong> You answered the exercise incorrectly.</p>" );
+		}
+	});
+	
+	var insertExercise = function( testObj ) {
+		var exercise = $( $("#form-tmpl").html() )
+			.filter( "h3" ).data( "exercise", testObj ).end()
+			.find( "a" ).text( testObj.test || testObj.title ).end()
+			.find( ".desc" ).html( testObj.desc ).end()
+			.appendTo( "#tests" );
+		
+		if ( testObj.validate ) {
+			exercise
+				.find( "button.check" )
+					.button({ icons: { primary: "ui-icon-check" } }).end();
+		
+		} else {
+			exercise.find( "button" ).remove();
+		}
+	};
+	
+	var loadExercises = function() {
+		var exercises = [];
+		
+		for ( var i = 0, l = Record.commands.length; i < l; i++ ) {
+			var testObj = Record.commands[i];
+			
+			if ( testObj.test ) {
+				insertExercise( testObj );
+				
+				exercises.push( testObj );
+			}
+		}
+	};
+	
+	if ( Record.video ) {
+		Record.video.time = 0;
+		
+		insertExercise( Record.video );
+		
+		if ( Record.commands ) {
+			loadExercises();
+		}
+	
+		$("#tests").accordion({
+			change: function( e, ui ) {
+				var exercise =  ui.newHeader.data( "exercise" );
+				
+				if ( exercise && exercise.time ) {
+					seekTo( exercise.time );
+					Record.pausePlayback();
+				}
+			}
+		});
+	}
+	
 	$("#test").click(function() {
 		var numTest = $("#tests h3").length + 1,
 			testObj = { test: "Exercise #" + numTest };
@@ -175,26 +249,41 @@ function formatTime( seconds ) {
 	return min + ":" + (sec < 10 ? "0" : "") + sec;
 }
 
+var seekTo = function( time ) {
+	$("#progress").slider( "option", "value", time );
+	Record.seekTo( time );
+	player.seekTo( time / 1000 );
+};
+
+var player;
+
 function onYouTubePlayerAPIReady() {
-	var player = new YT.Player('player', {
+	var duration;
+	
+	if ( !Record.video ) {
+		return;
+	}
+	
+	var updateTimeLeft = function( time ) {
+		$("#timeleft").text( "-" + formatTime( duration - time ) );
+	};
+	
+	player = new YT.Player('player', {
 		height: '390',
 		width: '640',
-		videoId: Record.video,
+		videoId: Record.video.id,
 		events: {
 			onReady: function() {
 				player.playVideo();
 				
-				var duration = player.getDuration();
+				duration = player.getDuration();
 				
 				$("#progress").slider( "option", "max", duration );
 				
 				setInterval(function() {
-					// Update time left
-					var currentTime = player.getCurrentTime();
-					
-					$("#timeleft").text( "-" + formatTime( duration - currentTime ) );
-					
-					$("#progress").slider( "option", "value", currentTime );
+					if ( updateTime ) {
+						$("#progress").slider( "option", "value", player.getCurrentTime() );
+					}
 				}, 16);
 			},
 			
@@ -205,6 +294,32 @@ function onYouTubePlayerAPIReady() {
 				} else if ( e.data === 2 ) {
 					Record.pausePlayback();
 				}
+			}
+		}
+	});
+	
+	var updateTime = true,
+		wasPlaying;
+	
+	$("#progress").slider({
+		start: function() {
+			updateTime = false;
+			wasPlaying = Record.playing;
+		},
+		
+		slide: function( e, ui ) {
+			updateTimeLeft( ui.value );
+		},
+		
+		change: function( e, ui ) {
+			updateTimeLeft( ui.value );
+		},
+		
+		stop: function( e, ui ) {
+			updateTime = true;
+			
+			if ( wasPlaying ) {
+				seekTo( ui.value * 1000 );
 			}
 		}
 	});
