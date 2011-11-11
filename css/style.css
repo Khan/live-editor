@@ -1,5 +1,7 @@
 body {
 	background: #FFF;
+	font-family: Helvetica, Arial;
+	font-size: 12px;
 }
 
 #canvas-editor {
@@ -8,7 +10,7 @@ body {
 	height: 360px;
 }
 
-#canvas, #editor {
+#canvas, #editor, #overlay {
 	position: absolute;
 	top: 0px;
 	left: 0px;
@@ -24,6 +26,11 @@ body {
 
 #editor {
 	z-index: 2;
+}
+
+#overlay {
+	z-index: 3;
+	display: none;
 }
 
 #canvas.canvas {
@@ -74,6 +81,20 @@ body {
 
 #editor .ace_sb {
 	overflow-y: auto;
+}
+
+#player {
+	position: absolute;
+	left: -999px;
+}
+
+#timeleft {
+	position: relative;
+	top: -2px;
+	margin-left: 10px;
+	background: rgba(255, 255, 255, 0.6);
+	border-radius: 4px;
+	padding: 3px;
 }
 
 #tests {

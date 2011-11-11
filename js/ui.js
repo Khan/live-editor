@@ -88,6 +88,8 @@ $(function(){
 		}
 	});
 	
+	var wasDrawing;
+	
 	$(Record).bind({
 		playStarted: function( e, resume ) {
 			// Reset the editor and canvas to its initial state
@@ -97,12 +99,26 @@ $(function(){
 				Canvas.endDraw();
 			}
 			
+			if ( wasDrawing ) {
+				$(Canvas).trigger( "drawStarted" );
+			}
+			
+			$("#overlay").show();
+			
 			$("#play").addClass( "ui-state-active" )
 				.find( ".ui-icon" )
 					.removeClass( "ui-icon-play" ).addClass( "ui-icon-pause" );
 		},
 		
 		playStopped: function() {
+			$("#overlay").hide();
+			
+			wasDrawing = Canvas.drawing;
+			
+			if ( wasDrawing ) {
+				$(Canvas).trigger( "drawEnded" );
+			}
+			
 			$("#play").removeClass( "ui-state-active" )
 				.find( ".ui-icon" )
 					.addClass( "ui-icon-play" ).removeClass( "ui-icon-pause" );
@@ -111,7 +127,7 @@ $(function(){
 		recordStarted: function() {
 			// Reset the editor and canvas to its initial state
 			Editor.reset();
-			Canvas.clear();
+			Canvas.clear( true );
 			Canvas.endDraw();
 			
 			$("#test").removeClass( "ui-state-disabled" );
@@ -151,3 +167,55 @@ $(function(){
 		$("#tests").accordion( "destroy" ).accordion({ active: ":last" });
 	});
 });
+
+function formatTime( seconds ) {
+	var min = Math.floor( seconds / 60 ),
+		sec = Math.round( seconds % 60 );
+	
+	return min + ":" + (sec < 10 ? "0" : "") + sec;
+}
+
+function onYouTubePlayerAPIReady() {
+	var player = new YT.Player('player', {
+		height: '390',
+		width: '640',
+		videoId: Record.video,
+		events: {
+			onReady: function() {
+				player.playVideo();
+				
+				var duration = player.getDuration();
+				
+				$("#progress").slider( "option", "max", duration );
+				
+				setInterval(function() {
+					// Update time left
+					var currentTime = player.getCurrentTime();
+					
+					$("#timeleft").text( "-" + formatTime( duration - currentTime ) );
+					
+					$("#progress").slider( "option", "value", currentTime );
+				}, 16);
+			},
+			
+			onStateChange: function( e ) {
+				if ( e.data === 1 ) {
+					Record.play();
+					
+				} else if ( e.data === 2 ) {
+					Record.pausePlayback();
+				}
+			}
+		}
+	});
+	
+	$(Record).bind({
+		playStarted: function() {
+			player.playVideo();
+		},
+		
+		playStopped: function() {
+			player.pauseVideo();
+		}
+	});
+}
