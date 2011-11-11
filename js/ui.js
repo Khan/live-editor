@@ -182,15 +182,15 @@ $(function(){
 	};
 	
 	var loadExercises = function() {
-		var exercises = [];
+		var pos = 1;
 		
 		for ( var i = 0, l = Record.commands.length; i < l; i++ ) {
 			var testObj = Record.commands[i];
 			
 			if ( testObj.test ) {
+				testObj.pos = pos;
 				insertExercise( testObj );
-				
-				exercises.push( testObj );
+				pos++;
 			}
 		}
 	};
@@ -204,16 +204,15 @@ $(function(){
 			loadExercises();
 		}
 	
-		$("#tests").accordion({
-			change: function( e, ui ) {
-				var exercise =  ui.newHeader.data( "exercise" );
-				
-				if ( exercise && exercise.time ) {
-					seekTo( exercise.time );
-					Record.pausePlayback();
-				}
+		$("#tests").delegate( "h3", "click", function( e ) {
+			var exercise =  $(this).data( "exercise" );
+			
+			if ( exercise && exercise.time != null ) {
+				seekTo( exercise.time );
 			}
 		});
+		
+		$("#tests").accordion();
 	}
 	
 	$("#test").click(function() {
@@ -250,7 +249,7 @@ function formatTime( seconds ) {
 }
 
 var seekTo = function( time ) {
-	$("#progress").slider( "option", "value", time );
+	$("#progress").slider( "option", "value", time / 1000 );
 	Record.seekTo( time );
 	player.seekTo( time / 1000 );
 };
@@ -281,7 +280,7 @@ function onYouTubePlayerAPIReady() {
 				$("#progress").slider( "option", "max", duration );
 				
 				setInterval(function() {
-					if ( updateTime ) {
+					if ( updateTime && Record.playing ) {
 						$("#progress").slider( "option", "value", player.getCurrentTime() );
 					}
 				}, 16);
@@ -334,3 +333,9 @@ function onYouTubePlayerAPIReady() {
 		}
 	});
 }
+
+Record.handlers.test = function( e ) {
+	Record.pausePlayback();
+	Canvas.endDraw();
+	$("#tests").accordion({ active: e.pos });
+};

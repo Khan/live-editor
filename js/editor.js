@@ -68,7 +68,11 @@ jQuery.extend( Record.handlers, {
 			altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey } );
 	},
 	
-	text: function( e ) {
+	focus: function() {
+		Editor.textarea[0].focus();
+	},
+	
+	text: function( e ) {		
 		var evt = document.createEvent("TextEvent");
 		evt.initTextEvent( "textInput", true, true, null, e.text );
 		Editor.textarea[0].dispatchEvent( evt );
