@@ -25,8 +25,11 @@ var Editor = {
 			Editor.offset = Editor.content.offset();
 			
 			Editor.textarea.bind( "keydown", function( e ) {
-				if ( e.keyCode && e.keyCode < 48 && e.keyCode !== 13 && e.keyCode !== 32 ) {
-					Record.log({ key: e.keyCode });
+				if ( e.keyCode && (e.keyCode < 48 && e.keyCode !== 13 && e.keyCode !== 32 ||
+						e.altKey || e.ctrlKey || e.metaKey) ) {
+					
+					Record.log({ key: e.keyCode, altKey: e.altKey, ctrlKey: e.ctrlKey,
+						 metaKey: e.metaKey, shiftKey: e.shiftKey });
 				}
 			});
 			
@@ -61,7 +64,8 @@ var Editor = {
 // Add in record playback handlers.
 jQuery.extend( Record.handlers, {
 	key: function( e ) {
-		Editor.textarea.simulate( "keydown", { keyCode: e.key } );
+		Editor.textarea.simulate( "keydown", { keyCode: e.key,
+			altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey } );
 	},
 	
 	text: function( e ) {
