@@ -63,6 +63,23 @@ $(function(){
 		}
 	});
 	
+	$("#play").click(function() {
+		if ( Record.playing ) {
+			Record.pausePlayback();
+		} else {
+			Record.play();
+		}
+	});
+	
+	$("#play").toggleClass( "ui-state-disabled", !Record.commands );
+	
+	$("#progress").slider({
+		range: "min",
+		value: 0,
+		min: 0,
+		max: 100
+	});
+	
 	$("#record").click(function() {
 		if ( Record.recording ) {
 			Record.stopRecord();
@@ -71,29 +88,21 @@ $(function(){
 		}
 	});
 	
-	$("#play").click(function() {
-		if ( Record.playing ) {
-			Record.stopPlayback();
-		} else {
-			Record.play();
-		}
-	});
-	
-	$("#play").toggleClass( "ui-state-disabled", !Record.commands );
-	
 	$(Record).bind({
-		playStarted: function() {
+		playStarted: function( e, resume ) {
 			// Reset the editor and canvas to its initial state
-			Editor.reset();
-			Canvas.clear();
-			Canvas.endDraw();
+			if ( !resume ) {
+				Editor.reset();
+				Canvas.clear();
+				Canvas.endDraw();
+			}
 			
 			$("#play").addClass( "ui-state-active" )
 				.find( ".ui-icon" )
 					.removeClass( "ui-icon-play" ).addClass( "ui-icon-pause" );
 		},
 		
-		playEnded: function() {
+		playStopped: function() {
 			$("#play").removeClass( "ui-state-active" )
 				.find( ".ui-icon" )
 					.addClass( "ui-icon-play" ).removeClass( "ui-icon-pause" );

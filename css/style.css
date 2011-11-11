@@ -4,16 +4,16 @@ body {
 
 #canvas-editor {
 	position: relative;
-	width: 600px;
-	height: 480px;
+	width: 640px;
+	height: 360px;
 }
 
 #canvas, #editor {
 	position: absolute;
 	top: 0px;
 	left: 0px;
-	width: 600px;
-	height: 480px;
+	width: 640px;
+	height: 360px;
 }
 
 #canvas {
@@ -37,7 +37,7 @@ body {
 
 .toolbar {
 	font-size: 12px;
-	width: 590px;
+	width: 630px;
 	padding: 3px;
 	margin-bottom: 5px;
 }
@@ -46,6 +46,22 @@ body {
 	display: inline-block;
 	height: 1px;
 	width: 30px;
+}
+
+.toolbar #progress {
+	display: inline-block;
+	width: 400px;
+	margin-left: 10px;
+}
+
+.toolbar .ui-slider-range-min {
+	background: #3BAAE3;
+}
+
+.toolbar .ui-slider .ui-slider-handle {
+	width: 0.6em;
+	margin-left: -.3em;
+	outline: none;
 }
 
 #editor .ace_gutter {

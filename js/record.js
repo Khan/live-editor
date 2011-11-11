@@ -50,7 +50,7 @@ var Record = {
 			}
 		}, 1 );
 		
-		$(Record).trigger( "playStarted" );
+		$(Record).trigger( "playStarted", !!Record.pauseTime );
 	},
 	
 	pausePlayback: function() {
@@ -60,6 +60,8 @@ var Record = {
 			Record.playing = false;
 			Record.playInterval = null;
 			Record.pauseTime = (new Date).getTime();
+			
+			$(Record).trigger( "playStopped" );
 		}
 	},
 	
@@ -69,8 +71,6 @@ var Record = {
 		
 			Record.playPos = null;
 			Record.playStart = null;
-			
-			$(Record).trigger( "playEnded" );
 		}
 	},
 
