@@ -3,4 +3,4 @@ Canvas Editor
 A simple presentation tool for simultaneous code editing and drawing. Designed to be used while creating the Khan Academy Computer Science curriculum.
 
 Getting started:
-  git submodule update --init
+	git submodule update --init --recursive
