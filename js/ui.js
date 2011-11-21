@@ -71,8 +71,6 @@ $(function(){
 		}
 	});
 	
-	$("#play").toggleClass( "ui-state-disabled", !Record.commands );
-	
 	$("#progress").slider({
 		range: "min",
 		value: 0,
@@ -164,57 +162,6 @@ $(function(){
 		}
 	});
 	
-	var insertExercise = function( testObj ) {
-		var exercise = $( $("#form-tmpl").html() )
-			.filter( "h3" ).data( "exercise", testObj ).end()
-			.find( "a" ).text( testObj.test || testObj.title ).end()
-			.find( ".desc" ).html( testObj.desc ).end()
-			.appendTo( "#tests" );
-		
-		if ( testObj.validate ) {
-			exercise
-				.find( "button.check" )
-					.button({ icons: { primary: "ui-icon-check" } }).end();
-		
-		} else {
-			exercise.find( "button" ).remove();
-		}
-	};
-	
-	var loadExercises = function() {
-		var pos = 1;
-		
-		for ( var i = 0, l = Record.commands.length; i < l; i++ ) {
-			var testObj = Record.commands[i];
-			
-			if ( testObj.test ) {
-				testObj.pos = pos;
-				insertExercise( testObj );
-				pos++;
-			}
-		}
-	};
-	
-	if ( Record.video ) {
-		Record.video.time = 0;
-		
-		insertExercise( Record.video );
-		
-		if ( Record.commands ) {
-			loadExercises();
-		}
-	
-		$("#tests").delegate( "h3", "click", function( e ) {
-			var exercise =  $(this).data( "exercise" );
-			
-			if ( exercise && exercise.time != null ) {
-				seekTo( exercise.time );
-			}
-		});
-		
-		$("#tests").accordion();
-	}
-	
 	$("#test").click(function() {
 		var numTest = $("#tests h3").length + 1,
 			testObj = { test: "Exercise #" + numTest };
@@ -241,64 +188,88 @@ $(function(){
 	});
 });
 
-function formatTime( seconds ) {
+var insertExercise = function( testObj ) {
+	var exercise = $( $("#form-tmpl").html() )
+		.filter( "h3" ).data( "exercise", testObj ).end()
+		.find( "a" ).text( testObj.test || testObj.title || "" ).end()
+		.find( ".desc" ).html( testObj.desc || "" ).end()
+		.appendTo( "#tests" );
+	
+	if ( testObj.validate ) {
+		exercise
+			.find( "button.check" )
+				.button({ icons: { primary: "ui-icon-check" } }).end();
+	
+	} else {
+		exercise.find( "button" ).remove();
+	}
+};
+
+var loadExercises = function() {
+	var pos = 1;
+	
+	for ( var i = 0, l = Record.commands.length; i < l; i++ ) {
+		var testObj = Record.commands[i];
+		
+		if ( testObj.test ) {
+			testObj.pos = pos;
+			insertExercise( testObj );
+			pos++;
+		}
+	}
+};
+
+var formatTime = function( seconds ) {
 	var min = Math.floor( seconds / 60 ),
 		sec = Math.round( seconds % 60 );
 	
 	return min + ":" + (sec < 10 ? "0" : "") + sec;
-}
+};
 
 var seekTo = function( time ) {
 	$("#progress").slider( "option", "value", time / 1000 );
 	Record.seekTo( time );
-	player.seekTo( time / 1000 );
+	
+	if ( typeof SC !== "undefined" ) {
+		player.setPosition( time );
+		player.resume();
+	
+	} else {
+		player.seekTo( time / 1000 );
+	}
 };
 
-var player;
+var player, track;
 
-function onYouTubePlayerAPIReady() {
-	var duration;
-	
+var audioInit = function() {
 	if ( !Record.video ) {
 		return;
 	}
 	
-	var updateTimeLeft = function( time ) {
-		$("#timeleft").text( "-" + formatTime( duration - time ) );
-	};
-	
-	player = new YT.Player('player', {
-		height: '390',
-		width: '640',
-		videoId: Record.video.id,
-		events: {
-			onReady: function() {
-				player.playVideo();
-				
-				duration = player.getDuration();
-				
-				$("#progress").slider( "option", "max", duration );
-				
-				setInterval(function() {
-					if ( updateTime && Record.playing ) {
-						$("#progress").slider( "option", "value", player.getCurrentTime() );
-					}
-				}, 16);
-			},
-			
-			onStateChange: function( e ) {
-				if ( e.data === 1 ) {
-					Record.play();
-					
-				} else if ( e.data === 2 ) {
-					Record.pausePlayback();
-				}
-			}
-		}
-	});
-	
 	var updateTime = true,
 		wasPlaying;
+	
+	var updateTimeLeft = function( time ) {
+		$("#timeleft").text( "-" + formatTime( (track.duration / 1000) - time ) );
+	};
+	
+	player = SC.stream( Record.video.id, {
+		autoLoad: true,
+		
+		onload: function() {
+			//player.play();
+		},
+		
+		whileplaying: function() {
+			if ( updateTime && Record.playing ) {
+				$("#progress").slider( "option", "value", player.position / 1000 );
+			}
+		},
+		
+		onplay: Record.play,
+		onresume: Record.play,
+		onpause: Record.pausePlayback
+	});
 	
 	$("#progress").slider({
 		start: function() {
@@ -325,14 +296,67 @@ function onYouTubePlayerAPIReady() {
 	
 	$(Record).bind({
 		playStarted: function() {
-			player.playVideo();
+			if ( player.paused ) {
+				player.resume();
+
+			} else if ( player.playState === 0 ) {
+				player.play();
+			}
 		},
 		
 		playStopped: function() {
-			player.pauseVideo();
+			player.pause();
 		}
 	});
-}
+};
+
+$.getScript( "http://connect.soundcloud.com/sdk.js", function() {
+	SC.initialize({
+	  client_id: "82ff867e7207d75bc8bbd3d281d74bf4"
+	});
+
+	SC.whenStreamingReady( audioInit );
+	
+	if ( Record.video ) {
+		SC.get( "/tracks/" + Record.video.id, function( data ) {
+			track = data;
+		
+			try {
+				Record.commands = JSON.parse( track.description );
+			} catch( e ) {}
+		
+			var title = track.title.split( ":" );
+		
+			Record.video.title = title[0];
+			Record.video.description = title[1];
+		
+			// track.waveform_url (hot)
+			
+			$("#play").toggleClass( "ui-state-disabled", !Record.commands );
+			$("#progress").slider( "option", "max", track.duration / 1000 );
+
+			if ( Record.video ) {
+				Record.video.time = 0;
+
+				insertExercise( Record.video );
+
+				if ( Record.commands ) {
+					loadExercises();
+				}
+
+				$("#tests").delegate( "h3", "click", function( e ) {
+					var exercise =  $(this).data( "exercise" );
+
+					if ( exercise && exercise.time != null ) {
+						seekTo( exercise.time );
+					}
+				});
+
+				$("#tests").accordion();
+			}
+		});
+	}
+});
 
 Record.handlers.test = function( e ) {
 	Record.pausePlayback();
