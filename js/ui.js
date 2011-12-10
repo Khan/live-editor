@@ -71,6 +71,32 @@ $(function(){
 		}
 	});
 	
+	$("#save").click(function() {
+		var dialog = $("<div>Saving recording...</div>")
+			.dialog({ modal: true });
+		
+		SC.recordUpload(
+			{
+				track: {
+					genre: "Khan Academy Code",
+					tags: "KhanAcademyCode",
+					sharing: "public",
+					track_type: "spoken",
+					description: JSON.stringify( Record.commands ),
+					title: recordData.title + (recordData.desc ? ": " + recordData.desc : ""),
+					license: "cc-by-nc-sa"
+				}
+			},
+
+			function( success, error ) {
+				// TODO: Hook this into the play page
+				dialog.html( $("<a>")
+					.attr("href", "")
+					.text( recordData.title ) );
+			}
+		);
+	});
+	
 	$("#progress").slider({
 		range: "min",
 		value: 0,
@@ -82,11 +108,14 @@ $(function(){
 		if ( Record.recording ) {
 			Record.stopRecord();
 		} else {
-			Record.record();
+			SC.record({
+				start: Record.record
+			});
 		}
 	});
 	
-	var wasDrawing;
+	var wasDrawing,
+		recordData;
 	
 	$(Record).bind({
 		playStarted: function( e, resume ) {
@@ -128,14 +157,22 @@ $(function(){
 			Canvas.clear( true );
 			Canvas.endDraw();
 			
+			recordData = { title: "New Recording" };
+			
+			insertExerciseForm( recordData );
+			
+			$("#tests textarea:last").remove();
+			
 			$("#test").removeClass( "ui-state-disabled" );
-			$("#play").addClass( "ui-state-disabled" );
+			$("#save").addClass( "ui-state-disabled" );
 			$("#record").addClass( "ui-state-active" );
 		},
 		
 		recordEnded: function() {
+			SC.recordStop();
+			
 			$("#test").addClass( "ui-state-disabled" );
-			$("#play").removeClass( "ui-state-disabled" );
+			$("#save").removeClass( "ui-state-disabled" );
 			$("#record").removeClass( "ui-state-active" );
 		}
 	});
@@ -164,29 +201,33 @@ $(function(){
 	
 	$("#test").click(function() {
 		var numTest = $("#tests h3").length + 1,
-			testObj = { test: "Exercise #" + numTest };
+			testObj = { title: "Exercise #" + numTest };
 		
 		if ( !Record.log( testObj ) ) {
 			return false;
 		}
 		
-		$( $("#form-tmpl").html() )
-			.find( "a" ).text( testObj.test ).end()
-			.find( "input" ).val( testObj.test ).end()
-			.appendTo( "#tests" )
-			.find( "form" ).change(function( e ) {
-				var elem = e.target;
-				
-				testObj[ elem.name ] = elem.value;
-				
-				if ( elem.name === "test" ) {
-					$(this).parent().prev().find("a").text( elem.value );
-				}
-			});
-		
-		$("#tests").accordion( "destroy" ).accordion({ active: ":last" });
+		insertExerciseForm( testObj );
 	});
 });
+
+var insertExerciseForm = function( testObj ) {
+	$( $("#form-tmpl").html() )
+		.find( "a" ).text( testObj.title ).end()
+		.find( "input" ).val( testObj.title ).end()
+		.appendTo( "#tests" )
+		.find( "form" ).change(function( e ) {
+			var elem = e.target;
+			
+			testObj[ elem.name ] = elem.value;
+			
+			if ( elem.name === "test" ) {
+				$(this).parent().prev().find("a").text( elem.value );
+			}
+		});
+	
+	$( "#tests" ).accordion( "destroy" ).accordion({ active: ":last" });
+};
 
 var insertExercise = function( testObj ) {
 	var exercise = $( $("#form-tmpl").html() )
@@ -252,13 +293,11 @@ var audioInit = function() {
 	var updateTimeLeft = function( time ) {
 		$("#timeleft").text( "-" + formatTime( (track.duration / 1000) - time ) );
 	};
-	
-	player = SC.stream( Record.video.id, {
+
+	updateTimeLeft( 0 );
+
+	player = SC.stream( Record.video.id.toString(), {
 		autoLoad: true,
-		
-		onload: function() {
-			//player.play();
-		},
 		
 		whileplaying: function() {
 			if ( updateTime && Record.playing ) {
@@ -312,23 +351,49 @@ var audioInit = function() {
 
 $.getScript( "http://connect.soundcloud.com/sdk.js", function() {
 	SC.initialize({
-	  client_id: "82ff867e7207d75bc8bbd3d281d74bf4"
+		client_id: "82ff867e7207d75bc8bbd3d281d74bf4",
+		redirect_uri: window.location.href.replace(/[^\/]*$/, "callback.html")
 	});
 
-	SC.whenStreamingReady( audioInit );
-	
-	if ( Record.video ) {
-		SC.get( "/tracks/" + Record.video.id, function( data ) {
+	if ( $("html").attr("id") === "play-page" ) {
+		if ( window.location.search ) {
+			SC.get( "/tracks/" + window.location.search, playTrack );
+
+		} else {
+			// TODO: Switch to some sort of generic genre search
+			SC.get( "/tracks.json", { user_id: "9127538" }, function( data ) {
+				var dialog = $("<div><ul></ul></div>").find("ul");
+
+				$.each( data, function() {
+					var item = this;
+
+					$("<li><a href=''>" + this.title.split(": ")[0] + "</a></li>")
+						.find("a").click(function() {
+							playTrack( item );
+							dialog.dialog( "destroy" );
+							return false;
+						}).end()
+						.appendTo( dialog );
+				});
+
+				dialog = dialog.parent().dialog({ title: "Choose Recording", modal: true });
+			});
+		}
+
+		function playTrack( data ) {
 			track = data;
 		
 			try {
 				Record.commands = JSON.parse( track.description );
 			} catch( e ) {}
 		
-			var title = track.title.split( ":" );
-		
-			Record.video.title = title[0];
-			Record.video.description = title[1];
+			var title = track.title.split( ": " );
+	
+			Record.video = {
+				id: data.id,
+				title: title[0],
+				desc: title[1]
+			};
 		
 			// track.waveform_url (hot)
 			
@@ -354,6 +419,14 @@ $.getScript( "http://connect.soundcloud.com/sdk.js", function() {
 
 				$("#tests").accordion();
 			}
+
+			SC.whenStreamingReady( audioInit );
+		}
+	
+	} else {
+		SC.connect(function() {
+			// Connected!
+			// TODO: Hide the recording app until connected
 		});
 	}
 });
