@@ -88,11 +88,24 @@ $(function(){
 				}
 			},
 
-			function( success, error ) {
-				// TODO: Hook this into the play page
-				dialog.html( $("<a>")
-					.attr("href", "")
-					.text( recordData.title ) );
+			function( response, error ) {
+				if ( response ) {
+					recordData.id = response.id;
+
+					saveAttachment( response.id, Record.commands, function( response ) {
+						if ( response ) {
+							// TODO: Hook this into the play page
+							dialog.html( $("<a>")
+								.attr("href", "")
+								.text( recordData.title ) );
+						} else {
+							// TODO: Show error message
+						}
+					});
+
+				} else {
+					// TODO: Show error message
+				}
 			}
 		);
 	});
@@ -382,45 +395,48 @@ $.getScript( "http://connect.soundcloud.com/sdk.js", function() {
 
 		function playTrack( data ) {
 			track = data;
+
+			getAttachment( data.id, function( commands ) {
+				if ( !commands ) {
+					// TODO: Show an error message
+					return;
+				}
 		
-			try {
-				Record.commands = JSON.parse( track.description );
-			} catch( e ) {}
+				Record.commands = commands;
 		
-			var title = track.title.split( ": " );
-	
-			Record.video = {
-				id: data.id,
-				title: title[0],
-				desc: title[1]
-			};
+				Record.video = {
+					id: track.id,
+					title: track.title,
+					desc: track.description
+				};
 		
-			// track.waveform_url (hot)
+				// track.waveform_url (hot)
 			
-			$("#play").toggleClass( "ui-state-disabled", !Record.commands );
-			$("#progress").slider( "option", "max", track.duration / 1000 );
+				$("#play").toggleClass( "ui-state-disabled", !Record.commands );
+				$("#progress").slider( "option", "max", track.duration / 1000 );
 
-			if ( Record.video ) {
-				Record.video.time = 0;
+				if ( Record.video ) {
+					Record.video.time = 0;
 
-				insertExercise( Record.video );
+					insertExercise( Record.video );
 
-				if ( Record.commands ) {
-					loadExercises();
+					if ( Record.commands ) {
+						loadExercises();
+					}
+
+					$("#tests").delegate( "h3", "click", function( e ) {
+						var exercise =  $(this).data( "exercise" );
+
+						if ( exercise && exercise.time != null ) {
+							seekTo( exercise.time );
+						}
+					});
+
+					$("#tests").accordion();
 				}
 
-				$("#tests").delegate( "h3", "click", function( e ) {
-					var exercise =  $(this).data( "exercise" );
-
-					if ( exercise && exercise.time != null ) {
-						seekTo( exercise.time );
-					}
-				});
-
-				$("#tests").accordion();
-			}
-
-			SC.whenStreamingReady( audioInit );
+				SC.whenStreamingReady( audioInit );
+			});
 		}
 	
 	} else {
@@ -430,6 +446,49 @@ $.getScript( "http://connect.soundcloud.com/sdk.js", function() {
 		});
 	}
 });
+
+function saveAttachment( id, data, callback ) {
+	var boundary = "KHAAAANNNNN",
+		url = "https://api.soundcloud.com/tracks/" + id + "/attachments.json",
+		contentType = "multipart/mixed; boundary=" + boundary,
+		body = "--" + boundary + "\r\n" +
+			"Content-Disposition: form-data; name=\"oauth_token\"\r\n\r\n" +
+			SC.accessToken() + "\r\n--" + boundary + "\r\n" +
+			"Content-Disposition: form-data; name=\"attachment[asset_data]\"; " +
+			"filename=\"attachment\"\r\n" +
+			"Content-Type: application/octet-stream\r\n\r\n" +
+			"khanEditor_" + id + "(" + JSON.stringify( data ) + ")" +
+			"\r\n--" + boundary + "--\r\n";
+
+	SC._request("POST", url, contentType, body, function( responseText, xhr ) {
+ 		var response = SC.Helper.responseHandler(responseText, xhr);
+
+		if ( response && response.json ) {
+			callback( response.json );
+		} else {
+			callback();
+		}
+	});
+}
+
+function getAttachment( id, callback ) {
+	SC.get("/tracks/" + id + "/attachments", function(attachments, error) {
+		if ( attachments && attachments.length ) {
+			var attachment = attachments[ attachments.length - 1 ];
+			$.ajax({
+				url: attachment.href,
+				dataType: "jsonp",
+				jsonpCallback: "khanEditor_" + id,
+				success: callback,
+				error: function() {
+					callback();
+				}
+			});
+		} else {
+			callback();
+		}
+	});
+}
 
 Record.handlers.test = function( e ) {
 	Record.pausePlayback();
