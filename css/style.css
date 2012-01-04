@@ -110,3 +110,46 @@ body {
 	min-height: 100px;
 	margin-top: 10px;
 }
+
+#exercise-page .editor {
+	position: relative;
+	width: 640px;
+	height: 360px;
+}
+
+#exercise-page .editor .ace_gutter {
+	background: #DEEDF7;
+}
+
+#exercise-page .editor .ace_scroller {
+	overflow-x: auto;
+}
+
+#exercise-page .editor .ace_sb {
+	overflow-y: auto;
+}
+
+#exercise-page #exercise-editor {
+	position: relative;
+}
+
+#exercise-page #tests {
+	right: 0px;
+}
+
+#exercise-page .editor-form {
+	margin-right: 315px;
+}
+
+#exercise-page .ui-tabs {
+	padding: 0;
+}
+
+#exercise-page .ui-tabs-panel {
+	padding: 8px 0;
+}
+
+#exercise-page .ui-tabs.ui-widget-content {
+	border: none;
+	background: #fff;
+}

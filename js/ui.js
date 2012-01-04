@@ -1,6 +1,6 @@
 $(function(){
 	// Start the editor and canvas drawing area
-	Editor.init();
+	var editor = new Editor( "editor" );
 	Canvas.init();
 	
 	// Set up toolbar buttons
@@ -134,7 +134,7 @@ $(function(){
 		playStarted: function( e, resume ) {
 			// Reset the editor and canvas to its initial state
 			if ( !resume ) {
-				Editor.reset();
+				editor.reset();
 				Canvas.clear();
 				Canvas.endDraw();
 			}
@@ -166,7 +166,7 @@ $(function(){
 		
 		recordStarted: function() {
 			// Reset the editor and canvas to its initial state
-			Editor.reset();
+			editor.reset();
 			Canvas.clear( true );
 			Canvas.endDraw();
 			
@@ -192,7 +192,7 @@ $(function(){
 	
 	$("#tests").delegate( "button.check", "click", function() {
 		var exercise = $(this).parent().prev().data( "exercise" ),
-			code = Editor.editor.getSession().getValue().replace(/\r/g, "\n"),
+			code = editor.editor.getSession().getValue().replace(/\r/g, "\n"),
 			validate, pass = false;
 		 
 		try {

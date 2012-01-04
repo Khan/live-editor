@@ -7,80 +7,88 @@ if ( typeof require !== "undefined" ) {
 	});
 }
 
-var Editor = {
-	init: function() {
-		Editor.editorElem = $("#editor");
+var Editor = function( id ) {
+	var editor = this;
+	
+	id = id || "editor";
+	
+	this.editorElem = $("#" + id);
+	
+	require(["ace/ace", "ace/mode/javascript"], function() {
+		editor.editor = require("ace/ace").edit( id );
 		
-		require(["ace/ace", "ace/mode/javascript"], function() {
-			Editor.editor = require("ace/ace").edit( "editor" );
-			
-			Editor.editor.setHighlightActiveLine( false );
+		editor.editor.setHighlightActiveLine( false );
 
-			Editor.editor.getSession().setMode(new (require("ace/mode/javascript").Mode)());
-			Editor.editor.setTheme( "ace/theme/textmate" );
-			
-			Editor.textarea = Editor.editorElem.find("textarea");
-			Editor.content = Editor.editorElem.find("div.ace_content");
-			
-			Editor.offset = Editor.content.offset();
-			
-			Editor.textarea.bind( "keydown", function( e ) {
+		editor.editor.getSession().setMode(new (require("ace/mode/javascript").Mode)());
+		editor.editor.setTheme( "ace/theme/textmate" );
+		
+		editor.textarea = editor.editorElem.find("textarea");
+		editor.content = editor.editorElem.find("div.ace_content");
+		
+		editor.offset = editor.content.offset();
+		
+		if ( window.Record ) {
+			editor.textarea.bind( "keydown", function( e ) {
 				if ( e.keyCode && (e.keyCode < 48 && e.keyCode !== 13 && e.keyCode !== 32 ||
 						e.altKey || e.ctrlKey || e.metaKey) ) {
-					
+				
 					Record.log({ key: e.keyCode, altKey: e.altKey, ctrlKey: e.ctrlKey,
 						 metaKey: e.metaKey, shiftKey: e.shiftKey });
 				}
 			});
-			
-			Editor.reset();
-		});
+		}
 		
-		// Watch for mouse and key events
-		Editor.editorElem.bind({
+		editor.reset();
+	});
+	
+	// Watch for mouse and key events
+	if ( window.Record ) {
+		this.editorElem.bind({
 			mousedown: function( e ) {
 				Record.log({ x: e.layerX, y: e.layerY });
 			},
-			
+		
 			keypress: function( e ) {
 				var text = String.fromCharCode( e.keyCode );
-				
+			
 				if ( text ) {
 					Record.log({ text: text });
 				}
 			}
 		});
-	},
+		
+		// Add in record playback handlers.
+		jQuery.extend( Record.handlers, {
+			key: function( e ) {
+				editor.textarea.simulate( "keydown", { keyCode: e.key,
+					altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey } );
+			},
+
+			focus: function() {
+				editor.textarea[0].focus();
+			},
+
+			text: function( e ) {		
+				var evt = document.createEvent("TextEvent");
+				evt.initTextEvent( "textInput", true, true, null, e.text );
+				Editor.textarea[0].dispatchEvent( evt );
+			},
+
+			x: function( e ) {
+				var evt = { clientX: editor.offset.left + e.x, clientY: editor.offset.top + e.y };
+				editor.content.simulate( "mousedown", evt );
+				editor.content.simulate( "mouseup", evt );
+			}
+		});
+	}
+};
 	
+Editor.prototype = {
 	reset: function() {
-		Editor.loadCode( "" );
+		this.loadCode( "" );
 	},
 	
 	loadCode: function( code ) {
-		Editor.editor.getSession().setValue( code );
+		this.editor.getSession().setValue( code );
 	}
 };
-
-// Add in record playback handlers.
-jQuery.extend( Record.handlers, {
-	key: function( e ) {
-		Editor.textarea.simulate( "keydown", { keyCode: e.key,
-			altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey } );
-	},
-	
-	focus: function() {
-		Editor.textarea[0].focus();
-	},
-	
-	text: function( e ) {		
-		var evt = document.createEvent("TextEvent");
-		evt.initTextEvent( "textInput", true, true, null, e.text );
-		Editor.textarea[0].dispatchEvent( evt );
-	},
-	
-	x: function( e ) {
-		var evt = { clientX: Editor.offset.left + e.x, clientY: Editor.offset.top + e.y };
-		Editor.content.simulate( "mousedown", evt );
-		Editor.content.simulate( "mouseup", evt );
-	}
-});

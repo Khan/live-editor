@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html id="exercise-page">
+<head>
+	<title>Play Canvas Editor</title>
+	<link rel="stylesheet" href="css/style.css" />
+	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/cupertino/jquery-ui.css" />
+	<script src="js/jquery.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js"></script>
+	<script src="js/require.js"></script>
+	<script src="js/editor.js"></script>
+	<script src="js/exercise.js"></script>
+</head>
+<body>
+	<!--<div class="exercise-toolbar ui-widget-header ui-corner-all">
+		<a href="" id="play" class="ui-state-disabled"><span class="ui-icon-play"></span></a>
+	</div>-->
+	<div id="exercise-editor">
+		<form action="" method="POST" class="editor-form">
+			<div id="code-tabs">
+				<ul>
+					<li><a href="#start-code-tab">Starting Code</a></li>
+					<li><a href="#finish-code-tab">Solution</a></li>
+					<li><a href="#validate-code-tab">Validation</a></li>
+				</ul>
+				<div id="start-code-tab"><div id="start-code" class="editor"></div></div>
+				<div id="finish-code-tab"><div id="finish-code" class="editor"></div></div>
+				<div id="validate-code-tab"><div id="validate-code" class="editor"></div></div>
+			</div>
+			<h3>Hints <button>Add Hint</button></h3>
+			<ul id="hints"></ul>
+		</form>
+		<div id="tests"></div>
+	</div>
+	<script type="text/html" id="form-tmpl">
+		<h3><a href='#'>Exercise</a></h3>
+		<div>
+			<form action="" method="POST">
+				<input type="text" placeholder="Title" name="test" /><br/>
+				<textarea name="desc" placeholder="Description"></textarea>
+			</form>
+		</div>
+	</script>
+</body>
+</html>
