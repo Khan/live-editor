@@ -1,17 +1,35 @@
 var Exercise = { title: "Exercise Name", desc: "", problems: [] };
 
+require([ "ace/worker/jshint" ], function( jshint ) {
+	window.JSHINT = jshint;
+});
+
 $(function() {
 	$("#code-tabs").tabs({
 		show: function( e, ui ) {
-			var editorElem = $( ui.panel ).find( ".editor" ),
-				editor = editorElem.data( "editor" );
+			var editorElem = $( ui.panel ).find( ".editor" );
 			
-			if ( !editor ) {
-				editor = new Editor( editorElem[0].id );
-				editorElem.data( "editor", editor );
+			if ( editorElem.length ) {
+				var editor = editorElem.data( "editor" );
+			
+				if ( !editor ) {
+					editor = new Editor( editorElem[0].id );
+					editorElem.data( "editor", editor );
+				}
 			}
 		}
 	});
+	
+	$(".add-hint").live("click", function() {
+		$( $("#hint-tmpl").html() )
+			.appendTo( "#hints" );
+	});
+	
+	$(".remove-hint").live("click", function() {
+		$(this).parents("li").remove();
+	});
+	
+	$(".editor-form").submit( false );
 	
 	insertExerciseForm( Exercise );
 	makeProblem();
