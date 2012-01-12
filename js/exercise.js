@@ -59,3 +59,33 @@ var insertExerciseForm = function( testObj ) {
 	
 	$( "#tests" ).accordion( "destroy" ).accordion({ active: ":last" });
 };
+
+var extractExercise = function() {
+	return {
+		start: $("#start-code").editorText(),
+		solution: $("#finish-code").editorText(),
+		validate: $("#validate-code").editorText(),
+		
+		hints: $("#hints textarea").map(function() {
+			return $(this).val();
+		}).get(),
+		
+		options: {
+			module: $("#module").val()
+		}
+	};
+};
+
+jQuery.fn.editorText = function() {
+	var editor = this.data("editor");
+	
+	return editor ?
+		editor.editor.getSession().getValue().replace(/\r/g, "\n") :
+		"";
+};
+
+var runCode = function( code, context ) {
+	var fn = new Function( "with(__context__) {\n" + code + "\n}", "__context__" );
+	
+	fn( context );
+};
