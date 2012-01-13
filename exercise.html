@@ -11,9 +11,24 @@
 	<script src="js/exercise.js"></script>
 </head>
 <body>
-	<!--<div class="exercise-toolbar ui-widget-header ui-corner-all">
-		<a href="" id="play" class="ui-state-disabled"><span class="ui-icon-play"></span></a>
-	</div>-->
+	<div class="toolbar ui-widget-header ui-corner-all">
+		<a href="" id="new" class="ui-button">
+			<span class="ui-icon-document"></span>
+			<span class="ui-button-text">New</span>
+		</a>
+		<a href="" id="open" class="ui-button">
+			<span class="ui-icon-folder-open"></span>
+			<span class="ui-button-text">Open</span>
+		</a>
+		<a href="" id="save" class="ui-button ui-state-disabled">
+			<span class="ui-icon-disk"></span>
+			<span class="ui-button-text">Save</span>
+		</a>
+		<a href="" id="add-problem" class="ui-button">
+			<span class="ui-icon-plusthick"></span>
+			<span class="ui-button-text">Add Problem</span>
+		</a>
+	</div>
 	<div id="exercise-editor">
 		<form action="" method="POST" class="editor-form">
 			<div id="code-tabs">
@@ -36,11 +51,15 @@
 		<div id="tests"></div>
 	</div>
 	<script type="text/html" id="form-tmpl">
-		<h3><a href='#'>Exercise</a></h3>
+		<h3><a href='#' class='name'>Exercise</a></h3>
 		<div>
 			<form action="" method="POST">
-				<input type="text" placeholder="Title" name="test" /><br/>
+				<input type="text" placeholder="Title" name="title" /><br/>
 				<textarea name="desc" placeholder="Description"></textarea>
+				<a href="" class="ui-button delete-problem">
+					<span class="ui-icon-closethick"></span>
+					<span class="ui-button-text">Remove Problem</span>
+				</a>
 			</form>
 		</div>
 	</script>

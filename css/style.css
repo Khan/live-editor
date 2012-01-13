@@ -153,3 +153,11 @@ body {
 	border: none;
 	background: #fff;
 }
+
+#exercise-page .toolbar {
+	width: auto;
+}
+
+#exercise-page #add-problem {
+	float: right;
+}
