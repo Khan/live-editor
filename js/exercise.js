@@ -1,8 +1,24 @@
-var Exercise = { title: "Exercise Name", desc: "", problems: [] },
-	curProblem;
+var Exercise,
+	JSHINT,
+	curProblem,
+	
+	// TODO: Remove once an API is in place
+	exerciseData = JSON.parse( window.localStorage.exerciseData || "[]" ),
+	
+	editors = {
+		"start-code": "start",
+		"finish-code": "solution",
+		"validate-code": "validate"
+	};
+
+/* BUGS:
+ * Overlay doesn't hide on OPEN
+ * Second problem code doesn't save
+ * HINTS aren't reloaded after OPEN
+ */
 
 require([ "ace/worker/jshint" ], function( jshint ) {
-	window.JSHINT = jshint;
+	JSHINT = jshint;
 });
 
 $(function() {
@@ -31,6 +47,52 @@ $(function() {
 		}
 	});
 	
+	$("#new").click(function() {
+		// TODO: Confirm save before new?
+		createNewExercise();
+	});
+	
+	$("#open").click(function() {
+		var dialog = $("<div><ul><li>Loading...</li></ul></div>")
+			.dialog({ title: "Open Exercise", modal: true });
+		
+		getExerciseList(function( exercises ) {
+			var ul = dialog.find("ul");
+			
+			ul.html( exercises.length ? "" : "<li>No exercises found.</li>" );
+			
+			$.each( exercises, function() {
+				var exercise = this;
+
+				// TODO: Maybe show who created the exercise
+				$("<li><a href=''>" + exercise.title + "</a></li>")
+					.find("a").click(function() {
+						ul.html( "<li>Loading exercise...</li>" );
+						
+						getExercise( exercise.id, function( exercise ) {
+							createNewExercise( exercise );
+							dialog.dialog( "destroy" );
+						});
+	
+						return false;
+					}).end()
+					.appendTo( ul );
+			});
+		});
+	});
+	
+	$("#save").click(function() {
+		var save = $(this)
+			.addClass( "ui-state-disabled" )
+			.find( ".ui-button-text" ).text( "Saving..." ).end();
+		
+		saveExercise(function() {
+			save
+				.removeClass( "ui-state-disabled" )
+				.find( ".ui-button-text" ).text( "Save" ).end();
+		});
+	});
+	
 	$("#add-problem").click( makeProblem );
 	
 	$(".delete-problem").live( "click", function() {
@@ -57,7 +119,10 @@ $(function() {
 		// Save entered data
 		if ( oldPos > 0 ) {
 			var oldProblem = Exercise.problems[ oldPos - 1 ];
-			extractProblem( oldProblem );
+			
+			if ( oldProblem ) {
+				extractProblem( oldProblem );
+			}
 		}
 		
 		// Load new data
@@ -68,6 +133,14 @@ $(function() {
 		} else {
 			curProblem = null;
 			resetProblem( null );
+		}
+	}).change(function( e ) {
+		var elem = e.target;
+		
+		(curProblem || Exercise)[ elem.name ] = elem.value;
+		
+		if ( elem.name === "title" ) {
+			$("#tests h3.ui-state-active a").html( elem.value || "&nbsp;" );
 		}
 	});
 	
@@ -83,12 +156,13 @@ $(function() {
 					editorElem.data( "editor", editor );
 				}
 
-				if ( editorElem[0].id === "start-code" ) {
-					editorElem.editorText( curProblem && curProblem.start || "" );
-				} else if ( editorElem[0].id === "finish-code" ) {
-					editorElem.editorText( curProblem && curProblem.solution || "" );
-				} else if ( editorElem[0].id === "validate-code" ) {
-					editorElem.editorText( curProblem && curProblem.validate || "" );
+				if ( editors[ editorElem[0].id ] ) {
+					editorElem.editorText( curProblem && curProblem[ editors[ editorElem[0].id ] ] || "" );
+				}
+				
+				// Save the editor when switching tabs
+				if ( curProblem ) {
+					extractProblem( curProblem );
 				}
 			}
 		}
@@ -104,9 +178,71 @@ $(function() {
 	});
 	
 	$(".editor-form").submit( false );
+});
+
+var createNewExercise = function( data ) {
+	// TODO: A better way of generating an ID
+	Exercise = data || { id: (new Date).getTime(), title: "Exercise Name", desc: "", problems: [] };
+	
+	// Reset visual view
+	$("#tests").empty();
+	resetProblem( null );
 	
 	insertExerciseForm( Exercise );
-});
+	
+	for ( var i = 0; i < Exercise.problems.length; i++ ) {
+		insertExerciseForm( Exercise.problems[i] );
+	}
+	
+	$("#save, #add-problem").removeClass( "ui-state-disabled" );
+};
+
+var getExerciseList = function( callback ) {
+	// TODO: Get this from an API of some sort
+	// TODO: Remove artificial delay
+	setTimeout(function() {
+		callback( exerciseData );
+	}, 1500 );
+};
+
+var getExercise = function( id, callback ) {
+	// TODO: Pull from a server instead
+	var exercise;
+	
+	for ( var i = 0; i < exerciseData.length; i++ ) {
+		if ( id === exerciseData[i].id ) {
+			exercise = exerciseData[i];
+			break;
+		}
+	}
+	
+	// TODO: Remove artificial delay
+	setTimeout(function() {
+		callback( exercise );
+	}, 1500);
+};
+
+var saveExercise = function( callback ) {
+	// TODO: Save to a server instead
+	var isSet = false;
+	
+	for ( var i = 0; i < exerciseData.length; i++ ) {
+		if ( Exercise.id === exerciseData[i].id ) {
+			exerciseData[i] = Exercise;
+			isSet = true;
+			break;
+		}
+	}
+	
+	if ( !isSet ) {
+		exerciseData.push( Exercise );
+	}
+	
+	window.localStorage.exerciseData = JSON.stringify( exerciseData );
+	
+	// TODO: Remove artificial delay
+	setTimeout( callback, 1500 );
+};
 
 var makeProblem = function() {
 	var problem = { title: "Problem #" + (Exercise.problems.length + 1), desc: "" };
@@ -127,19 +263,10 @@ var makeProblem = function() {
 var insertExerciseForm = function( testObj ) {
 	var exercise = $( $("#form-tmpl").html() )
 		.buttonize()
-		.find( "a.name" ).text( testObj.title ).end()
-		.find( "input[name='title']" ).val( testObj.title ).end()
-		.find( "textarea[name='desc']" ).val( testObj.desc ).end()
-		.appendTo( "#tests" )
-		.find( "form" ).change(function( e ) {
-			var elem = e.target;
-			
-			testObj[ elem.name ] = elem.value;
-			
-			if ( elem.name === "test" ) {
-				$(this).parent().prev().find("a").text( elem.value );
-			}
-		});
+		.find( "a.name" ).text( testObj.title || "" ).end()
+		.find( "input[name='title']" ).val( testObj.title || "" ).end()
+		.find( "textarea[name='desc']" ).val( testObj.desc || "" ).end()
+		.appendTo( "#tests" );
 	
 	if ( testObj.problems ) {
 		exercise.find(".ui-button").remove();
@@ -149,11 +276,11 @@ var insertExerciseForm = function( testObj ) {
 };
 
 var extractProblem = function( testObj ) {
+	for ( var editor in editors ) {
+		testObj[ editors[editor] ] = $("#" + editor).editorText();
+	}
+	
 	jQuery.extend( testObj, {
-		start: $("#start-code").editorText(),
-		solution: $("#finish-code").editorText(),
-		validate: $("#validate-code").editorText(),
-		
 		hints: $("#hints textarea").map(function() {
 			return $(this).val();
 		}).get(),
@@ -165,13 +292,11 @@ var extractProblem = function( testObj ) {
 };
 
 var resetProblem = function( testObj ) {
-	if ( !testObj ) {
-		// TODO: Hide editors
-	}
+	$("#overlay").toggle( !testObj || !!testObj.problems );
 	
-	$("#start-code").editorText( testObj && testObj.start || "" );
-	$("#finish-code").editorText( testObj && testObj.solution || "" );
-	$("#validate-code").editorText( testObj && testObj.validate || "" )
+	for ( var editor in editors ) {
+		$("#" + editor).editorText( testObj && testObj[ editors[editor] ] || "" );
+	}
 };
 
 jQuery.fn.buttonize = function() {
