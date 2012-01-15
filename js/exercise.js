@@ -12,9 +12,8 @@ var Exercise,
 	};
 
 /* BUGS:
- * None of the other code saves :(
  * HINTS aren't reloaded after OPEN
- * Drag and drop accordion
+ * Implement drag-and-drop on hints
  * When you delete, re-focus the previous item
  * Confirm auto-save when leaving page
  */
@@ -100,7 +99,7 @@ $(function() {
 	
 	$("#add-problem").click( makeProblem );
 	
-	$(".delete-problem").live( "click", function() {
+	$("#tests").delegate(".delete-problem", "click", function() {
 		var content = $(this).parents(".ui-accordion-content"),
 			pos = $("#tests .ui-accordion.content").index( content ) - 1;
 		
@@ -113,7 +112,51 @@ $(function() {
 		
 		$("#tests").accordion( "activate", Exercise.problems[ pos ] ? pos + 1 : 0 );
 		
+		if ( Exercise.problems.length <= 1 ) {
+			$(".reorder-problems").addClass( "ui-state-disabled" );
+		}
+		
 		return false;
+	});
+	
+	var dragging = false;
+	
+	$("#tests").delegate(".reorder-problems", "click", function() {
+		$("#tests").sortable( "option", "disabled", dragging );
+		dragging = !dragging;
+		
+		if ( dragging ) {
+			$(this).find( ".ui-button-text" ).text( "Finish Re-ordering" ).end();
+		
+			$("#tests h3:not(.exercise-name)")
+				.each(function() {
+					$(this).next().appendTo( this );
+				})
+			 	.find( "a" ).bind( "click", disableOpen ).end()
+				.find( ".ui-icon" ).addClass( "ui-icon-grip-dotted-horizontal" );
+			
+		} else {
+			$(this).find( ".ui-button-text" ).text( "Re-order Problems" ).end();
+			
+			$("#tests h3:not(.exercise-name)")
+				.each(function() {
+					$(this).find( "div" ).insertAfter( this );
+				})
+			 	.find( "a" ).unbind( "click", disableOpen ).end()
+				.find( ".ui-icon" ).removeClass( "ui-icon-grip-dotted-horizontal" );
+		}
+	});
+	
+	function disableOpen() {
+		return false;
+	}
+	
+	$("#tests").sortable({
+		disabled: true,
+		items: "> h3:not(.exercise-name)",
+		axis: "y",
+		cursor: "move",
+		containment: "parent"
 	});
 	
 	$("#tests").bind( "accordionchangestart", function( e, ui ) {
@@ -173,12 +216,10 @@ $(function() {
 		}
 	});
 	
-	$(".add-hint").live("click", function() {
+	$("#hints-tab").delegate(".add-hint", "click", function() {
 		$( $("#hint-tmpl").html() )
 			.appendTo( "#hints" );
-	});
-	
-	$(".remove-hint").live("click", function() {
+	}).delegate(".remove-hint", "click", function() {
 		$(this).parents("li").remove();
 	});
 	
@@ -231,6 +272,9 @@ var saveExercise = function( callback ) {
 	// TODO: Save to a server instead
 	var isSet = false;
 	
+	// Make sure we get the latest data
+	extractProblem( curProblem );
+	
 	for ( var i = 0; i < exerciseData.length; i++ ) {
 		if ( Exercise.id === exerciseData[i].id ) {
 			exerciseData[i] = Exercise;
@@ -262,6 +306,10 @@ var makeProblem = function() {
 	
 		insertExerciseForm( curProblem );
 		resetProblem( curProblem );
+		
+		if ( Exercise.problems.length > 1 ) {
+			$(".reorder-problems").removeClass( "ui-state-disabled" );
+		}
 	}
 };
 
@@ -274,7 +322,13 @@ var insertExerciseForm = function( testObj ) {
 		.appendTo( "#tests" );
 	
 	if ( testObj.problems ) {
-		exercise.find(".ui-button").remove();
+		exercise.find(".ui-button")
+			.removeClass( "delete-problem" )
+			.addClass( "reorder-problems ui-state-disabled" )
+			.find( ".ui-icon" ).removeClass( "ui-icon-closethick" ).addClass( "ui-icon-shuffle" ).end()
+			.find( ".ui-button-text" ).text( "Re-order Problems" ).end();
+		
+		exercise.filter( "h3" ).addClass( "exercise-name" );
 	}
 	
 	$( "#tests" ).accordion( "destroy" ).accordion({ active: ":last" });
@@ -282,7 +336,11 @@ var insertExerciseForm = function( testObj ) {
 
 var extractProblem = function( testObj ) {
 	for ( var editor in editors ) {
-		testObj[ editors[editor] ] = $("#" + editor).editorText();
+		var val = $("#" + editor).editorText();
+		
+		if ( val != null ) {
+			testObj[ editors[editor] ] = val;
+		}
 	}
 	
 	jQuery.extend( testObj, {
@@ -329,7 +387,7 @@ jQuery.fn.editorText = function( text ) {
 	} else {
 		return editor && editor.editor ?
 			editor.editor.getSession().getValue().replace(/\r/g, "\n") :
-			"";
+			null;
 	}
 };
 
