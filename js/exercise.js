@@ -12,9 +12,11 @@ var Exercise,
 	};
 
 /* BUGS:
- * Overlay doesn't hide on OPEN
- * Second problem code doesn't save
+ * None of the other code saves :(
  * HINTS aren't reloaded after OPEN
+ * Drag and drop accordion
+ * When you delete, re-focus the previous item
+ * Confirm auto-save when leaving page
  */
 
 require([ "ace/worker/jshint" ], function( jshint ) {
@@ -71,6 +73,9 @@ $(function() {
 						
 						getExercise( exercise.id, function( exercise ) {
 							createNewExercise( exercise );
+							
+							$("#tests").accordion( "destroy" ).accordion({ active: ":first" });
+							
 							dialog.dialog( "destroy" );
 						});
 	
@@ -245,19 +250,19 @@ var saveExercise = function( callback ) {
 };
 
 var makeProblem = function() {
-	var problem = { title: "Problem #" + (Exercise.problems.length + 1), desc: "" };
-	Exercise.problems.push( problem );
+	if ( Exercise ) {
+		var problem = { title: "Problem #" + (Exercise.problems.length + 1), desc: "" };
+		Exercise.problems.push( problem );
 	
-	if ( curProblem ) {
-		extractProblem( curProblem );
+		if ( curProblem ) {
+			extractProblem( curProblem );
+		}
+	
+		curProblem = problem;
+	
+		insertExerciseForm( curProblem );
+		resetProblem( curProblem );
 	}
-	
-	curProblem = problem;
-	
-	insertExerciseForm( curProblem );
-	resetProblem( curProblem );
-	
-	// TODO: Populate main form and sync it to object
 };
 
 var insertExerciseForm = function( testObj ) {
@@ -310,7 +315,7 @@ jQuery.fn.buttonize = function() {
 			.addClass( "ui-button-icon-only" )
 			.append( "<span class='ui-button-text'>&nbsp;</span>" )
 		.end()
-		.end();
+	.end();
 };
 
 jQuery.fn.editorText = function( text ) {
