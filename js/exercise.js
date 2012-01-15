@@ -12,8 +12,6 @@ var Exercise,
 	};
 
 /* BUGS:
- * HINTS aren't reloaded after OPEN
- * Implement drag-and-drop on hints
  * When you delete, re-focus the previous item
  * Confirm auto-save when leaving page
  */
@@ -24,17 +22,7 @@ require([ "ace/worker/jshint" ], function( jshint ) {
 
 $(function() {
 	// Set up toolbar buttons
-	// (Use jQuery UI styling but different interaction model)
-	$(".ui-button")
-		.addClass( "ui-widget ui-state-default ui-corner-all" )
-		.find("span:first").addClass( "ui-button-icon-primary ui-icon" ).end()
-		.filter(":has(.ui-button-text)")
-			.addClass( "ui-button-text-icon-primary" )
-		.end()
-		.not(":has(.ui-button-text)")
-			.addClass( "ui-button-icon-only" )
-			.append( "<span class='ui-button-text'>&nbsp;</span>" )
-		.end();
+	$(document).buttonize();
 	
 	$("body").delegate( ".ui-button", {
 		hover: function() {
@@ -131,11 +119,11 @@ $(function() {
 			$(this).find( ".ui-button-text" ).text( "Finish Re-ordering" ).end();
 		
 			$("#tests h3:not(.exercise-name)")
+			 	.find( "a" ).bind( "click", disableOpen ).end()
+				.find( ".ui-icon" ).addClass( "ui-icon-grip-dotted-horizontal" ).end()
 				.each(function() {
 					$(this).next().appendTo( this );
-				})
-			 	.find( "a" ).bind( "click", disableOpen ).end()
-				.find( ".ui-icon" ).addClass( "ui-icon-grip-dotted-horizontal" );
+				});
 			
 		} else {
 			$(this).find( ".ui-button-text" ).text( "Re-order Problems" ).end();
@@ -145,7 +133,7 @@ $(function() {
 					$(this).find( "div" ).insertAfter( this );
 				})
 			 	.find( "a" ).unbind( "click", disableOpen ).end()
-				.find( ".ui-icon" ).removeClass( "ui-icon-grip-dotted-horizontal" );
+				.find( ".ui-icon" ).removeClass( "ui-icon-grip-dotted-horizontal" ).end();
 		}
 	});
 	
@@ -223,11 +211,25 @@ $(function() {
 		}
 	});
 	
+	$("#hints").sortable({
+		axis: "y",
+		containment: "parent",
+		stop: function() {
+			extractProblem( curProblem );
+		}
+	});
+	
 	$("#hints-tab").delegate(".add-hint", "click", function() {
 		$( $("#hint-tmpl").html() )
-			.appendTo( "#hints" );
+			.buttonize()
+			.appendTo( "#hints" )
+			.find( "input" ).focus();
+		
+		extractProblem( curProblem );
 	}).delegate(".remove-hint", "click", function() {
-		$(this).parents("li").remove();
+		$(this).parents(".hint").remove();
+		
+		extractProblem( curProblem );
 	});
 	
 	$(".editor-form").submit( false );
@@ -314,6 +316,8 @@ var makeProblem = function() {
 		insertExerciseForm( curProblem );
 		resetProblem( curProblem );
 		
+		$("#tests .ui-accordion-content-active input[name='title']").select().focus();
+		
 		if ( Exercise.problems.length > 1 ) {
 			$(".reorder-problems").removeClass( "ui-state-disabled" );
 		}
@@ -352,7 +356,7 @@ var extractProblem = function( testObj ) {
 	}
 	
 	jQuery.extend( testObj, {
-		hints: $("#hints textarea").map(function() {
+		hints: $("#hints input").map(function() {
 			return $(this).val();
 		}).get(),
 		
@@ -367,6 +371,17 @@ var resetProblem = function( testObj ) {
 	
 	for ( var editor in editors ) {
 		$("#" + editor).editorText( testObj && testObj[ editors[editor] ] || "" );
+	}
+	
+	$("#hints").empty();
+	
+	if ( testObj && testObj.hints ) {
+		for ( var i = 0; i < testObj.hints.length; i++ ) {
+			$( $("#hint-tmpl").html() )
+				.find( "input" ).val( testObj.hints[i] || "" ).end()
+				.buttonize()
+				.appendTo( "#hints" );
+		}
 	}
 };
 

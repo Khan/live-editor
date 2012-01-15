@@ -42,7 +42,13 @@
 				<div id="start-code-tab" class="ui-tabs-hide"><div id="start-code" class="editor"></div></div>
 				<div id="finish-code-tab" class="ui-tabs-hide"><div id="finish-code" class="editor"></div></div>
 				<div id="validate-code-tab" class="ui-tabs-hide"><div id="validate-code" class="editor"></div></div>
-				<div id="hints-tab" class="ui-tabs-hide"><ol id="hints"></ol><button class="add-hint">Add Hint</button></div>
+				<div id="hints-tab" class="ui-tabs-hide">
+					<a href="" class="add-hint ui-button">
+						<span class="ui-icon-plusthick"></span>
+						<span class="ui-button-text">Add Hint</span>
+					</a>
+					<div id="hints"></div>
+				</div>
 				<!--<div id="options-tab">
 					<p>Module: <input type="text" id="module" placeholder="Module Name" /></p>
 				</div>-->
@@ -65,7 +71,12 @@
 		</div>
 	</script>
 	<script type="text/html" id="hint-tmpl">
-		<li><textarea></textarea> <button class="remove-hint">Remove Hint</button></li>
+		<div class="hint ui-state-default">
+			<span class="ui-icon ui-icon-grip-dotted-horizontal grip"></span>
+			<input type="text" class="hint-text" />
+			<a href="" class="remove-hint ui-button">
+				<span class="ui-icon-closethick"></span>
+			</a></li>
 	</script>
 </body>
 </html>

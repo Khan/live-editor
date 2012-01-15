@@ -176,3 +176,33 @@ body {
 #exercise-page .sorting h3:not(.exercise-name) a {
 	cursor: move;
 }
+
+#exercise-page .add-hint {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 12px;
+}
+
+#exercise-page #hints .hint {
+    position: relative;
+    padding: 4px 40px 4px 25px;
+    margin: 4px;
+}
+
+#exercise-page #hints span.grip {
+    position: absolute;
+    top: 9px;
+    left: 4px;
+}
+
+#exercise-page #hints input {
+	width: 100%;
+}
+
+#exercise-page #hints .remove-hint {
+    font-size: 9px;
+    position: absolute;
+    top: 7px;
+    right: 4px;
+}
