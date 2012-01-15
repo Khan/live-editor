@@ -122,7 +122,9 @@ $(function() {
 	var dragging = false;
 	
 	$("#tests").delegate(".reorder-problems", "click", function() {
-		$("#tests").sortable( "option", "disabled", dragging );
+		$("#tests")
+			.toggleClass( "sorting", !dragging )
+			.sortable( "option", "disabled", dragging );
 		dragging = !dragging;
 		
 		if ( dragging ) {
@@ -155,8 +157,13 @@ $(function() {
 		disabled: true,
 		items: "> h3:not(.exercise-name)",
 		axis: "y",
-		cursor: "move",
-		containment: "parent"
+		containment: "parent",
+		stop: function() {
+			// Persist changes to problem reordering
+			Exercise.problems = $("#tests h3:not(.exercise-name)").map(function() {
+				return $(this).data( "problem" );
+			}).get();
+		}
 	});
 	
 	$("#tests").bind( "accordionchangestart", function( e, ui ) {
@@ -316,6 +323,7 @@ var makeProblem = function() {
 var insertExerciseForm = function( testObj ) {
 	var exercise = $( $("#form-tmpl").html() )
 		.buttonize()
+		.filter( "h3" ).data( "problem", testObj ).end()
 		.find( "a.name" ).text( testObj.title || "" ).end()
 		.find( "input[name='title']" ).val( testObj.title || "" ).end()
 		.find( "textarea[name='desc']" ).val( testObj.desc || "" ).end()
