@@ -162,7 +162,7 @@ $(function() {
 	});
 	
 	$("#tests").bind( "accordionchangestart", function( e, ui ) {
-		var oldProblem = ui.oldHeader.data( "problem" ),
+		var oldProblem = ui.oldHeader && ui.oldHeader.data( "problem" ),
 			newProblem = ui.newHeader.data( "problem" );
 		
 		// Save entered data
@@ -215,7 +215,6 @@ $(function() {
 	
 	$("#hints").sortable({
 		axis: "y",
-		containment: "parent",
 		stop: function() {
 			extractProblem( curProblem );
 		}
