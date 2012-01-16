@@ -61,7 +61,9 @@ $(function() {
 						getExercise( exercise.id, function( exercise ) {
 							createNewExercise( exercise );
 							
-							$("#tests").accordion( "destroy" ).accordion({ active: ":first" });
+							$("#tests")
+								.accordion( "destroy" )
+								.accordion({ collapsible: true });
 							
 							dialog.dialog( "destroy" );
 						});
@@ -101,15 +103,16 @@ $(function() {
 		$("#tests").accordion( "activate", Exercise.problems[ pos ] ? pos + 1 : 0 );
 		
 		if ( Exercise.problems.length <= 1 ) {
-			$(".reorder-problems").addClass( "ui-state-disabled" );
+			$("#reorder-problems").addClass( "ui-state-disabled" );
 		}
 		
 		return false;
 	});
 	
-	var dragging = false;
+	var dragging = false,
+		exerciseName;
 	
-	$("#tests").delegate(".reorder-problems", "click", function() {
+	$("#reorder-problems").bind("click", function() {
 		$("#tests")
 			.toggleClass( "sorting", !dragging )
 			.sortable( "option", "disabled", dragging );
@@ -117,8 +120,12 @@ $(function() {
 		
 		if ( dragging ) {
 			$(this).find( ".ui-button-text" ).text( "Finish Re-ordering" ).end();
+			
+			exerciseName = $("#tests h3.exercise-name").next().andSelf().detach();
+			
+			$("#tests").accordion( "activate", false );
 		
-			$("#tests h3:not(.exercise-name)")
+			$("#tests h3")
 			 	.find( "a" ).bind( "click", disableOpen ).end()
 				.find( ".ui-icon" ).addClass( "ui-icon-grip-dotted-horizontal" ).end()
 				.each(function() {
@@ -128,12 +135,17 @@ $(function() {
 		} else {
 			$(this).find( ".ui-button-text" ).text( "Re-order Problems" ).end();
 			
-			$("#tests h3:not(.exercise-name)")
+			$("#tests h3")
 				.each(function() {
 					$(this).find( "div" ).insertAfter( this );
 				})
 			 	.find( "a" ).unbind( "click", disableOpen ).end()
 				.find( ".ui-icon" ).removeClass( "ui-icon-grip-dotted-horizontal" ).end();
+			
+			$("#tests")
+				.prepend( exerciseName )
+				.accordion( "destroy" )
+				.accordion({ collapsible: true });
 		}
 	});
 	
@@ -143,12 +155,11 @@ $(function() {
 	
 	$("#tests").sortable({
 		disabled: true,
-		items: "> h3:not(.exercise-name)",
+		items: "> h3",
 		axis: "y",
-		containment: "parent",
 		stop: function() {
 			// Persist changes to problem reordering
-			Exercise.problems = $("#tests h3:not(.exercise-name)").map(function() {
+			Exercise.problems = $("#tests h3").map(function() {
 				return $(this).data( "problem" );
 			}).get();
 		}
@@ -319,7 +330,7 @@ var makeProblem = function() {
 		$("#tests .ui-accordion-content-active input[name='title']").select().focus();
 		
 		if ( Exercise.problems.length > 1 ) {
-			$(".reorder-problems").removeClass( "ui-state-disabled" );
+			$("#reorder-problems").removeClass( "ui-state-disabled" );
 		}
 	}
 };
@@ -333,17 +344,15 @@ var insertExerciseForm = function( testObj ) {
 		.find( "textarea[name='desc']" ).val( testObj.desc || "" ).end()
 		.appendTo( "#tests" );
 	
-	if ( testObj.problems ) {
-		exercise.find(".ui-button")
-			.removeClass( "delete-problem" )
-			.addClass( "reorder-problems ui-state-disabled" )
-			.find( ".ui-icon" ).removeClass( "ui-icon-closethick" ).addClass( "ui-icon-shuffle" ).end()
-			.find( ".ui-button-text" ).text( "Re-order Problems" ).end();
-		
-		exercise.filter( "h3" ).addClass( "exercise-name" );
+	if ( testObj.problems ) {		
+		exercise
+			.find( ".ui-button" ).remove().end()
+			.filter( "h3" ).addClass( "exercise-name" );
 	}
 	
-	$( "#tests" ).accordion( "destroy" ).accordion({ active: ":last" });
+	$( "#tests" )
+		.accordion( "destroy" )
+		.accordion({ collapsible: true, active: ":last" });
 };
 
 var extractProblem = function( testObj ) {
