@@ -11,11 +11,12 @@
 	<script src="js/record.js"></script>
 	<script src="js/editor.js"></script>
 	<script src="js/canvas.js"></script>
-	<script src="js/ui.js"></script>
+	<script src="js/utils.js"></script>
+	<script src="js/play-ui.js"></script>
 </head>
 <body>
-	<div class="toolbar ui-widget-header ui-corner-all">
-		<a href="" id="play" class="ui-state-disabled"><span class="ui-icon-play"></span></a>
+	<div id="playbar" class="toolbar ui-widget-header ui-corner-all">
+		<a href="" id="play"><span class="ui-icon-play"></span></a>
 		<div id="progress"></div>
 		<span id="timeleft"></span>
 	</div>
@@ -27,7 +28,7 @@
 		<div id="overlay"></div>
 	</div>
 	<script type="text/html" id="form-tmpl">
-		<h3><a href='#'>Exercise</a></h3>
+		<h3><a href='#' class='title'>Exercise</a></h3>
 		<div>
 			<p class="desc">Exercise description.</p>
 			<button class="check">Check Answer</button>

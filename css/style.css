@@ -111,6 +111,10 @@ body {
 	margin-top: 10px;
 }
 
+#play-page #playbar {
+	display: none;
+}
+
 #exercise-page .editor {
 	position: relative;
 	width: 640px;
