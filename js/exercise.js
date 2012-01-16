@@ -9,10 +9,6 @@ var Exercise,
 		"validate-code": "validate"
 	};
 
-/* BUGS:
- * When you delete, re-focus the previous item
- */
-
 require([ "ace/worker/jshint" ], function( jshint ) {
 	JSHINT = jshint;
 });
@@ -89,7 +85,7 @@ $(function() {
 	
 	$("#tests").delegate(".delete-problem", "click", function() {
 		var content = $(this).parents(".ui-accordion-content"),
-			pos = $("#tests .ui-accordion.content").index( content ) - 1;
+			pos = $("#tests .ui-accordion-content").index( content ) - 1;
 		
 		// Remove exercise
 		Exercise.problems.splice( pos, 1 );
@@ -98,7 +94,9 @@ $(function() {
 		content.prev( ".ui-accordion-header" ).remove();
 		content.remove();
 		
-		$("#tests").accordion( "activate", Exercise.problems[ pos ] ? pos + 1 : 0 );
+		$("#tests")
+			.accordion( "destroy" )
+			.accordion({ collapsible: true, active: Exercise.problems[ pos - 1 ] ? pos : 0 });
 		
 		if ( Exercise.problems.length <= 1 ) {
 			$("#reorder-problems").addClass( "ui-state-disabled" );
