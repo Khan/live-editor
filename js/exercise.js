@@ -18,22 +18,30 @@ $(function() {
 	$(document).buttonize();
 	
 	$("body").delegate( ".ui-button", {
-		hover: function() {
+		mouseenter: function() {
 			if ( !$(this).hasClass( "ui-state-disabled" ) ) {
-				$(this).toggleClass( "ui-state-hover" );
+				$(this).addClass( "ui-state-hover" );
 			}
+		},
+		
+		mouseleave: function() {
+			$(this).removeClass( "ui-state-hover" );
 		},
 
 		click: function( e ) {
 			e.preventDefault();
+			
+			if ( !$(this).hasClass( "ui-state-disabled" ) ) {
+				$(this).trigger( "buttonClick" );
+			}
 		}
 	});
 	
-	$("#new").click(function() {
+	$("#new").bind( "buttonClick", function() {
 		confirmSave( createNewExercise );
 	});
 	
-	$("#open").click(function() {
+	$("#open").bind( "buttonClick", function() {
 		confirmSave(function() {	
 			var dialog = $("<div><ul><li>Loading...</li></ul></div>")
 				.dialog({ title: "Open Exercise", modal: true });
@@ -69,7 +77,7 @@ $(function() {
 		});
 	});
 	
-	$("#save").click(function() {
+	$("#save").bind( "buttonClick", function( e ) {
 		var save = $(this)
 			.addClass( "ui-state-disabled" )
 			.find( ".ui-button-text" ).text( "Saving..." ).end();
@@ -81,9 +89,9 @@ $(function() {
 		});
 	});
 	
-	$("#add-problem").click( makeProblem );
+	$("#add-problem").bind( "buttonClick", makeProblem );
 	
-	$("#tests").delegate(".delete-problem", "click", function() {
+	$("#tests").delegate(".delete-problem", "buttonClick", function() {
 		var content = $(this).parents(".ui-accordion-content"),
 			pos = $("#tests .ui-accordion-content").index( content ) - 1;
 		
@@ -108,7 +116,7 @@ $(function() {
 	var dragging = false,
 		exerciseName;
 	
-	$("#reorder-problems").bind("click", function() {
+	$("#reorder-problems").bind( "buttonClick", function() {
 		$("#tests")
 			.toggleClass( "sorting", !dragging )
 			.sortable( "option", "disabled", dragging );
@@ -220,14 +228,15 @@ $(function() {
 		}
 	});
 	
-	$("#hints-tab").delegate(".add-hint", "click", function() {
+	$("#hints-tab").delegate(".add-hint", "buttonClick", function() {
 		$( $("#hint-tmpl").html() )
 			.buttonize()
 			.appendTo( "#hints" )
 			.find( "input" ).focus();
 		
 		extractProblem( curProblem );
-	}).delegate(".remove-hint", "click", function() {
+		
+	}).delegate(".remove-hint", "buttonClick", function() {
 		$(this).parents(".hint").remove();
 		
 		extractProblem( curProblem );
