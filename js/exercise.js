@@ -1,9 +1,7 @@
 var Exercise,
 	JSHINT,
 	curProblem,
-	
-	// TODO: Remove once an API is in place
-	exerciseData = JSON.parse( window.localStorage.exerciseData || "[]" ),
+	lastSave,
 	
 	editors = {
 		"start-code": "start",
@@ -13,7 +11,6 @@ var Exercise,
 
 /* BUGS:
  * When you delete, re-focus the previous item
- * Confirm auto-save when leaving page
  */
 
 require([ "ace/worker/jshint" ], function( jshint ) {
@@ -37,40 +34,41 @@ $(function() {
 	});
 	
 	$("#new").click(function() {
-		// TODO: Confirm save before new?
-		createNewExercise();
+		confirmSave( createNewExercise );
 	});
 	
 	$("#open").click(function() {
-		var dialog = $("<div><ul><li>Loading...</li></ul></div>")
-			.dialog({ title: "Open Exercise", modal: true });
+		confirmSave(function() {	
+			var dialog = $("<div><ul><li>Loading...</li></ul></div>")
+				.dialog({ title: "Open Exercise", modal: true });
 		
-		getExerciseList(function( exercises ) {
-			var ul = dialog.find("ul");
+			getExerciseList(function( exercises ) {
+				var ul = dialog.find("ul");
 			
-			ul.html( exercises.length ? "" : "<li>No exercises found.</li>" );
+				ul.html( exercises.length ? "" : "<li>No exercises found.</li>" );
 			
-			$.each( exercises, function() {
-				var exercise = this;
+				$.each( exercises, function() {
+					var exercise = this;
 
-				// TODO: Maybe show who created the exercise
-				$("<li><a href=''>" + exercise.title + "</a></li>")
-					.find("a").click(function() {
-						ul.html( "<li>Loading exercise...</li>" );
+					// TODO: Maybe show who created the exercise
+					$("<li><a href=''>" + exercise.title + "</a></li>")
+						.find("a").click(function() {
+							ul.html( "<li>Loading exercise...</li>" );
 						
-						getExercise( exercise.id, function( exercise ) {
-							createNewExercise( exercise );
+							getExercise( exercise.id, function( exercise ) {
+								createNewExercise( exercise );
 							
-							$("#tests")
-								.accordion( "destroy" )
-								.accordion({ collapsible: true });
+								$("#tests")
+									.accordion( "destroy" )
+									.accordion({ collapsible: true });
 							
-							dialog.dialog( "destroy" );
-						});
+								dialog.dialog( "destroy" );
+							});
 	
-						return false;
-					}).end()
-					.appendTo( ul );
+							return false;
+						}).end()
+						.appendTo( ul );
+				});
 			});
 		});
 	});
@@ -239,7 +237,28 @@ $(function() {
 	});
 	
 	$(".editor-form").submit( false );
+	
+	$(window).bind( "beforeunload", function() {
+		if ( !confirmSave() ) {
+			return "You have unsaved work, CANCEL in order to save your work first.";
+		}
+	});
 });
+
+var confirmSave = function( callback ) {
+	var needSave = Exercise && JSON.stringify( Exercise ) !== lastSave;
+	
+	if ( !callback ) {
+		return !needSave;
+	}
+	
+	if ( needSave && confirm( "Do you wish to save your unsaved work before continuing?" ) ) {
+		saveExercise( callback );
+	
+	} else {
+		callback();
+	}
+};
 
 var createNewExercise = function( data ) {
 	// TODO: A better way of generating an ID
@@ -262,13 +281,15 @@ var getExerciseList = function( callback ) {
 	// TODO: Get this from an API of some sort
 	// TODO: Remove artificial delay
 	setTimeout(function() {
+		var exerciseData = JSON.parse( window.localStorage.exerciseData || "[]" );
 		callback( exerciseData );
 	}, 1500 );
 };
 
 var getExercise = function( id, callback ) {
 	// TODO: Pull from a server instead
-	var exercise;
+	var exercise,
+		exerciseData = JSON.parse( window.localStorage.exerciseData || "[]" );
 	
 	for ( var i = 0; i < exerciseData.length; i++ ) {
 		if ( id === exerciseData[i].id ) {
@@ -279,13 +300,15 @@ var getExercise = function( id, callback ) {
 	
 	// TODO: Remove artificial delay
 	setTimeout(function() {
+		lastSave = JSON.stringify( exercise );
 		callback( exercise );
 	}, 1500);
 };
 
 var saveExercise = function( callback ) {
 	// TODO: Save to a server instead
-	var isSet = false;
+	var isSet = false,
+		exerciseData = JSON.parse( window.localStorage.exerciseData || "[]" );
 	
 	// Make sure we get the latest data
 	extractProblem( curProblem );
@@ -303,6 +326,8 @@ var saveExercise = function( callback ) {
 	}
 	
 	window.localStorage.exerciseData = JSON.stringify( exerciseData );
+	
+	lastSave = JSON.stringify( Exercise );
 	
 	// TODO: Remove artificial delay
 	setTimeout( callback, 1500 );
