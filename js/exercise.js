@@ -166,22 +166,17 @@ $(function() {
 	});
 	
 	$("#tests").bind( "accordionchangestart", function( e, ui ) {
-		var h3 = $(this).find("h3"),
-			oldPos = h3.index( ui.oldHeader ),
-			newPos = h3.index( ui.newHeader );
+		var oldProblem = ui.oldHeader.data( "problem" ),
+			newProblem = ui.newHeader.data( "problem" );
 		
 		// Save entered data
-		if ( oldPos > 0 ) {
-			var oldProblem = Exercise.problems[ oldPos - 1 ];
-			
-			if ( oldProblem ) {
-				extractProblem( oldProblem );
-			}
+		if ( oldProblem && !oldProblem.problems ) {
+			extractProblem( oldProblem );
 		}
 		
 		// Load new data
-		if ( newPos > 0 ) {
-			curProblem = Exercise.problems[ newPos - 1 ];
+		if ( newProblem && !newProblem.problems ) {
+			curProblem = newProblem;
 			resetProblem( curProblem );
 		
 		} else {
@@ -328,10 +323,6 @@ var makeProblem = function() {
 		resetProblem( curProblem );
 		
 		$("#tests .ui-accordion-content-active input[name='title']").select().focus();
-		
-		if ( Exercise.problems.length > 1 ) {
-			$("#reorder-problems").removeClass( "ui-state-disabled" );
-		}
 	}
 };
 
@@ -378,6 +369,10 @@ var extractProblem = function( testObj ) {
 var resetProblem = function( testObj ) {
 	$("#overlay").toggle( !testObj || !!testObj.problems );
 	
+	if ( Exercise.problems.length > 1 ) {
+		$("#reorder-problems").removeClass( "ui-state-disabled" );
+	}
+	
 	for ( var editor in editors ) {
 		$("#" + editor).editorText( testObj && testObj[ editors[editor] ] || "" );
 	}
@@ -392,6 +387,8 @@ var resetProblem = function( testObj ) {
 				.appendTo( "#hints" );
 		}
 	}
+	
+	$("#code-tabs").tabs( "select", 0 );
 };
 
 jQuery.fn.buttonize = function() {
