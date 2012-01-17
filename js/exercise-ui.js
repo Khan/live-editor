@@ -1,5 +1,4 @@
 var Exercise,
-	JSHINT,
 	curProblem,
 	lastSave,
 	
@@ -9,33 +8,9 @@ var Exercise,
 		"validate-code": "validate"
 	};
 
-require([ "ace/worker/jshint" ], function( jshint ) {
-	JSHINT = jshint;
-});
-
 $(function() {
 	// Set up toolbar buttons
 	$(document).buttonize();
-	
-	$("body").delegate( ".ui-button", {
-		mouseenter: function() {
-			if ( !$(this).hasClass( "ui-state-disabled" ) ) {
-				$(this).addClass( "ui-state-hover" );
-			}
-		},
-		
-		mouseleave: function() {
-			$(this).removeClass( "ui-state-hover" );
-		},
-
-		click: function( e ) {
-			e.preventDefault();
-			
-			if ( !$(this).hasClass( "ui-state-disabled" ) ) {
-				$(this).trigger( "buttonClick" );
-			}
-		}
-	});
 	
 	$("#new").bind( "buttonClick", function() {
 		confirmSave( createNewExercise );
@@ -286,8 +261,8 @@ var insertExerciseForm = function( testObj ) {
 	$( "#tests" )
 		.accordion( "destroy" )
 		.accordion({ collapsible: true, active: ":last" });
-		
-	$("#tests .ui-accordion-content-active input[name='title']").select().focus();
+	
+	exercise.find("input[name='title']").select().focus();
 };
 
 var extractProblem = function( testObj ) {
@@ -329,10 +304,4 @@ var resetProblem = function( testObj ) {
 	}
 	
 	$("#code-tabs").tabs( "select", 0 );
-};
-
-var runCode = function( code, context ) {
-	var fn = new Function( "with(__context__) {\n" + code + "\n}", "__context__" );
-	
-	fn( context );
 };

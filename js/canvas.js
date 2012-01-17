@@ -15,7 +15,7 @@ var Canvas = {
 		}
 		
 		Canvas.canvas = jQuery("#canvas")[0];
-		Canvas.ctx = canvas.getContext("2d");
+		Canvas.ctx = Canvas.canvas.getContext("2d");
 		
 		Canvas.clear( true );
 		

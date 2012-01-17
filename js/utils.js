@@ -1,3 +1,23 @@
+$(document).delegate( ".ui-button", {
+	mouseenter: function() {
+		if ( !$(this).hasClass( "ui-state-disabled" ) ) {
+			$(this).addClass( "ui-state-hover" );
+		}
+	},
+	
+	mouseleave: function() {
+		$(this).removeClass( "ui-state-hover" );
+	},
+
+	click: function( e ) {
+		e.preventDefault();
+		
+		if ( !$(this).hasClass( "ui-state-disabled" ) ) {
+			$(this).trigger( "buttonClick" );
+		}
+	}
+});
+
 jQuery.fn.buttonize = function() {
 	return this.find(".ui-button")
 		.addClass( "ui-widget ui-state-default ui-corner-all" )
@@ -34,13 +54,15 @@ var formatTime = function( seconds ) {
 	return min + ":" + (sec < 10 ? "0" : "") + sec;
 };
 
+var delaySize = 13;
+
 var getExerciseList = function( callback ) {
 	// TODO: Get this from an API of some sort
 	// TODO: Remove artificial delay
 	setTimeout(function() {
 		var exerciseData = JSON.parse( window.localStorage.exerciseData || "[]" );
 		callback( exerciseData );
-	}, 1500 );
+	}, delaySize );
 };
 
 var getExercise = function( id, callback ) {
@@ -59,7 +81,7 @@ var getExercise = function( id, callback ) {
 	setTimeout(function() {
 		lastSave = JSON.stringify( exercise );
 		callback( exercise );
-	}, 1500);
+	}, delaySize );
 };
 
 var saveExercise = function( callback ) {
@@ -90,7 +112,7 @@ var saveExercise = function( callback ) {
 	lastSave = JSON.stringify( Exercise );
 	
 	// TODO: Remove artificial delay
-	setTimeout( callback, 1500 );
+	setTimeout( callback, delaySize );
 };
 
 var openExerciseDialog = function( callback ) {
@@ -112,10 +134,6 @@ var openExerciseDialog = function( callback ) {
 				
 					getExercise( exercise.id, function( exercise ) {
 						callback( exercise );
-					
-						$("#tests")
-							.accordion( "destroy" )
-							.accordion({ collapsible: true });
 					
 						dialog.dialog( "destroy" );
 					});
@@ -147,4 +165,13 @@ var loadAudio = function() {
 			});
 		}
 	});
+};
+
+var runCode = function( code, context ) {
+	$("#results ul").empty();
+	
+	var fn = new Function( code );
+	//var fn = new Function( "with(__context__) {\n" + code + "\n}", "__context__" );
+	
+	fn( context );
 };

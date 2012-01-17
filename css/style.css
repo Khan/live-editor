@@ -4,18 +4,16 @@ body {
 	font-size: 12px;
 }
 
-#canvas-editor {
+#canvas-editor, #editor, #canvas, #play-overlay {
 	position: relative;
 	width: 640px;
 	height: 360px;
-}
-
-#canvas, #editor, #overlay {
-	position: absolute;
 	top: 0px;
 	left: 0px;
-	width: 640px;
-	height: 360px;
+}
+
+#canvas, #play-overlay {
+	position: absolute;
 }
 
 #canvas {
@@ -26,9 +24,10 @@ body {
 
 #editor {
 	z-index: 2;
+	background: #FFF;
 }
 
-#overlay {
+#play-overlay {
 	z-index: 3;
 	display: none;
 }
@@ -42,11 +41,21 @@ body {
 	z-index: 1;
 }
 
+.editor-box {
+	overflow: hidden;
+}
+
 .toolbar {
 	font-size: 12px;
 	width: 630px;
 	padding: 3px;
 	margin-bottom: 5px;
+}
+
+#canvas-editor .toolbar {
+	margin-bottom: 0px;
+	border: none;
+	border-top: 1px solid #DDD;
 }
 
 .toolbar div.space {
@@ -102,7 +111,7 @@ body {
 	width: 300px;
 	font-size: 12px;
 	top: 0px;
-	right: -310px;
+	right: -308px;
 }
 
 #tests textarea {
@@ -111,8 +120,149 @@ body {
 	margin-top: 10px;
 }
 
+#play-page #hint {
+	background: rgba(0, 0, 0, 0.6);
+	color: white;
+	position: absolute;
+	width: 638px;
+	bottom: 5px;
+	left: 1px;
+	z-index: 5;
+	display: none;
+	border: none;
+	font-weight: normal;
+}
+
+#play-page #hint .text-wrap {
+	margin: 8px 20px 24px 8px;
+}
+
+#play-page #hint .nav {
+	position: absolute;
+	right: 3px;
+	bottom: 4px;
+}
+
+#play-page #hint .nav a {
+	display: inline-block;
+	background: rgba( 255, 255, 255, 0.2 );
+	border-radius: 5px;
+	padding: 1px 1px 1px 3px;
+	font-size: 10px;
+	line-height: 16px;
+	height: 16px;
+}
+
+#play-page #hint .nav a.prev {
+	padding: 1px 3px 1px 1px;
+}
+
+#play-page #hint .nav a .ui-icon {
+	display: inline-block;
+	vertical-align: middle;
+	margin-top: -4px;
+}
+
+#play-page #hint .close {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+}
+
 #play-page #playbar {
 	display: none;
+}
+
+#play-page #exercise-tabs {
+	width: 948px;
+}
+
+#play-page #code {
+	padding: 0;
+}
+
+#play-page #code .toolbar {
+	width: auto;
+	overflow: auto;
+	background: #D7EBF9;
+	position: relative;
+	z-index: 5;
+}
+
+#play-page #code .top-toolbar {
+	border-top: none;
+}
+
+#play-page #code .toolbar .ui-button.right {
+	float: right;
+}
+
+#play-page .ui-tabs-nav a span {
+	display: inline-block;
+	vertical-align: middle;
+	margin-top: -3px;
+}
+
+#play-page .ui-tabs-nav {
+	border-bottom-color: #2779AA;
+	width: 942px;
+}
+
+#play-page .ui-tabs-nav li.ui-tabs-selected {
+	background: #D7EBF9;
+	color: #2779AA;
+	border-color: #2779AA;
+}
+
+#play-page #tests h3 {
+	font-size: 1em;
+	padding: .5em .5em .5em .7em;
+	cursor: auto;
+	background: #D7EBF9;
+}
+
+#play-page #tests .ui-widget-content {
+	margin-bottom: 1em;
+}
+
+#play-page #tests .desc {
+	padding: 0 .7em 1em .7em;
+}
+
+#play-page #results {
+	display: none;
+}
+
+#play-page #results ul {
+	list-style: none;
+	margin: 0;
+	padding: .7em 0 0 0;
+}
+
+#play-page #results li {
+	margin: 4px;
+	background: #FFF;
+	border-radius: 5px;
+}
+
+#play-page #results li .ui-icon {
+	display: inline-block;
+	float: left;
+}
+
+#play-page #results li.error .ui-icon {
+	background: url(http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/smoothness/images/ui-icons_cd0a0a_256x240.png);
+	background-position: 0 -144px;
+}
+
+#play-page #results li.pass .ui-icon {
+	background: url(http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/le-frog/images/ui-icons_4eb305_256x240.png);
+	background-position: -208px -192px;
+}
+
+#play-page #results li span.msg {
+	display: block;
+	margin-left: 20px;
 }
 
 #exercise-page .editor {
@@ -166,7 +316,7 @@ body {
 	float: right;
 }
 
-#exercise-page #overlay {
+#exercise-page #overlay, #play-page #overlay {
 	display: block;
     position: absolute;
     top: 0px;
@@ -174,7 +324,7 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(255,255,255,0.8);
-    z-index: 3;
+    z-index: 50;
 }
 
 #exercise-page .sorting h3:not(.exercise-name) a {

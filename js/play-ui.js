@@ -1,13 +1,22 @@
 var player,
-	track;
+	track,
+	curHint,
+	curProblem,
+	JSHINT;
+
+require([ "ace/worker/jshint" ], function( jshint ) {
+	JSHINT = jshint.JSHINT;
+});
 
 $(function(){
 	// Start the editor and canvas drawing area
 	var editor = new Editor( "editor" );
 	Canvas.init();
 	
+	$("#editor").data( "editor", editor );
+	
 	// Set up toolbar buttons
-	$(".ui-button").buttonize();
+	$(document).buttonize();
 	
 	$("#play").click(function() {
 		if ( Record.playing ) {
@@ -84,6 +93,14 @@ $(function(){
 		}
 	});
 	
+	$("#tests").delegate( "h3", "click", function( e ) {
+		var exercise =  $(this).data( "exercise" );
+
+		if ( exercise && exercise.time != null ) {
+			seekTo( exercise.time );
+		}
+	});
+	
 	$("#test").click(function() {
 		var numTest = $("#tests h3").length + 1,
 			testObj = { title: "Exercise #" + numTest };
@@ -95,8 +112,100 @@ $(function(){
 		insertExerciseForm( testObj );
 	});
 	
+	$("#get-hint").bind( "buttonClick", function() {
+		if ( !$("#hint").is(":visible") ) {
+			showHint();
+		
+			$("#hint")
+				.addClass( "ui-state-active" )
+				.css({ bottom: -30, opacity: 0.1 })
+				.show()
+				.animate({ bottom: 5, opacity: 1.0 }, 300 );
+		}
+	});
+	
+	$("#hint .close").click(function() {
+		$("#hint")
+			.animate({ bottom: -30, opacity: 0.1 }, 300, function() {
+				$(this).hide();
+			});
+
+		return false;
+	});
+	
+	$("#hint .nav a").click(function() {
+		if ( !$(this).hasClass( "ui-state-disabled" ) ) {
+			if ( $(this).hasClass( "next" ) ) {
+				curHint += 1;
+		
+			} else {
+				curHint -= 1;
+			}
+		
+			showHint();
+		}
+		
+		return false;
+	});
+	
+	$("#run-code").bind( "buttonClick", function() {
+		var userCode = $("#editor").editorText(),
+			validate = curProblem.validate,
+			pass = JSHINT( userCode );
+			
+		/* 
+		var errors = [];
+        for (var i=0; i<results.data.length; i++) {
+            var error = results.data[i];
+            if (error)
+                errors.push({
+                    row: error.line-1,
+                    column: error.character-1,
+                    text: error.reason,
+                    type: "warning",
+                    lint: error
+                });
+        }
+        session.setAnnotations(errors);
+		*/
+		
+		if ( pass ) {
+		
+			// TODO: Run JSHint
+			// Show errors in results
+			// Show errors/warnings in editor (?)
+		
+			runCode( userCode + "\n" + validate, { assert: assert } );
+			
+			$("#results").show();
+		} else {
+			// TODO: Log out errors
+			console.log( "Error", JSHINT.errors );
+			
+			$("#results").hide();
+		}
+	});
+	
 	openExerciseDialog( openExercise );
 });
+
+var assert = function( a, b, msg ) {
+	var pass = a === b;
+	
+	$("#results ul").append(
+		"<li class='" + (pass ? "pass" : "error") +
+		"'><span class='ui-icon ui-icon-" + (pass ? "circle-check" : "alert") +
+		"'></span> <span class='msg'>" + msg + "</li>"
+	);
+};
+
+var showHint = function() {
+	$("#hint")
+		.find( "strong" ).text( "Hint #" + (curHint + 1) + ":" ).end()
+		.find( ".text" ).text( curProblem.hints[ curHint ] || "" ).end()
+		.find( "a.prev" ).toggleClass( "ui-state-disabled", curHint === 0 ).end()
+		.find( "a.next" ).toggleClass( "ui-state-disabled", curHint + 1 === curProblem.hints.length );
+};
 
 var openExercise = function( exercise ) {
 	Exercise = exercise;
@@ -106,63 +215,66 @@ var openExercise = function( exercise ) {
 	if ( Exercise.audioID ) {
 		loadAudio();
 	}
-
-	insertExercise( Exercise );
+	
+	$("h1").text( Exercise.title );
+	
+	document.title = Exercise.title;
+	
+	/* Perhaps not necessary?
+	$("<p>" + Exercise.desc + "</p>")
+		.appendTo( "body" )
+		.dialog({ title: Exercise.title, resizable: false, draggable: false,
+			buttons: { "Start Exercise": function() { $(this).dialog("close"); } },
+			close: startExercise
+		});
+	*/
 
 	if ( Exercise.problems ) {
 		for ( var i = 0, l = Exercise.problems.length; i < l; i++ ) {
 			insertExercise( Exercise.problems[i] );
 		}
 	}
-
-	$("#tests").delegate( "h3", "click", function( e ) {
-		var exercise =  $(this).data( "exercise" );
-
-		if ( exercise && exercise.time != null ) {
-			seekTo( exercise.time );
-		}
-	});
-
-	$("#tests")
-		.accordion( "destroy" )
-		.accordion({ collapsible: true });
-
-	dialog.dialog( "destroy" );
-}
-
-var insertExerciseForm = function( testObj ) {
-	$( $("#form-tmpl").html() )
-		.find( "a" ).text( testObj.title ).end()
-		.find( "input" ).val( testObj.title ).end()
-		.appendTo( "#tests" )
-		.find( "form" ).change(function( e ) {
-			var elem = e.target;
-			
-			testObj[ elem.name ] = elem.value;
-			
-			if ( elem.name === "test" ) {
-				$(this).parent().prev().find("a").text( elem.value );
-			}
-		});
 	
-	$( "#tests" ).accordion( "destroy" ).accordion({ active: ":last" });
+	$("#exercise-tabs")
+		.append( "<div id='overlay'></div>" )
+		.tabs({
+			show: function( e, ui ) {
+				showProblem( Exercise.problems[ ui.index ] );
+			}
+		})
+		.removeClass( "ui-widget-content" )
+		.find( ".ui-tabs-nav" ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" ).end();
+	
+	startExercise();
+};
+
+var startExercise = function() {
+	$("#overlay").hide();
+};
+
+var showProblem = function( problem ) {
+	curProblem = problem;
+	curHint = 0;
+	
+	$("#exercise-tabs .ui-state-active").removeClass( "ui-state-active" );
+	
+	$("#editor").editorText( problem.start || "" );
+	
+	$("#problem")
+		.find( ".title" ).text( problem.title || "" ).end()
+		.find( ".desc" ).text( (problem.desc || "").replace( /\n/g, "<br>" ) ).end();
+	
+	$("#run-code").toggleClass( "ui-state-disabled", !problem.validate );
+	$("#get-hint").toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) );
+	
+	$("#hint").hide();
 };
 
 var insertExercise = function( testObj ) {
-	var exercise = $( $("#form-tmpl").html() )
-		.filter( "h3" ).data( "exercise", testObj ).end()
-		.find( "a" ).text( testObj.test || testObj.title || "" ).end()
-		.find( ".desc" ).html( testObj.desc || "" ).end()
-		.appendTo( "#tests" );
-	
-	if ( testObj.validate ) {
-		exercise
-			.find( "button.check" )
-				.button({ icons: { primary: "ui-icon-check" } }).end();
-	
-	} else {
-		exercise.find( "button" ).remove();
-	}
+	$( $("#tab-tmpl").html() )
+		.find( ".ui-icon" ).remove().end()
+		.find( "a" ).append( testObj.title || "Problem" ).end()
+		.appendTo("#exercise-tabs ul.ui-tabs-nav");
 };
 
 var seekTo = function( time ) {
@@ -250,5 +362,5 @@ var audioInit = function() {
 Record.handlers.test = function( e ) {
 	Record.pausePlayback();
 	Canvas.endDraw();
-	$("#tests").accordion({ active: e.pos });
+	// $("#tests").accordion({ active: e.pos });
 };
