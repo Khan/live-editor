@@ -7,6 +7,23 @@ if ( typeof require !== "undefined" ) {
 	});
 }
 
+// TODO: Change how selections are made and tracked
+//       .editor.selection.getCursor()
+//       .editor.selection.moveCursorTo( 1, 3 )
+//       .editor.selection.getSelectionAnchor()
+//       .editor.selection.setSelectionAnchor( 1, 3 )
+//       this.selection.addEventListener("changeCursor", this.$onCursorChange);
+//       this.selection.addEventListener("changeSelection", this.$onSelectionChange);
+// TODO: Change how key presses are played back
+//       .editor.keyBinding.onTextInput( "foo!", false );
+//       .editor.keyBinding.onCommandKey( event, hashId??, keyCode )
+//       .editor.keyBinding.setKeyboardHandler({ handleKeyboard: function() { console.log( arguments ); } })
+// TODO: Track scroll position changes
+//       this.session.addEventListener("changeScrollTop", this.$onScrollTopChange);
+//       this.session.getScrollTop()
+//       this.session.addEventListener("changeScrollLeft", this.$onScrollLeftChange);
+//       this.session.getScrollLeft()
+
 var Editor = function( id ) {
 	var editor = this;
 	
@@ -19,7 +36,9 @@ var Editor = function( id ) {
 		
 		editor.editor.setHighlightActiveLine( false );
 
-		editor.editor.getSession().setMode(new (require("ace/mode/javascript").Mode)());
+		var session = editor.editor.getSession();
+		session.setMode(new (require("ace/mode/javascript").Mode)());
+		session.$stopWorker();
 		editor.editor.setTheme( "ace/theme/textmate" );
 		
 		editor.textarea = editor.editorElem.find("textarea");
