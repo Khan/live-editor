@@ -175,3 +175,23 @@ var runCode = function( code, context ) {
 	
 	fn( context );
 };
+
+var assertIcons = {
+	pass: "circle-check",
+	error: "alert",
+	info: "info"
+};
+
+var log = function( msg, type ) {
+	type = type || "info";
+	
+	$("#results ul").append(
+		"<li class='" + type + "'><span class='ui-icon ui-icon-" +
+		assertIcons[ type ] + "'></span> <span class='msg'>" +
+		msg.replace( /</g, "&gt;" ) + "</li>"
+	);
+};
+
+var assert = function( a, b, msg, type ) {
+	log( msg, a === b ? "pass" : "error" );
+};

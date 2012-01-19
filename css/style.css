@@ -120,7 +120,7 @@ body {
 	margin-top: 10px;
 }
 
-#play-page #hint {
+#play-page .tipbar {
 	background: rgba(0, 0, 0, 0.6);
 	color: white;
 	position: absolute;
@@ -133,17 +133,21 @@ body {
 	font-weight: normal;
 }
 
-#play-page #hint .text-wrap {
+#play-page #error.tipbar {
+	background: rgba( 255, 0, 0, 0.6 );
+}
+
+#play-page .tipbar .text-wrap {
 	margin: 8px 20px 24px 8px;
 }
 
-#play-page #hint .nav {
+#play-page .tipbar .nav {
 	position: absolute;
 	right: 3px;
 	bottom: 4px;
 }
 
-#play-page #hint .nav a {
+#play-page .tipbar .nav a {
 	display: inline-block;
 	background: rgba( 255, 255, 255, 0.2 );
 	border-radius: 5px;
@@ -153,17 +157,17 @@ body {
 	height: 16px;
 }
 
-#play-page #hint .nav a.prev {
+#play-page .tipbar .nav a.prev {
 	padding: 1px 3px 1px 1px;
 }
 
-#play-page #hint .nav a .ui-icon {
+#play-page .tipbar .nav a .ui-icon {
 	display: inline-block;
 	vertical-align: middle;
 	margin-top: -4px;
 }
 
-#play-page #hint .close {
+#play-page .tipbar .close {
 	position: absolute;
 	top: 4px;
 	right: 4px;

@@ -32,13 +32,21 @@
 				<div class="editor-box ui-widget-content ui-corner-all">
 					<div id="editor"></div>
 					<canvas id="canvas" width="640" height="360"></canvas>
-					<div id="hint">
+					<div id="hint" class="tipbar">
 						<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
 						<div class="nav">
 							<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
 							<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
 						</div>
 						<div class="text-wrap"><strong>Hint:</strong> <span class="text"></span></div>
+					</div>
+					<div id="error" class="tipbar">
+						<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
+						<div class="nav">
+							<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
+							<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
+						</div>
+						<div class="text-wrap"><strong><span class="ui-icon ui-icon-alert"></span> Error:</strong> <span class="text"></span></div>
 					</div>
 					<div class="toolbar ui-widget-header ui-corner-bottom">
 						<a href="" id="run-code" class="ui-button ui-state-disabled right">
@@ -49,6 +57,11 @@
 						<a href="" id="get-hint" class="ui-button ui-state-disabled right">
 							<span class="ui-icon-info"></span>
 							<span class="ui-button-text">Hints</span>
+						</a>
+						
+						<a href="" id="show-errors" class="ui-button ui-state-disabled right">
+							<span class="ui-icon-alert"></span>
+							<span class="ui-button-text">Errors</span>
 						</a>
 					</div>
 				</div>

@@ -2,6 +2,8 @@ var player,
 	track,
 	curHint,
 	curProblem,
+	errors,
+	curError,
 	JSHINT;
 
 require([ "ace/worker/jshint" ], function( jshint ) {
@@ -115,17 +117,39 @@ $(function(){
 	$("#get-hint").bind( "buttonClick", function() {
 		if ( !$("#hint").is(":visible") ) {
 			showHint();
+			
+			$("#error").fadeOut( 300 );
 		
 			$("#hint")
 				.addClass( "ui-state-active" )
 				.css({ bottom: -30, opacity: 0.1 })
 				.show()
 				.animate({ bottom: 5, opacity: 1.0 }, 300 );
+			
+		} else {
+			$("#hint .close").click();
 		}
 	});
 	
-	$("#hint .close").click(function() {
-		$("#hint")
+	$("#show-errors").bind( "buttonClick", function() {
+		if ( !$("#error").is(":visible") ) {
+			showError();
+			
+			$("#hint").fadeOut( 300 );
+		
+			$("#error")
+				.addClass( "ui-state-active" )
+				.css({ bottom: -30, opacity: 0.1 })
+				.show()
+				.animate({ bottom: 5, opacity: 1.0 }, 300 );
+			
+		} else {
+			$("#error .close").click();
+		}
+	});
+	
+	$(".tipbar .close").click(function() {
+		$(this).parents( ".tipbar" )
 			.animate({ bottom: -30, opacity: 0.1 }, 300, function() {
 				$(this).hide();
 			});
@@ -133,16 +157,30 @@ $(function(){
 		return false;
 	});
 	
-	$("#hint .nav a").click(function() {
+	$(".tipbar .nav a").click(function() {
+		var id = $(this).parents(".tipbar").attr( "id" );
+		
 		if ( !$(this).hasClass( "ui-state-disabled" ) ) {
-			if ( $(this).hasClass( "next" ) ) {
-				curHint += 1;
+			if ( id === "hint" ) {
+				if ( $(this).hasClass( "next" ) ) {
+					curHint += 1;
 		
-			} else {
-				curHint -= 1;
+				} else {
+					curHint -= 1;
+				}
+		
+				showHint();
+				
+			} else if ( id === "error" ) {
+				if ( $(this).hasClass( "next" ) ) {
+					curError += 1;
+		
+				} else {
+					curError -= 1;
+				}
+		
+				showError();
 			}
-		
-			showHint();
 		}
 		
 		return false;
@@ -151,53 +189,52 @@ $(function(){
 	$("#run-code").bind( "buttonClick", function() {
 		var userCode = $("#editor").editorText(),
 			validate = curProblem.validate,
-			pass = JSHINT( userCode );
-			
-		/* 
-		var errors = [];
-        for (var i=0; i<results.data.length; i++) {
-            var error = results.data[i];
-            if (error)
-                errors.push({
-                    row: error.line-1,
-                    column: error.character-1,
-                    text: error.reason,
-                    type: "warning",
-                    lint: error
-                });
-        }
-        session.setAnnotations(errors);
-		*/
+			pass = JSHINT( userCode ),
+			session = $("#editor").data( "editor" ).editor.getSession();
+		
+		session.clearAnnotations();
+		
+		$("#show-errors").toggleClass( "ui-state-disabled", JSHINT.errors.length === 0 );
+		
+		$("#error").fadeOut( 300 );
 		
 		if ( pass ) {
-		
-			// TODO: Run JSHint
-			// Show errors in results
-			// Show errors/warnings in editor (?)
-		
 			runCode( userCode + "\n" + validate, { assert: assert } );
 			
-			$("#results").show();
-		} else {
-			// TODO: Log out errors
-			console.log( "Error", JSHINT.errors );
+			$("#results").fadeIn( 400 );
 			
-			$("#results").hide();
+		} else {			
+			errors = [];
+			
+	        for ( var i = 0; i < JSHINT.errors.length; i++ ) {
+	            var error = JSHINT.errors[ i ];
+	
+	            if ( error && error.line && error.character &&
+						error.reason && !/unable to continue/i.test( error.reason ) ) {
+
+	                errors.push({
+	                    row: error.line - 1,
+	                    column: error.character - 1,
+	                    text: error.reason,
+	                    type: "error",
+	                    lint: error
+	                });
+				}
+	        }
+	
+	        session.setAnnotations( errors );
+	
+			curError = 0;
+			showError();
+			
+			$("#show-errors").click();
+			
+			$("#results").fadeOut( 400 );
 		}
 	});
 	
 	openExerciseDialog( openExercise );
 });
-
-var assert = function( a, b, msg ) {
-	var pass = a === b;
-	
-	$("#results ul").append(
-		"<li class='" + (pass ? "pass" : "error") +
-		"'><span class='ui-icon ui-icon-" + (pass ? "circle-check" : "alert") +
-		"'></span> <span class='msg'>" + msg + "</li>"
-	);
-};
 
 var showHint = function() {
 	$("#hint")
@@ -205,6 +242,22 @@ var showHint = function() {
 		.find( ".text" ).text( curProblem.hints[ curHint ] || "" ).end()
 		.find( "a.prev" ).toggleClass( "ui-state-disabled", curHint === 0 ).end()
 		.find( "a.next" ).toggleClass( "ui-state-disabled", curHint + 1 === curProblem.hints.length );
+};
+
+var showError = function() {
+	var error = errors[ curError ];
+	
+	$("#error")
+		.find( "strong" ).text( "Error #" + (curError + 1) + ":" ).end()
+		.find( ".text" ).text( error.text || "" ).end()
+		.find( "a.prev" ).toggleClass( "ui-state-disabled", curError === 0 ).end()
+		.find( "a.next" ).toggleClass( "ui-state-disabled", curError + 1 === errors.length );
+	
+	var editor = $("#editor").data( "editor" ).editor;
+	
+	editor.moveCursorTo( error.row, error.column );
+	editor.clearSelection();
+	editor.focus();
 };
 
 var openExercise = function( exercise ) {
