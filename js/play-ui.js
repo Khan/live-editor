@@ -1,9 +1,13 @@
-var player,
+var Exercise,
+	player,
 	track,
 	curHint,
 	curProblem,
 	errors,
 	curError,
+	asserts,
+	viewingTests = false,
+	curPosition,
 	JSHINT;
 
 require([ "ace/worker/jshint" ], function( jshint ) {
@@ -70,36 +74,6 @@ $(function(){
 			$("#play").removeClass( "ui-state-active" )
 				.find( ".ui-icon" )
 					.addClass( "ui-icon-play" ).removeClass( "ui-icon-pause" );
-		}
-	});
-	
-	$("#tests").delegate( "button.check", "click", function() {
-		var exercise = $(this).parent().prev().data( "exercise" ),
-			code = editor.editor.getSession().getValue().replace(/\r/g, "\n"),
-			validate, pass = false;
-		 
-		try {
-			validate = new Function( code + "\nreturn " + exercise.validate );
-			pass = validate();
-		} catch( e ) {
-			// TODO: Show error message
-		}
-		
-		if ( pass ) {
-			$(this).next(".error").remove();
-			$(this).after( "<p><strong>Success!</strong> You answered the exercise correctly.</p>" );
-			$(this).remove();
-		
-		} else {
-			$(this).after( "<p class='error'><strong>Oops!</strong> You answered the exercise incorrectly.</p>" );
-		}
-	});
-	
-	$("#tests").delegate( "h3", "click", function( e ) {
-		var exercise =  $(this).data( "exercise" );
-
-		if ( exercise && exercise.time != null ) {
-			seekTo( exercise.time );
 		}
 	});
 	
@@ -186,6 +160,59 @@ $(function(){
 		return false;
 	});
 	
+	$("#next-problem").bind( "buttonClick", function() {
+		var pos = Exercise.problems.indexOf( curProblem );
+		
+		if ( pos + 1 < Exercise.problems.length ) {
+			$("#exercise-tabs").tabs( "select", pos + 1 );
+		}
+	});
+	
+	$("#view-tests, #view-tests-2").bind( "buttonClick", function() {
+		var editor = $("#editor").data("editor").editor;
+		
+		if ( !viewingTests ) {
+			leaveProblem();
+		}
+		
+		editor.setReadOnly( !viewingTests );
+		editor.setHighlightActiveLine( !viewingTests );
+		
+		if ( viewingTests ) {
+			textProblem();
+			
+		} else {
+			$("#editor").editorText( curProblem.validate );
+		}
+		
+		$("#view-tests-2").css( "display", viewingTests ? "none" : "inline-block" );
+		
+		$("#view-tests")
+			.find( ".ui-icon" ).toggleClass( "ui-icon-circle-check ui-icon-carat-1-w" ).end()
+			.find( ".ui-button-text" ).text( viewingTests ? "Tests" : "Back to Your Code" );
+		
+		viewingTests = !viewingTests;
+	});
+	
+	$("#results ul").delegate( "a", "click", function() {
+		if ( !viewingTests ) {
+			$("#view-tests").click();
+		}
+		
+		var editor = $("#editor").data("editor").editor,
+			search = editor.$search;
+		
+		search.set({ needle: $(this).text() });
+		var match = search.find( editor.getSession() );
+		
+		if ( match && match.start ) {
+			editor.moveCursorTo( match.start.row, 0 );
+			editor.clearSelection();
+		}
+		
+		return false;
+	});
+	
 	$("#run-code").bind( "buttonClick", function() {
 		var userCode = $("#editor").editorText(),
 			validate = curProblem.validate,
@@ -199,7 +226,28 @@ $(function(){
 		$("#error").fadeOut( 300 );
 		
 		if ( pass ) {
+			asserts = [];
+			
 			runCode( userCode + "\n" + validate, { assert: assert } );
+			
+			var total = asserts.length,
+				pass = 0;
+			
+			for ( var i = 0; i < asserts.length; i++ ) {
+				if ( asserts[i] ) {
+					pass += 1;
+				}
+			}
+			
+			if ( pass === total ) {
+				curProblem.done = true;
+				
+				$(".ui-tabs-selected")
+				 	.addClass( "icon-tab" )
+					.find( "a" ).prepend( "<span class='ui-icon ui-icon-circle-check'></span>" );
+				
+				$("#next-problem-desc").show();
+			}
 			
 			$("#results").fadeIn( 400 );
 			
@@ -305,19 +353,53 @@ var startExercise = function() {
 	$("#overlay").hide();
 };
 
+var leaveProblem = function() {
+	if ( curProblem ) {
+		curProblem.answer = $("#editor").editorText();
+		curProblem.cursor = $("#editor").data( "editor" ).editor.getCursorPosition();
+	}
+};
+
+var textProblem = function() {
+	if ( curProblem ) {
+		var editor = $("#editor").data( "editor" ).editor;
+		
+		$("#editor").editorText( curProblem.answer || curProblem.start || "" );
+		
+		if ( curProblem.cursor ) {
+			editor.moveCursorToPosition( curProblem.cursor );
+			editor.clearSelection();
+			editor.focus();
+		}
+	}
+};
+
 var showProblem = function( problem ) {
+	if ( viewingTests ) {
+		$("#view-tests").click();
+	}
+	
+	leaveProblem();
+	
 	curProblem = problem;
 	curHint = 0;
 	
+	$("#results").hide();
+	
+	$("#next-problem-desc").toggle( !!problem.done );
+	
+	$("#next-problem").toggleClass( "ui-state-disabled", 
+		Exercise.problems.indexOf( curProblem ) + 1 >= Exercise.problems.length );
+	
 	$("#exercise-tabs .ui-state-active").removeClass( "ui-state-active" );
 	
-	$("#editor").editorText( problem.start || "" );
+	textProblem();
 	
 	$("#problem")
 		.find( ".title" ).text( problem.title || "" ).end()
-		.find( ".desc" ).text( (problem.desc || "").replace( /\n/g, "<br>" ) ).end();
+		.find( ".text" ).text( (problem.desc || "").replace( /\n/g, "<br>" ) ).end();
 	
-	$("#run-code").toggleClass( "ui-state-disabled", !problem.validate );
+	$("#view-tests").toggleClass( "ui-state-disabled", !problem.validate );
 	$("#get-hint").toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) );
 	
 	$("#hint").hide();

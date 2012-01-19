@@ -9,6 +9,9 @@ var Exercise,
 	};
 
 $(function() {
+	var dragging = false,
+		exerciseName;
+		
 	// Set up toolbar buttons
 	$(document).buttonize();
 	
@@ -56,10 +59,10 @@ $(function() {
 		}
 		
 		return false;
+		
+	}).delegate(".set-cursor", "buttonClick", function() {
+		curProblem.cursor = $("#start-code").data( "editor" ).editor.getCursorPosition();
 	});
-	
-	var dragging = false,
-		exerciseName;
 	
 	$("#reorder-problems").bind( "buttonClick", function() {
 		$("#tests")
@@ -147,16 +150,19 @@ $(function() {
 			var editorElem = $( ui.panel ).find( ".editor" );
 			
 			if ( editorElem.length ) {
-				var editor = editorElem.data( "editor" );
+				var editor = editorElem.data( "editor" ),
+					id = editorElem[0].id;
 			
 				if ( !editor ) {
-					editor = new Editor( editorElem[0].id );
+					editor = new Editor( id );
 					editorElem.data( "editor", editor );
 				}
 
-				if ( editors[ editorElem[0].id ] ) {
+				if ( editors[ id ] ) {
 					editorElem.editorText( curProblem && curProblem[ editors[ editorElem[0].id ] ] || "" );
 				}
+				
+				setCursor( curProblem );
 				
 				// Save the editor when switching tabs
 				if ( curProblem ) {
@@ -221,7 +227,7 @@ var createNewExercise = function( data ) {
 	insertExerciseForm( Exercise );
 	
 	for ( var i = 0; i < Exercise.problems.length; i++ ) {
-		insertExerciseForm( Exercise.problems[i] );
+		insertExerciseForm( Exercise.problems[i], ":first" );
 	}
 	
 	$("#save, #add-problem").removeClass( "ui-state-disabled" );
@@ -243,7 +249,7 @@ var makeProblem = function() {
 	}
 };
 
-var insertExerciseForm = function( testObj ) {
+var insertExerciseForm = function( testObj, pos ) {
 	var exercise = $( $("#form-tmpl").html() )
 		.buttonize()
 		.filter( "h3" ).data( "problem", testObj ).end()
@@ -260,7 +266,7 @@ var insertExerciseForm = function( testObj ) {
 	
 	$( "#tests" )
 		.accordion( "destroy" )
-		.accordion({ collapsible: true, active: ":last" });
+		.accordion({ collapsible: true, active: pos || ":last" });
 	
 	exercise.find("input[name='title']").select().focus();
 };
@@ -281,6 +287,15 @@ var extractProblem = function( testObj ) {
 	});
 };
 
+var setCursor = function( testObj ) {
+	if ( testObj && testObj.cursor ) {
+		var editor = $("#start-code").data( "editor" ).editor;
+		editor.moveCursorToPosition( testObj.cursor );
+		editor.clearSelection();
+		editor.focus();
+	}
+};
+
 var resetProblem = function( testObj ) {
 	$("#overlay").toggle( !testObj || !!testObj.problems );
 	
@@ -291,6 +306,8 @@ var resetProblem = function( testObj ) {
 	for ( var editor in editors ) {
 		$("#" + editor).editorText( testObj && testObj[ editors[editor] ] || "" );
 	}
+	
+	setCursor( testObj );
 	
 	$("#hints").empty();
 	

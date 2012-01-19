@@ -93,7 +93,7 @@ var saveExercise = function( callback ) {
 	extractProblem( curProblem );
 	
 	// Add in ID, normally this would be done on the server
-	Exercise.id = (new Date).getTime();
+	Exercise.id = Exercise.id || (new Date).getTime();
 	
 	for ( var i = 0; i < exerciseData.length; i++ ) {
 		if ( Exercise.id === exerciseData[i].id ) {
@@ -187,11 +187,15 @@ var log = function( msg, type ) {
 	
 	$("#results ul").append(
 		"<li class='" + type + "'><span class='ui-icon ui-icon-" +
-		assertIcons[ type ] + "'></span> <span class='msg'>" +
-		msg.replace( /</g, "&gt;" ) + "</li>"
+		assertIcons[ type ] + "'></span> <span class='msg'><a href=''>" +
+		msg.replace( /</g, "&gt;" ) + "</a></span></li>"
 	);
 };
 
 var assert = function( a, b, msg, type ) {
 	log( msg, a === b ? "pass" : "error" );
+	
+	if ( typeof asserts !== "undefined" ) {
+		asserts.push( a === b );
+	}
 };

@@ -49,14 +49,19 @@
 						<div class="text-wrap"><strong><span class="ui-icon ui-icon-alert"></span> Error:</strong> <span class="text"></span></div>
 					</div>
 					<div class="toolbar ui-widget-header ui-corner-bottom">
-						<a href="" id="run-code" class="ui-button ui-state-disabled right">
-							<span class="ui-icon-script"></span>
-							<span class="ui-button-text">Run Code</span>
+						<a href="" id="view-tests" class="ui-button ui-state-disabled">
+							<span class="ui-icon-circle-check"></span>
+							<span class="ui-button-text">Tests</span>
 						</a>
 						
-						<a href="" id="get-hint" class="ui-button ui-state-disabled right">
+						<a href="" id="get-hint" class="ui-button ui-state-disabled">
 							<span class="ui-icon-info"></span>
 							<span class="ui-button-text">Hints</span>
+						</a>
+						
+						<a href="" id="run-code" class="ui-button right">
+							<span class="ui-icon-script"></span>
+							<span class="ui-button-text">Run Code</span>
 						</a>
 						
 						<a href="" id="show-errors" class="ui-button ui-state-disabled right">
@@ -70,13 +75,29 @@
 					<div id="problem">
 						<h3 class="title ui-helper-reset ui-corner-top"></h3>
 						<div class="ui-widget-content ui-corner-bottom">
-							<p class="desc"></p>
+							<div class="desc">
+								<div class="text"></div>
+								<div id="next-problem-desc">
+									<p><span class="ui-icon ui-icon-circle-check"></span> You've gotten this problem correct!</p>
+									<a href="" id="next-problem" class="ui-button">
+										<span class="ui-icon-triangle-1-e"></span>
+										<span class="ui-button-text">Next Problem</span>
+									</a>
+								</div>
+							</div>
 						</div>
 					</div>
 					<div id="results">
-						<h3 class="ui-helper-reset ui-corner-top">Results</h3>
+						<h3 class="ui-helper-reset ui-corner-top">Test Results</h3>
 						<div class="ui-widget-content ui-corner-bottom">
-							<div class="desc"><ul></ul></div>
+							<div class="desc">
+								<ul></ul>
+								
+								<a href="" id="view-tests-2" class="ui-button">
+									<span class="ui-icon-carat-1-w"></span>
+									<span class="ui-button-text">Back to Your Code</span>
+								</a>
+							</div>
 						</div>
 					</div>
 				</div>
