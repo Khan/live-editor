@@ -18,10 +18,16 @@ var Editor = function( id ) {
 		editor.editor = require("ace/ace").edit( id );
 		
 		editor.editor.setHighlightActiveLine( false );
+		
+		// Stop bracket highlighting
+		editor.editor.$highlightBrackets = function() {};
 
 		var session = editor.editor.getSession();
 		session.setMode(new (require("ace/mode/javascript").Mode)());
+		
+		// Stop automatic JSHINT warnings
 		session.$stopWorker();
+		
 		editor.editor.setTheme( "ace/theme/textmate" );
 		
 		editor.textarea = editor.editorElem.find("textarea");
