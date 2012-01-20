@@ -165,9 +165,7 @@ $(function() {
 				setCursor( curProblem );
 				
 				// Save the editor when switching tabs
-				if ( curProblem ) {
-					extractProblem( curProblem );
-				}
+				extractProblem( curProblem );
 			}
 		}
 	});
@@ -238,9 +236,7 @@ var makeProblem = function() {
 		var problem = { title: "Problem #" + (Exercise.problems.length + 1), desc: "" };
 		Exercise.problems.push( problem );
 	
-		if ( curProblem ) {
-			extractProblem( curProblem );
-		}
+		extractProblem( curProblem );
 	
 		curProblem = problem;
 	
@@ -272,19 +268,21 @@ var insertExerciseForm = function( testObj, pos ) {
 };
 
 var extractProblem = function( testObj ) {
-	for ( var editor in editors ) {
-		var val = $("#" + editor).editorText();
+	if ( testObj ) {
+		for ( var editor in editors ) {
+			var val = $("#" + editor).editorText();
 		
-		if ( val != null ) {
-			testObj[ editors[editor] ] = val;
+			if ( val != null ) {
+				testObj[ editors[editor] ] = val;
+			}
 		}
-	}
 	
-	jQuery.extend( testObj, {
-		hints: $("#hints input").map(function() {
-			return $(this).val();
-		}).get()
-	});
+		jQuery.extend( testObj, {
+			hints: $("#hints input").map(function() {
+				return $(this).val();
+			}).get()
+		});
+	}
 };
 
 var setCursor = function( testObj ) {
