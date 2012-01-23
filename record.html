@@ -16,38 +16,36 @@
 </head>
 <body>
 	<div class="toolbar ui-widget-header ui-corner-all">
-		<a href="" id="record"><span class="ui-icon-video"></span></a>
-		<a href="" id="save" class="ui-state-disabled"><span class="ui-icon-disk"></span></a>
-		<div class="space"></div>
-		<a href="" id="test" class="ui-state-disabled"><span class="ui-icon-flag"></span></a>
+		<a href="" id="record" class="ui-button">
+			<span class="ui-icon-video"></span>
+			<span class="ui-button-text">Record</span>
+		</a>
+		<a href="" id="save" class="ui-button ui-state-disabled">
+			<span class="ui-icon-disk"></span>
+			<span class="ui-button-text">Save</span>
+		</a>
 	</div>
 	<div class="toolbar ui-widget-header ui-corner-all">
-		<a href="" id="draw"><span class="ui-icon-pencil"></span></a>
-		<a href="" id="clear"><span class="ui-icon-cancel"></span></a>
+		<a href="" id="draw" class="ui-button">
+			<span class="ui-icon-pencil"></span>
+		</a>
+		<a href="" id="clear" class="ui-button">
+			<span class="ui-icon-cancel"></span>
+		</a>
 		<div class="space"></div>
-		<a href="" class="color" id="black"><span></span></a>
-		<a href="" class="color" id="red"><span></span></a>
-		<a href="" class="color" id="orange"><span></span></a>
-		<a href="" class="color" id="green"><span></span></a>
-		<a href="" class="color" id="blue"><span></span></a>
-		<a href="" class="color" id="lightblue"><span></span></a>
-		<a href="" class="color" id="violet"><span></span></a>
+		<a href="" class="ui-button color" id="black"><span></span></a>
+		<a href="" class="ui-button color" id="red"><span></span></a>
+		<a href="" class="ui-button color" id="orange"><span></span></a>
+		<a href="" class="ui-button color" id="green"><span></span></a>
+		<a href="" class="ui-button color" id="blue"><span></span></a>
+		<a href="" class="ui-button color" id="lightblue"><span></span></a>
+		<a href="" class="ui-button color" id="violet"><span></span></a>
 	</div>
 	<div id="canvas-editor">
 		<div id="editor"></div>
 		<canvas id="canvas" width="640" height="360"></canvas>
 		<div id="tests"></div>
 	</div>
-	<script type="text/html" id="form-tmpl">
-		<h3><a href='#'>Exercise</a></h3>
-		<div>
-			<form action="" method="POST">
-				<input type="text" placeholder="Title" name="test" /><br/>
-				<textarea name="desc" placeholder="Description"></textarea><br/>
-				<textarea name="validate" placeholder="Validation"></textarea>
-			</form>
-		</div>
-	</script>
 	<script type="text/html" id="form-tmpl">
 		<h3><a href='#' class='title'>Exercise</a></h3>
 		<div>

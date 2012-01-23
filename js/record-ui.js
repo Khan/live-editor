@@ -7,7 +7,7 @@ $(function(){
 	Canvas.init();
 	
 	// Set up toolbar buttons
-	$(".ui-button").buttonize();
+	$(document).buttonize();
 
 	// Set up color button handling
 	$(".toolbar a.color").each(function() {
@@ -131,9 +131,3 @@ $(function(){
 	
 	loadAudio();
 });
-
-Record.handlers.test = function( e ) {
-	Record.pausePlayback();
-	Canvas.endDraw();
-	$("#tests").accordion({ active: e.pos });
-};

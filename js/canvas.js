@@ -30,14 +30,14 @@ var Canvas = {
 			mousedown: function( e ) {
 				// Left mouse button
 				if ( e.button === 0 ) {
-					Canvas.startLine( e.layerX, e.layerY );
+					Canvas.startLine( e.offsetX, e.offsetY );
 
 					e.preventDefault();
 				}
 			},
 
 			mousemove: function( e ) {
-				Canvas.drawLine( e.layerX, e.layerY );
+				Canvas.drawLine( e.offsetX, e.offsetY );
 			},
 			
 			mouseup: Canvas.endLine
