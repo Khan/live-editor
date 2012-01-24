@@ -314,7 +314,10 @@ var openExercise = function( exercise ) {
 	// If an audio track is provided, load the track data
 	// and load the audio player as well
 	if ( Exercise.audioID ) {
-		loadAudio();
+		connectAudio(function( data ) {
+			track = data;
+			SC.whenStreamingReady( audioInit );
+		});
 	}
 	
 	$("h1").text( Exercise.title );

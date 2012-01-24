@@ -145,26 +145,35 @@ var openExerciseDialog = function( callback ) {
 	});
 };
 
-var loadAudio = function() {
-	$.getScript( "http://connect.soundcloud.com/sdk.js", function() {
-		SC.initialize({
-			client_id: "82ff867e7207d75bc8bbd3d281d74bf4",
-			redirect_uri: window.location.href.replace(/[^\/]*$/, "callback.html")
-		});
-		
-		if ( window.Exercise && Exercise.audioID ) {
-			SC.get( "/tracks/" + Exercise.audioID, function( data ) {
-				track = data;
-				SC.whenStreamingReady( audioInit );
-			});
-			
-		} else {
-			SC.connect(function() {
-				// Connected!
-				// TODO: Hide the recording app until connected
-			});
+var connectAudio = function( callback ) {
+	if ( window.SC && SC.isConnected() ) {
+		if ( callback ) {
+			callback();
 		}
-	});
+	
+	} else {
+		$.getScript( "http://connect.soundcloud.com/sdk.js", function() {
+			SC.initialize({
+				client_id: "82ff867e7207d75bc8bbd3d281d74bf4",
+				redirect_uri: window.location.href.replace(/[^\/]*$/, "callback.html")
+			});
+		
+			if ( window.Exercise && Exercise.audioID ) {
+				SC.get( "/tracks/" + Exercise.audioID, function( data ) {
+					if ( callback ) {
+						callback( data );
+					}
+				});
+			
+			} else {
+				SC.connect(function() {
+					if ( callback ) {
+						callback();
+					}
+				});
+			}
+		});
+	}
 };
 
 var runCode = function( code, context ) {

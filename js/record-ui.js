@@ -93,8 +93,11 @@ $(function(){
 		if ( Record.recording ) {
 			Record.stopRecord();
 		} else {
-			SC.record({
-				start: Record.record
+			// TODO: Hide the recording app until connected
+			connectAudio(function() {
+				SC.record({
+					start: Record.record
+				});
 			});
 		}
 	});
@@ -128,6 +131,4 @@ $(function(){
 			$("#record").removeClass( "ui-state-active" );
 		}
 	});
-	
-	loadAudio();
 });
