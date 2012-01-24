@@ -285,12 +285,12 @@ body {
 }
 
 #play-page #results li.error .ui-icon {
-	background: url(http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/smoothness/images/ui-icons_cd0a0a_256x240.png);
+	background: url(images/ui-icons_cd0a0a_256x240.png);
 	background-position: 0 -144px;
 }
 
 #play-page #results li.pass .ui-icon {
-	background: url(http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/le-frog/images/ui-icons_4eb305_256x240.png);
+	background: url(images/ui-icons_4eb305_256x240.png);
 	background-position: -208px -192px;
 }
 
@@ -303,6 +303,14 @@ body {
 	display: none;
 }
 
+div#exercise-page {
+	padding: 0 2em;
+}
+
+#exercise-page a:hover {
+	color: auto;
+}
+
 #exercise-page .editor {
 	position: relative;
 	width: 640px;
@@ -310,7 +318,7 @@ body {
 }
 
 #exercise-page .editor .ace_gutter {
-	background: #DEEDF7;
+	background: #EEE; /*#DEEDF7;*/
 }
 
 #exercise-page .editor .ace_scroller {
@@ -331,6 +339,7 @@ body {
 
 #exercise-page .editor-form {
 	margin-right: 315px;
+	display: block;
 }
 
 #exercise-page .ui-tabs {
@@ -397,4 +406,14 @@ body {
     position: absolute;
     top: 7px;
     right: 4px;
+}
+
+#exercise-page .ui-accordion-content {
+	overflow: hidden;
+}
+
+#exercise-page .ui-button-text,
+#exercise-page .ui-tabs-nav a,
+#exercise-page .ui-accordion-header.ui-state-default a {
+	font-weight: normal;
 }
