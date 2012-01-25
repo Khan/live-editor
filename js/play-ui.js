@@ -7,12 +7,7 @@ var Exercise,
 	curError,
 	asserts,
 	viewingTests = false,
-	curPosition,
-	JSHINT;
-
-require([ "ace/worker/jshint" ], function( jshint ) {
-	JSHINT = jshint.JSHINT;
-});
+	curPosition;
 
 $(function(){
 	// Start the editor and canvas drawing area
@@ -239,17 +234,19 @@ $(function(){
 				}
 			}
 			
-			if ( pass === total ) {
-				curProblem.done = true;
+			if ( total > 0 ) {
+				if ( pass === total ) {
+					curProblem.done = true;
 				
-				$(".ui-tabs-selected")
-				 	.addClass( "icon-tab" )
-					.find( "a" ).prepend( "<span class='ui-icon ui-icon-circle-check'></span>" );
+					$(".ui-tabs-selected")
+					 	.addClass( "icon-tab" )
+						.find( "a" ).prepend( "<span class='ui-icon ui-icon-circle-check'></span>" );
 				
-				$("#next-problem-desc").show();
-			}
+					$("#next-problem-desc").show();
+				}
 			
-			$("#results").fadeIn( 400 );
+				$("#results").fadeIn( 400 );
+			}
 			
 		} else {			
 			errors = [];
@@ -320,7 +317,7 @@ var openExercise = function( exercise ) {
 		});
 	}
 	
-	$("h1").text( Exercise.title );
+	$("#page_sub_nav b").text( Exercise.title );
 	
 	document.title = Exercise.title;
 	
@@ -359,7 +356,7 @@ var startExercise = function() {
 var leaveProblem = function() {
 	if ( curProblem ) {
 		curProblem.answer = $("#editor").editorText();
-		curProblem.cursor = $("#editor").data( "editor" ).editor.getCursorPosition();
+		$("#editor").extractCursor( curProblem );
 	}
 };
 
@@ -367,13 +364,9 @@ var textProblem = function() {
 	if ( curProblem ) {
 		var editor = $("#editor").data( "editor" ).editor;
 		
-		$("#editor").editorText( curProblem.answer || curProblem.start || "" );
-		
-		if ( curProblem.cursor ) {
-			editor.moveCursorToPosition( curProblem.cursor );
-			editor.clearSelection();
-			editor.focus();
-		}
+		$("#editor")
+			.editorText( curProblem.answer || curProblem.start || "" )
+			.setCursor( curProblem );
 	}
 };
 

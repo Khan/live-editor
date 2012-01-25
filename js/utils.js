@@ -45,6 +45,28 @@ jQuery.fn.editorText = function( text ) {
 			editor.editor.getSession().getValue().replace(/\r/g, "\n") :
 			null;
 	}
+	
+	return this;
+};
+
+jQuery.fn.extractCursor = function( testObj ) {
+	var cursor = this.data( "editor" ).editor.getCursorPosition();
+	
+	testObj.cursorRow = cursor.row;
+	testObj.cursorColumn = cursor.column;
+	
+	return this;
+};
+
+jQuery.fn.setCursor = function( testObj ) {
+	if ( testObj && testObj.cursorRow != null ) {
+		var editor = this.data( "editor" ).editor;
+		editor.moveCursorToPosition({
+			row: testObj.cursorRow, column: testObj.cursorColumn
+		});
+		editor.clearSelection();
+		editor.focus();
+	}
 };
 
 var formatTime = function( seconds ) {
@@ -54,65 +76,36 @@ var formatTime = function( seconds ) {
 	return min + ":" + (sec < 10 ? "0" : "") + sec;
 };
 
-var delaySize = 13;
-
 var getExerciseList = function( callback ) {
-	// TODO: Get this from an API of some sort
-	// TODO: Remove artificial delay
-	setTimeout(function() {
-		var exerciseData = JSON.parse( window.localStorage.exerciseData || "[]" );
-		callback( exerciseData );
-	}, delaySize );
+	$.getJSON( "/api/labs/videoexercises", callback );
 };
 
 var getExercise = function( id, callback ) {
-	// TODO: Pull from a server instead
-	var exercise,
-		exerciseData = JSON.parse( window.localStorage.exerciseData || "[]" );
-	
-	for ( var i = 0; i < exerciseData.length; i++ ) {
-		if ( id === exerciseData[i].id ) {
-			exercise = exerciseData[i];
-			break;
-		}
-	}
-	
-	// TODO: Remove artificial delay
-	setTimeout(function() {
-		lastSave = JSON.stringify( exercise );
-		callback( exercise );
-	}, delaySize );
+	$.getJSON( "/api/labs/videoexercises/" + id, function( exerciseData ) {
+		lastSave = JSON.stringify( exerciseData );
+		
+		callback( exerciseData );
+	});
 };
 
 var saveExercise = function( callback ) {
-	// TODO: Save to a server instead
-	var isSet = false,
-		exerciseData = JSON.parse( window.localStorage.exerciseData || "[]" );
-	
 	// Make sure we get the latest data
 	extractProblem( curProblem );
 	
-	// Add in ID, normally this would be done on the server
-	Exercise.id = Exercise.id || (new Date).getTime();
+	var data = JSON.stringify( Exercise );
 	
-	for ( var i = 0; i < exerciseData.length; i++ ) {
-		if ( Exercise.id === exerciseData[i].id ) {
-			exerciseData[i] = Exercise;
-			isSet = true;
-			break;
+	$.ajax({
+		url: "/api/labs/videoexercises" + (Exercise.id ? "/" + Exercise.id : ""),
+		data: data,
+		dataType: "JSON",
+		type: Exercise.id ? "PUT" : "POST",
+		contentType: "application/json",
+		success: function( exerciseData ) {
+			lastSave = JSON.stringify( exerciseData );
+			Exercise = exerciseData;
+			callback();
 		}
-	}
-	
-	if ( !isSet ) {
-		exerciseData.push( Exercise );
-	}
-	
-	window.localStorage.exerciseData = JSON.stringify( exerciseData );
-	
-	lastSave = JSON.stringify( Exercise );
-	
-	// TODO: Remove artificial delay
-	setTimeout( callback, delaySize );
+	});		
 };
 
 var openExerciseDialog = function( callback ) {

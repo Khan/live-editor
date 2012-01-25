@@ -43,6 +43,7 @@ body {
 
 .editor-box {
 	overflow: hidden;
+	position: relative;
 }
 
 .toolbar {
@@ -81,7 +82,8 @@ body {
 }
 
 #editor .ace_gutter {
-	background: #DEEDF7;
+	background: #F5F3E5; /*#D7EBF9;*/
+	width: 50px;
 }
 
 #editor .ace_scroller {
@@ -192,7 +194,7 @@ body {
 #play-page #code .toolbar {
 	width: auto;
 	overflow: auto;
-	background: #D7EBF9;
+	background: #F5F3E5; /*#D7EBF9;*/
 	position: relative;
 	z-index: 5;
 }
@@ -217,25 +219,32 @@ body {
 }
 
 #play-page .ui-tabs-nav {
-	border-bottom-color: #2779AA;
+	border-bottom-color: #D4CCB0; /*#2779AA;*/
 	width: 942px;
 }
 
 #play-page .ui-tabs-nav li.ui-tabs-selected {
-	background: #D7EBF9;
-	color: #2779AA;
-	border-color: #2779AA;
+	background: #F5F3E5; /*#D7EBF9;*/
+	color: #000; /*#2779AA;*/
+	border-color: #D4CCB0; /*#2779AA;*/
+}
+
+#play-page .ui-tabs-nav li.ui-tabs-selected a {
+	color: #000;
 }
 
 #play-page #tests h3 {
 	font-size: 1em;
 	padding: .5em .5em .5em .7em;
 	cursor: auto;
-	background: #D7EBF9;
+	background: #F5F3E5; /*#D7EBF9;*/
+	border: 1px solid #D4CCB0;
+	border-bottom: none;
 }
 
 #play-page #tests .ui-widget-content {
 	margin-bottom: 1em;
+	border-top: none;
 }
 
 #play-page #tests .desc {
@@ -303,6 +312,7 @@ body {
 	display: none;
 }
 
+div#play-page,
 div#exercise-page {
 	padding: 0 2em;
 }

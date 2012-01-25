@@ -61,13 +61,14 @@ $(function() {
 		return false;
 		
 	}).delegate(".set-cursor", "buttonClick", function() {
-		curProblem.cursor = $("#start-code").data( "editor" ).editor.getCursorPosition();
+		$("#start-code").extractCursor( curProblem );
 	});
 	
 	$("#reorder-problems").bind( "buttonClick", function() {
 		$("#tests")
 			.toggleClass( "sorting", !dragging )
 			.sortable( "option", "disabled", dragging );
+		
 		dragging = !dragging;
 		
 		if ( dragging ) {
@@ -162,7 +163,7 @@ $(function() {
 					editorElem.editorText( curProblem && curProblem[ editors[ editorElem[0].id ] ] || "" );
 				}
 				
-				setCursor( curProblem );
+				$("#start-code").setCursor( curProblem );
 				
 				// Save the editor when switching tabs
 				extractProblem( curProblem );
@@ -285,15 +286,6 @@ var extractProblem = function( testObj ) {
 	}
 };
 
-var setCursor = function( testObj ) {
-	if ( testObj && testObj.cursor ) {
-		var editor = $("#start-code").data( "editor" ).editor;
-		editor.moveCursorToPosition( testObj.cursor );
-		editor.clearSelection();
-		editor.focus();
-	}
-};
-
 var resetProblem = function( testObj ) {
 	$("#overlay").toggle( !testObj || !!testObj.problems );
 	
@@ -305,7 +297,7 @@ var resetProblem = function( testObj ) {
 		$("#" + editor).editorText( testObj && testObj[ editors[editor] ] || "" );
 	}
 	
-	setCursor( testObj );
+	$("#start-code").setCursor( testObj );
 	
 	$("#hints").empty();
 	
