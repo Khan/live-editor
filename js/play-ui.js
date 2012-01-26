@@ -90,10 +90,10 @@ $(function(){
 			$("#error").fadeOut( 300 );
 		
 			$("#hint")
-				.addClass( "ui-state-active" )
+				.addClass( "ui-state-hover" )
 				.css({ bottom: -30, opacity: 0.1 })
 				.show()
-				.animate({ bottom: 5, opacity: 1.0 }, 300 );
+				.animate({ bottom: 33, opacity: 1.0 }, 300 );
 			
 		} else {
 			$("#hint .close").click();
@@ -107,10 +107,10 @@ $(function(){
 			$("#hint").fadeOut( 300 );
 		
 			$("#error")
-				.addClass( "ui-state-active" )
+				.addClass( "ui-state-hover" )
 				.css({ bottom: -30, opacity: 0.1 })
 				.show()
-				.animate({ bottom: 5, opacity: 1.0 }, 300 );
+				.animate({ bottom: 33, opacity: 1.0 }, 300 );
 			
 		} else {
 			$("#error .close").click();
@@ -126,7 +126,7 @@ $(function(){
 		return false;
 	});
 	
-	$(".tipbar .nav a").click(function() {
+	$(".tipbar .tipnav a").click(function() {
 		var id = $(this).parents(".tipbar").attr( "id" );
 		
 		if ( !$(this).hasClass( "ui-state-disabled" ) ) {
@@ -212,15 +212,16 @@ $(function(){
 		var userCode = $("#editor").editorText(),
 			validate = curProblem.validate,
 			pass = JSHINT( userCode ),
+			hintData = JSHINT.data(),
 			session = $("#editor").data( "editor" ).editor.getSession();
 		
 		session.clearAnnotations();
 		
 		$("#show-errors").toggleClass( "ui-state-disabled", JSHINT.errors.length === 0 );
 		
-		$("#error").fadeOut( 300 );
-		
-		if ( pass ) {
+		if ( pass && !hintData.implieds ) {
+			$("#error").fadeOut( 300 );
+			
 			asserts = [];
 			
 			runCode( userCode + "\n" + validate, { assert: assert } );
@@ -266,6 +267,26 @@ $(function(){
 	                });
 				}
 	        }
+	
+			if ( hintData.implieds ) {
+				for ( var i = 0; i < hintData.implieds.length; i++ ) {
+					var implied = hintData.implieds[i];
+					
+					for ( var l = 0; l < implied.line.length; l++ ) {
+						errors.push({
+							row: implied.line[l] - 1,
+							column: 0,
+							text: "Using an undefined variable '" + implied.name + "'.",
+							type: "error",
+							lint: implied
+						});
+					}
+				}
+			}
+			
+			errors = errors.sort(function( a, b ) {
+				return a.row - b.row;
+			});
 	
 	        session.setAnnotations( errors );
 	
@@ -387,7 +408,7 @@ var showProblem = function( problem ) {
 	$("#next-problem").toggleClass( "ui-state-disabled", 
 		Exercise.problems.indexOf( curProblem ) + 1 >= Exercise.problems.length );
 	
-	$("#exercise-tabs .ui-state-active").removeClass( "ui-state-active" );
+	//$("#exercise-tabs .ui-state-active").removeClass( "ui-state-active" );
 	
 	textProblem();
 	
