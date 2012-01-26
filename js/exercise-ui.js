@@ -30,7 +30,16 @@ $(function() {
 			.addClass( "ui-state-disabled" )
 			.find( ".ui-button-text" ).text( "Saving..." ).end();
 		
-		saveExercise(function() {
+		saveExercise(function( exerciseData ) {
+			var problemPos = Exercise.problems.indexOf( curProblem );
+			
+			Exercise = exerciseData;
+			
+			if ( problemPos >= 0 ) {
+				curProblem = Exercise.problems[ problemPos ];
+				$(".ui-accordion h3").eq( problemPos + 1 ).data( "problem", curProblem );
+			}
+			
 			save
 				.removeClass( "ui-state-disabled" )
 				.find( ".ui-button-text" ).text( "Save" ).end();

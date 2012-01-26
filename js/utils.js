@@ -102,8 +102,7 @@ var saveExercise = function( callback ) {
 		contentType: "application/json",
 		success: function( exerciseData ) {
 			lastSave = JSON.stringify( exerciseData );
-			Exercise = exerciseData;
-			callback();
+			callback( exerciseData );
 		}
 	});		
 };
