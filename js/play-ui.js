@@ -93,7 +93,7 @@ $(function(){
 				.addClass( "ui-state-hover" )
 				.css({ bottom: -30, opacity: 0.1 })
 				.show()
-				.animate({ bottom: 33, opacity: 1.0 }, 300 );
+				.animate({ bottom: 38, opacity: 1.0 }, 300 );
 			
 		} else {
 			$("#hint .close").click();
@@ -110,7 +110,7 @@ $(function(){
 				.addClass( "ui-state-hover" )
 				.css({ bottom: -30, opacity: 0.1 })
 				.show()
-				.animate({ bottom: 33, opacity: 1.0 }, 300 );
+				.animate({ bottom: 38, opacity: 1.0 }, 300 );
 			
 		} else {
 			$("#error .close").click();
@@ -217,9 +217,8 @@ $(function(){
 		
 		session.clearAnnotations();
 		
-		$("#show-errors").toggleClass( "ui-state-disabled", JSHINT.errors.length === 0 );
-		
-		if ( pass && !hintData.implieds ) {
+		if ( pass & !hintData.implieds ) {
+			$("#show-errors").addClass( "ui-state-disabled" );
 			$("#error").fadeOut( 300 );
 			
 			asserts = [];
@@ -249,7 +248,9 @@ $(function(){
 				$("#results").fadeIn( 400 );
 			}
 			
-		} else {			
+		} else {
+			$("#show-errors").removeClass( "ui-state-disabled" );
+			
 			errors = [];
 			
 	        for ( var i = 0; i < JSHINT.errors.length; i++ ) {
@@ -293,9 +294,11 @@ $(function(){
 			curError = 0;
 			showError();
 			
-			$("#show-errors").click();
+			if ( !$("#error").is(":visible") ) {
+				$("#show-errors").click();
 			
-			$("#results").fadeOut( 400 );
+				$("#results").fadeOut( 400 );
+			}
 		}
 	});
 	
@@ -414,7 +417,7 @@ var showProblem = function( problem ) {
 	
 	$("#problem")
 		.find( ".title" ).text( problem.title || "" ).end()
-		.find( ".text" ).text( (problem.desc || "").replace( /\n/g, "<br>" ) ).end();
+		.find( ".text" ).html( (problem.desc || "").replace( /\n/g, "<br>" ) ).end();
 	
 	$("#view-tests").toggleClass( "ui-state-disabled", !problem.validate );
 	$("#get-hint").toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) );

@@ -37,7 +37,10 @@ $(function() {
 			
 			if ( problemPos >= 0 ) {
 				curProblem = Exercise.problems[ problemPos ];
-				$(".ui-accordion h3").eq( problemPos + 1 ).data( "problem", curProblem );
+				
+				$(".ui-accordion h3").slice(1).each(function( i ) {
+					$(this).data( "problem", Exercise.problems[ i ] );
+				});
 			}
 			
 			save

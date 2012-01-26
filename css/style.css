@@ -136,7 +136,7 @@ a.ui-button:visited:hover {
 	color: white;
 	position: absolute;
 	width: 638px;
-	min-height: 90px;
+	min-height: 40px;
 	bottom: 5px;
 	left: 0px;
 	z-index: 5;
