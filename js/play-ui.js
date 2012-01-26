@@ -239,6 +239,7 @@ $(function(){
 					curProblem.done = true;
 				
 					$(".ui-tabs-selected")
+						.next( "li" ).removeClass( "ui-state-disabled" ).end()
 					 	.addClass( "icon-tab" )
 						.find( "a" ).prepend( "<span class='ui-icon ui-icon-circle-check'></span>" );
 				
@@ -368,7 +369,10 @@ var openExercise = function( exercise ) {
 			}
 		})
 		.removeClass( "ui-widget-content" )
-		.find( ".ui-tabs-nav" ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" ).end();
+		.find( ".ui-tabs-nav" )
+			.removeClass( "ui-corner-all" ).addClass( "ui-corner-top" )
+			.find( "li:not(.ui-state-active)" ).addClass( "ui-state-disabled" ).end()
+		.end();
 	
 	startExercise();
 };
