@@ -1,23 +1,13 @@
 {% extends "labs/template.html" %}
 
 {% block pagescript %}
-
-<script>/*Top of page css/scripts*/</script>
-
+<link rel="stylesheet" href="/canvas-editor/css/style.css" />
+<script src="/canvas-editor/js/utils.js"></script>
+<script src="/canvas-editor/js/main-ui.js"></script>
 {% endblock pagescript %}
 
-{% block pagetitle %}Computer Science Exercises{% endblock pagetitle %}
-
 {% block pagecontent %}
+<h1>Computer Science Exercises</h1>
 
-CS stuff
-
-test?
-
+<ul id="exercises"></ul>
 {% endblock pagecontent %}
- 
-{% block bottompagescript %}
-
-<script>/*Bottom of page scripts*/</script>
-
-{% endblock bottompagescript %}

@@ -303,7 +303,12 @@ $(function(){
 		}
 	});
 	
-	openExerciseDialog( openExercise );
+	if ( window.location.search ) {
+		getExercise( window.location.search.slice(1), openExercise );
+		
+	} else {
+		openExerciseDialog( openExercise );
+	}
 });
 
 var showHint = function() {
@@ -342,7 +347,7 @@ var openExercise = function( exercise ) {
 		});
 	}
 	
-	$("#page_sub_nav b").text( Exercise.title );
+	$("h1").text( Exercise.title );
 	
 	document.title = Exercise.title;
 	
