@@ -1,3 +1,7 @@
+var apollo = typeof require !== "undefined" ?
+	require("sjs:apollo-sys") :
+	null;
+
 $(document).delegate( ".ui-button", {
 	mouseenter: function() {
 		if ( !$(this).hasClass( "ui-state-disabled" ) ) {
@@ -171,10 +175,69 @@ var connectAudio = function( callback ) {
 var runCode = function( code, context ) {
 	$("#results ul").empty();
 	
-	var fn = new Function( code );
-	//var fn = new Function( "with(__context__) {\n" + code + "\n}", "__context__" );
+	// TODO: Try/Catch this and complain
 	
-	fn( context );
+	if ( typeof apollo !== "undefined" ) {
+		apollo.eval( "(function(){" + code + "})();" );
+		
+	} else {
+		var fn = new Function( code );
+		//var fn = new Function( "with(__context__) {\n" + code + "\n}", "__context__" );
+	
+		fn( context );
+	}
+};
+
+$(document).delegate( "#output form", "submit", function() {
+	var val = $(this).find("input[type='text']").val();
+
+	$(this)
+		.after( clean( val ) )
+		.remove();
+
+	if ( window.doResume ) {
+		window.doResume( val );
+	}
+
+	return false;
+});
+
+var clean = function( str ) {
+	return str.replace( /</g, "&gt;" );
+};
+
+var outputs = [];
+
+var clear = function() {
+	$("#output").empty();
+	outputs = [];
+};
+
+var focusOutput = function() {
+	$("#output-nav").removeClass( "ui-state-disabled" );
+	$("#editor-box-tabs").tabs( "select", 1 );
+};
+
+var print = function( msg ) {
+	var output = $("#output");
+	
+	output.append( "<div>" + clean( msg ) + "</div>" );
+	output.scrollTop( output[0].scrollHeight );
+	
+	outputs.push( msg );
+};
+
+var showInput = function( msg ) {
+	focusOutput();
+	
+	var output = $("#output");
+	
+	output.append( "<div>" + clean( msg ) +
+		" <form><input type='text'/> <input type='submit' value='Enter'/></form></div>" );
+	
+	output.scrollTop( output[0].scrollHeight );
+
+	$("input[type='text']").focus();
 };
 
 var assertIcons = {
@@ -189,7 +252,7 @@ var log = function( msg, type ) {
 	$("#results ul").append(
 		"<li class='" + type + "'><span class='ui-icon ui-icon-" +
 		assertIcons[ type ] + "'></span> <span class='msg'><a href=''>" +
-		msg.replace( /</g, "&gt;" ) + "</a></span></li>"
+		clean( msg ) + "</a></span></li>"
 	);
 };
 

@@ -211,9 +211,12 @@ $(function(){
 	$("#run-code").bind( "buttonClick", function() {
 		var userCode = $("#editor").editorText(),
 			validate = curProblem.validate,
-			pass = JSHINT( userCode ),
+			pass = JSHINT( "/*global input:false, print:false*/\n" + userCode ),
 			hintData = JSHINT.data(),
 			session = $("#editor").data( "editor" ).editor.getSession();
+		
+		clear();
+		$("#output-nav").addClass( "ui-state-disabled" );
 		
 		session.clearAnnotations();
 		
@@ -224,6 +227,10 @@ $(function(){
 			asserts = [];
 			
 			runCode( userCode + "\n" + validate, { assert: assert } );
+			
+			if ( outputs.length > 0 ) {
+				focusOutput();
+			}
 			
 			var total = asserts.length,
 				pass = 0;
@@ -261,7 +268,7 @@ $(function(){
 						error.reason && !/unable to continue/i.test( error.reason ) ) {
 
 	                errors.push({
-	                    row: error.line - 1,
+	                    row: error.line - 2,
 	                    column: error.character - 1,
 	                    text: error.reason,
 	                    type: "error",
@@ -302,6 +309,24 @@ $(function(){
 			}
 		}
 	});
+	
+	$("#editor-box-tabs")
+		.tabs()
+		.removeClass( "ui-widget ui-widget-content ui-corner-all" );
+	
+	$("#editor-box")
+		.removeClass( "ui-tabs-panel ui-corner-bottom" );
+	
+	$("#output")
+		.removeClass( "ui-corner-bottom" )
+		.addClass( "ui-corner-top" );
+	
+	$("#editor-box-tabs-nav")
+		.removeClass( "ui-corner-all" )
+		.addClass( "ui-corner-bottom" )
+		.find( "li" )
+			.removeClass( "ui-corner-top" )
+			.addClass( "ui-corner-bottom" );
 	
 	if ( window.location.search ) {
 		getExercise( window.location.search.slice(1), openExercise );
@@ -374,7 +399,7 @@ var openExercise = function( exercise ) {
 			}
 		})
 		.removeClass( "ui-widget-content" )
-		.find( ".ui-tabs-nav" )
+		.find( "#main-tabs-nav" )
 			.removeClass( "ui-corner-all" ).addClass( "ui-corner-top" )
 			.find( "li:not(.ui-state-active)" ).addClass( "ui-state-disabled" ).end()
 		.end();
@@ -438,7 +463,7 @@ var insertExercise = function( testObj ) {
 	$( $("#tab-tmpl").html() )
 		.find( ".ui-icon" ).remove().end()
 		.find( "a" ).append( testObj.title || "Problem" ).end()
-		.appendTo("#exercise-tabs ul.ui-tabs-nav");
+		.appendTo("#main-tabs-nav");
 };
 
 var seekTo = function( time ) {

@@ -5,6 +5,8 @@
 <link rel="stylesheet" href="/canvas-editor/css/style.css" />
 <link rel="stylesheet" href="/canvas-editor/css/jquery-ui.css" />
 
+<script src="/canvas-editor/js/oni-apollo.js"></script>
+
 <script src="/canvas-editor/js/ace.js"></script>
 <script src="/canvas-editor/js/ace-mode-javascript.js"></script>
 <script src="/canvas-editor/js/ace-theme-textmate.js"></script>
@@ -25,7 +27,7 @@
 <div id="play-page">
 <h1>Loading...</h1>
 <div id="exercise-tabs">
-	<ul class="ui-tabs-nav"></ul>
+	<ul id="main-tabs-nav" class="ui-tabs-nav"></ul>
 	<div id="code">
 		<div class="top-toolbar toolbar ui-widget-header ui-corner-bottom">
 			<div id="playbar">
@@ -37,46 +39,55 @@
 			</div>
 		</div>
 		<div id="canvas-editor">
-			<div class="editor-box ui-widget-content ui-corner-all">
-				<div id="editor"></div>
-				<canvas id="canvas" width="640" height="360"></canvas>
-				<div id="hint" class="tipbar">
-					<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
-					<div class="tipnav">
-						<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
-						<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
+			<div id="editor-box-tabs">
+				<ul id="editor-box-tabs-nav">
+					<li><a href="#editor-box">Code</a></li>
+					<li id="output-nav" class="ui-state-disabled"><a href="#output">Output</a></li>
+					<!--<li class="ui-state-disabled"><a href="#editor-box">Tests</a></li>-->
+				</ul>
+				
+				<div id="editor-box" class="editor-box ui-widget-content ui-corner-top">
+					<div id="editor" class="ui-corner-top"></div>
+					<canvas id="canvas" width="640" height="360"></canvas>
+					<div id="hint" class="tipbar">
+						<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
+						<div class="tipnav">
+							<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
+							<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
+						</div>
+						<div class="text-wrap"><strong>Hint:</strong> <span class="text"></span></div>
 					</div>
-					<div class="text-wrap"><strong>Hint:</strong> <span class="text"></span></div>
-				</div>
-				<div id="error" class="tipbar">
-					<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
-					<div class="tipnav">
-						<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
-						<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
+					<div id="error" class="tipbar">
+						<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
+						<div class="tipnav">
+							<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
+							<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
+						</div>
+						<div class="text-wrap"><strong><span class="ui-icon ui-icon-alert"></span> Error:</strong> <span class="text"></span></div>
 					</div>
-					<div class="text-wrap"><strong><span class="ui-icon ui-icon-alert"></span> Error:</strong> <span class="text"></span></div>
+					<div class="toolbar ui-widget-header">
+						<a href="" id="view-tests" class="ui-button ui-state-disabled">
+							<span class="ui-icon-circle-check"></span>
+							<span class="ui-button-text">Tests</span>
+						</a>
+					
+						<a href="" id="get-hint" class="ui-button ui-state-disabled">
+							<span class="ui-icon-info"></span>
+							<span class="ui-button-text">Hints</span>
+						</a>
+					
+						<a href="" id="run-code" class="ui-button right">
+							<span class="ui-icon-script"></span>
+							<span class="ui-button-text">Run Code</span>
+						</a>
+					
+						<a href="" id="show-errors" class="ui-button ui-state-disabled right">
+							<span class="ui-icon-alert"></span>
+							<span class="ui-button-text">Errors</span>
+						</a>
+					</div>
 				</div>
-				<div class="toolbar ui-widget-header ui-corner-bottom">
-					<a href="" id="view-tests" class="ui-button ui-state-disabled">
-						<span class="ui-icon-circle-check"></span>
-						<span class="ui-button-text">Tests</span>
-					</a>
-					
-					<a href="" id="get-hint" class="ui-button ui-state-disabled">
-						<span class="ui-icon-info"></span>
-						<span class="ui-button-text">Hints</span>
-					</a>
-					
-					<a href="" id="run-code" class="ui-button right">
-						<span class="ui-icon-script"></span>
-						<span class="ui-button-text">Run Code</span>
-					</a>
-					
-					<a href="" id="show-errors" class="ui-button ui-state-disabled right">
-						<span class="ui-icon-alert"></span>
-						<span class="ui-button-text">Errors</span>
-					</a>
-				</div>
+				<div id="output"></div>
 			</div>
 			
 			<div id="tests">
@@ -132,6 +143,17 @@
 			<p class="desc">Exercise description.</p>
 		</div>
 	</div>
+</script>
+<script type="text/sjs">
+window.input = function( msg ) {
+	showInput( msg );
+
+	waitfor(var val) {
+		window.doResume = resume;
+	}
+	
+	return val;
+};
 </script>
 
 {% endblock bottompagescript %}
