@@ -5,7 +5,6 @@ var Exercise,
 	curProblem,
 	errors,
 	curError,
-	asserts,
 	viewingTests = false,
 	curPosition;
 
@@ -217,6 +216,8 @@ $(function(){
 		
 		clear();
 		$("#output-nav").addClass( "ui-state-disabled" );
+		$("#results .desc").empty();
+		$("#results").hide();
 		
 		session.clearAnnotations();
 		
@@ -224,36 +225,15 @@ $(function(){
 			$("#show-errors").addClass( "ui-state-disabled" );
 			$("#error").fadeOut( 300 );
 			
-			asserts = [];
+			// Run the tests
+			runTests( userCode, curProblem );
 			
-			runCode( userCode + "\n" + validate, { assert: assert } );
+			// Then run the user code
+			clear();
+			runCode( userCode );
 			
 			if ( outputs.length > 0 ) {
 				focusOutput();
-			}
-			
-			var total = asserts.length,
-				pass = 0;
-			
-			for ( var i = 0; i < asserts.length; i++ ) {
-				if ( asserts[i] ) {
-					pass += 1;
-				}
-			}
-			
-			if ( total > 0 ) {
-				if ( pass === total ) {
-					curProblem.done = true;
-				
-					$(".ui-tabs-selected")
-						.next( "li" ).removeClass( "ui-state-disabled" ).end()
-					 	.addClass( "icon-tab" )
-						.find( "a" ).prepend( "<span class='ui-icon ui-icon-circle-check'></span>" );
-				
-					$("#next-problem-desc").show();
-				}
-			
-				$("#results").fadeIn( 400 );
 			}
 			
 		} else {

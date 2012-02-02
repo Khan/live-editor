@@ -337,6 +337,18 @@ a.ui-button:visited:hover {
 	display: none;
 }
 
+#play-page #results fieldset {
+	border: 1px solid #CCC;
+	padding: 4px;
+	border-radius: 4px;
+	margin-bottom: 8px;
+}
+
+#play-page #results legend {
+	padding: 0 8px;
+	font-size: 12px;
+}
+
 #play-page #results .ui-button {
 	margin-top: 1em;
 	display: none;

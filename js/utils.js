@@ -173,8 +173,6 @@ var connectAudio = function( callback ) {
 };
 
 var runCode = function( code, context ) {
-	$("#results ul").empty();
-	
 	// TODO: Try/Catch this and complain
 	
 	if ( typeof apollo !== "undefined" ) {
@@ -203,10 +201,88 @@ $(document).delegate( "#output form", "submit", function() {
 });
 
 var clean = function( str ) {
-	return str.replace( /</g, "&gt;" );
+	return str.replace( /</g, "&lt;" );
 };
 
-var outputs = [];
+var outputs = [],
+	tests = [],
+	asserts = [],
+	ioTests,
+	testMode = false;
+	
+var test = function( name, fn ) {
+	if ( !fn ) {
+		fn = name;
+		name = "Test Case";
+	}
+	
+	tests.push({ name: name, fn: fn });
+};
+
+/*
+ * testIO([
+ *   { print: "Strict equals." },
+ *   { print: /RegExp equals/i },
+ *   { print: true }, // Any print statement will do
+ *   { input: "Input string" },
+ *   { inputNumber: Number }, // Inputs a number
+ * ]);
+ */
+
+var testIO = function( name, test ) {
+	if ( !test ) {
+		test = name;
+		name = "Test Case";
+	}
+	
+	tests.push({ name: name, tests: test });
+};
+
+var runTests = function( userCode, curProblem ) {
+	testMode = true;
+	
+	// Prime the test queue
+	// TODO: Should we check to see if no test() prime exists?
+	runCode( curProblem.validate );
+	
+	asserts = [];
+	
+	for ( var i = 0; i < tests.length; i++ ) (function( test ) {
+		clear();
+		
+		$("#results .desc").append( "<fieldset><legend>" + test.name + "</legend><ul></ul></fieldset>" );
+		
+		ioTests = test.tests || null;
+		
+		runCode( (test.fn ? "(" + test.fn + ")();\n" : "") + userCode );
+	})( tests[i] );
+	
+	var total = asserts.length,
+		pass = 0;
+	
+	for ( var i = 0; i < asserts.length; i++ ) {
+		if ( asserts[i] ) {
+			pass += 1;
+		}
+	}
+	
+	if ( total > 0 ) {
+		if ( pass === total ) {
+			curProblem.done = true;
+		
+			$("#main-tabs-nav .ui-tabs-selected")
+				.next( "li" ).removeClass( "ui-state-disabled" ).end()
+			 	.addClass( "icon-tab" )
+				.find( "a" ).prepend( "<span class='ui-icon ui-icon-circle-check'></span>" );
+		
+			$("#next-problem-desc").show();
+		}
+	
+		$("#results").fadeIn( 400 );
+	}
+	
+	testMode = false;
+};
 
 var clear = function() {
 	$("#output").empty();
@@ -225,19 +301,66 @@ var print = function( msg ) {
 	output.scrollTop( output[0].scrollHeight );
 	
 	outputs.push( msg );
+	
+	if ( testMode && ioTests && ioTests.length > 0 ) {
+		var curTest = ioTests[0];
+		
+		if ( curTest.print != null ) {
+			var pass = false;
+			
+			if ( curTest.print === true ) {
+				pass = true;
+				
+			} else if ( typeof curTest.print === "string" ) {
+				pass = msg === curTest.print;
+				
+			} else if ( typeof curTest.print === "object" ) {
+				pass = curTest.print.test( msg );
+			}
+			
+			assert( pass, pass ?
+				"'" + msg + "' was printed out correctly." :
+				"'" + msg + "' does not match the expected statement." );
+			
+			ioTests.shift();
+			
+		} else {
+			assert( false, "Unexpected print statement." );
+		}
+	}
 };
 
 var showInput = function( msg ) {
 	focusOutput();
 	
-	var output = $("#output");
+	var output = $("#output"),
+		input;
 	
-	output.append( "<div>" + clean( msg ) +
-		" <form><input type='text'/> <input type='submit' value='Enter'/></form></div>" );
+	if ( testMode && ioTests && ioTests.length > 0 ) {
+		var curTest = ioTests[0];
+		
+		if ( curTest.input != null ) {
+			input = curTest.input.toString();
+			
+			assert( true, "'" + input + "' was put in an input." );
+			
+			ioTests.shift();
+			
+		} else {
+			assert( false, "Unexpected input statement." );
+		}
+	}
+	
+	output.append( "<div>" + clean( msg ) + " " +
+		( input != null ?
+			input :
+			"<form><input type='text'/> <input type='submit' value='Enter'/></form></div>" ) );
 	
 	output.scrollTop( output[0].scrollHeight );
 
-	$("input[type='text']").focus();
+	output.find("input[type='text']").last().focus();
+	
+	return input;
 };
 
 var assertIcons = {
@@ -249,17 +372,29 @@ var assertIcons = {
 var log = function( msg, type ) {
 	type = type || "info";
 	
-	$("#results ul").append(
+	$("#results ul").last().append(
 		"<li class='" + type + "'><span class='ui-icon ui-icon-" +
 		assertIcons[ type ] + "'></span> <span class='msg'><a href=''>" +
 		clean( msg ) + "</a></span></li>"
 	);
 };
 
-var assert = function( a, b, msg, type ) {
+var assert = function( pass, msg, type ) {
+	log( msg, pass ? "pass" : "error" );
+	
+	if ( typeof asserts !== "undefined" ) {
+		asserts.push( !!pass );
+	}
+	
+	return !!pass;
+};
+
+var isEqual = function( a, b, msg, type ) {
 	log( msg, a === b ? "pass" : "error" );
 	
 	if ( typeof asserts !== "undefined" ) {
 		asserts.push( a === b );
 	}
+	
+	return a === b;
 };
