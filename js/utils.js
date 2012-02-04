@@ -219,16 +219,6 @@ var test = function( name, fn ) {
 	tests.push({ name: name, fn: fn });
 };
 
-/*
- * testIO([
- *   { print: "Strict equals." },
- *   { print: /RegExp equals/i },
- *   { print: true }, // Any print statement will do
- *   { input: "Input string" },
- *   { inputNumber: Number }, // Inputs a number
- * ]);
- */
-
 var testIO = function( name, test ) {
 	if ( !test ) {
 		test = name;
@@ -254,7 +244,7 @@ var runTests = function( userCode, curProblem ) {
 		
 		ioTests = test.tests || null;
 		
-		runCode( (test.fn ? "(" + test.fn + ")();\n" : "") + userCode );
+		runCode( userCode + (test.fn ? "\n(" + test.fn + ")();\n" : "") );
 	})( tests[i] );
 	
 	var total = asserts.length,
@@ -313,6 +303,9 @@ var print = function( msg ) {
 				
 			} else if ( typeof curTest.print === "string" ) {
 				pass = msg === curTest.print;
+			
+			} else if ( typeof curTest.print === "function" ) {
+				pass = !!curTest.print( msg );
 				
 			} else if ( typeof curTest.print === "object" ) {
 				pass = curTest.print.test( msg );
@@ -340,7 +333,9 @@ var showInput = function( msg ) {
 		var curTest = ioTests[0];
 		
 		if ( curTest.input != null ) {
-			input = curTest.input.toString();
+			input = (typeof curTest.input === "function" ?
+				curTest.input() :
+				curTest.input).toString();
 			
 			assert( true, "'" + input + "' was put in an input." );
 			
