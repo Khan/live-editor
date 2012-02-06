@@ -193,8 +193,8 @@ $(document).delegate( "#output form", "submit", function() {
 		.after( clean( val ) )
 		.remove();
 
-	if ( window.doResume ) {
-		window.doResume( val );
+	if ( window.waitInput ) {
+		window.waitInput( val );
 	}
 
 	return false;
@@ -207,7 +207,11 @@ var clean = function( str ) {
 var outputs = [],
 	tests = [],
 	asserts = [],
-	ioTests,
+	waitTest,
+	waitTestPrint,
+	waitTestInput,
+	waitInput,
+	toInput,
 	testMode = false;
 	
 var test = function( name, fn ) {
@@ -219,17 +223,29 @@ var test = function( name, fn ) {
 	tests.push({ name: name, fn: fn });
 };
 
-var testIO = function( name, test ) {
-	if ( !test ) {
-		test = name;
-		name = "Test Case";
+var resumeTest = function() {
+	if ( window.waitTest ) {
+		var doResume = window.waitTest;
+		window.waitTest = undefined;
+		doResume();
+	}
+};
+
+var finalResumeTest = function() {
+	if ( window.waitTestInput ) {
+		window.waitTestInput = undefined;
+		assert( false, "An expected input() was not found." );
 	}
 	
-	tests.push({ name: name, tests: test });
+	if ( window.waitTestPrint ) {
+		window.waitTestPrint = undefined;
+		assert( false, "An expected print() call was not found." );
+	}
 };
 
 var runTests = function( userCode, curProblem ) {
 	testMode = true;
+	tests = [];
 	
 	// Prime the test queue
 	// TODO: Should we check to see if no test() prime exists?
@@ -242,9 +258,12 @@ var runTests = function( userCode, curProblem ) {
 		
 		$("#results .desc").append( "<fieldset><legend>" + test.name + "</legend><ul></ul></fieldset>" );
 		
-		ioTests = test.tests || null;
+		if ( test.fn ) {
+			runCode( "waitfor() { window.waitTest = resume; } (" + test.fn + ")();" );
+		}
 		
-		runCode( userCode + (test.fn ? "\n(" + test.fn + ")();\n" : "") );
+		runCode( userCode + "\nif ( window.waitTest ) { (" + test.fn +
+			")(); window.waitTest = undefined; } finalResumeTest();" );
 	})( tests[i] );
 	
 	var total = asserts.length,
@@ -274,6 +293,38 @@ var runTests = function( userCode, curProblem ) {
 	testMode = false;
 };
 
+var print = function( msg ) {
+	resumeTest();
+	
+	var output = $("#output");
+	
+	output.append( "<div>" + clean( msg ) + "</div>" );
+	output.scrollTop( output[0].scrollHeight );
+	
+	outputs.push( msg );
+	
+	if ( window.waitTestPrint ) {
+		var doResume = window.waitTestPrint;
+		window.waitTestPrint = undefined
+		doResume( msg );
+	}
+};
+
+var showInput = function( msg ) {
+	focusOutput();
+	
+	var output = $("#output");
+	
+	output.append( "<div>" + clean( msg ) + " " +
+		( window.toInput != null ?
+			window.toInput :
+			"<form><input type='text'/> <input type='submit' value='Enter'/></form></div>" ) );
+	
+	output.scrollTop( output[0].scrollHeight );
+
+	output.find("input[type='text']").last().focus();
+};
+
 var clear = function() {
 	$("#output").empty();
 	outputs = [];
@@ -282,80 +333,6 @@ var clear = function() {
 var focusOutput = function() {
 	$("#output-nav").removeClass( "ui-state-disabled" );
 	$("#editor-box-tabs").tabs( "select", 1 );
-};
-
-var print = function( msg ) {
-	var output = $("#output");
-	
-	output.append( "<div>" + clean( msg ) + "</div>" );
-	output.scrollTop( output[0].scrollHeight );
-	
-	outputs.push( msg );
-	
-	if ( testMode && ioTests && ioTests.length > 0 ) {
-		var curTest = ioTests[0];
-		
-		if ( curTest.print != null ) {
-			var pass = false;
-			
-			if ( curTest.print === true ) {
-				pass = true;
-				
-			} else if ( typeof curTest.print === "string" ) {
-				pass = msg === curTest.print;
-			
-			} else if ( typeof curTest.print === "function" ) {
-				pass = !!curTest.print( msg );
-				
-			} else if ( typeof curTest.print === "object" ) {
-				pass = curTest.print.test( msg );
-			}
-			
-			assert( pass, pass ?
-				"'" + msg + "' was printed out correctly." :
-				"'" + msg + "' does not match the expected statement." );
-			
-			ioTests.shift();
-			
-		} else {
-			assert( false, "Unexpected print statement." );
-		}
-	}
-};
-
-var showInput = function( msg ) {
-	focusOutput();
-	
-	var output = $("#output"),
-		input;
-	
-	if ( testMode && ioTests && ioTests.length > 0 ) {
-		var curTest = ioTests[0];
-		
-		if ( curTest.input != null ) {
-			input = (typeof curTest.input === "function" ?
-				curTest.input() :
-				curTest.input).toString();
-			
-			assert( true, "'" + input + "' was put in an input." );
-			
-			ioTests.shift();
-			
-		} else {
-			assert( false, "Unexpected input statement." );
-		}
-	}
-	
-	output.append( "<div>" + clean( msg ) + " " +
-		( input != null ?
-			input :
-			"<form><input type='text'/> <input type='submit' value='Enter'/></form></div>" ) );
-	
-	output.scrollTop( output[0].scrollHeight );
-
-	output.find("input[type='text']").last().focus();
-	
-	return input;
 };
 
 var assertIcons = {

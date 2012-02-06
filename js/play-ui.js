@@ -422,10 +422,11 @@ var showProblem = function( problem ) {
 	
 	$("#next-problem-desc").toggle( !!problem.done );
 	
+	$("#editor-box-tabs").tabs( "select", 0 );
+	$("#output-nav").addClass( "ui-state-disabled" );
+	
 	$("#next-problem").toggleClass( "ui-state-disabled", 
 		Exercise.problems.indexOf( curProblem ) + 1 >= Exercise.problems.length );
-	
-	//$("#exercise-tabs .ui-state-active").removeClass( "ui-state-active" );
 	
 	textProblem();
 	
