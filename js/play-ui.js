@@ -210,7 +210,8 @@ $(function(){
 	$("#run-code").bind( "buttonClick", function() {
 		var userCode = $("#editor").editorText(),
 			validate = curProblem.validate,
-			pass = JSHINT( "/*global input:false, print:false*/\n" + userCode ),
+			// TODO: Generate this list dynamically
+			pass = JSHINT( "/*global input:false, inputNumber:false, print:false*/\n" + userCode ),
 			hintData = JSHINT.data(),
 			session = $("#editor").data( "editor" ).editor.getSession();
 		
