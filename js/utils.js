@@ -201,7 +201,7 @@ $(document).delegate( "#output form", "submit", function() {
 });
 
 var clean = function( str ) {
-	return str.replace( /</g, "&lt;" );
+	return String( str ).replace( /</g, "&lt;" );
 };
 
 var outputs = [],
