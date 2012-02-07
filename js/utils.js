@@ -258,12 +258,13 @@ var runTests = function( userCode, curProblem ) {
 		
 		$("#results .desc").append( "<fieldset><legend>" + test.name + "</legend><ul></ul></fieldset>" );
 		
-		if ( test.fn ) {
-			runCode( "waitfor() { window.waitTest = resume; } (" + test.fn + ")();" );
-		}
+		// Load up the IO tests
+		runCode( "waitfor() { window.waitTest = resume; } tests[" + i + "].fn();" );
 		
-		runCode( userCode + "\nif ( window.waitTest ) { (" + test.fn +
-			")(); window.waitTest = undefined; } finalResumeTest();" );
+		// Then run the code with the post-tests
+		// only run them if there were no IO tests
+		runCode( userCode + "\nif ( window.waitTest ) { tests[" + i + "].fn(); " +
+			"window.waitTest = undefined; } finalResumeTest();" );
 	})( tests[i] );
 	
 	var total = asserts.length,
