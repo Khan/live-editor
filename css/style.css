@@ -433,6 +433,10 @@ div#exercise-page {
 	right: 0px;
 }
 
+#exercise-page #tests textarea {
+	margin-bottom: 10px;
+}
+
 #exercise-page .editor-form {
 	margin-right: 315px;
 	display: block;

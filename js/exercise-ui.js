@@ -62,9 +62,12 @@ $(function() {
 		content.prev( ".ui-accordion-header" ).remove();
 		content.remove();
 		
+		curProblem = Exercise.problems[ pos - 1 ] || null;
+		resetProblem( curProblem );
+		
 		$("#tests")
 			.accordion( "destroy" )
-			.accordion({ collapsible: true, active: Exercise.problems[ pos - 1 ] ? pos : 0 });
+			.accordion({ collapsible: true, active: curProblem ? pos : 0 });
 		
 		if ( Exercise.problems.length <= 1 ) {
 			$("#reorder-problems").addClass( "ui-state-disabled" );
@@ -84,6 +87,8 @@ $(function() {
 		dragging = !dragging;
 		
 		if ( dragging ) {
+			$("#add-problem").addClass( "ui-state-disabled" );
+			
 			$(this).find( ".ui-button-text" ).text( "Finish Re-ordering" ).end();
 			
 			exerciseName = $("#tests h3.exercise-name").next().andSelf().detach();
@@ -98,6 +103,8 @@ $(function() {
 				});
 			
 		} else {
+			$("#add-problem").removeClass( "ui-state-disabled" );
+			
 			$(this).find( ".ui-button-text" ).text( "Re-order Problems" ).end();
 			
 			$("#tests h3")
