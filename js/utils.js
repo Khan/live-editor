@@ -263,8 +263,14 @@ var runTests = function( userCode, curProblem ) {
 		
 		// Then run the code with the post-tests
 		// only run them if there were no IO tests
-		runCode( userCode + "\nif ( window.waitTest ) { tests[" + i + "].fn(); " +
-			"window.waitTest = undefined; } finalResumeTest();" );
+		// This code is very much not ideal - but I'm trying to keep the closure
+		// on the test and the scope to the user's variables as well. SIGH
+		runCode( userCode + "\nif ( window.waitTest ) { (function(){ tests = [];\n" +
+			curProblem.validate + "\n})(); tests[" + i + "].fn(); }" );
+		
+		window.waitTest = undefined;
+			
+		finalResumeTest();
 	})( tests[i] );
 	
 	var total = asserts.length,
