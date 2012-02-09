@@ -31,17 +31,7 @@ $(function() {
 			.find( ".ui-button-text" ).text( "Saving..." ).end();
 		
 		saveExercise(function( exerciseData ) {
-			var problemPos = Exercise.problems.indexOf( curProblem );
-			
 			Exercise = exerciseData;
-			
-			if ( problemPos >= 0 ) {
-				curProblem = Exercise.problems[ problemPos ];
-				
-				$(".ui-accordion h3").slice(1).each(function( i ) {
-					$(this).data( "problem", Exercise.problems[ i ] );
-				});
-			}
 			
 			save
 				.removeClass( "ui-state-disabled" )
@@ -62,8 +52,8 @@ $(function() {
 		content.prev( ".ui-accordion-header" ).remove();
 		content.remove();
 		
-		curProblem = Exercise.problems[ pos - 1 ] || null;
-		resetProblem( curProblem );
+		curProblem = pos > 0 ? pos - 1 : null;
+		resetProblem();
 		
 		$("#tests")
 			.accordion( "destroy" )
@@ -76,7 +66,7 @@ $(function() {
 		return false;
 		
 	}).delegate(".set-cursor", "buttonClick", function() {
-		$("#start-code").extractCursor( curProblem );
+		$("#start-code").extractCursor( Exercise.problems[ curProblem ] );
 	});
 	
 	$("#reorder-problems").bind( "buttonClick", function() {
@@ -130,10 +120,19 @@ $(function() {
 		items: "> h3",
 		axis: "y",
 		stop: function() {
+			var newProblems = [];
+			
+			$("#tests h3").each(function() {
+				var num = $(this).data( "problem" ),
+					newNum = newProblems.length;
+				
+				newProblems[ newNum ] = Exercise.problems[ num ];
+				
+				$(this).data( "problem", newNum );
+			})
+			
 			// Persist changes to problem reordering
-			Exercise.problems = $("#tests h3").map(function() {
-				return $(this).data( "problem" );
-			}).get();
+			Exercise.problems = newProblems;
 		}
 	});
 	
@@ -142,23 +141,17 @@ $(function() {
 			newProblem = ui.newHeader.data( "problem" );
 		
 		// Save entered data
-		if ( oldProblem && !oldProblem.problems ) {
-			extractProblem( oldProblem );
-		}
+		extractProblem();
 		
 		// Load new data
-		if ( newProblem && !newProblem.problems ) {
-			curProblem = newProblem;
-			resetProblem( curProblem );
+		curProblem = newProblem != null ? newProblem : null;
+		resetProblem();
 		
-		} else {
-			curProblem = null;
-			resetProblem( null );
-		}
 	}).change(function( e ) {
-		var elem = e.target;
+		var elem = e.target,
+			problem = curProblem != null ? Exercise.problems[ curProblem ] : Exercise;
 		
-		(curProblem || Exercise)[ elem.name ] = elem.value;
+		problem[ elem.name ] = elem.value;
 		
 		if ( elem.name === "title" ) {
 			$("#tests h3.ui-state-active a").html( elem.value || "&nbsp;" );
@@ -178,14 +171,18 @@ $(function() {
 					editorElem.data( "editor", editor );
 				}
 
-				if ( editors[ id ] ) {
-					editorElem.editorText( curProblem && curProblem[ editors[ editorElem[0].id ] ] || "" );
+				if ( curProblem != null ) {
+					var problem = Exercise.problems[ curProblem ];
+					
+					if ( editors[ id ] ) {
+						editorElem.editorText( problem[ editors[ id ] ] || "" );
+					}
+				
+					$("#start-code").setCursor( problem );
+				
+					// Save the editor when switching tabs
+					extractProblem();
 				}
-				
-				$("#start-code").setCursor( curProblem );
-				
-				// Save the editor when switching tabs
-				extractProblem( curProblem );
 			}
 		}
 	});
@@ -193,7 +190,7 @@ $(function() {
 	$("#hints").sortable({
 		axis: "y",
 		stop: function() {
-			extractProblem( curProblem );
+			extractProblem();
 		}
 	});
 	
@@ -203,12 +200,12 @@ $(function() {
 			.appendTo( "#hints" )
 			.find( "input" ).focus();
 		
-		extractProblem( curProblem );
+		extractProblem();
 		
 	}).delegate(".remove-hint", "buttonClick", function() {
 		$(this).parents(".hint").remove();
 		
-		extractProblem( curProblem );
+		extractProblem();
 	});
 	
 	$(".editor-form").submit( false );
@@ -238,14 +235,16 @@ var confirmSave = function( callback ) {
 var createNewExercise = function( data ) {
 	Exercise = data || { title: "Exercise Name", desc: "", problems: [] };
 	
+	curProblem = null;
+	
 	// Reset visual view
 	$("#tests").empty();
-	resetProblem( null );
+	resetProblem();
 	
-	insertExerciseForm( Exercise );
+	insertExerciseForm();
 	
 	for ( var i = 0; i < Exercise.problems.length; i++ ) {
-		insertExerciseForm( Exercise.problems[i], ":first" );
+		insertExerciseForm( i, ":first" );
 	}
 	
 	$("#save, #add-problem").removeClass( "ui-state-disabled" );
@@ -256,23 +255,32 @@ var makeProblem = function() {
 		var problem = { title: "Problem #" + (Exercise.problems.length + 1), desc: "" };
 		Exercise.problems.push( problem );
 	
-		extractProblem( curProblem );
+		// Extract the old problem
+		extractProblem();
 	
-		curProblem = problem;
+		// Create the new problem
+		curProblem = Exercise.problems.length - 1;
 	
 		insertExerciseForm( curProblem );
-		resetProblem( curProblem );
+		resetProblem();
 	}
 };
 
-var insertExerciseForm = function( testObj, pos ) {
+var insertExerciseForm = function( num, pos ) {
+	var testObj = num != null ?
+		Exercise.problems[ num ] :
+		Exercise;
+	
 	var exercise = $( $("#form-tmpl").html() )
 		.buttonize()
-		.filter( "h3" ).data( "problem", testObj ).end()
 		.find( "a.name" ).text( testObj.title || "" ).end()
 		.find( "input[name='title']" ).val( testObj.title || "" ).end()
 		.find( "textarea[name='desc']" ).val( testObj.desc || "" ).end()
 		.appendTo( "#tests" );
+	
+	if ( num != null ) {
+		exercise.filter( "h3" ).data( "problem", num );
+	}
 	
 	if ( testObj.problems ) {		
 		exercise
@@ -287,8 +295,10 @@ var insertExerciseForm = function( testObj, pos ) {
 	exercise.find("input[name='title']").select().focus();
 };
 
-var extractProblem = function( testObj ) {
-	if ( testObj ) {
+var extractProblem = function() {
+	if ( curProblem != null ) {
+		var testObj = Exercise.problems[ curProblem ];
+		
 		for ( var editor in editors ) {
 			var val = $("#" + editor).editorText();
 		
@@ -305,7 +315,11 @@ var extractProblem = function( testObj ) {
 	}
 };
 
-var resetProblem = function( testObj ) {
+var resetProblem = function() {
+	var testObj = curProblem != null ?
+		Exercise.problems[ curProblem ] :
+		null;
+	
 	$("#overlay").toggle( !testObj || !!testObj.problems );
 	
 	if ( Exercise.problems.length > 1 ) {
