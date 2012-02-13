@@ -5,7 +5,6 @@ var Exercise,
 	curProblem,
 	errors,
 	curError,
-	viewingTests = false,
 	curPosition;
 
 $(function(){
@@ -162,37 +161,7 @@ $(function(){
 		}
 	});
 	
-	$("#view-tests, #view-tests-2").bind( "buttonClick", function() {
-		var editor = $("#editor").data("editor").editor;
-		
-		if ( !viewingTests ) {
-			leaveProblem();
-		}
-		
-		editor.setReadOnly( !viewingTests );
-		editor.setHighlightActiveLine( !viewingTests );
-		
-		if ( viewingTests ) {
-			textProblem();
-			
-		} else {
-			$("#editor").editorText( curProblem.validate );
-		}
-		
-		$("#view-tests-2").css( "display", viewingTests ? "none" : "inline-block" );
-		
-		$("#view-tests")
-			.find( ".ui-icon" ).toggleClass( "ui-icon-circle-check ui-icon-carat-1-w" ).end()
-			.find( ".ui-button-text" ).text( viewingTests ? "Tests" : "Back to Your Code" );
-		
-		viewingTests = !viewingTests;
-	});
-	
-	$("#results ul").delegate( "a", "click", function() {
-		if ( !viewingTests ) {
-			$("#view-tests").click();
-		}
-		
+	$("#results ul").delegate( "a", "click", function() {		
 		var editor = $("#editor").data("editor").editor,
 			search = editor.$search;
 		
@@ -292,10 +261,27 @@ $(function(){
 	});
 	
 	$("#editor-box-tabs")
-		.tabs()
+		.tabs({
+			show: function( e, ui ) {
+				// If we're loading the tests tab
+				if ( ui.panel.id === "tests-box" ) {
+					var editor = $("#tests-editor").data( "editor" );
+					
+					if ( !editor ) {
+						editor = new Editor( "tests-editor" );
+						$("#tests-editor").data( "editor", editor );
+						
+						editor.editor.setReadOnly( true );
+						editor.editor.setHighlightActiveLine( true );
+					}
+					
+					$("#tests-editor").editorText( curProblem.validate );
+				}
+			}
+		})
 		.removeClass( "ui-widget ui-widget-content ui-corner-all" );
 	
-	$("#editor-box")
+	$("#editor-box, #tests-box")
 		.removeClass( "ui-tabs-panel ui-corner-bottom" );
 	
 	$("#output")
@@ -409,11 +395,7 @@ var textProblem = function() {
 	}
 };
 
-var showProblem = function( problem ) {
-	if ( viewingTests ) {
-		$("#view-tests").click();
-	}
-	
+var showProblem = function( problem ) {	
 	leaveProblem();
 	
 	curProblem = problem;
@@ -425,6 +407,7 @@ var showProblem = function( problem ) {
 	
 	$("#editor-box-tabs").tabs( "select", 0 );
 	$("#output-nav").addClass( "ui-state-disabled" );
+	$("#tests-nav").toggleClass( "ui-state-disabled",  !problem.validate );
 	
 	$("#next-problem").toggleClass( "ui-state-disabled", 
 		Exercise.problems.indexOf( curProblem ) + 1 >= Exercise.problems.length );
@@ -435,7 +418,6 @@ var showProblem = function( problem ) {
 		.find( ".title" ).text( problem.title || "" ).end()
 		.find( ".text" ).html( (problem.desc || "").replace( /\n/g, "<br>" ) ).end();
 	
-	$("#view-tests").toggleClass( "ui-state-disabled", !problem.validate );
 	$("#get-hint").toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) );
 	
 	$("#hint").hide();

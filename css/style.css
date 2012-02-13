@@ -4,7 +4,7 @@ body {
 	font-size: 12px;
 }
 
-#canvas-editor, #editor, #canvas, #play-overlay {
+#canvas-editor, #editor, #canvas, #play-overlay, #tests-editor {
 	position: relative;
 	width: 640px;
 	height: 360px;
@@ -22,7 +22,7 @@ body {
 	opacity: 0.3;
 }
 
-#editor {
+#editor, #tests-editor {
 	z-index: 2;
 	background: #FFF;
 }
@@ -41,12 +41,16 @@ body {
 	z-index: 1;
 }
 
-#editor-box {
+#editor-box, #tests-box {
 	overflow: hidden;
 	position: absolute;
 	border-bottom: none;
 	top: 0px;
 	left: 0px;
+}
+
+#tests-editor {
+	height: 393px;
 }
 
 #editor-box-tabs-nav {
@@ -146,20 +150,20 @@ a.ui-button:visited:hover {
 	color: #FFF;
 }
 
-#editor .ace_gutter {
+#editor .ace_gutter, #tests-editor .ace_gutter {
 	background: #F5F3E5; /*#D7EBF9;*/
 	width: 50px;
 }
 
-#editor .ace_scroller {
+#editor .ace_scroller, #tests-editor .ace_scroller {
 	overflow-x: auto;
 }
 
-#editor .ace_sb {
+#editor .ace_sb, #tests-editor .ace_sb {
 	overflow-y: auto;
 }
 
-#editor .ace_active_line {
+#editor .ace_active_line, #tests-editor .ace_active_line {
 	background: rgba(215, 235, 249, 0.5);
 }
 
