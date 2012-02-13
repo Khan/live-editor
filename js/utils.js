@@ -223,6 +223,12 @@ var test = function( name, fn ) {
 	tests.push({ name: name, fn: fn });
 };
 
+var testIO = function() {
+	test.call( this, arguments );
+	
+	tests[ tests.length - 1 ].io = true;
+};
+
 var resumeTest = function() {
 	if ( window.waitTest ) {
 		var doResume = window.waitTest;
@@ -258,15 +264,25 @@ var runTests = function( userCode, curProblem ) {
 		
 		$("#results .desc").append( "<fieldset><legend>" + test.name + "</legend><ul></ul></fieldset>" );
 		
-		// Load up the IO tests
-		runCode( "waitfor() { window.waitTest = resume; } tests[" + i + "].fn();" );
+		// TODO: Have all tests run after user's code has been defined
+		// Will need to force input/print statements to block during testMode
 		
-		// Then run the code with the post-tests
-		// only run them if there were no IO tests
-		// This code is very much not ideal - but I'm trying to keep the closure
-		// on the test and the scope to the user's variables as well. SIGH
-		runCode( userCode + "\nif ( window.waitTest ) { (function(){ tests = [];\n" +
-			curProblem.validate + "\n})(); tests[" + i + "].fn(); }" );
+		// We're doing an IO test
+		if ( tests[i].io ) {
+			// Load up the IO tests
+			runCode( "waitfor() { window.waitTest = resume; } tests[" + i + "].fn();" );
+			
+			// Then run the user's code
+			runCode( userCode );
+		
+		// Otherwise we're just running a normal test
+		} else {
+			// We need to maintain the closure so we have to re-initialize the tests
+			// and then run the current one. Definitely not ideal.
+			runCode( userCode +
+				"\n(function(){ tests = [];\n" +
+				curProblem.validate + "\n})(); tests[" + i + "].fn();" );
+		}
 		
 		window.waitTest = undefined;
 			
