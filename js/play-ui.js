@@ -311,7 +311,7 @@ $(function(){
 var showHint = function() {
 	$("#hint")
 		.find( "strong" ).text( "Hint #" + (curHint + 1) + ":" ).end()
-		.find( ".text" ).text( curProblem.hints[ curHint ] || "" ).end()
+		.find( ".text" ).html( curProblem.hints[ curHint ] || "" ).end()
 		.find( "a.prev" ).toggleClass( "ui-state-disabled", curHint === 0 ).end()
 		.find( "a.next" ).toggleClass( "ui-state-disabled", curHint + 1 === curProblem.hints.length );
 };
