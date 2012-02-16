@@ -425,7 +425,9 @@ var showProblem = function( problem ) {
 	
 	$("#get-hint").toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) );
 	
-	$("#hint").hide();
+	$("#hint, #error").hide();
+	
+	session.clearAnnotations();
 };
 
 var insertExercise = function( testObj ) {
