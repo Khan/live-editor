@@ -173,16 +173,21 @@ var connectAudio = function( callback ) {
 };
 
 var runCode = function( code, context ) {
-	// TODO: Try/Catch this and complain
-	
-	if ( typeof apollo !== "undefined" ) {
-		apollo.eval( "(function(){" + code + "})();" );
+	try {
+		if ( typeof apollo !== "undefined" ) {
+			apollo.eval( "(function(){" + code + "})();" );
 		
-	} else {
-		var fn = new Function( code );
-		//var fn = new Function( "with(__context__) {\n" + code + "\n}", "__context__" );
-	
-		fn( context );
+		} else {
+			(new Function( code ))();
+		}
+		
+	} catch( e ) {
+		errors.push({
+            row: 0,
+            column: 0,
+            text: e.message,
+            type: "error"
+        });
 	}
 };
 
@@ -220,7 +225,25 @@ var test = function( name, fn ) {
 		name = "Test Case";
 	}
 	
-	tests.push({ name: name, fn: fn });
+	tests.push({
+		name: name,
+		
+		fn: function() {
+			try {
+				fn.apply( this, arguments );
+				
+			} catch( e ) {
+				errors.push({
+		            row: 0,
+		            column: 0,
+		            text: e.message,
+		            type: "error"
+		        });
+		
+				assert( false, "Error: " + e.message );
+			}
+		}
+	});
 };
 
 var testIO = function() {
@@ -369,8 +392,8 @@ var log = function( msg, type ) {
 	
 	$("#results ul").last().append(
 		"<li class='" + type + "'><span class='ui-icon ui-icon-" +
-		assertIcons[ type ] + "'></span> <span class='msg'><a href=''>" +
-		clean( msg ) + "</a></span></li>"
+		assertIcons[ type ] + "'></span> <span class='msg'>" +
+		clean( msg ) + "</span></li>"
 	);
 };
 

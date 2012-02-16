@@ -191,7 +191,11 @@ $(function(){
 		
 		session.clearAnnotations();
 		
-		if ( pass & !hintData.implieds ) {
+		errors = [];
+		
+		var doRunTests = !!(pass && !hintData.implieds);
+		
+		if ( doRunTests ) {
 			$("#show-errors").addClass( "ui-state-disabled" );
 			$("#error").fadeOut( 300 );
 			
@@ -205,11 +209,10 @@ $(function(){
 			if ( outputs.length > 0 ) {
 				focusOutput();
 			}
-			
-		} else {
+		}
+		
+		if ( !doRunTests || errors.length ) {
 			$("#show-errors").removeClass( "ui-state-disabled" );
-			
-			errors = [];
 			
 	        for ( var i = 0; i < JSHINT.errors.length; i++ ) {
 	            var error = JSHINT.errors[ i ];
@@ -255,7 +258,9 @@ $(function(){
 			if ( !$("#error").is(":visible") ) {
 				$("#show-errors").click();
 			
-				$("#results").fadeOut( 400 );
+				if ( !doRunTests ) {
+					$("#results").fadeOut( 400 );
+				}
 			}
 		}
 	});
