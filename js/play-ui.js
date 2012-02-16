@@ -427,6 +427,7 @@ var showProblem = function( problem ) {
 	
 	$("#hint, #error").hide();
 	
+	var session = $("#editor").data( "editor" ).editor.getSession();
 	session.clearAnnotations();
 };
 
