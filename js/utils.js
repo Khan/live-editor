@@ -224,7 +224,7 @@ var test = function( name, fn ) {
 };
 
 var testIO = function() {
-	test.call( this, arguments );
+	test.apply( this, arguments );
 	
 	tests[ tests.length - 1 ].io = true;
 };
