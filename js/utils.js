@@ -22,6 +22,77 @@ $(document).delegate( ".ui-button", {
 	}
 });
 
+$(document).delegate( ".tipbar .close", "click", function() {
+	hideTip();
+
+	return false;
+});
+
+$(document).delegate( ".tipbar .tipnav a", "click", function() {
+	if ( !$(this).hasClass( "ui-state-disabled" ) ) {
+		tipData.pos += $(this).hasClass( "next" ) ? 1 : -1;
+		showTip();
+	}
+	
+	return false;
+});
+
+var tipData = {
+	pos: 0
+};
+
+var showTip = function( type, texts, callback ) {
+	type = type || tipData.cur;
+	
+	if ( texts ) {
+		tipData.pos = 0;
+		tipData[ type ] = texts;
+		tipData.callback = callback;
+	}
+	
+	tipData.cur = type;
+	texts = texts || tipData[ type ];
+	
+	var pos = tipData.pos,
+		bar = $("#tipbar")
+		.attr( "class", "tipbar ui-state-hover " + type.toLowerCase() )
+		
+		// Inject current text
+		.find( "strong" ).text( type + " #" + (pos + 1) + ":" ).end()
+		.find( ".text" ).html( texts[ pos ].text || texts[ pos ] || "" ).end()
+		.find( "a.prev" ).toggleClass( "ui-state-disabled", pos === 0 ).end()
+		.find( "a.next" ).toggleClass( "ui-state-disabled", pos + 1 === texts.length ).end();
+	
+	// Only animate the bar in if it's not visible
+	if ( !bar.is(":visible") ) {
+		bar
+			.css({ bottom: -30, opacity: 0.1 })
+			.show()
+			.animate({ bottom: 38, opacity: 1.0 }, 300 );
+	}
+	
+	if ( tipData.callback ) {
+		tipData.callback( texts[ pos ] );
+	}
+};
+
+var hideTip = function( type ) {
+	if ( !type || type === tipData.cur ) {
+		$("#tipbar").animate({ bottom: -30, opacity: 0.1 }, 300, function() {
+			$(this).hide();
+		});
+	}
+};
+
+var toggleTip = function( type, texts, callback ) {
+	if ( !$("#tipbar").is(":visible") || tipData.cur !== type ) {
+		showTip( type, texts, callback );
+		
+	} else {
+		hideTip();
+	}
+};
+
 jQuery.fn.buttonize = function() {
 	return this.find(".ui-button")
 		.addClass( "ui-widget ui-state-default ui-corner-all" )
@@ -63,14 +134,20 @@ jQuery.fn.extractCursor = function( testObj ) {
 };
 
 jQuery.fn.setCursor = function( testObj ) {
-	if ( testObj && testObj.cursorRow != null ) {
+	if ( testObj && (testObj.cursorRow != null || testObj.row != null) ) {
 		var editor = this.data( "editor" ).editor;
+		
 		editor.moveCursorToPosition({
-			row: testObj.cursorRow, column: testObj.cursorColumn
+			row: testObj.cursorRow || testObj.row, column: testObj.cursorColumn || testObj.column
 		});
+		
 		editor.clearSelection();
 		editor.focus();
 	}
+};
+
+var setCursor = function( testObj ) {
+	$("#editor").setCursor( testObj );
 };
 
 var formatTime = function( seconds ) {

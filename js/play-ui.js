@@ -1,10 +1,8 @@
 var Exercise,
 	player,
 	track,
-	curHint,
 	curProblem,
 	errors,
-	curError,
 	curPosition;
 
 $(function(){
@@ -82,75 +80,11 @@ $(function(){
 	});
 	
 	$("#get-hint").bind( "buttonClick", function() {
-		if ( !$("#hint").is(":visible") ) {
-			showHint();
-			
-			$("#error").fadeOut( 300 );
-		
-			$("#hint")
-				.addClass( "ui-state-hover" )
-				.css({ bottom: -30, opacity: 0.1 })
-				.show()
-				.animate({ bottom: 38, opacity: 1.0 }, 300 );
-			
-		} else {
-			$("#hint .close").click();
-		}
+		toggleTip( "Hint", curProblem.hints );
 	});
 	
 	$("#show-errors").bind( "buttonClick", function() {
-		if ( !$("#error").is(":visible") ) {
-			showError();
-			
-			$("#hint").fadeOut( 300 );
-		
-			$("#error")
-				.addClass( "ui-state-hover" )
-				.css({ bottom: -30, opacity: 0.1 })
-				.show()
-				.animate({ bottom: 38, opacity: 1.0 }, 300 );
-			
-		} else {
-			$("#error .close").click();
-		}
-	});
-	
-	$(".tipbar .close").click(function() {
-		$(this).parents( ".tipbar" )
-			.animate({ bottom: -30, opacity: 0.1 }, 300, function() {
-				$(this).hide();
-			});
-
-		return false;
-	});
-	
-	$(".tipbar .tipnav a").click(function() {
-		var id = $(this).parents(".tipbar").attr( "id" );
-		
-		if ( !$(this).hasClass( "ui-state-disabled" ) ) {
-			if ( id === "hint" ) {
-				if ( $(this).hasClass( "next" ) ) {
-					curHint += 1;
-		
-				} else {
-					curHint -= 1;
-				}
-		
-				showHint();
-				
-			} else if ( id === "error" ) {
-				if ( $(this).hasClass( "next" ) ) {
-					curError += 1;
-		
-				} else {
-					curError -= 1;
-				}
-		
-				showError();
-			}
-		}
-		
-		return false;
+		toggleTip( "Error", errors, setCursor );
 	});
 	
 	$("#next-problem").bind( "buttonClick", function() {
@@ -197,7 +131,7 @@ $(function(){
 		
 		if ( doRunTests ) {
 			$("#show-errors").addClass( "ui-state-disabled" );
-			$("#error").fadeOut( 300 );
+			hideTip( "Error" );
 			
 			// Run the tests
 			runTests( userCode, curProblem );
@@ -236,7 +170,7 @@ $(function(){
 					
 					for ( var l = 0; l < implied.line.length; l++ ) {
 						errors.push({
-							row: implied.line[l] - 1,
+							row: implied.line[l] - 2,
 							column: 0,
 							text: "Using an undefined variable '" + implied.name + "'.",
 							type: "error",
@@ -252,15 +186,10 @@ $(function(){
 	
 	        session.setAnnotations( errors );
 	
-			curError = 0;
-			showError();
+			showTip( "Error", errors, setCursor );
 			
-			if ( !$("#error").is(":visible") ) {
-				$("#show-errors").click();
-			
-				if ( !doRunTests ) {
-					$("#results").fadeOut( 400 );
-				}
+			if ( !doRunTests ) {
+				$("#results").fadeOut( 400 );
 			}
 		}
 	});
@@ -307,30 +236,6 @@ $(function(){
 		openExerciseDialog( openExercise );
 	}
 });
-
-var showHint = function() {
-	$("#hint")
-		.find( "strong" ).text( "Hint #" + (curHint + 1) + ":" ).end()
-		.find( ".text" ).html( curProblem.hints[ curHint ] || "" ).end()
-		.find( "a.prev" ).toggleClass( "ui-state-disabled", curHint === 0 ).end()
-		.find( "a.next" ).toggleClass( "ui-state-disabled", curHint + 1 === curProblem.hints.length );
-};
-
-var showError = function() {
-	var error = errors[ curError ];
-	
-	$("#error")
-		.find( "strong" ).text( "Error #" + (curError + 1) + ":" ).end()
-		.find( ".text" ).text( error.text || "" ).end()
-		.find( "a.prev" ).toggleClass( "ui-state-disabled", curError === 0 ).end()
-		.find( "a.next" ).toggleClass( "ui-state-disabled", curError + 1 === errors.length );
-	
-	var editor = $("#editor").data( "editor" ).editor;
-	
-	editor.moveCursorTo( error.row, error.column );
-	editor.clearSelection();
-	editor.focus();
-};
 
 var openExercise = function( exercise ) {
 	Exercise = exercise;
@@ -404,7 +309,7 @@ var showProblem = function( problem ) {
 	leaveProblem();
 	
 	curProblem = problem;
-	curHint = 0;
+	errors = [];
 	
 	$("#results").hide();
 	
@@ -425,7 +330,7 @@ var showProblem = function( problem ) {
 	
 	$("#get-hint").toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) );
 	
-	$("#hint, #error").hide();
+	$("#tipbar").hide();
 	
 	var session = $("#editor").data( "editor" ).editor.getSession();
 	session.clearAnnotations();
