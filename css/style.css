@@ -249,6 +249,21 @@ a.ui-button:visited:hover {
 	right: 4px;
 }
 
+#play-page .tipbar form input {
+	margin-top: 8px;
+	margin-bottom: 8px;
+}
+
+#play-page .tipbar form .ui-button {
+	margin-left: 8px;
+}
+
+#play-page .tipbar .status .ui-icon {
+	display: inline-block;
+	position: relative;
+	top: 4px;
+}
+
 #play-page #playbar {
 	display: none;
 }

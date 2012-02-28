@@ -87,6 +87,13 @@ $(function(){
 		toggleTip( "Error", errors, setCursor );
 	});
 	
+	$("#show-question").bind( "buttonClick", function() {
+		showTip( "Question", testAnswers, function() {
+			$(".tipbar").buttonize();
+			$(".tipbar input").first().focus();
+		});
+	});
+	
 	$("#next-problem").bind( "buttonClick", function() {
 		var pos = Exercise.problems.indexOf( curProblem );
 		
@@ -311,13 +318,24 @@ var showProblem = function( problem ) {
 	curProblem = problem;
 	errors = [];
 	
+	tests = [];
+	testAnswers = [];
+	
+	// Prime the test queue
+	// TODO: Should we check to see if no test() prime exists?
+	if ( curProblem.validate ) {
+		runCode( curProblem.validate );
+	}
+	
+	var doAnswer = testAnswers.length > 0;
+	
 	$("#results").hide();
 	
 	$("#next-problem-desc").toggle( !!problem.done );
 	
 	$("#editor-box-tabs").tabs( "select", 0 );
 	$("#output-nav").addClass( "ui-state-disabled" );
-	$("#tests-nav").toggleClass( "ui-state-disabled",  !problem.validate );
+	$("#tests-nav").toggleClass( "ui-state-disabled",  !problem.validate || doAnswer );
 	
 	$("#next-problem").toggleClass( "ui-state-disabled", 
 		Exercise.problems.indexOf( curProblem ) + 1 >= Exercise.problems.length );
@@ -330,7 +348,15 @@ var showProblem = function( problem ) {
 	
 	$("#get-hint").toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) );
 	
-	$("#tipbar").hide();
+	$("#show-errors, #run-code").toggle( !doAnswer );
+	$("#show-question").toggle( doAnswer );
+	
+	if ( doAnswer ) {
+		$("#show-question").trigger( "buttonClick" );
+		
+	} else {
+		$("#tipbar").hide();
+	}
 	
 	var session = $("#editor").data( "editor" ).editor.getSession();
 	session.clearAnnotations();

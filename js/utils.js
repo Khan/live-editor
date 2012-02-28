@@ -2,7 +2,7 @@ var apollo = typeof require !== "undefined" ?
 	require("sjs:apollo-sys") :
 	null;
 
-$(document).delegate( ".ui-button", {
+$(document).delegate( "a.ui-button", {
 	mouseenter: function() {
 		if ( !$(this).hasClass( "ui-state-disabled" ) ) {
 			$(this).addClass( "ui-state-hover" );
@@ -33,6 +33,23 @@ $(document).delegate( ".tipbar .tipnav a", "click", function() {
 		tipData.pos += $(this).hasClass( "next" ) ? 1 : -1;
 		showTip();
 	}
+	
+	return false;
+});
+
+$(document).delegate( ".tipbar form", "submit", function() {
+	var answer = tipData.Question[ tipData.pos ].answer,
+		input = $(this).find("input").first().val();
+	
+	if ( answer === input ) {
+		problemDone();
+	}
+	
+	$(this)
+		.find( ".status" ).remove().end()
+		.append( "<p class='status'><span class='ui-icon ui-icon-circle-" + 
+			(answer === input ? "check" : "close") + "'></span> " +
+			(answer === input ? "Correct! Proceed to the next problem." : "Incorrect, try again or view the hints for help.") + "</p>" );
 	
 	return false;
 });
@@ -292,6 +309,7 @@ var clean = function( str ) {
 
 var outputs = [],
 	tests = [],
+	testAnswers = [],
 	asserts = [],
 	waitTest,
 	waitTestPrint,
@@ -311,7 +329,7 @@ var test = function( name, fn ) {
 		
 		fn: function() {
 			try {
-				fn.apply( this, arguments );
+				return fn.apply( this, arguments );
 				
 			} catch( e ) {
 				errors.push({
@@ -331,6 +349,12 @@ var testIO = function() {
 	test.apply( this, arguments );
 	
 	tests[ tests.length - 1 ].io = true;
+};
+
+var testAnswer = function( name, val ) {
+	testAnswers.push({ answer: val, text: "<form>" + name +
+		"<br/><input type='text'/>" +
+		"<input type='submit' value='Check Answer' class='ui-button'/></form>" });
 };
 
 var resumeTest = function() {
@@ -355,11 +379,6 @@ var finalResumeTest = function() {
 
 var runTests = function( userCode, curProblem ) {
 	testMode = true;
-	tests = [];
-	
-	// Prime the test queue
-	// TODO: Should we check to see if no test() prime exists?
-	runCode( curProblem.validate );
 	
 	asserts = [];
 	
@@ -404,20 +423,24 @@ var runTests = function( userCode, curProblem ) {
 	
 	if ( total > 0 ) {
 		if ( pass === total ) {
-			curProblem.done = true;
-		
-			$("#main-tabs-nav .ui-tabs-selected")
-				.next( "li" ).removeClass( "ui-state-disabled" ).end()
-			 	.addClass( "icon-tab" )
-				.find( "a" ).prepend( "<span class='ui-icon ui-icon-circle-check'></span>" );
-		
-			$("#next-problem-desc").show();
+			problemDone();
 		}
 	
 		$("#results").fadeIn( 400 );
 	}
 	
 	testMode = false;
+};
+
+var problemDone = function() {
+	curProblem.done = true;
+
+	$("#main-tabs-nav .ui-tabs-selected")
+		.next( "li" ).removeClass( "ui-state-disabled" ).end()
+	 	.addClass( "icon-tab" )
+		.find( "a" ).prepend( "<span class='ui-icon ui-icon-circle-check'></span>" );
+
+	$("#next-problem-desc").show();
 };
 
 var print = function( msg ) {
