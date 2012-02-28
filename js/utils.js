@@ -155,7 +155,8 @@ jQuery.fn.setCursor = function( testObj ) {
 		var editor = this.data( "editor" ).editor;
 		
 		editor.moveCursorToPosition({
-			row: testObj.cursorRow || testObj.row, column: testObj.cursorColumn || testObj.column
+			row: testObj.cursorRow || testObj.row || 0,
+			column: testObj.cursorColumn || testObj.column || 0
 		});
 		
 		editor.clearSelection();
