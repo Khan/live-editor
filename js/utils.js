@@ -218,6 +218,8 @@ var problemDone = function() {
 	$("#main-tabs-nav .ui-tabs-selected").markDone();
 
 	$("#next-problem-desc").show();
+	$(".next-problem").show();
+	// TODO: Show next exercise, if applicable
 };
 
 jQuery.fn.markDone = function() {

@@ -88,7 +88,7 @@ $(function(){
 		toggleTip( "Error", errors, setCursor );
 	});
 	
-	$("#next-problem").bind( "buttonClick", function() {
+	$(document).delegate( ".next-problem", "buttonClick", function() {
 		var pos = Exercise.problems.indexOf( curProblem );
 		
 		if ( pos + 1 < Exercise.problems.length ) {
@@ -406,13 +406,12 @@ var showProblem = function( problem ) {
 	$("#results").hide();
 	
 	$("#next-problem-desc").toggle( !!problem.done );
+	$(".next-problem").toggle( !!problem.done );
+	// TODO: Have a next exercise button
 	
 	$("#editor-box-tabs").tabs( "select", 0 );
 	$("#output-nav").addClass( "ui-state-disabled" );
 	$("#tests-nav").toggleClass( "ui-state-disabled",  !problem.validate || doAnswer );
-	
-	$("#next-problem").toggleClass( "ui-state-disabled", 
-		Exercise.problems.indexOf( curProblem ) + 1 >= Exercise.problems.length );
 	
 	textProblem();
 	
