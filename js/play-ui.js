@@ -3,7 +3,8 @@ var Exercise,
 	track,
 	curProblem,
 	errors,
-	curPosition;
+	curPosition,
+	DEBUG = false;
 
 $(function(){
 	// Start the editor and canvas drawing area
@@ -237,7 +238,15 @@ $(function(){
 			.addClass( "ui-corner-bottom" );
 	
 	if ( window.location.search ) {
-		getExercise( window.location.search.slice(1), openExercise );
+		var parts = window.location.search.slice(1).split( "&" );
+		
+		for ( var i = 0; i < parts.length; i++ ) {
+			if ( parts[i] === "debug" ) {
+				DEBUG = true;
+			}
+		}
+		
+		getExercise( parts[0], openExercise );
 		
 	} else {
 		openExerciseDialog( openExercise );
@@ -285,7 +294,7 @@ var openExercise = function( exercise ) {
 		.removeClass( "ui-widget-content" )
 		.find( "#main-tabs-nav" )
 			.removeClass( "ui-corner-all" ).addClass( "ui-corner-top" )
-			.find( "li:not(.ui-state-active)" ).addClass( "ui-state-disabled" ).end()
+			.find( "li:not(.ui-state-active)" ).addClass( DEBUG ? "" : "ui-state-disabled" ).end()
 		.end();
 	
 	startExercise();
