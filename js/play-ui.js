@@ -88,13 +88,6 @@ $(function(){
 		toggleTip( "Error", errors, setCursor );
 	});
 	
-	$("#show-question").bind( "buttonClick", function() {
-		showTip( "Question", testAnswers, function() {
-			$(".tipbar").buttonize();
-			$(".tipbar input").first().focus();
-		});
-	});
-	
 	$("#next-problem").bind( "buttonClick", function() {
 		var pos = Exercise.problems.indexOf( curProblem );
 		
@@ -361,6 +354,13 @@ var openExercise = function( exercise ) {
 	startExercise();
 };
 
+var showQuestion = function() {
+	showTip( "Question", testAnswers, function() {
+		$(".tipbar").buttonize();
+		$(".tipbar input").first().focus();
+	});
+};
+
 var startExercise = function() {
 	$("#overlay").hide();
 };
@@ -423,10 +423,9 @@ var showProblem = function( problem ) {
 	$("#get-hint").toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) );
 	
 	$("#show-errors, #run-code").toggle( !doAnswer );
-	$("#show-question").toggle( doAnswer );
 	
 	if ( doAnswer ) {
-		$("#show-question").trigger( "buttonClick" );
+		showQuestion();
 		
 	} else {
 		$("#tipbar").hide();

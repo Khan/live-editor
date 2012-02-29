@@ -80,12 +80,14 @@ var showTip = function( type, texts, callback ) {
 		.find( "a.prev" ).toggleClass( "ui-state-disabled", pos === 0 ).end()
 		.find( "a.next" ).toggleClass( "ui-state-disabled", pos + 1 === texts.length ).end();
 	
+	bar.find( ".tipnav" ).toggle( texts.length > 1 );
+	
 	// Only animate the bar in if it's not visible
 	if ( !bar.is(":visible") ) {
 		bar
 			.css({ bottom: -30, opacity: 0.1 })
 			.show()
-			.animate({ bottom: 38, opacity: 1.0 }, 300 );
+			.animate({ bottom: 33, opacity: 1.0 }, 300 );
 	}
 	
 	if ( tipData.callback ) {
@@ -95,7 +97,7 @@ var showTip = function( type, texts, callback ) {
 
 var hideTip = function( type ) {
 	if ( testAnswers && testAnswers.length > 0 ) {
-		$("#show-question").trigger( "buttonClick" );
+		showQuestion();
 	
 	} else if ( !type || type === tipData.cur ) {
 		$("#tipbar").animate({ bottom: -30, opacity: 0.1 }, 300, function() {
