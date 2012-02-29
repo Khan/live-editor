@@ -370,7 +370,7 @@ var openExercise = function( exercise ) {
 var showQuestion = function() {
 	showTip( "Question", testAnswers, function() {
 		$(".tipbar").buttonize();
-		$(".tipbar input").first().focus();
+		$(".tipbar input").first().val( testAnswers.length > 0 ? curProblem.answer : "" ).focus();
 	});
 };
 
@@ -395,7 +395,7 @@ var textProblem = function() {
 		var editor = $("#editor").data( "editor" ).editor;
 		
 		$("#editor")
-			.editorText( curProblem.answer || curProblem.start || "" )
+			.editorText( testAnswers.length === 0 && curProblem.answer || curProblem.start || "" )
 			.setCursor( curProblem );
 	}
 };

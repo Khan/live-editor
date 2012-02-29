@@ -41,6 +41,8 @@ $(document).delegate( ".tipbar form", "submit", function() {
 	var answer = tipData.Question[ tipData.pos ].answer,
 		input = $(this).find("input").first().val();
 	
+	extractResults();
+	
 	if ( answer === input ) {
 		problemDone();
 	}
@@ -267,6 +269,10 @@ var loadResults = function( exercise, callback ) {
 };
 
 var extractResults = function( code, callback ) {
+	if ( testAnswers.length > 0 ) {
+		code = $(".tipbar input").first().val();
+	}
+	
 	if ( code !== curProblem.start || curProblem.answer != null ) {
 		curProblem.answer = code;
 	}
