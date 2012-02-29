@@ -139,6 +139,24 @@ $(function(){
 		return false;
 	});
 	
+	$(document).delegate( "#results legend a", "click", function() {
+		var output = $(this).parents( "fieldset" ).data( "output" );
+		
+		if ( output ) {
+			var str = "";
+			
+			for ( var i = 0; i < output.length; i++ ) {
+				str += "<div>" + clean( output[i] ) + "</div>";
+			}
+			
+			$("#output").html( str );
+			
+			focusOutput();
+		}
+		
+		return false;
+	});
+	
 	$("#run-code").bind( "buttonClick", function() {
 		var userCode = $("#editor").editorText(),
 			validate = curProblem.validate,

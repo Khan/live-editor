@@ -429,6 +429,10 @@ a.ui-button:visited:hover {
 	border: 2px solid #CD0A0A;
 }
 
+#play-page #results legend a {
+	border-bottom: 1px solid #CCC;
+}
+
 #play-page .ui-dialog-titlebar-close {
 	display: none;
 }

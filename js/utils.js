@@ -320,6 +320,7 @@ var outputs = [],
 	waitTestInput,
 	waitInput,
 	toInput,
+	testOutput = [],
 	testMode = false;
 	
 var test = function( name, fn ) {
@@ -389,15 +390,23 @@ var runTests = function( userCode, curProblem ) {
 	for ( var i = 0; i < tests.length; i++ ) (function( test ) {
 		clear();
 		
-		$("#results .desc").append( "<fieldset><legend>" + test.name + "</legend><ul></ul></fieldset>" );
+		var testset = $("<fieldset><legend>" + test.name + "</legend><ul></ul></fieldset>")
+			.appendTo("#results .desc");
 		
 		// TODO: Have all tests run after user's code has been defined
 		// Will need to force input/print statements to block during testMode
 		
 		// We're doing an IO test
 		if ( tests[i].io ) {
+			testOutput = [];
+			
 			// Load up the IO tests
 			runCode( "waitfor() { window.waitTest = resume; } tests[" + i + "].fn();" );
+			
+			testset
+				.data( "output", testOutput )
+				.find( "legend" )
+					.append( " (<a href=''>View Output</a>)" );
 			
 			// Then run the user's code
 			runCode( userCode );
