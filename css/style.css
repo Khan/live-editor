@@ -415,14 +415,18 @@ a.ui-button:visited:hover {
 #play-page #results .tip {
 	display: block;
 	position: absolute;
-	top: 23px;
+	top: 25px;
 	left: 0px;
 	background: white;
-	border: 2px solid #CD0A0A;
+	border: 2px solid #CCC;
 	border-radius: 5px;
 	color: black;
 	padding: 5px;
 	margin: 0 3px;
+}
+
+#play-page #results .error .tip {
+	border: 2px solid #CD0A0A;
 }
 
 #play-page .ui-dialog-titlebar-close {

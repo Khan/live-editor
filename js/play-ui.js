@@ -112,8 +112,8 @@ $(function(){
 		
 			if ( !tip.length ) {
 				tip = $( "<span class='tip'>This test was expecting a result of <code>" +
-					JSON.stringify( expected[1] ) + "</code> but your code produced a result of <code>" +
-					JSON.stringify( expected[0] ) + "</code>." )
+					JSON.stringify( expected[1] ) + "</code>, your code produced a result of <code>" +
+					JSON.stringify( expected[0] ) + "</code>.</span>" )
 						.appendTo( $parent )
 						.hide();
 			}
