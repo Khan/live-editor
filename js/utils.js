@@ -186,7 +186,8 @@ var getExercise = function( id, callback ) {
 	$.getJSON( "/api/labs/videoexercises/" + id, function( exerciseData ) {
 		lastSave = JSON.stringify( exerciseData );
 		
-		callback( exerciseData );
+		// Load in the user's saved progress
+		loadResults( exerciseData, callback );
 	});
 };
 
@@ -207,6 +208,64 @@ var saveExercise = function( callback ) {
 			callback( exerciseData );
 		}
 	});		
+};
+
+var problemDone = function() {
+	curProblem.done = true;
+
+	$("#main-tabs-nav .ui-tabs-selected").markDone();
+
+	$("#next-problem-desc").show();
+};
+
+jQuery.fn.markDone = function() {
+	return this
+		.next( "li" ).removeClass( "ui-state-disabled" ).end()
+		.removeClass( "ui-state-disabled" )
+ 		.addClass( "icon-tab" )
+		.find( "a" ).prepend( "<span class='ui-icon ui-icon-circle-check'></span>" ).end();
+};
+
+var saveResults = function( callback ) {
+	var results = [],
+		problems = Exercise.problems;
+	
+	for ( var i = 0; i < problems.length; i++ ) {
+		var problem = problems[i];
+		
+		results.push({
+			answer: problem.answer,
+			done: problem.done,
+			cursorRow: problem.cursorRow,
+			cursorColumn: problem.cursorColumn
+		});
+	}
+	
+	window.localStorage[ "labs-cs-" + Exercise.id ] = JSON.stringify({ problems: results });
+	
+	if ( callback ) {
+		callback();
+	}
+};
+
+var loadResults = function( exercise, callback ) {
+	var results = JSON.parse( window.localStorage[ "labs-cs-" + exercise.id ] || null );
+	
+	if ( results && results.problems ) {
+		for ( var i = 0; i < results.problems.length; i++ ) {
+			$.extend( exercise.problems[i], results.problems[i] );
+		}
+	}
+	
+	if ( callback ) {
+		callback( exercise );
+	}
+};
+
+var extractResults = function( code, callback ) {
+	if ( code !== curProblem.start || curProblem.answer != null ) {
+		curProblem.answer = code;
+	}
 };
 
 var openExerciseDialog = function( callback ) {
@@ -443,17 +502,6 @@ var runTests = function( userCode, curProblem ) {
 	}
 	
 	testMode = false;
-};
-
-var problemDone = function() {
-	curProblem.done = true;
-
-	$("#main-tabs-nav .ui-tabs-selected")
-		.next( "li" ).removeClass( "ui-state-disabled" ).end()
-	 	.addClass( "icon-tab" )
-		.find( "a" ).prepend( "<span class='ui-icon ui-icon-circle-check'></span>" );
-
-	$("#next-problem-desc").show();
 };
 
 var print = function( msg ) {

@@ -165,6 +165,8 @@ $(function(){
 			hintData = JSHINT.data(),
 			session = $("#editor").data( "editor" ).editor.getSession();
 		
+		extractResults( userCode );
+		
 		clear();
 		$("#output-nav").addClass( "ui-state-disabled" );
 		$("#results .desc").empty();
@@ -323,6 +325,13 @@ var openExercise = function( exercise ) {
 		}
 	}
 	
+	$(window).bind( "beforeunload", function() {
+		leaveProblem();
+		saveResults();
+	});
+	
+	var activeTab = 0;
+	
 	$("#exercise-tabs")
 		.append( "<div id='overlay'></div>" )
 		.tabs({
@@ -333,8 +342,21 @@ var openExercise = function( exercise ) {
 		.removeClass( "ui-widget-content" )
 		.find( "#main-tabs-nav" )
 			.removeClass( "ui-corner-all" ).addClass( "ui-corner-top" )
-			.find( "li:not(.ui-state-active)" ).addClass( DEBUG ? "" : "ui-state-disabled" ).end()
-		.end();
+			.find( "li" ).each(function( i ) {
+				var done = Exercise.problems[i].done;
+				
+				if ( i === 0 || DEBUG || done != null ) {
+					$(this).removeClass( "ui-state-disabled" );
+					activeTab = i;
+				}
+				
+				if ( done ) {
+					$(this).markDone();
+					activeTab = i + 1;
+				}
+			}).end()
+		.end()
+		.tabs( "select", activeTab );
 	
 	startExercise();
 };
@@ -345,8 +367,8 @@ var startExercise = function() {
 
 var leaveProblem = function() {
 	if ( curProblem ) {
-		curProblem.answer = $("#editor").editorText();
 		$("#editor").extractCursor( curProblem );
+		extractResults( $("#editor").editorText() );
 	}
 };
 
@@ -368,6 +390,10 @@ var showProblem = function( problem ) {
 	
 	tests = [];
 	testAnswers = [];
+	
+	if ( curProblem.done == null ) {
+		curProblem.done = false;
+	}
 	
 	// Prime the test queue
 	// TODO: Should we check to see if no test() prime exists?
