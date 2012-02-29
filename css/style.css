@@ -4,7 +4,7 @@ body {
 	font-size: 12px;
 }
 
-#canvas-editor, #editor, #canvas, #play-overlay, #tests-editor {
+#canvas-editor, #editor, #canvas, #play-overlay, #play-page .extra-editor {
 	position: relative;
 	width: 640px;
 	height: 360px;
@@ -22,7 +22,7 @@ body {
 	opacity: 0.3;
 }
 
-#editor, #tests-editor {
+#editor, #play-page .extra-editor {
 	z-index: 2;
 	background: #FFF;
 }
@@ -41,7 +41,7 @@ body {
 	z-index: 1;
 }
 
-#editor-box, #tests-box {
+#editor-box, #tests-box, #output-box, #solution-box {
 	overflow: hidden;
 	position: absolute;
 	border-bottom: none;
@@ -49,8 +49,12 @@ body {
 	left: 0px;
 }
 
-#tests-editor {
+#play-page .extra-editor {
 	height: 393px;
+}
+
+#play-page #code.done .extra-editor {
+	height: 360px;
 }
 
 #editor-box-tabs-nav {
@@ -81,15 +85,7 @@ body {
 }
 
 #output {
-	position: absolute;
-	top: 0px;
-	left: 0px;
 	overflow: auto;
-	border-width: 1px;
-	width: 640px;
-	height: 394px;
-	padding: 0px;
-	border-bottom: none;
 }
 
 #output form {
@@ -150,20 +146,20 @@ a.ui-button:visited:hover {
 	color: #FFF;
 }
 
-#editor .ace_gutter, #tests-editor .ace_gutter {
+#editor .ace_gutter, #play-page .extra-editor .ace_gutter {
 	background: #F5F3E5; /*#D7EBF9;*/
 	width: 50px;
 }
 
-#editor .ace_scroller, #tests-editor .ace_scroller {
+#editor .ace_scroller, #play-page .extra-editor .ace_scroller {
 	overflow-x: auto;
 }
 
-#editor .ace_sb, #tests-editor .ace_sb {
+#editor .ace_sb, #play-page .extra-editor .ace_sb {
 	overflow-y: auto;
 }
 
-#editor .ace_active_line, #tests-editor .ace_active_line {
+#editor .ace_active_line, #play-page .extra-editor .ace_active_line {
 	background: rgba(215, 235, 249, 0.5);
 }
 
@@ -295,6 +291,14 @@ a.ui-button:visited:hover {
 #play-page #code .toolbar .ui-button.right {
 	float: right;
 	margin-left: 2px;
+}
+
+#play-page #code .next-toolbar {
+	display: none;
+}
+
+#play-page #code.done .next-toolbar {
+	display: block;
 }
 
 #play-page .ui-tabs-nav .icon-tab a {

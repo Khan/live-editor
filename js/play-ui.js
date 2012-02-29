@@ -249,25 +249,28 @@ $(function(){
 	$("#editor-box-tabs")
 		.tabs({
 			show: function( e, ui ) {
-				// If we're loading the tests tab
-				if ( ui.panel.id === "tests-box" ) {
-					var editor = $("#tests-editor").data( "editor" );
+				// If we're loading the tests or solution tab
+				if ( ui.panel.id === "tests-box" || ui.panel.id === "solution-box" ) {
+					var $editor = $( ui.panel ).find( ".editor" ),
+						editor = $editor.data( "editor" );
 					
 					if ( !editor ) {
-						editor = new Editor( "tests-editor" );
-						$("#tests-editor").data( "editor", editor );
+						editor = new Editor( $editor.attr( "id" ) );
+						$editor.data( "editor", editor );
 						
 						editor.editor.setReadOnly( true );
 						editor.editor.setHighlightActiveLine( true );
 					}
 					
-					$("#tests-editor").editorText( curProblem.validate );
+					$editor.editorText( ui.panel.id === "tests-box" ?
+						curProblem.validate :
+						curProblem.solution );
 				}
 			}
 		})
 		.removeClass( "ui-widget ui-widget-content ui-corner-all" );
 	
-	$("#editor-box, #tests-box")
+	$("#editor-box, #tests-box, #output-box, #solution-box")
 		.removeClass( "ui-tabs-panel ui-corner-bottom" );
 	
 	$("#output")
@@ -371,6 +374,11 @@ var showQuestion = function() {
 	});
 };
 
+var showSolution = function() {
+	$("#solution-nav").removeClass( "ui-state-disabled" );
+	$("#editor-box-tabs-nav").tabs( "select", 3 );
+};
+
 var startExercise = function() {
 	$("#overlay").hide();
 };
@@ -415,13 +423,17 @@ var showProblem = function( problem ) {
 	
 	$("#results").hide();
 	
+	$("#code").toggleClass( "done", !!problem.done );
 	$("#next-problem-desc").toggle( !!problem.done );
 	$(".next-problem").toggle( !!problem.done );
+	$("#solution-nav").toggleClass( "ui-state-disabled", !problem.done );
 	// TODO: Have a next exercise button
 	
 	$("#editor-box-tabs").tabs( "select", 0 );
 	$("#output-nav").addClass( "ui-state-disabled" );
 	$("#tests-nav").toggleClass( "ui-state-disabled",  !problem.validate || doAnswer );
+	$("#solution-nav").toggle( !!problem.solution );
+	
 	
 	textProblem();
 	
