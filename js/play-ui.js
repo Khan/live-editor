@@ -88,6 +88,16 @@ $(function(){
 		toggleTip( "Error", errors, setCursor );
 	});
 	
+	$("#reset-code").bind( "buttonClick", function() {
+		var code = $("#editor").editorText();
+		
+		if ( code !== curProblem.start &&
+				confirm( "This will delete your code and reset it back to what you started with. Is this ok?") ) {
+			curProblem.answer = "";
+			textProblem();
+		}
+	});
+	
 	$(document).delegate( ".next-problem", "buttonClick", function() {
 		var pos = Exercise.problems.indexOf( curProblem );
 		
@@ -421,7 +431,7 @@ var showProblem = function( problem ) {
 	
 	$("#get-hint").toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) );
 	
-	$("#show-errors, #run-code").toggle( !doAnswer );
+	$("#show-errors, #run-code, #reset-code").toggle( !doAnswer );
 	
 	if ( doAnswer ) {
 		showQuestion();

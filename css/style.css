@@ -294,6 +294,7 @@ a.ui-button:visited:hover {
 
 #play-page #code .toolbar .ui-button.right {
 	float: right;
+	margin-left: 2px;
 }
 
 #play-page .ui-tabs-nav .icon-tab a {
