@@ -94,7 +94,10 @@ var showTip = function( type, texts, callback ) {
 };
 
 var hideTip = function( type ) {
-	if ( !type || type === tipData.cur ) {
+	if ( testAnswers && testAnswers.length > 0 ) {
+		$("#show-question").trigger( "buttonClick" );
+	
+	} else if ( !type || type === tipData.cur ) {
 		$("#tipbar").animate({ bottom: -30, opacity: 0.1 }, 300, function() {
 			$(this).hide();
 		});
