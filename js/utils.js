@@ -489,24 +489,28 @@ var focusOutput = function() {
 	$("#editor-box-tabs").tabs( "select", 1 );
 };
 
+var focusTests = function() {
+	$("#editor-box-tabs").tabs( "select", 2 );
+};
+
 var assertIcons = {
 	pass: "circle-check",
 	error: "alert",
 	info: "info"
 };
 
-var log = function( msg, type ) {
+var log = function( msg, type, expected ) {
 	type = type || "info";
 	
-	$("#results ul").last().append(
-		"<li class='" + type + "'><span class='ui-icon ui-icon-" +
-		assertIcons[ type ] + "'></span> <span class='msg'>" +
-		clean( msg ) + "</span></li>"
-	);
+	$("<li class='" + type + "'><span class='ui-icon ui-icon-" +
+		assertIcons[ type ] + "'></span> <a href='' class='msg'>" +
+		clean( msg ) + "</a></li>")
+		.data( "expected", expected || false )
+		.appendTo( $("#results ul").last() )
 };
 
 var assert = function( pass, msg, type ) {
-	log( msg, pass ? "pass" : "error" );
+	log( msg, !!pass ? "pass" : "error" );
 	
 	if ( typeof asserts !== "undefined" ) {
 		asserts.push( !!pass );
@@ -516,7 +520,7 @@ var assert = function( pass, msg, type ) {
 };
 
 var isEqual = function( a, b, msg, type ) {
-	log( msg, a === b ? "pass" : "error" );
+	log( msg, a === b ? "pass" : "error", [ a, b ] );
 	
 	if ( typeof asserts !== "undefined" ) {
 		asserts.push( a === b );

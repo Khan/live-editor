@@ -103,8 +103,29 @@ $(function(){
 		}
 	});
 	
-	$("#results ul").delegate( "a", "click", function() {		
-		var editor = $("#editor").data("editor").editor,
+	$(document).delegate( "#results li", "hover", function() {
+		var $parent = $(this),
+			expected = $parent.data( "expected" );
+		
+		if ( expected ) {
+			var tip = $parent.find( ".tip" );
+		
+			if ( !tip.length ) {
+				tip = $( "<span class='tip'>This test was expecting a result of <code>" +
+					JSON.stringify( expected[1] ) + "</code> but your code produced a result of <code>" +
+					JSON.stringify( expected[0] ) + "</code>." )
+						.appendTo( $parent )
+						.hide();
+			}
+			
+			tip.toggle();
+		}
+	});
+	
+	$(document).delegate( "#results ul a", "click", function() {
+		focusTests();
+		
+		var editor = $("#tests-editor").data("editor").editor,
 			search = editor.$search;
 		
 		search.set({ needle: $(this).text() });

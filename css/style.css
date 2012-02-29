@@ -384,6 +384,7 @@ a.ui-button:visited:hover {
 	padding: 2px;
 	background: #FFF;
 	border-radius: 5px;
+	position: relative;
 }
 
 #play-page #results li a {
@@ -409,6 +410,19 @@ a.ui-button:visited:hover {
 #play-page #results li span.msg {
 	display: block;
 	margin-left: 20px;
+}
+
+#play-page #results .tip {
+	display: block;
+	position: absolute;
+	top: 23px;
+	left: 0px;
+	background: white;
+	border: 2px solid #CD0A0A;
+	border-radius: 5px;
+	color: black;
+	padding: 5px;
+	margin: 0 3px;
 }
 
 #play-page .ui-dialog-titlebar-close {
