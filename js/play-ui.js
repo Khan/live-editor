@@ -103,6 +103,26 @@ $(function(){
 		
 		if ( pos + 1 < Exercise.problems.length ) {
 			$("#exercise-tabs").tabs( "select", pos + 1 );
+			
+		} else {
+			var next = ExerciseMap[ Exercise.id ],
+				nextmsg = next ?
+					"this exercise, would you like to continue on to the next one?" :
+					"all the exercises, congratulations!";
+			
+			$("<p>You've completed " + nextmsg + "</p>")
+				.appendTo( "body" )
+				.dialog({
+					title:"Exercise Complete!",
+					resizable: false,
+					draggable: false,
+					modal: true,
+					buttons: {
+						"Next Exercise": function() {
+							window.location.search = "?" + next;
+						}
+					},
+				});
 		}
 	});
 	
@@ -316,14 +336,15 @@ var openExercise = function( exercise ) {
 	
 	document.title = Exercise.title;
 	
-	/* Perhaps not necessary?
-	$("<p>" + Exercise.desc + "</p>")
-		.appendTo( "body" )
-		.dialog({ title: Exercise.title, resizable: false, draggable: false,
-			buttons: { "Start Exercise": function() { $(this).dialog("close"); } },
-			close: startExercise
-		});
-	*/
+	// Show the exercise description if it exists and if
+	// it's the user's first time doing it
+	if ( Exercise.desc && Exercise.problems.done == null ) {
+		$("<p>" + Exercise.desc + "</p>")
+			.appendTo( "body" )
+			.dialog({ title: Exercise.title, resizable: false, draggable: false, modal: true,
+				buttons: { "Start Exercise": function() { $(this).dialog("close"); } }
+			});
+	}
 
 	if ( Exercise.problems ) {
 		for ( var i = 0, l = Exercise.problems.length; i < l; i++ ) {

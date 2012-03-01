@@ -1,3 +1,33 @@
+// Temporary solution until we get a full DB/UI implemented
+var ExerciseMap = {
+	// Starting point
+	0: 537514895,
+	
+	// Intro to programming
+	537514895: 527964494,
+	
+	// Intro to Variables 1
+	527964494: 580591777,
+	
+	// Intro to Variables 2
+	580591777: 612865753,
+	
+	// Basic computations
+	612865753: 528949083,
+	
+	// Reading text
+	528949083: 579066940,
+	
+	// Reading numbers
+	579066940: 563383397,
+	
+	// Conditions
+	// 563383397
+	
+	// For testing:
+	1: 18
+};
+
 var apollo = typeof require !== "undefined" ?
 	require("sjs:apollo-sys") :
 	null;
