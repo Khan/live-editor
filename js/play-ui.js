@@ -434,7 +434,6 @@ var showProblem = function( problem ) {
 	$("#tests-nav").toggleClass( "ui-state-disabled",  !problem.validate || doAnswer );
 	$("#solution-nav").toggle( !!problem.solution );
 	
-	
 	textProblem();
 	
 	$("#problem")

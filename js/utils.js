@@ -221,6 +221,7 @@ var problemDone = function() {
 
 	$("#next-problem-desc").show();
 	$(".next-problem").show();
+	$("#code").addClass( "done" );
 	// TODO: Show next exercise, if applicable
 };
 
