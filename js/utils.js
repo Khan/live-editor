@@ -155,13 +155,11 @@ jQuery.fn.hideTip = function( type ) {
 jQuery.fn.toggleTip = function( type, texts, callback ) {
 	var tipData = this.data( "tipData" );
 	
-	if ( tipData ) {
-		if ( !this.find(".tipbar").is(":visible") || tipData.cur !== type ) {
-			this.showTip( type, texts, callback );
+	if ( !tipData || !this.find(".tipbar").is(":visible") || tipData.cur !== type ) {
+		this.showTip( type, texts, callback );
 		
-		} else {
-			this.hideTip();
-		}
+	} else {
+		this.hideTip();
 	}
 	
 	return this;
