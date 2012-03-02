@@ -436,7 +436,8 @@ var focusProblem = function() {
 		$(".tipbar input").first().focus();
 	
 	} else {
-		setCursor( curProblem );
+		$("#editor").data("editor").editor.focus();
+		//setCursor( curProblem );
 	}
 };
 
@@ -445,11 +446,6 @@ var showQuestion = function() {
 		$(".tipbar").buttonize();
 		$(".tipbar input").first().val( testAnswers.length > 0 ? curProblem.answer : "" ).focus();
 	});
-};
-
-var showSolution = function() {
-	$("#solution-nav").removeClass( "ui-state-disabled" );
-	$("#editor-box-tabs-nav").tabs( "select", 3 );
 };
 
 var leaveProblem = function() {
@@ -464,9 +460,8 @@ var textProblem = function() {
 		var editor = $("#editor").data( "editor" ).editor;
 		
 		$("#editor")
-			.editorText( testAnswers.length === 0 && curProblem.answer || curProblem.start || "" );
-		
-		focusProblem();
+			.editorText( testAnswers.length === 0 && curProblem.answer || curProblem.start || "" )
+			.setCursor( curProblem, testAnswers.length === 0 );
 	}
 };
 

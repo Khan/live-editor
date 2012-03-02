@@ -205,7 +205,7 @@ jQuery.fn.extractCursor = function( testObj ) {
 	return this;
 };
 
-jQuery.fn.setCursor = function( testObj ) {
+jQuery.fn.setCursor = function( testObj, focus ) {
 	if ( testObj && (testObj.cursorRow != null || testObj.row != null) ) {
 		var editor = this.data( "editor" ).editor;
 		
@@ -215,7 +215,10 @@ jQuery.fn.setCursor = function( testObj ) {
 		});
 		
 		editor.clearSelection();
-		editor.focus();
+		
+		if ( focus !== false ) {
+			editor.focus();
+		}
 	}
 };
 
@@ -270,7 +273,11 @@ var problemDone = function() {
 	$("#next-problem-desc").show();
 	$(".next-problem").show();
 	$("#code").addClass( "done" );
-	// TODO: Show next exercise, if applicable
+	
+	if ( curProblem.solution ) {
+		$("#solution-nav").removeClass( "ui-state-disabled" );
+		$("#editor-box-tabs-nav").tabs( "select", 3 );
+	}
 };
 
 jQuery.fn.markDone = function() {
