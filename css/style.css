@@ -446,6 +446,7 @@ a.ui-button:visited:hover {
 	color: black;
 	padding: 5px;
 	margin: 0 3px;
+	z-index: 3;
 }
 
 #play-page #results .error .tip {
