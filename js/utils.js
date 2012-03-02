@@ -127,7 +127,7 @@ jQuery.fn.showTip = function( type, texts, callback ) {
 		bar
 			.css({ bottom: -30, opacity: 0.1 })
 			.show()
-			.animate({ bottom: $("#code").is(".done") ? 33 : 0, opacity: 1.0 }, 300 );
+			.animate({ bottom: this.find(".toolbar").is(":visible") ? 33 : 0, opacity: 1.0 }, 300 );
 	}
 	
 	if ( tipData.callback ) {
