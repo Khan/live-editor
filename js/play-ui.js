@@ -81,11 +81,11 @@ $(function(){
 	});
 	
 	$("#get-hint").bind( "buttonClick", function() {
-		toggleTip( "Hint", curProblem.hints );
+		$("#editor-box").toggleTip( "Hint", curProblem.hints );
 	});
 	
 	$("#show-errors").bind( "buttonClick", function() {
-		toggleTip( "Error", errors, setCursor );
+		$("#editor-box").toggleTip( "Error", errors, setCursor );
 	});
 	
 	$("#reset-code").bind( "buttonClick", function() {
@@ -95,6 +95,11 @@ $(function(){
 				confirm( "This will delete your code and reset it back to what you started with. Is this ok?") ) {
 			curProblem.answer = "";
 			textProblem();
+			
+			$("#editor-box").hideTip( "Error" );
+			
+			var session = $("#editor").data( "editor" ).editor.getSession();
+			session.clearAnnotations();
 		}
 	});
 	
@@ -110,6 +115,17 @@ $(function(){
 					"this exercise, would you like to continue on to the next one?" :
 					"all the exercises, congratulations!";
 			
+			var buttons = {},
+				name = next ? "Next Exercise" : "Yay!";
+			
+			buttons[ name ] = function() {
+				if ( next ) {
+					window.location.search = "?" + next;
+				} else {
+					$(this).dialog( "close" );
+				}
+			};
+			
 			$("<p>You've completed " + nextmsg + "</p>")
 				.appendTo( "body" )
 				.dialog({
@@ -117,11 +133,7 @@ $(function(){
 					resizable: false,
 					draggable: false,
 					modal: true,
-					buttons: {
-						"Next Exercise": function() {
-							window.location.search = "?" + next;
-						}
-					},
+					buttons: buttons
 				});
 		}
 	});
@@ -203,7 +215,7 @@ $(function(){
 		
 		if ( doRunTests ) {
 			$("#show-errors").addClass( "ui-state-disabled" );
-			hideTip( "Error" );
+			$("#editor-box").hideTip( "Error" );
 			
 			// Run the tests
 			runTests( userCode, curProblem );
@@ -214,6 +226,9 @@ $(function(){
 			
 			if ( outputs.length > 0 ) {
 				focusOutput();
+				
+			} else {
+				focusProblem();
 			}
 		}
 		
@@ -258,7 +273,7 @@ $(function(){
 	
 	        session.setAnnotations( errors );
 	
-			showTip( "Error", errors, setCursor );
+			$("#editor-box").showTip( "Error", errors, setCursor );
 			
 			if ( !doRunTests ) {
 				$("#results").fadeOut( 400 );
@@ -269,8 +284,11 @@ $(function(){
 	$("#editor-box-tabs")
 		.tabs({
 			show: function( e, ui ) {
+				if ( ui.panel.id === "editor-box" ) {
+					focusProblem();
+				
 				// If we're loading the tests or solution tab
-				if ( ui.panel.id === "tests-box" || ui.panel.id === "solution-box" ) {
+				} else if ( ui.panel.id === "tests-box" || ui.panel.id === "solution-box" ) {
 					var $editor = $( ui.panel ).find( ".editor" ),
 						editor = $editor.data( "editor" );
 					
@@ -282,9 +300,21 @@ $(function(){
 						editor.editor.setHighlightActiveLine( true );
 					}
 					
-					$editor.editorText( ui.panel.id === "tests-box" ?
-						curProblem.validate :
-						curProblem.solution );
+					$(ui.panel).find( ".tipbar" ).hide();
+					
+					if ( ui.panel.id === "tests-box" ) {
+						$editor.editorText( curProblem.validate );
+						
+						$(ui.panel).showTip( "Tests", [ "These are the tests that are used to evaluate your code. " +
+							"We run these tests to make sure that your program is running correctly. " +
+							"You can hover your mouse over a test on the right-hand panel to see its expected results." ] );
+					} else {
+						$editor.editorText( curProblem.solution );
+						
+						$(ui.panel).showTip( "Solution", [ "This is a solution to this particular problem. " +
+						 	"This solution may match your code, but that's ok if it does not. " +
+							"There are many ways to solve a problem, many of which are valid." ] );
+					}
 				}
 			}
 		})
@@ -410,7 +440,7 @@ var focusProblem = function() {
 };
 
 var showQuestion = function() {
-	showTip( "Question", testAnswers, function() {
+	$("#editor-box").showTip( "Question", testAnswers, function() {
 		$(".tipbar").buttonize();
 		$(".tipbar input").first().val( testAnswers.length > 0 ? curProblem.answer : "" ).focus();
 	});

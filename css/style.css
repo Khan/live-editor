@@ -199,7 +199,7 @@ a.ui-button:visited:hover {
 	min-height: 40px;
 	bottom: 5px;
 	left: 0px;
-	z-index: 5;
+	z-index: 2;
 	display: none;
 	border: none;
 	font-weight: normal;
@@ -301,6 +301,15 @@ a.ui-button:visited:hover {
 	display: block;
 }
 
+#play-page #code.done .toolbar .ui-button:not(.next-problem):not(.ui-state-disabled) {
+	opacity: 0.9;
+}
+
+#play-page #code.done .next-problem , #play-page #code:not(.done) #run-code {
+	border: 1px solid black;
+	-webkit-box-shadow: 0px 0px 5px rgba(0,0,0,1);
+}
+
 #play-page .ui-tabs-nav .icon-tab a {
 	padding-left: 2em;
 }
@@ -359,6 +368,15 @@ a.ui-button:visited:hover {
 
 #play-page #results {
 	display: none;
+}
+
+#play-page #results h3 {
+	background: #70C448;
+	color: #FFF;
+}
+
+#play-page #results.error h3 {
+	background: #CD0A0A;
 }
 
 #play-page #results fieldset {

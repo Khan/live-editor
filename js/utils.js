@@ -53,22 +53,27 @@ $(document).delegate( "a.ui-button", {
 });
 
 $(document).delegate( ".tipbar .close", "click", function() {
-	hideTip();
+	$(this).parents(".editor-box").hideTip();
 
 	return false;
 });
 
 $(document).delegate( ".tipbar .tipnav a", "click", function() {
 	if ( !$(this).hasClass( "ui-state-disabled" ) ) {
+		var box = $(this).parents(".editor-box"),
+			tipData = box.data( "tipData" );
+		
 		tipData.pos += $(this).hasClass( "next" ) ? 1 : -1;
-		showTip();
+		box.showTip();
 	}
 	
 	return false;
 });
 
 $(document).delegate( ".tipbar form", "submit", function() {
-	var answer = tipData.Question[ tipData.pos ].answer,
+	var box = $(this).parents(".editor-box"),
+		tipData = box.data( "tipData" ),
+		answer = tipData.Question[ tipData.pos ].answer,
 		input = $(this).find("input").first().val();
 	
 	extractResults();
@@ -86,11 +91,14 @@ $(document).delegate( ".tipbar form", "submit", function() {
 	return false;
 });
 
-var tipData = {
-	pos: 0
-};
-
-var showTip = function( type, texts, callback ) {
+jQuery.fn.showTip = function( type, texts, callback ) {
+	var tipData = this.data( "tipData" );
+	
+	if ( !tipData ) {
+		tipData = { pos: 0 };
+		this.data( "tipData", tipData );
+	}
+	
 	type = type || tipData.cur;
 	
 	if ( texts ) {
@@ -103,7 +111,7 @@ var showTip = function( type, texts, callback ) {
 	texts = texts || tipData[ type ];
 	
 	var pos = tipData.pos,
-		bar = $("#tipbar")
+		bar = this.find(".tipbar")
 		.attr( "class", "tipbar ui-state-hover " + type.toLowerCase() )
 		
 		// Inject current text
@@ -119,32 +127,44 @@ var showTip = function( type, texts, callback ) {
 		bar
 			.css({ bottom: -30, opacity: 0.1 })
 			.show()
-			.animate({ bottom: 33, opacity: 1.0 }, 300 );
+			.animate({ bottom: $("#code").is(".done") ? 33 : 0, opacity: 1.0 }, 300 );
 	}
 	
 	if ( tipData.callback ) {
 		tipData.callback( texts[ pos ] );
 	}
+	
+	return this;
 };
 
-var hideTip = function( type ) {
+jQuery.fn.hideTip = function( type ) {
+	var tipData = this.data( "tipData" );
+	
 	if ( testAnswers && testAnswers.length > 0 ) {
 		showQuestion();
 	
-	} else if ( !type || type === tipData.cur ) {
-		$("#tipbar").animate({ bottom: -30, opacity: 0.1 }, 300, function() {
+	} else if ( tipData && (!type || type === tipData.cur) ) {
+		this.find(".tipbar").animate({ bottom: -30, opacity: 0.1 }, 300, function() {
 			$(this).hide();
 		});
 	}
+	
+	return this;
 };
 
-var toggleTip = function( type, texts, callback ) {
-	if ( !$("#tipbar").is(":visible") || tipData.cur !== type ) {
-		showTip( type, texts, callback );
+jQuery.fn.toggleTip = function( type, texts, callback ) {
+	var tipData = this.data( "tipData" );
+	
+	if ( tipData ) {
+		if ( !this.find(".tipbar").is(":visible") || tipData.cur !== type ) {
+			this.showTip( type, texts, callback );
 		
-	} else {
-		hideTip();
+		} else {
+			this.hideTip();
+		}
 	}
+	
+	return this;
 };
 
 jQuery.fn.buttonize = function() {
@@ -538,8 +558,13 @@ var runTests = function( userCode, curProblem ) {
 		if ( pass === total ) {
 			problemDone();
 		}
-	
-		$("#results").fadeIn( 400 );
+		
+		$("#results")
+			.find( "h3" ).text( pass === total ?
+				"Test Results: All Tests Passed!" :
+				"Test Results: " + (total - pass) + " Test" + (total - pass === 1 ? "" : "s") + " Failed." ).end()
+			.toggleClass( "error", pass < total )
+			.fadeIn( 400 );
 	}
 	
 	testMode = false;
