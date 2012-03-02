@@ -82,6 +82,7 @@ $(function(){
 	
 	$("#get-hint").bind( "buttonClick", function() {
 		$("#editor-box").toggleTip( "Hint", curProblem.hints );
+		focusProblem();
 	});
 	
 	$("#show-errors").bind( "buttonClick", function() {

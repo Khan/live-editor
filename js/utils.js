@@ -54,7 +54,7 @@ $(document).delegate( "a.ui-button", {
 
 $(document).delegate( ".tipbar .close", "click", function() {
 	$(this).parents(".editor-box").hideTip();
-
+	focusProblem();
 	return false;
 });
 
@@ -66,6 +66,8 @@ $(document).delegate( ".tipbar .tipnav a", "click", function() {
 		tipData.pos += $(this).hasClass( "next" ) ? 1 : -1;
 		box.showTip();
 	}
+	
+	focusProblem();
 	
 	return false;
 });
@@ -87,6 +89,8 @@ $(document).delegate( ".tipbar form", "submit", function() {
 		.append( "<p class='status'><span class='ui-icon ui-icon-circle-" + 
 			(answer === input ? "check" : "close") + "'></span> " +
 			(answer === input ? "Correct! Proceed to the next problem." : "Incorrect, try again or view the hints for help.") + "</p>" );
+	
+	focusProblem();
 	
 	return false;
 });
