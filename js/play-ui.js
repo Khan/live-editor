@@ -304,6 +304,11 @@ $(function(){
 			.removeClass( "ui-corner-top" )
 			.addClass( "ui-corner-bottom" );
 	
+	$(window).bind( "beforeunload", function() {
+		leaveProblem();
+		saveResults();
+	});
+	
 	if ( window.location.search ) {
 		var parts = window.location.search.slice(1).split( "&" );
 		
@@ -338,11 +343,22 @@ var openExercise = function( exercise ) {
 	
 	// Show the exercise description if it exists and if
 	// it's the user's first time doing it
-	if ( Exercise.desc && Exercise.problems.done == null ) {
+	if ( Exercise.desc && Exercise.problems[0].done == null ) {
 		$("<p>" + Exercise.desc + "</p>")
 			.appendTo( "body" )
-			.dialog({ title: Exercise.title, resizable: false, draggable: false, modal: true,
-				buttons: { "Start Exercise": function() { $(this).dialog("close"); } }
+			.dialog({
+				title: Exercise.title,
+				resizable: false,
+				draggable: false,
+				modal: true,
+				buttons: {
+					"Start Exercise": function() {
+						$(this).dialog("close");
+						
+						// Re-focus cursor after button click starting the exercise
+						focusProblem();
+					}
+				}
 			});
 	}
 
@@ -351,11 +367,6 @@ var openExercise = function( exercise ) {
 			insertExercise( Exercise.problems[i] );
 		}
 	}
-	
-	$(window).bind( "beforeunload", function() {
-		leaveProblem();
-		saveResults();
-	});
 	
 	var activeTab = 0;
 	
@@ -385,7 +396,17 @@ var openExercise = function( exercise ) {
 		.end()
 		.tabs( "select", activeTab );
 	
-	startExercise();
+	$("#overlay").hide();
+	focusProblem();
+};
+
+var focusProblem = function() {
+	if ( testAnswers.length > 0 ) {
+		$(".tipbar input").first().focus();
+	
+	} else {
+		setCursor( curProblem );
+	}
 };
 
 var showQuestion = function() {
@@ -400,10 +421,6 @@ var showSolution = function() {
 	$("#editor-box-tabs-nav").tabs( "select", 3 );
 };
 
-var startExercise = function() {
-	$("#overlay").hide();
-};
-
 var leaveProblem = function() {
 	if ( curProblem ) {
 		$("#editor").extractCursor( curProblem );
@@ -416,8 +433,9 @@ var textProblem = function() {
 		var editor = $("#editor").data( "editor" ).editor;
 		
 		$("#editor")
-			.editorText( testAnswers.length === 0 && curProblem.answer || curProblem.start || "" )
-			.setCursor( curProblem );
+			.editorText( testAnswers.length === 0 && curProblem.answer || curProblem.start || "" );
+		
+		focusProblem();
 	}
 };
 
