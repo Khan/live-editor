@@ -107,7 +107,7 @@ var showTip = function( type, texts, callback ) {
 		.attr( "class", "tipbar ui-state-hover " + type.toLowerCase() )
 		
 		// Inject current text
-		.find( "strong" ).text( type + " #" + (pos + 1) + ":" ).end()
+		.find( "strong" ).text( type + ( texts.length > 1 ? " #" + (pos + 1) : "" ) + ":" ).end()
 		.find( ".text" ).html( texts[ pos ].text || texts[ pos ] || "" ).end()
 		.find( "a.prev" ).toggleClass( "ui-state-disabled", pos === 0 ).end()
 		.find( "a.next" ).toggleClass( "ui-state-disabled", pos + 1 === texts.length ).end();
