@@ -462,7 +462,8 @@ var test = function( name, fn ) {
 		            type: "error"
 		        });
 		
-				assert( false, "Error: " + e.message );
+				assert( false, "Error: " + e.message,
+				 	"A critical problem occurred in your program making it unable to run." );
 			}
 		}
 	});
@@ -491,12 +492,14 @@ var resumeTest = function() {
 var finalResumeTest = function() {
 	if ( window.waitTestInput ) {
 		window.waitTestInput = undefined;
-		assert( false, "An expected input() was not found." );
+		assert( false, "An expected input() was not found.",
+		 	"The test was looking for an input but one was not found. Perhaps you forgot one?" );
 	}
 	
 	if ( window.waitTestPrint ) {
 		window.waitTestPrint = undefined;
-		assert( false, "An expected print() call was not found." );
+		assert( false, "An expected print() call was not found.",
+		 	"The test was looking for an print but one was not found. Perhaps you forgot one?" );
 	}
 };
 
@@ -630,8 +633,8 @@ var log = function( msg, type, expected ) {
 		.appendTo( $("#results ul").last() )
 };
 
-var assert = function( pass, msg, type ) {
-	log( msg, !!pass ? "pass" : "error" );
+var assert = function( pass, msg, expected ) {
+	log( msg, !!pass ? "pass" : "error", expected );
 	
 	if ( typeof asserts !== "undefined" ) {
 		asserts.push( !!pass );
@@ -640,7 +643,7 @@ var assert = function( pass, msg, type ) {
 	return !!pass;
 };
 
-var isEqual = function( a, b, msg, type ) {
+var isEqual = function( a, b, msg ) {
 	log( msg, a === b ? "pass" : "error", [ a, b ] );
 	
 	if ( typeof asserts !== "undefined" ) {

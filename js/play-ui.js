@@ -146,9 +146,10 @@ $(function(){
 			var tip = $parent.find( ".tip" );
 		
 			if ( !tip.length ) {
-				tip = $( "<span class='tip'>This test was expecting a result of <code>" +
+				tip = $( "<span class='tip'>" + (typeof expected === "string" ? expected :
+					"This test was expecting a result of <code>" +
 					JSON.stringify( expected[1] ) + "</code>, your code produced a result of <code>" +
-					JSON.stringify( expected[0] ) + "</code>.</span>" )
+					JSON.stringify( expected[0] ) + "</code>.") + "</span>" )
 						.appendTo( $parent )
 						.hide();
 			}
