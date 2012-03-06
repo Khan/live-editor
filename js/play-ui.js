@@ -87,6 +87,7 @@ $(function(){
 	
 	$("#show-errors").bind( "buttonClick", function() {
 		$("#editor-box").toggleTip( "Error", errors, setCursor );
+		focusProblem();
 	});
 	
 	$("#reset-code").bind( "buttonClick", function() {
