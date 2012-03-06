@@ -501,6 +501,12 @@ var resumeTest = function() {
 };
 
 var finalResumeTest = function() {
+	if ( window.waitTest ) {
+		window.waitTest = undefined;
+		assert( false, "A print or input was expected but not found.",
+			"Some form of input was expected by the tests but was not found. Perhaps you forgot a print or input statement?" );
+	}
+	
 	if ( window.waitTestInput ) {
 		window.waitTestInput = undefined;
 		assert( false, "An expected input() was not found.",
@@ -551,8 +557,6 @@ var runTests = function( userCode, curProblem ) {
 				"\n(function(){ tests = [];\n" +
 				curProblem.validate + "\n})(); tests[" + i + "].fn();" );
 		}
-		
-		window.waitTest = undefined;
 			
 		finalResumeTest();
 	})( tests[i] );
