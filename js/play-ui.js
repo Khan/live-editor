@@ -404,7 +404,6 @@ var openExercise = function( exercise ) {
 	var activeTab = 0;
 	
 	$("#exercise-tabs")
-		.append( "<div id='overlay'></div>" )
 		.tabs({
 			show: function( e, ui ) {
 				showProblem( Exercise.problems[ ui.index ] );
