@@ -81,7 +81,9 @@ $(function(){
 	});
 	
 	$("#get-hint").bind( "buttonClick", function() {
-		$("#editor-box").toggleTip( "Hint", curProblem.hints );
+		$("#editor-box").toggleTip( "Hint", curProblem.hints, function() {
+			$("#get-hint .ui-button-text").text( testAnswers.length > 0 ? "Answer" : "Hints" );
+		});
 		focusProblem();
 	});
 	
@@ -446,6 +448,10 @@ var showQuestion = function() {
 	$("#editor-box").showTip( "Question", testAnswers, function() {
 		$(".tipbar").buttonize();
 		$(".tipbar input").first().val( testAnswers.length > 0 ? curProblem.answer : "" ).focus();
+		
+		if ( !$("#get-hint").is(".ui-state-disabled") ) {
+			$("#get-hint .ui-button-text").text( "Hints" );
+		}
 	});
 };
 
@@ -506,7 +512,9 @@ var showProblem = function( problem ) {
 		.find( ".title" ).text( problem.title || "" ).end()
 		.find( ".text" ).html( (problem.desc || "").replace( /\n/g, "<br>" ) ).end();
 	
-	$("#get-hint").toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) );
+	$("#get-hint")
+		.toggleClass( "ui-state-disabled", !(problem.hints && problem.hints.length) )
+		.find( ".ui-button-text" ).text( "Hints" );
 	
 	$("#show-errors, #run-code, #reset-code").toggle( !doAnswer );
 	
