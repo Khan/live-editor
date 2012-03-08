@@ -669,7 +669,7 @@ var isEqual = function( a, b, msg ) {
 };
 
 (function() {
-	var num, range, firstNum, slider, handle, ignore = false;
+	var num, range, firstNum, slider, handle, decimal = 0, ignore = false;
 	
 	jQuery.fn.hotNumber = function() {
 		var editor = this.data("editor").editor,
@@ -711,8 +711,11 @@ var isEqual = function( a, b, msg ) {
 		if ( /^([\d.-]+)/.test( line.slice( before ) ) && !isNaN( parseFloat( RegExp.$1 ) ) ) {
 			var Range = require("ace/range").Range;
 			
-			firstNum = num = parseFloat( RegExp.$1 );
+			num = RegExp.$1;
+			firstNum = parseFloat( num );
+			decimal = /\.(\d+)/.test( num ) ? RegExp.$1.length : 0;
 			range = new Range( pos.row, before, pos.row, before + String( num ).length );
+			
 			handle = function( value ) {
 				updateNumberSlider( editor, value );
 			};
@@ -737,26 +740,19 @@ var isEqual = function( a, b, msg ) {
 			offset = ((Math.log( firstNum * 500 ) - Math.log( firstNum * ((100 - curNum) * 10) )) * firstNum);
 		 
 		newNum = firstNum + ((newNum < 50 ? -1 : 1) * (!isFinite( offset ) ? firstNum * 4 : offset));
-		
-		// Figure out how many decimal places should be shown
-		if ( /\.(\d+)/.test( firstNum ) ) {
-			newNum = newNum.toFixed( RegExp.$1.length );
-			
-		} else {
-			newNum = Math.round( newNum );
-		}
+		newNum = newNum.toFixed( decimal );
 		
 		// Figure out the position of the old number to replace
-		range.end.column = range.start.column + String( num ).length;
+		range.end.column = range.start.column + num.length;
 		num = newNum;
 		
 		ignore = true;
 		
 		// Insert the new number
-		editor.session.replace( range, String( newNum ) );
+		editor.session.replace( range, newNum );
 		
 		// Select and focus the updated number
-		range.end.column = range.start.column + String( num ).length;
+		range.end.column = range.start.column + num.length;
 		editor.selection.setSelectionRange( range );
 		editor.focus();
 		
