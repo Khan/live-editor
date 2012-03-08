@@ -667,3 +667,99 @@ var isEqual = function( a, b, msg ) {
 	
 	return a === b;
 };
+
+(function() {
+	var num, range, firstNum, slider, handle, ignore = false;
+	
+	jQuery.fn.hotNumber = function() {
+		var editor = this.data("editor").editor,
+			selection = editor.session.selection;
+		
+		selection.on( "changeCursor", $.proxy( checkNumber, editor ) );
+		selection.on( "changeSelection", $.proxy( checkNumber, editor ) );
+
+		attachSlider();
+		
+		return this;
+	};
+	
+	function attachSlider() {
+		if ( !slider ) {
+			slider = $("<div class='hotnumber'><div class='slider'></div><div class='arrow'></div>")
+				.appendTo( "body" )
+				.children( ".slider" ).slider({
+					slide: function( e, ui ) {
+						if ( handle ) {
+							handle( ui.value );
+						}
+					}
+				}).end()
+				.hide();
+		}
+	}
+	
+	function checkNumber() {
+		if ( ignore ) {
+			return;
+		}
+		
+		var editor = this,
+			pos = editor.selection.getCursor(),
+			line = editor.session.getDocument().getLine( pos.row ),
+			before = pos.column - (/([\d.-]+)$/.test( line.slice( 0, pos.column ) ) ? RegExp.$1.length : 0);
+	
+		if ( /^([\d.-]+)/.test( line.slice( before ) ) && !isNaN( parseFloat( RegExp.$1 ) ) ) {
+			var Range = require("ace/range").Range;
+			
+			firstNum = num = parseFloat( RegExp.$1 );
+			range = new Range( pos.row, before, pos.row, before + String( num ).length );
+			handle = function( value ) {
+				updateNumberSlider( editor, value );
+			};
+			
+			var coords = editor.renderer.textToScreenCoordinates( pos.row, pos.column );
+			slider.children().slider( "value", 50 );
+			slider.css({ top: coords.pageY, left: coords.pageX }).show();
+			
+		} else {
+			range = null;
+			slider.hide();
+		}
+	}
+
+	function updateNumberSlider( editor, newNum ) {
+		if ( !range ) {
+			return;
+		}
+		
+		// Compute the offset, relative to the center position
+		var curNum = newNum < 50 ? (50 - newNum) + 50 : newNum,
+			offset = ((Math.log( firstNum * 500 ) - Math.log( firstNum * ((100 - curNum) * 10) )) * firstNum);
+		 
+		newNum = firstNum + ((newNum < 50 ? -1 : 1) * (!isFinite( offset ) ? firstNum * 4 : offset));
+		
+		// Figure out how many decimal places should be shown
+		if ( /\.(\d+)/.test( firstNum ) ) {
+			newNum = newNum.toFixed( RegExp.$1.length );
+			
+		} else {
+			newNum = Math.round( newNum );
+		}
+		
+		// Figure out the position of the old number to replace
+		range.end.column = range.start.column + String( num ).length;
+		num = newNum;
+		
+		ignore = true;
+		
+		// Insert the new number
+		editor.session.replace( range, String( newNum ) );
+		
+		// Select and focus the updated number
+		range.end.column = range.start.column + String( num ).length;
+		editor.selection.setSelectionRange( range );
+		editor.focus();
+		
+		ignore = false;
+	}
+})();

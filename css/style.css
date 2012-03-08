@@ -582,3 +582,29 @@ div#exercise-page {
 #exercise-page .ui-accordion-header.ui-state-default a {
 	font-weight: normal;
 }
+
+.hotnumber {
+	position: absolute;
+	display: block;
+	z-index: 100;
+	width: 100px;
+	background: black;
+	padding: 5px;
+	border-radius: 7px;
+	margin-top: -29px;
+	margin-left: -53px;
+	box-shadow: 0px 0px 8px rgba(0,0,0,1);
+}
+
+.hotnumber .arrow {
+	position: absolute;
+	bottom: -8px;
+	left: 46px;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+	border-top: 8px solid black;
+}
+
+.hotnumber .ui-slider-handle {
+	width: 8px;
+}
