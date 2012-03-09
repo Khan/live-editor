@@ -6,10 +6,13 @@ body {
 
 #canvas-editor, #editor, #canvas, #play-overlay, #play-page .extra-editor {
 	position: relative;
-	width: 640px;
 	height: 360px;
+	/*
+	width: 640px;
 	top: 0px;
 	left: 0px;
+	*/
+	/*width: 100%;*/
 }
 
 #canvas, #play-overlay {
@@ -43,10 +46,12 @@ body {
 
 #editor-box, #tests-box, #output-box, #solution-box {
 	overflow: hidden;
-	position: absolute;
 	border-bottom: none;
+	/*
+	position: absolute;
 	top: 0px;
 	left: 0px;
+	*/
 }
 
 #play-page .extra-editor {
@@ -103,7 +108,7 @@ body {
 #output div input.text {
 	font-family: Monaco, Courier New;
 	font-size: 12px;
-	width: 175px;
+	width: 125px;
 }
 
 .toolbar {
@@ -178,11 +183,13 @@ a.ui-button:visited:hover {
 }
 
 #tests {
+	font-size: 12px;
+	/*
 	position: absolute;
 	width: 300px;
-	font-size: 12px;
 	top: 0px;
 	right: -308px;
+	*/
 }
 
 #tests textarea {
@@ -265,7 +272,8 @@ a.ui-button:visited:hover {
 }
 
 #play-page #exercise-tabs {
-	width: 948px;
+	/*width: 948px;*/
+	width: 1184px;
 }
 
 #play-page #code {
@@ -323,7 +331,7 @@ a.ui-button:visited:hover {
 
 #play-page #main-tabs-nav {
 	border-bottom-color: #327E04; /*#D4CCB0;*/ /*#2779AA;*/
-	width: 942px;
+	/*width: 942px;*/
 }
 
 #play-page .#main-tabs-nav li.ui-tabs-selected {
@@ -607,4 +615,25 @@ div#exercise-page {
 
 .hotnumber .ui-slider-handle {
 	width: 8px;
+}
+
+.container-fluid > .sidebar {
+	display: none;
+}
+
+div.container-fluid > div.content {
+	margin-left: 0px;
+}
+
+#output.side {
+	/*
+	position: absolute;
+	width: 360px;
+	*/
+	height: 360px;
+	border: 1px solid #D4CCB0;
+}
+
+#output-test {
+	display: none;
 }

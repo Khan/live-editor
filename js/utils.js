@@ -523,6 +523,8 @@ var finalResumeTest = function() {
 var runTests = function( userCode, curProblem ) {
 	testMode = true;
 	
+	clear();
+	
 	asserts = [];
 	
 	for ( var i = 0; i < tests.length; i++ ) (function( test ) {
@@ -580,7 +582,7 @@ var runTests = function( userCode, curProblem ) {
 				"Test Results: All Tests Passed!" :
 				"Test Results: " + (total - pass) + " Test" + (total - pass === 1 ? "" : "s") + " Failed." ).end()
 			.toggleClass( "error", pass < total )
-			.fadeIn( 400 );
+			.show();
 	}
 	
 	testMode = false;
@@ -589,12 +591,16 @@ var runTests = function( userCode, curProblem ) {
 var print = function( msg ) {
 	resumeTest();
 	
-	var output = $("#output");
+	outputs.push( msg );
+	
+	if ( curProblem.focusLine != null && curProblem.focusLine + 1 > ++curProblem.curLine ) {
+		return;
+	}
+	
+	var output = $("#output" + (testMode ? "-test" : ""));
 	
 	output.append( "<div>" + clean( msg ) + "</div>" );
 	output.scrollTop( output[0].scrollHeight );
-	
-	outputs.push( msg );
 	
 	if ( window.waitTestPrint ) {
 		var doResume = window.waitTestPrint;
@@ -603,29 +609,63 @@ var print = function( msg ) {
 	}
 };
 
+$(document).delegate( "#output input", "keydown keyup change", function() {
+	var last = $(this).data("last"),
+		val = $(this).val() || null;
+	
+	if ( last != val ) {
+		var pos = $("#output input").index( this );
+	
+		curProblem.inputs[ pos ] = val;
+		curProblem.focusLine = $("#output").children().index( this.parentNode );
+	
+		$(this).data( "last", val );
+	
+		toExec = true;
+	}
+});
+
 var showInput = function( msg ) {
+	outputs.push( msg );
+	
+	if ( curProblem.focusLine != null && curProblem.focusLine + 1 > ++curProblem.curLine ) {
+		return;
+	}
+	
 	focusOutput();
 	
-	var output = $("#output");
+	var output = $("#output" + (testMode ? "-test" : ""));
 	
-	output.append( "<div>" + clean( msg ) + " " +
-		( window.toInput != null ?
-			window.toInput :
-			"<form><input type='text'/> <input type='submit' value='Enter'/></form></div>" ) );
+	var div = $( "<div>" + clean( msg ) + " <input type='text' class='text'/></div>" )
+		.appendTo( output );
+	
+	var input = div.find( "input" )
+		.val( window.toInput != null ? window.toInput : "" );
 	
 	output.scrollTop( output[0].scrollHeight );
-
-	output.find("input[type='text']").last().focus();
+	
+	if ( curProblem.inputNum - 1 === curProblem.focusInput ) {
+		input.focus();
+	}
 };
 
 var clear = function() {
-	$("#output").empty();
-	outputs = [];
+	if ( !testMode && curProblem.focusLine != null ) {
+		$("#output").children().slice( curProblem.focusLine + 1 ).remove();
+		outputs.splice( curProblem.focusLine + 1 );
+		
+	} else {
+		$("#output" + (testMode ? "-test" : "")).empty();
+		outputs = [];
+	}
+	
+	curProblem.inputNum = 0;
+	curProblem.curLine = -1;
 };
 
 var focusOutput = function() {
 	$("#output-nav").removeClass( "ui-state-disabled" );
-	$("#editor-box-tabs").tabs( "select", 1 );
+	//$("#editor-box-tabs").tabs( "select", 1 );
 };
 
 var focusTests = function() {

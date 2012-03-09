@@ -4,6 +4,7 @@ var Exercise,
 	curProblem,
 	errors,
 	curPosition,
+	toExec,
 	DEBUG = false;
 
 $(function(){
@@ -11,7 +12,13 @@ $(function(){
 	var editor = new Editor( "editor" );
 	Canvas.init();
 	
-	$("#editor").data( "editor", editor );
+	$("#editor")
+		.data( "editor", editor )
+		.hotNumber();
+	
+	editor.editor.on( "change", function() {
+		toExec = editor.editor.getSession().getValue();
+	});
 	
 	// Set up toolbar buttons
 	$(document).buttonize();
@@ -197,94 +204,7 @@ $(function(){
 		return false;
 	});
 	
-	$("#run-code").bind( "buttonClick", function() {
-		var userCode = $("#editor").editorText(),
-			validate = curProblem.validate,
-			// TODO: Generate this list dynamically
-			pass = JSHINT( "/*global input:false, inputNumber:false, print:false*/\n" + userCode ),
-			hintData = JSHINT.data(),
-			session = $("#editor").data( "editor" ).editor.getSession();
-		
-		extractResults( userCode );
-		
-		clear();
-		$("#output-nav").addClass( "ui-state-disabled" );
-		$("#results .desc").empty();
-		$("#results").hide();
-		
-		session.clearAnnotations();
-		
-		errors = [];
-		
-		var doRunTests = !!(pass && !hintData.implieds);
-		
-		if ( doRunTests ) {
-			$("#show-errors").addClass( "ui-state-disabled" );
-			$("#editor-box").hideTip( "Error" );
-			
-			// Run the tests
-			runTests( userCode, curProblem );
-			
-			// Then run the user code
-			clear();
-			runCode( userCode );
-			
-			if ( outputs.length > 0 ) {
-				focusOutput();
-				
-			} else {
-				focusProblem();
-			}
-		}
-		
-		if ( !doRunTests || errors.length ) {
-			$("#show-errors").removeClass( "ui-state-disabled" );
-			
-	        for ( var i = 0; i < JSHINT.errors.length; i++ ) {
-	            var error = JSHINT.errors[ i ];
-	
-	            if ( error && error.line && error.character &&
-						error.reason && !/unable to continue/i.test( error.reason ) ) {
-
-	                errors.push({
-	                    row: error.line - 2,
-	                    column: error.character - 1,
-	                    text: error.reason,
-	                    type: "error",
-	                    lint: error
-	                });
-				}
-	        }
-	
-			if ( hintData.implieds ) {
-				for ( var i = 0; i < hintData.implieds.length; i++ ) {
-					var implied = hintData.implieds[i];
-					
-					for ( var l = 0; l < implied.line.length; l++ ) {
-						errors.push({
-							row: implied.line[l] - 2,
-							column: 0,
-							text: "Using an undefined variable '" + implied.name + "'.",
-							type: "error",
-							lint: implied
-						});
-					}
-				}
-			}
-			
-			errors = errors.sort(function( a, b ) {
-				return a.row - b.row;
-			});
-	
-	        session.setAnnotations( errors );
-	
-			$("#editor-box").showTip( "Error", errors, setCursor );
-			
-			if ( !doRunTests ) {
-				$("#results").fadeOut( 400 );
-			}
-		}
-	});
+	$("#run-code").bind( "buttonClick", execCode );
 	
 	$("#editor-box-tabs")
 		.tabs({
@@ -359,6 +279,105 @@ $(function(){
 		openExerciseDialog( openExercise );
 	}
 });
+
+setInterval(function() {
+	if ( window.input != null && toExec != null ) {
+		execCode( toExec === true ? $("#editor").editorText() : toExec );
+		toExec = null;
+		curProblem.focusLine = null;
+	}
+}, 100 );
+
+var execCode = function( userCode ) {
+	var validate = curProblem.validate,
+		// TODO: Generate this list dynamically
+		pass = JSHINT( "/*global input:false, inputNumber:false, print:false*/\n" + userCode ),
+		hintData = JSHINT.data(),
+		session = $("#editor").data( "editor" ).editor.getSession();
+	
+	if ( !curProblem.inputs ) {
+		curProblem.inputs = [];
+	}
+	
+	extractResults( userCode );
+	
+	$("#output-nav").addClass( "ui-state-disabled" );
+	$("#results .desc").empty();
+	$("#results").hide();
+	
+	session.clearAnnotations();
+	
+	errors = [];
+	
+	var doRunTests = !!(pass && !hintData.implieds);
+	
+	if ( doRunTests ) {
+		$("#show-errors").addClass( "ui-state-disabled" );
+		$("#editor-box").hideTip( "Error" );
+		
+		// Run the tests
+		runTests( userCode, curProblem );
+		
+		// Then run the user code
+		clear();
+		runCode( userCode );
+		
+		if ( outputs.length > 0 ) {
+			focusOutput();
+			
+		} else {
+			focusProblem();
+		}
+	}
+	
+	if ( !doRunTests || errors.length ) {
+		$("#show-errors").removeClass( "ui-state-disabled" );
+		
+        for ( var i = 0; i < JSHINT.errors.length; i++ ) {
+            var error = JSHINT.errors[ i ];
+
+            if ( error && error.line && error.character &&
+					error.reason && !/unable to continue/i.test( error.reason ) ) {
+
+                errors.push({
+                    row: error.line - 2,
+                    column: error.character - 1,
+                    text: error.reason,
+                    type: "error",
+                    lint: error
+                });
+			}
+        }
+
+		if ( hintData.implieds ) {
+			for ( var i = 0; i < hintData.implieds.length; i++ ) {
+				var implied = hintData.implieds[i];
+				
+				for ( var l = 0; l < implied.line.length; l++ ) {
+					errors.push({
+						row: implied.line[l] - 2,
+						column: 0,
+						text: "Using an undefined variable '" + implied.name + "'.",
+						type: "error",
+						lint: implied
+					});
+				}
+			}
+		}
+		
+		errors = errors.sort(function( a, b ) {
+			return a.row - b.row;
+		});
+
+        session.setAnnotations( errors );
+
+		//$("#editor-box").showTip( "Error", errors, setCursor );
+		
+		if ( !doRunTests ) {
+			$("#results").fadeOut( 400 );
+		}
+	}
+};
 
 var openExercise = function( exercise ) {
 	Exercise = exercise;
