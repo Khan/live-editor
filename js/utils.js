@@ -776,10 +776,11 @@ var isEqual = function( a, b, msg ) {
 		}
 		
 		// Compute the offset, relative to the center position
-		var curNum = newNum < 50 ? (50 - newNum) + 50 : newNum,
-			offset = ((Math.log( firstNum * 500 ) - Math.log( firstNum * ((100 - curNum) * 10) )) * firstNum);
+		var offsetNum = firstNum === 0 ? newNum === 50 ? 0 : 1 : firstNum;
+			curNum = newNum < 50 ? (50 - newNum) + 50 : newNum,
+			offset = ((Math.log( offsetNum * 500 ) - Math.log( offsetNum * ((100 - curNum) * 10) )) * offsetNum);
 		 
-		newNum = firstNum + ((newNum < 50 ? -1 : 1) * (!isFinite( offset ) ? firstNum * 4 : offset));
+		newNum = firstNum + ((newNum < 50 ? -1 : 1) * (!isFinite( offset ) ? offsetNum * 4 : offset));
 		newNum = newNum.toFixed( decimal );
 		
 		// Figure out the position of the old number to replace
