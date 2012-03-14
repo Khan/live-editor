@@ -504,6 +504,9 @@ div#exercise-page {
 
 #exercise-page #tests {
 	right: 0px;
+	position: absolute;
+	width: 300px;
+	top: 0px;
 }
 
 #exercise-page #tests textarea {
