@@ -5,7 +5,14 @@ var Exercise,
 	errors,
 	curPosition,
 	toExec,
-	DEBUG = false;
+	pInstance,
+	DEBUG = false,
+	externalPropString = "",
+	externalProps = {
+		input: false,
+		inputNumber: false,
+		print: false
+	};
 
 $(function(){
 	// Start the editor and canvas drawing area
@@ -196,7 +203,7 @@ $(function(){
 				str += "<div>" + clean( output[i] ) + "</div>";
 			}
 			
-			$("#output").html( str );
+			$("#output-text").html( str );
 			
 			focusOutput();
 		}
@@ -259,6 +266,29 @@ $(function(){
 			.removeClass( "ui-corner-top" )
 			.addClass( "ui-corner-bottom" );
 	
+	pInstance = new Processing( "output-canvas", function( instance ) {
+		instance.draw = function(){};
+	});
+	pInstance.size( 400, 360 );
+	
+	// Make sure that only certain properties can be manipulated
+	for ( var prop in pInstance ) {
+		if ( prop.indexOf( "__" ) < 0 ) {
+			externalProps[ prop ] = !(/^[A-Z]/.test( prop ) ||
+				typeof pInstance[ prop ] === "function");
+		}
+	}
+	
+	externalProps.draw = true;
+	
+	var propList = [];
+	
+	for ( var prop in externalProps ) {
+		propList.push( prop + ":" + externalProps[ prop ] );
+	}
+	
+	externalPropString = propList.join( "," );
+	
 	$(window).bind( "beforeunload", function() {
 		leaveProblem();
 		saveResults();
@@ -291,12 +321,29 @@ setInterval(function() {
 var execCode = function( userCode ) {
 	var validate = curProblem.validate,
 		// TODO: Generate this list dynamically
-		pass = JSHINT( "/*global input:false, inputNumber:false, print:false*/\n" + userCode ),
+		pass = JSHINT( "/*global " + externalPropString + "*/\n" + userCode ),
 		hintData = JSHINT.data(),
 		session = $("#editor").data( "editor" ).editor.getSession();
 	
 	if ( !curProblem.inputs ) {
 		curProblem.inputs = [];
+	}
+	
+	var isCanvas = true;
+	
+	if ( hintData && hintData.globals ) {
+		for ( var i = 0, l = hintData.globals.length; i < l; i++ ) {
+			var global = hintData.globals[i];
+			
+			if ( global === "print" || global === "input" ||
+					global === "inputNumber" ) {
+				isCanvas = false;
+			}
+		}
+	}
+	
+	if ( isCanvas ) {
+		$("#output-canvas").show();
 	}
 	
 	extractResults( userCode );
@@ -312,15 +359,19 @@ var execCode = function( userCode ) {
 	var doRunTests = !!(pass && !hintData.implieds);
 	
 	if ( doRunTests ) {
+		var curCode = isCanvas ?
+			"with ( pInstance ) {\n" + userCode + "\n}" :
+			userCode;
+		
 		$("#show-errors").addClass( "ui-state-disabled" );
 		$("#editor-box").hideTip( "Error" );
 		
 		// Run the tests
-		runTests( userCode, curProblem );
+		runTests( curCode, curProblem, isCanvas );
 		
 		// Then run the user code
 		clear();
-		runCode( userCode );
+		runCode( curCode, isCanvas );
 		
 		if ( outputs.length > 0 ) {
 			focusOutput();

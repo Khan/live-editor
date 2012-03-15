@@ -25,6 +25,10 @@ body {
 	opacity: 0.3;
 }
 
+#play-page #canvas {
+	display: none;
+}
+
 #editor, #play-page .extra-editor {
 	z-index: 2;
 	background: #FFF;
@@ -91,6 +95,7 @@ body {
 
 #output {
 	overflow: auto;
+	position: relative;
 }
 
 #output form {
@@ -638,5 +643,14 @@ div.container-fluid > div.content {
 }
 
 #output-test {
+	display: none;
+}
+
+#output-canvas {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 400px;
+	height: 360px;
 	display: none;
 }

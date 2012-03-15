@@ -399,9 +399,9 @@ var connectAudio = function( callback ) {
 	}
 };
 
-var runCode = function( code, context ) {
+var runCode = function( code, isCanvas ) {
 	try {
-		if ( typeof apollo !== "undefined" ) {
+		if ( !isCanvas && typeof apollo !== "undefined" ) {
 			apollo.eval( "(function(){" + code + "})();" );
 		
 		} else {
@@ -422,7 +422,7 @@ var runCode = function( code, context ) {
 	}
 };
 
-$(document).delegate( "#output form", "submit", function() {
+$(document).delegate( "#output-text form", "submit", function() {
 	var val = $(this).find("input[type='text']").val();
 
 	$(this)
@@ -484,6 +484,12 @@ var testIO = function() {
 	test.apply( this, arguments );
 	
 	tests[ tests.length - 1 ].io = true;
+};
+
+var testCanvas = function() {
+	test.apply( this, arguments );
+	
+	tests[ tests.length - 1 ].canvas = true;
 };
 
 var testAnswer = function( name, val ) {
@@ -597,7 +603,7 @@ var print = function( msg ) {
 		return;
 	}
 	
-	var output = $("#output" + (testMode ? "-test" : ""));
+	var output = $("#output-text" + (testMode ? "-test" : ""));
 	
 	output.append( "<div>" + clean( msg ) + "</div>" );
 	output.scrollTop( output[0].scrollHeight );
@@ -609,15 +615,15 @@ var print = function( msg ) {
 	}
 };
 
-$(document).delegate( "#output input", "keydown keyup change", function() {
+$(document).delegate( "#output-text input", "keydown keyup change", function() {
 	var last = $(this).data("last"),
 		val = $(this).val() || null;
 	
 	if ( last != val ) {
-		var pos = $("#output input").index( this );
+		var pos = $("#output-text input").index( this );
 	
 		curProblem.inputs[ pos ] = val;
-		curProblem.focusLine = $("#output").children().index( this.parentNode );
+		curProblem.focusLine = $("#output-text").children().index( this.parentNode );
 	
 		$(this).data( "last", val );
 	
@@ -634,7 +640,7 @@ var showInput = function( msg ) {
 	
 	focusOutput();
 	
-	var output = $("#output" + (testMode ? "-test" : ""));
+	var output = $("#output-text" + (testMode ? "-test" : ""));
 	
 	var div = $( "<div>" + clean( msg ) + " <input type='text' class='text'/></div>" )
 		.appendTo( output );
@@ -651,11 +657,11 @@ var showInput = function( msg ) {
 
 var clear = function() {
 	if ( !testMode && curProblem.focusLine != null ) {
-		$("#output").children().slice( curProblem.focusLine + 1 ).remove();
+		$("#output-text").children().slice( curProblem.focusLine + 1 ).remove();
 		outputs.splice( curProblem.focusLine + 1 );
 		
 	} else {
-		$("#output" + (testMode ? "-test" : "")).empty();
+		$("#output-text" + (testMode ? "-test" : "")).empty();
 		outputs = [];
 	}
 	
@@ -707,6 +713,8 @@ var isEqual = function( a, b, msg ) {
 	
 	return a === b;
 };
+
+var CURNUM = 0;
 
 (function() {
 	var num, range, firstNum, slider, handle, decimal = 0, ignore = false;
