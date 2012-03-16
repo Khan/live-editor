@@ -1,1 +1,8 @@
 js/test.js
+js/combined*
+js/compressed*
+js/hashed-*
+css/combined*
+css/compressed*
+css/hashed-*
+css/uri.css
