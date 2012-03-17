@@ -584,9 +584,12 @@ var runTests = function( userCode, curProblem ) {
 		}
 		
 		$("#results")
+		/*
 			.find( "h3" ).text( pass === total ?
 				"Test Results: All Tests Passed!" :
 				"Test Results: " + (total - pass) + " Test" + (total - pass === 1 ? "" : "s") + " Failed." ).end()
+		*/
+			.toggleClass( "multiple", tests.length > 1 )
 			.toggleClass( "error", pass < total )
 			.show();
 	}
@@ -679,7 +682,8 @@ var focusTests = function() {
 };
 
 var assertIcons = {
-	pass: "circle-check",
+	pass: "check",
+	fail: "none",
 	error: "alert",
 	info: "info"
 };
@@ -687,15 +691,15 @@ var assertIcons = {
 var log = function( msg, type, expected ) {
 	type = type || "info";
 	
-	$("<li class='" + type + "'><span class='ui-icon ui-icon-" +
-		assertIcons[ type ] + "'></span> <a href='' class='msg'>" +
+	$("<li class='" + type + "'><span class='check'><span class='ui-icon ui-icon-" +
+		assertIcons[ type ] + "'></span></span> <a href='' class='msg'>" +
 		clean( msg ) + "</a></li>")
 		.data( "expected", expected || false )
 		.appendTo( $("#results ul").last() )
 };
 
 var assert = function( pass, msg, expected ) {
-	log( msg, !!pass ? "pass" : "error", expected );
+	log( msg, !!pass ? "pass" : "fail", expected );
 	
 	if ( typeof asserts !== "undefined" ) {
 		asserts.push( !!pass );
@@ -705,7 +709,7 @@ var assert = function( pass, msg, expected ) {
 };
 
 var isEqual = function( a, b, msg ) {
-	log( msg, a === b ? "pass" : "error", [ a, b ] );
+	log( msg, a === b ? "pass" : "fail", [ a, b ] );
 	
 	if ( typeof asserts !== "undefined" ) {
 		asserts.push( a === b );

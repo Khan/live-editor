@@ -266,6 +266,12 @@ $(function(){
 			.removeClass( "ui-corner-top" )
 			.addClass( "ui-corner-bottom" );
 	
+	$("#tests")
+		.tabs()
+		.find( ".ui-tabs-nav" )
+			.removeClass( "ui-corner-all" )
+			.addClass( "ui-corner-top" );
+	
 	pInstance = new Processing( "output-canvas", function( instance ) {
 		instance.draw = function(){};
 	});
