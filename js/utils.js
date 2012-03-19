@@ -399,13 +399,17 @@ var connectAudio = function( callback ) {
 	}
 };
 
-var runCode = function( code, isCanvas ) {
+var runCode = function( code, context ) {
 	try {
-		if ( !isCanvas && typeof apollo !== "undefined" ) {
+		if ( !context && typeof apollo !== "undefined" ) {
 			apollo.eval( "(function(){" + code + "})();" );
 		
 		} else {
-			(new Function( code ))();
+			var curCode = context ?
+				"with ( __context__ ) {\n" + code + "\n}" :
+				code;
+			
+			(new Function( "__context__", curCode ))( context );
 		}
 		
 	} catch( e ) {
@@ -526,7 +530,7 @@ var finalResumeTest = function() {
 	}
 };
 
-var runTests = function( userCode, curProblem ) {
+var runTests = function( userCode, curProblem, context ) {
 	testMode = true;
 	
 	clear();

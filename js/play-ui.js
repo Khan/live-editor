@@ -7,6 +7,7 @@ var Exercise,
 	toExec,
 	pInstance,
 	DEBUG = false,
+	codeContext,
 	externalPropString = "",
 	externalProps = {
 		input: false,
@@ -276,6 +277,9 @@ $(function(){
 		instance.draw = function(){};
 	});
 	pInstance.size( 400, 360 );
+	pInstance.background( 255 );
+	
+	codeContext = pInstance;
 	
 	// Make sure that only certain properties can be manipulated
 	for ( var prop in pInstance ) {
@@ -324,6 +328,8 @@ setInterval(function() {
 	}
 }, 100 );
 
+var lastGrab;
+
 var execCode = function( userCode ) {
 	var validate = curProblem.validate,
 		// TODO: Generate this list dynamically
@@ -335,22 +341,29 @@ var execCode = function( userCode ) {
 		curProblem.inputs = [];
 	}
 	
-	var isCanvas = true;
+	var isCanvas = false, grabAll = {}, fnCalls = [];
 	
 	if ( hintData && hintData.globals ) {
-		for ( var i = 0, l = hintData.globals.length; i < l; i++ ) {
-			var global = hintData.globals[i];
-			
-			if ( global === "print" || global === "input" ||
-					global === "inputNumber" ) {
-				isCanvas = false;
+		for ( var i = 0, l = hintData.globals.length; i < l; i++ ) (function( global ) {
+			if ( !(global === "print" || global === "input" ||
+					global === "inputNumber") ) {
+				isCanvas = true;
 			}
-		}
+			
+			// Do this so that declared variables are gobbled up
+			// into the codeContext object
+			if ( !externalProps[ global ] && !(global in codeContext) ) {
+				codeContext[ global ] = undefined;
+			}
+			
+			// TODO: Make sure these calls don't have a side effect
+			grabAll[ global ] = typeof codeContext[ global ] === "function" ?
+				function(){ fnCalls.push([ global, arguments ]); } :
+				codeContext[ global ];
+		})( hintData.globals[i] );
 	}
 	
-	if ( isCanvas ) {
-		$("#output-canvas").show();
-	}
+	$("#output-canvas").toggle( isCanvas );
 	
 	extractResults( userCode );
 	
@@ -364,20 +377,49 @@ var execCode = function( userCode ) {
 	
 	var doRunTests = !!(pass && !hintData.implieds);
 	
-	if ( doRunTests ) {
-		var curCode = isCanvas ?
-			"with ( pInstance ) {\n" + userCode + "\n}" :
-			userCode;
-		
+	if ( doRunTests ) {		
 		$("#show-errors").addClass( "ui-state-disabled" );
 		$("#editor-box").hideTip( "Error" );
 		
 		// Run the tests
-		runTests( curCode, curProblem, isCanvas );
+		if ( !isCanvas ) { // TODO: Remove this, eventually
+			runTests( userCode, curProblem, codeContext );
+		}
 		
 		// Then run the user code
 		clear();
-		runCode( curCode, isCanvas );
+		
+		// Snag all the user-defined variables
+		if ( isCanvas && lastGrab ) {
+			runCode( userCode, grabAll );
+			
+			var inject = "";
+			
+			for ( var i = 0; i < fnCalls.length; i++ ) {
+				var props = Array.prototype.slice.call( fnCalls[i][1] );
+				inject += fnCalls[i][0] + "(" + props.join( "," ) + ");\n";
+			}
+			
+			for ( var prop in grabAll ) {
+				grabAll[ prop ] = typeof grabAll[ prop ] === "function" ?
+					grabAll[ prop ].toString() :
+					JSON.stringify( grabAll[ prop ] );
+				
+				if ( externalProps[ prop ] !== false && (!(prop in lastGrab) || grabAll[ prop ] != lastGrab[ prop ]) ) {
+					inject += "var " + prop + " = " + grabAll[ prop ] + ";\n";
+				}
+			}
+			
+			if ( inject ) {
+				runCode( inject, codeContext );
+			}
+			
+			lastGrab = grabAll;
+			
+		} else {
+			runCode( userCode, codeContext );
+			lastGrab = {};
+		}
 		
 		if ( outputs.length > 0 ) {
 			focusOutput();
