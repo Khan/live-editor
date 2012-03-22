@@ -639,6 +639,7 @@ var CanvasOutput = {
 		});
 		
 		CanvasOutput.canvas.size( 400, 360 );
+		CanvasOutput.canvas.frameRate( 30 );
 		CanvasOutput.clear();
 		
 		if ( !CanvasOutput.props ) {

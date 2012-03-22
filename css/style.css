@@ -221,13 +221,14 @@ a.ui-button:visited:hover {
 }
 
 #play-page .tipbar .text-wrap {
-	margin: 8px 20px 24px 8px;
+	margin: 8px 20px 33px 8px;
 	font-family: Helvetica, Arial, sans-serif;
+	line-height: 1.4em;
 }
 
 #play-page .tipbar .tipnav {
 	position: absolute;
-	right: 274px;
+	right: 144px;
 	bottom: 4px;
 }
 
