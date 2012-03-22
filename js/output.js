@@ -25,6 +25,10 @@ var Output = {
 		this.toExec = true;
 		this.context = {};
 		
+		if ( !curProblem.taskOpen ) {
+			curProblem.taskOpen = [];
+		}
+		
 		// Default to using CanvasOutput
 		var type = CanvasOutput;
 		
@@ -323,15 +327,20 @@ var Output = {
 				"<input type='submit' value='Check Answer' class='ui-button'/></form>" });
 		},
 		
-		task: function( msg ) {			
-			Output.testContext.log( msg, "pass" );
+		task: function( msg, tip ) {
+			Output.testContext.log( msg, "pass", tip );
 			
-			var task = $( "#results li" ).last()
-				.addClass( "task" )
-				.append( "<ul></ul>" );
+			var pos = $( "#results li.task" ).length,
+				task = $( "#results li" ).last()
+					.addClass( "task" )
+					.append( "<ul></ul>" );
 			
 			if ( Output.inTask !== null ) {
 				task.parents( "ul" ).last().append( task );
+			}
+			
+			if ( curProblem.taskOpen[ pos ] ) {
+				task.find( "ul" ).show();
 			}
 			
 			Output.inTask = true;

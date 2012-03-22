@@ -174,17 +174,13 @@ $(function(){
 	});
 	
 	$(document).delegate( "#results ul a", "click", function() {
-		focusTests();
+		var li = $(this).parent();
 		
-		var editor = $("#tests-editor").data("editor").editor,
-			search = editor.$search;
-		
-		search.set({ needle: $(this).text() });
-		var match = search.find( editor.getSession() );
-		
-		if ( match && match.start ) {
-			editor.moveCursorTo( match.start.row, 0 );
-			editor.clearSelection();
+		if ( li.hasClass( "task" ) ) {
+			var pos = $( "#results li.task" ).index( li ),
+				visible = li.find( "ul" ).toggle().is( ":visible" );
+			
+			curProblem.taskOpen[ pos ] = visible;
 		}
 		
 		return false;

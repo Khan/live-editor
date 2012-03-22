@@ -490,7 +490,7 @@ a.ui-button:visited:hover {
 	position: relative;
 }
 
-#play-page #results li.task.pass ul {
+#play-page #results li.task ul {
 	display: none;
 }
 
