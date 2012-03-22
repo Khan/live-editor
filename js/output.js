@@ -185,10 +185,12 @@ var Output = {
 
 	        session.setAnnotations( Output.errors );
 
-			$("#editor-box").showTip( "Error", Output.errors, setCursor );
+			$("#output").showTip( "Error", Output.errors, function() {
+				$( ".tipbar .text" ).append( " (<a href=''>View Error</a>)" );
+			});
 			
 		} else {
-			$("#editor-box").hideTip( "Error" );
+			$("#output").hideTip( "Error" );
 		}
 	},
 	

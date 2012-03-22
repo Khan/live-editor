@@ -189,12 +189,6 @@ a.ui-button:visited:hover {
 
 #tests {
 	font-size: 12px;
-	/*
-	position: absolute;
-	width: 300px;
-	top: 0px;
-	right: -308px;
-	*/
 }
 
 #tests textarea {
@@ -207,7 +201,7 @@ a.ui-button:visited:hover {
 	background: rgba(0, 0, 0, 0.6);
 	color: white;
 	position: absolute;
-	width: 640px;
+	width: 100%;
 	min-height: 40px;
 	bottom: 5px;
 	left: 0px;
@@ -215,6 +209,7 @@ a.ui-button:visited:hover {
 	display: none;
 	border: none;
 	font-weight: normal;
+	margin: 0px;
 }
 
 #play-page .tipbar.error {
@@ -223,6 +218,7 @@ a.ui-button:visited:hover {
 
 #play-page .tipbar .text-wrap {
 	margin: 8px 20px 24px 8px;
+	font-family: Helvetica, Arial, sans-serif;
 }
 
 #play-page .tipbar .tipnav {
@@ -249,6 +245,10 @@ a.ui-button:visited:hover {
 	display: inline-block;
 	vertical-align: middle;
 	margin-top: -4px;
+}
+
+#play-page .tipbar .text a {
+	text-decoration: underline;
 }
 
 #play-page .tipbar .close {

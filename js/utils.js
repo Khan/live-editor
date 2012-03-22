@@ -68,6 +68,16 @@ $(document).delegate( ".tipbar .tipnav a", "click", function() {
 	return false;
 });
 
+$(document).delegate( ".tipbar.error .text-wrap a", "click", function() {
+	var box = $(this).parents(".editor-box"),
+		tipData = box.data( "tipData" ),
+		error = tipData.Error[ tipData.pos ];
+	
+	setCursor( error );
+	
+	return false;
+});
+
 $(document).delegate( ".tipbar form", "submit", function() {
 	var box = $(this).parents(".editor-box"),
 		tipData = box.data( "tipData" ),
