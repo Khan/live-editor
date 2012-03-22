@@ -94,7 +94,7 @@ body {
 }
 
 #output {
-	overflow: auto;
+	overflow: hidden;
 	position: relative;
 }
 
@@ -210,6 +210,10 @@ a.ui-button:visited:hover {
 	border: none;
 	font-weight: normal;
 	margin: 0px;
+}
+
+#play-page #output .tipbar {
+	z-index: 51;
 }
 
 #play-page .tipbar.error {
@@ -622,7 +626,7 @@ div#exercise-page {
 	float: right;
 }
 
-#exercise-page #overlay, #play-page #overlay {
+#exercise-page #overlay, #play-page #overlay, #output .overlay {
 	display: block;
     position: absolute;
     top: 0px;
@@ -631,6 +635,7 @@ div#exercise-page {
     height: 100%;
     background: rgba(255,255,255,0.8);
     z-index: 50;
+	margin: 0;
 }
 
 #exercise-page .sorting h3:not(.exercise-name) a {

@@ -177,6 +177,9 @@ var Output = {
 		session.clearAnnotations();
 		
 		$("#show-errors").toggleClass( "ui-state-disabled", !hasErrors );
+		$("#output .overlay").toggle( hasErrors );
+		
+		Output.toggle( !hasErrors );
 		
 		if ( hasErrors ) {
 			Output.errors = Output.errors.sort(function( a, b ) {
@@ -252,6 +255,24 @@ var Output = {
 			Output.exec( userCode +
 				"\n(function(){ Output.tests = [];\n" +
 				curProblem.validate + "\n})(); Output.tests[" + i + "].fn();" );
+		}
+	},
+
+	toggle: function( toggle ) {
+		if ( Output.output && Output.output.toggle ) {
+			Output.output.toggle( toggle );
+		}
+	},
+	
+	start: function() {
+		if ( Output.output && Output.output.start ) {
+			Output.output.start();
+		}
+	},
+	
+	stop: function() {
+		if ( Output.output && Output.output.stop ) {
+			Output.output.stop();
 		}
 	},
 	
@@ -700,8 +721,6 @@ var CanvasOutput = {
 	},
 	
 	toggle: function( doToggle ) {
-		CanvasOutput.$elem.toggle( doToggle );
-		
 		if ( doToggle ) {
 			CanvasOutput.start();
 			
