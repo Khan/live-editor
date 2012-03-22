@@ -402,16 +402,15 @@ var TextOutput = {
 			curProblem.inputs = [];
 		}
 		
+		// Need to execute the test code in apollo itself
+		this.doCompile = true;
+		
 		this.focusLine = null;
 		this.inputNum = 0;
 		this.curLine = -1;
+		this.toInput = null;
 		
 		Output.context = jQuery.extend( {}, TextOutput.context );
-		
-		// Need to execute the test code in apollo itself
-		if ( curProblem.validate ) {
-			TextOutput.doCompile = true;
-		}
 		
 		this.bind();
 		
@@ -464,12 +463,8 @@ var TextOutput = {
 			}
 
 			TextOutput.addLine( clean( msg ) );
-
-			if ( TextOutput.waitTestPrint ) {
-				var doResume = TextOutput.waitTestPrint;
-				delete TextOutput.waitTestPrint;
-				doResume( msg );
-			}
+			
+			TextOutput.resumeTest( "waitTestPrint", msg );
 		}
 	},
 	
@@ -500,11 +495,15 @@ var TextOutput = {
 		return $line;
 	},
 	
-	resumeTest: function() {
-		if ( TextOutput.waitTest ) {
-			var doResume = TextOutput.waitTest;
-			delete TextOutput.waitTest;
-			doResume();
+	resumeTest: function( name, msg ) {
+		name = name || "waitTest";
+		
+		if ( TextOutput[ name ] ) {
+			var doResume = TextOutput[ name ];
+			delete TextOutput[ name ];
+			doResume( msg );
+			
+			return true;
 		}
 	},
 	
@@ -535,23 +534,18 @@ var TextOutput = {
 		
 		TextOutput.$elem = $( "#" + this.id );
 		
-		if ( TextOutput.waitTest ) {
-			delete TextOutput.waitTest;
-			Output.testContext.assert( false, "A print or input was expected but not found.",
-				"Some form of input was expected by the tests but was not found. Perhaps you forgot a print or input statement?" );
-		}
-
-		if ( TextOutput.waitTestInput ) {
-			delete TextOutput.waitTestInput;
-			Output.testContext.assert( false, "An expected input() was not found.",
-			 	"The test was looking for an input but one was not found. Perhaps you forgot one?" );
-		}
-
-		if ( TextOutput.waitTestPrint ) {
-			delete TextOutput.waitTestPrint;
-			Output.testContext.assert( false, "An expected print() call was not found.",
-			 	"The test was looking for an print but one was not found. Perhaps you forgot one?" );
-		}
+		// Make sure the remaining IO tests are printed out so that the
+		// user knows what's expected of them
+		var checkIO;
+		
+		do {
+			checkIO = false;
+			
+			TextOutput.resumeTest();
+			
+			checkIO = TextOutput.resumeTest( "waitTestInput", false ) || checkIO;
+			checkIO = TextOutput.resumeTest( "waitTestPrint", false ) || checkIO;
+		} while( checkIO );
 	},
 	
 	testContext: {
