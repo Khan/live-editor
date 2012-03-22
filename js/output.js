@@ -700,12 +700,25 @@ var CanvasOutput = {
 				inject += "var " + prop + " = " + grabAll[ prop ] + ";\n";
 			}
 		}
+		
+		// Make sure that deleted variables go away
+		for ( var prop in CanvasOutput.lastGrab ) {
+			if ( !(prop in grabAll) && (CanvasOutput.props[ prop ] || !(prop in CanvasOutput.props)) ) {
+				inject += "delete Output.context." + prop + ";\n";
+			}
+		}
 
 		if ( !CanvasOutput.lastGrab ) {
 			Output.exec( userCode, Output.context );
 			
 		} else if ( inject ) {
 			Output.exec( inject, Output.context );
+		}
+		
+		// Need to make sure that the draw function is never deleted
+		// (Otherwise Processing.js starts to freak out)
+		if ( !Output.context.draw ) {
+			Output.context.draw = function(){};
 		}
 
 		CanvasOutput.lastGrab = grabAll;
