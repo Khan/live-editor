@@ -459,7 +459,7 @@ var connectAudio = function( callback ) {
 			
 			var coords = editor.renderer.textToScreenCoordinates( pos.row, pos.column );
 			slider.children().slider( "value", 50 );
-			slider.css({ top: coords.pageY, left: coords.pageX }).show();
+			slider.css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX }).show();
 			
 		} else {
 			range = null;
