@@ -410,8 +410,7 @@ var TextOutput = {
 		
 		// Need to execute the test code in apollo itself
 		if ( curProblem.validate ) {
-			Output.tests = [];
-			TextOutput.exec( "(function(){" + curProblem.validate + "})();" );
+			TextOutput.doCompile = true;
 		}
 		
 		this.bind();
@@ -517,9 +516,19 @@ var TextOutput = {
 		// testOutput = [];
 		
 		TextOutput.$elem = $( "#" + this.id + "-test" );
+		
+		Output.clear();
 
 		// Load up the IO tests
 		Output.exec( "waitfor() { TextOutput.waitTest = resume; } Output.tests[" + i + "].fn();", Output.testContext );
+		
+		// Need to execute the test code in apollo itself
+		// Need to be compiled after they've been referenced
+		if ( TextOutput.doCompile ) {
+			Output.tests = [];
+			Output.exec( curProblem.validate, Output.testContext );
+			TextOutput.doCompile = false;
+		}
 
 		// Then run the user's code
 		Output.exec( userCode, Output.context );
