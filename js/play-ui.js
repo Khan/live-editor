@@ -24,10 +24,6 @@ $(function(){
 		.data( "editor", editor )
 		.hotNumber();
 	
-	editor.editor.on( "change", function() {
-		toExec = editor.editor.getSession().getValue();
-	});
-	
 	// Set up toolbar buttons
 	$(document).buttonize();
 	
@@ -205,14 +201,10 @@ $(function(){
 			}
 			
 			$("#output-text").html( str );
-			
-			focusOutput();
 		}
 		
 		return false;
 	});
-	
-	$("#run-code").bind( "buttonClick", execCode );
 	
 	$("#editor-box-tabs")
 		.tabs({
@@ -273,32 +265,6 @@ $(function(){
 			.removeClass( "ui-corner-all" )
 			.addClass( "ui-corner-top" );
 	
-	pInstance = new Processing( "output-canvas", function( instance ) {
-		instance.draw = function(){};
-	});
-	pInstance.size( 400, 360 );
-	pInstance.background( 255 );
-	
-	codeContext = pInstance;
-	
-	// Make sure that only certain properties can be manipulated
-	for ( var prop in pInstance ) {
-		if ( prop.indexOf( "__" ) < 0 ) {
-			externalProps[ prop ] = !(/^[A-Z]/.test( prop ) ||
-				typeof pInstance[ prop ] === "function");
-		}
-	}
-	
-	externalProps.draw = true;
-	
-	var propList = [];
-	
-	for ( var prop in externalProps ) {
-		propList.push( prop + ":" + externalProps[ prop ] );
-	}
-	
-	externalPropString = propList.join( "," );
-	
 	$(window).bind( "beforeunload", function() {
 		leaveProblem();
 		saveResults();
@@ -319,164 +285,6 @@ $(function(){
 		openExerciseDialog( openExercise );
 	}
 });
-
-setInterval(function() {
-	if ( window.input != null && toExec != null ) {
-		execCode( toExec === true ? $("#editor").editorText() : toExec );
-		toExec = null;
-		curProblem.focusLine = null;
-	}
-}, 100 );
-
-var lastGrab;
-
-var execCode = function( userCode ) {
-	var validate = curProblem.validate,
-		// TODO: Generate this list dynamically
-		pass = JSHINT( "/*global " + externalPropString + "*/\n" + userCode ),
-		hintData = JSHINT.data(),
-		session = $("#editor").data( "editor" ).editor.getSession();
-	
-	if ( !curProblem.inputs ) {
-		curProblem.inputs = [];
-	}
-	
-	var isCanvas = false, grabAll = {}, fnCalls = [];
-	
-	if ( hintData && hintData.globals ) {
-		for ( var i = 0, l = hintData.globals.length; i < l; i++ ) (function( global ) {
-			if ( !(global === "print" || global === "input" ||
-					global === "inputNumber") ) {
-				isCanvas = true;
-			}
-			
-			// Do this so that declared variables are gobbled up
-			// into the codeContext object
-			if ( !externalProps[ global ] && !(global in codeContext) ) {
-				codeContext[ global ] = undefined;
-			}
-			
-			// TODO: Make sure these calls don't have a side effect
-			grabAll[ global ] = typeof codeContext[ global ] === "function" ?
-				function(){ fnCalls.push([ global, arguments ]); } :
-				codeContext[ global ];
-		})( hintData.globals[i] );
-	}
-	
-	$("#output-canvas").toggle( isCanvas );
-	
-	extractResults( userCode );
-	
-	$("#output-nav").addClass( "ui-state-disabled" );
-	$("#results .desc").empty();
-	$("#results").hide();
-	
-	session.clearAnnotations();
-	
-	errors = [];
-	
-	var doRunTests = !!(pass && !hintData.implieds);
-	
-	if ( doRunTests ) {		
-		$("#show-errors").addClass( "ui-state-disabled" );
-		$("#editor-box").hideTip( "Error" );
-		
-		// Run the tests
-		if ( !isCanvas ) { // TODO: Remove this, eventually
-			runTests( userCode, curProblem, codeContext );
-		}
-		
-		// Then run the user code
-		clear();
-		
-		// Snag all the user-defined variables
-		if ( isCanvas && lastGrab ) {
-			runCode( userCode, grabAll );
-			
-			var inject = "";
-			
-			for ( var i = 0; i < fnCalls.length; i++ ) {
-				var props = Array.prototype.slice.call( fnCalls[i][1] );
-				inject += fnCalls[i][0] + "(" + props.join( "," ) + ");\n";
-			}
-			
-			for ( var prop in grabAll ) {
-				grabAll[ prop ] = typeof grabAll[ prop ] === "function" ?
-					grabAll[ prop ].toString() :
-					JSON.stringify( grabAll[ prop ] );
-				
-				if ( externalProps[ prop ] !== false && (!(prop in lastGrab) || grabAll[ prop ] != lastGrab[ prop ]) ) {
-					inject += "var " + prop + " = " + grabAll[ prop ] + ";\n";
-				}
-			}
-			
-			if ( inject ) {
-				runCode( inject, codeContext );
-			}
-			
-			lastGrab = grabAll;
-			
-		} else {
-			runCode( userCode, codeContext );
-			lastGrab = {};
-		}
-		
-		if ( outputs.length > 0 ) {
-			focusOutput();
-			
-		} else {
-			focusProblem();
-		}
-	}
-	
-	if ( !doRunTests || errors.length ) {
-		$("#show-errors").removeClass( "ui-state-disabled" );
-		
-        for ( var i = 0; i < JSHINT.errors.length; i++ ) {
-            var error = JSHINT.errors[ i ];
-
-            if ( error && error.line && error.character &&
-					error.reason && !/unable to continue/i.test( error.reason ) ) {
-
-                errors.push({
-                    row: error.line - 2,
-                    column: error.character - 1,
-                    text: error.reason,
-                    type: "error",
-                    lint: error
-                });
-			}
-        }
-
-		if ( hintData.implieds ) {
-			for ( var i = 0; i < hintData.implieds.length; i++ ) {
-				var implied = hintData.implieds[i];
-				
-				for ( var l = 0; l < implied.line.length; l++ ) {
-					errors.push({
-						row: implied.line[l] - 2,
-						column: 0,
-						text: "Using an undefined variable '" + implied.name + "'.",
-						type: "error",
-						lint: implied
-					});
-				}
-			}
-		}
-		
-		errors = errors.sort(function( a, b ) {
-			return a.row - b.row;
-		});
-
-        session.setAnnotations( errors );
-
-		//$("#editor-box").showTip( "Error", errors, setCursor );
-		
-		if ( !doRunTests ) {
-			$("#results").fadeOut( 400 );
-		}
-	}
-};
 
 var openExercise = function( exercise ) {
 	Exercise = exercise;
@@ -603,12 +411,6 @@ var showProblem = function( problem ) {
 		curProblem.done = false;
 	}
 	
-	// Prime the test queue
-	// TODO: Should we check to see if no test() prime exists?
-	if ( curProblem.validate ) {
-		runCode( curProblem.validate );
-	}
-	
 	var doAnswer = testAnswers.length > 0;
 	
 	$("#results").hide();
@@ -636,15 +438,14 @@ var showProblem = function( problem ) {
 	
 	$("#show-errors, #run-code, #reset-code").toggle( !doAnswer );
 	
+	Output.init();
+	
 	if ( doAnswer ) {
 		showQuestion();
 		
 	} else {
 		$("#tipbar").hide();
 	}
-	
-	var session = $("#editor").data( "editor" ).editor.getSession();
-	session.clearAnnotations();
 };
 
 var insertExercise = function( testObj ) {
