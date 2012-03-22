@@ -490,6 +490,10 @@ a.ui-button:visited:hover {
 	position: relative;
 }
 
+#play-page #results li.task.pass ul {
+	display: none;
+}
+
 #play-page #results li a {
 	text-decoration: none;
 	border-bottom: 1px solid #CCC;

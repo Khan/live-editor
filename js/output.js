@@ -20,6 +20,7 @@ var Output = {
 
 		this.errors = [];
 		this.asserts = [];
+		this.inTask = null;
 		
 		this.toExec = true;
 		this.context = {};
@@ -322,8 +323,24 @@ var Output = {
 				"<input type='submit' value='Check Answer' class='ui-button'/></form>" });
 		},
 		
+		task: function( msg ) {			
+			Output.testContext.log( msg, "pass" );
+			
+			var task = $( "#results li" ).last()
+				.addClass( "task" )
+				.append( "<ul></ul>" );
+			
+			if ( Output.inTask !== null ) {
+				task.parents( "ul" ).last().append( task );
+			}
+			
+			Output.inTask = true;
+		},
+		
 		log: function( msg, type, expected ) {
 			type = type || "info";
+			
+			Output.updateTask( type );
 
 			$( "<li class='" + type + "'><span class='check'><span class='ui-icon ui-icon-" +
 				Output.icons[ type ] + "'></span></span> <a href='' class='msg'>" +
@@ -351,22 +368,21 @@ var Output = {
 		}
 	},
 	
-	getUserCode: function() {
-		return $("#editor").editorText();
+	updateTask: function( type ) {
+		if ( Output.inTask === true && type !== "pass" ) {
+			$( "#results li.task" ).last()
+				.removeClass( "pass" )
+				.addClass( type || "" )
+				.find( ".ui-icon" )
+					.removeClass( "ui-icon-" + Output.icons.pass )
+					.addClass( "ui-icon-" + Output.icons[ type ] );
+			
+			Output.inTask = false;
+		}
 	},
 	
-	buildVarString: function( objects ) {
-		var propList = [];
-		
-		for ( var i = 0; i < objects.length; i++ ) {
-			var props = objects[i];
-			
-			for ( var prop in props ) {
-				propList.push( prop + " = " + this.stringify( props[ prop ] ) );
-			}
-		}
-		
-		return "var " + propList.join( ", " ) + ";\n";
+	getUserCode: function() {
+		return $("#editor").editorText();
 	},
 	
 	stringify: function( obj ) {
