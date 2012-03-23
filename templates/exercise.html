@@ -1,26 +1,9 @@
 {% extends "labs/template.html" %}
 
-{% block pagescript %}
+{% block pagecss %}
+{{ js_css_packages.css_package("canvas-editor") }}
+{% endblock pagecss %}
 
-<link rel="stylesheet" href="/canvas-editor/css/style.css" />
-<link rel="stylesheet" href="/canvas-editor/css/jquery-ui.css" />
-
-<script src="/canvas-editor/js/oni-apollo.js"></script>
-
-<script src="/canvas-editor/js/ace.js"></script>
-<script src="/canvas-editor/js/ace-mode-javascript.js"></script>
-<script src="/canvas-editor/js/ace-theme-textmate.js"></script>
-
-<script src="/canvas-editor/js/jquery-ui.js"></script>
-<script src="/canvas-editor/js/jquery.simulate.js"></script>
-<script src="/canvas-editor/js/record.js"></script>
-<script src="/canvas-editor/js/editor.js"></script>
-<script src="/canvas-editor/js/canvas.js"></script>
-<script src="/canvas-editor/js/utils.js"></script>
-<script src="/canvas-editor/js/jshint.js"></script>
-<script src="/canvas-editor/js/play-ui.js"></script>
-
-{% endblock pagescript %}
 
 {% block pagecontent %}
 
@@ -38,101 +21,90 @@
 				<span id="timeleft"></span>
 			</div>
 		</div>
-		<div id="canvas-editor">
-			<div id="editor-box-tabs">
-				<ul id="editor-box-tabs-nav">
-					<li><a href="#editor-box">Code</a></li>
-					<li id="output-nav" class="ui-state-disabled"><a href="#output">Output</a></li>
-					<!--<li class="ui-state-disabled"><a href="#editor-box">Tests</a></li>-->
+		<div id="canvas-editor" class="row">
+			<div id="tests" class="span5">
+				<ul class="ui-tabs-nav">
+					<li><a href="#task-tab">Problem</a></li>
 				</ul>
-				
-				<div id="editor-box" class="editor-box ui-widget-content ui-corner-top">
-					<div id="editor" class="ui-corner-top"></div>
-					<canvas id="canvas" width="640" height="360"></canvas>
-					<div id="hint" class="tipbar">
-						<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
-						<div class="tipnav">
-							<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
-							<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
+				<div id="task-tab">
+					<div id="problem">
+						<div class="ui-widget-content ui-corner-all">
+							<div class="desc">
+								<div class="text"></div>
+								<div id="next-problem-desc">
+									<p><span class="ui-icon ui-icon-circle-check"></span> You've gotten this problem correct!</p>
+								</div>
+							</div>
 						</div>
-						<div class="text-wrap"><strong>Hint:</strong> <span class="text"></span></div>
 					</div>
-					<div id="error" class="tipbar">
-						<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
-						<div class="tipnav">
-							<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
-							<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
-						</div>
-						<div class="text-wrap"><strong><span class="ui-icon ui-icon-alert"></span> Error:</strong> <span class="text"></span></div>
-					</div>
-					<div class="toolbar ui-widget-header">
-						<a href="" id="view-tests" class="ui-button ui-state-disabled">
-							<span class="ui-icon-circle-check"></span>
-							<span class="ui-button-text">Tests</span>
-						</a>
-					
-						<a href="" id="get-hint" class="ui-button ui-state-disabled">
-							<span class="ui-icon-info"></span>
-							<span class="ui-button-text">Hints</span>
-						</a>
-					
-						<a href="" id="run-code" class="ui-button right">
-							<span class="ui-icon-script"></span>
-							<span class="ui-button-text">Run Code</span>
-						</a>
-					
-						<a href="" id="show-errors" class="ui-button ui-state-disabled right">
-							<span class="ui-icon-alert"></span>
-							<span class="ui-button-text">Errors</span>
-						</a>
-					</div>
-				</div>
-				<div id="output"></div>
-			</div>
-			
-			<div id="tests">
-				<div id="problem">
-					<h3 class="title ui-helper-reset ui-corner-top"></h3>
-					<div class="ui-widget-content ui-corner-bottom">
-						<div class="desc">
-							<div class="text"></div>
-							<div id="next-problem-desc">
-								<p><span class="ui-icon ui-icon-circle-check"></span> You've gotten this problem correct!</p>
-								<a href="" id="next-problem" class="ui-button">
-									<span class="ui-icon-triangle-1-e"></span>
-									<span class="ui-button-text">Next Problem</span>
-								</a>
+					<div id="results">
+						<h3 class="ui-helper-reset ui-corner-top">Tasks</h3>
+						<div class="ui-widget-content">
+							<div class="desc">
+								<ul></ul>
 							</div>
 						</div>
 					</div>
 				</div>
-				<div id="results">
-					<h3 class="ui-helper-reset ui-corner-top">Test Results</h3>
-					<div class="ui-widget-content ui-corner-bottom">
-						<div class="desc">
-							<ul></ul>
-							
-							<a href="" id="view-tests-2" class="ui-button">
-								<span class="ui-icon-carat-1-w"></span>
-								<span class="ui-button-text">Back to Your Code</span>
-							</a>
-						</div>
-					</div>
+			</div>
+
+			<div id="editor-box" class="span8 editor-box ui-widget-content ui-corner-top">
+				<div id="editor" class="editor ui-corner-top"></div>
+				<canvas id="canvas" width="640" height="360"></canvas>
+				<div class="toolbar ui-widget-header">
+					<a href="" id="reset-code" class="ui-button">
+						<span class="ui-icon-arrowreturnthick-1-w"></span>
+						<span class="ui-button-text">Reset</span>
+					</a>
+					
+					<a href="" class="next-problem ui-button right">
+						<span class="ui-icon-triangle-1-e"></span>
+						<span class="ui-button-text">Next Problem</span>
+					</a>
+					
+					<a href="" id="get-hint" class="ui-button ui-state-disabled right">
+						<span class="ui-icon-info"></span>
+						<span class="ui-button-text">Hints</span>
+					</a>
 				</div>
 			</div>
-			<div id="player"></div>
-			<div id="play-overlay"></div>
+
+			<div id="output" class="span7 side editor-box">
+				<div class="overlay"></div>
+				<div id="output-text"></div>
+				<canvas id="output-canvas" width="400" height="360"></canvas>
+				<div id="output-text-test"></div>
+				<div id="tipbar" class="tipbar ui-state-hover">
+					<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
+					<div class="tipnav">
+						<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
+						<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
+					</div>
+					<div class="text-wrap">
+						<strong></strong>
+						<span class="text"></span>
+					</div>
+				</div>
+				<div class="toolbar ui-widget-header">
+					<a href="" id="restart-code" class="ui-button right">
+						<span class="ui-icon-refresh"></span>
+						<span class="ui-button-text">Restart</span>
+					</a>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
+<div id="overlay"></div>
 </div>
 
 {% endblock pagecontent %}
  
 {% block bottompagescript %}
+{{ js_css_packages.js_package("canvas-editor-exercise") }}
 
 <script type="text/html" id="tab-tmpl">
-	<li>
+	<li class="ui-state-disabled">
 		<a href='#code'><span class='ui-icon-pencil ui-icon'></span></a>
 	</li>
 </script>
@@ -143,17 +115,6 @@
 			<p class="desc">Exercise description.</p>
 		</div>
 	</div>
-</script>
-<script type="text/sjs">
-window.input = function( msg ) {
-	showInput( msg );
-
-	waitfor(var val) {
-		window.doResume = resume;
-	}
-	
-	return val;
-};
 </script>
 
 {% endblock bottompagescript %}

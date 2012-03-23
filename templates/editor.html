@@ -1,19 +1,11 @@
 {% extends "labs/template.html" %}
 
+{% block pagecss %}
+    {{ js_css_packages.css_package("canvas-editor") }}
+{% endblock pagecss %}
+
 {% block pagescript %}
-
-<link rel="stylesheet" href="/canvas-editor/css/style.css" />
-<link rel="stylesheet" href="/canvas-editor/css/jquery-ui.css" />
-
-<script src="/canvas-editor/js/ace.js"></script>
-<script src="/canvas-editor/js/ace-mode-javascript.js"></script>
-<script src="/canvas-editor/js/ace-theme-textmate.js"></script>
-
-<script src="/canvas-editor/js/jquery-ui.js"></script>
-<script src="/canvas-editor/js/editor.js"></script>
-<script src="/canvas-editor/js/utils.js"></script>
-<script src="/canvas-editor/js/exercise-ui.js"></script>
-
+{{ js_css_packages.js_package("canvas-editor") }}
 {% endblock pagescript %}
 
 {% block pagecontent %}

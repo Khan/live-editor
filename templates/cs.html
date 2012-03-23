@@ -1,10 +1,12 @@
 {% extends "labs/template.html" %}
 
-{% block pagescript %}
-<link rel="stylesheet" href="/canvas-editor/css/style.css" />
-<script src="/canvas-editor/js/utils.js"></script>
-<script src="/canvas-editor/js/main-ui.js"></script>
-{% endblock pagescript %}
+{% block pagecss %}
+    {{ js_css_packages.css_package("canvas-editor") }}
+{% endblock pagecss %}
+
+{% block bottompagescript %}
+    {{ js_css_packages.js_package("canvas-editor-cs") }}
+{% endblock bottompagescript %}
 
 {% block pagecontent %}
 <h1>Computer Science Exercises</h1>
