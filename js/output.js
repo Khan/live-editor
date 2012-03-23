@@ -189,7 +189,7 @@ var Output = {
 	        session.setAnnotations( Output.errors );
 
 			$("#output").showTip( "Error", Output.errors, function() {
-				$( ".tipbar .text" ).append( " (<a href=''>View Error</a>)" );
+				$( ".tipbar.error .text" ).append( " (<a href=''>View Error</a>)" );
 			});
 			
 		} else {

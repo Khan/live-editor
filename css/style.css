@@ -51,11 +51,7 @@ body {
 #editor-box, #tests-box, #output-box, #solution-box {
 	overflow: hidden;
 	border-bottom: none;
-	/*
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	*/
+	position: relative;
 }
 
 #play-page .extra-editor {
@@ -727,11 +723,12 @@ div.container-fluid > div.content {
 	border: 1px solid #D4CCB0;
 }
 
-#output.side .toolbar {
+#play-page #output.side .toolbar {
 	margin: 0;
 	top: 360px;
-	position: absolute;
-	width: 100%;
+	position: relative;
+	width: auto;
+	z-index: 52;
 }
 
 #output-text-test {

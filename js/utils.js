@@ -107,6 +107,7 @@ jQuery.fn.showTip = function( type, texts, callback ) {
 	if ( !tipData ) {
 		tipData = { pos: 0 };
 		this.data( "tipData", tipData );
+		this.append( $( "#tipbar-tmpl" ).html() );
 	}
 	
 	type = type || tipData.cur;
