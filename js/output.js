@@ -276,6 +276,12 @@ var Output = {
 		}
 	},
 	
+	restart: function() {
+		if ( Output.output && Output.output.restart ) {
+			Output.output.restart();
+		}
+	},
+	
 	clear: function() {
 		if ( Output.output && Output.output.clear ) {
 			Output.output.clear();
@@ -480,8 +486,10 @@ var TextOutput = {
 			if ( last != val ) {
 				var pos = root.find( "input" ).index( this );
 
-				curProblem.inputs[ pos ] = val;
-				TextOutput.focusLine = root.children().index( this.parentNode );
+				if ( !TextOutput.restarting ) {
+					curProblem.inputs[ pos ] = val;
+					TextOutput.focusLine = root.children().index( this.parentNode );
+				}
 
 				$(this).data( "last", val );
 			}
@@ -492,7 +500,7 @@ var TextOutput = {
 				TextOutput.runCode( Output.getUserCode() );
 				TextOutput.focusLine = null;
 			}
-		}, 13 )
+		}, 13 );
 		
 		this.bound = true;
 	},
@@ -621,6 +629,17 @@ var TextOutput = {
 	kill: function() {
 		TextOutput.$elem.empty();
 		TextOutput.$elem.hide();
+	},
+	
+	restart: function() {
+		curProblem.inputs = [];
+		TextOutput.focusLine = null;
+		TextOutput.inputNum = 0;
+		TextOutput.curLine = -1;
+		
+		TextOutput.restarting = true;
+		Output.runCode( Output.getUserCode() );
+		TextOutput.restarting = false;
 	}
 };
 
@@ -724,8 +743,9 @@ var CanvasOutput = {
 		CanvasOutput.lastGrab = grabAll;
 	},
 	
-	reset: function() {
-		
+	restart: function() {
+		CanvasOutput.lastGrab = null;
+		CanvasOutput.runCode( Output.getUserCode() );
 	},
 	
 	testContext: {

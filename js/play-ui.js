@@ -91,6 +91,10 @@ $(function(){
 		insertExerciseForm( testObj );
 	});
 	
+	$("#restart-code").bind( "buttonClick", function() {
+		Output.restart();
+	});
+	
 	$("#get-hint").bind( "buttonClick", function() {
 		$("#editor-box").toggleTip( "Hint", curProblem.hints, function() {
 			$("#get-hint .ui-button-text").text( testAnswers.length > 0 ? "Answer" : "Hints" );

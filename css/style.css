@@ -98,19 +98,19 @@ body {
 	position: relative;
 }
 
-#output form {
+#output-text form {
 	display: inline-block;
 	margin: 0;
 }
 
-#output div {
+#output-text div {
 	line-height: 28px;
 	margin: 2px 5px;
 	font-family: Monaco, Courier New;
 	font-size: 12px;
 }
 
-#output div input.text {
+#output-text div input.text {
 	font-family: Monaco, Courier New;
 	font-size: 12px;
 	width: 125px;
@@ -723,23 +723,27 @@ div.container-fluid > div.content {
 }
 
 #output.side {
-	/*
-	position: absolute;
-	width: 360px;
-	*/
-	height: 360px;
+	height: 393px;
 	border: 1px solid #D4CCB0;
+}
+
+#output.side .toolbar {
+	margin: 0;
+	top: 360px;
+	position: absolute;
+	width: 100%;
 }
 
 #output-text-test {
 	display: none;
 }
 
-#output-canvas {
+#output-text, #output-canvas {
 	position: absolute;
 	top: 0px;
 	left: 0px;
 	width: 400px;
 	height: 360px;
 	display: none;
+	overflow: auto;
 }
