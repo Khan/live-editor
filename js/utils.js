@@ -314,7 +314,9 @@ var saveResults = function( callback ) {
 		});
 	}
 	
-	window.localStorage[ "labs-cs-" + Exercise.id ] = JSON.stringify({ problems: results });
+	if ( !window.DEBUG ) {
+		window.localStorage[ "labs-cs-" + Exercise.id ] = JSON.stringify({ problems: results });
+	}
 	
 	if ( callback ) {
 		callback();
@@ -322,11 +324,13 @@ var saveResults = function( callback ) {
 };
 
 var loadResults = function( exercise, callback ) {
-	var results = JSON.parse( window.localStorage[ "labs-cs-" + exercise.id ] || null );
+	if ( !window.DEBUG ) {
+		var results = JSON.parse( window.localStorage[ "labs-cs-" + exercise.id ] || null );
 	
-	if ( results && results.problems ) {
-		for ( var i = 0; i < results.problems.length; i++ ) {
-			$.extend( exercise.problems[i], results.problems[i] );
+		if ( results && results.problems ) {
+			for ( var i = 0; i < results.problems.length; i++ ) {
+				$.extend( exercise.problems[i], results.problems[i] );
+			}
 		}
 	}
 	
