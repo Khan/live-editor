@@ -307,6 +307,7 @@ var saveResults = function( callback ) {
 		var problem = problems[i];
 		
 		results.push({
+			id: problem.id,
 			answer: problem.answer,
 			done: problem.done,
 			cursorRow: problem.cursorRow,
@@ -329,7 +330,12 @@ var loadResults = function( exercise, callback ) {
 	
 		if ( results && results.problems ) {
 			for ( var i = 0; i < results.problems.length; i++ ) {
-				$.extend( exercise.problems[i], results.problems[i] );
+				var problem = exercise.problems[i],
+					result = results.problems[i];
+				
+				if ( problem && result && problem.id === result.id ) {
+					$.extend( problem, result );
+				}
 			}
 		}
 	}
