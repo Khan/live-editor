@@ -654,7 +654,7 @@ var CanvasOutput = {
 		CanvasOutput.lastGrab = null;
 		
 		CanvasOutput.canvas = Output.context = new Processing( this.id, function( instance ) {
-			instance.draw = function(){};
+			instance.draw = CanvasOutput.DUMMY;
 		});
 		
 		CanvasOutput.canvas.size( 400, 360 );
@@ -677,6 +677,8 @@ var CanvasOutput = {
 		
 		return this;
 	},
+	
+	DUMMY: function(){},
 	
 	runTest: function( userCode, test, i ) {
 		// TODO: Add in Canvas testing
@@ -726,8 +728,10 @@ var CanvasOutput = {
 				inject += "delete Output.context." + prop + ";\n";
 			}
 		}
-
-		if ( !CanvasOutput.lastGrab ) {
+		
+		// Re-run the entire program if we don't need to inject the changes
+		if ( Output.context.draw === CanvasOutput.DUMMY || !CanvasOutput.lastGrab ) {
+			CanvasOutput.clear();
 			Output.exec( userCode, Output.context );
 			
 		} else if ( inject ) {
@@ -737,7 +741,7 @@ var CanvasOutput = {
 		// Need to make sure that the draw function is never deleted
 		// (Otherwise Processing.js starts to freak out)
 		if ( !Output.context.draw ) {
-			Output.context.draw = function(){};
+			Output.context.draw = CanvasOutput.DUMMY;
 		}
 
 		CanvasOutput.lastGrab = grabAll;
