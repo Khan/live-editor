@@ -635,6 +635,10 @@ div#exercise-page {
 	margin: 0;
 }
 
+#play-page #overlay {
+	z-index: 100;
+}
+
 #exercise-page .sorting h3:not(.exercise-name) a {
 	cursor: move;
 }
