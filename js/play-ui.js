@@ -2,7 +2,6 @@ var Exercise,
 	player,
 	track,
 	curProblem,
-	errors,
 	curPosition,
 	toExec,
 	pInstance,
@@ -97,7 +96,7 @@ $(function(){
 	
 	$("#get-hint").bind( "buttonClick", function() {
 		$("#editor-box").toggleTip( "Hint", curProblem.hints, function() {
-			$("#get-hint .ui-button-text").text( testAnswers.length > 0 ? "Answer" : "Hints" );
+			$("#get-hint .ui-button-text").text( Output.testAnswers.length > 0 ? "Answer" : "Hints" );
 		});
 		focusProblem();
 	});
@@ -361,7 +360,7 @@ var openExercise = function( exercise ) {
 };
 
 var focusProblem = function() {
-	if ( testAnswers.length > 0 ) {
+	if ( Output.testAnswers.length > 0 ) {
 		$(".tipbar input").first().focus();
 	
 	} else {
@@ -371,9 +370,9 @@ var focusProblem = function() {
 };
 
 var showQuestion = function() {
-	$("#editor-box").showTip( "Question", testAnswers, function() {
+	$("#editor-box").showTip( "Question", Output.testAnswers, function() {
 		$(".tipbar").buttonize();
-		$(".tipbar input").first().val( testAnswers.length > 0 ? curProblem.answer : "" ).focus();
+		$(".tipbar input").first().val( Output.testAnswers.length > 0 ? curProblem.answer : "" ).focus();
 		
 		if ( !$("#get-hint").is(".ui-state-disabled") ) {
 			$("#get-hint .ui-button-text").text( "Hints" );
@@ -383,6 +382,7 @@ var showQuestion = function() {
 
 var leaveProblem = function() {
 	if ( curProblem ) {
+		$( ".tipbar" ).hide();
 		$("#editor").extractCursor( curProblem );
 		extractResults( $("#editor").editorText() );
 	}
@@ -393,8 +393,8 @@ var textProblem = function() {
 		var editor = $("#editor").data( "editor" ).editor;
 		
 		$("#editor")
-			.editorText( testAnswers.length === 0 && curProblem.answer || curProblem.start || "" )
-			.setCursor( curProblem, testAnswers.length === 0 );
+			.editorText( Output.testAnswers.length === 0 && curProblem.answer || curProblem.start || "" )
+			.setCursor( curProblem, Output.testAnswers.length === 0 );
 	}
 };
 
@@ -402,16 +402,14 @@ var showProblem = function( problem ) {
 	leaveProblem();
 	
 	curProblem = problem;
-	errors = [];
-	
-	tests = [];
-	testAnswers = [];
 	
 	if ( curProblem.done == null ) {
 		curProblem.done = false;
 	}
 	
-	var doAnswer = testAnswers.length > 0;
+	Output.init();
+	
+	var doAnswer = Output.testAnswers.length > 0;
 	
 	$("#results").hide();
 	
@@ -437,8 +435,6 @@ var showProblem = function( problem ) {
 		.find( ".ui-button-text" ).text( "Hints" );
 	
 	$("#show-errors, #run-code, #reset-code").toggle( !doAnswer );
-	
-	Output.init();
 	
 	if ( doAnswer ) {
 		showQuestion();

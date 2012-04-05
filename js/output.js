@@ -198,6 +198,10 @@ var Output = {
 	},
 	
 	test: function( userCode ) {
+		if ( Output.testAnswers.length ) {
+			return;
+		}
+		
 		var insert = $( "#results .desc" ).empty();
 		
 		Output.testing = true;
@@ -206,12 +210,12 @@ var Output = {
 		for ( var i = 0; i < Output.tests.length; i++ ) {
 			var fieldset = $( "<fieldset><legend>" + Output.tests[i].name + " (<a href=''>View Output</a>)</legend><ul></ul></fieldset>" )
 				.appendTo( insert );
-			
+		
 			var testOutput = Output.runTest( userCode, Output.tests[i], i );
-			
+		
 			fieldset.data( "output", testOutput || false );
 		}
-		
+	
 		Output.testing = false;
 
 		var total = Output.asserts.length,

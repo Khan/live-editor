@@ -151,7 +151,7 @@ jQuery.fn.showTip = function( type, texts, callback ) {
 jQuery.fn.hideTip = function( type ) {
 	var tipData = this.data( "tipData" );
 	
-	if ( testAnswers && testAnswers.length > 0 ) {
+	if ( Output.testAnswers.length > 0 ) {
 		showQuestion();
 	
 	} else if ( tipData && (!type || type === tipData.cur) ) {
@@ -346,7 +346,7 @@ var loadResults = function( exercise, callback ) {
 };
 
 var extractResults = function( code, callback ) {
-	if ( testAnswers.length > 0 ) {
+	if ( Output.testAnswers.length > 0 ) {
 		code = $(".tipbar input").first().val();
 	}
 	
