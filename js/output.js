@@ -246,15 +246,26 @@ var Output = {
 	runTest: function( userCode, test, i ) {
 		Output.clear();
 		
-		if ( Output.output && Output.output.runTest ) {
-			Output.output.runTest( userCode, test, i );
+		if ( Output.output && Output.output.preTest ) {
+			Output.output.preTest();
+		}
+		
+		if ( typeof test.type === "object" ) {
+			if ( test.type.runTest ) {
+				test.type.runTest( userCode, test, i );
+			}
 		
 		} else {
 			// We need to maintain the closure so we have to re-initialize the tests
 			// and then run the current one. Definitely not ideal.
 			Output.exec( userCode +
 				"\n(function(){ Output.tests = [];\n" +
-				curProblem.validate + "\n})(); Output.tests[" + i + "].fn();" );
+				curProblem.validate + "\n})(); Output.tests[" + i + "].fn();",
+				Output.context, Output.testContext );
+		}
+		
+		if ( Output.output && Output.output.postTest ) {
+			return Output.output.postTest();
 		}
 	},
 
@@ -563,14 +574,21 @@ var TextOutput = {
 		}
 	},
 	
+	preTest: function() {
+		TextOutput.$elem = $( "#" + this.id + "-test" );
+	},
+	
+	postTest: function() {
+		var oldElem = TextOutput.$elem[0];
+		
+		TextOutput.$elem = $( "#" + this.id );
+		
+		return oldElem;
+	},
+	
 	runTest: function( userCode, test, i ) {
 		// TODO: Have all tests run after user's code has been defined
 		// Will need to force input/print statements to block during testMode
-		
-		// TODO: Output to temporary location instead
-		// testOutput = [];
-		
-		TextOutput.$elem = $( "#" + this.id + "-test" );
 		
 		Output.clear();
 
@@ -587,8 +605,6 @@ var TextOutput = {
 
 		// Then run the user's code
 		Output.exec( userCode, Output.context );
-		
-		TextOutput.$elem = $( "#" + this.id );
 		
 		// Make sure the remaining IO tests are printed out so that the
 		// user knows what's expected of them
@@ -653,13 +669,7 @@ var CanvasOutput = {
 		
 		CanvasOutput.lastGrab = null;
 		
-		CanvasOutput.canvas = Output.context = new Processing( this.id, function( instance ) {
-			instance.draw = CanvasOutput.DUMMY;
-		});
-		
-		CanvasOutput.canvas.size( 400, 360 );
-		CanvasOutput.canvas.frameRate( 30 );
-		CanvasOutput.clear();
+		CanvasOutput.build( this.id );
 		
 		if ( !CanvasOutput.props ) {
 			var props = CanvasOutput.props = {};
@@ -678,7 +688,30 @@ var CanvasOutput = {
 		return this;
 	},
 	
+	build: function( canvas ) {
+		CanvasOutput.canvas = Output.context = new Processing( canvas, function( instance ) {
+			instance.draw = CanvasOutput.DUMMY;
+		});
+		
+		CanvasOutput.canvas.size( 400, 360 );
+		CanvasOutput.canvas.frameRate( 30 );
+		CanvasOutput.clear();
+	},
+	
 	DUMMY: function(){},
+	
+	preTest: function() {
+		CanvasOutput.oldContext = Output.context;
+		
+		CanvasOutput.testCanvas = document.createElement( "canvas" );
+		CanvasOutput.build( CanvasOutput.testCanvas );
+	},
+	
+	postTest: function() {
+		CanvasOutput.canvas = Output.context = CanvasOutput.oldContext;
+		
+		return CanvasOutput.testCanvas;
+	},
 	
 	runTest: function( userCode, test, i ) {
 		// TODO: Add in Canvas testing
@@ -776,10 +809,7 @@ var CanvasOutput = {
 	},
 	
 	clear: function() {
-		// TODO: Remove when testing is implemented
-		if ( !Output.testing ) {
-			CanvasOutput.canvas.background( 255 );
-		}
+		CanvasOutput.canvas.background( 255 );
 	},
 	
 	kill: function() {
