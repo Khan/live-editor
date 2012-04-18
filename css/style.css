@@ -756,6 +756,14 @@ div.container-fluid > div.content {
 	height: 400px;
 }
 
+#play-page.scratch #output.side {
+	width: 400px;
+}
+
+#play-page.scratch h1 {
+	line-height: 44px;
+}
+
 #play-page.scratch #editor {
 	border-bottom: 1px solid #DFD9C3;
 }
