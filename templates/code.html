@@ -1,0 +1,49 @@
+{% extends "labs/template.html" %}
+
+{% block pagecss %}
+{{ js_css_packages.css_package("canvas-editor") }}
+{% endblock pagecss %}
+
+
+{% block pagecontent %}
+<div id="play-page" class="scratch">
+	<h1>Code Scratchpad</h1>
+	
+	<div id="exercise-tabs">
+		<div id="code">
+			<div id="canvas-editor" class="row">
+				<div id="editor-box" class="span8 editor-box ui-widget-content">
+					<div id="editor" class="editor ui-corner-top"></div>
+					<canvas id="canvas" width="640" height="400"></canvas>
+				</div>
+
+				<div id="output" class="span7 side editor-box">
+					<div class="overlay"></div>
+					<div id="output-text"></div>
+					<canvas id="output-canvas" width="400" height="400"></canvas>
+					<div id="output-text-test"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="overlay"></div>
+</div>
+{% endblock pagecontent %}
+ 
+{% block bottompagescript %}
+<script type="text/html" id="tipbar-tmpl">
+<div class="tipbar ui-state-hover">
+	<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
+	<div class="tipnav">
+		<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
+		<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
+	</div>
+	<div class="text-wrap">
+		<strong></strong>
+		<span class="text"></span>
+	</div>
+</div>
+</script>
+
+{{ js_css_packages.js_package("canvas-editor-exercise") }}
+{% endblock bottompagescript %}

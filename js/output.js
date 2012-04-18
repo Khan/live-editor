@@ -25,7 +25,7 @@ var Output = {
 		this.toExec = true;
 		this.context = {};
 		
-		if ( !curProblem.taskOpen ) {
+		if ( curProblem && !curProblem.taskOpen ) {
 			curProblem.taskOpen = [];
 		}
 		
@@ -33,7 +33,7 @@ var Output = {
 		var type = CanvasOutput;
 		
 		// Prime the test queue
-		if ( curProblem.validate ) {
+		if ( curProblem && curProblem.validate ) {
 			Output.exec( curProblem.validate, Output.testContext );
 			
 			if ( Output.tests.length ) {
@@ -259,7 +259,7 @@ var Output = {
 				test.type.runTest( userCode, test, i );
 			}
 		
-		} else {
+		} else if ( curProblem && curProblem.validate ) {
 			// We need to maintain the closure so we have to re-initialize the tests
 			// and then run the current one. Definitely not ideal.
 			Output.exec( userCode +
@@ -383,7 +383,7 @@ var Output = {
 				task.parents( "ul" ).last().append( task );
 			}
 			
-			if ( curProblem.taskOpen[ pos ] ) {
+			if ( curProblem && curProblem.taskOpen[ pos ] ) {
 				task.find( "ul" ).show();
 			}
 			
@@ -467,7 +467,7 @@ var TextOutput = {
 		this.oni = window.__oni_rt;
 		
 		// For managing real-time inputs
-		if ( !curProblem.inputs ) {
+		if ( curProblem && !curProblem.inputs ) {
 			curProblem.inputs = [];
 		}
 		
@@ -502,7 +502,10 @@ var TextOutput = {
 				var pos = root.find( "input" ).index( this );
 
 				if ( !TextOutput.restarting ) {
-					curProblem.inputs[ pos ] = val;
+					if ( curProblem ) {
+						curProblem.inputs[ pos ] = val;
+					}
+					
 					TextOutput.focusLine = root.children().index( this.parentNode );
 				}
 
@@ -601,7 +604,7 @@ var TextOutput = {
 		
 		// Need to execute the test code in apollo itself
 		// Need to be compiled after they've been referenced
-		if ( TextOutput.doCompile ) {
+		if ( TextOutput.doCompile && curProblem && curProblem.validate ) {
 			Output.tests = [];
 			Output.exec( curProblem.validate, Output.testContext );
 			TextOutput.doCompile = false;
@@ -652,7 +655,10 @@ var TextOutput = {
 	},
 	
 	restart: function() {
-		curProblem.inputs = [];
+		if ( curProblem ) {
+			curProblem.inputs = [];
+		}
+		
 		TextOutput.focusLine = null;
 		TextOutput.inputNum = 0;
 		TextOutput.curLine = -1;

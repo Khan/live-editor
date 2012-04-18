@@ -277,7 +277,9 @@ var saveExercise = function( callback ) {
 };
 
 var problemDone = function() {
-	curProblem.done = true;
+	if ( curProblem ) {
+		curProblem.done = true;
+	}
 
 	$("#main-tabs-nav .ui-tabs-selected").markDone();
 
@@ -285,7 +287,7 @@ var problemDone = function() {
 	$(".next-problem").show();
 	$("#code").addClass( "done" );
 	
-	if ( curProblem.solution ) {
+	if ( curProblem && curProblem.solution ) {
 		$("#solution-nav").removeClass( "ui-state-disabled" );
 		$("#editor-box-tabs-nav").tabs( "select", 3 );
 	}
@@ -350,7 +352,7 @@ var extractResults = function( code, callback ) {
 		code = $(".tipbar input").first().val();
 	}
 	
-	if ( code !== curProblem.start || curProblem.answer != null ) {
+	if ( curProblem && (code !== curProblem.start || curProblem.answer != null) ) {
 		curProblem.answer = code;
 	}
 };

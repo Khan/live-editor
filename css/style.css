@@ -748,3 +748,14 @@ div.container-fluid > div.content {
 	display: none;
 	overflow: auto;
 }
+
+#play-page.scratch #output-text,
+#play-page.scratch #output-canvas,
+#play-page.scratch #output.side,
+#play-page.scratch #editor {
+	height: 400px;
+}
+
+#play-page.scratch #editor {
+	border-bottom: 1px solid #DFD9C3;
+}

@@ -247,9 +247,11 @@ $(function(){
 	$("#editor-box, #tests-box, #output-box, #solution-box")
 		.removeClass( "ui-tabs-panel ui-corner-bottom" );
 	
+	/*
 	$("#output")
 		.removeClass( "ui-corner-bottom" )
 		.addClass( "ui-corner-top" );
+	*/
 	
 	$("#editor-box-tabs-nav")
 		.removeClass( "ui-corner-all" )
@@ -268,6 +270,26 @@ $(function(){
 		leaveProblem();
 		saveResults();
 	});
+	
+	// Implement the scratchpad functionality
+	if ( $("#play-page").hasClass( "scratch" ) ) {
+		$("#overlay").hide();
+		focusProblem();
+		
+		curProblem = { id: 1 };
+		
+		Exercise = {
+			id: "scratch",
+			problems: [ curProblem ]
+		};
+		
+		loadResults( Exercise, function() {
+			Output.init();
+			textProblem();
+		});
+		
+		return;
+	}
 	
 	if ( window.location.search ) {
 		var parts = window.location.search.slice(1).split( "&" );
@@ -360,7 +382,7 @@ var openExercise = function( exercise ) {
 };
 
 var focusProblem = function() {
-	if ( Output.testAnswers.length > 0 ) {
+	if ( Output.testAnswers && Output.testAnswers.length > 0 ) {
 		$(".tipbar input").first().focus();
 	
 	} else {
