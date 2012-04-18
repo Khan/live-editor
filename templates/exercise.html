@@ -74,17 +74,6 @@
 				<div id="output-text"></div>
 				<canvas id="output-canvas" width="400" height="360"></canvas>
 				<div id="output-text-test"></div>
-				<div id="tipbar" class="tipbar ui-state-hover">
-					<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
-					<div class="tipnav">
-						<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
-						<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
-					</div>
-					<div class="text-wrap">
-						<strong></strong>
-						<span class="text"></span>
-					</div>
-				</div>
 				<div class="toolbar ui-widget-header">
 					<a href="" id="restart-code" class="ui-button right">
 						<span class="ui-icon-refresh"></span>
@@ -107,6 +96,19 @@
 	<li class="ui-state-disabled">
 		<a href='#code'><span class='ui-icon-pencil ui-icon'></span></a>
 	</li>
+</script>
+<script type="text/html" id="tipbar-tmpl">
+<div class="tipbar ui-state-hover">
+	<a href="" class="close"><span class="ui-icon ui-icon-circle-close"></span></a>
+	<div class="tipnav">
+		<a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span> Prev</a>
+		<a href="" class="next">Next <span class="ui-icon ui-icon-circle-triangle-e"></span></a>
+	</div>
+	<div class="text-wrap">
+		<strong></strong>
+		<span class="text"></span>
+	</div>
+</div>
 </script>
 <script type="text/html" id="form-tmpl">
 	<div>
