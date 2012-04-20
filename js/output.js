@@ -775,8 +775,12 @@ var CanvasOutput = {
 		
 		// Make sure that deleted variables go away
 		for ( var prop in CanvasOutput.lastGrab ) {
-			if ( !(prop in grabAll) && !(prop in CanvasOutput.props) ) {
+			if ( !(prop in grabAll) && (!(prop in CanvasOutput.props) || prop === "draw") ) {
 				inject += "delete Output.context." + prop + ";\n";
+				
+				if ( prop === "draw" ) {
+					CanvasOutput.clear();
+				}
 			}
 		}
 		
