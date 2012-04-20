@@ -315,7 +315,7 @@ a.ui-button:visited:hover {
 	display: block;
 }
 
-#play-page #code.done .toolbar .ui-button:not(.next-problem):not(.ui-state-disabled) {
+#play-page:not(.scratch) #code.done .toolbar .ui-button:not(.next-problem):not(.ui-state-disabled) {
 	opacity: 0.9;
 }
 
@@ -841,6 +841,7 @@ div.container-fluid > div.content {
 #play-page.scratch h2 {
 	position: relative;
 	top: 20px;
+	clear: both;
 }
 
 #play-page.scratch #docs {

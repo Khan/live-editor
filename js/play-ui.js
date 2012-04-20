@@ -94,6 +94,14 @@ $(function(){
 		Output.restart();
 	});
 	
+	$("#save-share-code").bind( "buttonClick", function() {
+		$(this).addClass( "ui-state-disabled" );
+		
+		saveScratch(function( scratchData ) {
+			window.location.href = "/labs/code/" + scratchData.id;
+		});
+	});
+	
 	$("#get-hint").bind( "buttonClick", function() {
 		$("#editor-box").toggleTip( "Hint", curProblem.hints, function() {
 			$("#get-hint .ui-button-text").text( Output.testAnswers.length > 0 ? "Answer" : "Hints" );
