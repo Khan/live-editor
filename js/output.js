@@ -775,7 +775,7 @@ var CanvasOutput = {
 		
 		// Make sure that deleted variables go away
 		for ( var prop in CanvasOutput.lastGrab ) {
-			if ( !(prop in grabAll) && (CanvasOutput.props[ prop ] || !(prop in CanvasOutput.props)) ) {
+			if ( !(prop in grabAll) && !(prop in CanvasOutput.props) ) {
 				inject += "delete Output.context." + prop + ";\n";
 			}
 		}
@@ -786,6 +786,7 @@ var CanvasOutput = {
 			Output.exec( userCode, Output.context );
 			
 		} else if ( inject ) {
+			console.log( inject );
 			Output.exec( inject, Output.context );
 		}
 		
