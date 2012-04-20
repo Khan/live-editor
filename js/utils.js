@@ -581,11 +581,9 @@ var connectAudio = function( callback ) {
 		}
 		
 		// Compute the offset, relative to the center position
-		var offsetNum = firstNum === 0 ? newNum === 50 ? 0 : 1 : firstNum;
-			curNum = newNum < 50 ? (50 - newNum) + 50 : newNum,
-			offset = ((Math.log( offsetNum * 500 ) - Math.log( offsetNum * ((100 - curNum) * 10) )) * offsetNum);
+		var curNum = newNum < 50 ? (50 - newNum) / 50 : (newNum - 50) / 50;
 		 
-		newNum = firstNum + ((newNum < 50 ? -1 : 1) * (!isFinite( offset ) ? offsetNum * 4 : offset));
+		newNum = firstNum + ((newNum < 50 ? -1 : 1) * (curNum * 400));
 		newNum = newNum.toFixed( decimal );
 		
 		// Replace the old number with the new one
