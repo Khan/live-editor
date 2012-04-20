@@ -829,3 +829,26 @@ div.container-fluid > div.content {
 #play-page.scratch #editor {
 	border-bottom: 1px solid #DFD9C3;
 }
+
+#play-page.scratch h2 {
+	position: relative;
+	top: 20px;
+}
+
+#play-page.scratch #docs {
+	border: 1px solid #D4CCB0;
+	margin-top: 20px;
+	width: 1042px;
+	margin-left: 0px;
+	clear: both;
+	padding: 20px 0;
+}
+
+#play-page.scratch #docs li {
+	margin: 4px 0;
+}
+
+#play-page.scratch #docs code {
+	padding: 1px;
+	color: #000;
+}
