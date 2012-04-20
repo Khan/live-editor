@@ -786,7 +786,6 @@ var CanvasOutput = {
 			Output.exec( userCode, Output.context );
 			
 		} else if ( inject ) {
-			console.log( inject );
 			Output.exec( inject, Output.context );
 		}
 		
