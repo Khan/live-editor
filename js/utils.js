@@ -483,7 +483,7 @@ var connectAudio = function( callback ) {
 			prefix = line.slice( 0, pos.column ),
 			oldPicker = curPicker, newPicker;
 		
-		if ( /(?:background|fill|stroke)\(\s*([\s\d,]*)\s*$/.test( prefix ) ) {
+		if ( /\b(?:background|fill|stroke)\(\s*([\s\d,]*)\s*$/.test( prefix ) ) {
 			var before = pos.column - RegExp.$1.length;
 			
 			if ( /^\s*([\s\d,]*?)\s*(\)|$)/.test( line.slice( before ) ) ) {
@@ -491,6 +491,20 @@ var connectAudio = function( callback ) {
 				
 				color = RegExp.$1;
 				range = new Range( pos.row, before, pos.row, before + String( color ).length );
+				
+				// Insert a ); if one doesn't exist
+				// Makes it easier to quickly insert a color
+				// TODO: Maybe we should do this for more methods?
+				if ( RegExp.$2.length === 0 ) {
+					ignore = true;
+					
+					editor.session.getDocument().insertInLine({ row: pos.row, column: line.length },
+						( color ? "" : (color = "0, 0, 0") ) + ");");
+					range.start.column -= 1;
+					editor.selection.setSelectionRange( range );
+					
+					ignore = false;
+				}
 			
 				handle = function( value ) {
 					updateColorSlider( editor, value );
@@ -500,8 +514,8 @@ var connectAudio = function( callback ) {
 				
 				picker.find( ".picker" ).ColorPickerSetColor( colors.length === 3 ?
 					{ r: parseFloat( colors[0] ), g: parseFloat( colors[1] ), b: parseFloat( colors[2] ) } :
-					colors.length === 0 ?
-						{ r: 0, g: 0, b: 0 } :
+					colors.length === 1 && !colors[0] ?
+						{ r: 255, g: 0, b: 0 } :
 						{ r: parseFloat( colors[0] ), g: parseFloat( colors[0] ), b: parseFloat( colors[0] ) } );
 				
 				newPicker = picker;
@@ -533,7 +547,8 @@ var connectAudio = function( callback ) {
 		}
 		
 		if ( newPicker ) {
-			var coords = editor.renderer.textToScreenCoordinates( pos.row, pos.column );
+			var coords = editor.renderer.textToScreenCoordinates( pos.row,
+				newPicker === picker ? editor.session.getDocument().getLine( pos.row ).length : pos.column );
 			newPicker.css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX }).show();
 			curPicker = newPicker;
 		}
@@ -544,9 +559,7 @@ var connectAudio = function( callback ) {
 			return;
 		}
 		
-		var newColor = rgb.r === rgb.g && rgb.r === rgb.b ?
-			String( rgb.r ) :
-			rgb.r + ", " + rgb.g + ", " + rgb.b;
+		var newColor = rgb.r + ", " + rgb.g + ", " + rgb.b;
 		
 		// Replace the old color with the new one
 		update( editor, color, newColor );
