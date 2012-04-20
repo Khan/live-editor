@@ -187,10 +187,18 @@ var Output = {
 			});
 
 	        session.setAnnotations( Output.errors );
-
-			$("#output").showTip( "Error", Output.errors, function() {
-				$( ".tipbar.error .text" ).append( " (<a href=''>View Error</a>)" );
-			});
+	
+			if ( Output.errorDelay ) {
+				clearTimeout( Output.errorDelay );
+			}
+			
+			Output.errorDelay = setTimeout( function() {
+				if ( Output.errors.length > 0 ) {
+					$("#output").showTip( "Error", Output.errors, function() {
+						$( ".tipbar.error .text" ).append( " (<a href=''>View Error</a>)" );
+					});
+				}
+			}, 1500 );
 			
 		} else {
 			$("#output").hideTip( "Error" );
