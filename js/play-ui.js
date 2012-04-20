@@ -272,25 +272,31 @@ $(function(){
 	});
 	
 	// Implement the scratchpad functionality
-	if ( $("#play-page").hasClass( "scratch" ) ) {
-		$("#overlay").hide();
-		focusProblem();
-		
-		curProblem = { id: 1 };
-		
-		Exercise = {
-			id: "scratch",
-			problems: [ curProblem ]
-		};
-		
-		loadResults( Exercise, function() {
-			Output.init();
-			textProblem();
+	if ( $("#play-page").hasClass( "scratch" ) ) {		
+		if ( /(\d+)\/?$/.test( window.location.href ) ) {
+			var id = RegExp.$1;
 			
-			setTimeout(function() {
-				$("#editor").hotNumber( true );
-			}, 100 );
-		});
+			getScratch( id, function( scratchData ) {
+				curProblem = { id: 1, answer: scratchData.code };
+				
+				Exercise = {
+					id: scratchData.id,
+					problems: [ curProblem ]
+				};
+				
+				startScratch();
+			});
+			
+		} else {
+			curProblem = { id: 1 };
+		
+			Exercise = {
+				id: 0,
+				problems: [ curProblem ]
+			};
+			
+			loadResults( Exercise, startScratch );
+		}
 		
 		return;
 	}
@@ -310,6 +316,18 @@ $(function(){
 		openExerciseDialog( openExercise );
 	}
 });
+
+var startScratch = function() {
+	Output.init();
+	textProblem();
+	
+	$("#overlay").hide();
+	focusProblem();
+	
+	setTimeout(function() {
+		$("#editor").hotNumber( true );
+	}, 100 );
+};
 
 var openExercise = function( exercise ) {
 	Exercise = exercise;

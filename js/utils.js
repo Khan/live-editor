@@ -276,6 +276,29 @@ var saveExercise = function( callback ) {
 	});		
 };
 
+var getScratch = function( id, callback ) {
+	$.getJSON( "/api/labs/scratch/" + id, function( scratchData ) {
+		// Load in the user's scratch code
+		callback( scratchData );
+	});
+};
+
+var saveScratch = function( callback ) {
+	$.ajax({
+		type: "POST",
+		url: "/api/labs/scratch",
+		dataType: "JSON",
+		contentType: "application/json",
+		data: JSON.stringify({
+			origin: Exercise.id || 0,
+			code: $("#editor").editorText()
+		}),
+		success: function( scratchData ) {
+			callback( scratchData );
+		}
+	});	
+};
+
 var problemDone = function() {
 	if ( curProblem ) {
 		curProblem.done = true;
