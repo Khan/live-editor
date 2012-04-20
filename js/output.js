@@ -820,6 +820,9 @@ var CanvasOutput = {
 	
 	clear: function() {
 		CanvasOutput.canvas.background( 255 );
+		CanvasOutput.canvas.strokeWeight( 1 );
+		CanvasOutput.canvas.stroke( 0, 0, 0 );
+		CanvasOutput.canvas.fill( 255, 255, 255 );
 	},
 	
 	kill: function() {

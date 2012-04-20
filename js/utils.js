@@ -432,8 +432,8 @@ var connectAudio = function( callback ) {
 			selection.on( "changeCursor", $.proxy( checkNumber, editor ) );
 			selection.on( "changeSelection", $.proxy( checkNumber, editor ) );
 			
-			attachPicker();
-			attachSlider();
+			attachPicker( editor );
+			attachSlider( editor);
 		}
 		
 		return this;
@@ -454,7 +454,7 @@ var connectAudio = function( callback ) {
 		}
 	}
 	
-	function attachPicker() {
+	function attachPicker( editor ) {
 		if ( !picker ) {
 			picker = $("<div class='hotnumber picker'><div id='hotpicker' class='picker'></div><div class='arrow'></div>")
 				.appendTo( "body" )
@@ -466,6 +466,13 @@ var connectAudio = function( callback ) {
 						}
 					}
 				}).end()
+				.bind( "mouseleave", function() {
+					var pos = editor.selection.getCursor(),
+						coords = editor.renderer.textToScreenCoordinates( pos.row,
+							editor.session.getDocument().getLine( pos.row ).length );
+
+					$(this).css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX });
+				})
 				.hide();
 		}
 	}
@@ -499,7 +506,7 @@ var connectAudio = function( callback ) {
 					ignore = true;
 					
 					editor.session.getDocument().insertInLine({ row: pos.row, column: line.length },
-						( color ? "" : (color = "0, 0, 0") ) + ");");
+						( color ? "" : (color = "255, 0, 0") ) + ");");
 					range.start.column -= 1;
 					editor.selection.setSelectionRange( range );
 					
@@ -549,6 +556,7 @@ var connectAudio = function( callback ) {
 		if ( newPicker ) {
 			var coords = editor.renderer.textToScreenCoordinates( pos.row,
 				newPicker === picker ? editor.session.getDocument().getLine( pos.row ).length : pos.column );
+				
 			newPicker.css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX }).show();
 			curPicker = newPicker;
 		}
