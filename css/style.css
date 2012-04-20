@@ -784,37 +784,6 @@ div#exercise-page {
 	display: none;
 }
 
-/*
-.container-fluid > .sidebar {
-	display: none;
-}
-*/
-
-html {
-	overflow-y: auto;
-}
-
-html .container-fluid {
-	padding-right: 0;
-}
-
-html .container-fluid > .sidebar {
-	position: static;
-	height: 100px;
-	width: 100%;
-	overflow: hidden;
-	padding: 0;
-}
-
-.container-fluid > .sidebar img {
-	height: 114px;
-	margin-left: 11px;
-}
-
-div.container-fluid > div.content {
-	margin-left: 0px;
-}
-
 #output.side {
 	height: 393px;
 	border: 1px solid #D4CCB0;
@@ -855,9 +824,6 @@ div.container-fluid > div.content {
 
 #play-page.scratch h1 {
 	line-height: 44px;
-	position: absolute;
-	top: 44px;
-	left: 107px;
 }
 
 #play-page.scratch #editor {
@@ -873,8 +839,8 @@ div.container-fluid > div.content {
 #play-page.scratch #docs {
 	border: 1px solid #D4CCB0;
 	margin-top: 20px;
-	width: auto;
 	margin-left: 0px;
+	width: 964px;
 	clear: both;
 	padding: 20px 0;
 }
@@ -886,4 +852,13 @@ div.container-fluid > div.content {
 #play-page.scratch #docs code {
 	padding: 1px;
 	color: #000;
+}
+
+#play-page.scratch #exercise-tabs {
+	margin-left: 0px;
+	width: auto;
+}
+
+#play-page.scratch #canvas-editor {
+	width: 984px;
 }
