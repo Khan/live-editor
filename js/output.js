@@ -703,7 +703,7 @@ var CanvasOutput = {
 			instance.draw = CanvasOutput.DUMMY;
 		});
 		
-		CanvasOutput.canvas.size( 400, 360 );
+		CanvasOutput.canvas.size( 400, 400 );
 		CanvasOutput.canvas.frameRate( 30 );
 		CanvasOutput.clear();
 	},

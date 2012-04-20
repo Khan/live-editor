@@ -286,6 +286,10 @@ $(function(){
 		loadResults( Exercise, function() {
 			Output.init();
 			textProblem();
+			
+			setTimeout(function() {
+				$("#editor").hotNumber( true );
+			}, 100 );
 		});
 		
 		return;

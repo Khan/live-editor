@@ -419,16 +419,22 @@ var connectAudio = function( callback ) {
 };
 
 (function() {
-	var num, range, firstNum, slider, handle, decimal = 0, ignore = false;
+	var num, color, range, firstNum, slider, picker, curPicker, handle, decimal = 0, ignore = false;
 	
-	jQuery.fn.hotNumber = function() {
+	jQuery.fn.hotNumber = function( reload ) {
 		var editor = this.data("editor").editor,
 			selection = editor.session.selection;
 		
-		selection.on( "changeCursor", $.proxy( checkNumber, editor ) );
-		selection.on( "changeSelection", $.proxy( checkNumber, editor ) );
-
-		attachSlider();
+		if ( reload ) {
+			checkNumber.call( editor );
+			
+		} else {
+			selection.on( "changeCursor", $.proxy( checkNumber, editor ) );
+			selection.on( "changeSelection", $.proxy( checkNumber, editor ) );
+			
+			attachPicker();
+			attachSlider();
+		}
 		
 		return this;
 	};
@@ -437,10 +443,26 @@ var connectAudio = function( callback ) {
 		if ( !slider ) {
 			slider = $("<div class='hotnumber'><div class='slider'></div><div class='arrow'></div>")
 				.appendTo( "body" )
-				.children( ".slider" ).slider({
+				.find( ".slider" ).slider({
 					slide: function( e, ui ) {
 						if ( handle ) {
 							handle( ui.value );
+						}
+					}
+				}).end()
+				.hide();
+		}
+	}
+	
+	function attachPicker() {
+		if ( !picker ) {
+			picker = $("<div class='hotnumber picker'><div id='hotpicker' class='picker'></div><div class='arrow'></div>")
+				.appendTo( "body" )
+				.find( ".picker" ).ColorPicker({
+					flat: true,
+					onChange: function( hsb, hex, rgb ) {
+						if ( handle ) {
+							handle( rgb );
 						}
 					}
 				}).end()
@@ -453,31 +475,83 @@ var connectAudio = function( callback ) {
 			return;
 		}
 		
+		range = null;
+		
 		var editor = this,
 			pos = editor.selection.getCursor(),
 			line = editor.session.getDocument().getLine( pos.row ),
-			before = pos.column - (/([\d.-]+)$/.test( line.slice( 0, pos.column ) ) ? RegExp.$1.length : 0);
-	
-		if ( /^([\d.-]+)/.test( line.slice( before ) ) && !isNaN( parseFloat( RegExp.$1 ) ) ) {
-			var Range = require("ace/range").Range;
+			prefix = line.slice( 0, pos.column ),
+			oldPicker = curPicker, newPicker;
+		
+		if ( /(?:background|fill|stroke)\(\s*([\s\d,]*)\s*$/.test( prefix ) ) {
+			var before = pos.column - RegExp.$1.length;
 			
-			num = RegExp.$1;
-			firstNum = parseFloat( num );
-			decimal = /\.(\d+)/.test( num ) ? RegExp.$1.length : 0;
-			range = new Range( pos.row, before, pos.row, before + String( num ).length );
+			if ( /^\s*([\s\d,]*?)\s*(\)|$)/.test( line.slice( before ) ) ) {
+				var Range = require("ace/range").Range;
+				
+				color = RegExp.$1;
+				range = new Range( pos.row, before, pos.row, before + String( color ).length );
 			
-			handle = function( value ) {
-				updateNumberSlider( editor, value );
-			};
-			
-			var coords = editor.renderer.textToScreenCoordinates( pos.row, pos.column );
-			slider.children().slider( "value", 50 );
-			slider.css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX }).show();
+				handle = function( value ) {
+					updateColorSlider( editor, value );
+				};
+				
+				var colors = color.replace( /\s/, "" ).split( "," );
+				
+				picker.find( ".picker" ).ColorPickerSetColor( colors.length === 3 ?
+					{ r: parseFloat( colors[0] ), g: parseFloat( colors[1] ), b: parseFloat( colors[2] ) } :
+					colors.length === 0 ?
+						{ r: 0, g: 0, b: 0 } :
+						{ r: parseFloat( colors[0] ), g: parseFloat( colors[0] ), b: parseFloat( colors[0] ) } );
+				
+				newPicker = picker;
+			}
 			
 		} else {
-			range = null;
-			slider.hide();
+			var before = pos.column - (/([\d.-]+)$/.test( prefix ) ? RegExp.$1.length : 0);
+	
+			if ( /^([\d.-]+)/.test( line.slice( before ) ) && !isNaN( parseFloat( RegExp.$1 ) ) ) {
+				var Range = require("ace/range").Range;
+			
+				num = RegExp.$1;
+				firstNum = parseFloat( num );
+				decimal = /\.(\d+)/.test( num ) ? RegExp.$1.length : 0;
+				range = new Range( pos.row, before, pos.row, before + String( num ).length );
+			
+				handle = function( value ) {
+					updateNumberSlider( editor, value );
+				};
+				
+				slider.find( ".slider" ).slider( "value", 50 );
+				
+				newPicker = slider;
+			}
 		}
+		
+		if ( oldPicker && oldPicker !== newPicker ) {
+			oldPicker.hide();
+		}
+		
+		if ( newPicker ) {
+			var coords = editor.renderer.textToScreenCoordinates( pos.row, pos.column );
+			newPicker.css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX }).show();
+			curPicker = newPicker;
+		}
+	}
+	
+	function updateColorSlider( editor, rgb ) {
+		if ( !range ) {
+			return;
+		}
+		
+		var newColor = rgb.r === rgb.g && rgb.r === rgb.b ?
+			String( rgb.r ) :
+			rgb.r + ", " + rgb.g + ", " + rgb.b;
+		
+		// Replace the old color with the new one
+		update( editor, color, newColor );
+		
+		color = newColor;
 	}
 
 	function updateNumberSlider( editor, newNum ) {
@@ -493,17 +567,21 @@ var connectAudio = function( callback ) {
 		newNum = firstNum + ((newNum < 50 ? -1 : 1) * (!isFinite( offset ) ? offsetNum * 4 : offset));
 		newNum = newNum.toFixed( decimal );
 		
-		// Figure out the position of the old number to replace
-		range.end.column = range.start.column + num.length;
-		num = newNum;
+		// Replace the old number with the new one
+		update( editor, num, newNum );
 		
+		num = newNum;
+	}
+	
+	function update( editor, oldNum, newNum ) {
 		ignore = true;
 		
 		// Insert the new number
+		range.end.column = range.start.column + oldNum.length;
 		editor.session.replace( range, newNum );
 		
 		// Select and focus the updated number
-		range.end.column = range.start.column + num.length;
+		range.end.column = range.start.column + newNum.length;
 		editor.selection.setSelectionRange( range );
 		editor.focus();
 		
