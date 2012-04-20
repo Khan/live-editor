@@ -784,8 +784,31 @@ div#exercise-page {
 	display: none;
 }
 
+/*
 .container-fluid > .sidebar {
 	display: none;
+}
+*/
+
+html {
+	overflow-y: auto;
+}
+
+html .container-fluid {
+	padding-right: 0;
+}
+
+html .container-fluid > .sidebar {
+	position: static;
+	height: 100px;
+	width: 100%;
+	overflow: hidden;
+	padding: 0;
+}
+
+.container-fluid > .sidebar img {
+	height: 114px;
+	margin-left: 11px;
 }
 
 div.container-fluid > div.content {
@@ -832,6 +855,9 @@ div.container-fluid > div.content {
 
 #play-page.scratch h1 {
 	line-height: 44px;
+	position: absolute;
+	top: 44px;
+	left: 107px;
 }
 
 #play-page.scratch #editor {
@@ -847,7 +873,7 @@ div.container-fluid > div.content {
 #play-page.scratch #docs {
 	border: 1px solid #D4CCB0;
 	margin-top: 20px;
-	width: 1042px;
+	width: auto;
 	margin-left: 0px;
 	clear: both;
 	padding: 20px 0;
