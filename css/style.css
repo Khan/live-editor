@@ -862,3 +862,22 @@ div#exercise-page {
 #play-page.scratch #canvas-editor {
 	width: 984px;
 }
+
+@media (min-width: 1300px) {
+	#play-page.scratch #canvas-editor {
+		width: 1300px;
+	}
+	
+	#play-page.scratch #editor {
+		height: 718px;
+	}
+	
+	#play-page.scratch #output.side {
+		margin-left: 18px;
+	}
+	
+	#play-page.scratch #output.side, #play-page.scratch #output.side #output-canvas {
+		width: 718px;
+		height: 718px;
+	}
+}
