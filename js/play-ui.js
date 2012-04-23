@@ -295,7 +295,7 @@ $(function(){
 		editor.editor.renderer.setShowGutter( false );
 		editor.editor.renderer.setShowPrintMargin( false );
 		
-		if ( /(\d+)\/?$/.test( window.location.href ) ) {
+		if ( /\/(\d+)/.test( window.location.href ) ) {
 			var id = RegExp.$1;
 			
 			getScratch( id, function( scratchData ) {
