@@ -831,10 +831,17 @@ var CanvasOutput = {
 	},
 	
 	clear: function() {
-		CanvasOutput.canvas.background( 255 );
 		CanvasOutput.canvas.strokeWeight( 1 );
-		CanvasOutput.canvas.stroke( 0, 0, 0 );
-		CanvasOutput.canvas.fill( 255, 255, 255 );
+		if ( Output.dark ) {
+			CanvasOutput.canvas.background( 15, 15, 15 );
+			CanvasOutput.canvas.stroke( 255, 255, 255 );
+			CanvasOutput.canvas.fill( 15, 15, 15 );
+			
+		} else {
+			CanvasOutput.canvas.background( 255 );
+			CanvasOutput.canvas.stroke( 0, 0, 0 );
+			CanvasOutput.canvas.fill( 255, 255, 255 );
+		}
 	},
 	
 	kill: function() {

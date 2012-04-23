@@ -280,7 +280,21 @@ $(function(){
 	});
 	
 	// Implement the scratchpad functionality
-	if ( $("#play-page").hasClass( "scratch" ) ) {		
+	if ( $("#play-page").hasClass( "scratch" ) ) {
+		if ( window.location.search.indexOf( "dark" ) >= 0 ) {
+			$("html").addClass( "dark" );
+			Output.dark = true;
+			editor.editor.setTheme( "ace/theme/twilight" );
+		}
+		
+		$(".content").addClass( "scratch" );
+		
+		editor.editor.setFontSize( "14px" );
+		editor.editor.setHighlightSelectedWord( false );
+		
+		editor.editor.renderer.setShowGutter( false );
+		editor.editor.renderer.setShowPrintMargin( false );
+		
 		if ( /(\d+)\/?$/.test( window.location.href ) ) {
 			var id = RegExp.$1;
 			

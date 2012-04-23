@@ -687,12 +687,12 @@ div#exercise-page {
 	position: absolute;
 	display: block;
 	z-index: 100;
-	width: 20px;
+	width: 31px;
 	background: black;
 	padding: 5px;
 	border-radius: 7px;
 	margin-top: -29px;
-	margin-left: -15px;
+	margin-left: -20px;
 	box-shadow: 0px 0px 8px rgba(0,0,0,1);
 	opacity: 0.2;
 }
@@ -722,7 +722,7 @@ div#exercise-page {
 .hotnumber .arrow {
 	position: absolute;
 	bottom: -8px;
-	left: 8px;
+	left: 13px;
 	border-left: 8px solid transparent;
 	border-right: 8px solid transparent;
 	border-top: 8px solid black;
@@ -737,7 +737,7 @@ div#exercise-page {
 	border-top: 8px solid transparent;
 	border-bottom: 8px solid transparent;
 	border-right: 8px solid black;
-	left: -8px;
+	left: -7px;
 	top: 5px;
 	bottom: auto;
 }
@@ -747,6 +747,9 @@ div#exercise-page {
 	position: relative;
 	width: 15px;
 	height: 15px;
+	border: 1px solid white;
+	margin-left: -1px;
+	margin-top: -1px;
 }
 
 .hotnumber.picker:hover .picker {
@@ -863,6 +866,66 @@ div#exercise-page {
 	width: 984px;
 }
 
+#play-page.scratch #code .toolbar {
+	border: none;
+	background: #fff;
+}
+
+#play-page.scratch #editor-box {
+	border: none;
+}
+
+#play-page.scratch #editor {
+	border: 1px solid #DFD9C3;
+}
+
+/* Dark colors for Scratchpad */
+
+html.dark #play-page.scratch #code .toolbar {
+	background: #333;
+}
+
+html.dark .content.scratch {
+	background: #333;
+	color: #fff;
+	overflow: auto;
+}
+
+html.dark .content.scratch h1,
+html.dark .content.scratch h2,
+html.dark .content.scratch h3,
+html.dark .content.scratch h4 {
+	color: #fff;
+}
+
+html.dark #play-page.scratch .ace_sb,
+html.dark #play-page.scratch .ace_scroller {
+	background: #0f0f0f;
+}
+
+html.dark .hotnumber {
+	background: #fff;
+	box-shadow: 0px 0px 8px rgba(255,255,255,1);
+}
+
+html.dark .hotnumber .ui-slider {
+	background: #0f0f0f;
+}
+
+html.dark .hotnumber .arrow {
+	border-top-color: #fff;
+}
+
+html.dark .hotnumber.picker .arrow {
+	border-top-color: transparent;
+	border-right-color: #fff;
+}
+
+html.dark .hotnumber.picker .picker {
+	border: 1px solid black;
+}
+
+/* 720p resizing for Scratchpad */
 @media (min-width: 1300px) {
 	#play-page.scratch #canvas-editor {
 		width: 1300px;
