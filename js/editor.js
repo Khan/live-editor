@@ -27,14 +27,40 @@ var Editor = function( id ) {
 	
 	editor.offset = editor.content.offset();
 	
+	var canon = require("pilot/canon");
+	
 	if ( window.Record ) {
-		editor.textarea.bind( "keydown", function( e ) {
-			if ( e.keyCode && (e.keyCode < 48 && e.keyCode !== 13 && e.keyCode !== 32 ||
-					e.altKey || e.ctrlKey || e.metaKey) ) {
-			
-				Record.log({ key: e.keyCode, altKey: e.altKey, ctrlKey: e.ctrlKey,
-					 metaKey: e.metaKey, shiftKey: e.shiftKey });
+		var event = require("pilot/event"),
+			paste = false;
+		
+		editor.editor.keyBinding.setKeyboardHandler({
+			handleKeyboard: function($data, hashId, keyOrText, keyCode, e) {
+				var isCommand = canon.findKeyCommand({editor: editor.editor}, "editor", hashId, keyOrText),
+					isEmpty = jQuery.isEmptyObject( e );
+				
+				if ( isCommand && !isEmpty ) {
+					Record.log({ cmd: isCommand.name });
+
+				} else if ( !isCommand && isEmpty ) {
+					if ( !paste ) {
+						Record.log({ key: keyOrText });
+					}
+					paste = false;
+				}
 			}
+		});
+		
+		editor.editor.addEventListener( "copy", function() {
+			Record.log({ copy: 1 });
+		});
+		
+		editor.editor.addEventListener( "paste", function( text ) {
+			paste = true;
+			Record.log({ paste: text });
+		});
+		
+		editor.editor.addEventListener( "cut", function() {
+			Record.log({ cut: 1 });
 		});
 	}
 	
@@ -58,19 +84,28 @@ var Editor = function( id ) {
 		
 		// Add in record playback handlers.
 		jQuery.extend( Record.handlers, {
+			cut: function() {
+				editor.editor.onCut();
+			},
+			
+			copy: function() {
+				editor.editor.getCopyText();
+			},
+			
+			paste: function( e ) {
+				editor.editor.onTextInput( e.paste, true );
+			},
+			
+			cmd: function( e ) {
+				canon.exec( e.cmd, { editor: editor.editor }, "editor" );
+			},
+			
 			key: function( e ) {
-				editor.textarea.simulate( "keydown", { keyCode: e.key,
-					altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey } );
+				editor.editor.onTextInput( e.key, false );
 			},
 
 			focus: function() {
 				editor.textarea[0].focus();
-			},
-
-			text: function( e ) {		
-				var evt = document.createEvent("TextEvent");
-				evt.initTextEvent( "textInput", true, true, null, e.text );
-				Editor.textarea[0].dispatchEvent( evt );
 			},
 
 			x: function( e ) {
