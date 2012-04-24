@@ -11,8 +11,14 @@ var Editor = function( id ) {
 	
 	// Stop bracket highlighting
 	editor.editor.$highlightBrackets = function() {};
+	
+	// Make sure no horizontal scrollbars are shown
+	editor.editor.renderer.setHScrollBarAlwaysVisible( false );
 
 	var session = editor.editor.getSession();
+	
+	// Use word wrap
+	session.setUseWrapMode(true);
 	
 	// Stop automatic JSHINT warnings
 	session.setUseWorker( false );
@@ -76,6 +82,10 @@ var Editor = function( id ) {
 			blockSelection();
 		});
 		
+		editor.editor.renderer.scrollBar.addEventListener( "scroll", function( e ) {
+			Record.log({ top: e.data });
+		});
+		
 		editor.editor.selection.addEventListener( "changeSelection", function() {
 			if ( !doSelect ) {
 				return;
@@ -129,6 +139,10 @@ var Editor = function( id ) {
 			
 			key: function( e ) {
 				editor.editor.onTextInput( e.key, false );
+			},
+			
+			top: function( e ) {
+				editor.editor.renderer.scrollBar.setScrollTop( e.top );
 			},
 			
 			start: function( e ) {
