@@ -879,6 +879,10 @@ div#exercise-page {
 	border: 1px solid #DFD9C3;
 }
 
+#play-page.scratch #output-box {
+	width: 402px;
+}
+
 /* Swap the Y-axis, matching it closer to traditional mathematical drawing. */
 #play-page.scratch #output-canvas {
 	-webkit-transform: scaleY(-1);

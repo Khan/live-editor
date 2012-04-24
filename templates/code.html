@@ -1,6 +1,7 @@
-{% extends "labs/template.html" %}
+{% extends "labs/template-slim.html" %}
 
 {% block pagecss %}
+{{ js_css_packages.css_package("bootstrap") }}
 {{ js_css_packages.css_package("canvas-editor") }}
 {% endblock pagecss %}
 
@@ -12,20 +13,142 @@
 	<div id="exercise-tabs">
 		<div id="code">
 			<div id="canvas-editor" class="row">
-				<div id="editor-box" class="span8 editor-box ui-widget-content">
+				<div id="editor-box" class="span7 editor-box ui-widget-content">
+					<div class="toolbar ui-widget-header ui-corner-all">
+						<a href="" id="record" class="ui-button">
+							<span class="ui-icon-video"></span>
+							<span class="ui-button-text">Record</span>
+						</a>
+						<a href="" id="save" class="ui-button ui-state-disabled">
+							<span class="ui-icon-disk"></span>
+							<span class="ui-button-text">Save</span>
+						</a>
+					</div>
+					
 					<div id="editor" class="editor ui-corner-top"></div>
-					<canvas id="canvas" width="640" height="400"></canvas>
+					
+					<div class="toolbar ui-widget-header">
+						<a href="" id="restart-code" class="ui-button">
+							<span class="ui-icon-refresh"></span>
+							<span class="ui-button-text">Restart</span>
+						</a>
+						
+						<a href="" id="save-share-code" class="ui-button right">
+							<span class="ui-icon-star"></span>
+							<span class="ui-button-text">Save &amp; Share</span>
+						</a>
+					</div>
 				</div>
 
-				<div id="output" class="span7 side editor-box">
-					<div class="overlay"></div>
-					<div id="output-text"></div>
-					<canvas id="output-canvas" width="400" height="400"></canvas>
-					<div id="output-text-test"></div>
+				<div id="output-box" class="span5 editor-box">
+					<div class="toolbar ui-widget-header ui-corner-all">
+						<a href="" id="draw" class="ui-button"><span class="ui-icon-pencil"></span></a>
+						<a href="" id="clear" class="ui-button"><span class="ui-icon-cancel"></span></a>
+						<div class="space"></div>
+						<a href="" class="color" id="black"><span></span></a>
+						<a href="" class="color" id="red"><span></span></a>
+						<a href="" class="color" id="orange"><span></span></a>
+						<a href="" class="color" id="green"><span></span></a>
+						<a href="" class="color" id="blue"><span></span></a>
+						<a href="" class="color" id="lightblue"><span></span></a>
+						<a href="" class="color" id="violet"><span></span></a>
+					</div>
+					<div id="output" class="side">
+						<div class="overlay"></div>
+						<div id="output-text"></div>
+						<canvas id="output-canvas" width="400" height="400"></canvas>
+						<canvas id="canvas" width="400" height="400"></canvas>
+						<div id="output-text-test"></div>
+					</div>
+				</div>
+			</div>
+			<h2>Documentation</h2>
+			<div id="docs" class="row span12">
+				<div class="span4">
+					<h4>Shapes</h4>
+					<ul>
+						<li><code>point(x, y);</code><br/>
+							Draw a single point on the drawing.</li>
+						<li><code>line(x1, y1, x2, y2);</code><br/>
+							Draw a line from one point to another.</li>
+						<li><code>rect(x1, y1, width, height);</code><br/>
+							Draw a four-sided rectangle.</li>
+						<li><code>ellipse(x, y, r1, r2);</code><br/>
+							Draw an ellipse (if r1 and r2 are equal, a circle!).</li>
+						<li><code>triangle(x1, y1, x2, y2, x3, y3);</code><br/>
+							Draw a three-sided shape.</li>
+					</ul>
+					<h4>Text</h4>
+					<ul>
+						<li><code>text("Some text.", x, y);</code><br/>
+							Display some text at a certain position.</li>
+						<li><code>textSize(num);</code><br/>
+							How large the text should be.</li>
+						<li><code>textWidth("Some text.");</code><br/>
+							Calculates how wide the text is.</li>
+					</ul>
+				</div>
+				<div class="span4">
+					<h4>Colors and Stoke</h4>
+					<ul>
+						<li><code>stroke(red, green, blue);</code><br/>
+							Set the color for lines and shape borders.</li>
+						<li><code>strokeWeight(size);</code><br/>
+							Set the width of lines and shape borders.</li>
+						<li><code>fill(red, green, blue);</code><br/>
+							Set the color of the insides of shapes.</li>
+						<li><code>background(red, green, blue);</code><br/>
+							Set the background color of the entire drawing.</li>
+					</ul>
+					<h4>Events</h4>
+					<ul>
+						<li><code>var draw = function() { };</code><br/>
+							Draw function which is called over-and-over.</li>
+						<li><code>mousePressed</code><br/>
+							Is true if the mouse is being pressed.</li>
+						<li><code>mouseX</code><br/>
+							The X position of the mouse on the drawing.</li>
+						<li><code>mouseY</code><br/>
+							The Y position of the mouse on the drawing.</li>
+					</ul>
+				</div>
+				<div class="span4">
+					<h4>JavaScript</h4>
+					<ul>
+						<li><code>var age = 28;</code><br/>
+							Set a value into a variable.</li>
+						<li><code>for ( var i = 1; i &lt;= 10; i++ ) { }</code><br/>
+							Loop through 10 numbers.</li>
+						<li><code>var move = function() { };</code><br/>
+							Create a function named 'move'.</li>
+						<li><code>if ( age > 27 ) { }</code><br/>
+							Check if a value is above a certain amount.</li>
+					</ul>
+					<h4>Math</h4>
+					<p><code>sin(rad)</code> <code>cos(rad)</code> <code>tan(rad)</code></p>
+					<p><code>abs(num)</code> <code>round(num)</code> <code>floor(num)</code> <code>ceil(num)</code></p>
+					<p><code>pow(num)</code> <code>sqrt(num)</code> <code>log(num)</code></p>
+					<p><code>random(low, high)</code></p>
+					<h4>More Details</h4>
+					<ul>
+						<li><a href="http://processingjs.org/reference/">Drawing Reference Guide</a></li>
+					</ul>
+					<!--
+					<h4>Printing</h4>
+					<ul>
+						<li><code>print("Some text.");</code><br/>
+							Display some text on the screen.</li>
+						<li><code>input( "Prompt" );</code><br/>
+							Prompt the user for a value.</li>
+					</ul>
+					-->
 				</div>
 			</div>
 		</div>
 	</div>
+	
+
+	
 	<div id="overlay"></div>
 </div>
 {% endblock pagecontent %}
