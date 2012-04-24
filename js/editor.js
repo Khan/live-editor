@@ -27,11 +27,22 @@ var Editor = function( id ) {
 	
 	editor.offset = editor.content.offset();
 	
-	var canon = require("pilot/canon");
+	var emptySelection = { start: { row: 0, column: 0 }, end: { row: 0, column: 0 } };
 	
 	if ( window.Record ) {
-		var event = require("pilot/event"),
-			paste = false;
+		var canon = require("pilot/canon"),
+			event = require("pilot/event"),
+			paste = false,
+			doSelect = true,
+			lastSelection = emptySelection;
+		
+		function blockSelection() {
+			doSelect = false;
+			
+			setTimeout(function() {
+				doSelect = true;
+			}, 13 );
+		}
 		
 		editor.editor.keyBinding.setKeyboardHandler({
 			handleKeyboard: function($data, hashId, keyOrText, keyCode, e) {
@@ -40,6 +51,7 @@ var Editor = function( id ) {
 				
 				if ( isCommand && !isEmpty ) {
 					Record.log({ cmd: isCommand.name });
+					blockSelection();
 
 				} else if ( !isCommand && isEmpty ) {
 					if ( !paste ) {
@@ -61,24 +73,39 @@ var Editor = function( id ) {
 		
 		editor.editor.addEventListener( "cut", function() {
 			Record.log({ cut: 1 });
+			blockSelection();
 		});
-	}
-	
-	editor.reset();
-	
-	// Watch for mouse and key events
-	if ( window.Record ) {
-		this.editorElem.bind({
-			mousedown: function( e ) {
-				Record.log({ x: e.layerX, y: e.layerY });
-			},
 		
-			keypress: function( e ) {
-				var text = String.fromCharCode( e.keyCode );
+		editor.editor.selection.addEventListener( "changeSelection", function() {
+			if ( !doSelect ) {
+				return;
+			}
 			
-				if ( text ) {
-					Record.log({ text: text });
+			var range = editor.editor.selection.getRange();
+			
+			if ( lastSelection.start.row !== range.start.row ||
+				 lastSelection.start.column !== range.start.column ||
+				 lastSelection.end.row !== range.end.row ||
+				 lastSelection.end.column !== range.end.column ) {
+				
+				var diff = {
+					start: {
+						row: range.start.row,
+						column: range.start.column
+					}
+				};
+				
+				if ( range.end.row !== range.start.row ||
+					 range.end.column !== range.start.column ) {
+
+					diff.end = {
+						row: range.end.row,
+						column: range.end.column
+					};
 				}
+				
+				Record.log( diff );
+				lastSelection = range;
 			}
 		});
 		
@@ -103,18 +130,22 @@ var Editor = function( id ) {
 			key: function( e ) {
 				editor.editor.onTextInput( e.key, false );
 			},
+			
+			start: function( e ) {
+				if ( !e.end ) {
+					e.end = e.start;
+				}
+				
+				editor.editor.selection.setSelectionRange( e );
+			},
 
 			focus: function() {
 				editor.textarea[0].focus();
-			},
-
-			x: function( e ) {
-				var evt = { clientX: editor.offset.left + e.x, clientY: editor.offset.top + e.y };
-				editor.content.simulate( "mousedown", evt );
-				editor.content.simulate( "mouseup", evt );
 			}
 		});
 	}
+	
+	editor.reset();
 };
 	
 Editor.prototype = {
