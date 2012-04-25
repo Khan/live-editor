@@ -1,24 +1,21 @@
-var player,
-	track;
-
 $(function(){
-	// Start the editor and canvas drawing area
-	var editor = new Editor( "editor" );
-	Canvas.init();
+	if ( !$("#play-page").hasClass( "developer" ) ) {
+		return;
+	}
 	
-	// Set up toolbar buttons
-	$(document).buttonize();
+	// Start the canvas drawing area
+	//Canvas.init();
 
 	// Set up color button handling
 	$(".toolbar a.color").each(function() {
-		$(this).children(".ui-icon").css( "background", this.id );
+		$(this).addClass( "ui-button" ).children().css( "background", this.id );
 	});
 
-	$(".toolbar").delegate( "a.color", "click", function() {
+	$(document).delegate( ".toolbar a.color", "buttonClick", function() {
 		Canvas.setColor( this.id );
 	});
 
-	$("#draw").click(function() {
+	$("#draw").bind( "buttonClick", function() {
 		if ( Canvas.drawing ) {
 			Canvas.endDraw();
 		} else {
@@ -26,8 +23,24 @@ $(function(){
 		}
 	});
 	
-	$("#clear").click(function() {
+	$("#clear").bind( "buttonClick", function() {
 		Canvas.clear();
+	});
+	
+	$("#record").bind( "buttonClick", function() {
+		if ( Record.recording ) {
+			Record.stopRecord();
+		} else {
+			// TODO: Hide the recording app until connected
+			Record.record();
+			/*
+			connectAudio(function() {
+				SC.record({
+					start: Record.record
+				});
+			});
+			*/
+		}
 	});
 	
 	$(Canvas).bind({
@@ -50,7 +63,8 @@ $(function(){
 		}
 	});
 	
-	$("#save").click(function() {
+	// TODO: Move this some place else?
+	$("#save-blah").click(function() {
 		var dialog = $("<div>Saving recording...</div>")
 			.dialog({ modal: true });
 		
@@ -89,32 +103,19 @@ $(function(){
 		);
 	});
 	
-	$("#record").click(function() {
-		if ( Record.recording ) {
-			Record.stopRecord();
-		} else {
-			// TODO: Hide the recording app until connected
-			connectAudio(function() {
-				SC.record({
-					start: Record.record
-				});
-			});
-		}
-	});
-	
 	var wasDrawing,
 		recordData;
 	
 	$(Record).bind({		
 		recordStarted: function() {
 			// Reset the editor and canvas to its initial state
-			editor.reset();
+			$("#editor").data("editor").reset();
 			Canvas.clear( true );
 			Canvas.endDraw();
 			
-			recordData = { title: "New Recording" };
+			//recordData = { title: "New Recording" };
 			
-			insertExerciseForm( recordData );
+			//insertExerciseForm( recordData );
 			
 			$("#tests textarea:last").remove();
 			
@@ -124,7 +125,7 @@ $(function(){
 		},
 		
 		recordEnded: function() {
-			SC.recordStop();
+			//SC.recordStop();
 			
 			$("#test").addClass( "ui-state-disabled" );
 			$("#save").removeClass( "ui-state-disabled" );
