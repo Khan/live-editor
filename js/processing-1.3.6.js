@@ -7634,7 +7634,12 @@
             if (align === 39) xOffset = -textWidth;
             else xOffset = -textWidth / 2
           }
-          curContext.fillText(str, x + xOffset, y)
+					// XXX: Changed to flip the Y
+					p.pushMatrix();
+					p.translate( x + xOffset, y );
+					p.scale( 1.0, -1.0 );
+          curContext.fillText(str, 0, 0);
+					p.popMatrix();
         }
       } else {
         var font = p.glyphTable[curFontName];
@@ -8054,7 +8059,8 @@
     function updateMousePosition(curElement, event) {
       var offset = calculateOffset(curElement, event);
       p.mouseX = event.pageX - offset.X;
-      p.mouseY = event.pageY - offset.Y
+			// XXX: Changed to flip the Y
+      p.mouseY = p.height - (event.pageY - offset.Y);
     }
     function addTouchEventOffset(t) {
       var offset = calculateOffset(t.changedTouches[0].target, t.changedTouches[0]),
