@@ -118,10 +118,18 @@ var Record = {
 	},
 
 	log: function( e ) {
-		if ( !Record.playing && Record.recording ) {
+		if ( !Record.playing && Record.recording && Record.commands ) {
 			e.time = (new Date).getTime() - Record.startTime;
 			Record.commands.push( e );
 			return true;
 		}
+	},
+	
+	pauseLog: function() {
+		Record.recording = false;
+	},
+	
+	resumeLog: function() {
+		Record.recording = true;
 	}
 };
