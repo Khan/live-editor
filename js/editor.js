@@ -63,6 +63,7 @@ var Editor = function( id ) {
 					if ( !paste ) {
 						Record.log({ key: keyOrText });
 					}
+					blockSelection();
 					paste = false;
 				}
 			}
@@ -86,37 +87,46 @@ var Editor = function( id ) {
 			Record.log({ top: e.data });
 		});
 		
+		var curRange;
+		
 		editor.editor.selection.addEventListener( "changeSelection", function() {
 			if ( !doSelect ) {
 				return;
 			}
 			
-			var range = editor.editor.selection.getRange();
-			
-			if ( lastSelection.start.row !== range.start.row ||
-				 lastSelection.start.column !== range.start.column ||
-				 lastSelection.end.row !== range.end.row ||
-				 lastSelection.end.column !== range.end.column ) {
-				
-				var diff = {
-					start: {
-						row: range.start.row,
-						column: range.start.column
-					}
-				};
-				
-				if ( range.end.row !== range.start.row ||
-					 range.end.column !== range.start.column ) {
+			if ( !curRange ) {
+				setTimeout(function() {
+					if ( lastSelection.start.row !== curRange.start.row ||
+						 lastSelection.start.column !== curRange.start.column ||
+						 lastSelection.end.row !== curRange.end.row ||
+						 lastSelection.end.column !== curRange.end.column ) {
+							
+						var diff = {
+							start: {
+								row: curRange.start.row,
+								column: curRange.start.column
+							}
+						};
 
-					diff.end = {
-						row: range.end.row,
-						column: range.end.column
-					};
-				}
-				
-				Record.log( diff );
-				lastSelection = range;
+						if ( curRange.end.row !== curRange.start.row ||
+							 curRange.end.column !== curRange.start.column ) {
+
+							diff.end = {
+								row: curRange.end.row,
+								column: curRange.end.column
+							};
+						}
+
+						Record.log( diff );
+					
+						lastSelection = curRange;
+					}
+					
+					curRange = null;
+				}, 13);
 			}
+			
+			curRange = editor.editor.selection.getRange();
 		});
 		
 		// Add in record playback handlers.
