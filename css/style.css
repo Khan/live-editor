@@ -893,6 +893,22 @@ div#exercise-page {
 	z-index: 100;
 }
 
+#play-page.scratch .toolbar #progress {
+	width: 212px;
+}
+
+#play-page.scratch .toolbar #draw-widgets {
+	display: none;
+}
+
+#play-page .dev-only {
+	display: none;
+}
+
+#play-page.developer .dev-only {
+	display: block;
+}
+
 /* Swap the Y-axis, matching it closer to traditional mathematical drawing. */
 #play-page.scratch #output-canvas {
 	-webkit-transform: scaleY(-1);

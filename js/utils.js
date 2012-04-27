@@ -278,6 +278,9 @@ var saveExercise = function( callback ) {
 
 var getScratch = function( id, callback ) {
 	$.getJSON( "/api/labs/scratch/" + id, function( scratchData ) {
+		Record.audioID = scratchData.audioID;
+		Record.commands = JSON.parse( scratchData.recording );
+		
 		// Load in the user's scratch code
 		callback( scratchData );
 	});
@@ -291,7 +294,9 @@ var saveScratch = function( callback ) {
 		contentType: "application/json",
 		data: JSON.stringify({
 			origin: Exercise.id || 0,
-			code: $("#editor").editorText()
+			code: Editor.startCode,
+			audioID: Record.audioID || "",
+			recording: Record.recorded ? JSON.stringify( Record.commands ) : ""
 		}),
 		success: function( scratchData ) {
 			callback( scratchData );
@@ -420,11 +425,11 @@ var connectAudio = function( callback ) {
 		$.getScript( "http://connect.soundcloud.com/sdk.js", function() {
 			SC.initialize({
 				client_id: "82ff867e7207d75bc8bbd3d281d74bf4",
-				redirect_uri: window.location.href.replace(/[^\/]*$/, "callback.html")
+				redirect_uri: window.location.href.replace(/labs\/.*$/, "labs/callback")
 			});
 		
-			if ( window.Exercise && Exercise.audioID ) {
-				SC.get( "/tracks/" + Exercise.audioID, function( data ) {
+			if ( Record.audioID || window.Exercise && Exercise.audioID ) {
+				SC.get( "/tracks/" + (Record.audioID || Exercise.audioID), function( data ) {
 					if ( callback ) {
 						callback( data );
 					}

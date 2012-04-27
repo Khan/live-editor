@@ -136,7 +136,9 @@ var Canvas = {
 		args = args || [];
 		
 		if ( !Canvas.undoRunning ) {
-			Record.log({ canvas: name, args: args });
+			var obj = {};
+			obj[ name ] = args;
+			Record.log( obj );
 		}
 		
 		Canvas.undoStack.push({ name: name, args: args });
@@ -190,6 +192,8 @@ var Canvas = {
 	}
 };
 
-Record.handlers.canvas = function( e ) {
-	Canvas[ e.canvas ].apply( Canvas, e.args || [] );
-};
+jQuery.each([ "startLine", "drawLine", "endLine", "setColor", "clear" ], function( i, name ) {
+	Record.handlers[ name ] = function( e ) {
+		Canvas[ name ].apply( Canvas, e[ name ] || [] );
+	};
+});

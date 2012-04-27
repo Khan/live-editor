@@ -7,58 +7,60 @@
 
 
 {% block pagecontent %}
-<div id="play-page" class="scratch">
+<div id="play-page" class="scratch {% if UserData.current().developer %}developer{% endif %}">
 	<h1>Code Scratchpad</h1>
 	
 	<div id="exercise-tabs">
 		<div id="code">
 			<div id="canvas-editor" class="row">
 				<div id="editor-box" class="span7 editor-box ui-widget-content">
-					<div class="toolbar ui-widget-header ui-corner-all">
-						<a href="" id="record" class="ui-button">
-							<span class="ui-icon-video"></span>
-							<span class="ui-button-text">Record</span>
-						</a>
-						<a href="" id="save" class="ui-button ui-state-disabled">
-							<span class="ui-icon-disk"></span>
-							<span class="ui-button-text">Save</span>
-						</a>
-					</div>
-					
 					<div id="editor" class="editor ui-corner-top"></div>
 					
-					<div class="toolbar ui-widget-header">
-						<a href="" id="restart-code" class="ui-button">
-							<span class="ui-icon-refresh"></span>
-							<span class="ui-button-text">Restart</span>
-						</a>
-						
+					<div class="toolbar ui-widget-header">						
 						<a href="" id="save-share-code" class="ui-button right">
 							<span class="ui-icon-star"></span>
 							<span class="ui-button-text">Save &amp; Share</span>
 						</a>
+						
+						<a href="" id="record" class="ui-button right dev-only">
+							<span class="ui-icon-video"></span>
+							<span class="ui-button-text">Record</span>
+						</a>
+						
+						<div id="playbar">
+							<a href="" id="play" class="ui-button">
+								<span class="ui-icon-play"></span>
+							</a>
+							<div id="progress"></div>
+							<span id="timeleft"></span>
+						</div>
 					</div>
 				</div>
 
 				<div id="output-box" class="span5 editor-box">
-					<div class="toolbar ui-widget-header ui-corner-all">
-						<a href="" id="draw" class="ui-button"><span class="ui-icon-pencil"></span></a>
-						<a href="" id="clear" class="ui-button"><span class="ui-icon-cancel"></span></a>
-						<div class="space"></div>
-						<a href="" class="color" id="black"><span></span></a>
-						<a href="" class="color" id="red"><span></span></a>
-						<a href="" class="color" id="orange"><span></span></a>
-						<a href="" class="color" id="green"><span></span></a>
-						<a href="" class="color" id="blue"><span></span></a>
-						<a href="" class="color" id="lightblue"><span></span></a>
-						<a href="" class="color" id="violet"><span></span></a>
-					</div>
 					<div id="output" class="side">
 						<div class="overlay"></div>
 						<div id="output-text"></div>
 						<canvas id="output-canvas" width="400" height="400"></canvas>
 						<canvas id="canvas" width="400" height="400"></canvas>
 						<div id="output-text-test"></div>
+					</div>
+					<div class="toolbar ui-widget-header ui-corner-all">
+						<a href="" id="restart-code" class="ui-button right">
+							<span class="ui-icon-refresh"></span>
+							<span class="ui-button-text">Restart</span>
+						</a>
+						
+						<div id="draw-widgets" class="dev-only">
+							<a href="" id="clear" class="ui-button"><span class="ui-icon-cancel"></span></a>
+							<a href="" class="color" id="black"><span></span></a>
+							<a href="" class="color" id="red"><span></span></a>
+							<a href="" class="color" id="orange"><span></span></a>
+							<a href="" class="color" id="green"><span></span></a>
+							<a href="" class="color" id="blue"><span></span></a>
+							<a href="" class="color" id="lightblue"><span></span></a>
+							<a href="" class="color" id="violet"><span></span></a>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -17,6 +17,7 @@ var Record = {
 	stopRecord: function() {
 		if ( Record.recording ) {
 			Record.recording = false;
+			Record.recorded = true;
 		
 			$(Record).trigger( "recordEnded" );
 		}

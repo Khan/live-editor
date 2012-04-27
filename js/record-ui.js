@@ -13,34 +13,35 @@ $(function(){
 
 	$(document).delegate( ".toolbar a.color", "buttonClick", function() {
 		Canvas.setColor( this.id );
-	});
-
-	$("#draw").bind( "buttonClick", function() {
-		if ( Canvas.drawing ) {
-			Canvas.endDraw();
-		} else {
-			Canvas.startDraw();
-		}
+		focusProblem();
 	});
 	
 	$("#clear").bind( "buttonClick", function() {
 		Canvas.clear();
+		Canvas.endDraw();
+		focusProblem();
 	});
 	
-	$("#record").bind( "buttonClick", function() {
+	$("#record").bind( "buttonClick", function() {		
 		if ( Record.recording ) {
 			Record.stopRecord();
 		} else {
 			// TODO: Hide the recording app until connected
-			Record.record();
-			/*
 			connectAudio(function() {
 				SC.record({
-					start: Record.record
+					start: function() {
+						$("#draw-widgets").show();
+						
+						Editor.startCode = $("#editor").editorText();
+						setCursor({ row: 0, column: 0 });
+						focusProblem();
+						
+						Record.record();
+					}
 				});
 			});
-			*/
 		}
+		focusProblem();
 	});
 	
 	$(Canvas).bind({
@@ -63,10 +64,16 @@ $(function(){
 		}
 	});
 	
-	// TODO: Move this some place else?
-	$("#save-blah").click(function() {
-		var dialog = $("<div>Saving recording...</div>")
+	$("#save-share-code").bind( "buttonClick", function() {
+		$(this).addClass( "ui-state-disabled" );
+		
+		var dialog = $("<div>Saving Scratchpad...</div>")
 			.dialog({ modal: true });
+		
+		if ( !Record.recorded ) {
+			save();
+			return;
+		}
 		
 		SC.recordUpload(
 			{
@@ -75,61 +82,46 @@ $(function(){
 					tags: "KhanAcademyCode",
 					sharing: "public",
 					track_type: "spoken",
-					description: JSON.stringify( Exercise ),
-					title: recordData.title + (recordData.desc ? ": " + recordData.desc : ""),
+					description: "",
+					title: "Code Scratchpad", // TODO: Allow presenter to input title
 					license: "cc-by-nc-sa"
 				}
 			},
 
 			function( response, error ) {
 				if ( response ) {
-					recordData.id = response.id;
-
-					saveAttachment( response.id, Exercise, function( response ) {
-						if ( response ) {
-							// TODO: Hook this into the play page
-							dialog.html( $("<a>")
-								.attr("href", "")
-								.text( recordData.title ) );
-						} else {
-							// TODO: Show error message
-						}
-					});
+					Record.audioID = String( response.id );
+					save();
 
 				} else {
 					// TODO: Show error message
 				}
 			}
 		);
+		
+		function save() {
+			saveScratch(function( scratchData ) {
+				dialog.dialog( "close" );
+				window.location.href = "/labs/code/" + scratchData.id;
+			});
+		}
 	});
-	
-	var wasDrawing,
-		recordData;
 	
 	$(Record).bind({		
 		recordStarted: function() {
-			// Reset the editor and canvas to its initial state
-			$("#editor").data("editor").reset();
+			// Reset the canvas to its initial state
 			Canvas.clear( true );
 			Canvas.endDraw();
 			
-			//recordData = { title: "New Recording" };
-			
-			//insertExerciseForm( recordData );
-			
-			$("#tests textarea:last").remove();
-			
-			$("#test").removeClass( "ui-state-disabled" );
-			$("#save").addClass( "ui-state-disabled" );
+			$("#save-share-code").addClass( "ui-state-disabled" );
 			$("#record").addClass( "ui-state-active" );
 		},
 		
 		recordEnded: function() {
-			//SC.recordStop();
+			SC.recordStop();
 			
-			$("#test").addClass( "ui-state-disabled" );
-			$("#save").removeClass( "ui-state-disabled" );
-			$("#record").removeClass( "ui-state-active" );
+			$("#save-share-code").removeClass( "ui-state-disabled" );
+			$("#record").removeClass( "ui-state-active" ).addClass( "ui-state-disabled" );
 		}
 	});
 });

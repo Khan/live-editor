@@ -57,7 +57,9 @@ $(function(){
 				$(Canvas).trigger( "drawStarted" );
 			}
 			
-			$("#overlay").show();
+			// TODO: Switch to a better way of preventing user input
+			// possibly hide the textarea? need to take care of hot numbers as well
+			//$("#overlay").show();
 			
 			$("#play").addClass( "ui-state-active" )
 				.find( ".ui-icon" )
@@ -94,13 +96,15 @@ $(function(){
 		Output.restart();
 	});
 	
-	$("#save-share-code").bind( "buttonClick", function() {
-		$(this).addClass( "ui-state-disabled" );
+	if ( !$("#play-page").hasClass( "developer" ) ) {
+		$("#save-share-code").bind( "buttonClick", function() {
+			$(this).addClass( "ui-state-disabled" );
 		
-		saveScratch(function( scratchData ) {
-			window.location.href = "/labs/code/" + scratchData.id;
+			saveScratch(function( scratchData ) {
+				window.location.href = "/labs/code/" + scratchData.id;
+			});
 		});
-	});
+	}
 	
 	$("#get-hint").bind( "buttonClick", function() {
 		$("#editor-box").toggleTip( "Hint", curProblem.hints, function() {
@@ -305,6 +309,15 @@ $(function(){
 					id: scratchData.id,
 					problems: [ curProblem ]
 				};
+				
+				// If an audio track is provided, load the track data
+				// and load the audio player as well
+				if ( Record.audioID ) {
+					connectAudio(function( data ) {
+						track = data;
+						SC.whenStreamingReady( audioInit );
+					});
+				}
 				
 				startScratch();
 			});
@@ -546,7 +559,7 @@ var audioInit = function() {
 
 	updateTimeLeft( 0 );
 
-	player = SC.stream( Exercise.audioID.toString(), {
+	player = SC.stream( (Record.audioID || Exercise.audioID).toString(), {
 		autoLoad: true,
 		
 		whileplaying: function() {
@@ -597,10 +610,4 @@ var audioInit = function() {
 			player.pause();
 		}
 	});
-};
-
-Record.handlers.test = function( e ) {
-	Record.pausePlayback();
-	Canvas.endDraw();
-	// $("#tests").accordion({ active: e.pos });
 };
