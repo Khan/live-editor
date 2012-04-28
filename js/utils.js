@@ -424,7 +424,9 @@ var connectAudio = function( callback ) {
 	} else {
 		$.getScript( "http://connect.soundcloud.com/sdk.js", function() {
 			SC.initialize({
-				client_id: "82ff867e7207d75bc8bbd3d281d74bf4",
+				client_id: window.KA_IS_DEV ?
+					"82ff867e7207d75bc8bbd3d281d74bf4" :
+					"3f0c48a9e159d0610cae89b55f39751e",
 				redirect_uri: window.location.href.replace(/labs\/.*$/, "labs/callback")
 			});
 		
