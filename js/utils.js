@@ -30,6 +30,10 @@ var ExerciseMap = {
 
 soundManager.url = "/canvas-editor/js/swf/";
 
+// Disable this callback function in SoundCloud, it throws errors (not sure why)
+Recorder.stop = function(){};
+
+// Make sure SoundCloud writes to localStorage to save repeated login attempts
 SC.storage = function() {
 	return window.localStorage;
 };

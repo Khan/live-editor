@@ -171,6 +171,10 @@ var Editor = function( id ) {
 	
 	editor.reset();
 };
+
+Editor.reset = function() {
+	$("#editor").editorText( Exercise.code || "" );
+};
 	
 Editor.prototype = {
 	reset: function() {

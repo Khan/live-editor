@@ -531,17 +531,13 @@ var insertExercise = function( testObj ) {
 		.appendTo("#main-tabs-nav");
 };
 
-var seekTo = function( time ) {
-	$("#progress").slider( "option", "value", time / 1000 );
-	Record.seekTo( time );
-	
-	if ( typeof SC !== "undefined" ) {
-		player.setPosition( time );
-		player.resume();
-	
-	} else {
-		player.seekTo( time / 1000 );
+var seekTo = function( time, noUpdate ) {
+	if ( !noUpdate ) {
+		$("#progress").slider( "option", "value", time / 1000 );
 	}
+	
+	Record.seekTo( time );
+	player.setPosition( time );
 };
 
 // track.waveform_url (hot)
@@ -576,29 +572,27 @@ var audioInit = function() {
 	
 	$("#progress").slider({
 		start: function() {
-			updateTime = false;
 			wasPlaying = Record.playing;
+			Record.pausePlayback();
 		},
 		
 		slide: function( e, ui ) {
+			updateTime = false;
 			updateTimeLeft( ui.value );
-		},
-		
-		change: function( e, ui ) {
-			updateTimeLeft( ui.value );
+			seekTo( ui.value * 1000, true );
+			updateTime = true;
 		},
 		
 		stop: function( e, ui ) {
-			updateTime = true;
-			
 			if ( wasPlaying ) {
-				seekTo( ui.value * 1000 );
+				Record.play();
 			}
 		}
 	});
 	
 	$(Record).bind({
 		playStarted: function() {
+			console.log( "playStarted" );
 			if ( player.paused ) {
 				player.resume();
 
@@ -608,6 +602,7 @@ var audioInit = function() {
 		},
 		
 		playStopped: function() {
+			console.log( "playStopped", player.pause );
 			player.pause();
 		}
 	});

@@ -24,16 +24,11 @@ var Record = {
 	},
 	
 	seekTo: function( time ) {
-		Record.seeking = true;
-		Record.pausePlayback();
-		
 		Editor.reset();
 		Canvas.clear( true );
 		Canvas.endDraw();
 		
-		var i = 0;
-		
-		var interval = setInterval(function() {
+		for ( var i = 0; i < Record.commands.length; i++ ) {
 			var evt = Record.commands[ i ];
 			
 			if ( evt.time > time ) {
@@ -41,18 +36,12 @@ var Record = {
 				Record.playStart = Record.pauseTime - time;
 				Record.playPos = i;
 				
-				clearInterval( interval );
-				Record.seeking = false;
+				break;
 				
 			} else {
 				Record.runCommand( evt );
 			}
-
-			if ( ++i === Record.commands.length ) {
-				clearInterval( interval );
-				Record.seeking = false;
-			}
-		}, 1 );
+		}
 	},
 	
 	play: function() {
