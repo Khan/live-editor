@@ -316,7 +316,7 @@ $(function(){
 				if ( Exercise.audioID ) {
 					connectAudio(function( data ) {
 						track = data;
-						SC.whenStreamingReady( audioInit );
+						audioInit();
 					});
 				}
 				
@@ -373,7 +373,7 @@ var openExercise = function( exercise ) {
 	if ( Exercise.audioID ) {
 		connectAudio(function( data ) {
 			track = data;
-			SC.whenStreamingReady( audioInit );
+			audioInit();
 		});
 	}
 	

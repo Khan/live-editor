@@ -429,18 +429,22 @@ var openExerciseDialog = function( callback ) {
 };
 
 var connectAudio = function( callback ) {
-	if ( window.Exercise && Exercise.audioID ) {
-		SC.get( "/tracks/" + Exercise.audioID, function( data ) {
-			if ( callback ) {
-				callback( data );
+	SC.whenStreamingReady(function() {
+		soundManager.onready(function() {
+			if ( window.Exercise && Exercise.audioID ) {
+				SC.get( "/tracks/" + Exercise.audioID, function( data ) {
+					if ( callback ) {
+						callback( data );
+					}
+				});
+	
+			} else {
+				if ( callback ) {
+					callback();
+				}
 			}
 		});
-	
-	} else {
-		if ( callback ) {
-			callback();
-		}
-	}
+	});
 };
 
 (function() {
