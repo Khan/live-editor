@@ -93,7 +93,6 @@ var Canvas = {
 			Canvas.down = true;
 			Canvas.x = x;
 			Canvas.y = y;
-			Canvas.prev = [];
 		
 			Canvas.log( "startLine", [ x, y ] );
 		}
@@ -101,32 +100,21 @@ var Canvas = {
 	
 	drawLine: function( x, y ) {
 		if ( Canvas.down ) {
-			Canvas.prev.push({ x: x, y: y });
-
-			if ( Canvas.prev.length === 2 ) {
-				var prev = Canvas.prev;
-
-				// Only make a path if we're actually going to draw something
-				if ( prev[0].x !== prev[1].x || prev[0].y !== prev[1].y ) {
-					Canvas.ctx.beginPath();
-					Canvas.ctx.moveTo( Canvas.x, Canvas.y );
-					Canvas.ctx.quadraticCurveTo( prev[0].x, prev[0].y, prev[1].x, prev[1].y );
-					Canvas.ctx.stroke();
-					Canvas.ctx.closePath();
-
-					Canvas.x = prev[1].x;
-					Canvas.y = prev[1].y;
-				}
-				
-				Canvas.prev.length = 0;
-			}
+			Canvas.ctx.beginPath();
+			Canvas.ctx.moveTo( Canvas.x, Canvas.y );
+			Canvas.ctx.lineTo( x, y );
+			Canvas.ctx.stroke();
+			Canvas.ctx.closePath();
+			
+			Canvas.x = x;
+			Canvas.y = y;
 			
 			Canvas.log( "drawLine", [ x, y ] );
 		}
 	},
 	
 	endLine: function() {
-		if ( Canvas.down ) {
+		if ( Canvas.down ) {			
 			Canvas.down = false;
 			Canvas.log( "endLine" );
 		}
@@ -191,6 +179,24 @@ var Canvas = {
 		}
 	}
 };
+
+$(Record).bind({		
+	recordStarted: function() {
+		$("#draw-widgets").show();
+		
+		// Reset the canvas to its initial state
+		Canvas.clear( true );
+		Canvas.endDraw();
+	},
+	
+	recordEnded: function() {
+		$("#draw-widgets").hide();
+		
+		// Reset the canvas to its initial state
+		Canvas.clear( true );
+		Canvas.endDraw();
+	}
+});
 
 jQuery.each([ "startLine", "drawLine", "endLine", "setColor", "clear" ], function( i, name ) {
 	Record.handlers[ name ] = function( e ) {

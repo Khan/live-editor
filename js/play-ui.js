@@ -48,7 +48,10 @@ $(function(){
 		playStarted: function( e, resume ) {
 			// Reset the editor and canvas to its initial state
 			if ( !resume ) {
-				editor.reset();
+				$("#editor").editorText( Exercise.code );
+				setCursor({ row: 0, column: 0 });
+				focusProblem();
+				
 				Canvas.clear();
 				Canvas.endDraw();
 			}
@@ -305,14 +308,12 @@ $(function(){
 			getScratch( id, function( scratchData ) {
 				curProblem = { id: 1, answer: scratchData.code };
 				
-				Exercise = {
-					id: scratchData.id,
-					problems: [ curProblem ]
-				};
+				Exercise = scratchData;
+				Exercise.problems = [ curProblem ];
 				
 				// If an audio track is provided, load the track data
 				// and load the audio player as well
-				if ( Record.audioID ) {
+				if ( Exercise.audioID ) {
 					connectAudio(function( data ) {
 						track = data;
 						SC.whenStreamingReady( audioInit );
@@ -559,7 +560,7 @@ var audioInit = function() {
 
 	updateTimeLeft( 0 );
 
-	player = SC.stream( (Record.audioID || Exercise.audioID).toString(), {
+	player = SC.stream( Exercise.audioID.toString(), {
 		autoLoad: true,
 		
 		whileplaying: function() {

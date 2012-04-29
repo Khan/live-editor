@@ -901,6 +901,10 @@ div#exercise-page {
 	display: none;
 }
 
+#play-page.scratch .toolbar .ui-slider-range-min {
+	background: #678D00;
+}
+
 #play-page .dev-only {
 	display: none;
 }

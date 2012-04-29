@@ -28,6 +28,19 @@ var ExerciseMap = {
 	1: 18
 };
 
+soundManager.url = "/canvas-editor/js/swf/";
+
+SC.storage = function() {
+	return window.localStorage;
+};
+
+SC.initialize({
+	client_id: window.KA_IS_DEV ?
+		"82ff867e7207d75bc8bbd3d281d74bf4" :
+		"3f0c48a9e159d0610cae89b55f39751e",
+	redirect_uri: window.location.href.replace(/labs\/.*$/, "labs/callback")
+});
+
 $(document).delegate( "a.ui-button", {
 	mouseenter: function() {
 		if ( !$(this).hasClass( "ui-state-disabled" ) ) {
@@ -278,8 +291,7 @@ var saveExercise = function( callback ) {
 
 var getScratch = function( id, callback ) {
 	$.getJSON( "/api/labs/scratch/" + id, function( scratchData ) {
-		Record.audioID = scratchData.audioID;
-		Record.commands = JSON.parse( scratchData.recording );
+		Record.commands = scratchData.recording;
 		
 		// Load in the user's scratch code
 		callback( scratchData );
@@ -293,10 +305,11 @@ var saveScratch = function( callback ) {
 		dataType: "JSON",
 		contentType: "application/json",
 		data: JSON.stringify({
-			origin: Exercise.id || 0,
-			code: Editor.startCode,
-			audioID: Record.audioID || "",
-			recording: Record.recorded ? JSON.stringify( Record.commands ) : ""
+			parent: Exercise.id || null,
+			title: Exercise.title || "Code Scatchpad",
+			code: Exercise.code,
+			audioID: Exercise.audioID || "",
+			recording: Record.recorded ? Record.commands : ""
 		}),
 		success: function( scratchData ) {
 			callback( scratchData );
@@ -416,35 +429,17 @@ var openExerciseDialog = function( callback ) {
 };
 
 var connectAudio = function( callback ) {
-	if ( window.SC && SC.isConnected() ) {
+	if ( window.Exercise && Exercise.audioID ) {
+		SC.get( "/tracks/" + Exercise.audioID, function( data ) {
+			if ( callback ) {
+				callback( data );
+			}
+		});
+	
+	} else {
 		if ( callback ) {
 			callback();
 		}
-	
-	} else {
-		$.getScript( "http://connect.soundcloud.com/sdk.js", function() {
-			SC.initialize({
-				client_id: window.KA_IS_DEV ?
-					"82ff867e7207d75bc8bbd3d281d74bf4" :
-					"3f0c48a9e159d0610cae89b55f39751e",
-				redirect_uri: window.location.href.replace(/labs\/.*$/, "labs/callback")
-			});
-		
-			if ( Record.audioID || window.Exercise && Exercise.audioID ) {
-				SC.get( "/tracks/" + (Record.audioID || Exercise.audioID), function( data ) {
-					if ( callback ) {
-						callback( data );
-					}
-				});
-			
-			} else {
-				SC.connect(function() {
-					if ( callback ) {
-						callback();
-					}
-				});
-			}
-		});
 	}
 };
 

@@ -30,9 +30,7 @@ $(function(){
 			connectAudio(function() {
 				SC.record({
 					start: function() {
-						$("#draw-widgets").show();
-						
-						Editor.startCode = $("#editor").editorText();
+						Exercise.code = $("#editor").editorText();
 						setCursor({ row: 0, column: 0 });
 						focusProblem();
 						
@@ -75,29 +73,38 @@ $(function(){
 			return;
 		}
 		
-		SC.recordUpload(
-			{
-				track: {
-					genre: "Khan Academy Code",
-					tags: "KhanAcademyCode",
-					sharing: "public",
-					track_type: "spoken",
-					description: "",
-					title: "Code Scratchpad", // TODO: Allow presenter to input title
-					license: "cc-by-nc-sa"
-				}
-			},
+		if ( SC.accessToken() ) {
+			upload();
+			
+		} else {
+			SC.connect( upload );
+		}
+		
+		function upload() {
+			SC.recordUpload(
+				{
+					track: {
+						genre: "Khan Academy Code",
+						tags: "KhanAcademyCode",
+						sharing: "public",
+						track_type: "spoken",
+						description: "",
+						title: "Code Scratchpad", // TODO: Allow presenter to input title
+						license: "cc-by-nc-sa"
+					}
+				},
 
-			function( response, error ) {
-				if ( response ) {
-					Record.audioID = String( response.id );
-					save();
+				function( response, error ) {
+					if ( response ) {
+						Exercise.audioID = response.id;
+						save();
 
-				} else {
-					// TODO: Show error message
+					} else {
+						// TODO: Show error message
+					}
 				}
-			}
-		);
+			);
+		}
 		
 		function save() {
 			saveScratch(function( scratchData ) {
@@ -109,10 +116,6 @@ $(function(){
 	
 	$(Record).bind({		
 		recordStarted: function() {
-			// Reset the canvas to its initial state
-			Canvas.clear( true );
-			Canvas.endDraw();
-			
 			$("#save-share-code").addClass( "ui-state-disabled" );
 			$("#record").addClass( "ui-state-active" );
 		},
