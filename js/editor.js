@@ -18,7 +18,10 @@ var Editor = function( id ) {
 	var session = editor.editor.getSession();
 	
 	// Use word wrap
-	session.setUseWrapMode(true);
+	session.setUseWrapMode( true );
+	
+	// Don't use soft tabs
+	session.setUseSoftTabs( false );
 	
 	// Stop automatic JSHINT warnings
 	session.setUseWorker( false );
@@ -52,12 +55,28 @@ var Editor = function( id ) {
 		
 		editor.editor.keyBinding.setKeyboardHandler({
 			handleKeyboard: function($data, hashId, keyOrText, keyCode, e) {
+				if ( !Record.recording ) {
+					return;
+				}
+				
 				var isCommand = canon.findKeyCommand({editor: editor.editor}, "editor", hashId, keyOrText),
 					isEmpty = jQuery.isEmptyObject( e );
 				
 				if ( isCommand && !isEmpty ) {
 					Record.log({ cmd: isCommand.name });
 					blockSelection();
+					
+					// Prevent commands from having any logged side effects
+					var oldExec = isCommand.exec;
+					
+					isCommand.exec = function() {
+						Record.recording = false;
+						var ret = oldExec.apply( this, arguments );
+						Record.recording = true;
+						return ret;
+					};
+					
+					return isCommand;
 
 				} else if ( !isCommand && isEmpty ) {
 					if ( !paste ) {
@@ -74,8 +93,10 @@ var Editor = function( id ) {
 		});
 		
 		editor.editor.addEventListener( "paste", function( text ) {
-			paste = true;
-			Record.log({ paste: text });
+			if ( Record.recording ) {
+				paste = true;
+				Record.log({ paste: text });
+			}
 		});
 		
 		editor.editor.addEventListener( "cut", function() {
@@ -90,7 +111,7 @@ var Editor = function( id ) {
 		var curRange;
 		
 		editor.editor.selection.addEventListener( "changeSelection", function() {
-			if ( !doSelect ) {
+			if ( !doSelect || !Record.recording ) {
 				return;
 			}
 			
