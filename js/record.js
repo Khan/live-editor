@@ -32,10 +32,7 @@ var Record = {
 			var evt = Record.commands[ i ];
 			
 			if ( evt.time > time ) {
-				Record.pauseTime = (new Date).getTime();
-				Record.playStart = Record.pauseTime - time;
 				Record.playPos = i;
-				
 				break;
 				
 			} else {
@@ -64,7 +61,7 @@ var Record = {
 				Record.runCommand( evt );
 
 				if ( ++Record.playPos === Record.commands.length ) {
-					Record.stopPlayback();
+					Record.stopPlayback( true );
 
 					$(Record).trigger( "playEnded" );
 				}
@@ -74,7 +71,7 @@ var Record = {
 		$(Record).trigger( "playStarted", !!Record.pauseTime );
 	},
 	
-	pausePlayback: function() {
+	pausePlayback: function( end ) {
 		if ( Record.playing ) {
 			clearInterval( Record.playInterval );
 		
@@ -82,18 +79,22 @@ var Record = {
 			Record.playInterval = null;
 			Record.pauseTime = (new Date).getTime();
 			
-			$(Record).trigger( "playPaused" );
+			if ( !end ) {
+				$(Record).trigger( "playPaused" );
+			}
 		}
 	},
 	
 	stopPlayback: function( end ) {
 		if ( Record.playing ) {
-			Record.pausePlayback();
+			Record.pausePlayback( end );
 			
 			Record.playPos = null;
 			Record.playStart = null;
 			
-			$(Record).trigger( "playStopped" );
+			if ( !end ) {
+				$(Record).trigger( "playStopped" );
+			}
 		}
 	},
 	

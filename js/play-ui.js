@@ -41,9 +41,6 @@ $(function(){
 		max: 100
 	});
 	
-	var wasDrawing,
-		recordData;
-	
 	$(Record).bind({
 		playStarted: function( e, resume ) {
 			// Reset the editor and canvas to its initial state
@@ -52,12 +49,8 @@ $(function(){
 				setCursor({ row: 0, column: 0 });
 				focusProblem();
 				
-				Canvas.clear();
+				Canvas.clear( true );
 				Canvas.endDraw();
-			}
-			
-			if ( wasDrawing ) {
-				$(Canvas).trigger( "drawStarted" );
 			}
 			
 			// TODO: Switch to a better way of preventing user input
@@ -70,19 +63,11 @@ $(function(){
 		},
 		
 		playPaused: function() {
+			$("#overlay").hide();
+			
 			$("#play").removeClass( "ui-state-active" )
 				.find( ".ui-icon" )
 					.addClass( "ui-icon-play" ).removeClass( "ui-icon-pause" );
-		},
-		
-		playStopped: function() {
-			$("#overlay").hide();
-			
-			wasDrawing = Canvas.drawing;
-			
-			if ( wasDrawing ) {
-				$(Canvas).trigger( "drawEnded" );
-			}
 		}
 	});
 	
@@ -544,8 +529,7 @@ var seekTo = function( time, noUpdate ) {
 
 // track.waveform_url (hot)
 var audioInit = function() {
-	var updateTime = true,
-		wasPlaying;
+	var wasPlaying;
 	
 	var updateTimeLeft = function( time ) {
 		$("#timeleft").text( "-" + formatTime( (track.duration / 1000) - time ) );
@@ -561,14 +545,14 @@ var audioInit = function() {
 		autoLoad: true,
 		
 		whileplaying: function() {
-			if ( updateTime && Record.playing ) {
-				$("#progress").slider( "option", "value", player.position / 1000 );
-			}
+			updateTimeLeft( player.position );
+			$("#progress").slider( "option", "value", player.position / 1000 );
 		},
 		
 		onplay: Record.play,
 		onresume: Record.play,
-		onpause: Record.pausePlayback
+		onpause: Record.pausePlayback,
+		onfinish: Record.stopPlayback
 	}, function() {
 		$("#playbar").show();
 	});
@@ -580,10 +564,12 @@ var audioInit = function() {
 		},
 		
 		slide: function( e, ui ) {
-			updateTime = false;
 			updateTimeLeft( ui.value );
 			seekTo( ui.value * 1000, true );
-			updateTime = true;
+		},
+		
+		change: function( e, ui ) {
+			updateTimeLeft( ui.value );
 		},
 		
 		stop: function( e, ui ) {

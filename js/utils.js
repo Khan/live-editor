@@ -258,6 +258,11 @@ var formatTime = function( seconds ) {
 	var min = Math.floor( seconds / 60 ),
 		sec = Math.round( seconds % 60 );
 	
+	if ( min < 0 || sec < 0 ) {
+		min = 0;
+		sec = 0;
+	}
+	
 	return min + ":" + (sec < 10 ? "0" : "") + sec;
 };
 

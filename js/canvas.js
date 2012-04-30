@@ -89,8 +89,8 @@ var Canvas = {
 	},
 	
 	startLine: function( x, y ) {
-		if ( !Canvas.down ) {
-			Canvas.down = true;
+		if ( !Canvas.drawing ) {
+			Canvas.drawing = true;
 			Canvas.x = x;
 			Canvas.y = y;
 		
@@ -99,7 +99,7 @@ var Canvas = {
 	},
 	
 	drawLine: function( x, y ) {
-		if ( Canvas.down ) {
+		if ( Canvas.drawing ) {
 			Canvas.ctx.beginPath();
 			Canvas.ctx.moveTo( Canvas.x, Canvas.y );
 			Canvas.ctx.lineTo( x, y );
@@ -114,8 +114,8 @@ var Canvas = {
 	},
 	
 	endLine: function() {
-		if ( Canvas.down ) {			
-			Canvas.down = false;
+		if ( Canvas.drawing ) {			
+			Canvas.drawing = false;
 			Canvas.log( "endLine" );
 		}
 	},
