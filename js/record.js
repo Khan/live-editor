@@ -82,16 +82,18 @@ var Record = {
 			Record.playInterval = null;
 			Record.pauseTime = (new Date).getTime();
 			
-			$(Record).trigger( "playStopped" );
+			$(Record).trigger( "playPaused" );
 		}
 	},
 	
-	stopPlayback: function() {
+	stopPlayback: function( end ) {
 		if ( Record.playing ) {
 			Record.pausePlayback();
-		
+			
 			Record.playPos = null;
 			Record.playStart = null;
+			
+			$(Record).trigger( "playStopped" );
 		}
 	},
 	

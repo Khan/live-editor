@@ -69,6 +69,12 @@ $(function(){
 					.removeClass( "ui-icon-play" ).addClass( "ui-icon-pause" );
 		},
 		
+		playPaused: function() {
+			$("#play").removeClass( "ui-state-active" )
+				.find( ".ui-icon" )
+					.addClass( "ui-icon-play" ).removeClass( "ui-icon-pause" );
+		},
+		
 		playStopped: function() {
 			$("#overlay").hide();
 			
@@ -77,10 +83,6 @@ $(function(){
 			if ( wasDrawing ) {
 				$(Canvas).trigger( "drawEnded" );
 			}
-			
-			$("#play").removeClass( "ui-state-active" )
-				.find( ".ui-icon" )
-					.addClass( "ui-icon-play" ).removeClass( "ui-icon-pause" );
 		}
 	});
 	
@@ -592,7 +594,6 @@ var audioInit = function() {
 	
 	$(Record).bind({
 		playStarted: function() {
-			console.log( "playStarted" );
 			if ( player.paused ) {
 				player.resume();
 
@@ -601,9 +602,12 @@ var audioInit = function() {
 			}
 		},
 		
-		playStopped: function() {
-			console.log( "playStopped", player.pause );
+		playPaused: function() {
 			player.pause();
+		},
+		
+		playStopped: function() {
+			seekTo( 0 );
 		}
 	});
 };
