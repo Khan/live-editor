@@ -551,7 +551,6 @@ var audioInit = function() {
 		$("#timeleft").text( "-" + formatTime( (track.duration / 1000) - time ) );
 	};
 	
-	$("#playbar").show();
 	$("#progress").slider( "option", "max", track.duration / 1000 );
 
 	Record.time = 0;
@@ -570,6 +569,8 @@ var audioInit = function() {
 		onplay: Record.play,
 		onresume: Record.play,
 		onpause: Record.pausePlayback
+	}, function() {
+		$("#playbar").show();
 	});
 	
 	$("#progress").slider({
