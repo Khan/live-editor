@@ -20,8 +20,8 @@ var Editor = function( id ) {
 	// Use word wrap
 	session.setUseWrapMode( true );
 	
-	// Don't use soft tabs
-	session.setUseSoftTabs( false );
+	// Use soft tabs
+	session.setUseSoftTabs( true );
 	
 	// Stop automatic JSHINT warnings
 	session.setUseWorker( false );
