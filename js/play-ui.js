@@ -300,7 +300,7 @@ $(function(){
 				
 				// If an audio track is provided, load the track data
 				// and load the audio player as well
-				if ( Exercise.audioID ) {
+				if ( Exercise.audio_id ) {
 					connectAudio(function( data ) {
 						track = data;
 						audioInit();
@@ -357,7 +357,7 @@ var openExercise = function( exercise ) {
 
 	// If an audio track is provided, load the track data
 	// and load the audio player as well
-	if ( Exercise.audioID ) {
+	if ( Exercise.audio_id ) {
 		connectAudio(function( data ) {
 			track = data;
 			audioInit();
@@ -541,7 +541,7 @@ var audioInit = function() {
 
 	updateTimeLeft( 0 );
 
-	player = SC.stream( Exercise.audioID.toString(), {
+	player = SC.stream( Exercise.audio_id.toString(), {
 		autoLoad: true,
 		
 		whileplaying: function() {

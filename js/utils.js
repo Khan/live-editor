@@ -316,9 +316,9 @@ var saveScratch = function( callback ) {
 		data: JSON.stringify({
 			parent: Exercise.id || null,
 			title: Exercise.title || "Code Scatchpad",
-			code: Exercise.code,
-			audioID: Exercise.audioID || "",
-			recording: Record.recorded ? Record.commands : ""
+			code: Exercise.code || $("#editor").editorText(),
+			audio_id: Exercise.audio_id || 0,
+			recording: Record.recorded ? Record.commands : []
 		}),
 		success: function( scratchData ) {
 			callback( scratchData );
@@ -440,8 +440,8 @@ var openExerciseDialog = function( callback ) {
 var connectAudio = function( callback ) {
 	SC.whenStreamingReady(function() {
 		soundManager.onready(function() {
-			if ( window.Exercise && Exercise.audioID ) {
-				SC.get( "/tracks/" + Exercise.audioID, function( data ) {
+			if ( window.Exercise && Exercise.audio_id ) {
+				SC.get( "/tracks/" + Exercise.audio_id, function( data ) {
 					if ( callback ) {
 						callback( data );
 					}

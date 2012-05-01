@@ -96,7 +96,7 @@ $(function(){
 
 				function( response, error ) {
 					if ( response ) {
-						Exercise.audioID = response.id;
+						Exercise.audio_id = response.id;
 						save();
 
 					} else {
