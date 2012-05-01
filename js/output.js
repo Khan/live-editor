@@ -108,7 +108,8 @@ var Output = {
 	},
 	
 	runCode: function( userCode ) {
-		var doRunTests = !!JSHINT( "/*jshint undef: true *//*global " +
+		var doRunTests = !!JSHINT( "/*jshint undef:true, noempty:true, " + 
+				"plusplus:true, noarg:true, latedef:true, eqeqeq:true, curly:true *//*global " +
 				Output.propList() + "*/\n" + userCode ),
 			hintData = JSHINT.data(),
 			externalProps = Output.props();
