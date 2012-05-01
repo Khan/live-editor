@@ -623,7 +623,7 @@ div#exercise-page {
 	float: right;
 }
 
-#exercise-page #overlay, #play-page #overlay, #output .overlay {
+#exercise-page #overlay, #play-page #overlay, #output .overlay, #editor-box .overlay {
 	display: block;
     position: absolute;
     top: 0px;
@@ -633,6 +633,16 @@ div#exercise-page {
     background: rgba(255,255,255,0.8);
     z-index: 50;
 	margin: 0;
+}
+
+#editor-box .overlay {
+	display: none;
+	background: transparent;
+	width: auto;
+	height: auto;
+	z-index: 101;
+	bottom: 36px;
+	right: 16px;
 }
 
 #play-page #overlay {
@@ -911,6 +921,23 @@ div#exercise-page {
 
 #play-page.developer .dev-only {
 	display: block;
+}
+
+/* Handle playback styling */
+html.playing #editor textarea {
+	display: none;
+}
+
+html.playing #editor-box .overlay {
+	display: block;
+}
+
+html.playing .hotnumber:not(.picker), html.playing .hotnumber:not(picker) .ui-slider-handle {
+	visibility: hidden;
+}
+
+html.playing #editor .ace_cursor {
+	opacity: 1.0;
 }
 
 /* Swap the Y-axis, matching it closer to traditional mathematical drawing. */

@@ -29,7 +29,7 @@ var Canvas = {
 		jQuery(Canvas.canvas).bind({
 			mousedown: function( e ) {
 				// Left mouse button
-				if ( e.button === 0 ) {
+				if ( !Record.playing && e.button === 0 ) {
 					Canvas.startLine( e.offsetX, e.offsetY );
 
 					e.preventDefault();
@@ -37,15 +37,21 @@ var Canvas = {
 			},
 
 			mousemove: function( e ) {
-				Canvas.drawLine( e.offsetX, e.offsetY );
+				if ( !Record.playing ) {
+					Canvas.drawLine( e.offsetX, e.offsetY );
+				}
 			},
 			
-			mouseup: Canvas.endLine
+			mouseup: function( e ) {
+				if ( !Record.playing ) {
+					Canvas.endLine();
+				}
+			}
 		});
 		
 		jQuery(document).keydown(function(e) {
 			// Stop if we aren't running
-			if ( !Canvas.drawing ) {
+			if ( !Record.playing || !Canvas.drawing ) {
 				return;
 			}
 			

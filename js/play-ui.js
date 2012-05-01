@@ -53,9 +53,8 @@ $(function(){
 				Canvas.endDraw();
 			}
 			
-			// TODO: Switch to a better way of preventing user input
-			// possibly hide the textarea? need to take care of hot numbers as well
-			//$("#overlay").show();
+			$("html").addClass( "playing" );
+			$("#editor-box .overlay").show();
 			
 			$("#play").addClass( "ui-state-active" )
 				.find( ".ui-icon" )
@@ -63,7 +62,8 @@ $(function(){
 		},
 		
 		playPaused: function() {
-			$("#overlay").hide();
+			$("html").removeClass( "playing" );
+			$("#editor-box .overlay").hide();
 			
 			$("#play").removeClass( "ui-state-active" )
 				.find( ".ui-icon" )
