@@ -2484,7 +2484,11 @@ loop:   for (;;) {
             warning("Strict violation.", x);
         }
     });
-    reservevar('eval');
+    reservevar('eval', function (x) {
+        if (!option.evil) {
+            warning("Don't use eval.");
+        }
+	});
     reservevar('false');
     reservevar('Infinity');
     reservevar('NaN');
