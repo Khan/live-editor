@@ -51,10 +51,14 @@ var Record = {
 		
 		Record.stopRecord();
 		
+		var startTime = (Record.playStart ? Record.pauseTime - Record.playStart : 0);
+		
+		// Make sure everything is reset before playing
+		Record.seekTo( startTime );
+		
 		Record.playing = true;
 		Record.playPos = Record.playPos || 0;
-		Record.playStart = (new Date).getTime() -
-			(Record.playStart ? Record.pauseTime - Record.playStart : 0);
+		Record.playStart = (new Date).getTime() - startTime;
 
 		Record.playInterval = setInterval(function() {
 			var evt = Record.commands[ Record.playPos ];
