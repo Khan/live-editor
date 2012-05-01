@@ -552,9 +552,16 @@ var audioInit = function() {
 		onplay: Record.play,
 		onresume: Record.play,
 		onpause: Record.pausePlayback,
-		onfinish: Record.stopPlayback
+		onfinish: function() {
+			$(Record).trigger( "playPaused" );
+			$(Record).trigger( "playStopped" );
+			$(Record).trigger( "playEnded" );
+		},
+		onload: function() {
+			$("#playbar").show();
+		}
 	}, function() {
-		$("#playbar").show();
+		// TODO: Show loading message, perhaps
 	});
 	
 	$("#progress").slider({

@@ -32,6 +32,8 @@ var Record = {
 			var evt = Record.commands[ i ];
 			
 			if ( evt.time > time ) {
+				Record.pauseTime = (new Date).getTime();
+				Record.playStart = Record.pauseTime - time;
 				Record.playPos = i;
 				break;
 				
@@ -68,7 +70,7 @@ var Record = {
 			}
 		}, 1 );
 		
-		$(Record).trigger( "playStarted", !!Record.pauseTime );
+		$(Record).trigger( "playStarted", !!Record.pauseTime || Record.playPos > 0 );
 	},
 	
 	pausePlayback: function( end ) {
