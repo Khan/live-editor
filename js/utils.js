@@ -316,8 +316,8 @@ var saveScratch = function( callback ) {
 		data: JSON.stringify({
 			parent: Exercise.id || null,
 			title: Exercise.title || "Code Scatchpad",
-			code: Exercise.code || $("#editor").editorText(),
-			audio_id: Exercise.audio_id || 0,
+			code: Record.recorded ? Exercise.code : $("#editor").editorText(),
+			audio_id: Record.recorded ? Exercise.audio_id || 0 : 0,
 			recording: Record.recorded ? Record.commands : []
 		}),
 		success: function( scratchData ) {
