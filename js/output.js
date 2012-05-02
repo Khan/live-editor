@@ -340,7 +340,7 @@ var Output = {
 			
 			for ( var i = 0; i < contexts.length; i++ ) {
 				if ( contexts[i] ) {
-					code = "with(arguments[" + i + "]){\n" + code + "\n}";
+					code = "with(arguments[" + i + "]){(function(){\n" + code + "\n})();}";
 				}
 			}
 			
