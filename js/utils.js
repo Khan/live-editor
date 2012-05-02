@@ -66,14 +66,14 @@ $(document).delegate( "a.ui-button", {
 });
 
 $(document).delegate( ".tipbar .close", "click", function() {
-	$(this).parents(".editor-box").hideTip();
+	$(this).parents("#output").hideTip();
 	focusProblem();
 	return false;
 });
 
 $(document).delegate( ".tipbar .tipnav a", "click", function() {
 	if ( !$(this).hasClass( "ui-state-disabled" ) ) {
-		var box = $(this).parents(".editor-box"),
+		var box = $(this).parents("#output"),
 			tipData = box.data( "tipData" );
 		
 		tipData.pos += $(this).hasClass( "next" ) ? 1 : -1;
@@ -86,7 +86,7 @@ $(document).delegate( ".tipbar .tipnav a", "click", function() {
 });
 
 $(document).delegate( ".tipbar.error .text-wrap a", "click", function() {
-	var box = $(this).parents(".editor-box"),
+	var box = $(this).parents("#output"),
 		tipData = box.data( "tipData" ),
 		error = tipData.Error[ tipData.pos ];
 	
@@ -96,7 +96,7 @@ $(document).delegate( ".tipbar.error .text-wrap a", "click", function() {
 });
 
 $(document).delegate( ".tipbar form", "submit", function() {
-	var box = $(this).parents(".editor-box"),
+	var box = $(this).parents("#output"),
 		tipData = box.data( "tipData" ),
 		answer = tipData.Question[ tipData.pos ].answer,
 		input = $(this).find("input").first().val();
