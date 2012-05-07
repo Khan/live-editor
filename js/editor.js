@@ -36,14 +36,11 @@ var Editor = function( id ) {
 	
 	editor.offset = editor.content.offset();
 	
-	var emptySelection = { start: { row: 0, column: 0 }, end: { row: 0, column: 0 } };
-	
 	if ( window.Record ) {
 		var canon = require("pilot/canon"),
 			event = require("pilot/event"),
 			paste = false,
-			doSelect = true,
-			lastSelection = emptySelection;
+			doSelect = true;
 		
 		function blockSelection() {
 			doSelect = false;
@@ -117,30 +114,32 @@ var Editor = function( id ) {
 			
 			if ( !curRange ) {
 				setTimeout(function() {
-					if ( lastSelection.start.row !== curRange.start.row ||
-						 lastSelection.start.column !== curRange.start.column ||
-						 lastSelection.end.row !== curRange.end.row ||
-						 lastSelection.end.column !== curRange.end.column ) {
-							
-						var diff = {
-							start: {
-								row: curRange.start.row,
-								column: curRange.start.column
-							}
-						};
-
-						if ( curRange.end.row !== curRange.start.row ||
-							 curRange.end.column !== curRange.start.column ) {
-
-							diff.end = {
-								row: curRange.end.row,
-								column: curRange.end.column
-							};
+					var diff = {
+						start: {
+							row: curRange.start.row,
+							column: curRange.start.column
 						}
+					};
 
-						Record.log( diff );
+					if ( curRange.end.row !== curRange.start.row ||
+						 curRange.end.column !== curRange.start.column ) {
+
+						diff.end = {
+							row: curRange.end.row,
+							column: curRange.end.column
+						};
+					}
 					
-						lastSelection = curRange;
+					var lastSelection = Record.commands[ Record.commands.length - 1 ];
+					
+					// Note: Not sure how I feel about using JSON.stringify for deep comparisons
+					//       but boy is it convenient.
+					if ( lastSelection ) {
+						lastSelection = JSON.stringify({ start: lastSelection.start, end: lastSelection.end });
+					}
+
+					if ( !lastSelection || lastSelection !== JSON.stringify( diff ) ) {
+						Record.log( diff );
 					}
 					
 					curRange = null;
