@@ -130,5 +130,21 @@ var Record = {
 	
 	resumeLog: function() {
 		Record.recording = true;
+	},
+	
+	dump: function() {
+		if ( Record.commands ) {
+			return Record.commands.map(function( item ) {
+				var ret = [];
+				
+				for ( var prop in item ) {
+					if ( prop !== "time" ) {
+						ret.push( prop + ":" + item[prop] );
+					}
+				}
+				
+				return ret.join();
+			}).join();
+		}
 	}
 };
