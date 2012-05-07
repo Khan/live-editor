@@ -1005,12 +1005,14 @@ html.dark .hotnumber.picker .picker {
 		height: 718px;
 	}
 	
-	#play-page.scratch #output.side {
-		margin-left: 18px;
-	}
-	
-	#play-page.scratch #output.side, #play-page.scratch #output.side #output-canvas {
+	#play-page.scratch #output.side,
+	#play-page.scratch #output.side #output-canvas {
 		width: 718px;
 		height: 718px;
+	}
+	
+	#play-page.scratch #output-box {
+		width: 720px;
+		margin-left: 20px;
 	}
 }
