@@ -125,11 +125,12 @@ var Record = {
 	},
 	
 	pauseLog: function() {
+		Record.oldRecording = Record.recording;
 		Record.recording = false;
 	},
 	
 	resumeLog: function() {
-		Record.recording = true;
+		Record.recording = Record.oldRecording;
 	},
 	
 	dump: function() {
