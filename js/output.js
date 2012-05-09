@@ -785,6 +785,29 @@ var CanvasOutput = {
 			}
 		}
 		
+		// Make sure the matrix is always reset
+		Output.context.resetMatrix();
+		
+		// Make sure the various draw styles are also reset
+		// if they were just removed
+		if ( CanvasOutput.lastGrab ) {
+			if ( !grabAll.background && CanvasOutput.lastGrab.background ) {
+				CanvasOutput.resetBackground();
+			}
+		
+			if ( !grabAll.stroke && CanvasOutput.lastGrab.stroke ) {
+				CanvasOutput.resetStroke();
+			}
+		
+			if ( !grabAll.strokeWeight && CanvasOutput.lastGrab.strokeWeight ) {
+				CanvasOutput.resetStrokeWeight();
+			}
+		
+			if ( !grabAll.fill && CanvasOutput.lastGrab.fill ) {
+				CanvasOutput.resetFill();
+			}
+		}
+		
 		// Re-run the entire program if we don't need to inject the changes
 		if ( Output.context.draw === CanvasOutput.DUMMY || !CanvasOutput.lastGrab ) {
 			CanvasOutput.clear();
@@ -832,15 +855,36 @@ var CanvasOutput = {
 	},
 	
 	clear: function() {
+		CanvasOutput.resetStrokeWeight();
+		CanvasOutput.resetStroke();
+		CanvasOutput.resetBackground();
+		CanvasOutput.resetFill();
+	},
+	
+	resetStroke: function() {
+		if ( Output.dark ) {
+			CanvasOutput.canvas.stroke( 255, 255, 255 );
+		} else {
+			CanvasOutput.canvas.stroke( 0, 0, 0 );
+		}
+	},
+	
+	resetStrokeWeight: function() {
 		CanvasOutput.canvas.strokeWeight( 1 );
+	},
+	
+	resetBackground: function() {
 		if ( Output.dark ) {
 			CanvasOutput.canvas.background( 15, 15, 15 );
-			CanvasOutput.canvas.stroke( 255, 255, 255 );
-			CanvasOutput.canvas.fill( 15, 15, 15 );
-			
 		} else {
 			CanvasOutput.canvas.background( 255 );
-			CanvasOutput.canvas.stroke( 0, 0, 0 );
+		}
+	},
+	
+	resetFill: function() {
+		if ( Output.dark ) {
+			CanvasOutput.canvas.fill( 15, 15, 15 );
+		} else {
 			CanvasOutput.canvas.fill( 255, 255, 255 );
 		}
 	},
