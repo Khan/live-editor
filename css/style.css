@@ -935,6 +935,10 @@ div#exercise-page {
 	margin: -3px 3px 0 3px;
 }
 
+#play-page.scratch .playarea {
+	display: none;
+}
+
 /* Handle playback styling */
 html.playing #editor textarea {
 	display: none;

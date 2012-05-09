@@ -550,6 +550,10 @@ var audioInit = function() {
 
 	updateTimeLeft( 0 );
 	
+	$("#playbar")
+		.show()
+		.append( "<span class='loading-msg'>Loading audio... " +
+			"<span class='loading'></span></span>" );
 
 	player = SC.stream( Exercise.audio_id.toString(), {
 		autoLoad: true,
@@ -566,13 +570,17 @@ var audioInit = function() {
 			$(Record).trigger( "playPaused" );
 			$(Record).trigger( "playStopped" );
 			$(Record).trigger( "playEnded" );
-		},
-		onload: function() {
-			$("#playbar").show();
 		}
-	}, function() {
-		// TODO: Show loading message, perhaps
 	});
+	
+	var checkStreaming = setInterval(function() {
+		// We've loaded enough to start playing
+		if ( player.bytesLoaded > 0 ) {
+			$( "#playbar .loading-msg" ).hide();
+			$( "#playbar .playarea" ).show();
+			clearInterval( checkStreaming );
+		}
+	}, 16 );
 	
 	$("#progress").slider({
 		start: function() {
