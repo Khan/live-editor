@@ -923,6 +923,18 @@ div#exercise-page {
 	display: block;
 }
 
+#play-page.scratch .loading-msg {
+	line-height: 30px;
+}
+
+#play-page.scratch .loading {
+	width: 20px;
+	height: 20px;
+	display: inline-block;
+	vertical-align: middle;
+	margin: -3px 3px 0 3px;
+}
+
 /* Handle playback styling */
 html.playing #editor textarea {
 	display: none;

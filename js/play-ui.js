@@ -531,6 +531,15 @@ var seekTo = function( time, noUpdate ) {
 var audioInit = function() {
 	var wasPlaying;
 	
+	// An empty track means that the server is still processing the audio
+	if ( track.duration === 0 ) {
+		$("#playbar")
+			.show()
+			.html( "<span class='loading-msg'>Audio is processing, reload page in a minute." +
+				"<span class='ui-icon loading'></span></span>" );
+		return;
+	}
+	
 	var updateTimeLeft = function( time ) {
 		$("#timeleft").text( "-" + formatTime( (track.duration / 1000) - time ) );
 	};
@@ -540,6 +549,7 @@ var audioInit = function() {
 	Record.time = 0;
 
 	updateTimeLeft( 0 );
+	
 
 	player = SC.stream( Exercise.audio_id.toString(), {
 		autoLoad: true,
