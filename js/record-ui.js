@@ -122,7 +122,7 @@ $(function(){
 			var saveCode = Record.recorded ? Exercise.code : $("#editor").editorText();
 			
 			if ( !saveCode ) {
-				dialog.text( "You aren't saving any code. You should enter some code to save!" );
+				dialog.html( "<strong>Whoops!</strong><p>You aren't saving any code, you should enter some code to save!</p>" );
 				return;
 			}
 			
