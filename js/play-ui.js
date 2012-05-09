@@ -536,7 +536,7 @@ var audioInit = function() {
 		$("#playbar")
 			.show()
 			.html( "<span class='loading-msg'>Audio is processing, reload page in a minute." +
-				"<span class='ui-icon loading'></span></span>" );
+				"<span class='loading'></span></span>" );
 		return;
 	}
 	
