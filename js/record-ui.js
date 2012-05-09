@@ -25,20 +25,32 @@ $(function(){
 	$("#record").bind( "buttonClick", function() {		
 		if ( Record.recording ) {
 			Record.stopRecord();
+			
 		} else {
-			// TODO: Hide the recording app until connected
-			connectAudio(function() {
-				SC.record({
-					start: function() {
-						Exercise.code = $("#editor").editorText();
-						setCursor({ row: 0, column: 0 });
-						focusProblem();
+			var saveCode = $("#editor").editorText();
+			
+			if ( !saveCode ) {
+				var dialog = $("<div>Saving Scratchpad...</div>")
+					.dialog({ modal: true });
+					
+				dialog.html( "<strong>There is no code in the editor!</strong>" +
+					"<p>The student won't see anything when they first see the scratchpad, you should enter some code.</p>" );
+					
+			} else {
+				connectAudio(function() {
+					SC.record({
+						start: function() {
+							Exercise.code = $("#editor").editorText();
+							setCursor({ row: 0, column: 0 });
+							focusProblem();
 						
-						Record.record();
-					}
+							Record.record();
+						}
+					});
 				});
-			});
+			}
 		}
+		
 		focusProblem();
 	});
 	
@@ -107,6 +119,13 @@ $(function(){
 		}
 		
 		function save() {
+			var saveCode = Record.recorded ? Exercise.code : $("#editor").editorText();
+			
+			if ( !saveCode ) {
+				dialog.text( "You aren't saving any code. You should enter some code to save!" );
+				return;
+			}
+			
 			saveScratch(function( scratchData ) {
 				dialog.dialog( "close" );
 				window.location.href = "/labs/code/" + scratchData.id;
