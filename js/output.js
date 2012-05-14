@@ -127,7 +127,7 @@ var Output = {
 				// Do this so that declared variables are gobbled up
 				// into the global context object
 				if ( !externalProps[ global ] && !(global in Output.context) ) {
-					Output.context[ global ] = undefined;
+					Output.context[ global ] = null;
 				}
 				
 				Output.globals[ global ] = true;
@@ -139,14 +139,19 @@ var Output = {
 		if ( doRunTests ) {
 			// Run the tests
 			Output.test( userCode );
-			
-			// Then run the user's code
+
+			Output.exec( userCode, Output.context );
+
+			/*
+			// TODO(jlfwong): This breaks right now because runCode assumes
+			// that Output.exec is synchronous when it's not
 			if ( Output.output && Output.output.runCode ) {
 				Output.output.runCode( userCode, Output.context );
 				
 			} else {
 				Output.exec( userCode, Output.context );
 			}
+			*/
 			
 		} else {
 			for ( var i = 0; i < JSHINT.errors.length; i++ ) {
@@ -330,25 +335,130 @@ var Output = {
 		}
 	},
 
-	exec: function( code ) {		
-		try {
-			if ( Output.output && Output.output.compile ) {
-				code = Output.output.compile( code );
-			}	
+	exec: function( code ) {
+		var stubbed = function (obj) {
+			var stubbedContext = {};
 
-			var contexts = Array.prototype.slice.call( arguments, 1 );
-			
-			for ( var i = 0; i < contexts.length; i++ ) {
-				if ( contexts[i] ) {
-					code = "with(arguments[" + i + "]){\n" + code + "\n}";
+			// XXX(jlfwong): This won't work in general - I'm only
+			// stubbing out the global functions and things that can be
+			// serialized
+			//
+			// I could temporarily monkey patch Function.prototype.toJSON
+			// Hmm...
+			for ( var prop in obj ) {
+				var val = obj[prop];
+				
+				if (_.isFunction(val)) {
+					// Sentinel value to convert back into a stubbed
+					// function
+					stubbedContext[prop] = '__STUBBED_FUNCTION__';
+				} else if (_.isNumber(val) || _.isNull(val) || _.isString(val) || _.isUndefined(val)) {
+				
+					stubbedContext[prop] = val;
+				} else {
+					// If it's serializable, stick it on, otherwise,
+					// drop it
+					try {
+						JSON.stringify(val);
+
+						// XXX(jlfwong): Figure out why this is causing 
+						// DATA_CLONE_ERR: DOM Exception 25
+						// stubbedContext[prop] = val;
+					} catch(e) {
+						// pass
+					}
 				}
 			}
-			
-			(new Function( code )).apply( Output.context, contexts );
 
-		} catch( e ) {
-			Output.handleError( e );
+			return stubbedContext;
+		};
+
+		if ( Output.output && Output.output.compile ) {
+			code = Output.output.compile( code );
+		}	
+
+		var contexts = Array.prototype.slice.call( arguments, 1 );
+
+		var runForReal = function() {
+			try {
+				(new Function( code )).apply( Output.context, contexts );
+			} catch( e ) {
+				Output.handleError( e );
+			}
+		};
+		
+		for ( var i = 0; i < contexts.length; i++ ) {
+			if ( contexts[i] ) {
+				code = "with(arguments[" + i + "]){\n" + code + "\n}";
+			}
 		}
+
+		
+		if ( !window.Worker ) {
+			// No web worker support
+			runForReal();
+			return;
+		}
+
+		var runId = _.uniqueId('run');
+
+		if ( Output.worker ) {
+			// Might have already terminated, but let's be sure
+			Output.worker.terminate();
+		}
+
+		Output.worker = new Worker('/canvas-editor/js/worker.js');
+
+		var terminated = false;
+		var terminate = function() {
+			if (terminated) return false;
+			Output.worker.terminate();
+			terminated = true;
+			return true;
+		};
+
+		Output.worker.onmessage = function(event) {
+			var data = event.data;
+			var type = data.type;
+			if (type === 'start') {
+				// console.log('START');
+			} else if (type === 'end') {
+				// console.log('END');
+				terminate();
+				runForReal();
+			} else if (type === 'log') {
+				console.warn('WORKER:', data.message);
+			}
+		};
+		Output.worker.onerror = function(event) {
+			console.error('WORKERERROR:', event.message);
+			// If there was an error, we'll run it locally in case it only
+			// errored in the worker thread
+			terminate();
+			runForReal();
+		};
+
+		// If the thread doesn't finish executing quickly, kill it and
+		// don't execute the code
+		//
+		// TODO(jlfwong): Compensate for the runtime difference between the
+		// drawing routines and the no-ops used in the worker thread
+		//
+		// Calling ellipse() 10000 in the worker thread is almost free, but is
+		// very expensive on the real canvas
+		window.setTimeout(function() {
+			if (terminate()) {
+				Output.handleError({
+					message: 'Took too long to run'
+				});
+			}
+		}, 500);
+		
+		Output.worker.postMessage({
+			code: code,
+			globalContext: stubbed(Output.context),
+			contexts: _(contexts).map(stubbed)
+		});
 	},
 	
 	testContext: {
