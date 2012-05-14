@@ -481,17 +481,39 @@ var connectAudio = function( callback ) {
 		return this;
 	};
 	
-	function attachSlider() {
+	function attachSlider( editor ) {
 		if ( !slider ) {
-			slider = $("<div class='hotnumber'><div class='slider'></div><div class='arrow'></div>")
+			slider = $("<div class='hotnumber'><div class='scrubber'></div><div class='arrow'></div>")
 				.appendTo( "body" )
-				.find( ".slider" ).slider({
-					slide: function( e, ui ) {
-						if ( handle ) {
-							handle( ui.value );
-						}
-					}
-				}).end()
+				.find( ".scrubber" )
+					.append(
+						$('<div/>')
+							.css({
+								background: 'black',
+								color: 'white',
+								textAlign: 'center'
+							})
+							.text('◄ ◆ ►')
+							.draggable({
+								drag: function() {
+									var thisOffset = $(this).offset();
+									var parentOffset = $(this).parent().offset();
+									var dx = thisOffset.left - parentOffset.left;
+									var dy = parentOffset.top - thisOffset.top;
+									if (handle) {
+										handle( dx * Math.pow(10, dy / 200.0 - 1 ));
+									}
+								},
+								stop: function() {
+									$(this).css({
+										left: 0,
+										top: 0
+									});
+									checkNumber.call( editor );
+								}
+							})
+					)
+					.end()
 				.hide();
 		}
 	}
@@ -629,10 +651,7 @@ var connectAudio = function( callback ) {
 			return;
 		}
 		
-		// Compute the offset, relative to the center position
-		var curNum = newNum < 50 ? (50 - newNum) / 50 : (newNum - 50) / 50;
-		 
-		newNum = firstNum + ((newNum < 50 ? -1 : 1) * (curNum * 400));
+		newNum = firstNum + newNum;
 		newNum = newNum.toFixed( decimal );
 		
 		// Replace the old number with the new one
