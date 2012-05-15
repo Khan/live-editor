@@ -457,7 +457,7 @@ var connectAudio = function( callback ) {
 };
 
 (function() {
-	var oldValue, range, firstNum, slider, picker, curPicker, handle, decimal = 0, ignore = false;
+	var oldValue, range, firstNum, slider, picker, curPicker, handle, ignore = false;
 	
 	jQuery.fn.hotNumber = function( reload ) {
 		var editor = this.data("editor").editor,
@@ -501,7 +501,7 @@ var connectAudio = function( callback ) {
 									var dx = thisOffset.left - parentOffset.left;
 									var dy = parentOffset.top - thisOffset.top;
 									if (handle) {
-										handle( dx * Math.pow(10, dy / 200.0 - 1 ));
+										handle( Math.round(dx / 10.0) * Math.pow(10, Math.round(dy / 100.0)));
 									}
 								},
 								stop: function() {
@@ -596,7 +596,6 @@ var connectAudio = function( callback ) {
 			
 				oldValue = RegExp.$1;
 				firstNum = parseFloat( oldValue );
-				decimal = /\.(\d+)/.test( oldValue ) ? RegExp.$1.length : 0;
 				range = new Range( pos.row, before, pos.row, before + oldValue.length );
 			
 				handle = function( value ) {
@@ -652,10 +651,9 @@ var connectAudio = function( callback ) {
 		}
 		
 		newNum = firstNum + newNum;
-		newNum = newNum.toFixed( decimal );
 		
 		// Replace the old number with the new one
-		update( editor, newNum );
+		update( editor, newNum.toString() );
 	}
 	
 	function update( editor, newValue ) {
