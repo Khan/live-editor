@@ -495,8 +495,12 @@ var connectAudio = function( callback ) {
 									var parentOffset = $(this).parent().offset();
 									var dx = thisOffset.left - parentOffset.left;
 									var dy = parentOffset.top - thisOffset.top;
+									var powerOfTen = Math.round(dy / 50.0);
+									if (powerOfTen < -5) powerOfTen = -5;
+									if (powerOfTen > 5) powerOfTen = 5;
+									
 									if (handle) {
-										handle( Math.round(dx / 10.0) * Math.pow(10, Math.round(dy / 100.0)));
+										handle( Math.round(dx / 2.0) * Math.pow(10, powerOfTen));
 									}
 								},
 								stop: function() {
@@ -646,9 +650,19 @@ var connectAudio = function( callback ) {
 		}
 		
 		newNum = firstNum + newNum;
+
+		var newNumString = newNum.toString();
+		var fixed = newNum.toFixed(5);
+		
+		// Using a really small interval (1e-5), we start hitting float
+		// precision issues during addition/subtraction, so cap the number of
+		// digits after the decimal
+		if (fixed.length < newNumString.length) {
+			newNumString = fixed;
+		}
 		
 		// Replace the old number with the new one
-		update( editor, newNum.toString() );
+		update( editor, newNumString );
 	}
 	
 	function update( editor, newValue ) {
