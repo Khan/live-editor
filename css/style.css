@@ -726,7 +726,10 @@ div#exercise-page {
 	cursor: none;
 }
 
-.hotnumber .scrubber .ui-draggable {
+.hotnumber .scrubber .scrubber-handle {
+	background: black;
+	color: white;
+	text-align: center;
 	border-radius: 10px;
 }
 

@@ -487,12 +487,7 @@ var connectAudio = function( callback ) {
 				.appendTo( "body" )
 				.find( ".scrubber" )
 					.append(
-						$('<div/>')
-							.css({
-								background: 'black',
-								color: 'white',
-								textAlign: 'center'
-							})
+						$("<div class='scrubber-handle'/>")
 							.text('◄ ◆ ►')
 							.draggable({
 								drag: function() {
