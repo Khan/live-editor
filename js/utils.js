@@ -298,7 +298,7 @@ var saveExercise = function( callback ) {
 	});		
 };
 
-var getScratchpad = function( scratchpadId, callback ) {
+var getScratchpad = function(scratchpadId, callback) {
 	// TODO(jlfwong): Error handling (404)
 	var scratchpadUrl = "/api/labs/scratchpads/" + scratchpadId;
 	
@@ -313,7 +313,7 @@ var serializeRevisionData = function() {
 	};
 };
 
-var saveRevision = function( scratchpadId, callback ) {
+var saveRevision = function(scratchpadId, callback) {
 	$.ajax({
 		type: "POST",
 		url: "/api/labs/scratchpads/" + scratchpadId + "/revisions/",
@@ -324,7 +324,7 @@ var saveRevision = function( scratchpadId, callback ) {
 	});
 };
 
-var saveScratchpadRevision = function( callback ) {
+var saveScratchpadRevision = function(callback) {
 	// TODO(jlfwong): Error handling
 	
 	// TODO(jlfwong): If the current user is the owner of the scratchpad, give
@@ -352,11 +352,11 @@ var saveScratchpadRevision = function( callback ) {
 				revision: serializeRevisionData()
 			}),
 			success: callback
-		});	
+		});
 	} else {
 		// Update an existing scratchpad
-		saveRevision( currentScratchpad.id, function( revisionData ) {
-			callback( _.extend( {}, currentScratchpad, {
+		saveRevision(currentScratchpad.id, function(revisionData) {
+			callback($.extend({}, currentScratchpad, {
 				revision: revisionData
 			}));
 		});

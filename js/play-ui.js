@@ -94,7 +94,7 @@ $(function(){
 		$("#save-share-code").bind( "buttonClick", function() {
 			$(this).addClass( "ui-state-disabled" );
 		
-			saveScratchpadRevision(function( scratchpad ) {
+			saveScratchpadRevision(function(scratchpad) {
 				window.location.href = "/labs/code/" + scratchpad.slug +
 					"/" + scratchpad.id;
 			});
@@ -310,24 +310,24 @@ $(function(){
 				"*defaultRoute"       : "defaultRoute"
 			},
 			scratchpadNew: function() {
-				curProblem = { id: 1 };
+				curProblem = {id: 1};
 				
 				Exercise = {
 					id: 0,
 					scratchpad: {},
 					revision: {},
-					problems: [ curProblem ]
+					problems: [curProblem]
 				};
 				
-				loadResults( Exercise, startScratch );
+				loadResults(Exercise, startScratch);
 			},
 			scratchpadShowLatest: function(slug, scratchpadId) {
 				scratchpadId = parseInt(scratchpadId, 10);
 				
-				getScratchpad( scratchpadId, function( scratchpad ) {
+				getScratchpad(scratchpadId, function(scratchpad) {
 					var revision = scratchpad.latest_revision;
 					
-					curProblem = { id: 1, answer: revision.code };
+					curProblem = {id: 1, answer: revision.code};
 					
 					Exercise.scratchpad = scratchpad;
 					Exercise.revision = revision;
@@ -341,18 +341,18 @@ $(function(){
 					//
 					// TODO(jlfwong): Remove this, make all accesses explicitly
 					// to Exercise.revision or Exercise.scratchpad
-					_.extend( Exercise, revision, scratchpad );
+					$.extend(Exercise, revision, scratchpad);
 					
 					// If an audio track is provided, load the track data
 					// and load the audio player as well
-					if ( Exercise.audio_id ) {
-						connectAudio(function( data ) {
+					if (Exercise.audio_id) {
+						connectAudio(function(data) {
 							track = data;
 							audioInit();
 						});
 					}
 					
-					Exercise.problems = [ curProblem ];
+					Exercise.problems = [curProblem];
 					
 					startScratch();
 				});

@@ -126,7 +126,7 @@ $(function(){
 				return;
 			}
 			
-			saveScratchpadRevision(function( scratchpad ) {
+			saveScratchpadRevision(function(scratchpad) {
 				dialog.dialog( "close" );
 				window.location.href = "/labs/code/" + scratchpad.slug +
 					"/" + scratchpad.id;
