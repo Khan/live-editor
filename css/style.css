@@ -697,12 +697,12 @@ div#exercise-page {
 	position: absolute;
 	display: block;
 	z-index: 100;
-	width: 31px;
+	width: 50px;
 	background: black;
 	padding: 5px;
 	border-radius: 7px;
 	margin-top: -29px;
-	margin-left: -20px;
+	margin-left: -29px;
 	box-shadow: 0px 0px 8px rgba(0,0,0,1);
 	opacity: 0.2;
 }
@@ -717,6 +717,22 @@ div#exercise-page {
 	opacity: 1;
 }
 
+.hotnumber .scrubber {
+	cursor: move;
+	border-radius: 10px;
+}
+
+.hotnumber .scrubber:active {
+	cursor: none;
+}
+
+.hotnumber .scrubber .scrubber-handle {
+	background: black;
+	color: white;
+	text-align: center;
+	border-radius: 10px;
+}
+
 .hotnumber.picker:hover {
 	width: 196px;
 	height: 156px;
@@ -725,21 +741,15 @@ div#exercise-page {
 
 .hotnumber:hover {
 	opacity: 1;
-	width: 100px;
-	margin-left: -55px;
 }
 
 .hotnumber .arrow {
 	position: absolute;
 	bottom: -8px;
-	left: 13px;
+	left: 21px;
 	border-left: 8px solid transparent;
 	border-right: 8px solid transparent;
 	border-top: 8px solid black;
-}
-
-.hotnumber:hover .arrow {
-	left: 48px;
 }
 
 .hotnumber.picker .arrow {
