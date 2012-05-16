@@ -298,30 +298,19 @@ var saveExercise = function( callback ) {
 	});		
 };
 
-var getLatestScratchpadRevision = function( scratchpadId, callback ) {
+var getScratchpad = function( scratchpadId, callback ) {
 	// TODO(jlfwong): Error handling (404)
-	var results = {
-		scratchpad: null,
-		revision: null
-	};
-	
 	var scratchpadUrl = "/api/labs/scratchpads/" + scratchpadId;
 	
-	$.getJSON( scratchpadUrl, function( data ) {
-		results.scratchpad = data;
-		if ( results.revision ) {
-			callback(results);
-		}
-	});
-	
-	var revisionUrl = scratchpadUrl + "/revisions/latest";
-	
-	$.getJSON( revisionUrl, function( data ) {
-		results.revision = data;
-		if ( results.scratchpad ) {
-			callback(results);
-		}
-	});
+	$.getJSON( scratchpadUrl, callback )
+};
+
+var serializeRevisionData = function() {
+	return {
+		code: Record.recorded ? Exercise.code : $("#editor").editorText(),
+		audio_id: Record.recorded ? Exercise.audio_id || 0 : 0,
+		recording: Record.recorded ? Record.commands : []
+	};
 };
 
 var saveRevision = function( scratchpadId, callback ) {
@@ -330,11 +319,7 @@ var saveRevision = function( scratchpadId, callback ) {
 		url: "/api/labs/scratchpads/" + scratchpadId + "/revisions/",
 		dataType: "JSON",
 		contentType: "application/json",
-		data: JSON.stringify({
-			code: Record.recorded ? Exercise.code : $("#editor").editorText(),
-			audio_id: Record.recorded ? Exercise.audio_id || 0 : 0,
-			recording: Record.recorded ? Record.commands : []
-		}),
+		data: JSON.stringify(serializeRevisionData()),
 		success: callback
 	});
 };
@@ -363,24 +348,17 @@ var saveScratchpadRevision = function( callback ) {
 			data: JSON.stringify({
 				origin_scratchpad_id: currentScratchpad.id || null,
 				origin_revision_id: Exercise.revision.id || null,
-				title: Exercise.title || "Code Scatchpad"
+				title: Exercise.title || "Code Scatchpad",
+				revision: serializeRevisionData()
 			}),
-			success: function( scratchpadData ) {
-				saveRevision( scratchpadData.id, function( revisionData ) {
-					callback({
-						scratchpad: scratchpadData,
-						revision: revisionData
-					});
-				});
-			}
+			success: callback
 		});	
 	} else {
 		// Update an existing scratchpad
 		saveRevision( currentScratchpad.id, function( revisionData ) {
-			callback({
-				scratchpad: currentScratchpad,
+			callback( _.extend( {}, currentScratchpad, {
 				revision: revisionData
-			});
+			}));
 		});
 	}
 };

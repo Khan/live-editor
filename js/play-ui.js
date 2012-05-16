@@ -94,9 +94,9 @@ $(function(){
 		$("#save-share-code").bind( "buttonClick", function() {
 			$(this).addClass( "ui-state-disabled" );
 		
-			saveScratchpadRevision(function( data ) {
-				window.location.href = "/labs/code/" + data.scratchpad.slug +
-					"/" + data.scratchpad.id;
+			saveScratchpadRevision(function( scratchpad ) {
+				window.location.href = "/labs/code/" + scratchpad.slug +
+					"/" + scratchpad.id;
 			});
 		});
 	}
@@ -324,14 +324,13 @@ $(function(){
 			scratchpadShowLatest: function(slug, scratchpadId) {
 				scratchpadId = parseInt(scratchpadId, 10);
 				
-				getLatestScratchpadRevision( scratchpadId, function( data ) {
-					var scratchpad = data.scratchpad;
-					var revision = data.revision;
+				getScratchpad( scratchpadId, function( scratchpad ) {
+					var revision = scratchpad.latest_revision;
 					
 					curProblem = { id: 1, answer: revision.code };
 					
-					Exercise.scratchpad = data.scratchpad;
-					Exercise.revision = data.revision;
+					Exercise.scratchpad = scratchpad;
+					Exercise.revision = revision;
 					
 					Record.commands = Exercise.revision.recording;
 					
@@ -342,7 +341,7 @@ $(function(){
 					//
 					// TODO(jlfwong): Remove this, make all accesses explicitly
 					// to Exercise.revision or Exercise.scratchpad
-					_.extend(Exercise, revision, scratchpad);
+					_.extend( Exercise, revision, scratchpad );
 					
 					// If an audio track is provided, load the track data
 					// and load the audio player as well
