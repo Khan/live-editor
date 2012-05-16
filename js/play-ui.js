@@ -86,12 +86,17 @@ $(function(){
 		Output.restart();
 	});
 	
+	// XXX(jlfwong): This logic is a bit convoluted - we're *actually*
+	// checking to see if we can record, not if we're a developer
 	if ( !$("#play-page").hasClass( "developer" ) ) {
+		// If we can record, then a buttonClick handler gets
+		// attached by record-ui.js instead
 		$("#save-share-code").bind( "buttonClick", function() {
 			$(this).addClass( "ui-state-disabled" );
 		
-			saveScratch(function( scratchData ) {
-				window.location.href = "/labs/code/" + scratchData.id;
+			saveScratchpadRevision(function(scratchpad) {
+				window.location.href = "/labs/code/" + scratchpad.slug +
+					"/" + scratchpad.id;
 			});
 		});
 	}
@@ -289,37 +294,77 @@ $(function(){
 		editor.editor.renderer.setShowGutter( false );
 		editor.editor.renderer.setShowPrintMargin( false );
 		
-		if ( /\/(\d+)/.test( window.location.href ) ) {
-			var id = RegExp.$1;
-			
-			getScratch( id, function( scratchData ) {
-				curProblem = { id: 1, answer: scratchData.code };
+		// TODO(jlfwong): Deal with ?query_strings and trailing slashes/ for
+		// these routes
+		//
+		// Right now, /labs/code/cool-fractal/123?debug=true will send
+		// "123?debug=true" as the scratchpadId - similarly, 123/ will send
+		// "123/" as the scratchpadId
+		var CodeRouter = Backbone.Router.extend({
+			routes: {
+				""                    : "scratchpadNew",
 				
-				Exercise = scratchData;
-				Exercise.problems = [ curProblem ];
+				// The slug is just for vanity - only the scratchpadId is
+				// actually used to retrieve data
+				":slug/:scratchpadId" : "scratchpadShowLatest",
+				"*defaultRoute"       : "defaultRoute"
+			},
+			scratchpadNew: function() {
+				curProblem = {id: 1};
 				
-				// If an audio track is provided, load the track data
-				// and load the audio player as well
-				if ( Exercise.audio_id ) {
-					connectAudio(function( data ) {
-						track = data;
-						audioInit();
-					});
-				}
+				Exercise = {
+					id: 0,
+					scratchpad: {},
+					revision: {},
+					problems: [curProblem]
+				};
 				
-				startScratch();
-			});
-			
-		} else {
-			curProblem = { id: 1 };
+				loadResults(Exercise, startScratch);
+			},
+			scratchpadShowLatest: function(slug, scratchpadId) {
+				scratchpadId = parseInt(scratchpadId, 10);
+				
+				getScratchpad(scratchpadId, function(scratchpad) {
+					var revision = scratchpad.latest_revision;
+					
+					curProblem = {id: 1, answer: revision.code};
+					
+					Exercise.scratchpad = scratchpad;
+					Exercise.revision = revision;
+					
+					Record.commands = Exercise.revision.recording;
+					
+					// For compatibility with existing code that uses properties
+					// directly on Exercise, like Exercise.code, Exercise.title,
+					// we merge the properties of revision and scratchpad into
+					// Exercise.
+					//
+					// TODO(jlfwong): Remove this, make all accesses explicitly
+					// to Exercise.revision or Exercise.scratchpad
+					$.extend(Exercise, revision, scratchpad);
+					
+					// If an audio track is provided, load the track data
+					// and load the audio player as well
+					if (Exercise.audio_id) {
+						connectAudio(function(data) {
+							track = data;
+							audioInit();
+						});
+					}
+					
+					Exercise.problems = [curProblem];
+					
+					startScratch();
+				});
+			},
+			defaultRoute: function(path) {
+				console.error('404 on path: ', path);
+				// TODO(jlfwong): 404?
+			}
+		});
 		
-			Exercise = {
-				id: 0,
-				problems: [ curProblem ]
-			};
-			
-			loadResults( Exercise, startScratch );
-		}
+		var codeRouter = new CodeRouter();
+		Backbone.history.start({ pushState: true, root: "/labs/code" })
 		
 		return;
 	}

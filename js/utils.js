@@ -298,32 +298,69 @@ var saveExercise = function( callback ) {
 	});		
 };
 
-var getScratch = function( id, callback ) {
-	$.getJSON( "/api/labs/scratch/" + id, function( scratchData ) {
-		Record.commands = scratchData.recording;
-		
-		// Load in the user's scratch code
-		callback( scratchData );
+var getScratchpad = function(scratchpadId, callback) {
+	// TODO(jlfwong): Error handling (404)
+	var scratchpadUrl = "/api/labs/scratchpads/" + scratchpadId;
+	
+	$.getJSON( scratchpadUrl, callback )
+};
+
+var serializeRevisionData = function() {
+	return {
+		code: Record.recorded ? Exercise.code : $("#editor").editorText(),
+		audio_id: Record.recorded ? Exercise.audio_id || 0 : 0,
+		recording: Record.recorded ? Record.commands : []
+	};
+};
+
+var saveRevision = function(scratchpadId, callback) {
+	$.ajax({
+		type: "POST",
+		url: "/api/labs/scratchpads/" + scratchpadId + "/revisions/",
+		dataType: "JSON",
+		contentType: "application/json",
+		data: JSON.stringify(serializeRevisionData()),
+		success: callback
 	});
 };
 
-var saveScratch = function( callback ) {
-	$.ajax({
-		type: "POST",
-		url: "/api/labs/scratch",
-		dataType: "JSON",
-		contentType: "application/json",
-		data: JSON.stringify({
-			parent: Exercise.id || null,
-			title: Exercise.title || "Code Scatchpad",
-			code: Record.recorded ? Exercise.code : $("#editor").editorText(),
-			audio_id: Record.recorded ? Exercise.audio_id || 0 : 0,
-			recording: Record.recorded ? Record.commands : []
-		}),
-		success: function( scratchData ) {
-			callback( scratchData );
-		}
-	});	
+var saveScratchpadRevision = function(callback) {
+	// TODO(jlfwong): Error handling
+	
+	// TODO(jlfwong): If the current user is the owner of the scratchpad, give
+	// them the option of forking or updating
+	
+	// XXX(jlfwong): There will be weird behaviour here if the user logs out
+	// and _then_ saves, because it'll attempt to update, but then it'll fail
+	// (403 Forbidden) when it hits the server.
+	var currentScratchpad = Exercise.scratchpad;
+	
+	if (!currentScratchpad.user_id || currentScratchpad.user_id != ENV.userId) {
+		// If saving a fresh scratchpad or forking an existing one, we need
+		// to create a new scratchpad
+		//
+		// We automatically fork if the current user is not the owner
+		$.ajax({
+			type: "POST",
+			url: "/api/labs/scratchpads",
+			dataType: "JSON",
+			contentType: "application/json",
+			data: JSON.stringify({
+				origin_scratchpad_id: currentScratchpad.id || null,
+				origin_revision_id: Exercise.revision.id || null,
+				title: Exercise.title || "Code Scatchpad",
+				revision: serializeRevisionData()
+			}),
+			success: callback
+		});
+	} else {
+		// Update an existing scratchpad
+		saveRevision(currentScratchpad.id, function(revisionData) {
+			callback($.extend({}, currentScratchpad, {
+				revision: revisionData
+			}));
+		});
+	}
 };
 
 var problemDone = function() {

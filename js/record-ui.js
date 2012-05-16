@@ -126,9 +126,10 @@ $(function(){
 				return;
 			}
 			
-			saveScratch(function( scratchData ) {
+			saveScratchpadRevision(function(scratchpad) {
 				dialog.dialog( "close" );
-				window.location.href = "/labs/code/" + scratchData.id;
+				window.location.href = "/labs/code/" + scratchpad.slug +
+					"/" + scratchpad.id;
 			});
 		}
 	});
