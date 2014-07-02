@@ -1,5 +1,4 @@
 var $ = require("../../third_party/javascript-khansrc/jquery/jquery.js");
-var Analytics = require("../shared-package/analytics.js");
 var BabyHint = require("./babyhint.js");
 var Esprima = require("../../third_party/javascript-khansrc/structuredjs/external/esprima.js");
 var Processing = require("../../third_party/javascript-khansrc/processing-js/processing.js");

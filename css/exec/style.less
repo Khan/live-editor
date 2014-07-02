@@ -1,0 +1,204 @@
+@import "../shared-package/variables.less";
+@import "../shared-package/mixins.less";
+@import "../scratchpads-package/variables.less";
+
+html, body {
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+#output {
+    position: relative;
+}
+
+#output canvas {
+    display: block;
+}
+
+/**
+ * Code Error Reporting
+ * --------------------
+ *
+ * Indicates to users if something is wrong in the code. Overlays on top
+ * of the canvases.
+ */
+.tipbar {
+    border-radius: 10px;
+    /* Needs to match the background image */
+    background: @graySuperLight;
+    border: 1px solid @grayLighter;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, .5);
+    color: #000;
+    display: none;
+    font-family: @baseFontFamily;
+    font-weight: normal;
+    left: 125px;
+    margin: auto;
+    min-height: 40px;
+    position: absolute;
+    top: 100px;
+    width: 260px;
+    z-index: @zindexModal + 2;
+
+    .error-buddy {
+        background: url(/images/scratchpads/error-buddy.png);
+        height: 116px;
+        left: -140px;
+        opacity: 0.75;
+        position: absolute;
+        top: -12px;
+        width: 130px;
+    }
+
+    .speech-arrow {
+        background-image: url(/images/scratchpads/speech-arrow.png);
+        background-repeat: no-repeat;
+        height: 24px;
+        left: -14px;
+        position: absolute;
+        top: 40px;
+        width: 14px;
+    }
+
+    .text-wrap {
+        line-height: 1.4em;
+        margin: 8px 8px 33px 8px;
+
+        .message {
+            line-height: 20px;
+            margin: 10px 0px;
+            text-align: left;
+
+            .quote {
+                border-radius: 5px;
+
+                background: #fff;
+                border: 1px solid @grayLighter;
+                display: inline-block;
+                font-size: 14px;
+                line-height: 22px;
+                margin: 0px 2px;
+                padding: 1px 4px;
+                padding-left: 28px;
+                text-align: left;
+                text-indent: -22px;
+
+                #font > #family > .monospace;
+            }
+        }
+
+        .oh-no {
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .show-me {
+            a {
+                color: #005987;
+                font-size: 14px;
+                font-weight: bold;
+                position: absolute;
+                right: 7px;
+                &:hover {
+                    color: #678D00;
+                    text-decoration: underline;
+                }
+            }
+        }
+    }
+
+    .tipnav {
+        position: absolute;
+        right: 10px;
+        top: 4px;
+
+        a {
+            background: rgba( 255, 255, 255, 0.2 );
+            border-radius: 5px;
+            color: #000;
+            display: inline-block;
+            font-size: 10px;
+            height: 16px;
+            line-height: 16px;
+            padding: 1px 1px 1px 3px;
+        }
+
+        a.prev {
+            padding: 1px 3px 1px 1px;
+        }
+
+        a .ui-icon {
+            background-image: url(/images/scratchpads/ui-icons_808080_256x240.png);
+            background-repeat: no-repeat;
+            display: inline-block;
+            height: 16px;
+            margin-top: -4px;
+            overflow: hidden;
+            text-indent: -99999px;
+            vertical-align: middle;
+            width: 16px;
+        }
+
+        a .ui-icon.ui-icon-circle-triangle-w {
+            background-position: -80px -192px;
+        }
+
+        a .ui-icon.ui-icon-circle-triangle-e {
+            background-position: -48px -192px;
+        }
+    }
+
+    .text a {
+        text-decoration: underline;
+    }
+
+    form input {
+        margin-bottom: 8px;
+        margin-top: 8px;
+    }
+
+    form .ui-button {
+        margin-left: 8px;
+    }
+
+    .status .ui-icon {
+        display: inline-block;
+        position: relative;
+        top: 4px;
+    }
+}
+
+#test-errors {
+    color: red;
+    position: absolute;
+    z-index: 1000000;
+}
+
+/**
+ * == COMPONENTS ========================================================
+ * These styles correspond to self-contained graphical components
+ */
+
+/**
+ * Overlays
+ * --------
+ *
+ * Transparent or translucent overlays placed on top of the editor and/or canvas
+ * in order to disable interaction with them. The closest parent with
+ * position: relative or position: absolute determines the scope of the page
+ * blocked by the overlay.
+ */
+.overlay {
+    height: 100%;
+    left: 0px;
+    margin: 0;
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    z-index: @zindexModal + 1;
+}
+
+.error-overlay {
+    background: rgba(255,255,255,0.6);
+}
