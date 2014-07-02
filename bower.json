@@ -1,0 +1,25 @@
+{
+  "name": "live-editor",
+  "version": "0.0.1",
+  "homepage": "https://github.com/Khan/live-editor",
+  "authors": [
+    "John Resig <jeresig@gmail.com>"
+  ],
+  "description": "Live code editor.",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.1",
+    "structured": "*",
+    "underscore": "~1.6.0",
+    "ace": "~1.1.4",
+    "soundmanager": "*"
+  }
+}
