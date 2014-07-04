@@ -11,6 +11,29 @@ window.ScratchpadEditor = Backbone.View.extend({
         this.content = this.$(this.dom.CONTENT);
         this.offset = this.content.offset();
 
+        // Attach the hot number picker to the editor
+        if (this.$el.hotNumber) {
+            this.$el.hotNumber(false);
+        }
+
+        // Make the editor vertically resizable
+        if (this.$el.resizable) {
+            this.$el.resizable({
+                // Only allow for vertical resizing
+                handles: "s",
+
+                // While the resize is occurring, resize the Ace editor
+                resize: function() {
+                    self.editor.resize();
+                }
+            });
+        }
+
+        // Kill default selection on the hot number
+        this.$el.on("mousedown", ".hotnumber", function(e) {
+            e.preventDefault();
+        });
+
         // Stop overriding Cmd/Ctrl-L. It's used to by browser to go to the
         // location bar, but ace wants to use it for go-to-line.
         this.editor.commands.removeCommand("gotoline");

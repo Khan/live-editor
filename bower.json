@@ -20,6 +20,7 @@
     "structured": "*",
     "underscore": "~1.6.0",
     "ace": "~1.1.4",
-    "soundmanager": "*"
+    "soundmanager": "*",
+    "backbone": "~1.1.2"
   }
 }
