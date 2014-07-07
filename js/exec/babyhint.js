@@ -1,7 +1,3 @@
-var Jed = require("../../third_party/javascript-khansrc/jed/jed.js");
-
-require("../shared-package/i18n.js");
-
 /*
  * BabyHint does a line-by-line check for common beginner programming mistakes,
  * such as misspelling, missing spaces, missing commas, etc.  It is used in
@@ -693,4 +689,3 @@ var BabyHint = {
 };
 // TODO(jlfwong): Stop globalizing BabyHint
 window.BabyHint = BabyHint;
-module.exports = BabyHint;

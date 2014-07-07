@@ -1,17 +1,3 @@
-var $ = require("../../third_party/javascript-khansrc/jquery/jquery.js");
-var BabyHint = require("./babyhint.js");
-var Esprima = require("../../third_party/javascript-khansrc/structuredjs/external/esprima.js");
-var Processing = require("../../third_party/javascript-khansrc/processing-js/processing.js");
-var ScratchpadConfig = require("../scratchpads-package/scratchpad-config.js");
-var _ = require("../../third_party/javascript-khansrc/underscore/underscore.js");
-// In case of no web worker, we need to load StructuredJS and OutputTester here
-var Structured = require("../../third_party/javascript-khansrc/structuredjs/structured.js");
-var OutputTester = require("./output-tester.js");
-// In case of no web worker, we need to load JSHint here (ES5 is already loaded)
-var JSHINT = require("../../third_party/javascript-khansrc/jshint/jshint.js");
-
-require("./jquery.tipbar.js");
-
 (function() {
 
 if (window !== window.top) {
@@ -685,7 +671,6 @@ var Output = {
 
 // TODO(jlfwong): Stop globalizing Output
 window.Output = Output;
-module.exports = Output;
 
 
 window.CanvasOutput = {

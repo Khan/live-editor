@@ -1,0 +1,23 @@
+.scratchpad-wrap {
+    width: 100%;
+}
+
+.scratchpad-editor-wrap {
+    width: 100%;
+}
+
+.scratchpad-editor {
+    width: 100%;
+    height: 400px;
+}
+
+#output {
+    float: right;
+    width: 400px;
+    height: 400px;
+}
+
+#output-frame {
+    width: 100%;
+    height: 100%;
+}

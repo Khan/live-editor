@@ -1,0 +1,52 @@
+<html>
+<head>
+    <title></title>
+    <link rel="stylesheet" href="css/exec/style.css"/>
+</head>
+<body>
+    <div id="test-errors" style="display: none;"></div>
+
+    <!-- Output Canvas and Error Overlay -->
+    <div id="output">
+        <canvas id="output-canvas" width="400" height="400"></canvas>
+        <div class="overlay error-overlay hidden"></div>
+    </div>
+
+    <script type="text/html" id="tipbar-tmpl">
+    <div class="tipbar">
+        <div class="speech-arrow"></div>
+        <div class="error-buddy"></div>
+        <div class="tipnav">
+            <a href="" class="prev"><span class="ui-icon ui-icon-circle-triangle-w"></span></a>
+            <span class="current-pos"></span>
+            <a href="" class="next"><span class="ui-icon ui-icon-circle-triangle-e"></span></a>
+        </div>
+        <div class="text-wrap">
+            <div class="oh-no">{{ _("Oh noes!") }}</div>
+            <div class="message"></div>
+            <div class="show-me"><a href>{{ _("Show me where") }}</a></div>
+        </div>
+    </div>
+    </script>
+
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/underscore/underscore.js"></script>
+    <script src="external/processing-js/processing.js"></script>
+    <script src="external/jshint/jshint.js"></script>
+
+    <script>$._ = function(msg) { return msg; };</script>
+
+    <!-- Processing.js/JavaScript-related -->
+    <script src="bower_components/structured/external/esprima.js"></script>
+    <script src="bower_components/structured/structured.js"></script>
+    <!-- TODO: jshint -->
+
+    <script src="js/ui/scratchpad-config.js"></script>
+    <script src="js/exec/babyhint.js"></script>
+    <script src="js/exec/output.js"></script>
+    <script src="js/exec/images.js"></script>
+    <script>
+    Output.init();
+    </script>
+</body>
+</html>

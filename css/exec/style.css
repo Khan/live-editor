@@ -1,7 +1,3 @@
-@import "../shared-package/variables.less";
-@import "../shared-package/mixins.less";
-@import "../scratchpads-package/variables.less";
-
 html, body {
     margin: 0;
     min-width: 0;
@@ -26,12 +22,12 @@ html, body {
 .tipbar {
     border-radius: 10px;
     /* Needs to match the background image */
-    background: @graySuperLight;
-    border: 1px solid @grayLighter;
+    background: #F9F9F9;
+    border: 1px solid #EEE;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, .5);
     color: #000;
     display: none;
-    font-family: @baseFontFamily;
+    font-family: Helvetica;
     font-weight: normal;
     left: 125px;
     margin: auto;
@@ -39,10 +35,10 @@ html, body {
     position: absolute;
     top: 100px;
     width: 260px;
-    z-index: @zindexModal + 2;
+    z-index: 1000;
 
     .error-buddy {
-        background: url(/images/scratchpads/error-buddy.png);
+        background: url(../../images/scratchpads/error-buddy.png);
         height: 116px;
         left: -140px;
         opacity: 0.75;
@@ -52,7 +48,7 @@ html, body {
     }
 
     .speech-arrow {
-        background-image: url(/images/scratchpads/speech-arrow.png);
+        background-image: url(../../images/scratchpads/speech-arrow.png);
         background-repeat: no-repeat;
         height: 24px;
         left: -14px;
@@ -74,7 +70,7 @@ html, body {
                 border-radius: 5px;
 
                 background: #fff;
-                border: 1px solid @grayLighter;
+                border: 1px solid #EEE;
                 display: inline-block;
                 font-size: 14px;
                 line-height: 22px;
@@ -129,7 +125,7 @@ html, body {
         }
 
         a .ui-icon {
-            background-image: url(/images/scratchpads/ui-icons_808080_256x240.png);
+            background-image: url(../../images/scratchpads/ui-icons_808080_256x240.png);
             background-repeat: no-repeat;
             display: inline-block;
             height: 16px;
@@ -196,7 +192,7 @@ html, body {
     position: absolute;
     top: 0px;
     width: 100%;
-    z-index: @zindexModal + 1;
+    z-index: 999;
 }
 
 .error-overlay {

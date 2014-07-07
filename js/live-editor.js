@@ -6,21 +6,18 @@
 
 window.LiveEditor = Backbone.View.extend({
     dom: {
-        DRAW_CANVAS
-        DRAW_COLOR_BUTTONS
-        EDITOR
-        CANVS_LOADING
+        DRAW_CANVAS: ".scratchpad-draw-canvas",
+        DRAW_COLOR_BUTTONS: "#draw-widgets a.draw-color-button",
+        EDITOR: ".scratchpad-editor",
+        CANVAS_LOADING: ".scratchpad-canvas-loading"
     },
 
     initialize: function(options) {
         this.config = ScratchpadConfig;
 
-        this.record = {};
-
         // Set up the Canvas drawing area
         this.drawCanvas = new ScratchpadDrawCanvas({
-            el: this.dom.DRAW_CANVAS,
-            record: this.record
+            el: this.dom.DRAW_CANVAS
         });
 
         this.drawCanvas.on({
@@ -53,9 +50,8 @@ window.LiveEditor = Backbone.View.extend({
         // Set up the editor
         this.editor = new ScratchpadEditor({
             el: this.dom.EDITOR,
-            autoFocus: autoFocus,
-            config: this.config,
-            record: this.record
+            autoFocus: options.autoFocus,
+            config: this.config
         });
 
         var codeOptions = { code: "" };
@@ -80,9 +76,9 @@ window.LiveEditor = Backbone.View.extend({
         // Focus on the editor
         this.editor.focus();
 
-        if (cursor) {
+        if (options.cursor) {
             // Restore the cursor position
-            this.editor.setCursor(cursor);
+            this.editor.setCursor(options.cursor);
 
         } else {
             // Set an initial starting selection point
@@ -97,9 +93,14 @@ window.LiveEditor = Backbone.View.extend({
 
         // TODO(jeresig): hotNumber initializes in the wrong position
         // this should be changed to wait until rendering of Ace is complete
+        /*
         setTimeout(function() {
-            this.editor.$el.hotNumber(true);
+            this.editor.$el.hotNumber({
+                reload: true,
+                editor: this.editor.editor
+            });
         }.bind(this), 100);
+        */
 
         // Change the width and height of the output frame if it's been
         // changed by the user, via the query string, or in the settings
@@ -229,7 +230,7 @@ window.LiveEditor = Backbone.View.extend({
     /*
      * Restart the code in the output frame.
      */
-    restartCode = function() {
+    restartCode: function() {
         this.postFrame({ restart: true });
     },
 
@@ -248,7 +249,7 @@ window.LiveEditor = Backbone.View.extend({
         this.postFrame(options);
     },
 
-    updateCanvasSize = function(width, height) {
+    updateCanvasSize: function(width, height) {
         var canvasWidth = 400;
         var canvasHeight = 400;
 

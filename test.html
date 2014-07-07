@@ -1,0 +1,163 @@
+<html>
+<head>
+    <link rel="stylesheet" href="css/ui/style.css"/>
+
+    <!-- Core dependencies -->
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/jquery-ui/jquery-ui.js"></script>
+    <script src="bower_components/underscore/underscore.js"></script>
+    <script src="bower_components/backbone/backbone.js"></script>
+
+    <!-- Code editor -->
+    <script src="bower_components/ace/build/src-noconflict/ace.js"></script>
+    <script src="bower_components/ace/build/src-noconflict/mode-javascript.js"></script>
+    <script src="bower_components/ace/build/src-noconflict/ext-searchbox.js"></script>
+
+    <script src="external/colorpicker/colorpicker.js"></script>
+
+    <!-- Audio playback and recording -->
+    <script src="bower_components/soundmanager/script/soundmanager2.js"></script>
+    <script src="external/multirecorder/multirecorder.js"></script>
+    <script src="external/transloadit_xhr/transloadit_xhr.js"></script>
+
+    <!-- Internal jQuery plugins -->
+    <script src="js/ui/jquery.button.js"></script>
+    <script src="js/ui/jquery.hotnumber.js"></script>
+
+    <!-- Core logic -->
+    <script src="js/ui/canvas.js"></script>
+    <script src="js/ui/editor.js"></script>
+    <script src="js/ui/record.js"></script>
+    <script src="js/ui/scratchpad-config.js"></script>
+    <script src="js/live-editor.js"></script>
+
+    <script>
+    $(function() {
+        var liveEditor = new LiveEditor({
+            el: $(".scratchpad-wrap"),
+            width: 400,
+            height: 400,
+            autoFocus: true
+        });
+    });
+    </script>
+</head>
+<body>
+    <div class="scratchpad-wrap">
+        <!-- Canvases (Drawing + Output) -->
+        <div class="scratchpad-canvas-wrap">
+            <div id="output">
+                <!-- Extra data-src attribute to work around
+                     cross-origin access policies. -->
+                <iframe id="output-frame"
+                    src="exec.html"
+                    data-src="exec.html"></iframe>
+                <canvas class="scratchpad-draw-canvas" style="display:none;"
+                    width="400" height="400"></canvas>
+
+                <div class="overlay disable-overlay" style="display:none;">
+                </div>
+
+                <div class="scratchpad-canvas-loading">
+                    <img src="images/throbber-full.gif">
+                    <span class="hide-text">{{#_}}Loading...{{/_}}</span>
+                </div>
+            </div>
+
+            <div class="scratchpad-toolbar">
+                <button id="restart-code"
+                    class="simple-button pull-right">
+                    <span class="icon-refresh"></span>
+                    {{#_}}Restart{{/_}}</button>
+
+                <!-- Widgets for selecting colors to doodle on the canvas during
+                    recordings -->
+                <div id="draw-widgets" style="display:none;">
+                    <a href="" id="draw-clear-button" class="ui-button">
+                        <span class="ui-icon-cancel"></span>
+                    </a>
+                    {{#each colors}}
+                    <a href="" class="draw-color-button" id="{{this}}">
+                        <span></span>
+                    </a>
+                    {{/each}}
+                </div>
+
+                <!-- Save Button -->
+                <button id="save-button"
+                    class="simple-button green pull-left" style="display:none;">{{#_}}Save{{/_}}</button>
+
+                <!-- Record button -->
+                <button id="record" class="simple-button pull-left">{{#_}}Record{{/_}}</button>
+            </div>
+        </div>
+
+        <!-- Editor -->
+        <div class="scratchpad-editor-wrap overlay-container">
+            <div class="scratchpad-editor-tabs">
+              <div id="scratchpad-code-editor-tab" class="scratchpad-editor-tab">
+                <div class="scratchpad-editor scratchpad-ace-editor"></div>
+                <div class="overlay disable-overlay" style="display:none;">
+                </div>
+
+                <div class="scratchpad-editor-bigplay-loading">
+                    <img src="images/throbber-full.gif">
+                    <span class="hide-text">{{#_}}Loading...{{/_}}</span>
+                </div>
+
+                <!-- This cannot be removed, if we want Flash to keep working! -->
+                <div id="sm2-container">
+                    {{#_}}Enable Flash to load audio:{{/_}}
+                    <br>
+                </div>
+
+                <button class="scratchpad-editor-bigplay-button" style="display:none;">
+                    <span class="icon-play"></span>
+                    <span class="hide-text">{{#_}}Play{{/_}}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="scratchpad-toolbar">
+                <!-- Row for playback controls -->
+                <div class="scratchpad-playbar">
+                    <div class="scratchpad-playbar-area" style="display:none;">
+                        <button
+                            class="simple-button primary scratchpad-playbar-play"
+                            type="button">
+                            <span class="icon-play"></span>
+                        </button>
+
+                        <div class="scratchpad-playbar-progress"></div>
+
+                        <span class="scratchpad-playbar-timeleft"></span>
+
+                        <span class="dropdown scratchpad-playbar-options">
+                            <button class="dropdown-toggle" disabled>
+                                <i class="icon-cog icon-large"></i>
+                                <i class="icon-caret-down"></i>
+                            </button>
+                            <ul class="dropdown-menu no-submenus">
+                                <li>
+                                    <label>
+                                        <input type="checkbox">
+                                        <span class="link-text">{{#_}}Interactive transcript{{/_}}</span>
+                                    </label>
+                                </li>
+                                <li style="display:none;" data-no-transcript>
+                                    <a href="http://cs-blog.khanacademy.org/2013/11/call-for-volunteers-caption-our.html">{{#_}}No transcript available.
+                                        <br>Want to help?{{/_}}</a>
+                                </li>
+                            </ul>
+                        </span>
+
+                    </div>
+                    <div class="loading-msg">
+                        {{#_}}Loading audio...{{/_}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

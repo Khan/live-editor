@@ -193,4 +193,3 @@ var ScratchpadConfig = {
     ]
 };
 window.ScratchpadConfig = ScratchpadConfig;
-module.exports = ScratchpadConfig;

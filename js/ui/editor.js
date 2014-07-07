@@ -13,7 +13,11 @@ window.ScratchpadEditor = Backbone.View.extend({
 
         // Attach the hot number picker to the editor
         if (this.$el.hotNumber) {
-            this.$el.hotNumber(false);
+            this.$el.hotNumber({
+                reload: false,
+                editor: this.editor,
+                record: this.record
+            });
         }
 
         // Make the editor vertically resizable

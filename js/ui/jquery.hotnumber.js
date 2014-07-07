@@ -3,11 +3,11 @@
         scrubber, colorPicker, curPicker, imagePicker,
         handle, ignore = false, defaultImage = "cute/Blank";
 
-    $.fn.hotNumber = function(reload) {
-        var editor = ScratchpadUI.editor.editor;
+    $.fn.hotNumber = function(options) {
+        var editor = options.editor;
         var selection = editor.session.selection;
 
-        if (reload) {
+        if (options.reload) {
             checkNumber.call(editor);
 
         } else {
@@ -24,11 +24,13 @@
             attachScrubber(editor);
         }
 
-        Record.handlers.hot = function(e) {
-            checkNumber.call(editor);
-            update(editor, e.hot);
-            updatePos(editor);
-        };
+        if (options.record) {
+            options.record.handlers.hot = function(e) {
+                checkNumber.call(editor);
+                update(editor, e.hot);
+                updatePos(editor);
+            };
+        }
 
         return this;
     };
@@ -379,7 +381,7 @@
         // Replace the old color with the new one
         update(editor, rgb.r + ", " + rgb.g + ", " + rgb.b);
 
-        ScratchpadUI.editor.trigger("colorPicker");
+        //ScratchpadUI.editor.trigger("colorPicker");
     }
 
     function updateNumberScrubber(editor, newNum) {
@@ -420,7 +422,7 @@
         // Replace the old number with the new one
         update(editor, newNumString);
 
-        ScratchpadUI.editor.trigger("scrubber");
+        //ScratchpadUI.editor.trigger("scrubber");
     }
 
     function update(editor, newValue) {
