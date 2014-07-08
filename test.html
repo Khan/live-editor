@@ -1,5 +1,10 @@
 <html>
 <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="css/ui/flashblock.css"/>
+    <link rel="stylesheet" href="css/ui/colorpicker.css"/>
+    <link rel="stylesheet" href="css/ui/hotnumber.css"/>
+
     <link rel="stylesheet" href="css/ui/style.css"/>
 
     <!-- Core dependencies -->
@@ -121,12 +126,8 @@
                     {{/each}}
                 </div>
 
-                <!-- Save Button -->
-                <button id="save-button"
-                    class="simple-button green pull-left" style="display:none;">{{#_}}Save{{/_}}</button>
-
                 <!-- Record button -->
-                <button id="record" class="simple-button pull-left">{{#_}}Record{{/_}}</button>
+                <button id="record" class="simple-button pull-left" style="display:none;">{{#_}}Record{{/_}}</button>
             </div>
         </div>
 
@@ -138,7 +139,7 @@
                 <div class="overlay disable-overlay" style="display:none;">
                 </div>
 
-                <div class="scratchpad-editor-bigplay-loading">
+                <div class="scratchpad-editor-bigplay-loading" style="display:none;">
                     <img src="images/throbber-full.gif">
                     <span class="hide-text">{{#_}}Loading...{{/_}}</span>
                 </div>
@@ -158,8 +159,8 @@
 
             <div class="scratchpad-toolbar">
                 <!-- Row for playback controls -->
-                <div class="scratchpad-playbar">
-                    <div class="scratchpad-playbar-area" style="display:none;">
+                <div class="scratchpad-playbar" style="display:none;">
+                    <div class="scratchpad-playbar-area">
                         <button
                             class="simple-button primary scratchpad-playbar-play"
                             type="button">
@@ -169,26 +170,6 @@
                         <div class="scratchpad-playbar-progress"></div>
 
                         <span class="scratchpad-playbar-timeleft"></span>
-
-                        <span class="dropdown scratchpad-playbar-options">
-                            <button class="dropdown-toggle" disabled>
-                                <i class="icon-cog icon-large"></i>
-                                <i class="icon-caret-down"></i>
-                            </button>
-                            <ul class="dropdown-menu no-submenus">
-                                <li>
-                                    <label>
-                                        <input type="checkbox">
-                                        <span class="link-text">{{#_}}Interactive transcript{{/_}}</span>
-                                    </label>
-                                </li>
-                                <li style="display:none;" data-no-transcript>
-                                    <a href="http://cs-blog.khanacademy.org/2013/11/call-for-volunteers-caption-our.html">{{#_}}No transcript available.
-                                        <br>Want to help?{{/_}}</a>
-                                </li>
-                            </ul>
-                        </span>
-
                     </div>
                     <div class="loading-msg">
                         {{#_}}Loading audio...{{/_}}
