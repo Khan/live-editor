@@ -1,16 +1,24 @@
 // Maintain all of the configuration options and settings for the site.
 // Have them be versioned and attached to the ScratchpadRevision so that
 // later config changes don't break old code.
-var ScratchpadConfig = {
+var ScratchpadConfig = Backbone.Model.extend({
     version: null,
+
+    initialize: function(options) {
+        this.version = options.version;
+
+        if (this.version != null) {
+            this.version = this.latestVersion();
+        }
+    },
 
     // Run the configuration functions for a particular namespace
     // of functionality. Can optionally take any number of
     // additional arguments.
     runCurVersion: function(type) {
         var args = Array.prototype.slice.call(arguments, 0);
-        args.unshift(ScratchpadConfig.curVersion());
-        return ScratchpadConfig.runVersion.apply(ScratchpadConfig, args);
+        args.unshift(this.curVersion());
+        return this.runVersion.apply(this, args);
     },
 
     // Run the configuration functions for a particular namespace
@@ -20,7 +28,7 @@ var ScratchpadConfig = {
         var args = Array.prototype.slice.call(arguments, 2);
 
         for (var i = 0; i <= version; i++) {
-            var configFn = ScratchpadConfig.versions[i][type];
+            var configFn = this.versions[i][type];
 
             if (configFn) {
                 configFn.apply(window, args);
@@ -30,29 +38,27 @@ var ScratchpadConfig = {
 
     switchVersion: function(version) {
         // Make sure we're switching to a new version
-        if (version !== ScratchpadConfig.curVersion()) {
+        if (version !== this.curVersion()) {
             // Set the new version
-            ScratchpadConfig.version = version;
+            this.version = version;
 
             // Run the inits for all bound handlers
-            $(ScratchpadConfig).trigger("versionSwitched", version);
+            this.trigger("versionSwitched", version);
         }
     },
 
     // Get the current config version
     curVersion: function() {
-        if (ScratchpadConfig.version !== null) {
-            return ScratchpadConfig.version;
+        if (this.version !== null) {
+            return this.version;
         }
 
-        return typeof ScratchpadUI !== "undefined" ?
-            ScratchpadUI.scratchpad.getVersion() :
-            ScratchpadConfig.latestVersion();
+        return this.latestVersion();
     },
 
     // Get the latest config version
     latestVersion: function() {
-        return ScratchpadConfig.versions.length - 1;
+        return this.versions.length - 1;
     },
 
     // The configuration options
@@ -191,5 +197,4 @@ var ScratchpadConfig = {
             }
         }
     ]
-};
-window.ScratchpadConfig = ScratchpadConfig;
+});

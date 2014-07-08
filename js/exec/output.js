@@ -13,89 +13,6 @@ if (window !== window.top) {
 var frameSource;
 var frameOrigin;
 
-// Handle messages coming in from the parent frame
-$(window).bind("message", function(e) {
-    var event = e.originalEvent;
-    var data;
-
-    frameSource = event.source;
-    frameOrigin = event.origin;
-
-    // let the parent know we're up and running
-    notifyActive();
-
-    try {
-        data = JSON.parse(event.data);
-
-    } catch (err) {
-        return;
-    }
-    
-    // Validation code to run
-    if (data.validate != null) {
-        Output.initTests(data.validate);
-    }
-
-    // Settings to initialize
-    if (data.settings != null) {
-        Output.settings = data.settings;
-    }
-
-    // Code to be executed
-    if (data.code != null) {
-        ScratchpadConfig.switchVersion(data.version);
-        Output.runCode(data.code);
-    }
-
-    if (data.onlyRunTests != null) {
-        Output.onlyRunTests = !!(data.onlyRunTests);
-    } else {
-        Output.onlyRunTests = false;
-    }
-
-    // Restart the output
-    if (data.restart) {
-        Output.restart();
-    }
-
-    // Take a screenshot of the output
-    if (data.screenshot) {
-        // We want to resize the image to a 200x200 thumbnail,
-        // which we can do by creating a temporary canvas
-        var tmpCanvas = document.createElement("canvas");
-
-        var screenshotSize = data.screenshotSize || 200;
-        tmpCanvas.width = screenshotSize;
-        tmpCanvas.height = screenshotSize;
-        tmpCanvas.getContext("2d").drawImage(
-            $("#output-canvas")[0], 0, 0, screenshotSize, screenshotSize);
-
-        // Send back the screenshot data
-        frameSource.postMessage(tmpCanvas.toDataURL("image/png"),
-            frameOrigin);
-    }
-
-    // Keep track of recording state
-    if (data.recording != null) {
-        Output.recording = data.recording;
-    }
-
-    // Play back recording
-    if (data.action) {
-        if (CanvasOutput.handlers[data.name]) {
-            CanvasOutput.handlers[data.name](data.action);
-        }
-    }
-
-    if (data.fastNFurious) {
-        Output.fastNFurious = data.fastNFurious;
-    }
-
-    if (data.documentation) {
-        BabyHint.initDocumentation(data.documentation);
-    }
-});
-
 // Send a message back to the parent frame
 window.postParent = function(data) {
     // If there is no frameSource (e.g. we're not embedded in another page)
@@ -131,12 +48,103 @@ var Output = {
         this.context = {};
         this.loaded = false;
 
+        this.config = new ScratchpadConfig({});
+
         // Load JSHint config options
-        ScratchpadConfig.runCurVersion("jshint");
+        this.config.runCurVersion("jshint");
+
+        this.config.on("versionSwitched", function(e, version) {
+            this.config.runVersion(version, "processing", CanvasOutput.canvas);
+        }.bind(this));
 
         Output.setOutput(CanvasOutput);
 
         BabyHint.init();
+    },
+
+    bind: function() {
+        // Handle messages coming in from the parent frame
+        $(window).bind("message", function(e) {
+            var event = e.originalEvent;
+            var data;
+
+            frameSource = event.source;
+            frameOrigin = event.origin;
+
+            // let the parent know we're up and running
+            notifyActive();
+
+            try {
+                data = JSON.parse(event.data);
+
+            } catch (err) {
+                return;
+            }
+
+            // Validation code to run
+            if (data.validate != null) {
+                Output.initTests(data.validate);
+            }
+
+            // Settings to initialize
+            if (data.settings != null) {
+                Output.settings = data.settings;
+            }
+
+            // Code to be executed
+            if (data.code != null) {
+                this.config.switchVersion(data.version);
+                Output.runCode(data.code);
+            }
+
+            if (data.onlyRunTests != null) {
+                Output.onlyRunTests = !!(data.onlyRunTests);
+            } else {
+                Output.onlyRunTests = false;
+            }
+
+            // Restart the output
+            if (data.restart) {
+                Output.restart();
+            }
+
+            // Take a screenshot of the output
+            if (data.screenshot) {
+                // We want to resize the image to a 200x200 thumbnail,
+                // which we can do by creating a temporary canvas
+                var tmpCanvas = document.createElement("canvas");
+
+                var screenshotSize = data.screenshotSize || 200;
+                tmpCanvas.width = screenshotSize;
+                tmpCanvas.height = screenshotSize;
+                tmpCanvas.getContext("2d").drawImage(
+                    $("#output-canvas")[0], 0, 0, screenshotSize, screenshotSize);
+
+                // Send back the screenshot data
+                frameSource.postMessage(tmpCanvas.toDataURL("image/png"),
+                    frameOrigin);
+            }
+
+            // Keep track of recording state
+            if (data.recording != null) {
+                Output.recording = data.recording;
+            }
+
+            // Play back recording
+            if (data.action) {
+                if (CanvasOutput.handlers[data.name]) {
+                    CanvasOutput.handlers[data.name](data.action);
+                }
+            }
+
+            if (data.fastNFurious) {
+                Output.fastNFurious = data.fastNFurious;
+            }
+
+            if (data.documentation) {
+                BabyHint.initDocumentation(data.documentation);
+            }
+        }.bind(this));
     },
 
     fastNFurious: false,
@@ -169,7 +177,9 @@ var Output = {
             Output.output.kill();
         }
 
-        Output.output = output.init();
+        Output.output = output.init({
+            config: this.config
+        });
     },
 
     registerOutput: function(output) {
@@ -571,7 +581,7 @@ var Output = {
         // Use toString on functions
         if (typeof obj === "function") {
             return obj.toString();
-        
+
         // If we're dealing with an instantiated object just
         // use its generated ID
         } else if (obj && obj.__id) {
@@ -580,7 +590,7 @@ var Output = {
         // Check if we're dealing with an array
         } else if (obj && Object.prototype.toString.call(obj) === "[object Array]") {
             return Output.stringifyArray(obj);
-        
+
         // JSON.stringify returns undefined, not as a string, so we specially handle that
         } else if (typeof obj === "undefined") {
                 return "undefined";
@@ -711,7 +721,9 @@ window.CanvasOutput = {
         textSize: [12]
     },
 
-    init: function() {
+    init: function(options) {
+        this.config = options.config;
+
         this.$elem = $("#output-canvas");
 
         // If no canvas element is found we make a dummy one and render to it
@@ -888,7 +900,7 @@ window.CanvasOutput = {
 
         $.extend(CanvasOutput.canvas, CanvasOutput.processing);
 
-        ScratchpadConfig.runCurVersion("processing", CanvasOutput.canvas);
+        this.config.runCurVersion("processing", CanvasOutput.canvas);
 
         CanvasOutput.clear();
 
@@ -1600,10 +1612,6 @@ window.CanvasOutput = {
 
 Output.registerOutput(CanvasOutput);
 
-$(ScratchpadConfig).bind("versionSwitched", function(e, version) {
-    ScratchpadConfig.runVersion(version, "processing", CanvasOutput.canvas);
-});
-
 // This adds html tags around quoted lines so they can be formatted
 Output.prettify = function(str) {
     str = str.split("\"");
@@ -1687,16 +1695,16 @@ PooledWorker.prototype.getWorkerFromPool = function() {
 /* Returns true if the passed in worker is the most recently created */
 PooledWorker.prototype.isCurrentWorker = function(worker) {
     return this.curID === worker.id;
-};  
+};
 
 PooledWorker.prototype.addWorkerToPool = function(worker) {
     // Return the worker back to the pool
     this.pool.push(worker);
-};  
+};
 
 PooledWorker.prototype.exec = function() {
     this.onExec.apply(this, arguments);
-}; 
+};
 
 /*
  * The worker that matches with StructuredJS.
@@ -1716,7 +1724,7 @@ Output.testWorker = new PooledWorker(
         };
 
         // If there's no Worker or support *or* there
-        //  are syntax errors, we do the testing in 
+        //  are syntax errors, we do the testing in
         //  the browser instead.
         // We do it in-browser in the latter case as
         //  the code is often in a syntax-error state,
@@ -1914,7 +1922,7 @@ if (window !== window.top && Object.freeze &&
                     });
                 }
             } catch(e) {
-                // Couldn't access property for permissions reasons, 
+                // Couldn't access property for permissions reasons,
                 //  like window.frame
                 // Only happens on prod where it's cross-origin
             }

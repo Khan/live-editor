@@ -13,7 +13,9 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     initialize: function(options) {
-        this.config = ScratchpadConfig;
+        this.config = new ScratchpadConfig({
+            version: options.version
+        });
 
         // Set up the Canvas drawing area
         this.drawCanvas = new ScratchpadDrawCanvas({
@@ -105,6 +107,8 @@ window.LiveEditor = Backbone.View.extend({
         // Change the width and height of the output frame if it's been
         // changed by the user, via the query string, or in the settings
         this.updateCanvasSize(options.width, options.height);
+
+        this.bind();
     },
 
     bind: function() {
@@ -118,12 +122,12 @@ window.LiveEditor = Backbone.View.extend({
         this.$el.delegate("#restart-code", "click",
             this.restartCode.bind(this));
 
-        $(window).bind("message", this.listenMessages.bind(this));
+        $(window).on("message", this.listenMessages.bind(this));
 
         var toExec = false;
 
         // When the frame loads, execute the code
-        $("#output-frame").bind("load", function() {
+        $("#output-frame").on("load", function() {
             toExec = true;
             // TODO(leif): properly handle case where the user's code doesn't
             // initially compile. There is currently a race condition in which
@@ -131,22 +135,22 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // Whenever the user changes code, execute the code
-        editor.on("change", function() {
+        this.editor.editor.on("change", function() {
             toExec = true;
         });
 
         // Attempt to run the code every 100ms or so
         setInterval(function() {
             if (toExec !== null) {
-                runCode(toExec === true ?
-                    ScratchpadUI.editor.text() :
+                this.runCode(toExec === true ?
+                    this.editor.text() :
                     toExec);
 
                 toExec = null;
             }
-        }, 100);
+        }.bind(this), 100);
 
-        this.config.bind("versionSwitched", function(e, version) {
+        $(this.config).on("versionSwitched", function(e, version) {
             // Re-run the code after a version switch
             toExec = true;
 
@@ -170,7 +174,7 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
-        $(ScratchpadUI).trigger("update", data);
+        this.trigger("update", data);
 
         // Hide loading overlay
         if (data.loaded) {
