@@ -1,39 +1,10 @@
 (function() {
 
-if (window !== window.top) {
-    window.alert = $.noop;
-    window.open = $.noop;
-    window.showModalDialog = $.noop;
-    window.confirm = $.noop;
-    window.prompt = $.noop;
-    window.eval = $.noop;
-}
-
 // Keep track of the frame source and origin for later
 var frameSource;
 var frameOrigin;
 
-// Send a message back to the parent frame
-window.postParent = function(data) {
-    // If there is no frameSource (e.g. we're not embedded in another page)
-    // Then we don't need to care about sending the messages anywhere!
-    if (frameSource) {
-        frameSource.postMessage(JSON.stringify(data), frameOrigin);
-    }
-};
-
-var notifyActive = _.once(function() {
-    postParent({ "active": true });
-});
-
 var Output = {
-    icons: {
-        pass: "check",
-        fail: "none",
-        error: "alert",
-        info: "info"
-    },
-
     recording: false,
 
     init: function(id) {
@@ -57,97 +28,121 @@ var Output = {
             this.config.runVersion(version, "processing", CanvasOutput.canvas);
         }.bind(this));
 
+        Output.bind();
+
         Output.setOutput(CanvasOutput);
 
         BabyHint.init();
     },
 
-    bind: function() {
+    bind: function() {      
+        if (window !== window.top) {
+            window.alert = $.noop;
+            window.open = $.noop;
+            window.showModalDialog = $.noop;
+            window.confirm = $.noop;
+            window.prompt = $.noop;
+            window.eval = $.noop;
+        }
+
         // Handle messages coming in from the parent frame
-        $(window).bind("message", function(e) {
-            var event = e.originalEvent;
-            var data;
-
-            frameSource = event.source;
-            frameOrigin = event.origin;
-
-            // let the parent know we're up and running
-            notifyActive();
-
-            try {
-                data = JSON.parse(event.data);
-
-            } catch (err) {
-                return;
-            }
-
-            // Validation code to run
-            if (data.validate != null) {
-                Output.initTests(data.validate);
-            }
-
-            // Settings to initialize
-            if (data.settings != null) {
-                Output.settings = data.settings;
-            }
-
-            // Code to be executed
-            if (data.code != null) {
-                this.config.switchVersion(data.version);
-                Output.runCode(data.code);
-            }
-
-            if (data.onlyRunTests != null) {
-                Output.onlyRunTests = !!(data.onlyRunTests);
-            } else {
-                Output.onlyRunTests = false;
-            }
-
-            // Restart the output
-            if (data.restart) {
-                Output.restart();
-            }
-
-            // Take a screenshot of the output
-            if (data.screenshot) {
-                // We want to resize the image to a 200x200 thumbnail,
-                // which we can do by creating a temporary canvas
-                var tmpCanvas = document.createElement("canvas");
-
-                var screenshotSize = data.screenshotSize || 200;
-                tmpCanvas.width = screenshotSize;
-                tmpCanvas.height = screenshotSize;
-                tmpCanvas.getContext("2d").drawImage(
-                    $("#output-canvas")[0], 0, 0, screenshotSize, screenshotSize);
-
-                // Send back the screenshot data
-                frameSource.postMessage(tmpCanvas.toDataURL("image/png"),
-                    frameOrigin);
-            }
-
-            // Keep track of recording state
-            if (data.recording != null) {
-                Output.recording = data.recording;
-            }
-
-            // Play back recording
-            if (data.action) {
-                if (CanvasOutput.handlers[data.name]) {
-                    CanvasOutput.handlers[data.name](data.action);
-                }
-            }
-
-            if (data.fastNFurious) {
-                Output.fastNFurious = data.fastNFurious;
-            }
-
-            if (data.documentation) {
-                BabyHint.initDocumentation(data.documentation);
-            }
-        }.bind(this));
+        window.addEventListener("message",
+            this.handleMessage.bind(this), false);
     },
 
-    fastNFurious: false,
+    handleMessage: function(event) {
+        var data;
+
+        frameSource = event.source;
+        frameOrigin = event.origin;
+
+        // let the parent know we're up and running
+        this.notifyActive();
+
+        try {
+            data = JSON.parse(event.data);
+
+        } catch (err) {
+            return;
+        }
+
+        Output.execDir = data.execDir;
+        Output.externalsDir = data.externalsDir;
+        Output.imagesDir = data.imagesDir;
+
+        // Validation code to run
+        if (data.validate != null) {
+            Output.initTests(data.validate);
+        }
+
+        // Settings to initialize
+        if (data.settings != null) {
+            Output.settings = data.settings;
+        }
+
+        // Code to be executed
+        if (data.code != null) {
+            this.config.switchVersion(data.version);
+            Output.runCode(data.code);
+        }
+
+        if (data.onlyRunTests != null) {
+            Output.onlyRunTests = !!(data.onlyRunTests);
+        } else {
+            Output.onlyRunTests = false;
+        }
+
+        // Restart the output
+        if (data.restart) {
+            Output.restart();
+        }
+
+        // Take a screenshot of the output
+        if (data.screenshot) {
+            // We want to resize the image to a 200x200 thumbnail,
+            // which we can do by creating a temporary canvas
+            var tmpCanvas = document.createElement("canvas");
+
+            var screenshotSize = data.screenshotSize || 200;
+            tmpCanvas.width = screenshotSize;
+            tmpCanvas.height = screenshotSize;
+            tmpCanvas.getContext("2d").drawImage(
+                $("#output-canvas")[0], 0, 0, screenshotSize, screenshotSize);
+
+            // Send back the screenshot data
+            frameSource.postMessage(tmpCanvas.toDataURL("image/png"),
+                frameOrigin);
+        }
+
+        // Keep track of recording state
+        if (data.recording != null) {
+            Output.recording = data.recording;
+        }
+
+        // Play back recording
+        if (data.action) {
+            if (CanvasOutput.handlers[data.name]) {
+                CanvasOutput.handlers[data.name](data.action);
+            }
+        }
+
+        if (data.documentation) {
+            BabyHint.initDocumentation(data.documentation);
+        }
+    },
+
+    // Send a message back to the parent frame
+    postParent: function(data) {
+        // If there is no frameSource (e.g. we're not embedded in another page)
+        // Then we don't need to care about sending the messages anywhere!
+        if (frameSource) {
+            frameSource.postMessage(JSON.stringify(data), frameOrigin);
+        }
+    },
+
+    notifyActive: _.once(function() {
+        this.postParent({ active: true });
+    }),
 
     // This function stores the new tests on the validate property
     //  and it executes the test code to see if its valid
@@ -281,7 +276,7 @@ var Output = {
 
         var runDone = function() {
             if (!Output.loaded) {
-                postParent({ loaded: true });
+                this.postParent({ loaded: true });
                 Output.loaded = true;
             }
 
@@ -291,7 +286,7 @@ var Output = {
                 return;
             }
 
-            postParent({
+            this.postParent({
                 results: {
                     code: userCode,
                     errors: Output.errors,
@@ -300,7 +295,7 @@ var Output = {
             });
 
             Output.toggleErrors();
-        };
+        }.bind(this);
 
         // We only need to extract globals when the code has passed
         // the JSHint check
@@ -326,16 +321,12 @@ var Output = {
             if (Output.errors.length === 0 && !Output.onlyRunTests) {
                 // Then run the user's code
                 if (Output.output && Output.output.runCode) {
-                    if (Output.fastNFurious) {
+                    try {
                         Output.output.runCode(userCode, Output.context, runDone);
-                    } else {
-                        try {
-                            Output.output.runCode(userCode, Output.context, runDone);
 
-                        } catch (e) {
-                            Output.handleError(e);
-                            runDone();
-                        }
+                    } catch (e) {
+                        Output.handleError(e);
+                        runDone();
                     }
 
                     return;
@@ -481,7 +472,6 @@ var Output = {
     },
 
     handleError: function(e) {
-
         if (Output.testing) {
             // Note: Scratchpad challenge checks against the exact translated
             // text "A critical problem occurred..." to figure out whether
@@ -560,16 +550,12 @@ var Output = {
             return true;
         }
 
-        if (Output.fastNFurious) {
+        try {
             return exec_();
-        } else {
-            try {
-                return exec_();
 
-            } catch (e) {
-                Output.handleError(e);
-                return e;
-            }
+        } catch (e) {
+            Output.handleError(e);
+            return e;
         }
     },
 
@@ -838,7 +824,7 @@ window.CanvasOutput = {
                     };
 
                     // Log the command
-                    postParent({ log: action });
+                    Output.postParent({ log: action });
                 }
             });
 
@@ -963,8 +949,7 @@ window.CanvasOutput = {
             file = fileMatch[1];
 
             // We only allow images from within a certain path
-            var path = "/stylesheets/scratchpads-exec-package/images/" +
-                file + ".png";
+            var path = Output.imagesDir + file + ".png";
 
             // Load the image in the background
             var img = document.createElement("img");
@@ -1061,7 +1046,7 @@ window.CanvasOutput = {
 
                 var result = !!fn();
 
-                postParent({
+                Output.postParent({
                     results: {
                         code: Output.currentCode,
                         errors: [],
@@ -1130,16 +1115,12 @@ window.CanvasOutput = {
                 });
 
                 Output.worker.exec(userCode, context, function(userCode) {
-                    if (Output.fastNFurious) {
+                    try {
                         CanvasOutput.injectCode(userCode, callback);
-                    } else {
-                        try {
-                            CanvasOutput.injectCode(userCode, callback);
 
-                        } catch (e) {
-                            Output.handleError(e);
-                            callback();
-                        }
+                    } catch (e) {
+                        Output.handleError(e);
+                        callback();
                     }
                 });
 
@@ -1632,46 +1613,16 @@ Output.clean = function(str) {
     return String(str).replace(/</g, "&lt;");
 };
 
-/*
- * Get the current language used to display the site. If the default
- * language is used return undefined. We need this as KA.language is
- * unavailable.
- */
-var getLang = function() {
-    var lang = (function() {
-        // The path to search for, hopefully this won't be removed
-        var searchPackage = RegExp(
-            "genfiles/readable_js_packages_dev/([^/]*)" +
-            "/scratchpads-exec-package");
-
-        // Go through all the script tags to find where that file has been
-        // included
-        var scripts = document.getElementsByTagName("script");
-        for (var i = 0; i < scripts.length; i++) {
-            // We can get the language based on the package path.
-            var match = searchPackage.exec(scripts[i].src);
-            if (match && match[1] !== "en") {
-                getLang = function() {
-                    return match[1];
-                };
-                return match[1];
-            }
-        }
-    })();
-
-    getLang = function() {
-        return lang;
-    };
-
-    return lang;
-};
-
 var PooledWorker = function(filename, onExec) {
     this.pool = [];
     this.curID = 0;
-    this.url = "/javascript/scratchpads-exec-package/" + filename +
-        "?cachebust=B" + (new Date()).toDateString();
+    this.filename = filename;
     this.onExec = onExec || function() {};
+};
+
+PooledWorker.prototype.getURL = function() {
+    return Output.execDir + this.filename +
+        "?cachebust=B" + (new Date()).toDateString();
 };
 
 PooledWorker.prototype.getWorkerFromPool = function() {
@@ -1683,7 +1634,7 @@ PooledWorker.prototype.getWorkerFromPool = function() {
     // seems to freak out, use lots of memory, and sometimes crash.)
     var worker = this.pool.shift();
     if (!worker) {
-        worker = new window.Worker(this.url);
+        worker = new window.Worker(this.getURL());
     }
     // Keep track of what number worker we're running so that we know
     // if any new hint workers have been started after this one
@@ -1736,6 +1687,7 @@ Output.testWorker = new PooledWorker(
             callback();
             return;
         }
+
         var worker = this.getWorkerFromPool();
 
         worker.onmessage = function(event) {
@@ -1752,7 +1704,8 @@ Output.testWorker = new PooledWorker(
         worker.postMessage({
             code: code,
             validate: validate,
-            errors: errors
+            errors: errors,
+            externalsDir: Output.externalsDir
         });
     }
 );
@@ -1788,7 +1741,7 @@ Output.hintWorker = new PooledWorker(
 
         worker.postMessage({
             code: hintCode,
-            lang: getLang()
+            externalsDir: Output.externalsDir
         });
     }
 );
@@ -1800,7 +1753,7 @@ Output.worker = {
 
     init: function() {
         var worker = Output.worker.worker =
-            new window.Worker("/javascript/scratchpads-exec-package/" +
+            new window.Worker(Output.execDir +
                 "worker.js?cachebust=" + (new Date()).toDateString());
 
         worker.onmessage = function(event) {

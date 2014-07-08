@@ -13,6 +13,10 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     initialize: function(options) {
+        this.execDir = this._qualifyURL(options.execDir);
+        this.externalsDir = this._qualifyURL(options.externalsDir);
+        this.imagesDir = this._qualifyURL(options.imagesDir);
+
         this.config = new ScratchpadConfig({
             version: options.version
         });
@@ -245,7 +249,10 @@ window.LiveEditor = Backbone.View.extend({
         var options = {
             code: code,
             version: this.config.curVersion(),
-            settings: this.settings || {} // TODO: Figure this out
+            settings: this.settings || {}, // TODO: Figure this out
+            execDir: this.execDir,
+            externalsDir: this.externalsDir,
+            imagesDir: this.imagesDir
         };
 
         this.trigger("runCode", options);
@@ -299,5 +306,11 @@ window.LiveEditor = Backbone.View.extend({
             width: width,
             height: height
         });
+    },
+
+    _qualifyURL: function(url){
+        var a = document.createElement("a");
+        a.href = url;
+        return a.href;
     }
 });

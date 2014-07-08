@@ -22,6 +22,7 @@
     "ace": "~1.1.4",
     "soundmanager": "*",
     "backbone": "~1.1.2",
-    "jquery-ui": "~1.11.0"
+    "jquery-ui": "~1.11.0",
+    "es5-shim": "~3.4.0"
   }
 }

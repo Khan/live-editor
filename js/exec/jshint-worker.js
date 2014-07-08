@@ -1,18 +1,17 @@
-importScripts("../shared-package/es5-shim.js?cachebust=" + (new Date()).toDateString());
+var init = false;
 
 self.onmessage = function(event) {
     // We don't import JSHint on load as we need to know which language
     // the user is visiting the site in. If there is no language then
     // we just use the normal file.
-    if (typeof JSHint === "undefined") {
-        var prefix = "../..";
+    if (!init) {
+        init = true;
 
-        if (event.data.lang) {
-            prefix = "../../genfiles/translations/" + event.data.lang;
-        }
+        importScripts(event.data.externalsDir +
+            "es5-shim/es5-shim.js?cachebust=" + (new Date()).toDateString());
 
-        importScripts(prefix + "/third_party/javascript-khansrc/jshint" +
-            "/jshint.js?cachebust=" + (new Date()).toDateString());
+        importScripts(event.data.externalsDir +
+            "jshint/jshint.js?cachebust=" + (new Date()).toDateString());
     }
 
     // Evaluate the code using JSHint

@@ -3,20 +3,21 @@
     <link rel="stylesheet" href="css/ui/style.css"/>
 
     <!-- Core dependencies -->
-    <script src="bower_components/jquery/dist/jquery.js"></script>
-    <script src="bower_components/jquery-ui/jquery-ui.js"></script>
-    <script src="bower_components/underscore/underscore.js"></script>
-    <script src="bower_components/backbone/backbone.js"></script>
+    <script src="external/es5-shim/es5-shim.js"></script>
+    <script src="external/jquery/dist/jquery.js"></script>
+    <script src="external/jquery-ui/jquery-ui.js"></script>
+    <script src="external/underscore/underscore.js"></script>
+    <script src="external/backbone/backbone.js"></script>
 
     <!-- Code editor -->
-    <script src="bower_components/ace/build/src-noconflict/ace.js"></script>
-    <script src="bower_components/ace/build/src-noconflict/mode-javascript.js"></script>
-    <script src="bower_components/ace/build/src-noconflict/ext-searchbox.js"></script>
+    <script src="external/ace/build/src-noconflict/ace.js"></script>
+    <script src="external/ace/build/src-noconflict/mode-javascript.js"></script>
+    <script src="external/ace/build/src-noconflict/ext-searchbox.js"></script>
 
     <script src="external/colorpicker/colorpicker.js"></script>
 
     <!-- Audio playback and recording -->
-    <script src="bower_components/soundmanager/script/soundmanager2.js"></script>
+    <script src="external/soundmanager/script/soundmanager2.js"></script>
     <script src="external/multirecorder/multirecorder.js"></script>
     <script src="external/transloadit_xhr/transloadit_xhr.js"></script>
 
@@ -32,13 +33,49 @@
     <script src="js/live-editor.js"></script>
 
     <script>
+    /*
+     * Get the current language used to display the site. If the default
+     * language is used return undefined. We need this as KA.language is
+     * unavailable.
+     */
+    var getLang = function() {
+        var lang = (function() {
+            // The path to search for, hopefully this won't be removed
+            var searchPackage = RegExp(
+                "genfiles/readable_js_packages_dev/([^/]*)" +
+                "/scratchpads-exec-package");
+
+            // Go through all the script tags to find where that file has been
+            // included
+            var scripts = document.getElementsByTagName("script");
+            for (var i = 0; i < scripts.length; i++) {
+                // We can get the language based on the package path.
+                var match = searchPackage.exec(scripts[i].src);
+                if (match && match[1] !== "en") {
+                    getLang = function() {
+                        return match[1];
+                    };
+                    return match[1];
+                }
+            }
+        })();
+
+        getLang = function() {
+            return lang;
+        };
+
+        return lang;
+    };
+
     $(function() {
         var liveEditor = new LiveEditor({
             el: $(".scratchpad-wrap"),
             width: 400,
             height: 400,
             autoFocus: true,
-            execDir: "js/exec/"
+            execDir: "/live-editor/js/exec/",
+            externalsDir: "/live-editor/external/",
+            imagesDir: "/live-editor/images/"
         });
     });
     </script>
