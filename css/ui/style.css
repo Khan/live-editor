@@ -3,7 +3,7 @@
 }
 
 .scratchpad-editor-wrap {
-    width: 100%;
+    margin-right: 402px;
 }
 
 .scratchpad-editor {
@@ -11,8 +11,11 @@
     height: 400px;
 }
 
-#output {
+.scratchpad-canvas-wrap {
     float: right;
+}
+
+#output {
     width: 400px;
     height: 400px;
 }
