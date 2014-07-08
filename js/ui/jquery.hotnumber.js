@@ -11,8 +11,12 @@
             checkNumber.call(editor);
 
         } else {
-            selection.on("changeCursor", $.proxy(checkNumber, editor));
-            selection.on("changeSelection", $.proxy(checkNumber, editor));
+            selection.on("changeCursor", function() {
+                checkNumber(editor, options.record);
+            });
+            selection.on("changeSelection", function() {
+                checkNumber(editor, options.record);
+            });
 
             editor.renderer.scrollBar.addEventListener("scroll", function() {
                 if (curPicker) {
@@ -20,14 +24,14 @@
                 }
             });
 
-            attachPicker(editor);
-            attachScrubber(editor);
+            attachPicker(editor, record);
+            attachScrubber(editor, record);
         }
 
         if (options.record) {
             options.record.handlers.hot = function(e) {
-                checkNumber.call(editor);
-                update(editor, e.hot);
+                checkNumber(editor, options.record);
+                update(editor, options.record, e.hot);
                 updatePos(editor);
             };
         }
@@ -48,55 +52,57 @@
         }
     }
 
-    function attachScrubber(editor) {
-        if (!scrubber) {
-            var scrubberHandle = $("<div class='scrubber-handle'/>")
-                .text("◄ ◆ ►")
-                .draggable({
-                    axis: "x",
-                    drag: function() {
-                        scrubber.addClass("dragging");
-
-                        var thisOffset = $(this).offset();
-                        var parentOffset = $(this).parent().offset();
-                        var dx = thisOffset.left - parentOffset.left;
-
-                        // The interval of the scrubber is determined like so:
-                        //
-                        // If the original number contains no decimal point, the
-                        // interval is 10^0 = 1.
-                        //
-                        // Otherwise, the interval corresponds to the least
-                        // significant digit. So both 0.01 and 0.91 will operate
-                        // on an interval of 10^-2 = 0.01.
-                        var powerOfTen = -decimalCount(firstNumString);
-
-                        if (powerOfTen < -5) {
-                            powerOfTen = -5;
-                        }
-
-                        if (handle) {
-                            handle(Math.round(dx / 2.0) * Math.pow(10, powerOfTen));
-                        }
-                    },
-                    stop: function() {
-                        scrubber.removeClass("dragging");
-
-                        $(this).css({
-                            left: 0,
-                            top: 0
-                        });
-                        checkNumber.call(editor);
-                    }
-                });
-
-            scrubber = $("<div class='hotnumber'><div class='scrubber'></div><div class='arrow'></div></div>")
-                .appendTo("body")
-                .find(".scrubber")
-                    .append(scrubberHandle)
-                    .end()
-                .hide();
+    function attachScrubber(editor, record) {
+        if (scrubber) {
+            return;
         }
+
+        var scrubberHandle = $("<div class='scrubber-handle'/>")
+            .text("◄ ◆ ►")
+            .draggable({
+                axis: "x",
+                drag: function() {
+                    scrubber.addClass("dragging");
+
+                    var thisOffset = $(this).offset();
+                    var parentOffset = $(this).parent().offset();
+                    var dx = thisOffset.left - parentOffset.left;
+
+                    // The interval of the scrubber is determined like so:
+                    //
+                    // If the original number contains no decimal point, the
+                    // interval is 10^0 = 1.
+                    //
+                    // Otherwise, the interval corresponds to the least
+                    // significant digit. So both 0.01 and 0.91 will operate
+                    // on an interval of 10^-2 = 0.01.
+                    var powerOfTen = -decimalCount(firstNumString);
+
+                    if (powerOfTen < -5) {
+                        powerOfTen = -5;
+                    }
+
+                    if (handle) {
+                        handle(Math.round(dx / 2.0) * Math.pow(10, powerOfTen));
+                    }
+                },
+                stop: function() {
+                    scrubber.removeClass("dragging");
+
+                    $(this).css({
+                        left: 0,
+                        top: 0
+                    });
+                    checkNumber(editor, record);
+                }
+            });
+
+        scrubber = $("<div class='hotnumber'><div class='scrubber'></div><div class='arrow'></div></div>")
+            .appendTo("body")
+            .find(".scrubber")
+                .append(scrubberHandle)
+                .end()
+            .hide();
     }
 
     function attachPicker(editor) {
@@ -192,15 +198,14 @@
         return parenthesisDepth > 0;
     }
 
-    function checkNumber() {
+    function checkNumber(editor, record) {
         if (ignore) {
             return;
         }
 
         range = null;
 
-        var editor = this,
-            pos = editor.selection.getCursor(),
+        var pos = editor.selection.getCursor(),
             line = editor.session.getDocument().getLine(pos.row),
             prefix = line.slice(0, pos.column),
             oldPicker = curPicker, newPicker;
@@ -228,7 +233,9 @@
                 if (RegExp.$2.length === 0) {
                     ignore = true;
 
-                    Record.pauseLog();
+                    if (record) {
+                        record.pauseLog();
+                    }
 
                     editor.session.getDocument().insertInLine({ row: pos.row, column: line.length },
                         (oldValue ? "" : (oldValue = "255, 0, 0")) + ")" +
@@ -236,13 +243,15 @@
                     editor.selection.setSelectionRange(range);
                     editor.selection.clearSelection();
 
-                    Record.resumeLog();
+                    if (record) {
+                        record.resumeLog();
+                    }
 
                     ignore = false;
                 }
 
                 handle = function(value) {
-                    updateColorSlider(editor, value);
+                    updateColorSlider(editor, record, value);
                 };
 
                 newPicker = colorPicker;
@@ -262,7 +271,9 @@
                 if (RegExp.$2.length === 0) {
                     ignore = true;
 
-                    Record.pauseLog();
+                    if (record) {
+                        record.pauseLog();
+                    }
 
                     editor.session.getDocument().insertInLine({ row: pos.row, column: line.length },
                         (oldValue ? "" : (oldValue = '"' + defaultImage + '"')) + ")" +
@@ -270,17 +281,19 @@
                     editor.selection.setSelectionRange(range);
                     editor.selection.clearSelection();
 
-                    Record.resumeLog();
+                    if (record) {
+                        record.resumeLog();
+                    }
 
                     ignore = false;
                 }
 
                 handle = function(value) {
-                    updateImagePicker(editor, value);
+                    updateImagePicker(editor, record, value);
                 };
 
                 attachImagePicker(editor);
-                updateImagePicker(editor, oldValue);
+                updateImagePicker(editor, record, oldValue);
                 newPicker = imagePicker;
             }
 
@@ -296,7 +309,7 @@
                 range = new Range(pos.row, before, pos.row, before + oldValue.length);
 
                 handle = function(value) {
-                    updateNumberScrubber(editor, value);
+                    updateNumberScrubber(editor, record, value);
                 };
 
                 newPicker = scrubber;
@@ -341,7 +354,7 @@
         }
     }
 
-    function updateImagePicker(editor, path) {
+    function updateImagePicker(editor, record, path) {
         if (!range) {
             return;
         }
@@ -370,21 +383,21 @@
             .attr("src", "/stylesheets/scratchpads-exec-package/images/" + path + ".png");
 
         // Update the old path with a new one
-        update(editor, '"' + path + '"');
+        update(editor, record, '"' + path + '"');
     }
 
-    function updateColorSlider(editor, rgb) {
+    function updateColorSlider(editor, record, rgb) {
         if (!range) {
             return;
         }
 
         // Replace the old color with the new one
-        update(editor, rgb.r + ", " + rgb.g + ", " + rgb.b);
+        update(editor, record, rgb.r + ", " + rgb.g + ", " + rgb.b);
 
         //ScratchpadUI.editor.trigger("colorPicker");
     }
 
-    function updateNumberScrubber(editor, newNum) {
+    function updateNumberScrubber(editor, record, newNum) {
         if (!range) {
             return;
         }
@@ -420,19 +433,21 @@
         }
 
         // Replace the old number with the new one
-        update(editor, newNumString);
+        update(editor, record, newNumString);
 
         //ScratchpadUI.editor.trigger("scrubber");
     }
 
-    function update(editor, newValue) {
+    function update(editor, record, newValue) {
         if (!range) {
             return;
         }
 
         ignore = true;
 
-        Record.pauseLog();
+        if (record) {
+            record.pauseLog();
+        }
 
         // Insert the new number
         range.end.column = range.start.column + oldValue.length;
@@ -444,9 +459,10 @@
             editor.selection.setSelectionRange(range);
         }
 
-        Record.resumeLog();
-
-        Record.log({ hot: newValue });
+        if (record) {
+            record.resumeLog();
+            record.log({ hot: newValue });
+        }
 
         ignore = false;
         oldValue = newValue;
