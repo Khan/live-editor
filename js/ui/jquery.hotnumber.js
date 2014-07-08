@@ -393,8 +393,6 @@
 
         // Replace the old color with the new one
         update(editor, record, rgb.r + ", " + rgb.g + ", " + rgb.b);
-
-        //ScratchpadUI.editor.trigger("colorPicker");
     }
 
     function updateNumberScrubber(editor, record, newNum) {
@@ -434,8 +432,6 @@
 
         // Replace the old number with the new one
         update(editor, record, newNumString);
-
-        //ScratchpadUI.editor.trigger("scrubber");
     }
 
     function update(editor, record, newValue) {

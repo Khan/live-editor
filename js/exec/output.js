@@ -222,9 +222,7 @@ var Output = {
         Output.currentCode = userCode;
 
         // Build a string of options to feed into JSHint
-        // All properties are defined in the ScratchpadUI.config
-        // Build a string of options to feed into JSHint
-        // All properties are defined in the ScratchpadUI.config
+        // All properties are defined in the config
         var hintCode = "/*jshint " +
             Output.propListString(Output.JSHint) + " */" +
 
