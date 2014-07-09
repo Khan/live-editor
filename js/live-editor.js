@@ -577,7 +577,9 @@ window.LiveEditor = Backbone.View.extend({
 
                 // Activate the play button
                 $(self.dom.PLAYBAR_PLAY)
-                    .find("span").removeClass("icon-play").addClass("icon-pause");
+                    .find("span")
+                    .removeClass("glyphicon-play icon-play")
+                    .addClass("glyphicon-pause icon-pause");
             },
 
             playEnded: function() {
@@ -603,7 +605,9 @@ window.LiveEditor = Backbone.View.extend({
 
                 // Deactivate the play button
                 $(self.dom.PLAYBAR_PLAY)
-                    .find("span").addClass("icon-play").removeClass("icon-pause");
+                    .find("span")
+                    .addClass("glyphicon-play icon-play")
+                    .removeClass("glyphicon-pause icon-pause");
             },
 
             // Recording has begun

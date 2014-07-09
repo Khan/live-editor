@@ -23,6 +23,7 @@
 .scratchpad-wrap .scratchpad-editor-wrap .scratchpad-editor-tabs,
 .scratchpad-wrap .scratchpad-editor-wrap .scratchpad-toolbar {
     margin-right: @row-spacing;
+    position: relative;
 }
 
 .scratchpad-wrap .scratchpad-editor-wrap .scratchpad-editor-tabs-links {
