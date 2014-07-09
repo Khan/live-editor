@@ -1,10 +1,15 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <!-- Flash block CSS (for Soundmanager) -->
     <link rel="stylesheet" href="css/ui/flashblock.css"/>
+
+    <!-- Colorpicker/Hotnumber CSS -->
     <link rel="stylesheet" href="css/ui/colorpicker.css"/>
     <link rel="stylesheet" href="css/ui/hotnumber.css"/>
 
+    <!-- Core CSS -->
     <link rel="stylesheet" href="css/ui/style.css"/>
 
     <!-- Core dependencies -->
@@ -38,42 +43,8 @@
     <script src="js/live-editor.js"></script>
 
     <script>
-    /*
-     * Get the current language used to display the site. If the default
-     * language is used return undefined. We need this as KA.language is
-     * unavailable.
-     */
-    var getLang = function() {
-        var lang = (function() {
-            // The path to search for, hopefully this won't be removed
-            var searchPackage = RegExp(
-                "genfiles/readable_js_packages_dev/([^/]*)" +
-                "/scratchpads-exec-package");
-
-            // Go through all the script tags to find where that file has been
-            // included
-            var scripts = document.getElementsByTagName("script");
-            for (var i = 0; i < scripts.length; i++) {
-                // We can get the language based on the package path.
-                var match = searchPackage.exec(scripts[i].src);
-                if (match && match[1] !== "en") {
-                    getLang = function() {
-                        return match[1];
-                    };
-                    return match[1];
-                }
-            }
-        })();
-
-        getLang = function() {
-            return lang;
-        };
-
-        return lang;
-    };
-
     $(function() {
-        var liveEditor = new LiveEditor({
+        var options = {
             el: $(".scratchpad-wrap"),
             width: 400,
             height: 400,
@@ -81,6 +52,11 @@
             execDir: "/live-editor/js/exec/",
             externalsDir: "/live-editor/external/",
             imagesDir: "/live-editor/images/"
+        };
+
+        $.getJSON("test-audio.json", function(data) {
+            window.liveEditor = new LiveEditor(
+                $.extend(options, data));
         });
     });
     </script>
