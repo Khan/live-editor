@@ -281,8 +281,7 @@ window.LiveEditor = Backbone.View.extend({
             .off("click.play-button")
             .on("click.play-button", handlePlayClick);
 
-        // Set up all the big play button interactions
-        this.on("readyToPlay", function() {
+        var handlePlayButton = function() {
             // Show the playback bar and hide the loading message
             $el.find(dom.PLAYBAR_LOADING).hide();
             $el.find(dom.PLAYBAR_AREA).show();
@@ -307,7 +306,12 @@ window.LiveEditor = Backbone.View.extend({
             // Switch from loading to play
             $el.find(dom.BIG_PLAY_LOADING).hide();
             $el.find(dom.BIG_PLAY_BUTTON).show();
-        });
+
+            self.off("readyToPlay", handlePlayButton);
+        };
+
+        // Set up all the big play button interactions
+        this.on("readyToPlay", handlePlayButton);
 
         // Handle the clear button click during recording
         $el.on("buttonClick", "#draw-clear-button", function() {
