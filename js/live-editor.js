@@ -26,7 +26,6 @@ window.LiveEditor = Backbone.View.extend({
         this.execDir = this._qualifyURL(options.execDir);
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
-        this.tmplDir = this._qualifyURL(options.tmplDir);
 
         this.initialCode = options.code;
         this.recordingCommands = options.recordingCommands;
@@ -78,7 +77,8 @@ window.LiveEditor = Backbone.View.extend({
             el: this.dom.EDITOR,
             autoFocus: options.autoFocus,
             config: this.config,
-            record: this.record
+            record: this.record,
+            imagesDir: this.imagesDir
         });
 
         var codeOptions = { code: options.code || "" };

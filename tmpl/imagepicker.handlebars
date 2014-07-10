@@ -1,0 +1,17 @@
+<div class="current-image"><img src="{{imagesDir}}cute/Blank.png"/></div>
+<div class="image-groups">
+{{#each groups}}
+<div class="image-group">
+    <h3 class="image-group">{{groupName}}</h3>
+    {{#if cite}}
+        <p><a href="{{citeLink}}" target="_blank">{{cite}}</a></p>
+    {{/if}}
+    {{#each images}}
+    <div class="image" data-path="{{../groupName}}/{{this}}">
+        <img src="{{../imagesDir}}{{../groupName}}/{{this}}.png"/>
+        <span class="name">{{this}}</span>
+    </div>
+    {{/each}}
+</div>
+{{/each}}
+</div>

@@ -7,8 +7,12 @@
         var editor = options.editor;
         var selection = editor.session.selection;
 
+        // A bit of a hack adding it to the editor object...
+        editor.imagesDir = options.imagesDir;
+        console.log("hotNumber", options.imagesDir)
+
         if (options.reload) {
-            checkNumber.call(editor);
+            checkNumber(editor);
 
         } else {
             selection.on("changeCursor", function() {
@@ -159,8 +163,15 @@
 
     function attachImagePicker(editor) {
         if (!imagePicker) {
-            var tmpl = Templates.get("scratchpads.imagepicker");
-            var results = tmpl({ groups: OutputImages });
+            var tmpl = Handlebars.templates.imagepicker;
+            console.log("attach", editor.imagesDir)
+            var results = tmpl({
+                imagesDir: editor.imagesDir,
+                groups: _.map(OutputImages, function(data) {
+                    data.imagesDir = editor.imagesDir;
+                    return data;
+                })
+            });
 
             imagePicker = $("<div class='hotnumber imagepicker'>" + results +
                     "<div class='arrow'></div></div>")
@@ -380,7 +391,7 @@
         path = foundPath;
 
         $(".imagepicker .current-image img")
-            .attr("src", "/stylesheets/scratchpads-exec-package/images/" + path + ".png");
+            .attr("src", editor.imagesDir + path + ".png");
 
         // Update the old path with a new one
         update(editor, record, '"' + path + '"');
