@@ -474,15 +474,16 @@ window.ScratchpadRecordView = Backbone.View.extend({
 
     initialize: function(options) {
         //this.$el.html(this.template());
-        this.$recordButton = this.options.recordButton;
-        this.$finalSaveButton = this.options.saveButton;
-        this.scratchpad = this.options.scratchpad;
+        this.$recordButton = options.recordButton;
+        this.$finalSaveButton = options.saveButton;
+        this.editor = options.editor;
+        this.record = options.record;
+        this.config = options.config;
         this.audioChunks = new ScratchpadAudioChunks();
         this.recordInProgress = false;
         this.commandChunks = [];
         this.startingCode = "";
-        this.$editor = this.options.editor;
-        this.lastSavedCode = ScratchpadUI.editor.text();
+        this.lastSavedCode = this.editor.text();
         this.$lastAudioChunkElem = this.$el.find(".last-audio-chunk");
         // Note: $savedAudioChunksElem HAS to be displayed in order for us to
         //  get the duration. Hack -- look at other ways to get the duration.
@@ -522,6 +523,8 @@ window.ScratchpadRecordView = Backbone.View.extend({
      *   so no need to call startRecordingCommands manually.
      */
     startRecordingAudio: function() {
+        var self = this;
+
         this.lastSavedCode = ScratchpadUI.editor.text();
         this.multirecorder.startRecording(1)
             .progress(_.bind(function(seconds) {
@@ -529,13 +532,10 @@ window.ScratchpadRecordView = Backbone.View.extend({
             }, this))
             .done(_.bind(function() {
                 this.disableChunkButtons(false, true, true, true, true);
-                Record.recordingAudio = true;
+                self.record.recordingAudio = true;
                 this.$newChunkButton.html("Stop recording chunk");
                 this.startRecordingCommands();
-            }, this))
-            .fail(function(error) {
-                KAConsole.error(error);
-            });
+            }, this));
     },
 
     /* Stop recording audio. Called from ScratchpadUI as a result of the
@@ -577,27 +577,27 @@ window.ScratchpadRecordView = Backbone.View.extend({
     /* Start recording user commands. Should only be called from
      *  startRecordingAudio. */
     startRecordingCommands: function() {
-        if (Record.hasNoChunks()) {
+        if (this.record.hasNoChunks()) {
             // Save the initial code state
-            this.scratchpad.get("revision")
-                .set("code", ScratchpadUI.editor.text());
-            this.startingCode = ScratchpadUI.editor.text();
-            var newVersion = this.scratchpad.getVersion();
+            //this.scratchpad.get("revision")
+            //    .set("code", this.editor.text());
+            this.startingCode = this.editor.text();
+            var newVersion = this.config.curVersion();
             // Make sure we record using the scratchpad version
-            ScratchpadConfig.switchVersion(newVersion);
-            Record.setActualInitData({
+            this.config.switchVersion(newVersion);
+            this.record.setActualInitData({
                 configVersion: newVersion,
                 code: this.startingCode
             });
         }
 
         // Focus on the editor
-        ScratchpadUI.editor.focus();
+        this.editor.focus();
         // Start recording
-        Record.startRecordChunk(this.getDurationMsOfSavedAudio());
+        this.record.startRecordChunk(this.getDurationMsOfSavedAudio());
         // Every chunk should start the cursor at 0, 0 and log the event.
-        Record.log({start: {column: 0, row: 0}});
-        ScratchpadUI.editor.setCursor({row: 0, column: 0});
+        this.record.log({start: {column: 0, row: 0}});
+        this.editor.setCursor({row: 0, column: 0});
     },
 
     /* Stop recording commands. This will trigger an event sequence that
@@ -607,7 +607,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
      * to upload the recording.
      */
     stopRecordingCommands: function() {
-        Record.stopRecordChunk();
+        this.record.stopRecordChunk();
     },
 
     /* Return the final audio recording, with all the audio chunks stitched
@@ -620,7 +620,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
     /* Return the final commands recording, with all the command chunks
      *  stitched together. */
     getFinalCommandRecording: function() {
-        return Record.dumpRecording();
+        return this.record.dumpRecording();
     },
 
     /* Start recording a new chunk, or stop recording the current chunk
@@ -631,7 +631,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
         }
         if (!this.recordInProgress) {
             // Start recording an new chunk
-            ScratchpadUI.editor.editor.setReadOnly(false);
+            this.editor.editor.setReadOnly(false);
             this.recordInProgress = true;
             this.startRecordingAudio();
         } else {
@@ -654,7 +654,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
             return;
         }
         this.audioChunks.discardCurrentChunk();
-        Record.discardRecordChunk();
+        this.record.discardRecordChunk();
         this.$lastAudioChunkElem.empty();
         this.refreshEditor();
     },
@@ -665,7 +665,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
             return;
         }
         this.audioChunks.saveCurrentChunk();
-        Record.saveRecordChunk();
+        this.record.saveRecordChunk();
         this.lastSavedCode = ScratchpadUI.editor.text();
         this.disableChunkButtons(false, true, true, false, false);
         this.showSavedAudioChunks();
@@ -675,23 +675,25 @@ window.ScratchpadRecordView = Backbone.View.extend({
     /* Play back all the saved chunks to get back to the last
      *  saved state. */
     refreshEditor: function(evt) {
-        Record.loadRecording(Record.dumpRecording());
-        ScratchpadUI.editor.editor.setReadOnly(false);
-        Record.initData = Record.actualInitData;
+        this.record.loadRecording(this.record.dumpRecording());
+        this.editor.editor.setReadOnly(false);
+        this.record.initData = this.record.actualInitData;
         // Add an empty command to force the Record playback to
         // keep playing until the audio track finishes playing
-        if (Record.commands) {
-            Record.commands.push({ time: this.getDurationMsOfSavedAudio() });
+        if (this.record.commands) {
+            this.record.commands.push({
+                time: this.getDurationMsOfSavedAudio()
+            });
         }
         // Start the play head at 0
-        Record.time = 0;
+        this.record.time = 0;
 
         // Reset the editor
-        ScratchpadUI.editor.text(this.startingCode);
+        this.editor.text(this.startingCode);
         // Clear and hide the drawing area
-        ScratchpadUI.drawCanvas.clear(true);
-        ScratchpadUI.drawCanvas.endDraw();
-        Record.runSeek(this.getDurationMsOfSavedAudio());
+        this.drawCanvas.clear(true);
+        this.drawCanvas.endDraw();
+        this.record.runSeek(this.getDurationMsOfSavedAudio());
 
         // Set a timeout just to wait for all the commands to finish..
         setTimeout(_.bind(function() {

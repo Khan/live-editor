@@ -1,0 +1,15 @@
+<div class="scratchpad-dev-record">
+    <div class="scratchpad-dev-record-buttons">
+        <button class="scratchpad-dev-new-chunk simple-button pull-left">{{#_}}Start New Chunk{{/_}}</button>
+        <button class="scratchpad-dev-discard-chunk simple-button pull-left">{{#_}}Discard Recorded Chunk{{/_}}</button>
+        <button class="scratchpad-dev-save-chunk simple-button pull-left">{{#_}}Save Recorded Chunk{{/_}}</button>
+        <button class="scratchpad-dev-refresh-editor-state simple-button pull-left">{{#_}}Refresh Editor State{{/_}}</button>
+    </div>
+    <br />
+    <div class="show-audio-chunks-wrapper">
+        <p>{{#_}}Last audio chunk recorded: {{/_}}<span class="last-audio-chunk">{{#_}}Empty{{/_}}</span></p>
+        <p>{{#_}}All saved audio chunks: {{/_}}<span class="saved-audio-chunks">{{#_}}Empty{{/_}}</span></p>
+    </div>
+    <p>{{#i18nDoNotTranslate}}These buttons let you record in chunks, rather than having to get everything right in one go. There is no way to edit a chunk once you save it, sorry. Also, because command playback has some weird bugs, sometimes discarding a chunk might get you in a bad state. If that happens, just hit "Refresh editor state" and hope for the best. This is pretty brittle -- just record everything in one chunk if you want the old system back :){{/i18nDoNotTranslate}}</p>
+    <p>{{#i18nDoNotTranslate}}<strong>DO NOT TOUCH THE EDITOR (or the canvas) between chunks -- especially not the cursor or selection.</strong> If you do, you might destroy your whole recording -- try hitting "Refresh Editor State" to recover.{{/i18nDoNotTranslate}}</p>
+</div>

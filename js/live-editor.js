@@ -26,10 +26,13 @@ window.LiveEditor = Backbone.View.extend({
         this.execDir = this._qualifyURL(options.execDir);
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
+        this.tmplDir = this._qualifyURL(options.tmplDir);
 
         this.initialCode = options.code;
         this.recordingCommands = options.recordingCommands;
         this.recordingMP3 = options.recordingMP3;
+
+        this.render();
 
         this.config = new ScratchpadConfig({
             version: options.version
@@ -132,6 +135,10 @@ window.LiveEditor = Backbone.View.extend({
 
         this.bind();
         this.setupAudio();
+    },
+
+    render: function() {
+        this.$el.html(Handlebars.templates["live-editor"]({}));
     },
 
     bind: function() {
@@ -760,7 +767,11 @@ window.LiveEditor = Backbone.View.extend({
             this.recordView = new ScratchpadRecordView({
                 el: $el.find(".scratchpad-dev-record-row"),
                 recordButton: $el.find("#record"),
-                saveButton: $("#save-button")
+                saveButton: $("#save-button"),
+                record: this.record,
+                editor: this.editor,
+                config: this.config,
+                drawCanvas: this.drawCanvas
             });
         }
 
