@@ -9,7 +9,6 @@
 
         // A bit of a hack adding it to the editor object...
         editor.imagesDir = options.imagesDir;
-        console.log("hotNumber", options.imagesDir)
 
         if (options.reload) {
             checkNumber(editor);
@@ -164,7 +163,6 @@
     function attachImagePicker(editor) {
         if (!imagePicker) {
             var tmpl = Handlebars.templates.imagepicker;
-            console.log("attach", editor.imagesDir)
             var results = tmpl({
                 imagesDir: editor.imagesDir,
                 groups: _.map(OutputImages, function(data) {
