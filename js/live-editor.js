@@ -196,7 +196,6 @@ window.LiveEditor = Backbone.View.extend({
             $el.find(dom.DRAW_CANVAS).show();
             $el.find(".overlay").show();
             $el.find(dom.BIG_PLAY_LOADING).show();
-            $el.find(dom.PLAYBAR).show();
         }
 
         // Set up color button handling
