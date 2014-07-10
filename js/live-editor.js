@@ -27,6 +27,7 @@ window.LiveEditor = Backbone.View.extend({
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
 
+        this.initialCode = options.code;
         this.recordingCommands = options.recordingCommands;
         this.recordingMP3 = options.recordingMP3;
 
@@ -34,9 +35,12 @@ window.LiveEditor = Backbone.View.extend({
             version: options.version
         });
 
+        this.record = new ScratchpadRecord();
+
         // Set up the Canvas drawing area
         this.drawCanvas = new ScratchpadDrawCanvas({
-            el: this.dom.DRAW_CANVAS
+            el: this.dom.DRAW_CANVAS,
+            record: this.record
         });
 
         this.drawCanvas.on({
@@ -70,11 +74,8 @@ window.LiveEditor = Backbone.View.extend({
         this.editor = new ScratchpadEditor({
             el: this.dom.EDITOR,
             autoFocus: options.autoFocus,
-            config: this.config
-        });
-
-        this.record = new ScratchpadRecord({
-            editor: this.editor
+            config: this.config,
+            record: this.record
         });
 
         var codeOptions = { code: options.code || "" };
@@ -327,7 +328,12 @@ window.LiveEditor = Backbone.View.extend({
 
         // Load the recording playback commands as well, if applicable
         if (this.recordingCommands) {
-            this.record.loadRecording(this.recordingCommands);
+            this.record.loadRecording({
+                init: {
+                    code: this.initialCode
+                },
+                commands: this.recordingCommands
+            });
         }
     },
 
@@ -585,8 +591,8 @@ window.LiveEditor = Backbone.View.extend({
             playEnded: function() {
                 // Re-init if the recording version is different from
                 // the scratchpad's normal version
-                self.config.switchVersion(
-                    ScratchpadUI.scratchpad.getVersion());
+                //self.config.switchVersion(
+                    //ScratchpadUI.scratchpad.getVersion());
             },
 
             // Playback of a recording has been paused
