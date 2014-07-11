@@ -31,6 +31,9 @@ window.LiveEditor = Backbone.View.extend({
         this.recordingCommands = options.recordingCommands;
         this.recordingMP3 = options.recordingMP3;
 
+        this.transloaditTemplate = options.transloaditTemplate;
+        this.transloaditAuthKey = options.transloaditAuthKey;
+
         this.render();
 
         this.config = new ScratchpadConfig({
@@ -133,6 +136,10 @@ window.LiveEditor = Backbone.View.extend({
         // changed by the user, via the query string, or in the settings
         this.updateCanvasSize(options.width, options.height);
 
+        if (this.canRecord()) {
+            this.$el.find("#record").show();
+        }
+
         this.bind();
         this.setupAudio();
     },
@@ -196,6 +203,7 @@ window.LiveEditor = Backbone.View.extend({
             $el.find(dom.DRAW_CANVAS).show();
             $el.find(".overlay").show();
             $el.find(dom.BIG_PLAY_LOADING).show();
+            $el.find(dom.PLAYBAR).show();
         }
 
         // Set up color button handling
@@ -333,7 +341,12 @@ window.LiveEditor = Backbone.View.extend({
 
         // Bind the handler to start a new recording
         $el.find("#record").on("click", function() {
-            self.recordHandler()
+            self.recordHandler(function(err) {
+                if (err) {
+                    // TODO: Change this:
+                    console.error(err);
+                }
+            });
         });
 
         // Load the recording playback commands as well, if applicable
@@ -345,6 +358,10 @@ window.LiveEditor = Backbone.View.extend({
                 commands: this.recordingCommands
             });
         }
+    },
+
+    canRecord: function() {
+        return this.transloaditAuthKey && this.transloaditTemplate;
     },
 
     hasAudio: function() {
@@ -749,7 +766,7 @@ window.LiveEditor = Backbone.View.extend({
         } else if (this.config.curVersion() !== this.config.latestVersion()) {
             callback({error: "outdated"});
 
-        } else if (!revision || !revision.hasAudio()) {
+        } else if (this.canRecord() && !this.hasAudio()) {
             this.startRecording();
             this.editor.focus();
 
@@ -770,7 +787,9 @@ window.LiveEditor = Backbone.View.extend({
                 record: this.record,
                 editor: this.editor,
                 config: this.config,
-                drawCanvas: this.drawCanvas
+                drawCanvas: this.drawCanvas,
+                transloaditTemplate: this.transloaditTemplate,
+                transloaditAuthKey: this.transloaditAuthKey
             });
         }
 
@@ -788,7 +807,7 @@ window.LiveEditor = Backbone.View.extend({
 
         var transloadit = new TransloaditXhr({
             authKey: this.transloaditAuthKey,
-            templateId: "7b622b7a661855d67280551cf499aca0",
+            templateId: this.transloaditTemplate,
             successCb: function(results) {
                 self.recordingMP3 =
                     results.mp3[0].url.replace(/^http:/, "https:");
