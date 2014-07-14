@@ -1,9 +1,9 @@
 [submodule "external/processing-js"]
 	path = external/processing-js
 	url = https://github.com/Khan/processing-js
-[submodule "external/multirecorder"]
-	path = external/multirecorder
+[submodule "external/multirecorderjs"]
+	path = external/multirecorderjs
 	url = https://github.com/Khan/MultiRecorderJS
-[submodule "external/transloadit_xhr"]
-	path = external/transloadit_xhr
+[submodule "external/transloaditxhr"]
+	path = external/transloaditxhr
 	url = https://github.com/Khan/transloadit_xhr

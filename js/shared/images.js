@@ -1,3 +1,9 @@
+if (!$._) {
+    $._ = function(msg) {
+        return msg;
+    };
+}
+
 // The master list of acceptable images
 // Build a list of all the available images
 window.OutputImages = [

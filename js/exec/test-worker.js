@@ -19,11 +19,11 @@ self.onmessage = function(event) {
         importScripts(event.data.externalsDir +
             "es5-shim/es5-shim.js?cachebust=" + date);
         importScripts(event.data.externalsDir +
-            "structured/external/esprima.js?cachebust=" + date);
+            "structuredjs/external/esprima.js?cachebust=" + date);
         importScripts(event.data.externalsDir +
             "underscore/underscore.js?cachebust=" + date);
         importScripts(event.data.externalsDir +
-            "structured/structured.js?cachebust=" + date);
+            "structuredjs/structured.js?cachebust=" + date);
         importScripts("./output-tester.js?cachebust=" + date);
     }
 
