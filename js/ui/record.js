@@ -57,6 +57,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
         this.editor = options.editor;
         this.record = options.record;
         this.config = options.config;
+        this.externalsDir = options.externalsDir;
         this.transloaditTemplate = options.transloaditTemplate;
         this.transloaditAuthKey = options.transloaditAuthKey;
         this.audioChunks = new ScratchpadAudioChunks();
@@ -72,7 +73,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
     },
 
     render: function() {
-        this.$el.html(Handlebars.templates["dev-record"]({}));
+        this.$el.html(Handlebars.templates["dev-record"]({})).show();
     },
 
     initializeButtons: function() {
@@ -96,7 +97,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
     initializeRecordingAudio: function() {
         // Start recording the presenter's audio
         this.multirecorder = new MultiRecorder(
-            {workerPath: "../../third_party/javascript-khansrc/multirecorderjs/multirecorder-worker.js"});
+            {workerPath: this.externalsDir + "multirecorder/multirecorder-worker.js"});
         this.$recordButton.text("Use the chunks (and give permission)");
         this.setButtonDisableStatus(this.$recordButton, true);
         this.disableChunkButtons(false, true, true, true, true);

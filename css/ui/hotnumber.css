@@ -11,6 +11,8 @@
     position: absolute;
     width: 50px;
     z-index: 100;
+    -webkit-box-sizing: content-box;
+    box-sizing: content-box;
 }
 .hotnumber.picker {
     box-shadow: 0px 0px 4px #000000;

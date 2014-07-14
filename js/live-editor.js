@@ -787,6 +787,7 @@ window.LiveEditor = Backbone.View.extend({
                 record: this.record,
                 editor: this.editor,
                 config: this.config,
+                externalsDir: this.externalsDir,
                 drawCanvas: this.drawCanvas,
                 transloaditTemplate: this.transloaditTemplate,
                 transloaditAuthKey: this.transloaditAuthKey

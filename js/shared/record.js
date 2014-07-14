@@ -48,7 +48,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
         // a timestamp later than audioOffset (which really should not
         // usually happen) -- in that case, use the command's timestamp.
         audioOffset = Math.max(audioOffset, timeOfLastCommand());
-        Record._resetForNewChunk();
+        this._resetForNewChunk();
         this.record(audioOffset);
 
         function timeOfLastCommand() {
