@@ -84,18 +84,7 @@ window.LiveEditor = Backbone.View.extend({
             imagesDir: this.imagesDir
         });
 
-        var codeOptions = { code: options.code || "" };
-
-        this.trigger("initCode", codeOptions);
-        //ScratchpadUI.stashedCode = codeOptions.code;
-
-        var code = codeOptions.code;
-
-        // If there is no user specific code, then we should grab the code out of
-        // the revision
-        //if (!this.blank && !queryString.code) {
-        //    code = code || queryString.code || revision.get("code") || "";
-        //}
+        var code = options.code;
 
         // Load the text into the editor
         if (code !== undefined) {
@@ -980,6 +969,23 @@ window.LiveEditor = Backbone.View.extend({
         this.trigger("runCode", options);
 
         this.postFrame(options);
+    },
+
+    getScreenshot: function(callback) {
+        // Unbind any handlers this function may have set for previous
+        // screenshots
+        $(window).unbind("message.getScreenshot");
+
+        // We're only expecting one screenshot back
+        $(window).bind("message.getScreenshot", function(e) {
+            // Only call if the data is actually an image!
+            if (/^data:/.test(e.originalEvent.data)) {
+                callback(e.originalEvent.data);
+            }
+        });
+
+        // Ask the frame for a screenshot
+        this.postFrame({ screenshot: true });
     },
 
     updateCanvasSize: function(width, height) {
