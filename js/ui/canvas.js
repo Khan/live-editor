@@ -1,6 +1,6 @@
 window.ScratchpadDrawCanvas = Backbone.View.extend({
     initialize: function(options) {
-        this.recordView = options.record;
+        this.record = options.record;
 
         this.undoStack = [];
         this.isDrawing = false;
@@ -13,7 +13,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
 
         this.clear(true);
 
-        if (this.recordView) {
+        if (this.record) {
             this.bindRecordView();
         }
     },
@@ -45,37 +45,37 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
 
     bindRecordView: function() {
         var self = this;
-        var recordView = this.recordView;
+        var record = this.record;
 
         this.$el.on({
             "mousedown.draw-canvas": function(e) {
                 // Left mouse button
-                if (recordView.recording && e.button === 0) {
+                if (record.recording && e.button === 0) {
                     self.startLine(e.offsetX, e.offsetY);
                     e.preventDefault();
                 }
             },
 
             "mousemove.draw-canvas": function(e) {
-                if (recordView.recording) {
+                if (record.recording) {
                     self.drawLine(e.offsetX, e.offsetY);
                 }
             },
 
             "mouseup.draw-canvas": function(e) {
-                if (recordView.recording) {
+                if (record.recording) {
                     self.endLine();
                 }
             },
 
             "mouseout.draw-canvas": function(e) {
-                if (recordView.recording) {
+                if (record.recording) {
                     self.endLine();
                 }
             }
         });
 
-        recordView.on({
+        record.on({
             runSeek: function() {
                 self.clear(true);
                 self.endDraw();
@@ -83,7 +83,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
         });
 
         // Handle record seek caching
-        recordView.seekCachers.canvas = {
+        record.seekCachers.canvas = {
             getState: function() {
                 if (!self.isDrawing) {
                     return;
@@ -120,7 +120,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
 
         // Initialize playback commands
         _.each(this.commands, function(name) {
-            recordView.handlers[name] = function(e) {
+            record.handlers[name] = function(e) {
                 self[name].apply(self, e[name] || []);
             };
         });
@@ -129,16 +129,16 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
         // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
         _.each(this.mouseCommands, function(name) {
             // Handle the command during playback
-            recordView.handlers[name] = function(e) {
+            record.handlers[name] = function(e) {
                 // TODO: Get rid of ScratchpadUI in favor or something other
                 // meta-object that manages scratchpad state.
-                ScratchpadUI.postFrame({ name: name, action: e });
+                self.trigger("mouseEvent", {name: name, action: e});
             };
         });
 
         $(document).on("keydown.draw-canvas", function(e) {
             // Stop if we aren't running
-            if (!recordView.playing || !self.isDrawing) {
+            if (!record.playing || !self.isDrawing) {
                 return;
             }
 
@@ -152,7 +152,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
 
     // TODO: Just use the Record log as an undo stack
     undo: function() {
-        this.recordView.log({ canvas: "undo" });
+        this.record.log({ canvas: "undo" });
 
         // TODO: Eventually allow for a "redo" stack
         var cmd = this.undoStack.pop();
@@ -219,7 +219,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
         if (!this.undoRunning) {
             var obj = {};
             obj[name] = args;
-            Record.log(obj);
+            this.record.log(obj);
         }
 
         this.undoStack.push({ name: name, args: args });

@@ -28,6 +28,8 @@ window.LiveEditor = Backbone.View.extend({
         this.imagesDir = this._qualifyURL(options.imagesDir);
 
         this.initialCode = options.code;
+        this.initialVersion = options.version;
+        this.settings = options.settings;
         this.recordingCommands = options.recordingCommands;
         this.recordingMP3 = options.recordingMP3;
 
@@ -49,17 +51,21 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         this.drawCanvas.on({
+            mouseEvent: function(data) {
+                self.postFrame(data);
+            }.bind(this),
+
             // Drawing has started
             drawStarted: function() {
                 // Activate the canvas
                 $(this.dom.DRAW_CANVAS).show();
-            },
+            }.bind(this),
 
             // Drawing has ended
             drawEnded: function() {
                 // Hide the canvas
                 $(this.dom.DRAW_CANVAS).hide();
-            },
+            }.bind(this),
 
             // A color has been chosen
             colorSet: function(color) {
@@ -72,7 +78,7 @@ window.LiveEditor = Backbone.View.extend({
                     // Select that color and activate the button
                     $("#" + color).addClass("ui-state-active");
                 }
-            }
+            }.bind(this)
         });
 
         // Set up the editor
@@ -134,7 +140,10 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     render: function() {
-        this.$el.html(Handlebars.templates["live-editor"]({}));
+        this.$el.html(Handlebars.templates["live-editor"]({
+            colors: ["black", "red", "orange", "green", "blue", "lightblue",
+                "violet"]
+        }));
     },
 
     bind: function() {
@@ -537,24 +546,6 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         /*
-         * Bind events for tracking the time that the user has spent listening
-         * to the talkie.
-         */
-        record.bind({
-            playStarted: function() {
-                // Record when the audio started (unless recording).
-                if (!record.recordingAudio) {
-                    self.listenStart = (new Date()).getTime();
-                }
-            },
-
-            playPaused: function() {
-                // Update how long the user has been listening.
-                self.checkForListenedTime();
-            }
-        });
-
-        /*
          * Bind events to Record (for recording and playback)
          * and to ScratchpadCanvas (for recording and playback)
          */
@@ -607,8 +598,7 @@ window.LiveEditor = Backbone.View.extend({
             playEnded: function() {
                 // Re-init if the recording version is different from
                 // the scratchpad's normal version
-                //self.config.switchVersion(
-                    //ScratchpadUI.scratchpad.getVersion());
+                self.config.switchVersion(this.initialVersion);
             },
 
             // Playback of a recording has been paused
@@ -811,18 +801,6 @@ window.LiveEditor = Backbone.View.extend({
         });
     },
 
-    checkForListenedTime: function() {
-        if (!this.record || this.record.recordingAudio || !this.listenStart) {
-            return;
-        }
-
-        var curTime = (new Date()).getTime();
-        var elapsed = curTime - this.listenStart;
-        //ScratchpadUI.userScratchpad.addMillisecondsWatched(
-        //    elapsed, Record.currentTime(), Record.endTime());
-        this.listenStart = null;  // Avoid double-counting.
-    },
-
     // We call this function multiple times, because the
     // endTime value may change as we load the file
     updateDurationDisplay: function() {
@@ -960,7 +938,7 @@ window.LiveEditor = Backbone.View.extend({
         var options = {
             code: code,
             version: this.config.curVersion(),
-            settings: this.settings || {}, // TODO: Figure this out
+            settings: this.settings || {},
             execDir: this.execDir,
             externalsDir: this.externalsDir,
             imagesDir: this.imagesDir
@@ -995,40 +973,11 @@ window.LiveEditor = Backbone.View.extend({
         width = width || canvasWidth;
         height = height || canvasHeight;
 
-        var $el = this.$el;
-        var dom = this.dom;
-
-        $el.find(dom.OUTPUT_FRAME).width(width);
-        $el.find(dom.ALL_OUTPUT).height(height);
+        this.$el.find(this.dom.OUTPUT_FRAME).width(width);
+        this.$el.find(this.dom.ALL_OUTPUT).height(height);
 
         // Set the editor height to be the same as the canvas height
-        $el.find(dom.EDITOR).height(height);
-
-        // We need to add 2 to handle the 1px border.
-        var borderWidth = this.showButtons ? 2 : 0;
-
-        // Position the canvas on the right-hand-side (floated)
-        $el.find(dom.CANVAS_WRAP).width(width + borderWidth);
-
-        var marginWidth = this.showOutput ? width + borderWidth : 0;
-        var editorWrap = $el.find(dom.EDITOR_WRAP);
-        editorWrap.css(this.rtl ? "margin-left" : "margin-right",
-                marginWidth);
-
-        // If the scratchpad page is being embedded then we need to set the
-        // dimensions on the page, as well.
-        if (this.embedded && !this.showEditor) {
-            $("html").width(width + borderWidth).height(height);
-        }
-
-        var editor = this.editor.editor;
-
-        // Force the editor to resize.
-        editor.resize();
-
-        // Set the font size. Scale the font size down when the size of the
-        // editor is too small.
-        editor.setFontSize(editorWrap.width() < 400 ? "12px" : "14px");
+        this.$el.find(this.dom.EDITOR).height(height);
 
         this.trigger("canvasSizeUpdated", {
             width: width,

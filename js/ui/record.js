@@ -97,7 +97,8 @@ window.ScratchpadRecordView = Backbone.View.extend({
     initializeRecordingAudio: function() {
         // Start recording the presenter's audio
         this.multirecorder = new MultiRecorder(
-            {workerPath: this.externalsDir + "multirecorder/multirecorder-worker.js"});
+            {workerPath: this.externalsDir +
+                "multirecorderjs/multirecorder-worker.js"});
         this.$recordButton.text("Use the chunks (and give permission)");
         this.setButtonDisableStatus(this.$recordButton, true);
         this.disableChunkButtons(false, true, true, true, true);
