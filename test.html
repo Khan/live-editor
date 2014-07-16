@@ -19,22 +19,28 @@
     <!-- Core dependencies -->
     <script src="external/es5-shim/es5-shim.js"></script>
     <script src="external/jquery/dist/jquery.js"></script>
-    <script src="external/jquery-ui/jquery-ui.js"></script>
+    <script src="external/jqueryui/jquery-ui.js"></script>
     <script src="external/handlebars/handlebars.js"></script>
     <script src="external/underscore/underscore.js"></script>
     <script src="external/backbone/backbone.js"></script>
 
     <!-- Code editor -->
-    <script src="external/ace/build/src-noconflict/ace.js"></script>
-    <script src="external/ace/build/src-noconflict/mode-javascript.js"></script>
-    <script src="external/ace/build/src-noconflict/ext-searchbox.js"></script>
+    <script src="external/ace-builds/src-noconflict/ace.js"></script>
+    <script src="external/ace-builds/src-noconflict/mode-javascript.js"></script>
+    <script src="external/ace-builds/src-noconflict/ext-searchbox.js"></script>
 
     <script src="external/colorpicker/colorpicker.js"></script>
 
+    <!-- Blockly editor -->
+    <script src="external/blockly/blockly_compressed.js"></script>
+    <script src="external/blockly/javascript_compressed.js"></script>
+    <script src="external/blockly/blocks_compressed.js"></script>
+    <script src="external/blockly/msg/js/en.js"></script>
+
     <!-- Audio playback and recording -->
-    <script src="external/soundmanager/script/soundmanager2.js"></script>
-    <script src="external/multirecorder/multirecorder.js"></script>
-    <script src="external/transloadit_xhr/transloadit_xhr.js"></script>
+    <script src="external/SoundManager2/script/soundmanager2.js"></script>
+    <script src="external/multirecorderjs/multirecorder.js"></script>
+    <script src="external/transloaditxhr/transloadit_xhr.js"></script>
 
     <!-- Internal jQuery plugins -->
     <script src="js/ui/jquery.button.js"></script>
@@ -69,10 +75,10 @@
             imagesDir: "/live-editor/images/"
         };
 
-        $.getJSON("test-audio.json", function(data) {
-            window.liveEditor = new LiveEditor(
-                $.extend(options, data));
-        });
+        //$.getJSON("test-audio.json", function(data) {
+            window.liveEditor = new LiveEditor(options);
+                //$.extend(options, data));
+        //});
     });
     </script>
 </head>

@@ -76,12 +76,13 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // Set up the editor
-        this.editor = new ScratchpadEditor({
+        this.editor = new ScratchpadBlocklyEditor({
             el: this.dom.EDITOR,
             autoFocus: options.autoFocus,
             config: this.config,
             record: this.record,
-            imagesDir: this.imagesDir
+            imagesDir: this.imagesDir,
+            externalsDir: this.externalsDir
         });
 
         var codeOptions = { code: options.code || "" };
@@ -112,7 +113,7 @@ window.LiveEditor = Backbone.View.extend({
 
         } else {
             // Set an initial starting selection point
-            this.editor.editor.selection.setSelectionRange({
+            this.editor.setSelection({
                 start: {row: 0, column: 0},
                 end: {row: 0, column: 0}
             });
@@ -120,17 +121,6 @@ window.LiveEditor = Backbone.View.extend({
 
         // Hide the overlay
         $("#page-overlay").hide();
-
-        // TODO(jeresig): hotNumber initializes in the wrong position
-        // this should be changed to wait until rendering of Ace is complete
-        /*
-        setTimeout(function() {
-            this.editor.$el.hotNumber({
-                reload: true,
-                editor: this.editor.editor
-            });
-        }.bind(this), 100);
-        */
 
         // Change the width and height of the output frame if it's been
         // changed by the user, via the query string, or in the settings
@@ -176,7 +166,7 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // Whenever the user changes code, execute the code
-        this.editor.editor.on("change", function() {
+        this.editor.on("change", function() {
             toExec = true;
         });
 
@@ -656,7 +646,7 @@ window.LiveEditor = Backbone.View.extend({
                 $(".disable-overlay").hide();
 
                 // Allow the editor to be changed
-                self.editor.editor.setReadOnly(false);
+                self.editor.setReadOnly(false);
 
                 // Turn off playback-related styling
                 // (hides hot numbers, for example)
@@ -706,7 +696,7 @@ window.LiveEditor = Backbone.View.extend({
                 $("html").addClass("playing");
 
                 // Prevent the editor from being changed
-                self.editor.editor.setReadOnly(true);
+                self.editor.setReadOnly(true);
 
                 $("#draw-widgets").addClass("hidden").hide();
 
@@ -1017,12 +1007,14 @@ window.LiveEditor = Backbone.View.extend({
 
         var editor = this.editor.editor;
 
-        // Force the editor to resize.
-        editor.resize();
+        if (editor) {
+            // Force the editor to resize.
+            editor.resize();
 
-        // Set the font size. Scale the font size down when the size of the
-        // editor is too small.
-        editor.setFontSize(editorWrap.width() < 400 ? "12px" : "14px");
+            // Set the font size. Scale the font size down when the size of the
+            // editor is too small.
+            editor.setFontSize(editorWrap.width() < 400 ? "12px" : "14px");
+        }
 
         this.trigger("canvasSizeUpdated", {
             width: width,

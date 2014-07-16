@@ -48,6 +48,10 @@ window.ScratchpadEditor = Backbone.View.extend({
             self.setErrorHighlight(false);
         });
 
+        this.editor.on("change", function() {
+            self.trigger("change");
+        });
+
         // TODO: Bind directly to object once it's a backbone model
         $(this.config).on("versionSwitched", function(version) {
             self.config.runVersion(version, "editor", self.editor);
@@ -371,5 +375,47 @@ window.ScratchpadEditor = Backbone.View.extend({
                 this.setCursor({row: maxRow + 1, column: 0});
             }
         }
+    },
+
+    setReadOnly: function(state) {
+        this.editor.setReadOnly(state);
+    }
+});
+
+window.ScratchpadBlocklyEditor = Backbone.View.extend({
+    initialize: function(options) {
+        this.defaultCode = options.code;
+        this.autoFocus = options.autoFocus;
+        this.config = options.config;
+        this.record = options.record;
+
+        this.config.editor = this;
+
+        var toolbox = '<xml>';
+        toolbox += '  <block type="controls_if"></block>';
+        toolbox += '  <block type="controls_whileUntil"></block>';
+        toolbox += '</xml>';
+
+        Blockly.inject(this.el, {
+            path: options.externalsDir + "blockly/",
+            toolbox: toolbox
+        });
+
+        Blockly.addChangeListener(function() {
+            this.trigger("change");
+        }.bind(this));
+    },
+
+    setCursor: function() {},
+    setSelection: function() {},
+    focus: function() {},
+    toggleGutter: function() {},
+    setErrorHighlight: function() {},
+    setReadOnly: function() {},
+
+    text: function() {
+        // TODO: Convert JS to Blockly!?
+
+        return Blockly.JavaScript.workspaceToCode();
     }
 });
