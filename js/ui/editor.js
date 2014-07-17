@@ -391,10 +391,25 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
 
         this.config.editor = this;
 
-        var toolbox = '<xml>';
-        toolbox += '  <block type="controls_if"></block>';
-        toolbox += '  <block type="controls_whileUntil"></block>';
-        toolbox += '</xml>';
+        var toolbox = "<xml>";
+        Object.keys(Blockly.p5js).forEach(function(name) {
+            var props = Blockly.p5js[name];
+
+            toolbox += "<block type='p5js_" + name + "'>";
+            props.args.forEach(function(prop) {
+                if ("fill" in prop) {
+                    toolbox += "<value name='" + prop.name + "'>";
+                    if (typeof prop.fill === "number") {
+                        toolbox += "<block type='math_number'>" +
+                            "<field name='NUM'>" + prop.fill + "</field>" +
+                            "</block>";
+                    }
+                    toolbox += "</value>";
+                }
+            });
+            toolbox += "</block>";
+        });
+        toolbox += "</xml>";
 
         Blockly.inject(this.el, {
             path: options.externalsDir + "blockly/",
