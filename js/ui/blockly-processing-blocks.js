@@ -105,6 +105,18 @@ Blockly.p5js = {
             { name: "y", type: "Number", fill: 50, blank: 0 }
         ]
     },
+    width: {
+        url: "https://www.khanacademy.org/cs/width/5933816543707136",
+        title: "Program Width",
+        type: "Number",
+        args: []
+    },
+};
+
+var typeColors = {
+    Number: 230,
+    Text: 160,
+    Colour: 20
 };
 
 Object.keys(Blockly.p5js).forEach(function(name) {
@@ -113,21 +125,32 @@ Object.keys(Blockly.p5js).forEach(function(name) {
     Blockly.Blocks["p5js_" + name] = {
         init: function() {
             this.setHelpUrl(props.url);
-            this.setColour(160);
             this.appendDummyInput()
                 .appendField(props.title);
-            props.args.forEach(function(prop) {
-                this.appendValueInput(prop.name)
-                    .setCheck(prop.type)
-                    .appendField(prop.name);
-            }.bind(this));
-            this.setInputsInline(props.args.length <= 4);
-            this.setPreviousStatement(true);
-            this.setNextStatement(true);
+            if (props.type) {
+                this.setColour(typeColors[props.type]);
+                this.setOutput(true, props.type);
+            } else {
+                this.setColour(200);
+                props.args.forEach(function(prop) {
+                    var input = this.appendValueInput(prop.name);
+                    if (prop.type !== "String") {
+                        input.setCheck(prop.type);
+                    }
+                    input.appendField(prop.name);
+                }.bind(this));
+                this.setInputsInline(props.args.length <= 4);
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+            }
         }
     };
 
     Blockly.JavaScript["p5js_" + name] = function(block) {
+        if (props.type) {
+            return [name, Blockly.JavaScript.ORDER_ATOMIC];
+        }
+
         var values = props.args.map(function(prop) {
             var val = Blockly.JavaScript.valueToCode(block, prop.name,
                 Blockly.JavaScript.ORDER_NONE);
