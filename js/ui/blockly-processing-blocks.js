@@ -96,6 +96,15 @@ Blockly.p5js = {
             { name: "color", type: "Colour", fill: "color(255,0,0)" }
         ]
     },
+    text: {
+        url: "https://www.khanacademy.org/cs/texttext-x-y/937624625",
+        title: "Draw Text",
+        args: [
+            { name: "text", type: "String", fill: "", blank: "" },
+            { name: "x", type: "Number", fill: 50, blank: 0 },
+            { name: "y", type: "Number", fill: 50, blank: 0 }
+        ]
+    },
 };
 
 Object.keys(Blockly.p5js).forEach(function(name) {
@@ -122,8 +131,18 @@ Object.keys(Blockly.p5js).forEach(function(name) {
         var values = props.args.map(function(prop) {
             var val = Blockly.JavaScript.valueToCode(block, prop.name,
                 Blockly.JavaScript.ORDER_NONE);
-            return val != null ? val :
-                ("blank" in prop ? String(prop.blank) : String(prop.fill));
+
+            if (val != null && val !== "") {
+                return val;
+            }
+
+            val = ("blank" in prop ? prop.blank : prop.fill);
+
+            if (typeof val === "string") {
+                return '"' + val + '"';
+            } else {
+                return val;
+            }
         });
 
         return name + "(" + values.join(",") + ");\n";
