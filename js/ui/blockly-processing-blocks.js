@@ -88,7 +88,14 @@ Blockly.p5js = {
             { name: "x2", type: "Number", fill: 100, blank: 0 },
             { name: "y2", type: "Number", fill: 100, blank: 0 }
         ]
-    }
+    },
+    fill: {
+        url: "https://www.khanacademy.org/cs/fillr-g-b/839774957",
+        title: "Fill Color",
+        args: [
+            { name: "color", type: "Colour", fill: "color(255,0,0)" }
+        ]
+    },
 };
 
 Object.keys(Blockly.p5js).forEach(function(name) {
@@ -122,3 +129,16 @@ Object.keys(Blockly.p5js).forEach(function(name) {
         return name + "(" + values.join(",") + ");\n";
     };
 });
+
+var hexToColor = function(hex) {
+    var nums = [hex.slice(1,3), hex.slice(3,5), hex.slice(5,7)];
+    nums = nums.map(function(num) {
+        return parseInt(num, 16);
+    }).join(",");
+    return "color(" + nums + ")";
+};
+
+Blockly.JavaScript.colour_picker = function(block) {
+    return [hexToColor(block.getFieldValue("COLOUR")),
+        Blockly.JavaScript.ORDER_ATOMIC];
+};

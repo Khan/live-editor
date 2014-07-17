@@ -399,7 +399,10 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
             props.args.forEach(function(prop) {
                 if ("fill" in prop) {
                     toolbox += "<value name='" + prop.name + "'>";
-                    if (typeof prop.fill === "number") {
+                    if (prop.type === "Colour") {
+                        toolbox += "<block type='colour_picker'>" +
+                            "</block>";
+                    } else if (typeof prop.fill === "number") {
                         toolbox += "<block type='math_number'>" +
                             "<field name='NUM'>" + prop.fill + "</field>" +
                             "</block>";
