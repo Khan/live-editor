@@ -248,6 +248,19 @@ Blockly.p5js = {
             url: "",
             title: "Animate",
             type: "Event"
+        },
+        millis: {
+            url: "https://www.khanacademy.org/cs/millis/5970545493409792",
+            title: "Milliseconds elapsed",
+            ret: "Number",
+            args: []
+        },
+        println: {
+            url: "https://www.khanacademy.org/cs/printlndata/6120466259378176",
+            title: "Print to console",
+            args: [
+                { name: "data", fill: 0, blank: 0 }
+            ]
         }
     },
     Mouse: {
@@ -309,7 +322,8 @@ Blockly.p5js = {
             args: [
                 { name: "low", type: "Number", fill: 0, blank: 0 },
                 { name: "high", type: "Number", fill: 5, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         },
         dist: {
             url: "https://www.khanacademy.org/cs/distx1-y1-x2-y2/1917352082",
@@ -319,37 +333,42 @@ Blockly.p5js = {
                 { name: "y1", type: "Number", fill: 0, blank: 0 },
                 { name: "x2", type: "Number", fill: 5, blank: 0 },
                 { name: "y3", type: "Number", fill: 5, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         },
         min: {
             url: "https://www.khanacademy.org/cs/minnum1-num2/4693347713155072",
             title: "Calculate minimum of",
             args: [
                 { name: "num1", type: "Number", fill: 0, blank: 0 },
-                { name: "num2", type: "Number", fill: 0, blank: 0 }
-            ]
+                { name: "num2", type: "Number", fill: 2, blank: 0 }
+            ],
+            ret: "Number"
         },
         max: {
             url: "https://www.khanacademy.org/cs/maxnum1-num2/4755409722146816",
             title: "Calculate maximum of",
             args: [
                 { name: "num1", type: "Number", fill: 0, blank: 0 },
-                { name: "num2", type: "Number", fill: 0, blank: 0 }
-            ]
+                { name: "num2", type: "Number", fill: 2, blank: 0 }
+            ],
+            ret: "Number"
         },
         abs: {
             url: "https://www.khanacademy.org/cs/absnum/877930637",
             title: "Calculate absolute value of",
             args: [
-                { name: "num", type: "Number", fill: 0, blank: 0 }
-            ]
+                { name: "num", type: "Number", fill: -1, blank: 0 }
+            ],
+            ret: "Number"
         },
         log: {
             url: "https://www.khanacademy.org/cs/lognum/877921884",
             title: "Calculate logarithm of",
             args: [
-                { name: "num", type: "Number", fill: 0, blank: 0 }
-            ]
+                { name: "num", type: "Number", fill: 8, blank: 0 }
+            ],
+            ret: "Number"
         },
         pow: {
             url: "https://www.khanacademy.org/cs/pownum-exponent/877858853",
@@ -357,69 +376,110 @@ Blockly.p5js = {
             args: [
                 { name: "num", type: "Number", fill: 2, blank: 0 },
                 { name: "exponent", type: "Number", fill: 3, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         },
         sq: {
             url: "https://www.khanacademy.org/cs/sqnum/6588187426160640",
             title: "Square a number",
             args: [
                 { name: "num", type: "Number", fill: 2, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         },
         sqrt: {
             url: "https://www.khanacademy.org/cs/sqrtnum/6473360267542528",
             title: "Take square root of",
             args: [
                 { name: "num", type: "Number", fill: 4, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         },
         round: {
             url: "https://www.khanacademy.org/cs/roundnum/5907281296228352",
             title: "Round number",
             args: [
                 { name: "num", type: "Number", fill: 2.5, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         },
         ceil: {
             url: "https://www.khanacademy.org/cs/ceil/5491781646942208",
             title: "Take ceiling of",
             args: [
                 { name: "num", type: "Number", fill: 2.4, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         },
         floor: {
             url: "https://www.khanacademy.org/cs/floornum/5703004061696000",
             title: "Take floor of",
             args: [
                 { name: "num", type: "Number", fill: 2.6, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         },
         cos: {
             url: "https://www.khanacademy.org/cs/cosdeg/948226821",
             title: "Take cosine of angle",
             args: [
                 { name: "num", type: "Number", fill: 90, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         },
         sin: {
             url: "https://www.khanacademy.org/cs/sindeg/948255306",
             title: "Take sine of angle",
             args: [
                 { name: "num", type: "Number", fill: 90, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         },
         tan: {
             url: "https://www.khanacademy.org/cs/tandeg/948018680",
             title: "Take tangent of angle",
             args: [
                 { name: "num", type: "Number", fill: 90, blank: 0 }
-            ]
+            ],
+            ret: "Number"
         }
     },
     "Date/Time": {
         day: {
             url: "https://www.khanacademy.org/cs/day/4526347808407552",
-            title: "Current day"
+            title: "Current day",
+            ret: "Number",
+            args: []
+        },
+        month: {
+            url: "https://www.khanacademy.org/cs/month/5388987023753216",
+            title: "Current month",
+            ret: "Number",
+            args: []
+        },
+        year: {
+            url: "https://www.khanacademy.org/cs/year/6216887939629056",
+            title: "Current year",
+            ret: "Number",
+            args: []
+        },
+        hour: {
+            url: "https://www.khanacademy.org/cs/hour/5806957302644736",
+            title: "Current hour",
+            ret: "Number",
+            args: []
+        },
+        minute: {
+            url: "https://www.khanacademy.org/cs/minute/6638408210317312",
+            title: "Current minute",
+            ret: "Number",
+            args: []
+        },
+        second: {
+            url: "https://www.khanacademy.org/cs/second/5743886110556160",
+            title: "Current second",
+            ret: "Number",
+            args: []
         }
     }
 };
