@@ -18,6 +18,7 @@
     a = a.getInputTargetBlock(b);
     if (!a) return "";
     var d = this.blockToCode(a);
+    console.log(d, d instanceof Array, d.constructor)
     if ("" === d) return "";
     if (!(d instanceof Array)) throw 'Expecting tuple from value block "' + a.type + '".';
     b = d[0];

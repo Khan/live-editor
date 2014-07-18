@@ -356,26 +356,30 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
             var values = props.args.map(function(prop) {
                 if (prop.type === "List") {
                     return block.getFieldValue('PROPERTY');
+                }
+
+                var val = Blockly.JavaScript.valueToCode(block, prop.name,
+                    Blockly.JavaScript.ORDER_NONE);
+
+                if (val !== null && val !== "") {
+                    return val;
+                }
+
+                val = ("blank" in prop ? prop.blank : prop.fill);
+
+                if (typeof val === "string") {
+                    return '"' + val + '"';
                 } else {
-                    var val = Blockly.JavaScript.valueToCode(block, prop.name,
-                        Blockly.JavaScript.ORDER_NONE);
-
-
-                    if (val !== null && val !== "") {
-                        return val;
-                    }
-
-                    val = ("blank" in prop ? prop.blank : prop.fill);
-
-                    if (typeof val === "string") {
-                        return '"' + val + '"';
-                    } else {
-                        return val;
-                    }
+                    return val;
                 }
             });
 
-            return name + "(" + values.join(",") + ");\n";
+            if (props.ret) {
+                return [name + "(" + values.join(",") + ")",
+                    Blockly.JavaScript.ORDER_ATOMIC];
+            } else {
+                return name + "(" + values.join(",") + ");\n";
+            }
         };
     });
 });
@@ -445,7 +449,6 @@ Blockly.util.registerBlockSignature(
                 "</block></value>";
         } else {
             matchedProps.arguments.forEach(function(arg, i) {
-                console.log("arg", props.args[i].name)
                 callBlock += "<value name='" + props.args[i].name + "'>" +
                     Blockly.util.convertAstNodeToBlocks(arg) + "</value>";
             });
@@ -484,7 +487,6 @@ Blockly.util.registerBlockSignature(
 
         matchedProps.declarations.reverse().forEach(function(dec) {
             var props = findDefByName(dec.id.name);
-            console.log("dec.id.name", dec.id.name)
             if (props && props.type === "Event" && dec.init && dec.init.body) {
                 var decBlock = "<block type='p5js_" + dec.id.name + "'></block>";
                 // Append initialization to DO if present
