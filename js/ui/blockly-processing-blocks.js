@@ -153,6 +153,7 @@ Blockly.p5js = {
         color: {
             url: "https://www.khanacademy.org/cs/colorr-g-b/957020020",
             title: "Store a color",
+            ret: "Colour",
             args: [
                 { name: "color", type: "Colour", fill: "color(255,0,0)" }
             ]
@@ -311,7 +312,6 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
                     this.setColour(typeColors[props.type]);
                     this.setOutput(true, props.type);
                 } else {
-                    this.setColour(200);
                     props.args.forEach(function(prop) {
                         // check if type is a list
                         if (prop.type === "List") {
@@ -324,12 +324,22 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
                             if (prop.type !== "String") {
                                 input.setCheck(prop.type);
                             }
-                            input.appendField(prop.name);
+                            if (props.args.length > 1) {
+                                input.appendField(prop.name);
+                            }
                         }
                     }.bind(this));
+
                     this.setInputsInline(props.args.length <= 4);
-                    this.setPreviousStatement(true);
-                    this.setNextStatement(true);
+
+                    if (props.ret) {
+                        this.setColour(typeColors[props.ret]);
+                        this.setOutput(true, props.ret);
+                    } else {
+                        this.setColour(200);
+                        this.setPreviousStatement(true);
+                        this.setNextStatement(true);
+                    }
                 }
             }
         };
@@ -372,10 +382,26 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
 
 var hexToColor = function(hex) {
     var nums = [hex.slice(1,3), hex.slice(3,5), hex.slice(5,7)];
-    nums = nums.map(function(num) {
+    return nums.map(function(num) {
         return parseInt(num, 16);
     }).join(",");
-    return "color(" + nums + ")";
+};
+
+var convertArgsToHex = function(args) {
+    var rgb = args;
+
+    if (args.length === 3) {
+        rgb = [args[0].value, args[1].value, args[2].value];
+    } else if (args.length === 1) {
+        // TODO: Handle color(...)
+        var val = args[0].value;
+        rgb = [val, val, val];
+    }
+
+    return "#" + rgb.map(function(arg) {
+        var result = arg.toString(16);
+        return (result.length === 1 ? "0" : "") + result;
+    }).join("");
 };
 
 Blockly.JavaScript.colour_picker = function(block) {
@@ -411,10 +437,20 @@ Blockly.util.registerBlockSignature(
 
         var callBlock = "";
         callBlock += "<block type='p5js_" + matchedProps.callee_name + "'>";
-        matchedProps.arguments.forEach(function(arg, i) {
-            callBlock += "<value name='" + props.args[i].name + "'>" +
-                Blockly.util.convertAstNodeToBlocks(arg) + "</value>";
-        });
+
+        if (props.args[0] && props.args[0].type ==="Colour") {
+            callBlock += "<value name='" + props.args[0].name + "'>" +
+                "<block type='colour_picker'><field name='COLOUR'>" +
+                convertArgsToHex(matchedProps.arguments) + "</field>" +
+                "</block>";
+        } else {
+            matchedProps.arguments.forEach(function(arg, i) {
+                console.log("arg", props.args[i].name)
+                callBlock += "<value name='" + props.args[i].name + "'>" +
+                    Blockly.util.convertAstNodeToBlocks(arg) + "</value>";
+            });
+        }
+
         callBlock += "</block>";
         return callBlock;
     }
@@ -449,7 +485,7 @@ Blockly.util.registerBlockSignature(
         matchedProps.declarations.reverse().forEach(function(dec) {
             var props = findDefByName(dec.id.name);
             console.log("dec.id.name", dec.id.name)
-            if (props && props.type === "Event") {
+            if (props && props.type === "Event" && dec.init && dec.init.body) {
                 var decBlock = "<block type='p5js_" + dec.id.name + "'></block>";
                 // Append initialization to DO if present
                 if (dec.init) {
