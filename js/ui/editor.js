@@ -445,8 +445,19 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
     setErrorHighlight: function() {},
     setReadOnly: function() {},
 
-    text: function() {
-        // TODO: Convert JS to Blockly!?
+    setBlocklyFromJS: function(code) {
+        var xmlString = Blockly.util.jsToBlocklyXml(code);
+        var xmlDom = Blockly.core.Xml.textToDom(xmlString);
+        if (xmlDom) {
+            Blockly.core.mainWorkspace.clear();
+            Blockly.core.Xml.domToWorkspace(Blockly.core.mainWorkspace, xmlDom);
+        }
+    },
+
+    text: function(code) {
+        if (code != null) {
+            this.setBlocklyFromJS(code);
+        }
 
         return Blockly.JavaScript.workspaceToCode();
     }

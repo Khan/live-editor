@@ -129,7 +129,7 @@ exports.load = function(str, options) {
     return str;
   }
 
-	var parser = require("sax").parser(true, {trim:true, xmlns:false});
+	var parser = sax.parser(true, {trim:true, xmlns:false});
 	var result = {}, 
 		stack = [], 
 		cdata = '';

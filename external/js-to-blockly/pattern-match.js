@@ -18,7 +18,7 @@ function match(actual, body, thisArg) {
     var cases = [];
 
     if (typeof thisArg === 'undefined')
-        thisArg = global;
+        thisArg = window;
 
     body.call(thisArg, function(pattern, template, thisArg) {
         cases.push({
@@ -39,7 +39,7 @@ function matchCases(actual, cases) {
             var matches = {};
             matchPattern(c.pattern, actual, matches);
             return c.template
-                 ? c.template.call(typeof c.thisArg === 'undefined' ? global : c.thisArg, matches)
+                 ? c.template.call(typeof c.thisArg === 'undefined' ? window : c.thisArg, matches)
                  : matches;
         } catch (e) {
             if (e instanceof MatchError)

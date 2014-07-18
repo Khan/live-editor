@@ -39,9 +39,6 @@ function checkMatch(node, signature) {
     // patternMatch throws an error if it does not find a match
     return patternMatch(node,matcherFn)
   } catch(err) {
-    if (typeof err === 'string') {
-      console.log(err)
-    }
     return false
   }
 }
@@ -140,4 +137,3 @@ return {
   appendTagDeep: appendTagDeep,  
 }
 })();
-
