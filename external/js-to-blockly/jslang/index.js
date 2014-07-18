@@ -8,7 +8,7 @@
   var wordsToBeLiberated = ['console']
   wordsToBeLiberated.forEach(function(word){
     var index = rw.indexOf(word); // Find the index
-    if(index!=-1) rw.splice(index, 1); // Remove it if really found!  
+    if(index!=-1) rw.splice(index, 1); // Remove it if really found!
   })
   Blockly.core.JavaScript.RESERVED_WORDS_ = rw.join(',')
 
@@ -18,7 +18,6 @@
     a = a.getInputTargetBlock(b);
     if (!a) return "";
     var d = this.blockToCode(a);
-    console.log(d, d instanceof Array, d.constructor)
     if ("" === d) return "";
     if (!(d instanceof Array)) throw 'Expecting tuple from value block "' + a.type + '".';
     b = d[0];

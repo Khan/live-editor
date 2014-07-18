@@ -476,7 +476,7 @@ Blockly.util.registerBlockSignature(
     }
 );
 
-// Handle p5js events
+// Handle p5js events and regular variable declarations
 Blockly.util.registerBlockSignature(
     {
         type: "VariableDeclaration",
@@ -495,13 +495,13 @@ Blockly.util.registerBlockSignature(
                     decBlock = Blockly.util.appendTagDeep(decBlock, decInit, "value", "DO");
                 }
             } else {
-                var decBlock = "<block type='jslang_var'>";
-                decBlock += "<title name='VAR'>" + dec.id.name + "</title>";
+                var decBlock = "<block type='variables_set'>";
+                decBlock += "<field name='VAR'>" + dec.id.name + "</field>";
                 decBlock += "</block>";
                 // Append initialization to CHAIN if present
                 if (dec.init) {
                     var decInit = Blockly.util.convertAstNodeToBlocks(dec.init);
-                    decBlock = Blockly.util.appendTagDeep(decBlock, decInit, "value", "CHAIN");
+                    decBlock = Blockly.util.appendTagDeep(decBlock, decInit, "value", "VALUE");
                 }
             }
 
