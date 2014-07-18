@@ -1,17 +1,35 @@
 /* 
  Missing but want to add:
  -----------------------------
- image()
+
+ Drawing:
+  image()
+
 
  Probably don't add, or add but hide:
  -----------------------------
- mouseButton - not as relevant on mobile..
+ 
+ Color:
+  blendColor()
+  lerpColor()
+ 
+ Environment:
+  frameRate()
 
- blendColor()
- lerpColor()
- frameRate()
- mouseOver()
- mouseOut()
+ Mouse:
+  mouseButton - not as relevant on mobile..
+  mouseOver()
+  mouseOut()
+
+ Keyboard - we will have this but hidden,
+   and then add a triggersKeyboard: true
+   to each of the keyboard-related things,
+   so that if we see them when parsing the code,
+   we know to pop up the virtual keyboard.
+
+ Math:
+  constrain
+  PVector
 
 Still to triage:
 ------------------------------
@@ -162,7 +180,7 @@ Blockly.p5js = {
     Text: {
         text: {
             url: "https://www.khanacademy.org/cs/texttext-x-y/937624625",
-            title: "Write text",
+            title: "Display text",
             args: [
                 { name: "text", type: "String", fill: "", blank: "" },
                 { name: "x", type: "Number", fill: 50, blank: 0 },
@@ -283,12 +301,132 @@ Blockly.p5js = {
             title: "When mouse is dragged",
             type: "Event"
         }
+    },
+    Math: {
+        random: {
+            url: "https://www.khanacademy.org/cs/randomlow-high/827911487",
+            title: "Generate random number",
+            args: [
+                { name: "low", type: "Number", fill: 0, blank: 0 },
+                { name: "high", type: "Number", fill: 5, blank: 0 }
+            ]
+        },
+        dist: {
+            url: "https://www.khanacademy.org/cs/distx1-y1-x2-y2/1917352082",
+            title: "Calculate distance between",
+            args: [
+                { name: "x1", type: "Number", fill: 0, blank: 0 },
+                { name: "y1", type: "Number", fill: 0, blank: 0 },
+                { name: "x2", type: "Number", fill: 5, blank: 0 },
+                { name: "y3", type: "Number", fill: 5, blank: 0 }
+            ]
+        },
+        min: {
+            url: "https://www.khanacademy.org/cs/minnum1-num2/4693347713155072",
+            title: "Calculate minimum of",
+            args: [
+                { name: "num1", type: "Number", fill: 0, blank: 0 },
+                { name: "num2", type: "Number", fill: 0, blank: 0 }
+            ]
+        },
+        max: {
+            url: "https://www.khanacademy.org/cs/maxnum1-num2/4755409722146816",
+            title: "Calculate maximum of",
+            args: [
+                { name: "num1", type: "Number", fill: 0, blank: 0 },
+                { name: "num2", type: "Number", fill: 0, blank: 0 }
+            ]
+        },
+        abs: {
+            url: "https://www.khanacademy.org/cs/absnum/877930637",
+            title: "Calculate absolute value of",
+            args: [
+                { name: "num", type: "Number", fill: 0, blank: 0 }
+            ]
+        },
+        log: {
+            url: "https://www.khanacademy.org/cs/lognum/877921884",
+            title: "Calculate logarithm of",
+            args: [
+                { name: "num", type: "Number", fill: 0, blank: 0 }
+            ]
+        },
+        pow: {
+            url: "https://www.khanacademy.org/cs/pownum-exponent/877858853",
+            title: "Raise number to power",
+            args: [
+                { name: "num", type: "Number", fill: 2, blank: 0 },
+                { name: "exponent", type: "Number", fill: 3, blank: 0 }
+            ]
+        },
+        sq: {
+            url: "https://www.khanacademy.org/cs/sqnum/6588187426160640",
+            title: "Square a number",
+            args: [
+                { name: "num", type: "Number", fill: 2, blank: 0 }
+            ]
+        },
+        sqrt: {
+            url: "https://www.khanacademy.org/cs/sqrtnum/6473360267542528",
+            title: "Take square root of",
+            args: [
+                { name: "num", type: "Number", fill: 4, blank: 0 }
+            ]
+        },
+        round: {
+            url: "https://www.khanacademy.org/cs/roundnum/5907281296228352",
+            title: "Round number",
+            args: [
+                { name: "num", type: "Number", fill: 2.5, blank: 0 }
+            ]
+        },
+        ceil: {
+            url: "https://www.khanacademy.org/cs/ceil/5491781646942208",
+            title: "Take ceiling of",
+            args: [
+                { name: "num", type: "Number", fill: 2.4, blank: 0 }
+            ]
+        },
+        floor: {
+            url: "https://www.khanacademy.org/cs/floornum/5703004061696000",
+            title: "Take floor of",
+            args: [
+                { name: "num", type: "Number", fill: 2.6, blank: 0 }
+            ]
+        },
+        cos: {
+            url: "https://www.khanacademy.org/cs/cosdeg/948226821",
+            title: "Take cosine of angle",
+            args: [
+                { name: "num", type: "Number", fill: 90, blank: 0 }
+            ]
+        },
+        sin: {
+            url: "https://www.khanacademy.org/cs/sindeg/948255306",
+            title: "Take sine of angle",
+            args: [
+                { name: "num", type: "Number", fill: 90, blank: 0 }
+            ]
+        },
+        tan: {
+            url: "https://www.khanacademy.org/cs/tandeg/948018680",
+            title: "Take tangent of angle",
+            args: [
+                { name: "num", type: "Number", fill: 90, blank: 0 }
+            ]
+        }
+    },
+    "Date/Time": {
+        day: {
+            url: "https://www.khanacademy.org/cs/day/4526347808407552",
+            title: "Current day"
+        }
     }
 };
 
 var typeColors = {
     Number: 230,
-    Text: 160,
+    String: 160,
     Colour: 20,
     Event: 40
 };
