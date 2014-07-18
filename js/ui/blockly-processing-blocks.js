@@ -424,6 +424,21 @@ Blockly.p5js = {
     }
 };
 
+Blockly.js = {
+    Text: {
+        text: {},
+        text_join: {}
+    },
+    Logic: {
+        controls_if: {},
+        logic_compare: {},
+        logic_operation: {},
+        logic_negate: {},
+        logic_boolean: {},
+        logic_ternary: {}
+    }
+};
+
 var typeColors = {
     Number: 230,
     String: 160,

@@ -424,6 +424,32 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
                 toolbox += "</block>";
             });
 
+            var jsVars = Blockly.js[catName];
+
+            if (jsVars) {
+                Object.keys(jsVars).forEach(function(name) {
+                    toolbox += "<block type='" + name + "'>";
+                    toolbox += "</block>";
+                });
+            }
+
+            toolbox += "</category>";
+        });
+
+        Object.keys(Blockly.js).forEach(function(catName) {
+            if (catName in Blockly.p5js) {
+                return;
+            }
+
+            var jsVars = Blockly.js[catName];
+
+            toolbox += "<category name='" + catName + "'>";
+
+            Object.keys(jsVars).forEach(function(name) {
+                toolbox += "<block type='" + name + "'>";
+                toolbox += "</block>";
+            });
+
             toolbox += "</category>";
         });
         toolbox += "</xml>";
