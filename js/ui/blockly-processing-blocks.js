@@ -1,3 +1,23 @@
+/* 
+ Missing but want to add:
+ -----------------------------
+ image()
+
+ Probably don't add, or add but hide:
+ -----------------------------
+ mouseButton - not as relevant on mobile..
+
+ blendColor()
+ lerpColor()
+ frameRate()
+ mouseOver()
+ mouseOut()
+
+Still to triage:
+------------------------------
+ Keyboard on
+*/
+
 Blockly.p5js = {
     Drawing: {
         point: {
@@ -92,48 +112,117 @@ Blockly.p5js = {
         }
     },
     Colors: {
-        fill: {
-            url: "https://www.khanacademy.org/cs/fillr-g-b/839774957",
-            title: "Fill Color",
+        background: {
+            url: "https://www.khanacademy.org/cs/backgroundr-g-b/839653892",
+            title: "Set background color",
             args: [
                 { name: "color", type: "Colour", fill: "color(255,0,0)" }
             ]
         },
+        fill: {
+            url: "https://www.khanacademy.org/cs/fillr-g-b/839774957",
+            title: "Set fill color",
+            args: [
+                { name: "color", type: "Colour", fill: "color(255,0,0)" }
+            ]
+        },
+        noFill: {
+            url: "https://www.khanacademy.org/cs/nofill/877946290",
+            title: "Turn off fill",
+            args: []
+        },
         stroke: {
             url: "https://www.khanacademy.org/cs/stroker-g-b/839545910",
-            title: "Stroke Color",
+            title: "Set outline color",
             args: [
                 { name: "color", type: "Colour", fill: "color(255,0,0)" }
             ]
         },
         strokeWeight: {
             url: "https://www.khanacademy.org/cs/strokeweightthickness/877859744",
-            title: "Stroke Weight",
+            title: "Set outline thickness",
             args: [
                 { name: "weight", type: "Number", fill: 10 }
             ]
-        }
+        },
+        noStroke: {
+            url: "https://www.khanacademy.org/cs/nostroke/839859412",
+            title: "Turn off outlines",
+            args: []
+        },
+        color: {
+            url: "https://www.khanacademy.org/cs/colorr-g-b/957020020",
+            title: "Store a color",
+            args: [
+                { name: "color", type: "Colour", fill: "color(255,0,0)" }
+            ]
+        },
     },
     Text: {
         text: {
             url: "https://www.khanacademy.org/cs/texttext-x-y/937624625",
-            title: "Draw Text",
+            title: "Write text",
             args: [
                 { name: "text", type: "String", fill: "", blank: "" },
                 { name: "x", type: "Number", fill: 50, blank: 0 },
                 { name: "y", type: "Number", fill: 50, blank: 0 }
+            ]
+        },
+        textSize: {
+            url: "https://www.khanacademy.org/cs/textsizesize/937728198",
+            title: "Set text size",
+            args: [
+                { name: "size", type: "Number", fill: 12, blank: 0 }
+            ]
+        },
+        textFont: {
+            url: "https://www.khanacademy.org/cs/textfontfont-size/940030209",
+            title: "Set font",
+            args: [
+                {
+                  name: "font", type: "List", fill: "", blank: "",
+                  options: [["casual",  'createFont("sans-serif")'],
+                            ["proper",  'createFont("serif")'],
+                            ["cursive", 'createFont("cursive")'],
+                            ["fantasy", 'createFont("fantasy")'],
+                            ["code",    'createFont("monospace")']]
+                }
+            ]
+        },
+    },
+    Transforms: {
+        rotate: {
+            url: "https://www.khanacademy.org/cs/rotateangle/6386091934351360",
+            title: "Rotate next shapes by",
+            args: [
+                { name: "angle", type: "Number", fill: 30, blank: 0 }
+            ]
+        },
+        scale: {
+            url: "https://www.khanacademy.org/cs/scalex-y/6712922034143232",
+            title: "Scale next shapes by",
+            args: [
+                { name: "amount", type: "Number", fill: 2, blank: 0 }
+            ]
+        },
+        translate: {
+            url: "https://www.khanacademy.org/cs/translatex-y/6505693083336704",
+            title: "Translate next shapes by",
+            args: [
+                { name: "x", type: "Number", fill: 10, blank: 0 },
+                { name: "t", type: "Number", fill: 10, blank: 0 }
             ]
         }
     },
     Environment: {
         width: {
             url: "https://www.khanacademy.org/cs/width/5933816543707136",
-            title: "Program Width",
+            title: "Program width",
             type: "Number"
         },
         height: {
             url: "https://www.khanacademy.org/cs/height/4544657253990400",
-            title: "Program Height",
+            title: "Program height",
             type: "Number"
         },
         draw: {
@@ -145,23 +234,53 @@ Blockly.p5js = {
     Mouse: {
         mouseX: {
             url: "https://www.khanacademy.org/cs/mousex-mousey/5538427537719296",
-            title: "Mouse X",
+            title: "mouse X",
             type: "Number"
         },
         mouseY: {
             url: "https://www.khanacademy.org/cs/mousex-mousey/5538427537719296",
-            title: "Mouse Y",
+            title: "mouse Y",
             type: "Number"
         },
         pmouseX: {
             url: "https://www.khanacademy.org/cs/pmousex-pmousey/5082026180870144",
-            title: "Old Mouse X",
+            title: "old mouse X",
             type: "Number"
         },
         pmouseY: {
             url: "https://www.khanacademy.org/cs/pmousex-pmousey/5082026180870144",
-            title: "Old Mouse Y",
+            title: "old mouse Y",
             type: "Number"
+        },
+        mouseIsPressed: {
+            url: "https://www.khanacademy.org/cs/mouseispressed/939933053",
+            title: "the mouse is pressed",
+            type: "Boolean"
+        },
+        mouseClicked: {
+            url: "https://www.khanacademy.org/cs/var-mouseclicked-function/1897113673",
+            title: "When mouse is clicked",
+            type: "Event"
+        },
+        mousePressed: {
+            url: "https://www.khanacademy.org/cs/var-mousepressed-function/1907626123",
+            title: "When mouse is pressed",
+            type: "Event"
+        },
+        mouseReleased: {
+            url: "https://www.khanacademy.org/cs/var-mousereleased-function/1907670118",
+            title: "When mouse is released",
+            type: "Event"
+        },
+        mouseMoved: {
+            url: "https://www.khanacademy.org/cs/var-mousemoved-function/5689134450475008",
+            title: "When mouse is moved",
+            type: "Event"
+        },
+        mouseDragged: {
+            url: "https://www.khanacademy.org/cs/var-mousedragged-function/6273229589053440",
+            title: "When mouse is dragged",
+            type: "Event"
         }
     }
 };
@@ -194,11 +313,19 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
                 } else {
                     this.setColour(200);
                     props.args.forEach(function(prop) {
-                        var input = this.appendValueInput(prop.name);
-                        if (prop.type !== "String") {
-                            input.setCheck(prop.type);
+                        // check if type is a list
+                        if (prop.type === "List") {
+                            var dropdown = new Blockly.FieldDropdown(
+                                prop.options);
+                            this.appendDummyInput(prop.name)
+                                    .appendField(dropdown, 'PROPERTY');
+                        } else {
+                            var input = this.appendValueInput(prop.name);
+                            if (prop.type !== "String") {
+                                input.setCheck(prop.type);
+                            }
+                            input.appendField(prop.name);
                         }
-                        input.appendField(prop.name);
                     }.bind(this));
                     this.setInputsInline(props.args.length <= 4);
                     this.setPreviousStatement(true);
@@ -217,19 +344,24 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
             }
 
             var values = props.args.map(function(prop) {
-                var val = Blockly.JavaScript.valueToCode(block, prop.name,
-                    Blockly.JavaScript.ORDER_NONE);
-
-                if (val != null && val !== "") {
-                    return val;
-                }
-
-                val = ("blank" in prop ? prop.blank : prop.fill);
-
-                if (typeof val === "string") {
-                    return '"' + val + '"';
+                if (prop.type === "List") {
+                    return block.getFieldValue('PROPERTY');
                 } else {
-                    return val;
+                    var val = Blockly.JavaScript.valueToCode(block, prop.name,
+                        Blockly.JavaScript.ORDER_NONE);
+
+
+                    if (val !== null && val !== "") {
+                        return val;
+                    }
+
+                    val = ("blank" in prop ? prop.blank : prop.fill);
+
+                    if (typeof val === "string") {
+                        return '"' + val + '"';
+                    } else {
+                        return val;
+                    }
                 }
             });
 
