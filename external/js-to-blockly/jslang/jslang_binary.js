@@ -58,7 +58,24 @@
         case '*': operator = 'MULTIPLY'; break;
         case '/': operator = 'DIVIDE'; break;
       }
-      var output = '<block type="math_arithmetic"><title name="OP">'+operator+'</title></block>'
+      if (operator) {
+          var output = '<block type="math_arithmetic"><title name="OP">' +
+              operator + '</title></block>';
+      } else {
+          switch (matchedProps.operator) {
+            case '===': operator = 'EQ'; break;
+            case '==': operator = 'EQ'; break;
+            case '!==': operator = 'NEQ'; break;
+            case '!=': operator = 'NEQ'; break;
+            case '<': operator = 'LT'; break;
+            case '<=': operator = 'LTE'; break;
+            case '>': operator = 'GT'; break;
+            case '>': operator = 'GTE'; break;
+          }
+
+          var output = '<block type="logic_compare"><title name="OP">' +
+              operator + '</title></block>';
+      }
       var leftBlock = Blockly.util.convertAstNodeToBlocks(matchedProps.left)
       var rightBlock = Blockly.util.convertAstNodeToBlocks(matchedProps.right)
       output = Blockly.util.appendTagDeep(output, leftBlock, 'value', 'A')
