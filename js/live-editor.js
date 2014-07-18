@@ -33,6 +33,7 @@ window.LiveEditor = Backbone.View.extend({
 
         this.transloaditTemplate = options.transloaditTemplate;
         this.transloaditAuthKey = options.transloaditAuthKey;
+        this.editorHeight = options.editorHeight;
 
         this.render();
 
@@ -986,7 +987,7 @@ window.LiveEditor = Backbone.View.extend({
         $el.find(dom.ALL_OUTPUT).height(height);
 
         // Set the editor height to be the same as the canvas height
-        $el.find(dom.EDITOR).height(height);
+        $el.find(dom.EDITOR).height(this.editorHeight || height);
 
         // We need to add 2 to handle the 1px border.
         var borderWidth = this.showButtons ? 2 : 0;
