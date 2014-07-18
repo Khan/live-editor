@@ -392,6 +392,7 @@ var findDefByName = function(fnName) {
     }
 };
 
+// Handle p5js methods
 Blockly.util.registerBlockSignature(
     {
         type: "CallExpression",
@@ -416,5 +417,60 @@ Blockly.util.registerBlockSignature(
         });
         callBlock += "</block>";
         return callBlock;
+    }
+);
+
+// Handle p5js global variables
+Blockly.util.registerBlockSignature(
+    {
+        type: "Identifier",
+        name: patternMatch.var("name")
+    },
+    function(node, matchedProps) {
+        var props = findDefByName(matchedProps.name);
+
+        if (!props || props.args || props.type === "Event") {
+            return;
+        }
+
+        return "<block type='p5js_" + matchedProps.name + "'></block>";
+    }
+);
+
+// Handle p5js events
+Blockly.util.registerBlockSignature(
+    {
+        type: "VariableDeclaration",
+        declarations: patternMatch.var("declarations")
+    },
+    function(node, matchedProps) {
+        var output;
+
+        matchedProps.declarations.reverse().forEach(function(dec) {
+            var props = findDefByName(dec.id.name);
+            console.log("dec.id.name", dec.id.name)
+            if (props && props.type === "Event") {
+                var decBlock = "<block type='p5js_" + dec.id.name + "'></block>";
+                // Append initialization to DO if present
+                if (dec.init) {
+                    var decInit = Blockly.util.convertAstNodeToBlocks(dec.init.body);
+                    decBlock = Blockly.util.appendTagDeep(decBlock, decInit, "value", "DO");
+                }
+            } else {
+                var decBlock = "<block type='jslang_var'>";
+                decBlock += "<title name='VAR'>" + dec.id.name + "</title>";
+                decBlock += "</block>";
+                // Append initialization to CHAIN if present
+                if (dec.init) {
+                    var decInit = Blockly.util.convertAstNodeToBlocks(dec.init);
+                    decBlock = Blockly.util.appendTagDeep(decBlock, decInit, "value", "CHAIN");
+                }
+            }
+
+            output = output ?
+                Blockly.util.appendInNewTag(decBlock, output, "next") : decBlock;
+        });
+
+        return output;
     }
 );
