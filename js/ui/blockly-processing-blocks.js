@@ -503,7 +503,8 @@ var typeColors = {
     Number: 230,
     String: 160,
     Colour: 20,
-    Event: 40
+    Event: 40,
+    Boolean: 210
 };
 
 Object.keys(Blockly.p5js).forEach(function(catName) {
