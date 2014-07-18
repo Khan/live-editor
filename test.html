@@ -93,6 +93,7 @@
     $(function() {
         var options = {
             el: $("#sample-live-editor"),
+            code: window.localStorage["test-code"] || "",
             width: 400,
             height: 400,
             editorHeight: "100%",
@@ -103,7 +104,10 @@
         };
 
         //$.getJSON("test-audio.json", function(data) {
-            window.liveEditor = new LiveEditor(options);
+        window.liveEditor = new LiveEditor(options);
+            liveEditor.editor.on("change", function() {
+                window.localStorage["test-code"] = liveEditor.editor.text();
+            });
                 //$.extend(options, data));
         //});
     });
