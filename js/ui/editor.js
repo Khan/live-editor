@@ -392,29 +392,39 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
         this.config.editor = this;
 
         var toolbox = "<xml>";
-        Object.keys(Blockly.p5js).forEach(function(name) {
-            var props = Blockly.p5js[name];
+        Object.keys(Blockly.p5js).forEach(function(catName) {
+            var vars = Blockly.p5js[catName];
 
-            toolbox += "<block type='p5js_" + name + "'>";
-            props.args.forEach(function(prop) {
-                if ("fill" in prop) {
-                    toolbox += "<value name='" + prop.name + "'>";
-                    if (prop.type === "Colour") {
-                        toolbox += "<block type='colour_picker'>" +
-                            "</block>";
-                    } else if (prop.type === "String") {
-                        toolbox += "<block type='text'>" +
-                            "<field name='TEXT'>" + prop.fill + "</field>" +
-                            "</block>";
-                    } else if (prop.type === "Number") {
-                        toolbox += "<block type='math_number'>" +
-                            "<field name='NUM'>" + prop.fill + "</field>" +
-                            "</block>";
-                    }
-                    toolbox += "</value>";
+            toolbox += "<category name='" + catName + "'>";
+
+            Object.keys(vars).forEach(function(name) {
+                var props = vars[name];
+
+                toolbox += "<block type='p5js_" + name + "'>";
+                if (props.args) {
+                    props.args.forEach(function(prop) {
+                        if ("fill" in prop) {
+                            toolbox += "<value name='" + prop.name + "'>";
+                            if (prop.type === "Colour") {
+                                toolbox += "<block type='colour_picker'>" +
+                                    "</block>";
+                            } else if (prop.type === "String") {
+                                toolbox += "<block type='text'>" +
+                                    "<field name='TEXT'>" + prop.fill + "</field>" +
+                                    "</block>";
+                            } else if (prop.type === "Number") {
+                                toolbox += "<block type='math_number'>" +
+                                    "<field name='NUM'>" + prop.fill + "</field>" +
+                                    "</block>";
+                            }
+                            toolbox += "</value>";
+                        }
+                    });
                 }
+                toolbox += "</block>";
             });
-            toolbox += "</block>";
+
+            toolbox += "</category>";
         });
         toolbox += "</xml>";
 
