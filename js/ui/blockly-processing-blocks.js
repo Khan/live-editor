@@ -442,7 +442,7 @@ Blockly.util.registerBlockSignature(
             callBlock += "<value name='" + props.args[0].name + "'>" +
                 "<block type='colour_picker'><field name='COLOUR'>" +
                 convertArgsToHex(matchedProps.arguments) + "</field>" +
-                "</block>";
+                "</block></value>";
         } else {
             matchedProps.arguments.forEach(function(arg, i) {
                 console.log("arg", props.args[i].name)
