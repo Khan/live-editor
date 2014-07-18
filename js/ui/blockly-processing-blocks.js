@@ -382,3 +382,39 @@ Blockly.JavaScript.colour_picker = function(block) {
     return [hexToColor(block.getFieldValue("COLOUR")),
         Blockly.JavaScript.ORDER_ATOMIC];
 };
+
+var findDefByName = function(fnName) {
+    for (var catName in Blockly.p5js) {
+        var vars = Blockly.p5js[catName];
+        if (fnName in vars) {
+            return vars[fnName];
+        }
+    }
+};
+
+Blockly.util.registerBlockSignature(
+    {
+        type: "CallExpression",
+        arguments: patternMatch.var("arguments"),
+        callee: {
+            type: "Identifier",
+            name: patternMatch.var("callee_name"),
+        },
+    },
+    function(node, matchedProps) {
+        var props = findDefByName(matchedProps.callee_name);
+
+        if (!props || !props.args) {
+            return;
+        }
+
+        var callBlock = "";
+        callBlock += "<block type='p5js_" + matchedProps.callee_name + "'>";
+        matchedProps.arguments.forEach(function(arg, i) {
+            callBlock += "<value name='" + props.args[i].name + "'>" +
+                Blockly.util.convertAstNodeToBlocks(arg) + "</value>";
+        });
+        callBlock += "</block>";
+        return callBlock;
+    }
+);

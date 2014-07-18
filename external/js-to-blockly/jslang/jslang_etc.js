@@ -95,9 +95,9 @@
     // XML generator
     function(node,matchedProps) {
       var output = ''
-      output += '<block type="jslang_statement_nub"><value name="CHAIN">'
+      //output += '<block type="jslang_statement_nub"><value name="CHAIN">'
       output += Blockly.util.convertAstNodeToBlocks(matchedProps.expression)
-      output += '</value></block>'
+      //output += '</value></block>'
       return output
     }
   )
