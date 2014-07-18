@@ -105,6 +105,13 @@ Blockly.p5js = {
             args: [
                 { name: "color", type: "Colour", fill: "color(255,0,0)" }
             ]
+        },
+        strokeWeight: {
+            url: "https://www.khanacademy.org/cs/strokeweightthickness/877859744",
+            title: "Stroke Weight",
+            args: [
+                { name: "weight", type: "Number", fill: 10 }
+            ]
         }
     },
     Text: {
