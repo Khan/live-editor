@@ -15,6 +15,8 @@
  
  Environment:
   frameRate()
+  print()
+  debug()
 
  Mouse:
   mouseButton - not as relevant on mobile..
@@ -496,6 +498,23 @@ Blockly.js = {
         logic_negate: {},
         logic_boolean: {},
         logic_ternary: {}
+    },
+    Loops: {
+        controls_repeat_ext: {
+            args: [
+             { name: "TIMES", type: "Number", fill: 10, blank: 0 }
+            ]
+        },
+        controls_whileUntil: {},
+        controls_for: {
+            args: [
+             { name: "FROM", type: "Number", fill: 1, blank: 0 },
+             { name: "TO", type: "Number", fill: 10, blank: 0 },
+             { name: "BY", type: "Number", fill: 1, blank: 1 }
+            ]
+        },
+        controls_forEach: {},
+        controls_flow_statements: {}
     }
 };
 

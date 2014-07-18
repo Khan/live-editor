@@ -392,35 +392,40 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
         this.config.editor = this;
 
         var toolbox = "<xml>";
+
+        var generateValues = function(props) {
+            var values = "";
+            if (props.args) {
+                props.args.forEach(function(prop) {
+                    if ("fill" in prop) {
+                        values += "<value name='" + prop.name + "'>";
+                        if (prop.type === "Colour") {
+                            values += "<block type='colour_picker'>" +
+                                "</block>";
+                        } else if (prop.type === "String") {
+                            values += "<block type='text'>" +
+                                "<field name='TEXT'>" + prop.fill + "</field>" +
+                                "</block>";
+                        } else if (prop.type === "Number") {
+                            values += "<block type='math_number'>" +
+                                "<field name='NUM'>" + prop.fill + "</field>" +
+                                "</block>";
+                        }
+                        values += "</value>";
+                    }
+                });
+            }
+            return values;
+        };
+
         Object.keys(Blockly.p5js).forEach(function(catName) {
             var vars = Blockly.p5js[catName];
 
             toolbox += "<category name='" + catName + "'>";
 
             Object.keys(vars).forEach(function(name) {
-                var props = vars[name];
-
                 toolbox += "<block type='p5js_" + name + "'>";
-                if (props.args) {
-                    props.args.forEach(function(prop) {
-                        if ("fill" in prop) {
-                            toolbox += "<value name='" + prop.name + "'>";
-                            if (prop.type === "Colour") {
-                                toolbox += "<block type='colour_picker'>" +
-                                    "</block>";
-                            } else if (prop.type === "String") {
-                                toolbox += "<block type='text'>" +
-                                    "<field name='TEXT'>" + prop.fill + "</field>" +
-                                    "</block>";
-                            } else if (prop.type === "Number") {
-                                toolbox += "<block type='math_number'>" +
-                                    "<field name='NUM'>" + prop.fill + "</field>" +
-                                    "</block>";
-                            }
-                            toolbox += "</value>";
-                        }
-                    });
-                }
+                toolbox += generateValues(vars[name]);
                 toolbox += "</block>";
             });
 
@@ -429,6 +434,7 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
             if (jsVars) {
                 Object.keys(jsVars).forEach(function(name) {
                     toolbox += "<block type='" + name + "'>";
+                    toolbox += generateValues(jsVars[name]);
                     toolbox += "</block>";
                 });
             }
@@ -447,6 +453,7 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
 
             Object.keys(jsVars).forEach(function(name) {
                 toolbox += "<block type='" + name + "'>";
+                toolbox += generateValues(jsVars[name]);
                 toolbox += "</block>";
             });
 
