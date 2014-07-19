@@ -503,19 +503,18 @@ Blockly.js = {
     Math: {
         math_number: {},
         math_arithmetic: {},
-        math_constant: {},
-        math_number_property: {},
+        //math_constant: {},
+        //math_number_property: {},
         math_change: {
             args: [
-             { name: "DELTA", type: "Number", fill: 1, blank: 0 }
+                { name: "DELTA", type: "Number", fill: 1, blank: 0 }
             ]
         }
     },
     Variables: {
-        variables_get: {
-        },
-        variables_set: {
-        }
+        variables_declare: {},
+        variables_get: {},
+        variables_set: {}
     },
     Functions: {
         procedures_defnoreturn: {},
@@ -747,7 +746,6 @@ Blockly.util.registerBlockSignature(
         var callBlock = "";
         callBlock += "<block type='p5js_" + matchedProps.callee_name + "'>";
 
-        console.log(props);
         if (props.args[0] && props.args[0].type ==="Colour") {
             callBlock += "<value name='" + props.args[0].name + "'>" +
                 "<block type='colour_picker'><field name='COLOUR'>" +
@@ -774,7 +772,7 @@ Blockly.util.registerBlockSignature(
     function(node, matchedProps) {
         var props = findDefByName(matchedProps.name);
 
-        if (!props || props.args || props.type === "Event") {
+        if (!props) {
             return "<block type='variables_get'>" +
                 "<field name='VAR'>" + matchedProps.name + "</field>" +
                 "</block>";
@@ -942,12 +940,8 @@ Blockly.util.registerBlockSignature(
         var by = matchedProps.update.operator === "++" ? 1 :
             matchedProps.update.operator === "--" ? -1 :
             matchedProps.update.operator === "+=" ? matchedProps.update.right :
-            matchedProps.update.operator === "-=" ? {
-                type: "UnaryExpression",
-                prefix: true,
-                operator: "-",
-                argument: matchedProps.update.right
-            } : 1;
+            // TODO: This is pretty dicey
+            matchedProps.update.operator === "-=" ? matchedProps.update.right : 1;
 
         if (matchedProps.init.declarations) {
             var name = matchedProps.init.declarations[0].id.name;
