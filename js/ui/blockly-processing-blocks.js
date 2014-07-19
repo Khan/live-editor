@@ -800,7 +800,7 @@ Blockly.util.registerBlockSignature(
                     decBlock = Blockly.util.appendTagDeep(decBlock, decInit, "value", "DO");
                 }
             } else {
-                var decBlock = "<block type='variables_set'>";
+                var decBlock = "<block type='variables_declare'>";
                 decBlock += "<field name='VAR'>" + dec.id.name + "</field>";
                 decBlock += "</block>";
                 // Append initialization to VALUE if present
@@ -817,6 +817,113 @@ Blockly.util.registerBlockSignature(
         return output;
     }
 );
+
+Blockly.util.registerBlockSignature(
+    {
+        type: "VariableDeclarator",
+        id: patternMatch.var("id"),
+        init: patternMatch.var("init")
+    },
+    function(node, dec) {
+        var output;
+
+        var decBlock = "<block type='variables_declare'>";
+        decBlock += "<field name='VAR'>" + dec.id.name + "</field>";
+        decBlock += "</block>";
+
+        // Append initialization to VALUE if present
+        if (dec.init) {
+            var decInit = Blockly.util.convertAstNodeToBlocks(dec.init);
+            decBlock = Blockly.util.appendTagDeep(decBlock, decInit, "value", "VALUE");
+        }
+
+        return output;
+    }
+);
+
+Blockly.Blocks['controls_for'] = {
+  /**
+   * Block for 'for' loop.
+   * @this Blockly.Block
+   */
+  init: function() {
+      var OPERATORS = Blockly.RTL ? [
+            ['>', 'LT'],
+            ['\u2265', 'LTE'],
+            ['<', 'GT'],
+            ['\u2264', 'GTE'],
+            ['=', 'EQ'],
+            ['\u2260', 'NEQ'],
+          ] : [
+            ['<', 'LT'],
+            ['\u2264', 'LTE'],
+            ['>', 'GT'],
+            ['\u2265', 'GTE'],
+            ['=', 'EQ'],
+            ['\u2260', 'NEQ']
+          ];
+    this.setHelpUrl(Blockly.Msg.CONTROLS_FOR_HELPURL);
+    this.setColour(120);
+    this.appendDummyInput()
+        .appendField(Blockly.Msg.CONTROLS_FOR_INPUT_WITH)
+        .appendField(new Blockly.FieldVariable(null), 'VAR');
+    this.interpolateMsg("from %1 while %2 %3 by %4",
+                        ['FROM', 'Number', Blockly.ALIGN_RIGHT],
+                        ['OP', new Blockly.FieldDropdown(OPERATORS), Blockly.ALIGN_RIGHT],
+                        ['TO', 'Number', Blockly.ALIGN_RIGHT],
+                        ['BY', 'Number', Blockly.ALIGN_RIGHT],
+                        Blockly.ALIGN_RIGHT);
+    this.appendStatementInput('DO')
+        .appendField(Blockly.Msg.CONTROLS_FOR_INPUT_DO);
+    this.setPreviousStatement(true);
+    this.setNextStatement(true);
+    this.setInputsInline(true);
+    // Assign 'this' to a variable for use in the tooltip closure below.
+    var thisBlock = this;
+    this.setTooltip(function() {
+      return Blockly.Msg.CONTROLS_FOR_TOOLTIP.replace('%1',
+          thisBlock.getFieldValue('VAR'));
+    });
+  },
+  /**
+   * Return all variables referenced by this block.
+   * @return {!Array.<string>} List of variable names.
+   * @this Blockly.Block
+   */
+  getVars: function() {
+    return [this.getFieldValue('VAR')];
+  },
+  /**
+   * Notification that a variable is renaming.
+   * If the name matches one of this block's variables, rename it.
+   * @param {string} oldName Previous name of variable.
+   * @param {string} newName Renamed variable.
+   * @this Blockly.Block
+   */
+  renameVar: function(oldName, newName) {
+    if (Blockly.Names.equals(oldName, this.getFieldValue('VAR'))) {
+      this.setFieldValue(newName, 'VAR');
+    }
+  },
+  /**
+   * Add menu option to create getter block for loop variable.
+   * @param {!Array} options List of menu options to add to.
+   * @this Blockly.Block
+   */
+  customContextMenu: function(options) {
+    if (!this.isCollapsed()) {
+      var option = {enabled: true};
+      var name = this.getFieldValue('VAR');
+      option.text = Blockly.Msg.VARIABLES_SET_CREATE_GET.replace('%1', name);
+      var xmlField = goog.dom.createDom('field', null, name);
+      xmlField.setAttribute('name', 'VAR');
+      var xmlBlock = goog.dom.createDom('block', null, xmlField);
+      xmlBlock.setAttribute('type', 'variables_get');
+      option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
+      options.push(option);
+    }
+  }
+};
 
 // Handle for statements
 Blockly.util.registerBlockSignature(
@@ -840,7 +947,7 @@ Blockly.util.registerBlockSignature(
 
         if (matchedProps.init.declarations) {
             var name = matchedProps.init.declarations[0].id.name;
-            var from = matchedProps.init.declarations[0];
+            var from = matchedProps.init.declarations[0].init;
         } else {
             var name = matchedProps.init.left.name;
             var from = matchedProps.init.right;
@@ -992,4 +1099,159 @@ Blockly.JavaScript['logic_compare'] = function(block) {
   var argument1 = Blockly.JavaScript.valueToCode(block, 'B', order) || '0';
   var code = argument0 + ' ' + operator + ' ' + argument1;
   return [code, order];
+};
+
+Blockly.Blocks['variables_declare'] = {
+  /**
+   * Block for variable declaration.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.setHelpUrl(Blockly.Msg.VARIABLES_SET_HELPURL);
+    this.setColour(330);
+    this.interpolateMsg(
+        // TODO: Combine these messages instead of using concatenation.
+        "declare" + ' %1 ' +
+        "and set to" + ' %2',
+        ['VAR', new Blockly.FieldVariable(Blockly.Msg.VARIABLES_SET_ITEM)],
+        ['VALUE', null, Blockly.ALIGN_RIGHT],
+        Blockly.ALIGN_RIGHT);
+    this.setPreviousStatement(true);
+    this.setNextStatement(true);
+    this.setTooltip(Blockly.Msg.VARIABLES_SET_TOOLTIP);
+    this.contextMenuMsg_ = Blockly.Msg.VARIABLES_SET_CREATE_GET;
+    this.contextMenuType_ = 'variables_get';
+  },
+  /**
+   * Return all variables referenced by this block.
+   * @return {!Array.<string>} List of variable names.
+   * @this Blockly.Block
+   */
+  getVars: function() {
+    return [this.getFieldValue('VAR')];
+  },
+  /**
+   * Notification that a variable is renaming.
+   * If the name matches one of this block's variables, rename it.
+   * @param {string} oldName Previous name of variable.
+   * @param {string} newName Renamed variable.
+   * @this Blockly.Block
+   */
+  renameVar: function(oldName, newName) {
+    if (Blockly.Names.equals(oldName, this.getFieldValue('VAR'))) {
+      this.setFieldValue(newName, 'VAR');
+    }
+  },
+  customContextMenu: Blockly.Blocks['variables_get'].customContextMenu
+};
+
+Blockly.JavaScript['variables_declare'] = function(block) {
+  // Variable setter.
+  var argument0 = Blockly.JavaScript.valueToCode(block, 'VALUE',
+      Blockly.JavaScript.ORDER_ASSIGNMENT);
+  var varName = Blockly.JavaScript.variableDB_.getName(
+      block.getFieldValue('VAR'), Blockly.Variables.NAME_TYPE);
+  return 'var ' + varName + (argument0 ? ' = ' + argument0 : '') + ';\n';
+};
+
+Blockly.Blocks['variables_declarator'] = Blockly.Blocks['variables_declare'];
+
+Blockly.JavaScript['variables_declarator'] = function(block) {
+  // Variable setter.
+  var argument0 = Blockly.JavaScript.valueToCode(block, 'VALUE',
+      Blockly.JavaScript.ORDER_ASSIGNMENT);
+  var varName = Blockly.JavaScript.variableDB_.getName(
+      block.getFieldValue('VAR'), Blockly.Variables.NAME_TYPE);
+  return 'var ' + varName + (argument0 ? ' = ' + argument0 : '');
+};
+
+Blockly.JavaScript.init = function() {
+  // Create a dictionary of definitions to be printed before the code.
+  Blockly.JavaScript.definitions_ = Object.create(null);
+  // Create a dictionary mapping desired function names in definitions_
+  // to actual function names (to avoid collisions with user functions).
+  Blockly.JavaScript.functionNames_ = Object.create(null);
+
+  if (Blockly.Variables) {
+    if (!Blockly.JavaScript.variableDB_) {
+      Blockly.JavaScript.variableDB_ =
+          new Blockly.Names(Blockly.JavaScript.RESERVED_WORDS_);
+    } else {
+      Blockly.JavaScript.variableDB_.reset();
+    }
+
+    var defvars = [];
+    var variables = Blockly.Variables.allVariables();
+    for (var x = 0; x < variables.length; x++) {
+      defvars[x] = 'var ' +
+          Blockly.JavaScript.variableDB_.getName(variables[x],
+          Blockly.Variables.NAME_TYPE) + ';';
+    }
+    Blockly.JavaScript.definitions_['variables'] = '';
+  }
+};
+
+Blockly.JavaScript['controls_for'] = function(block) {
+  // For loop.
+  var variable0 = Blockly.JavaScript.variableDB_.getName(
+      block.getFieldValue('VAR'), Blockly.Variables.NAME_TYPE);
+  var argument0 = Blockly.JavaScript.valueToCode(block, 'FROM',
+      Blockly.JavaScript.ORDER_ASSIGNMENT) || '0';
+  var argument1 = Blockly.JavaScript.valueToCode(block, 'TO',
+      Blockly.JavaScript.ORDER_ASSIGNMENT) || '0';
+  var increment = Blockly.JavaScript.valueToCode(block, 'BY',
+      Blockly.JavaScript.ORDER_ASSIGNMENT) || '1';
+  var branch = Blockly.JavaScript.statementToCode(block, 'DO');
+  branch = Blockly.JavaScript.addLoopTrap(branch, block.id);
+  var code;
+  if (Blockly.isNumber(argument0) && Blockly.isNumber(argument1) &&
+      Blockly.isNumber(increment)) {
+    // All arguments are simple numbers.
+    var up = parseFloat(argument0) <= parseFloat(argument1);
+    code = 'for (var ' + variable0 + ' = ' + argument0 + '; ' +
+        variable0 + (up ? ' <= ' : ' >= ') + argument1 + '; ' +
+        variable0;
+    var step = Math.abs(parseFloat(increment));
+    if (step == 1) {
+      code += up ? '++' : '--';
+    } else {
+      code += (up ? ' += ' : ' -= ') + step;
+    }
+    code += ') {\n' + branch + '}\n';
+  } else {
+    code = '';
+    // Cache non-trivial values to variables to prevent repeated look-ups.
+    var startVar = argument0;
+    if (!argument0.match(/^\w+$/) && !Blockly.isNumber(argument0)) {
+      var startVar = Blockly.JavaScript.variableDB_.getDistinctName(
+          variable0 + '_start', Blockly.Variables.NAME_TYPE);
+      code += 'var ' + startVar + ' = ' + argument0 + ';\n';
+    }
+    var endVar = argument1;
+    if (!argument1.match(/^\w+$/) && !Blockly.isNumber(argument1)) {
+      var endVar = Blockly.JavaScript.variableDB_.getDistinctName(
+          variable0 + '_end', Blockly.Variables.NAME_TYPE);
+      code += 'var ' + endVar + ' = ' + argument1 + ';\n';
+    }
+    // Determine loop direction at start, in case one of the bounds
+    // changes during loop execution.
+    var incVar = Blockly.JavaScript.variableDB_.getDistinctName(
+        variable0 + '_inc', Blockly.Variables.NAME_TYPE);
+    code += 'var ' + incVar + ' = ';
+    if (Blockly.isNumber(increment)) {
+      code += Math.abs(increment) + ';\n';
+    } else {
+      code += 'Math.abs(' + increment + ');\n';
+    }
+    code += 'if (' + startVar + ' > ' + endVar + ') {\n';
+    code += Blockly.JavaScript.INDENT + incVar + ' = -' + incVar +';\n';
+    code += '}\n';
+    code += 'for (' + variable0 + ' = ' + startVar + ';\n' +
+        '     '  + incVar + ' >= 0 ? ' +
+        variable0 + ' <= ' + endVar + ' : ' +
+        variable0 + ' >= ' + endVar + ';\n' +
+        '     ' + variable0 + ' += ' + incVar + ') {\n' +
+        branch + '}\n';
+  }
+  return code;
 };
