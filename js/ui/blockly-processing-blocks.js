@@ -1,4 +1,4 @@
-/* 
+/*
  Missing but want to add:
  -----------------------------
 
@@ -8,11 +8,11 @@
 
  Probably don't add, or add but hide:
  -----------------------------
- 
+
  Color:
   blendColor()
   lerpColor()
- 
+
  Environment:
   frameRate()
   print()
@@ -791,6 +791,110 @@ Blockly.util.registerBlockSignature(
             output = output ?
                 Blockly.util.appendInNewTag(decBlock, output, "next") : decBlock;
         });
+
+        return output;
+    }
+);
+
+// Handle ++ and --
+Blockly.util.registerBlockSignature(
+    {
+        type: "UpdateExpression",
+        operator: patternMatch.var("operator"),
+        argument: patternMatch.var("argument")
+    },
+    function(node, matchedProps) {
+        var output;
+        /*
+        var type = matchedProps.operator === "++" ? "ADD": "MINUS";
+
+        // TODO: Handle cases like foo.bar++
+
+        var output = "<block type='math_arithmetic'>" +
+            "<field name='OP'>" + type + "</field>" +
+            "<value name='B'><block type='math_number'>" +
+                "<field name='NUM'>1</field>" +
+            "</block></value>" +
+            "</block>";
+
+        var leftBlock = Blockly.util.convertAstNodeToBlocks(matchedProps.argument);
+        output = Blockly.util.appendTagDeep(output, leftBlock, 'value', 'A');
+
+        output = "<block type='variables_set'>" +
+            "<field name='VAR'>" + matchedProps.argument.name + "</field>" +
+            "<value name='VALUE'>" +
+            output +
+            "</value></block>";
+
+        console.log(output)
+        */
+
+        if (matchedProps.argument.type === "Identifier") {
+            var amount = (matchedProps.operator === "++" ? 1 : -1);
+            output = "<block type='math_change'>" +
+                "<field name='VAR'>" + matchedProps.argument.name + "</field>" +
+                "<value name='DELTA'><block type='math_number'>" +
+                    "<field name='NUM'>" + amount + "</field>" +
+                "</block></value>" +
+            "</block>";
+        }
+
+        return output;
+    }
+);
+
+Blockly.JavaScript['math_change'] = function(block) {
+  // Add to a variable in place.
+  var argument0 = Blockly.JavaScript.valueToCode(block, 'DELTA',
+      Blockly.JavaScript.ORDER_ADDITION) || '0';
+  var varName = Blockly.JavaScript.variableDB_.getName(
+      block.getFieldValue('VAR'), Blockly.Variables.NAME_TYPE);
+  return varName + ' += ' + argument0 + ';\n';
+};
+
+// Handle += and -=
+Blockly.util.registerBlockSignature(
+    {
+        type: "AssignmentExpression",
+        operator: patternMatch.var("operator"),
+        left: patternMatch.var("left"),
+        right: patternMatch.var("right")
+    },
+    function(node, matchedProps) {
+        var output;
+
+        if (matchedProps.left.type !== "Identifier") {
+            return;
+        }
+
+        if (matchedProps.right.type === "Literal") {
+            var amount = (matchedProps.operator === "+=" ? 1 : -1) *
+                matchedProps.right.value;
+            output = "<block type='math_change'>" +
+                "<field name='VAR'>" + matchedProps.left.name + "</field>" +
+                "<value name='DELTA'><block type='math_number'>" +
+                    "<field name='NUM'>" + amount + "</field>" +
+                "</block></value>" +
+            "</block>";
+        } else {
+            // TODO: Add more types
+            var type = matchedProps.operator === "+=" ? "ADD": "MINUS";
+
+            var output = "<block type='math_arithmetic'>" +
+                "<field name='OP'>" + type + "</field>" +
+                "</block>";
+
+            var leftBlock = Blockly.util.convertAstNodeToBlocks(matchedProps.left);
+            var rightBlock = Blockly.util.convertAstNodeToBlocks(matchedProps.right);
+            output = Blockly.util.appendTagDeep(output, leftBlock, 'value', 'A');
+            output = Blockly.util.appendTagDeep(output, rightBlock, 'value', 'B');
+
+            output = "<block type='variables_set'>" +
+                "<field name='VAR'>" + matchedProps.left.name + "</field>" +
+                "<value name='VALUE'>" +
+                output +
+                "</value></block>";
+        }
 
         return output;
     }
