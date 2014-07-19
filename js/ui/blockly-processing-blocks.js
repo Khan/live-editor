@@ -491,6 +491,19 @@ Blockly.js = {
         text: {},
         text_join: {}
     },
+    Variables: {
+        variables_get: {
+        },
+        variables_set: {
+        }
+    },
+    Functions: {
+        procedures_defnoreturn: {},
+        procedures_defreturn: {},
+        procedures_ifreturn: {},
+        procedures_callnoreturn: {},
+        procedures_callreturn: {}
+    },
     Logic: {
         controls_if: {},
         logic_compare: {},
@@ -515,6 +528,32 @@ Blockly.js = {
         },
         controls_forEach: {},
         controls_flow_statements: {}
+    },
+    Lists: {
+        lists_create_empty: {},
+        lists_create_with: {},
+        lists_length: {},
+        lists_isEmpty: {},
+        lists_indexOf: {
+            args: [
+             { name: "VALUE", type: "Variable", fill: "list"}
+            ]
+        },
+        lists_getIndex: {
+            args: [
+             { name: "VALUE", type: "Variable", fill: "list"}
+            ]
+        },
+        lists_setIndex: {
+            args: [
+             { name: "LIST", type: "Variable", fill: "list"}
+            ]
+        },
+        lists_getSublist: {
+            args: [
+             { name: "LIST", type: "Variable", fill: "list"}
+            ]
+        }
     }
 };
 

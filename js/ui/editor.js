@@ -410,6 +410,10 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
                             values += "<block type='math_number'>" +
                                 "<field name='NUM'>" + prop.fill + "</field>" +
                                 "</block>";
+                        } else if (prop.type === "Variable") {
+                            values += "<block type='variables_get'>" +
+                                "<field name='VAR'>" + prop.fill + "</field>" +
+                                "</block>";
                         }
                         values += "</value>";
                     }
