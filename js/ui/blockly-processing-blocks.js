@@ -491,6 +491,17 @@ Blockly.js = {
         text: {},
         text_join: {}
     },
+    Math: {
+        math_number: {},
+        math_arithmetic: {},
+        math_constant: {},
+        math_number_property: {},
+        math_change: {
+            args: [
+             { name: "DELTA", type: "Number", fill: 1, blank: 0 }
+            ]
+        }
+    },
     Variables: {
         variables_get: {
         },

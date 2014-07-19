@@ -423,18 +423,9 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
         };
 
         Object.keys(Blockly.p5js).forEach(function(catName) {
-            var vars = Blockly.p5js[catName];
-
             toolbox += "<category name='" + catName + "'>";
 
-            Object.keys(vars).forEach(function(name) {
-                toolbox += "<block type='p5js_" + name + "'>";
-                toolbox += generateValues(vars[name]);
-                toolbox += "</block>";
-            });
-
             var jsVars = Blockly.js[catName];
-
             if (jsVars) {
                 Object.keys(jsVars).forEach(function(name) {
                     toolbox += "<block type='" + name + "'>";
@@ -442,6 +433,13 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
                     toolbox += "</block>";
                 });
             }
+
+            var vars = Blockly.p5js[catName];
+            Object.keys(vars).forEach(function(name) {
+                toolbox += "<block type='p5js_" + name + "'>";
+                toolbox += generateValues(vars[name]);
+                toolbox += "</block>";
+            });
 
             toolbox += "</category>";
         });
