@@ -39,6 +39,7 @@ function checkMatch(node, signature) {
     // patternMatch throws an error if it does not find a match
     return patternMatch(node,matcherFn)
   } catch(err) {
+      console.error(err)
     return false
   }
 }

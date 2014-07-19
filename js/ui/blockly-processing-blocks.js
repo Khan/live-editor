@@ -798,6 +798,56 @@ Blockly.util.registerBlockSignature(
     }
 );
 
+// Handle for statements
+Blockly.util.registerBlockSignature(
+    {
+        type: "ForStatement",
+        body: patternMatch.var("body"),
+        init: patternMatch.var("init"),
+        test: patternMatch.var("test"),
+        update: patternMatch.var("update")
+    },
+    function(node, matchedProps) {
+        var by = matchedProps.update.operator === "++" ? 1 :
+            matchedProps.update.operator === "--" ? -1 :
+            matchedProps.update.operator === "+=" ? matchedProps.update.right :
+            matchedProps.update.operator === "-=" ? {
+                type: "UnaryExpression",
+                prefix: true,
+                operator: "-",
+                argument: matchedProps.update.right
+            } : 1;
+
+        if (matchedProps.init.declarations) {
+            var name = matchedProps.init.declarations[0].id.name;
+            var from = matchedProps.init.declarations[0];
+        } else {
+            var name = matchedProps.init.left.name;
+            var from = matchedProps.init.right;
+        }
+
+        var output = "<block type='controls_for'>" +
+            "<field name='VAR'>" + name + "</field>" +
+            (typeof by === "number" ?
+            "<value name='BY'><block type='math_number'>" +
+                "<field name='NUM'>" + by + "</field>" +
+            "</block></value>" : "") +
+            "</block>";
+
+        var fromBlock = Blockly.util.convertAstNodeToBlocks(from);
+        output = Blockly.util.appendTagDeep(output, fromBlock, 'value', 'FROM');
+        var toBlock = Blockly.util.convertAstNodeToBlocks(matchedProps.test.right);
+        output = Blockly.util.appendTagDeep(output, toBlock, 'value', 'TO');
+
+        if (typeof by !== "number") {
+            var byBlock = Blockly.util.convertAstNodeToBlocks(by);
+            output = Blockly.util.appendTagDeep(output, byBlock, 'value', 'BY');
+        }
+
+        return output;
+    }
+);
+
 // Handle ++ and --
 Blockly.util.registerBlockSignature(
     {
