@@ -461,6 +461,10 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
 
             toolbox += "</category>";
         });
+
+        // Append dynamically generated "Functions" tab
+        toolbox += "<category name='Functions' custom='PROCEDURE'></category>";
+
         toolbox += "</xml>";
 
         Blockly.inject(this.el, {
