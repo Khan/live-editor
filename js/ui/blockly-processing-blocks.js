@@ -752,7 +752,9 @@ Blockly.util.registerBlockSignature(
         var props = findDefByName(matchedProps.name);
 
         if (!props || props.args || props.type === "Event") {
-            return;
+            return "<block type='variables_get'>" +
+                "<field name='VAR'>" + matchedProps.name + "</field>" +
+                "</block>";
         }
 
         return "<block type='p5js_" + matchedProps.name + "'></block>";
