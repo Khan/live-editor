@@ -474,7 +474,7 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
 
         // Attach the hot number picker to the editor
         var hn = new HotNumber({
-            container: Blockly.WidgetDiv.DIV,
+            blockly: Blockly,
             type: 'blockly'});
 
         // Kill default selection on the hot number

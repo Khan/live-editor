@@ -193,32 +193,43 @@ var HotNumberModule = function() {
 
     var blocklyEditor = {
         onInit: function() {
-            var container = this.options.container;
+            var blockly = this.options.blockly;
              
             var self = this;
-            $(container).on("mouseenter", "input", function() {
+
+            // Delegate, since the input can come and go
+            $(blockly.WidgetDiv.DIV).on("mouseenter", "input", function(e) {
+                _private.checkNumber.call(self);
+            });
+
+            // Listen to click on SVG so we can turn it off
+            $(blockly.svg).on("click", function(e) {
+                // To check when they click elsewhere
                 _private.checkNumber.call(self);
             });
 
             _private.attachScrubber.call(this);
         },
         onNumberCheck: function() {
-            var container = this.options.container;
-            this.firstNum = parseInt($(container).find("input").val(), 10);
-            // if input no longer exists
-            if (this.firstNum !== undefined) {
-                this.firstNumString = this.firstNum + "";
-                this.newPicker = this.scrubber;
-
-                // Repeated later
-                this.handle = function(value) {
-                    _private.updateNumberScrubber.call(this, value);
-                };
+            // if input no longer exists, return
+            var input = this.options.blockly.FieldTextInput.htmlInput_;
+            if (!input) {
+                return;
             }
+            this.firstNum = parseInt($(input).val(), 10);
+            this.firstNumString = this.firstNum + "";
+            this.newPicker = this.scrubber;
+
+            // Repeated later
+            this.handle = function(value) {
+                _private.updateNumberScrubber.call(this, value);
+            };
         },
         onUpdatePosition: function() {
-            var container = this.options.container;
-            var inputOffset = $(container).find("input").offset();
+            var container = this.options.blockly.WidgetDiv.DIV;
+            var input = this.options.blockly.FieldTextInput.htmlInput_;
+
+            var inputOffset = $(input).offset();
             var coords = {pageX: inputOffset.left, pageY: inputOffset.top};
             var relativePos = coords.pageY - $(container).offset().top;
             var editorHeight = $(container).height();
@@ -227,10 +238,9 @@ var HotNumberModule = function() {
                 .toggle(!(relativePos < 0 || relativePos >= editorHeight));
         },
         onNewNumber: function(newValue) {
-            var container = this.options.container;
-            $(container).find("input").val(newValue);
-            Blockly.fireUiEventNow($(container)
-                .find("input")[0], 'keypress');
+            var input = this.options.blockly.FieldTextInput.htmlInput_;
+            $(input).val(newValue);
+            Blockly.fireUiEventNow(input, 'keypress');
         }
     };
 
