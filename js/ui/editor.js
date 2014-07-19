@@ -471,6 +471,20 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
         Blockly.addChangeListener(function() {
             this.trigger("change");
         }.bind(this));
+
+        // Attach the hot number picker to the editor
+        if (this.$el.hotNumber) {
+            this.$el.hotNumber({
+                reload: false,
+                imagesDir: options.imagesDir,
+                container: Blockly.WidgetDiv.DIV
+            });
+        }
+
+        // Kill default selection on the hot number
+        this.$el.on("mousedown", ".hotnumber", function(e) {
+            e.preventDefault();
+        });
     },
 
     setCursor: function() {},
