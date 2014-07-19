@@ -6,29 +6,21 @@
 
     var aceEditor = {
         onInit: function(options) {
-            
-        }
-    };
-
-    $.fn.hotNumber = function(options) {
-
-        // ACE specific
-        if (options.editor) {
-            editor = options.editor;
+            var editor = options.editor;
             var selection = editor.session.selection;
 
             // A bit of a hack adding it to the editor object...
             editor.imagesDir = options.imagesDir;
 
             if (options.reload) {
-                checkNumber(editor);
+                checkNumber(options);
 
             } else {
                 selection.on("changeCursor", function() {
-                    checkNumber(editor, options.record);
+                    checkNumber(options);
                 });
                 selection.on("changeSelection", function() {
-                    checkNumber(editor, options.record);
+                    checkNumber(options);
                 });
 
                 editor.renderer.scrollBar.addEventListener("scroll", function() {
@@ -37,27 +29,59 @@
                     }
                 });
 
-                attachPicker(editor, record);
-                attachScrubber(editor, record);
+                attachPicker(options);
+                attachScrubber(options);
             }
 
             if (options.record) {
                 options.record.handlers.hot = function(e) {
-                    checkNumber(editor, options.record);
-                    update(editor, options.record, e.hot);
-                    updatePos(editor);
+                    checkNumber(options);
+                    update(options, e.hot);
+                    updatePos(options);
                 };
             }
-        } else if (options.container) {
-            container = options.container;
+        }
+    };
+
+
+    var blocklyEditor = {
+        onInit: function(options) {
+            var container = options.container;
 
             $(container).on("mouseenter", "input", function() {
-                checkNumber(editor, options.record);
+                checkNumber(options);
             });
-            // on change, it should go away
 
-            attachScrubber();
+            attachScrubber(options);
+        },
+        onNumberCheck: function(options) {
+            firstNum = parseInt($(container).find("input").val(), 10);
+            // if input no longer exists
+            if (firstNum !== undefined) {
+                firstNumString = firstNum + "";
+                newPicker = scrubber;
+
+                // Repeated later
+                handle = function(value) {
+                    updateNumberScrubber(editor, record, value);
+                };
+            }
         }
+    };
+
+
+    $.fn.hotNumber = function(options) {
+
+        if (options.type === "ace") {
+            editor = aceEditor;
+        } else if (options.type === "blockly") {
+            editor = blocklyEditor;
+        } else {
+            console.warn("Unknown editor type");
+            return;
+        }
+
+        editor.onInit(options);
 
         return this;
     };
@@ -75,7 +99,7 @@
         }
     }
 
-    function attachScrubber(editor, record) {
+    function attachScrubber(options) {
         if (scrubber) {
             return;
         }
@@ -116,8 +140,7 @@
                         left: 0,
                         top: 0
                     });
-                    checkNumber(editor, record);
-                    
+                    checkNumber(options);
                 }
             });
 
@@ -129,7 +152,7 @@
             .hide();
     }
 
-    function attachPicker(editor) {
+    function attachColorPicker(editor) {
         if (!colorPicker) {
             var over = false, down = false;
             var reposition = function($picker) {
@@ -229,7 +252,7 @@
     }
 
     // Completely ACE specific
-    function checkNumber(editor, record) {
+    function checkNumber(options) {
         if (ignore) {
             return;
         }
@@ -497,9 +520,6 @@
     }
 
     function update(editor, record, newValue) {
-        var e = jQuery.Event("keypress");
-        e.keyCode = 50; // # Some key code value
-
         $(container).find("input").val(newValue)
                                   .trigger(e);
         Blockly.fireUiEventNow($(container).find("input")[0], 'keypress');

@@ -12,14 +12,14 @@ window.ScratchpadEditor = Backbone.View.extend({
         this.offset = this.content.offset();
 
         // Attach the hot number picker to the editor
-        if (this.$el.hotNumber) {
-            this.$el.hotNumber({
-                reload: false,
-                editor: this.editor,
-                record: this.record,
-                imagesDir: options.imagesDir
-            });
-        }
+        var hn = new HotNumber({
+            container: this.$el,
+            editor: this.editor,
+            record: this.record,
+            imagesDir: options.imagesDir,
+            type: 'ace'
+        });
+
 
         // Make the editor vertically resizable
         if (this.$el.resizable) {
@@ -473,13 +473,9 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
         }.bind(this));
 
         // Attach the hot number picker to the editor
-        if (this.$el.hotNumber) {
-            this.$el.hotNumber({
-                reload: false,
-                imagesDir: options.imagesDir,
-                container: Blockly.WidgetDiv.DIV
-            });
-        }
+        var hn = new HotNumber({
+            container: Blockly.WidgetDiv.DIV,
+            type: 'blockly'});
 
         // Kill default selection on the hot number
         this.$el.on("mousedown", ".hotnumber", function(e) {

@@ -40,6 +40,20 @@ Still to triage:
 
 Blockly.p5js = {
     Drawing: {
+        image: {
+            url: "https://www.khanacademy.org/cs/pointx-y/827809834",
+            title: "Display image",
+            args: [
+                { name: "color", type: "Colour", fill: "color(255,0,0)" }
+            ]
+        },
+        getImage: {
+            url: "https://www.khanacademy.org/cs/pointx-y/827809834",
+            title: "Get image",
+            args: [
+                { name: "path", type: "String", fill: "", blank: "" }
+            ]
+        },
         point: {
             url: "https://www.khanacademy.org/cs/pointx-y/827809834",
             title: "Draw Point",
@@ -587,7 +601,13 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
                 this.setHelpUrl(props.url);
                 this.appendDummyInput()
                     .appendField(props.title);
-                if (props.type === "Event") {
+                if (props.type === "Image") {
+                    this.appendStatementInput("Display image");
+                    var image = new Blockly.FieldImage(
+                        'http://www.gstatic.com/codesite/ph/images/star_on.gif', 50, 50, '*');
+                    this.appendDummyInput("image")
+                        .appendField(image);
+                } else if (props.type === "Event") {
                     this.setColour(typeColors[props.type]);
                     this.appendStatementInput("DO")
                     .appendField($._("Run"));
