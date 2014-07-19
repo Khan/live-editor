@@ -803,7 +803,7 @@ Blockly.util.registerBlockSignature(
                 var decBlock = "<block type='variables_set'>";
                 decBlock += "<field name='VAR'>" + dec.id.name + "</field>";
                 decBlock += "</block>";
-                // Append initialization to CHAIN if present
+                // Append initialization to VALUE if present
                 if (dec.init) {
                     var decInit = Blockly.util.convertAstNodeToBlocks(dec.init);
                     decBlock = Blockly.util.appendTagDeep(decBlock, decInit, "value", "VALUE");
@@ -935,7 +935,9 @@ Blockly.util.registerBlockSignature(
     function(node, matchedProps) {
         var output;
 
-        if (matchedProps.left.type !== "Identifier") {
+        if (matchedProps.left.type !== "Identifier" ||
+            (matchedProps.operator !== "+=" &&
+            matchedProps.operator !== "-=")) {
             return;
         }
 

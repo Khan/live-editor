@@ -31,12 +31,15 @@
     },
     // XML generator
     function(node,matchedProps) {
-      var left = Blockly.util.convertAstNodeToBlocks(matchedProps.left)
+        if (matchedProps.left.type !== "Identifier") {
+            return;
+        }
+      var output = '<block type="variables_set">' +
+          "<field name='VAR'>" + matchedProps.left.name + "</field>" +
+          '</block>';
       var right = Blockly.util.convertAstNodeToBlocks(matchedProps.right)
-      var assign = '<block type="jslang_assignment"></block>'
-      assign = Blockly.util.appendTagDeep(assign, right, 'value', 'RIGHT')
-      var output = Blockly.util.appendTagDeep(left, assign, 'value', 'CHAIN')
-      return output
+      output = Blockly.util.appendTagDeep(output, right, 'value', 'VALUE')
+      return output;
     }
   )
 
