@@ -149,7 +149,6 @@ var HotNumberModule = function() {
             var coords = editor.renderer.textToScreenCoordinates(pos.row,
                 this.curPicker !== this.scrubber ? editor.session.getDocument().getLine(pos.row).length : pos.column);
             var relativePos = coords.pageY - editorBB.top;
-        
             // repeated
             this.curPicker
                 .css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX })
@@ -208,28 +207,47 @@ var HotNumberModule = function() {
                 _private.checkNumber.call(self);
             });
 
+            Blockly.addChangeListener(function(e) {
+                _private.checkNumber.call(self);
+            });
+
             _private.attachScrubber.call(this);
         },
         onNumberCheck: function() {
-            // if input no longer exists, return
+            // Check if we're working on an image
+            var selected = this.options.blockly.selected;
             var input = this.options.blockly.FieldTextInput.htmlInput_;
-            if (!input) {
-                return;
-            }
-            this.firstNum = parseInt($(input).val(), 10);
-            this.firstNumString = this.firstNum + "";
-            this.newPicker = this.scrubber;
 
-            // Repeated later
-            this.handle = function(value) {
-                _private.updateNumberScrubber.call(this, value);
-            };
+            if (selected && selected.type === "p5js_image") {
+                var imageField = selected.inputList[1].fieldRow[0];
+                var imageUrl = selected.inputList[1].fieldRow[0].getValue();
+                
+                this.handle = function(value) {
+                    _private.updateImagePicker.call(this, value);
+                };
+                _private.attachImagePicker.call(this);
+                _private.updateImagePicker.call(this, imageUrl);
+
+                this.newPicker = this.imagePicker;
+                this.selectedNode = imageField.getRootElement();
+
+            } else if (input) {
+                this.firstNum = parseInt($(input).val(), 10);
+                this.firstNumString = String(this.firstNum);
+                
+                // Repeated later
+                this.handle = function(value) {
+                    _private.updateNumberScrubber.call(this, value);
+                };
+                this.newPicker = this.scrubber;
+                this.selectedNode = input;
+            }
         },
         onUpdatePosition: function() {
-            var container = this.options.blockly.WidgetDiv.DIV;
-            var input = this.options.blockly.FieldTextInput.htmlInput_;
+            var container = this.options.blockly.svg;
+            var field = this.selectedNode;
 
-            var inputOffset = $(input).offset();
+            var inputOffset = $(field).offset();
             var coords = {pageX: inputOffset.left, pageY: inputOffset.top};
             var relativePos = coords.pageY - $(container).offset().top;
             var editorHeight = $(container).height();
@@ -238,9 +256,16 @@ var HotNumberModule = function() {
                 .toggle(!(relativePos < 0 || relativePos >= editorHeight));
         },
         onNewNumber: function(newValue) {
+            var selected = this.options.blockly.selected;
+
             var input = this.options.blockly.FieldTextInput.htmlInput_;
-            $(input).val(newValue);
-            Blockly.fireUiEventNow(input, 'keypress');
+            if (selected && selected.type === "p5js_image") {
+                var imageField = selected.inputList[1].fieldRow[0];
+                imageField.setValue(newValue);
+            } else if (input) {
+                $(input).val(newValue);
+                Blockly.fireUiEventNow(input, 'keypress');
+            }
         }
     };
 
@@ -334,12 +359,14 @@ var HotNumberModule = function() {
         attachImagePicker: function() {
             if (!this.imagePicker) {
                 var editor = this.options.editor;
-
+                var imagesDir = this.options.imagesDir;
+                
                 var tmpl = Handlebars.templates.imagepicker;
+
                 var results = tmpl({
-                    imagesDir: editor.imagesDir,
+                    imagesDir: imagesDir,
                     groups: _.map(OutputImages, function(data) {
-                        data.imagesDir = editor.imagesDir;
+                        data.imagesDir = imagesDir;
                         return data;
                     })
                 });
@@ -358,11 +385,15 @@ var HotNumberModule = function() {
                         }
                     })
                     .bind("mouseleave", function() {
+                        $(this).hide();
+                        // This is to change the position with ACE
+                        /*
                         var pos = editor.selection.getCursor(),
                             coords = editor.renderer.textToScreenCoordinates(pos.row,
                                 editor.session.getDocument().getLine(pos.row).length);
 
                         $(this).css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX });
+                        */
                     })
                     .hide();
             }
@@ -454,12 +485,12 @@ var HotNumberModule = function() {
 
             path = foundPath;
 
-            // TODO: eww
-            $(".imagepicker .current-image img")
-                .attr("src", this.options.imagesDir + path + ".png");
-
+            var fullPath = this.options.imagesDir + path + ".png";
+            this.imagePicker.find(".current-image img")
+                .attr("src", fullPath);
+        
             // Update the old path with a new one
-            _private.updateEditor.call(this, '"' + path + '"');
+            _private.updateEditor.call(this, fullPath);
         },
         updateEditor: function(newValue) {
             this.editor.onNewNumber.call(this, newValue);

@@ -44,14 +44,9 @@ Blockly.p5js = {
             url: "https://www.khanacademy.org/cs/pointx-y/827809834",
             title: "Display image",
             args: [
-                { name: "color", type: "Colour", fill: "color(255,0,0)" }
-            ]
-        },
-        getImage: {
-            url: "https://www.khanacademy.org/cs/pointx-y/827809834",
-            title: "Get image",
-            args: [
-                { name: "path", type: "String", fill: "", blank: "" }
+                { name: "image", type: "Image"},
+                { name: "x", type: "Number", fill: 50, blank: 0 },
+                { name: "y", type: "Number", fill: 50, blank: 0 }
             ]
         },
         point: {
@@ -593,6 +588,7 @@ var typeColors = {
 Object.keys(Blockly.p5js).forEach(function(catName) {
     var vars = Blockly.p5js[catName];
 
+    
     Object.keys(vars).forEach(function(name) {
         var props = vars[name];
 
@@ -601,13 +597,7 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
                 this.setHelpUrl(props.url);
                 this.appendDummyInput()
                     .appendField(props.title);
-                if (props.type === "Image") {
-                    this.appendStatementInput("Display image");
-                    var image = new Blockly.FieldImage(
-                        'http://www.gstatic.com/codesite/ph/images/star_on.gif', 50, 50, '*');
-                    this.appendDummyInput("image")
-                        .appendField(image);
-                } else if (props.type === "Event") {
+                if (props.type === "Event") {
                     this.setColour(typeColors[props.type]);
                     this.appendStatementInput("DO")
                     .appendField($._("Run"));
@@ -622,6 +612,10 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
                                 prop.options);
                             this.appendDummyInput(prop.name)
                                     .appendField(dropdown, 'PROPERTY');
+                        } else if (prop.type === "Image") {
+                            this.appendDummyInput(prop.name)
+                                .appendField(new Blockly.FieldImage(
+                                    '/images/avatars/leafers-seed.png', 30, 30), 'URL');
                         } else {
                             var input = this.appendValueInput(prop.name);
                             if (prop.type !== "String") {
@@ -659,6 +653,14 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
             var values = props.args.map(function(prop) {
                 if (prop.type === "List") {
                     return block.getFieldValue('PROPERTY');
+                } else if (prop.type === "Image") {
+                    var val = Blockly.JavaScript.valueToCode(block, 'URL',
+                    Blockly.JavaScript.ORDER_NONE);
+                    console.log('val', val);
+                    var url = block.getFieldValue('URL');
+                    console.log('url', url);
+                    var pathlessUrl = url.substr(url.indexOf('images/')+7).split('.png')[0];
+                    return 'getImage("' + pathlessUrl + '")';
                 }
 
                 var val = Blockly.JavaScript.valueToCode(block, prop.name,
@@ -745,6 +747,7 @@ Blockly.util.registerBlockSignature(
         var callBlock = "";
         callBlock += "<block type='p5js_" + matchedProps.callee_name + "'>";
 
+        console.log(props);
         if (props.args[0] && props.args[0].type ==="Colour") {
             callBlock += "<value name='" + props.args[0].name + "'>" +
                 "<block type='colour_picker'><field name='COLOUR'>" +
