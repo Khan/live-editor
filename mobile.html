@@ -106,6 +106,8 @@
 
         window.liveEditor = new LiveEditor(options);
 
+        $(".scratchpad-editor-wrap .scratchpad-toolbar").hide();
+
         $("<button>")
             .addClass("btn btn-success pull-left")
             .text(" Save")
@@ -118,7 +120,7 @@
                 iframe.parentNode.removeChild(iframe);
                 iframe = null;
             })
-            .appendTo(".scratchpad-wrap .scratchpad-toolbar");
+            .appendTo(".scratchpad-canvas-wrap .scratchpad-toolbar");
 
         $("#restart-code").addClass("btn btn-warning");
     });
