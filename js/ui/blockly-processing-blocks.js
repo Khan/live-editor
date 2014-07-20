@@ -941,11 +941,14 @@ Blockly.util.registerBlockSignature(
 */
 Blockly.util.registerBlockSignature(
     {
-        type: "CallExpression",
-        arguments: patternMatch.var("arguments"),
-        callee: {
-            type: "Identifier",
-            name: patternMatch.var("callee_name"),
+        type: 'ExpressionStatement',
+        expression: {
+            type: "CallExpression",
+            arguments: patternMatch.var("arguments"),
+            callee: {
+                type: "Identifier",
+                name: patternMatch.var("callee_name"),
+            },
         },
     },
     function(node, matchedProps) {
