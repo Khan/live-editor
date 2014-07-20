@@ -493,6 +493,7 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
         });
     },
 
+    getCursor: function() {},
     setCursor: function() {},
     setSelection: function() {},
     focus: function() {},
