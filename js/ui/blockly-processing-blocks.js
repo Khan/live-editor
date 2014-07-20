@@ -737,16 +737,236 @@ var findDefByName = function(fnName) {
     }
 };
 
-// Handle p5js methods
-/* This is what's used when we're loading in code and converting it into blocks
-*/
+//
+// Function "var hello = function(a,b,c) {}"
+//
+
+
+// modify the blockly block definition
+var _super_procedures_defnoreturn_init = Blockly.core.Language.procedures_defnoreturn.init
+Blockly.core.Language.procedures_defnoreturn.init = function() {
+  _super_procedures_defnoreturn_init.apply(this, arguments);
+  this.setPreviousStatement(true);
+  this.setNextStatement(true);
+}
+
+var functionBlockTemplate = function(node, matchedProps) {
+    // generate code
+    var output = ''
+    output += '<block type="procedures_defnoreturn">'
+    output += '<mutation>'
+    matchedProps.params.forEach(function(param,index) {
+    output += '<arg name="'+param.name+'"/>'
+    })
+    output += '</mutation>'
+    output += '<field name="NAME">'+matchedProps.name+'</field>'
+    output += '<statement name="STACK">'
+    output += Blockly.util.convertAstNodeToBlocks(matchedProps.body)
+    output += '</statement>'
+    output += '</block>'
+    return output
+}
+
+//_tree('var a = function(){}')
+  // ├─ type: VariableDeclaration
+  // ├─ declarations
+  // │  └─ 0
+  // │     ├─ type: VariableDeclarator
+  // │     ├─ id
+  // │     │  ├─ type: Identifier
+  // │     │  └─ name: a
+  // │     └─ init
+  // │        ├─ type: FunctionExpression
+  // │        ├─ id
+  // │        ├─ params
+  // │        ├─ defaults
+  // │        ├─ body
+  // │        │  ├─ type: BlockStatement
+  // │        │  └─ body
+  // │        ├─ rest
+  // │        ├─ generator: false
+  // │        └─ expression: false
+  // └─ kind: var
+
 Blockly.util.registerBlockSignature(
     {
-        type: "CallExpression",
-        arguments: patternMatch.var("arguments"),
-        callee: {
-            type: "Identifier",
-            name: patternMatch.var("callee_name"),
+        type: "VariableDeclaration",
+        declarations: [
+            {
+                type: "VariableDeclarator",
+                id: {
+                    name: patternMatch.var("name"),
+                },
+                init: {
+                    type: "FunctionExpression",
+                    params: patternMatch.var("params"),
+                    body: patternMatch.var("body"),
+                },
+            },
+        ],
+    },
+    functionBlockTemplate
+);
+
+//_tree('a = function(x, y){}')
+// ├─ type: ExpressionStatement
+// └─ expression
+//  ├─ type: AssignmentExpression
+//  ├─ operator: =
+//  ├─ left
+//  │  ├─ type: Identifier
+//  │  └─ name: a
+//  └─ right
+//     ├─ type: FunctionExpression
+//     ├─ id
+//     ├─ params
+//     │  ├─ 0
+//     │  │  ├─ type: Identifier
+//     │  │  └─ name: x
+//     │  └─ 1
+//     │     ├─ type: Identifier
+//     │     └─ name: y
+//     ├─ defaults
+//     ├─ body
+//     │  ├─ type: BlockStatement
+//     │  └─ body
+//     ├─ rest
+//     ├─ generator: false
+//     └─ expression: false
+
+Blockly.util.registerBlockSignature(
+    {
+        type: "ExpressionStatement",
+        expression: {
+            type: "AssignmentExpression",
+            operator: '=',
+            left: {
+                name: patternMatch.var("name"),
+            },
+            right: {
+                type: "FunctionExpression",
+                params: patternMatch.var("params"),
+                body: patternMatch.var("body"),
+            },
+        }
+        
+    },
+    functionBlockTemplate
+);
+
+Blockly.core.JavaScript.procedures_defnoreturn = function() {
+    // Define a procedure with a return value.
+    var branch = Blockly.core.JavaScript.statementToCode(this, 'STACK');
+    if (Blockly.core.JavaScript.INFINITE_LOOP_TRAP) {
+      branch = Blockly.core.JavaScript.INFINITE_LOOP_TRAP.replace(/%1/g,
+          '\'' + this.id + '\'') + branch;
+    }
+    var returnValue = Blockly.core.JavaScript.valueToCode(this, 'RETURN',
+        Blockly.core.JavaScript.ORDER_NONE) || '';
+    if (returnValue) {
+      returnValue = '  return ' + returnValue + ';\n';
+    }
+    var args = [];
+    for (var x = 0; x < this.arguments_.length; x++) {
+      args[x] = Blockly.core.JavaScript.variableDB_.getName(this.arguments_[x],
+          Blockly.core.Variables.NAME_TYPE);
+    }
+    var funcName = this.getFieldValue('NAME');
+    var code = new String()
+    code += 'var '+funcName
+    code += ' = function(' + args.join(', ') + ') {\n'
+    code += branch + returnValue + '};\n';
+
+    return code
+};
+
+//
+// Function CallExpression (No-Return) (Generic)
+//
+
+// _tree('whoopee(x)')
+// ├─ type: ExpressionStatement
+// └─ expression
+//    ├─ type: CallExpression
+//    ├─ callee
+//    │  ├─ type: Identifier
+//    │  └─ name: whoopee
+//    └─ arguments
+//       └─ 0
+//          ├─ type: Identifier
+//          └─ name: x
+
+// <block type="procedures_callnoreturn" id="48" inline="false" x="126" y="180">
+//   <mutation name="do something">
+//     <arg name="x"></arg>
+//   </mutation>
+//   <value name="ARG0">
+//     <block type="math_number" id="67">
+//       <field name="NUM">123</field>
+//     </block>
+//   </value>
+// </block>
+
+Blockly.util.registerBlockSignature(
+    {
+        type: "ExpressionStatement",
+        expression: {
+            type: "CallExpression",
+            callee: {
+                name: patternMatch.var("name"),
+            },
+            arguments: patternMatch.var("params"),
+        }
+        
+    },
+    function(node, matchedProps) {
+        var output = ''
+        output += '<block type="procedures_callnoreturn">'
+
+        
+        output += '<mutation name="'+matchedProps.name+'">'
+        var proc = Blockly.getUserDefinedFunction(matchedProps.name)
+        
+        matchedProps.params.forEach(function(param,index) {
+            var label;
+            // try to use the recorded method's arg names
+            try {
+                label = proc.params[index].name;
+            // fallback to labeling the args with the index
+            } catch (error) {
+                matchedProps.name
+                label = index;
+            }
+
+            output += '<arg name="'+label+'"/>'
+        })
+        output += '</mutation>'
+
+        matchedProps.params.forEach(function(param,index) {
+            output += '<value name="ARG'+index+'">'
+            output += Blockly.util.convertAstNodeToBlocks(param)
+            output += '</value>'
+        })
+        output += '</block>'
+        return output
+    }
+);
+
+//
+//  Handle p5js no-return methods
+//  This is what's used when we're loading in code and converting it into blocks
+//
+
+Blockly.util.registerBlockSignature(
+    {
+        type: 'ExpressionStatement',
+        expression: {
+            type: "CallExpression",
+            arguments: patternMatch.var("arguments"),
+            callee: {
+                type: "Identifier",
+                name: patternMatch.var("callee_name"),
+            },
         },
     },
     function(node, matchedProps) {
@@ -1121,148 +1341,6 @@ Blockly.util.registerBlockSignature(
     }
 );
 
-
-//
-// Function "var hello = function(a,b,c) {}"
-//
-
-
-// modify the blockly block definition
-var _super_procedures_defnoreturn_init = Blockly.core.Language.procedures_defnoreturn.init
-Blockly.core.Language.procedures_defnoreturn.init = function() {
-  _super_procedures_defnoreturn_init.apply(this, arguments);
-  this.setPreviousStatement(true);
-  this.setNextStatement(true);
-}
-
-var functionBlockTemplate = function(node, matchedProps) {
-    var output = ''
-    output += '<block type="procedures_defnoreturn">'
-    output += '<mutation>'
-    matchedProps.params.forEach(function(param,index) {
-    output += '<arg name="'+param.name+'"/>'
-    })
-    output += '</mutation>'
-    output += '<field name="NAME">'+matchedProps.name+'</field>'
-    output += '<statement name="STACK">'
-    output += Blockly.util.convertAstNodeToBlocks(matchedProps.body)
-    output += '</statement>'
-    output += '</block>'
-    return output
-}
-
-//_tree('var a = function(){}')
-  // ├─ type: VariableDeclaration
-  // ├─ declarations
-  // │  └─ 0
-  // │     ├─ type: VariableDeclarator
-  // │     ├─ id
-  // │     │  ├─ type: Identifier
-  // │     │  └─ name: a
-  // │     └─ init
-  // │        ├─ type: FunctionExpression
-  // │        ├─ id
-  // │        ├─ params
-  // │        ├─ defaults
-  // │        ├─ body
-  // │        │  ├─ type: BlockStatement
-  // │        │  └─ body
-  // │        ├─ rest
-  // │        ├─ generator: false
-  // │        └─ expression: false
-  // └─ kind: var
-
-Blockly.util.registerBlockSignature(
-    {
-        type: "VariableDeclaration",
-        declarations: [
-            {
-                type: "VariableDeclarator",
-                id: {
-                    name: patternMatch.var("name"),
-                },
-                init: {
-                    type: "FunctionExpression",
-                    params: patternMatch.var("params"),
-                    body: patternMatch.var("body"),
-                },
-            },
-        ],
-    },
-    functionBlockTemplate
-);
-
-//_tree('a = function(x, y){}')
-// ├─ type: ExpressionStatement
-// └─ expression
-//  ├─ type: AssignmentExpression
-//  ├─ operator: =
-//  ├─ left
-//  │  ├─ type: Identifier
-//  │  └─ name: a
-//  └─ right
-//     ├─ type: FunctionExpression
-//     ├─ id
-//     ├─ params
-//     │  ├─ 0
-//     │  │  ├─ type: Identifier
-//     │  │  └─ name: x
-//     │  └─ 1
-//     │     ├─ type: Identifier
-//     │     └─ name: y
-//     ├─ defaults
-//     ├─ body
-//     │  ├─ type: BlockStatement
-//     │  └─ body
-//     ├─ rest
-//     ├─ generator: false
-//     └─ expression: false
-
-Blockly.util.registerBlockSignature(
-    {
-        type: "ExpressionStatement",
-        expression: {
-            type: "AssignmentExpression",
-            operator: '=',
-            left: {
-                name: patternMatch.var("name"),
-            },
-            right: {
-                type: "FunctionExpression",
-                params: patternMatch.var("params"),
-                body: patternMatch.var("body"),
-            },
-        }
-        
-    },
-    functionBlockTemplate
-);
-
-Blockly.core.JavaScript.procedures_defnoreturn = function() {
-    // Define a procedure with a return value.
-    var branch = Blockly.core.JavaScript.statementToCode(this, 'STACK');
-    if (Blockly.core.JavaScript.INFINITE_LOOP_TRAP) {
-      branch = Blockly.core.JavaScript.INFINITE_LOOP_TRAP.replace(/%1/g,
-          '\'' + this.id + '\'') + branch;
-    }
-    var returnValue = Blockly.core.JavaScript.valueToCode(this, 'RETURN',
-        Blockly.core.JavaScript.ORDER_NONE) || '';
-    if (returnValue) {
-      returnValue = '  return ' + returnValue + ';\n';
-    }
-    var args = [];
-    for (var x = 0; x < this.arguments_.length; x++) {
-      args[x] = Blockly.core.JavaScript.variableDB_.getName(this.arguments_[x],
-          Blockly.core.Variables.NAME_TYPE);
-    }
-    var funcName = this.getFieldValue('NAME');
-    var code = new String()
-    code += 'var '+funcName
-    code += ' = function(' + args.join(', ') + ') {\n'
-    code += branch + returnValue + '};\n';
-
-    return code
-};
 
  //
  // Logical Comparison
