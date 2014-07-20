@@ -111,7 +111,12 @@
             .text(" Save")
             .prepend("<span class='glyphicon glyphicon-save'></span>")
             .on("click", function() {
-
+                var iframe = document.createElement("IFRAME");
+                iframe.setAttribute("src", "ka-cs://save-code?code=" +
+                    encodeURIComponent(liveEditor.editor.text()));
+                document.documentElement.appendChild(iframe);
+                iframe.parentNode.removeChild(iframe);
+                iframe = null;
             })
             .appendTo(".scratchpad-wrap .scratchpad-toolbar");
 
