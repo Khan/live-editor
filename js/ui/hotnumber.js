@@ -60,7 +60,6 @@ var HotNumberModule = function() {
                 });
 
                 _private.attachScrubber.call(this);
-                _private.attach
             }
 
             if (record) {
@@ -206,10 +205,10 @@ var HotNumberModule = function() {
                 // To check when they click elsewhere
                 _private.checkNumber.call(self);
             });
-
+            /*
             Blockly.addChangeListener(function(e) {
                 _private.checkNumber.call(self);
-            });
+            });*/
 
             _private.attachScrubber.call(this);
         },
@@ -218,9 +217,9 @@ var HotNumberModule = function() {
             var selected = this.options.blockly.selected;
             var input = this.options.blockly.FieldTextInput.htmlInput_;
 
-            if (selected && selected.type === "p5js_image") {
-                var imageField = selected.inputList[1].fieldRow[0];
-                var imageUrl = selected.inputList[1].fieldRow[0].getValue();
+            if (selected && selected.type === "image_picker") {
+                var imageField = selected.inputList[0].fieldRow[0];
+                var imageUrl = imageField.getValue();
                 
                 this.handle = function(value) {
                     _private.updateImagePicker.call(this, value);
@@ -259,12 +258,13 @@ var HotNumberModule = function() {
             var selected = this.options.blockly.selected;
 
             var input = this.options.blockly.FieldTextInput.htmlInput_;
-            if (selected && selected.type === "p5js_image") {
-                var imageField = selected.inputList[1].fieldRow[0];
+            if (selected && selected.type === "image_picker") {
+                var imageField = selected.inputList[0].fieldRow[0];
                 imageField.setValue(newValue);
+                selected.workspace.fireChangeEvent();
             } else if (input) {
                 $(input).val(newValue);
-                Blockly.fireUiEventNow(input, 'keypress');
+                this.options.blockly.fireUiEventNow(input, 'keypress');
             }
         }
     };

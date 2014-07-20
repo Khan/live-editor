@@ -44,7 +44,7 @@ Blockly.p5js = {
             url: "https://www.khanacademy.org/cs/pointx-y/827809834",
             title: "Display image",
             args: [
-                { name: "image", type: "Image"},
+                { name: "image", type: "Image", fill: "getImage(\"cute/Blank\")"},
                 { name: "x", type: "Number", fill: 50, blank: 0 },
                 { name: "y", type: "Number", fill: 50, blank: 0 }
             ]
@@ -585,6 +585,25 @@ var typeColors = {
     Boolean: 210
 };
 
+Blockly.Blocks["image_picker"] = {
+    init: function() {
+        this.setColour(30);
+        this.appendDummyInput()
+            .appendField(new Blockly.FieldImage(
+                '/images/creatures/Winston.png', 40, 40), 'URL');
+        this.setOutput(true, "Image");
+    }
+};
+
+Blockly.JavaScript["image_picker"] = function(block) {
+    var url = block.getFieldValue("URL");
+    var pathlessUrl = url.substr(url.indexOf('images/')+7).split('.png')[0];
+    var funcCall = 'getImage("' + pathlessUrl + '")';
+    return [funcCall,
+        Blockly.JavaScript.ORDER_ATOMIC];
+};
+
+
 Object.keys(Blockly.p5js).forEach(function(catName) {
     var vars = Blockly.p5js[catName];
 
@@ -612,11 +631,11 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
                                 prop.options);
                             this.appendDummyInput(prop.name)
                                     .appendField(dropdown, 'PROPERTY');
-                        } else if (prop.type === "Image") {
+                        } /*else if (prop.type === "Image") {
                             this.appendDummyInput(prop.name)
                                 .appendField(new Blockly.FieldImage(
                                     '/images/avatars/leafers-seed.png', 30, 30), 'URL');
-                        } else {
+                        }*/ else {
                             var input = this.appendValueInput(prop.name);
                             if (prop.type !== "String") {
                                 input.setCheck(prop.type);
@@ -653,16 +672,7 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
             var values = props.args.map(function(prop) {
                 if (prop.type === "List") {
                     return block.getFieldValue('PROPERTY');
-                } else if (prop.type === "Image") {
-                    var val = Blockly.JavaScript.valueToCode(block, 'URL',
-                    Blockly.JavaScript.ORDER_NONE);
-                    console.log('val', val);
-                    var url = block.getFieldValue('URL');
-                    console.log('url', url);
-                    var pathlessUrl = url.substr(url.indexOf('images/')+7).split('.png')[0];
-                    return 'getImage("' + pathlessUrl + '")';
                 }
-
                 var val = Blockly.JavaScript.valueToCode(block, prop.name,
                     Blockly.JavaScript.ORDER_NONE);
 
@@ -728,6 +738,8 @@ var findDefByName = function(fnName) {
 };
 
 // Handle p5js methods
+/* This is what's used when we're loading in code and converting it into blocks
+*/
 Blockly.util.registerBlockSignature(
     {
         type: "CallExpression",
@@ -746,17 +758,36 @@ Blockly.util.registerBlockSignature(
 
         var callBlock = "";
         callBlock += "<block type='p5js_" + matchedProps.callee_name + "'>";
+        
+        var processArgs = function(startInd) {
+            // We should still add other values
+            matchedProps.arguments.forEach(function(arg, i) {
+                if (i >= startInd) {
+                    callBlock += "<value name='" + props.args[i].name + "'>" +
+                        Blockly.util.convertAstNodeToBlocks(arg) + "</value>";
+                }
+            });
+        };
 
         if (props.args[0] && props.args[0].type ==="Colour") {
             callBlock += "<value name='" + props.args[0].name + "'>" +
                 "<block type='colour_picker'><field name='COLOUR'>" +
                 convertArgsToHex(matchedProps.arguments) + "</field>" +
                 "</block></value>";
+        } else if (props.args[0] && props.args[0].type ==="Image") {
+            // Get the argument that was passed to get image
+            var shortPath = matchedProps.arguments[0].arguments[0].raw;
+            // Remove the quotes
+            shortPath = shortPath.substr(1, shortPath.length-2);
+            // Add the path and extension
+            var fullPath = '/images/' + shortPath + ".png";
+            callBlock += "<value name='" + props.args[0].name + "'>" +
+                "<block type='image_picker'><field name='URL'>" +
+                  fullPath + "</field>" +
+                "</block></value>";
+            processArgs(1);
         } else {
-            matchedProps.arguments.forEach(function(arg, i) {
-                callBlock += "<value name='" + props.args[i].name + "'>" +
-                    Blockly.util.convertAstNodeToBlocks(arg) + "</value>";
-            });
+            processArgs(0);
         }
 
         callBlock += "</block>";

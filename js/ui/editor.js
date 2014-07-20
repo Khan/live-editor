@@ -406,6 +406,9 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
                         if (prop.type === "Colour") {
                             values += "<block type='colour_picker'>" +
                                 "</block>";
+                        } else if (prop.type === "Image") {
+                            values += "<block type='image_picker'>" +
+                                "</block>";
                         } else if (prop.type === "String") {
                             values += "<block type='text'>" +
                                 "<field name='TEXT'>" + prop.fill + "</field>" +
