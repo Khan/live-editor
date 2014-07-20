@@ -751,6 +751,7 @@ Blockly.core.Language.procedures_defnoreturn.init = function() {
 }
 
 var functionBlockTemplate = function(node, matchedProps) {
+    // generate code
     var output = ''
     output += '<block type="procedures_defnoreturn">'
     output += '<mutation>'
@@ -880,7 +881,7 @@ Blockly.core.JavaScript.procedures_defnoreturn = function() {
 };
 
 //
-// Function CallExpression
+// Function CallExpression (No-Return) (Generic)
 //
 
 // _tree('whoopee(x)')
@@ -921,11 +922,26 @@ Blockly.util.registerBlockSignature(
     function(node, matchedProps) {
         var output = ''
         output += '<block type="procedures_callnoreturn">'
+
+        
         output += '<mutation name="'+matchedProps.name+'">'
+        var proc = Blockly.getUserDefinedFunction(matchedProps.name)
+        
         matchedProps.params.forEach(function(param,index) {
-            output += '<arg name="'+index+'"/>'
+            var label;
+            // try to use the recorded method's arg names
+            try {
+                label = proc.params[index].name;
+            // fallback to labeling the args with the index
+            } catch (error) {
+                matchedProps.name
+                label = index;
+            }
+
+            output += '<arg name="'+label+'"/>'
         })
         output += '</mutation>'
+
         matchedProps.params.forEach(function(param,index) {
             output += '<value name="ARG'+index+'">'
             output += Blockly.util.convertAstNodeToBlocks(param)
@@ -936,9 +952,11 @@ Blockly.util.registerBlockSignature(
     }
 );
 
-// Handle p5js methods
-/* This is what's used when we're loading in code and converting it into blocks
-*/
+//
+//  Handle p5js no-return methods
+//  This is what's used when we're loading in code and converting it into blocks
+//
+
 Blockly.util.registerBlockSignature(
     {
         type: 'ExpressionStatement',

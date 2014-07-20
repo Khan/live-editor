@@ -47,22 +47,28 @@
       body: patternMatch.var('body'),
     },
     // XML generator
-    function(node,matchedProps) {
-      var body, output = '<xml>'
-      // Build body from the inside out, appending each node to the one before it's `next` tag
-      // elem0
-      // └─next:elem1
-      //        └─next:elem2
-      matchedProps.body.reverse().forEach(function(node,index) {
-        var nodeXml = Blockly.util.convertAstNodeToBlocks(node)
-        // Append current body inside this node, and set that as the new body
-        body = body ? Blockly.util.appendInNewTag(nodeXml,body,'next') : nodeXml
-      })
-      output += body
+    function(node, matchedProps) {
+      var output = '<xml>'
+      output += walkBlockBody( matchedProps.body )
       output += '</xml>'
       return output
     }
   )
+
+  // we use this to keep reference of the defined functions,
+  // similar to Blockly.Procedures.allProcedures()
+  // but available earlier
+  // sorry that this is a QuickHack™
+  
+  var __userDefinedFunctions = {}
+
+  Blockly.getUserDefinedFunction = function(targetName) {
+      return __userDefinedFunctions[targetName];
+  }
+
+  Blockly.setUserDefinedFunction = function(targetName, data) {
+      __userDefinedFunctions[targetName] = data;
+  }
 
   Blockly.util.registerBlockSignature({
     // Pattern
@@ -70,21 +76,45 @@
       body: patternMatch.var('body'),
     },
     // XML generator
-    function(node,matchedProps) {
-      var body, output = ''
-      // Build body from the inside out, appending each node to the one before it's `next` tag
-      // elem0
-      // └─next:elem1
-      //        └─next:elem2
-      matchedProps.body.reverse().forEach(function(node,index) {
-        var nodeXml = Blockly.util.convertAstNodeToBlocks(node)
-        // Append current body inside this node, and set that as the new body
-        body = body ? Blockly.util.appendInNewTag(nodeXml,body,'next') : nodeXml
-      })
-      output += body
-      return output
+    function(node, matchedProps) {
+      return walkBlockBody( matchedProps.body )
     }
   )
+
+  function walkBlockBody( blockBody ) {
+    // walk block statement (not-recursive) for function defintions
+    // so that we can use the argument names in other places
+    blockBody.forEach(function(node,index) {
+      // this is a hokey pattern check for the var-style method declarations
+      if ( node.type === "VariableDeclaration"
+        && node.declarations
+        && node.declarations[0]
+        && node.declarations[0].id
+        && node.declarations[0].id.name
+        && node.declarations[0].init
+        && node.declarations[0].init.type === "FunctionExpression"
+      ) {
+        var funcName = node.declarations[0].id.name;
+        var func = node.declarations[0].init;
+        // record the custom function
+        // we use this to look up arg names later
+        Blockly.setUserDefinedFunction(funcName, {
+          params: func.params,
+        });
+      }
+    })
+    // Build body from the inside out, appending each node to the one before it's `next` tag
+    // elem0
+    // └─next:elem1
+    //        └─next:elem2
+    var bodyXml;
+    blockBody.reverse().forEach(function(node, index) {
+      var nodeXml = Blockly.util.convertAstNodeToBlocks(node)
+      // Append current body inside this node, and set that as the new body
+      bodyXml = bodyXml ? Blockly.util.appendInNewTag(nodeXml, bodyXml, 'next') : nodeXml
+    })
+    return bodyXml
+  }
 
   // ExpressionStatement wraps the expression in a nub
   Blockly.util.registerBlockSignature({
