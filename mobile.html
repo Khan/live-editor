@@ -94,7 +94,7 @@
     $(function() {
         var options = {
             el: $("#sample-live-editor"),
-            code: window.localStorage["test-code"] || "",
+            code: window.DEFAULT_CODE || "",
             width: 400,
             height: 400,
             editorHeight: "100%",
@@ -104,13 +104,18 @@
             imagesDir: "./images/"
         };
 
-        //$.getJSON("test-audio.json", function(data) {
         window.liveEditor = new LiveEditor(options);
-            liveEditor.editor.on("change", function() {
-                window.localStorage["test-code"] = liveEditor.editor.text();
-            });
-                //$.extend(options, data));
-        //});
+
+        $("<button>")
+            .addClass("btn btn-success pull-left")
+            .text(" Save")
+            .prepend("<span class='glyphicon glyphicon-save'></span>")
+            .on("click", function() {
+
+            })
+            .appendTo(".scratchpad-wrap .scratchpad-toolbar");
+
+        $("#restart-code").addClass("btn btn-warning");
     });
     </script>
 </head>

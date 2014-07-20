@@ -11,11 +11,11 @@
 }
 
 .scratchpad-wrap .scratchpad-canvas-wrap  #output {
-    min-width: 402;
+    min-width: 402px;
 }
 
 .scratchpad-wrap .scratchpad-editor-wrap {
-    margin-right: 402;
+    margin-right: 412px;
     position: relative;
 }
 
