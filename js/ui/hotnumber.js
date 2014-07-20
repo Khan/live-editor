@@ -195,31 +195,32 @@ var HotNumberModule = function() {
              
             var self = this;
 
+            // We can't listen to change listener due to endless loop
+            // Ideally, Blockly would fire something like a FieldSelected listener
+
+            // Listen to mouseenter on input so we can turn number scrubber on
             // Delegate, since the input can come and go
             $(blockly.WidgetDiv.DIV).on("mouseenter", "input", function(e) {
                 _private.checkNumber.call(self);
             });
 
-            // Listen to click on SVG so we can turn it off
+            // Listen to click on SVG so we can turn pickers on/off
             $(blockly.svg).on("click", function(e) {
                 // To check when they click elsewhere
                 _private.checkNumber.call(self);
             });
-            /*
-            Blockly.addChangeListener(function(e) {
-                _private.checkNumber.call(self);
-            });*/
 
             _private.attachScrubber.call(this);
         },
         onNumberCheck: function() {
-            // Check if we're working on an image
             var selected = this.options.blockly.selected;
-            var input = this.options.blockly.FieldTextInput.htmlInput_;
 
-            if (selected && selected.type === "image_picker") {
+            if (!selected) {
+                return;
+            }
+            if (selected.type === "image_picker") {
                 var imageField = selected.inputList[0].fieldRow[0];
-                var imageUrl = imageField.getValue();
+                var imageUrl = selected.getPathlessUrl();
                 
                 this.handle = function(value) {
                     _private.updateImagePicker.call(this, value);
@@ -230,8 +231,9 @@ var HotNumberModule = function() {
                 this.newPicker = this.imagePicker;
                 this.selectedNode = imageField.getRootElement();
 
-            } else if (input) {
-                this.firstNum = parseInt($(input).val(), 10);
+            } else if (selected.type === "math_number") {
+                var textField = selected.inputList[0].fieldRow[0];
+                this.firstNum = parseFloat(textField.getValue(), 10);
                 this.firstNumString = String(this.firstNum);
                 
                 // Repeated later
@@ -239,20 +241,22 @@ var HotNumberModule = function() {
                     _private.updateNumberScrubber.call(this, value);
                 };
                 this.newPicker = this.scrubber;
-                this.selectedNode = input;
+                this.selectedNode = textField.getRootElement();
             }
         },
         onUpdatePosition: function() {
             var container = this.options.blockly.svg;
-            var field = this.selectedNode;
+            var selected = this.options.blockly.selected;
 
-            var inputOffset = $(field).offset();
-            var coords = {pageX: inputOffset.left, pageY: inputOffset.top};
-            var relativePos = coords.pageY - $(container).offset().top;
+            var coords = selected.getRelativeToSurfaceXY();
+            var realLeft = selected.workspace.getMetrics().absoluteLeft;
+            var fieldSize = selected.getHeightWidth();
             var editorHeight = $(container).height();
+            var isOnScreen = !(coords.y < 0 || coords.y >= editorHeight);
             this.curPicker
-                .css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX })
-                .toggle(!(relativePos < 0 || relativePos >= editorHeight));
+                .css({ top: $(window).scrollTop() + coords.y + 10,
+                       left: realLeft + coords.x + fieldSize.width/2})
+                .toggle(isOnScreen);
         },
         onNewNumber: function(newValue) {
             var selected = this.options.blockly.selected;

@@ -592,13 +592,16 @@ Blockly.Blocks["image_picker"] = {
             .appendField(new Blockly.FieldImage(
                 '/images/creatures/Winston.png', 40, 40), 'URL');
         this.setOutput(true, "Image");
+    },
+    getPathlessUrl: function() {
+        var url = this.getFieldValue("URL");
+        var pathlessUrl = url.substr(url.indexOf('images/')+7).split('.png')[0];
+        return pathlessUrl;
     }
 };
 
 Blockly.JavaScript["image_picker"] = function(block) {
-    var url = block.getFieldValue("URL");
-    var pathlessUrl = url.substr(url.indexOf('images/')+7).split('.png')[0];
-    var funcCall = 'getImage("' + pathlessUrl + '")';
+    var funcCall = 'getImage("' + block.getPathlessUrl() + '")';
     return [funcCall,
         Blockly.JavaScript.ORDER_ATOMIC];
 };
