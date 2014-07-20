@@ -1023,6 +1023,23 @@ window.LiveEditor = Backbone.View.extend({
         });
     },
 
+    getScreenshot: function(callback) {
+        // Unbind any handlers this function may have set for previous
+        // screenshots
+        $(window).off("message.getScreenshot");
+    
+        // We're only expecting one screenshot back
+        $(window).on("message.getScreenshot", function(e) {
+            // Only call if the data is actually an image!
+            if (/^data:/.test(e.originalEvent.data)) {
+                callback(e.originalEvent.data);
+            }
+        });
+    
+        // Ask the frame for a screenshot
+        this.postFrame({ screenshot: true });
+    },
+
     _qualifyURL: function(url){
         var a = document.createElement("a");
         a.href = url;
