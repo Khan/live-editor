@@ -379,6 +379,10 @@ window.ScratchpadEditor = Backbone.View.extend({
 
     setReadOnly: function(state) {
         this.editor.setReadOnly(state);
+    },
+
+    undo: function() {
+        this.editor.undo();
     }
 });
 
@@ -495,6 +499,8 @@ window.ScratchpadBlocklyEditor = Backbone.View.extend({
     toggleGutter: function() {},
     setErrorHighlight: function() {},
     setReadOnly: function() {},
+    undo: function() {},
+    insertNewlineIfCursorAtEnd: function() {},
 
     setBlocklyFromJS: function(code) {
         var xmlString = Blockly.util.jsToBlocklyXml(code);

@@ -28,6 +28,7 @@ window.LiveEditor = Backbone.View.extend({
         this.imagesDir = this._qualifyURL(options.imagesDir);
 
         this.initialCode = options.code;
+        this.validation = options.validation;
         this.recordingCommands = options.recordingCommands;
         this.recordingMP3 = options.recordingMP3;
 
@@ -907,7 +908,7 @@ window.LiveEditor = Backbone.View.extend({
 
         // Testing/validation code is being set
         if (data.validate != null) {
-            validation = data.validate;
+            this.validation = data.validate;
         }
 
         // Set the line visibility in the editor
@@ -961,6 +962,7 @@ window.LiveEditor = Backbone.View.extend({
     runCode: function(code) {
         var options = {
             code: code,
+            validate: this.validation || "",
             version: this.config.curVersion(),
             settings: this.settings || {}, // TODO: Figure this out
             execDir: this.execDir,
@@ -1038,6 +1040,10 @@ window.LiveEditor = Backbone.View.extend({
     
         // Ask the frame for a screenshot
         this.postFrame({ screenshot: true });
+    },
+
+    undo: function() {
+        this.editor.undo();
     },
 
     _qualifyURL: function(url){
