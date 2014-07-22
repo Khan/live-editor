@@ -2,42 +2,86 @@
     var oldValue, range, firstNum, firstNumString,
         scrubber, colorPicker, curPicker, imagePicker,
         handle, ignore = false, defaultImage = "cute/Blank";
+    var editor, record, container;
+
+    var aceEditor = {
+        onInit: function(options) {
+            var editor = options.editor;
+            var selection = editor.session.selection;
+
+            // A bit of a hack adding it to the editor object...
+            editor.imagesDir = options.imagesDir;
+
+            if (options.reload) {
+                checkNumber(options);
+
+            } else {
+                selection.on("changeCursor", function() {
+                    checkNumber(options);
+                });
+                selection.on("changeSelection", function() {
+                    checkNumber(options);
+                });
+
+                editor.renderer.scrollBar.addEventListener("scroll", function() {
+                    if (curPicker) {
+                        updatePos(editor);
+                    }
+                });
+
+                attachPicker(options);
+                attachScrubber(options);
+            }
+
+            if (options.record) {
+                options.record.handlers.hot = function(e) {
+                    checkNumber(options);
+                    update(options, e.hot);
+                    updatePos(options);
+                };
+            }
+        }
+    };
+
+
+    var blocklyEditor = {
+        onInit: function(options) {
+            var container = options.container;
+
+            $(container).on("mouseenter", "input", function() {
+                checkNumber(options);
+            });
+
+            attachScrubber(options);
+        },
+        onNumberCheck: function(options) {
+            firstNum = parseInt($(container).find("input").val(), 10);
+            // if input no longer exists
+            if (firstNum !== undefined) {
+                firstNumString = firstNum + "";
+                newPicker = scrubber;
+
+                // Repeated later
+                handle = function(value) {
+                    updateNumberScrubber(editor, record, value);
+                };
+            }
+        }
+    };
+
 
     $.fn.hotNumber = function(options) {
-        var editor = options.editor;
-        var selection = editor.session.selection;
 
-        // A bit of a hack adding it to the editor object...
-        editor.imagesDir = options.imagesDir;
-
-        if (options.reload) {
-            checkNumber(editor);
-
+        if (options.type === "ace") {
+            editor = aceEditor;
+        } else if (options.type === "blockly") {
+            editor = blocklyEditor;
         } else {
-            selection.on("changeCursor", function() {
-                checkNumber(editor, options.record);
-            });
-            selection.on("changeSelection", function() {
-                checkNumber(editor, options.record);
-            });
-
-            editor.renderer.scrollBar.addEventListener("scroll", function() {
-                if (curPicker) {
-                    updatePos(editor);
-                }
-            });
-
-            attachPicker(editor, record);
-            attachScrubber(editor, record);
+            console.warn("Unknown editor type");
+            return;
         }
 
-        if (options.record) {
-            options.record.handlers.hot = function(e) {
-                checkNumber(editor, options.record);
-                update(editor, options.record, e.hot);
-                updatePos(editor);
-            };
-        }
+        editor.onInit(options);
 
         return this;
     };
@@ -55,7 +99,7 @@
         }
     }
 
-    function attachScrubber(editor, record) {
+    function attachScrubber(options) {
         if (scrubber) {
             return;
         }
@@ -96,7 +140,7 @@
                         left: 0,
                         top: 0
                     });
-                    checkNumber(editor, record);
+                    checkNumber(options);
                 }
             });
 
@@ -108,7 +152,7 @@
             .hide();
     }
 
-    function attachPicker(editor) {
+    function attachColorPicker(editor) {
         if (!colorPicker) {
             var over = false, down = false;
             var reposition = function($picker) {
@@ -207,17 +251,33 @@
         return parenthesisDepth > 0;
     }
 
-    function checkNumber(editor, record) {
+    // Completely ACE specific
+    function checkNumber(options) {
         if (ignore) {
             return;
         }
 
-        range = null;
+        var oldPicker = curPicker, newPicker;
 
+        if (container) {
+            firstNum = parseInt($(container).find("input").val(), 10);
+            // if input no longer exists
+            if (firstNum !== undefined) {
+                firstNumString = firstNum + "";
+                newPicker = scrubber;
+
+                // Repeated later
+                handle = function(value) {
+                    updateNumberScrubber(editor, record, value);
+                };
+            }
+        
+        } else {
+
+        range = null;
         var pos = editor.selection.getCursor(),
             line = editor.session.getDocument().getLine(pos.row),
-            prefix = line.slice(0, pos.column),
-            oldPicker = curPicker, newPicker;
+            prefix = line.slice(0, pos.column);
 
         if (/\b(background|fill|stroke|color)(\s*)\(\s*([\s\d,]*)\s*$/.test(prefix)) {
             var paramsPos = pos.column - RegExp.$3.length;
@@ -325,6 +385,9 @@
             }
         }
 
+        } // end all the finding
+
+
         if (oldPicker && oldPicker !== newPicker) {
             oldPicker.hide();
         }
@@ -342,15 +405,28 @@
             return;
         }
 
-        var pos = editor.selection.getCursor(),
-            offset = editor.renderer.scroller.getBoundingClientRect(),
+        var coords, relativePos;
+        var editorHeight;
+
+        // ACE Specific
+        if (editor) {
+            var pos = editor.selection.getCursor();
+            var editorBB = editor.renderer.scroller.getBoundingClientRect();
+            editorHeight = editorBB.height;
             coords = editor.renderer.textToScreenCoordinates(pos.row,
-                curPicker !== scrubber ? editor.session.getDocument().getLine(pos.row).length : pos.column),
+                curPicker !== scrubber ? editor.session.getDocument().getLine(pos.row).length : pos.column);
             relativePos = coords.pageY - offset.top;
+        } else {
+        // Blockly
+            var inputOffset = $(container).find("input").offset();
+            coords = {pageX: inputOffset.left, pageY: inputOffset.top};
+            relativePos = coords.pageY - $(container).offset().top;
+            editorHeight = $(container).height();
+        }
 
         curPicker
             .css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX })
-            .toggle(!(relativePos < 0 || relativePos >= offset.height));
+            .toggle(!(relativePos < 0 || relativePos >= editorHeight));
 
         if (curPicker === colorPicker) {
             var colors = oldValue.replace(/\s/, "").split(",");
@@ -405,7 +481,7 @@
     }
 
     function updateNumberScrubber(editor, record, newNum) {
-        if (!range) {
+        if (firstNum === undefined) {
             return;
         }
 
@@ -444,6 +520,10 @@
     }
 
     function update(editor, record, newValue) {
+        $(container).find("input").val(newValue)
+                                  .trigger(e);
+        Blockly.fireUiEventNow($(container).find("input")[0], 'keypress');
+
         if (!range) {
             return;
         }

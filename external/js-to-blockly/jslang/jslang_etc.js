@@ -1,0 +1,246 @@
+
+// Other/etc.
+
+  // ===
+  // = Block Definition
+  // ===
+
+  // for using an Expression as a Statement
+  // TODO: this is a horrible thing to expect from your users
+  Blockly.core.Language.jslang_statement_nub = {
+    helpUrl: '',
+    init: function() {
+      this.setColour(290);
+      this.appendValueInput("CHAIN")
+          .setCheck("null");
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setTooltip('');
+    }
+  };
+
+  // For getting a property of an object
+  Blockly.core.Language.jslang_identifier = {
+    helpUrl: '',
+    init: function() {
+      this.setColour(240);
+      this.appendValueInput("CHAIN")
+          .setCheck("null")
+          .appendTitle("get var")
+          .appendTitle(new Blockly.core.FieldTextInput("prop"), "PROP");
+      this.setOutput(true, "null");
+      this.setTooltip('');
+    }
+  };
+
+  // ===
+  // = JS -> Blocks
+  // ===
+
+  // Program
+  // 
+  // <xml>{body[0]}</xml>
+
+  Blockly.util.registerBlockSignature({
+    // Pattern
+      type: 'Program',
+      body: patternMatch.var('body'),
+    },
+    // XML generator
+    function(node, matchedProps) {
+      var output = '<xml>'
+      output += walkBlockBody( matchedProps.body )
+      output += '</xml>'
+      return output
+    }
+  )
+
+  // we use this to keep reference of the defined functions,
+  // similar to Blockly.Procedures.allProcedures()
+  // but available earlier
+  // sorry that this is a QuickHack™
+  
+  var __userDefinedFunctions = {}
+
+  Blockly.getUserDefinedFunction = function(targetName) {
+      return __userDefinedFunctions[targetName];
+  }
+
+  Blockly.setUserDefinedFunction = function(targetName, data) {
+      __userDefinedFunctions[targetName] = data;
+  }
+
+  Blockly.util.registerBlockSignature({
+    // Pattern
+      type: 'BlockStatement',
+      body: patternMatch.var('body'),
+    },
+    // XML generator
+    function(node, matchedProps) {
+      return walkBlockBody( matchedProps.body )
+    }
+  )
+
+  function walkBlockBody( blockBody ) {
+    // walk block statement (not-recursive) for function defintions
+    // so that we can use the argument names in other places
+    blockBody.forEach(function(node,index) {
+      // this is a hokey pattern check for the var-style method declarations
+      if ( node.type === "VariableDeclaration"
+        && node.declarations
+        && node.declarations[0]
+        && node.declarations[0].id
+        && node.declarations[0].id.name
+        && node.declarations[0].init
+        && node.declarations[0].init.type === "FunctionExpression"
+      ) {
+        var funcName = node.declarations[0].id.name;
+        var func = node.declarations[0].init;
+        // record the custom function
+        // we use this to look up arg names later
+        Blockly.setUserDefinedFunction(funcName, {
+          params: func.params,
+        });
+      }
+    })
+    // Build body from the inside out, appending each node to the one before it's `next` tag
+    // elem0
+    // └─next:elem1
+    //        └─next:elem2
+    var bodyXml;
+    blockBody.reverse().forEach(function(node, index) {
+      var nodeXml = Blockly.util.convertAstNodeToBlocks(node)
+      // Append current body inside this node, and set that as the new body
+      bodyXml = bodyXml ? Blockly.util.appendInNewTag(nodeXml, bodyXml, 'next') : nodeXml
+    })
+    return bodyXml
+  }
+
+  // ExpressionStatement wraps the expression in a nub
+  Blockly.util.registerBlockSignature({
+    // Pattern
+      type: 'ExpressionStatement',
+      expression: patternMatch.var('expression'),
+    },
+    // XML generator
+    function(node,matchedProps) {
+      var output = ''
+      //output += '<block type="jslang_statement_nub"><value name="CHAIN">'
+      output += Blockly.util.convertAstNodeToBlocks(matchedProps.expression)
+      //output += '</value></block>'
+      return output
+    }
+  )
+
+// <xml>
+//   <block type="lists_create_with" inline="false" x="335" y="113">
+//     <mutation items="3"></mutation>
+//     <value name="ADD0">
+//       <block type="text">
+//         <title name="TEXT">hello!</title>
+//       </block>
+//     </value>
+//     <value name="ADD1">
+//       <block type="text">
+//         <title name="TEXT">bai</title>
+//       </block>
+//     </value>
+//     <value name="ADD2">
+//       <block type="text">
+//         <title name="TEXT">jake</title>
+//       </block>
+//     </value>
+//   </block>
+// </xml>
+
+  // ExpressionStatement wraps the expression in a nub
+  Blockly.util.registerBlockSignature({
+    // Pattern
+      type: 'ArrayExpression',
+      elements: patternMatch.var('elements'),
+    },
+    // XML generator
+    function(node,matchedProps) {
+      var output = ''
+      output += '<block type="lists_create_with">' //<value name="CHAIN">'
+      output += '<mutation items="'+matchedProps.elements.length+'"></mutation>'
+      matchedProps.elements.forEach(function(elem,index){
+        output += '<value name="ADD'+index+'">'
+        output += Blockly.util.convertAstNodeToBlocks(elem)
+        output += '</value>'
+      })
+      output += '</block>'
+      return output
+    }
+  )
+
+  // Literal
+  //
+  // <block type="text">
+  //   <title name="TEXT">hey</title>
+  // </block>
+  //
+  //        - or -
+  //
+  // <block type="math_number">
+  //   <title name="NUM">0</title>
+  // </block>
+
+  Blockly.util.registerBlockSignature({
+    // Pattern
+      type: 'Literal',
+      value: patternMatch.var('value'),
+    },
+    // XML generator
+    function(node,matchedProps) {
+      var output = ''
+      var type = typeof matchedProps.value
+      if (type === 'string') {
+        output += '<block type="text">\n'
+        output += '<title name="TEXT">'+matchedProps.value+'</title>'
+        output += '</block>'  
+      } else if (type === 'number') {
+        output += '<block type="math_number">\n'
+        output += '<title name="NUM">'+matchedProps.value+'</title>'
+        output += '</block>'
+      } else if (type === 'boolean') {
+        output += '<block type="logic_boolean">\n'
+        output += '<title name="BOOL">'+(matchedProps.value ? 'TRUE' : 'FALSE')+'</title>'
+        output += '</block>'
+      } else {
+        // No Match
+        return false
+      }
+      return output
+    }
+  )
+
+  Blockly.util.registerBlockSignature({
+    // Pattern
+      type: 'Identifier',
+      name: patternMatch.var('name'),
+    },
+    // XML generator
+    function(node,matchedProps) {
+      var output = '<block type="jslang_identifier"><title name="PROP">'+matchedProps.name+'</title></block>'
+      return output
+    }
+  )
+
+  // ===
+  // = Blocks -> JS
+  // ===
+
+  Blockly.core.JavaScript.jslang_statement_nub = function() {
+    var value_chain = Blockly.core.JavaScript.valueToCode(this, 'CHAIN', Blockly.core.JavaScript.ORDER_ATOMIC);
+    // Return chain
+    return value_chain+"\n";
+  };
+
+  Blockly.core.JavaScript.jslang_identifier = function() {
+    var value_chain = Blockly.core.JavaScript.valueToCode(this, 'CHAIN', Blockly.core.JavaScript.ORDER_ATOMIC);
+    var text_prop = this.getTitleValue('PROP');
+    // Assemble JavaScript into code variable.
+    var code = text_prop+value_chain
+    return [code, Blockly.core.JavaScript.ORDER_NONE];
+  };

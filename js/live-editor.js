@@ -1,9 +1,3 @@
-// TODO:
-// - DOM strings
-// - bind
-// - ScratchpadConfig
-// - Record
-
 window.LiveEditor = Backbone.View.extend({
     dom: {
         DRAW_CANVAS: ".scratchpad-draw-canvas",
@@ -22,14 +16,28 @@ window.LiveEditor = Backbone.View.extend({
         PLAYBAR_UI: ".scratchpad-playbar-play, .scratchpad-playbar-progress"
     },
 
+    defaultOutputWidth: 400,
+    defaultOutputHeight: 400,
+
+    defaultEditorType: "p5js",
+
+    editor: {
+        p5js: ScratchpadEditor,
+        blocklyp5js: ScratchpadBlocklyEditor
+    },
+
     initialize: function(options) {
         this.execDir = this._qualifyURL(options.execDir);
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
 
+        this.editorType = options.editorType || this.defaultEditorType;
+        this.editorHeight = options.editorHeight;
         this.initialCode = options.code;
         this.initialVersion = options.version;
         this.settings = options.settings;
+        this.validation = options.validation;
+
         this.recordingCommands = options.recordingCommands;
         this.recordingMP3 = options.recordingMP3;
 
@@ -58,36 +66,37 @@ window.LiveEditor = Backbone.View.extend({
             // Drawing has started
             drawStarted: function() {
                 // Activate the canvas
-                $(this.dom.DRAW_CANVAS).show();
+                this.$el.find(this.dom.DRAW_CANVAS).show();
             }.bind(this),
 
             // Drawing has ended
             drawEnded: function() {
                 // Hide the canvas
-                $(this.dom.DRAW_CANVAS).hide();
+                this.$el.find(this.dom.DRAW_CANVAS).hide();
             }.bind(this),
 
             // A color has been chosen
             colorSet: function(color) {
                 // Deactivate all the color buttons
-                $(this.dom.DRAW_COLOR_BUTTONS)
+                this.$el.find(this.dom.DRAW_COLOR_BUTTONS)
                     .removeClass("ui-state-active");
 
                 // If a new color has actually been chosen
                 if (color !== null) {
                     // Select that color and activate the button
-                    $("#" + color).addClass("ui-state-active");
+                    this.$el.find("#" + color).addClass("ui-state-active");
                 }
             }.bind(this)
         });
 
         // Set up the editor
-        this.editor = new ScratchpadEditor({
+        this.editor = new this.editor[this.editorType]({
             el: this.dom.EDITOR,
             autoFocus: options.autoFocus,
             config: this.config,
             record: this.record,
-            imagesDir: this.imagesDir
+            imagesDir: this.imagesDir,
+            externalsDir: this.externalsDir
         });
 
         var code = options.code;
@@ -107,25 +116,14 @@ window.LiveEditor = Backbone.View.extend({
 
         } else {
             // Set an initial starting selection point
-            this.editor.editor.selection.setSelectionRange({
+            this.editor.setSelection({
                 start: {row: 0, column: 0},
                 end: {row: 0, column: 0}
             });
         }
 
         // Hide the overlay
-        $("#page-overlay").hide();
-
-        // TODO(jeresig): hotNumber initializes in the wrong position
-        // this should be changed to wait until rendering of Ace is complete
-        /*
-        setTimeout(function() {
-            this.editor.$el.hotNumber({
-                reload: true,
-                editor: this.editor.editor
-            });
-        }.bind(this), 100);
-        */
+        this.$el.find("#page-overlay").hide();
 
         // Change the width and height of the output frame if it's been
         // changed by the user, via the query string, or in the settings
@@ -166,7 +164,7 @@ window.LiveEditor = Backbone.View.extend({
         var toExec = false;
 
         // When the frame loads, execute the code
-        $("#output-frame").on("load", function() {
+        $el.find("#output-frame").on("load", function() {
             toExec = true;
             // TODO(leif): properly handle case where the user's code doesn't
             // initially compile. There is currently a race condition in which
@@ -174,7 +172,7 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // Whenever the user changes code, execute the code
-        this.editor.editor.on("change", function() {
+        this.editor.on("change", function() {
             toExec = true;
         });
 
@@ -189,7 +187,7 @@ window.LiveEditor = Backbone.View.extend({
             }
         }.bind(this), 100);
 
-        $(this.config).on("versionSwitched", function(e, version) {
+        this.config.on("versionSwitched", function(e, version) {
             // Re-run the code after a version switch
             toExec = true;
 
@@ -401,7 +399,7 @@ window.LiveEditor = Backbone.View.extend({
                 window.clearTimeout(rebootTimer);
                 rebootTimer = window.setTimeout(function() {
                     // Clear flashblocker divs
-                    $("#sm2-container div").remove();
+                    self.$el.find("#sm2-container div").remove();
                     soundManager.reboot();
                 }, 3000);
             }
@@ -441,8 +439,8 @@ window.LiveEditor = Backbone.View.extend({
 
                 if (!record.seeking) {
                     // Slider takes values in seconds
-                    $(self.dom.PLAYBAR_PROGRESS).slider("option", "value",
-                        record.currentTime() / 1000);
+                    self.$el.find(self.dom.PLAYBAR_PROGRESS)
+                        .slider("option", "value", record.currentTime() / 1000);
                 }
 
                 record.trigger("playUpdate");
@@ -570,26 +568,26 @@ window.LiveEditor = Backbone.View.extend({
 
                 if (!record.recording) {
                     // Disable the record button during playback
-                    $("#record").addClass("disabled");
+                    self.$el.find("#record").addClass("disabled");
                 }
 
                 // During playback disable the restart button
-                $("#restart-code").addClass("disabled");
+                self.$el.find("#restart-code").addClass("disabled");
 
                 if (!record.recording) {
                     // Turn on playback-related styling
                     $("html").addClass("playing");
 
-                    // Show an invisible overlay that blocks interactions with the
-                    // editor and canvas areas (preventing the user from being able to
-                    // disturb playback)
-                    $(".disable-overlay").show();
+                    // Show an invisible overlay that blocks interactions with
+                    // the editor and canvas areas (preventing the user from
+                    // being able to disturb playback)
+                    self.$el.find(".disable-overlay").show();
                 }
 
                 self.editor.unfold();
 
                 // Activate the play button
-                $(self.dom.PLAYBAR_PLAY)
+                self.$el.find(self.dom.PLAYBAR_PLAY)
                     .find("span")
                     .removeClass("glyphicon-play icon-play")
                     .addClass("glyphicon-pause icon-pause");
@@ -607,16 +605,16 @@ window.LiveEditor = Backbone.View.extend({
                 $("html").removeClass("playing");
 
                 // Disable the blocking overlay
-                $(".disable-overlay").hide();
+                self.$el.find(".disable-overlay").hide();
 
                 // Allow the user to restart the code again
-                $("#restart-code").removeClass("disabled");
+                self.$el.find("#restart-code").removeClass("disabled");
 
                 // Re-enable the record button after playback
-                $("#record").removeClass("disabled");
+                self.$el.find("#record").removeClass("disabled");
 
                 // Deactivate the play button
-                $(self.dom.PLAYBAR_PLAY)
+                self.$el.find(self.dom.PLAYBAR_PLAY)
                     .find("span")
                     .addClass("glyphicon-play icon-play")
                     .removeClass("glyphicon-pause icon-pause");
@@ -627,15 +625,15 @@ window.LiveEditor = Backbone.View.extend({
                 // Let the output know that recording has begun
                 self.postFrame({ recording: true });
 
-                $("#draw-widgets").removeClass("hidden").show();
+                self.$el.find("#draw-widgets").removeClass("hidden").show();
 
                 // Hides the invisible overlay that blocks interactions with the
-                // editor and canvas areas (preventing the user from being able to
-                // disturb the recording)
-                $(".disable-overlay").hide();
+                // editor and canvas areas (preventing the user from being able
+                // to disturb the recording)
+                self.$el.find(".disable-overlay").hide();
 
                 // Allow the editor to be changed
-                self.editor.editor.setReadOnly(false);
+                self.editor.setReadOnly(false);
 
                 // Turn off playback-related styling
                 // (hides hot numbers, for example)
@@ -649,10 +647,10 @@ window.LiveEditor = Backbone.View.extend({
                 }
 
                 // Disable the save button
-                $("#save-button, #fork-button").addClass("disabled");
+                self.$el.find("#save-button, #fork-button").addClass("disabled");
 
                 // Activate the recording button
-                $("#record").addClass("toggled");
+                self.$el.find("#record").addClass("toggled");
             },
 
             // Recording has ended
@@ -665,32 +663,33 @@ window.LiveEditor = Backbone.View.extend({
                 }
 
                 // Re-enable the save button
-                $("#save-button, #fork-button").removeClass("disabled");
+                self.$el.find("#save-button, #fork-button").removeClass("disabled");
 
                 // Enable playbar UI
-                $(self.dom.PLAYBAR_UI).removeClass("ui-state-disabled");
+                self.$el.find(self.dom.PLAYBAR_UI).removeClass("ui-state-disabled");
 
                 // Return the recording button to normal
-                $("#record").removeClass("toggled disabled");
+                self.$el.find("#record").removeClass("toggled disabled");
 
                 // Stop any sort of user playback
                 record.stopPlayback();
 
                 // Show an invisible overlay that blocks interactions with the
-                // editor and canvas areas (preventing the user from being able to
-                // disturb the recording)
-                $(".disable-overlay").show();
+                // editor and canvas areas (preventing the user from being able
+                // to disturb the recording)
+                self.$el.find(".disable-overlay").show();
 
-                // Turn on playback-related styling (hides hot numbers, for example)
+                // Turn on playback-related styling (hides hot numbers, for
+                // example)
                 $("html").addClass("playing");
 
                 // Prevent the editor from being changed
-                self.editor.editor.setReadOnly(true);
+                self.editor.setReadOnly(true);
 
-                $("#draw-widgets").addClass("hidden").hide();
+                self.$el.find("#draw-widgets").addClass("hidden").hide();
 
-                // Because we are recording in chunks, do not reset the canvas to
-                // its initial state, but do redraw.
+                // Because we are recording in chunks, do not reset the canvas
+                // to its initial state, but do redraw.
                 self.drawCanvas.endDraw();
                 self.drawCanvas.redraw();
             }
@@ -698,7 +697,7 @@ window.LiveEditor = Backbone.View.extend({
 
         // When a restart occurs during playback, restart the output
         record.handlers.restart = function() {
-            var $restart = $("#restart-code");
+            var $restart = self.$el.find("#restart-code");
 
             if (!$restart.hasClass("hilite")) {
                 $restart.addClass("hilite green");
@@ -762,7 +761,7 @@ window.LiveEditor = Backbone.View.extend({
             this.recordView = new ScratchpadRecordView({
                 el: $el.find(".scratchpad-dev-record-row"),
                 recordButton: $el.find("#record"),
-                saveButton: $("#save-button"),
+                saveButton: $el.find("#save-button"),
                 record: this.record,
                 editor: this.editor,
                 config: this.config,
@@ -812,14 +811,14 @@ window.LiveEditor = Backbone.View.extend({
 
         // Set the duration of the progress bar based upon the track duration
         // Slider position is set in seconds
-        $(this.dom.PLAYBAR_PROGRESS).slider("option", "max",
+        this.$el.find(this.dom.PLAYBAR_PROGRESS).slider("option", "max",
             this.record.endTime() / 1000);
     },
 
     // Update the time left in playback of the track
     updateTimeLeft: function(time) {
         // Update the time indicator with a nicely formatted time
-        $(".scratchpad-playbar-timeleft").text(
+        this.$el.find(".scratchpad-playbar-timeleft").text(
             "-" + this.formatTime(this.record.endTime() - time));
     },
 
@@ -842,8 +841,8 @@ window.LiveEditor = Backbone.View.extend({
         // Don't update the slider position when seeking
         // (since this triggers an event on the #progress element)
         if (!this.record.seeking) {
-            $(this.dom.PLAYBAR_PROGRESS).slider("option", "value",
-                timeMS / 1000);
+            this.$el.find(this.dom.PLAYBAR_PROGRESS)
+                .slider("option", "value", timeMS / 1000);
         }
 
         // Move the recording and player positions
@@ -883,7 +882,7 @@ window.LiveEditor = Backbone.View.extend({
 
         // Testing/validation code is being set
         if (data.validate != null) {
-            validation = data.validate;
+            this.validation = data.validate;
         }
 
         // Set the line visibility in the editor
@@ -911,7 +910,7 @@ window.LiveEditor = Backbone.View.extend({
     // Extract the origin from the embedded frame location
     postFrameOrigin: function() {
         var match = /^.*:\/\/[^\/]*/.exec(
-            $("#output-frame").attr("data-src"));
+            this.$el.find("#output-frame").attr("data-src"));
 
         return match ?
             match[0] :
@@ -920,7 +919,7 @@ window.LiveEditor = Backbone.View.extend({
 
     postFrame: function(data) {
         // Send the data to the frame using postMessage
-        $("#output-frame")[0].contentWindow.postMessage(
+        this.$el.find("#output-frame")[0].contentWindow.postMessage(
             JSON.stringify(data), this.postFrameOrigin());
     },
 
@@ -937,6 +936,7 @@ window.LiveEditor = Backbone.View.extend({
     runCode: function(code) {
         var options = {
             code: code,
+            validate: this.validation || "",
             version: this.config.curVersion(),
             settings: this.settings || {},
             execDir: this.execDir,
@@ -967,22 +967,40 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     updateCanvasSize: function(width, height) {
-        var canvasWidth = 400;
-        var canvasHeight = 400;
-
-        width = width || canvasWidth;
-        height = height || canvasHeight;
+        width = width || this.defaultOutputWidth;
+        height = height || this.defaultOutputHeight;
 
         this.$el.find(this.dom.OUTPUT_FRAME).width(width);
         this.$el.find(this.dom.ALL_OUTPUT).height(height);
 
         // Set the editor height to be the same as the canvas height
-        this.$el.find(this.dom.EDITOR).height(height);
+        this.$el.find(this.dom.EDITOR).height(this.editorHeight || height);
 
         this.trigger("canvasSizeUpdated", {
             width: width,
             height: height
         });
+    },
+
+    getScreenshot: function(callback) {
+        // Unbind any handlers this function may have set for previous
+        // screenshots
+        $(window).off("message.getScreenshot");
+    
+        // We're only expecting one screenshot back
+        $(window).on("message.getScreenshot", function(e) {
+            // Only call if the data is actually an image!
+            if (/^data:/.test(e.originalEvent.data)) {
+                callback(e.originalEvent.data);
+            }
+        });
+    
+        // Ask the frame for a screenshot
+        this.postFrame({ screenshot: true });
+    },
+
+    undo: function() {
+        this.editor.undo();
     },
 
     _qualifyURL: function(url){
