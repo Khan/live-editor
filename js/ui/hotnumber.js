@@ -168,15 +168,15 @@ var HotNumberModule = function() {
                 record.pauseLog();
             }
 
-            // Insert the new number
-            var url = newValue;
-            var pathlessUrl = '"' + url.substr(url.indexOf('images/')+7).split('.png')[0] + '"';
-            range.end.column = range.start.column + this.oldValue.length;
-            editor.session.replace(range, pathlessUrl);
-
             // Select and focus the updated number
-            if (this.curPicker !== this.imagePicker) {
-                range.end.column = range.start.column + pathlessUrl.length;
+            if (this.curPicker === this.imagePicker) {
+                var url = newValue;
+                var pathlessUrl = '"' + url.substr(url.indexOf('images/')+7).split('.png')[0] + '"';
+                range.end.column = range.start.column + this.oldValue.length;
+                editor.session.replace(range, pathlessUrl);
+            } else {
+                editor.session.replace(range, newValue);
+                range.end.column = range.start.column + newValue.length;
                 editor.selection.setSelectionRange(this.range);
             }
 
@@ -277,8 +277,8 @@ var HotNumberModule = function() {
 
     var _private = {
         defaults: {
-            'type': 'blockly',  // 'blockly' or 'ace',
-            'imagesDir': '/'
+            type: "ace",  // 'blockly' or 'ace',
+            imagesDir: "./"
             // container, editor, record, depending on whether ACE or Blockly
         },
         getOrMakeHotNumber: function(elem, options) {
@@ -366,7 +366,7 @@ var HotNumberModule = function() {
             if (!this.imagePicker) {
                 var imagesDir = this.options.imagesDir;
                 
-                var tmpl = Handlebars.templates.imagepicker;
+                var tmpl = _public.getImagePickerTemplate();
 
                 var results = tmpl({
                     imagesDir: imagesDir,
@@ -508,16 +508,16 @@ var HotNumberModule = function() {
 
     // The public constructor and methods
     var HotNumber = function(options) {
-      
-      _private.customizeHotNumber.call(this, options);
-      
-      var self = this;
-      this.editor.onInit.call(this, options);
+        _private.customizeHotNumber.call(this, options);
+        this.editor.onInit.call(this, options);
     };
 
-
     var _public = function(el, options) {
-      return _private.getOrMakeHotNumber(el, options);
+        return _private.getOrMakeHotNumber(el, options);
+    };
+
+    _public.getImagePickerTemplate = function() {
+        return Handlebars.templates.imagepicker;
     };
 
     return _public;
