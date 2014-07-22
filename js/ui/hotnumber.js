@@ -169,22 +169,24 @@ var HotNumberModule = function() {
             }
 
             // Insert the new number
+            var url = newValue;
+            var pathlessUrl = '"' + url.substr(url.indexOf('images/')+7).split('.png')[0] + '"';
             range.end.column = range.start.column + this.oldValue.length;
-            editor.session.replace(range, newValue);
+            editor.session.replace(range, pathlessUrl);
 
             // Select and focus the updated number
-            //if (this.curPicker !== imagePicker) {
-                range.end.column = range.start.column + newValue.length;
+            if (this.curPicker !== this.imagePicker) {
+                range.end.column = range.start.column + pathlessUrl.length;
                 editor.selection.setSelectionRange(this.range);
-            //}
+            }
 
             if (record) {
                 record.resumeLog();
-                record.log({ hot: newValue });
+                record.log({ hot: pathlessUrl });
             }
 
             this.ignore = false;
-            this.oldValue = newValue;
+            this.oldValue = pathlessUrl;
         }
     };
 
@@ -362,7 +364,6 @@ var HotNumberModule = function() {
         },
         attachImagePicker: function() {
             if (!this.imagePicker) {
-                var editor = this.options.editor;
                 var imagesDir = this.options.imagesDir;
                 
                 var tmpl = Handlebars.templates.imagepicker;
@@ -390,14 +391,18 @@ var HotNumberModule = function() {
                     })
                     .bind("mouseleave", function() {
                         $(this).hide();
+
                         // This is to change the position with ACE
-                        /*
-                        var pos = editor.selection.getCursor(),
+                        // TODO(pamela): move this out into ACE specific
+                        var editor = self.options.editor;
+                        if (editor) {
+                            var pos = editor.selection.getCursor(),
                             coords = editor.renderer.textToScreenCoordinates(pos.row,
                                 editor.session.getDocument().getLine(pos.row).length);
 
-                        $(this).css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX });
-                        */
+                            $(this).css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX });
+                        }
+                        
                     })
                     .hide();
             }

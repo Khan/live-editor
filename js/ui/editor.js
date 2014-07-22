@@ -13,11 +13,10 @@ window.ScratchpadEditor = Backbone.View.extend({
 
         // Attach the hot number picker to the editor
         var hn = new HotNumber({
-            container: this.$el,
-            editor: this.editor,
-            record: this.record,
             imagesDir: options.imagesDir,
-            type: 'ace'
+            type: 'ace',
+            editor: this.editor,
+            record: this.record
         });
 
 
