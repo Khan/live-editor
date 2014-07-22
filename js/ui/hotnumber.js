@@ -60,13 +60,14 @@ var HotNumberModule = function() {
                 });
 
                 _private.attachScrubber.call(this);
+                _private.attachColorPicker.call(this);
             }
 
             if (record) {
                 record.handlers.hot = function(e) {
                     _private.checkNumber.call(self);
                     _private.updateEditor.call(e.hot);
-                    _private.updatePos.call();
+                    _private.updatePos.call(self);
                 };
             }
         },
@@ -79,7 +80,54 @@ var HotNumberModule = function() {
             var line = editor.session.getDocument().getLine(pos.row);
             var prefix = line.slice(0, pos.column);
 
-            if (/(\bgetImage\s*\(\s*)([^\)]*)$/.test(prefix)) {
+            if (/\b(background|fill|stroke|color)(\s*)\(\s*([\s\d,]*)\s*$/.test(prefix)) {
+                var paramsPos = pos.column - RegExp.$3.length;
+                // -1 because the open parenthesis is not included in the capture
+                var funcPos = paramsPos - RegExp.$1.length - RegExp.$2.length - 1;
+                var beforeFunction = prefix.substring(0, funcPos);
+                var needsSemicolon = RegExp.$1 !== "color" ||
+                    !isInParenthesis(beforeFunction);
+                // Test a match for:
+                // Capture group 1: r, g, b
+                // followed by an optional ,a for alpha
+                // Capture group 2: ) or empty
+                if (/^\s*((?:\s*\d+,){0,2}(?:\s*\d+)?)(?:,\s*\d+)?\s*(\)|$)/.test(line.slice(paramsPos))) {
+                    var Range = ace.require("ace/range").Range;
+
+                    this.oldValue = RegExp.$1;
+                    this.range = new Range(pos.row, paramsPos, pos.row, paramsPos + this.oldValue.length);
+
+                    // Insert a); if one doesn't exist
+                    // Makes it easier to quickly insert a color
+                    // TODO: Maybe we should do this for more methods?
+                    if (RegExp.$2.length === 0) {
+                        ignore = true;
+
+                        if (record) {
+                            record.pauseLog();
+                        }
+
+                        editor.session.getDocument().insertInLine({ row: pos.row, column: line.length },
+                            (oldValue ? "" : (oldValue = "255, 0, 0")) + ")" +
+                            (needsSemicolon ? ";" : ""));
+                        editor.selection.setSelectionRange(range);
+                        editor.selection.clearSelection();
+
+                        if (record) {
+                            record.resumeLog();
+                        }
+
+                        this.ignore = false;
+                    }
+
+                    this.handle = function(value) {
+                        _private.updateColorSlider.call(this, value);
+                    };
+
+                    this.newPicker = this.colorPicker;
+                }
+
+            } else if (/(\bgetImage\s*\(\s*)([^\)]*)$/.test(prefix)) {
                 var paramsPos = pos.column - RegExp.$2.length;
                 var beforeGetImage = prefix.substring(0, paramsPos - RegExp.$1.length);
 
@@ -362,6 +410,61 @@ var HotNumberModule = function() {
                     .end()
                 .hide();
         },
+        attachColorPicker: function() {
+            if (this.colorPicker) {
+                return;
+            }
+
+            var self = this;
+            var editor = this.options.editor;
+            var over = false, down = false;
+            var reposition = function($picker) {
+                var pos = editor.selection.getCursor(),
+                    coords = editor.renderer.textToScreenCoordinates(
+                        pos.row, editor.session.getDocument().getLine(
+                            pos.row).length);
+
+                $picker.css({
+                    top: $(window).scrollTop() + coords.pageY,
+                    left: coords.pageX
+                });
+            };
+
+            this.colorPicker = $("<div class='hotnumber picker'><div id='hotpicker' class='picker'></div><div class='arrow'></div></div>")
+                .appendTo("body")
+                .find(".picker").ColorPicker({
+                    flat: true,
+                    onChange: function(hsb, hex, rgb) {
+                        if (self.handle) {
+                            self.handle(rgb);
+                        }
+                    }
+                }).end()
+                .bind("mouseenter", function() {
+                    over = true;
+                })
+                .bind("mouseleave", function() {
+                    over = false;
+                    if (!down) {
+                        reposition($(this));
+                    }
+                    editor.focus();
+                })
+                .mousedown(function() {
+                    var $picker = $(this);
+                    $picker.addClass("active");
+                    down = true;
+
+                    $(document).one("mouseup", function() {
+                        $picker.removeClass("active");
+                        down = false;
+                        if (!over) {
+                            reposition($picker);
+                        }
+                    });
+                })
+                .hide();
+        },
         attachImagePicker: function() {
             if (!this.imagePicker) {
                 var imagesDir = this.options.imagesDir;
@@ -434,6 +537,14 @@ var HotNumberModule = function() {
             }
 
             this.editor.onUpdatePosition.call(this);
+        },
+        updateColorSlider: function(rgb) {
+            if (!this.range) {
+                return;
+            }
+
+            // Replace the old color with the new one
+            _private.updateEditor.call(this, rgb.r + ", " + rgb.g + ", " + rgb.b);
         },
         updateNumberScrubber: function(newNum) {
             if (this.firstNum === undefined) {
