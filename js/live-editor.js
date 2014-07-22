@@ -778,20 +778,17 @@ window.LiveEditor = Backbone.View.extend({
     saveRecording: function(callback) {
         // If no command or audio recording was made, just save the results
         if (!this.record.recorded || !this.record.recordingAudio) {
-            callback({error: "No recording."});
-            return;
+            return callback();
         }
-
-        var self = this;
 
         var transloadit = new TransloaditXhr({
             authKey: this.transloaditAuthKey,
             templateId: this.transloaditTemplate,
             successCb: function(results) {
-                self.recordingMP3 =
+                this.recordingMP3 =
                     results.mp3[0].url.replace(/^http:/, "https:");
-                callback();
-            },
+                callback(null, this.recordingMP3);
+            }.bind(this),
             errorCb: callback
         });
 
