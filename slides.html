@@ -28,7 +28,6 @@
     <script src="external/ace-builds/src-noconflict/ace.js"></script>
     <script src="external/ace-builds/src-noconflict/mode-javascript.js"></script>
     <script src="external/ace-builds/src-noconflict/ext-searchbox.js"></script>
-
     <script src="external/colorpicker/colorpicker.js"></script>
 
     <!-- Blockly editor -->
@@ -71,7 +70,7 @@
     <!-- Internal jQuery plugins -->
     <script src="js/ui/jquery.button.js"></script>
     <script src="js/ui/jquery.hotnumber.js"></script>
-    <!--<script src="js/ui/hotnumber.js"></script>-->
+    <script src="js/ui/hotnumber.js"></script>
 
     <!-- Templates -->
     <script src="tmpl/live-editor.handlebars.js"></script>
@@ -131,14 +130,9 @@ var stringifyTestCode = function(codeStrOrFunc) {
 };
 
 var displaySlide = function(slideNum) {
-    window.setTimeout(function() {
+    if (slideNum < slides.length) {
         liveEditor.editor.reset(stringifyTestCode(slides[slideNum]));
-    }, 30);
-
-    window.setTimeout(function() {
-        liveEditor.editor.reset(stringifyTestCode(slides[slideNum]));
-    }, 60);
-    
+    }
 };
 
 var nextButton = $('<button>Next →</button>')

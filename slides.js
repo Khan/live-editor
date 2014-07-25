@@ -1,6 +1,6 @@
 // TODO: Number picker, color scrubber
 var slides = [
-	function () {
+    function () {
 colorMode(RGB);
 background(255, 255, 255);
 
@@ -17,8 +17,8 @@ for (var i = 0; i < doge.length; i++) {
     
 }
 
-	},
-	function() {
+    },
+    function() {
 colorMode(RGB);
 background(255, 255, 255);
 
@@ -47,10 +47,10 @@ draw = function() {
         arc(mouseX, mouseY, 40, 40, 0, 180);
     }
 };
-	},
+    },
 /* But you can do step 1 in a few hours
 And in fact, we have people do that as just a part of our technical project interview.*/
-	function() {
+    function() {
 colorMode(RGB);
 background(255, 255, 255);
 noStroke();
@@ -80,8 +80,8 @@ draw = function() {
     text("Let's talk about where things get CRAZY!", 11, 188, width, 200);
     
 };
-	},
-	function() {
+    },
+    function() {
 var drawLetter = function(letter, x, y) {
   fill(random(255), random(255), random(255));
   textFont(createFont("monospace"));
@@ -98,15 +98,19 @@ var drawPhrase = function(phrase, y) {
     }
 };
 
+var started = 0;
 draw = function() {
-	colorMode(RGB);
-	background(255, 255, 255);
-	textFont(createFont("monospace"));
-	drawPhrase("Goal #1", 80);
-	drawPhrase("Don't CRASH", 200);
-	drawPhrase("the browser", 250);
+    if (started < 5) {
+        colorMode(RGB);
+        background(255, 255, 255);
+        textFont(createFont("monospace"));
+        drawPhrase("Goal #1", 80);
+        drawPhrase("Don't CRASH", 200);
+        drawPhrase("the browser", 250);
+        started++;
+    }
 };
-	}, function() {
+    }, function() {
 var drawMadMoney = function() {
     var coinX = 10;
     var coinY = 100;
@@ -132,7 +136,7 @@ var drawMadMoney = function() {
 colorMode(RGB);
 background(255, 255, 255);
 
-	}, function() {
+    }, function() {
 var drawBox = function(label, x, y, height) {
     rectMode(CORNER);
     textAlign(LEFT, TOP);
@@ -183,7 +187,7 @@ drawArrow(167, 205, 209, 205);
 drawBox("worker.js", 209, 176, 100);
 textSize(12);
 text("processing-stubs.js", 215, 215);
-	}, function() {
+    }, function() {
 
 var drawBox = function(label, x, y, height) {
     rectMode(CORNER);
@@ -268,7 +272,7 @@ var displayCode = function(codeStr, x, y) {
 
 displayCode(stringifyCode(workerCode), 5, 225);
 
-	}, function() {
+    }, function() {
 colorMode(RGB);
 background(255, 255, 255);
 var zoff = 0.0;
@@ -301,7 +305,7 @@ var draw = function() {
     ellipse(207, 170, 8, 4);
 };
 
-	}, function() {
+    }, function() {
 var drawBox = function(label, x, y, height) {
     rectMode(CORNER);
     textAlign(LEFT, TOP);
@@ -372,24 +376,24 @@ var stringifyCode = function(codeFunc) {
 };
 
 var displayCode = function(codeStr, x, y) {
-	fill(18, 18, 18);
+    fill(18, 18, 18);
     textSize(12);
     textFont(createFont("monospace"));
     text(codeStr, x+5, y);
 };
 
 draw = function() {
-	colorMode(RGB);
-	background(255, 255, 255);
-	fill(0, 0, 0);
-	textSize(20);
-	text("Detecting slow code", 10, 40);
-	drawBox("worker.js", 249, 8, 71);
-	textSize(12);
-	text("processing-stubs.js", 258, 58);
-	displayCode(stringifyCode(workerCode), 5, 80);
+    colorMode(RGB);
+    background(255, 255, 255);
+    fill(0, 0, 0);
+    textSize(20);
+    text("Detecting slow code", 10, 40);
+    drawBox("worker.js", 249, 8, 71);
+    textSize(12);
+    text("processing-stubs.js", 258, 58);
+    displayCode(stringifyCode(workerCode), 5, 80);
 };
-	}, function() {
+    }, function() {
 var drawLetter = function(letter, x, y, fillC) {
   textFont(createFont("monospace"));
   fill(fillC);
@@ -407,13 +411,18 @@ var drawPhrase = function(phrase, y) {
     }
 };
 
-background(0, 0, 0);
-colorMode(RGB);
-drawPhrase("Goal #2", 80);
-drawPhrase("Help the user", 200);
-drawPhrase("debug their code", 250);
-
-	}, function() {
+var started = 0;
+draw = function() {
+    if (started < 5) {
+        background(0, 0, 0);
+        colorMode(RGB);
+        drawPhrase("Goal #2", 80);
+        drawPhrase("Help the user", 200);
+        drawPhrase("debug their code", 250);
+        started++;
+    }
+};
+    }, function() {
 fill(0, 0, 0);
 textSize(25);
 text("Let's play... DEBUG THAT CODE!", 10, 38);
@@ -511,7 +520,7 @@ quad(diamondX, diamondY-diamondHeight/2,
 };
 drawDiamond(340, 194, 60, 100);
 */
-	}, function() {
+    }, function() {
 var drawBox = function(label, x, y, height) {
     rectMode(CORNER);
     textAlign(LEFT, TOP);
@@ -595,7 +604,7 @@ var displayCode = function(codeStr, x, y) {
 };
 
 displayCode(stringifyCode(workerCode), 5, 232);
-	}, function() {
+    }, function() {
 var drawBox = function(label, x, y, showArrow) {
     rectMode(CORNER);
     textAlign(LEFT, TOP);
@@ -629,7 +638,7 @@ text("rect(190, 130,,30);", 10, 73);
 drawBox("Expected an identifier and instead saw, ','.", 6, 100, true);
 drawBox("I thought you were going to type\nan identifier but you typed ','.", 54, 183, true);
 drawBox("I think you meant to type a value or\nvariable name before that comma?", 37, 265, false);
-	}, function() {
+    }, function() {
 background(255, 255, 255);
 fill(0, 0, 0);
 textSize(25);
@@ -720,7 +729,7 @@ var drawChocolateCheesecake = function() {
                    color(138, 86, 30));
 };
 */
-	}, function() {
+    }, function() {
 var drawBox = function(label, x, y, height) {
     rectMode(CORNER);
     textAlign(LEFT, TOP);
@@ -772,7 +781,7 @@ drawBox("babyhint.js", 211, 136);
 
 textFont(createFont("sans-serif"));
 text("BabyHint checks:\n1. Misspellings\n2. Function arg counts\n3. Banned properties\n4. Function declaration style\n5. Trailing =\n6. Space after var", 10, 225, width, 200);
-	}, function() {
+    }, function() {
 var drawLetter = function(letter, x, y, fillC) {
   textFont(createFont("monospace"));
   fill(fillC);
@@ -795,7 +804,7 @@ background(222, 255, 242);
 drawPhrase("Goal #3", 80);
 drawPhrase("Help the user", 200);
 drawPhrase("play with numbers", 250);
-	}, function() {
+    }, function() {
 var drawPlum = function(x, y, radius) {
     ellipseMode(CENTER);
     noStroke();
@@ -850,5 +859,27 @@ drawPlum(253, 276, 50);
 drawPlum(308, 276, 76);
 drawPlum(347, 276, 34);
 drawBowl(245, 289, 284);
-	}
+    }, function() {
+
+colorMode(RGB);
+background(255, 255, 255);
+fill(13, 0, 0);
+textSize(32);
+text("Other EXCITING Goals", 10, 80);
+for (var i = 0; i < 20; i++) {
+    image(getImage("creatures/Hopper-Happy"), i*20, 94, 20, 20);
+}
+var excitingGoalsOhMy = [
+  "Translate editor UI",
+  "Be iPad-friendly",
+  "Sync audio to code",
+  "Assess user code",
+  "Secure user code"
+];
+
+textSize(30);
+for (var i = 0; i < excitingGoalsOhMy.length; i++) {
+    text((i+1) + ". " + excitingGoalsOhMy[i], 20, i*30+164);
+}
+    }
 ];
