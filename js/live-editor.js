@@ -30,6 +30,7 @@ window.LiveEditor = Backbone.View.extend({
         this.execDir = this._qualifyURL(options.execDir);
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
+        this.execFile = this._qualifyURL(options.execFile);
 
         this.editorType = options.editorType || this.defaultEditorType;
         this.editorHeight = options.editorHeight;
@@ -139,6 +140,8 @@ window.LiveEditor = Backbone.View.extend({
 
     render: function() {
         this.$el.html(Handlebars.templates["live-editor"]({
+            execFile: this.execFile,
+            imagesDir: this.imagesDir,
             colors: ["black", "red", "orange", "green", "blue", "lightblue",
                 "violet"]
         }));

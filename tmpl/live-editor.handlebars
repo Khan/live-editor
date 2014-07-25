@@ -5,8 +5,8 @@
             <!-- Extra data-src attribute to work around
                  cross-origin access policies. -->
             <iframe id="output-frame"
-                src="exec.html"
-                data-src="exec.html"></iframe>
+                src="{{execFile}}"
+                data-src="{{execFile}}"></iframe>
             <canvas class="scratchpad-draw-canvas" style="display:none;"
                 width="400" height="400"></canvas>
 
@@ -14,7 +14,7 @@
             </div>
 
             <div class="scratchpad-canvas-loading">
-                <img src="images/throbber-full.gif">
+                <img src="{{imagesDir}}/throbber-full.gif">
                 <span class="hide-text">{{#_}}Loading...{{/_}}</span>
             </div>
         </div>
@@ -52,7 +52,7 @@
             </div>
 
             <div class="scratchpad-editor-bigplay-loading" style="display:none;">
-                <img src="images/throbber-full.gif">
+                <img src="{{imagesDir}}/throbber-full.gif">
                 <span class="hide-text">{{#_}}Loading...{{/_}}</span>
             </div>
 
