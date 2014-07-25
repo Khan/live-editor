@@ -64,14 +64,14 @@
     <script src="js/ui/blockly-processing-blocks.js"></script>
 
     <!-- Audio playback and recording -->
-    <script src="external/soundmanager/script/soundmanager2.js"></script>
+   <!-- <script src="external/soundmanager/script/soundmanager2.js"></script>
     <script src="external/multirecorderjs/multirecorder.js"></script>
-    <script src="external/transloadit_xhr/transloadit_xhr.js"></script>
+    <script src="external/transloadit_xhr/transloadit_xhr.js"></script>-->
 
     <!-- Internal jQuery plugins -->
     <script src="js/ui/jquery.button.js"></script>
     <script src="js/ui/jquery.hotnumber.js"></script>
-    <script src="js/ui/hotnumber.js"></script>
+    <!--<script src="js/ui/hotnumber.js"></script>-->
 
     <!-- Templates -->
     <script src="tmpl/live-editor.handlebars.js"></script>
@@ -92,29 +92,76 @@
 
     <script>
     $(function() {
-        var options = {
-            el: $("#sample-live-editor"),
-            code: window.localStorage["test-code"] || "",
-            width: 400,
-            height: 400,
-            editorHeight: "400px",
-            autoFocus: true,
-            execDir: "./js/exec/",
-            externalsDir: "./external/",
-            imagesDir: "./images/"
-        };
-
-        //$.getJSON("test-audio.json", function(data) {
-        window.liveEditor = new LiveEditor(options);
-            liveEditor.editor.on("change", function() {
-                window.localStorage["test-code"] = liveEditor.editor.text();
-            });
-                //$.extend(options, data));
-        //});
+        
     });
     </script>
 </head>
 <body>
     <div id="sample-live-editor"></a>
+
+    <script src="slides.js"></script>
+    <script>
+(function() {
+
+var options = {
+    el: $("#sample-live-editor"),
+    code: window.localStorage["test-code"] || "",
+    width: 400,
+    height: 400,
+    editorHeight: "400px",
+    autoFocus: true,
+    execDir: "./js/exec/",
+    externalsDir: "./external/",
+    imagesDir: "./images/"
+};
+
+window.liveEditor = new LiveEditor(options);
+
+
+var slideNum = 0;
+
+var stringifyTestCode = function(codeStrOrFunc) {
+    if (!_.isString(codeStrOrFunc)) {
+        codeStrOrFunc = codeStrOrFunc.toString()
+            .replace(/^function\s\(\)\s\{/gi, "")
+            .replace(/\}$/gi, "");
+    }
+
+    return codeStrOrFunc;
+};
+
+var displaySlide = function(slideNum) {
+    window.setTimeout(function() {
+        liveEditor.editor.reset(stringifyTestCode(slides[slideNum]));
+    }, 30);
+
+    window.setTimeout(function() {
+        liveEditor.editor.reset(stringifyTestCode(slides[slideNum]));
+    }, 60);
+    
+};
+
+var nextButton = $('<button>Next →</button>')
+    .css('float', 'right')
+    .on('click', function() {
+        slideNum++;
+        displaySlide(slideNum);
+    })
+    .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
+
+var prevButton = $('<button>Prev ←</button>')
+    .on('click', function() {
+        slideNum--;
+        displaySlide(slideNum);
+    })
+    .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
+
+
+displaySlide(slideNum);
+
+})();
+    </script>
+
+
 </body>
 </html>
