@@ -36,7 +36,7 @@ var HotNumberModule = function() {
             // To store editor specific things
             var editor = this.options.editor;
             var record = this.options.record;
-            
+
             var self = this;
 
             // A bit of a hack adding it to the editor object...
@@ -52,7 +52,7 @@ var HotNumberModule = function() {
                 selection.on("changeSelection", function() {
                     _private.checkNumber.call(self);
                 });
-                
+
                 editor.renderer.scrollBar.addEventListener("scroll", function() {
                     if (self.curPicker) {
                         _private.updatePos.call(self);
@@ -75,7 +75,6 @@ var HotNumberModule = function() {
             var editor = this.options.editor;
             var record = this.options.record;
 
-            this.range = null; // TODO: store elsewhere
             var pos = editor.selection.getCursor();
             var line = editor.session.getDocument().getLine(pos.row);
             var prefix = line.slice(0, pos.column);
@@ -108,9 +107,9 @@ var HotNumberModule = function() {
                         }
 
                         editor.session.getDocument().insertInLine({ row: pos.row, column: line.length },
-                            (oldValue ? "" : (oldValue = "255, 0, 0")) + ")" +
+                            (this.oldValue ? "" : (this.oldValue = "255, 0, 0")) + ")" +
                             (needsSemicolon ? ";" : ""));
-                        editor.selection.setSelectionRange(range);
+                        editor.selection.setSelectionRange(this.range);
                         editor.selection.clearSelection();
 
                         if (record) {
@@ -185,7 +184,7 @@ var HotNumberModule = function() {
                     };
                 }
             }
-            
+
         },
         onUpdatePosition: function() {
             var editor = this.options.editor;
@@ -216,25 +215,23 @@ var HotNumberModule = function() {
                 record.pauseLog();
             }
 
+            // Insert the new number
+            range.end.column = range.start.column + this.oldValue.length;
+            editor.session.replace(range, newValue);
+
             // Select and focus the updated number
-            if (this.curPicker === this.imagePicker) {
-                var url = newValue;
-                var pathlessUrl = '"' + url.substr(url.indexOf('images/')+7).split('.png')[0] + '"';
-                range.end.column = range.start.column + this.oldValue.length;
-                editor.session.replace(range, pathlessUrl);
-            } else {
-                editor.session.replace(range, newValue);
+            if (this.curPicker !== this.imagePicker) {
                 range.end.column = range.start.column + newValue.length;
-                editor.selection.setSelectionRange(this.range);
+                editor.selection.setSelectionRange(range);
             }
 
             if (record) {
                 record.resumeLog();
-                record.log({ hot: pathlessUrl });
+                record.log({ hot: newValue });
             }
 
             this.ignore = false;
-            this.oldValue = pathlessUrl;
+            this.oldValue = newValue;
         }
     };
 
@@ -242,7 +239,7 @@ var HotNumberModule = function() {
     var blocklyEditor = {
         onInit: function() {
             var blockly = this.options.blockly;
-             
+
             var self = this;
 
             // We can't listen to change listener due to endless loop
@@ -271,7 +268,7 @@ var HotNumberModule = function() {
             if (selected.type === "image_picker") {
                 var imageField = selected.inputList[0].fieldRow[0];
                 var imageUrl = selected.getPathlessUrl();
-                
+
                 this.handle = function(value) {
                     _private.updateImagePicker.call(this, value);
                 };
@@ -285,7 +282,7 @@ var HotNumberModule = function() {
                 var textField = selected.inputList[0].fieldRow[0];
                 this.firstNum = parseFloat(textField.getValue(), 10);
                 this.firstNumString = String(this.firstNum);
-                
+
                 // Repeated later
                 this.handle = function(value) {
                     _private.updateNumberScrubber.call(this, value);
@@ -331,7 +328,7 @@ var HotNumberModule = function() {
         },
         getOrMakeHotNumber: function(elem, options) {
             var hotNumber = elem.hotNumberObj;
-         
+
             if (hotNumber && hotNumber.constructor == HotNumber.prototype.constructor) {
                 if (options) _private.customizeHotNumber.call(marquee, options);
                 return hotNumber;
@@ -361,7 +358,7 @@ var HotNumberModule = function() {
             if (this.scrubber) {
                 return;
             }
-            
+
             var self = this;
             var scrubberHandle = $("<div class='scrubber-handle'/>")
                 .text("◄ ◆ ►")
@@ -468,7 +465,7 @@ var HotNumberModule = function() {
         attachImagePicker: function() {
             if (!this.imagePicker) {
                 var imagesDir = this.options.imagesDir;
-                
+
                 var tmpl = _public.getImagePickerTemplate();
 
                 var results = tmpl({
@@ -505,7 +502,7 @@ var HotNumberModule = function() {
 
                             $(this).css({ top: $(window).scrollTop() + coords.pageY, left: coords.pageX });
                         }
-                        
+
                     })
                     .hide();
             }
@@ -608,9 +605,9 @@ var HotNumberModule = function() {
             var fullPath = this.options.imagesDir + path + ".png";
             this.imagePicker.find(".current-image img")
                 .attr("src", fullPath);
-        
+
             // Update the old path with a new one
-            _private.updateEditor.call(this, fullPath);
+            _private.updateEditor.call(this, '"' + foundPath + '"');
         },
         updateEditor: function(newValue) {
             this.editor.onNewNumber.call(this, newValue);
@@ -635,5 +632,5 @@ var HotNumberModule = function() {
 };
 
 window.HotNumber = HotNumberModule();
-    
+
 })(window);
