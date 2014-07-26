@@ -29,31 +29,11 @@
     </div>
     </script>
 
-    <script src="external/es5-shim/es5-shim.js"></script>
-    <script src="external/jquery/dist/jquery.js"></script>
-    <script src="external/underscore/underscore.js"></script>
-    <script src="external/backbone/backbone.js"></script>
-
+    <script src="build/js/live-editor.core_deps.js"></script>
     <script>$._ = function(msg) { return msg; };</script>
-
-    <!-- Processing.js/JavaScript-related -->
-    <script src="external/processing-js/processing.js"></script>
-    <script src="external/jshint/jshint.js"></script>
-    <script src="external/structuredjs/external/esprima.js"></script>
-    <script src="external/structuredjs/structured.js"></script>
-
-    <script src="js/exec/jquery.tipbar.js"></script>
-
-    <!-- Shared logic -->
-    <script src="js/shared/i18n.js"></script>
-    <script src="js/shared/images.js"></script>
-    <script src="js/shared/record.js"></script>
-    <script src="js/shared/config.js"></script>
-
-    <!-- Core logic -->
-    <script src="js/exec/babyhint.js"></script>
-    <script src="js/exec/output-tester.js"></script>
-    <script src="js/exec/output.js"></script>
+    <script src="build/js/live-editor.output_p5js.js"></script>
+    <script src="build/js/live-editor.shared.js"></script>
+    <script src="build/js/live-editor.exec.js"></script>
     <script>
     Output.init();
     </script>
