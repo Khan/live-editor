@@ -87,17 +87,25 @@
             "js/live-editor.js"
         ]
     },
-    "styles": [
-        "css/bootstrap/dist/css/bootstrap.css",
-        "css/jquery-ui/ui-lightness/jquery-ui.css",
-
-        "css/ui/flashblock.css",
-
-        "css/ui/colorpicker.css",
-        "css/ui/hotnumber.css",
-
-        "css/ui/style.css"
-    ],
+    "styles": {
+        "core_deps": [
+            "css/bootstrap/dist/css/bootstrap.css",
+            "css/jquery-ui/ui-lightness/jquery-ui.css" 
+        ],
+        "audio": [
+            "css/ui/flashblock.css"
+        ],
+        "hotnumber": [
+            "css/ui/colorpicker.css",
+            "css/ui/hotnumber.css"
+        ],
+        "exec": [
+            "css/exec/style.css"
+        ],
+        "ui": [
+            "css/ui/style.css"
+        ]
+    },
     "images": [
         
     ]
