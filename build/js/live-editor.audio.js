@@ -6318,9 +6318,9 @@ window.soundManager = soundManager; // public API, flash callbacks etc.
 
 })(window);
 
-(function() {
-  var template = Handlebars.template, templates = Handlebars.templates = Handlebars.templates || {};
-templates['dev-record'] = template(function (Handlebars,depth0,helpers,partials,data) {
+this["Handlebars"] = this["Handlebars"] || {};
+this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
+this["Handlebars"]["templates"]["dev-record"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   this.compilerInfo = [4,'>= 1.0.0'];
 helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   var buffer = "", stack1, helper, options, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
@@ -6417,8 +6417,7 @@ function program13(depth0,data) {
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "</span></p>\n    </div>\n</div>";
   return buffer;
-  });
-})();
+  });;
 $(document).delegate("a.ui-button", {
     mouseenter: function() {
         if (!$(this).hasClass("ui-state-disabled")) {

@@ -20,6 +20,10 @@
     "gulp": "^3.8.6",
     "gulp-concat": "^2.3.4",
     "gulp-uglify": "^0.3.1",
-    "gulp-newer": "^0.3.0"
+    "gulp-newer": "^0.3.0",
+    "gulp-handlebars": "^2.1.0",
+    "gulp-define-module": "^0.1.1",
+    "gulp-changed": "^0.4.1",
+    "gulp-declare": "^0.2.0"
   }
 }

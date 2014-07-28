@@ -3,12 +3,28 @@ var gulp = require("gulp");
 var concat = require("gulp-concat");
 var uglify = require("gulp-uglify");
 var newer = require("gulp-newer");
+var changed = require("gulp-changed");
+var handlebars = require("gulp-handlebars");
+var defineModule = require("gulp-define-module");
+var declare = require("gulp-declare");
 
 var paths = require("./build-paths.json");
+
+gulp.task("templates", function() {
+    gulp.src(paths.templates)
+        .pipe(changed("build/tmpl", {extension: ".js"}))
+        .pipe(handlebars())
+        .pipe(defineModule("plain"))
+        .pipe(declare({
+            namespace: "Handlebars.templates"
+        }))
+        .pipe(gulp.dest("build/tmpl"));
+});
+
 var scriptTypes = Object.keys(paths.scripts);
 
 scriptTypes.forEach(function(type) {
-    gulp.task("script_" + type, function() {
+    gulp.task("script_" + type, ["templates"], function() {
         var outputFileName = "live-editor." + type + ".js";
         return gulp.src(paths.scripts[type])
             .pipe(newer("build/js/" + outputFileName))
@@ -16,7 +32,7 @@ scriptTypes.forEach(function(type) {
             .pipe(gulp.dest("build/js"));
     });
 
-    gulp.task("script_" + type + "_min", [type], function() {
+    gulp.task("script_" + type + "_min", ["script_" + type], function() {
         var outputFileName = "live-editor." + type + ".min.js";
         return gulp.src(["build/js/live-editor." + type + ".js"])
             .pipe(newer("build/js/" + outputFileName))
@@ -65,4 +81,4 @@ gulp.task("watch", function() {
     });
 });
 
-gulp.task("default", ["watch", "scripts", "styles", "fonts"]);
+gulp.task("default", ["watch", "templates", "scripts", "styles", "fonts"]);

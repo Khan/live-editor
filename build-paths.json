@@ -1,8 +1,6 @@
 {
     "templates": [
-        "tmpl/live-editor.handlebars",
-        "tmpl/imagepicker.handlebars",
-        "tmpl/dev-record.handlebars"
+        "tmpl/*.handlebars"
     ],
     "scripts": {
         "core_deps": [
@@ -59,13 +57,13 @@
             "external/SoundManager2/script/soundmanager2.js",
             "external/multirecorderjs/multirecorder.js",
             "external/transloaditxhr/transloadit_xhr.js",
-            "tmpl/dev-record.handlebars.js",
+            "build/tmpl/dev-record.js",
             "js/ui/jquery.button.js"
         ],
         "hotnumber": [
             "external/colorpicker/colorpicker.js",
             "js/ui/hotnumber.js",
-            "tmpl/imagepicker.handlebars.js"
+            "build/tmpl/imagepicker.js"
         ],
         "shared": [
             "js/shared/i18n.js",
@@ -74,13 +72,15 @@
             "js/shared/config.js"
         ],
         "exec": [
-            "js/exec/jquery.tipbar.js",
+            "build/tmpl/tipbar.js",
+            "js/exec/tipbar.js",
+            "build/tmpl/output.js",
             "js/exec/babyhint.js",
             "js/exec/output-tester.js",
             "js/exec/output.js"
         ],
         "ui": [
-            "tmpl/live-editor.handlebars.js",
+            "build/tmpl/live-editor.js",
             "js/ui/canvas.js",
             "js/ui/editor.js",
             "js/ui/record.js",

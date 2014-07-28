@@ -7,9 +7,9 @@ var frameOrigin;
 var Output = {
     recording: false,
 
-    init: function(id) {
-        this.id = id || "output";
-        this.$elem = $("#" + id);
+    init: function(options) {
+        this.$elem = $(options.el);
+        this.render();
 
         // These are the tests (like challenge tests)
         this.validate = null;
@@ -28,11 +28,19 @@ var Output = {
             this.config.runVersion(version, "processing", CanvasOutput.canvas);
         }.bind(this));
 
+        this.tipbar = new TipBar({
+            el: this.$elem[0]
+        });
+
         Output.bind();
 
         Output.setOutput(CanvasOutput);
 
         BabyHint.init();
+    },
+
+    render: function() {
+        this.$elem.html(Handlebars.templates["output"]());
     },
 
     bind: function() {      
@@ -380,6 +388,7 @@ var Output = {
     },
 
     toggleErrors: function() {
+        var self = this;
         var hasErrors = !!Output.errors.length;
 
         $("#show-errors").toggleClass("ui-state-disabled", !hasErrors);
@@ -398,12 +407,12 @@ var Output = {
 
             Output.errorDelay = setTimeout(function() {
                 if (Output.errors.length > 0) {
-                    $("#output").showTip("Error", Output.errors);
+                    self.tipbar.show("Error", Output.errors);
                 }
             }, 1500);
 
         } else {
-            $("#output").hideTip("Error");
+            self.tipbar.hide("Error");
         }
     },
 

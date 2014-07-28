@@ -1,3 +1,37 @@
+this["Handlebars"] = this["Handlebars"] || {};
+this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
+this["Handlebars"]["templates"]["tipbar"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  var buffer = "", stack1, helper, options, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
+
+function program1(depth0,data) {
+  
+  
+  return "Oh noes!";
+  }
+
+function program3(depth0,data) {
+  
+  
+  return "Show me where";
+  }
+
+  buffer += "<div class=\"tipbar\">\n    <div class=\"speech-arrow\"></div>\n    <div class=\"error-buddy\"></div>\n    <div class=\"tipnav\">\n        <a href=\"\" class=\"prev\"><span class=\"ui-icon ui-icon-circle-triangle-w\"></span></a>\n        <span class=\"current-pos\"></span>\n        <a href=\"\" class=\"next\"><span class=\"ui-icon ui-icon-circle-triangle-e\"></span></a>\n    </div>\n    <div class=\"text-wrap\">\n        <div class=\"oh-no\">";
+  options={hash:{},inverse:self.noop,fn:self.program(1, program1, data),data:data}
+  if (helper = helpers._) { stack1 = helper.call(depth0, options); }
+  else { helper = (depth0 && depth0._); stack1 = typeof helper === functionType ? helper.call(depth0, options) : helper; }
+  if (!helpers._) { stack1 = blockHelperMissing.call(depth0, stack1, {hash:{},inverse:self.noop,fn:self.program(1, program1, data),data:data}); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "</div>\n        <div class=\"message\"></div>\n        <div class=\"show-me\"><a href>";
+  options={hash:{},inverse:self.noop,fn:self.program(3, program3, data),data:data}
+  if (helper = helpers._) { stack1 = helper.call(depth0, options); }
+  else { helper = (depth0 && depth0._); stack1 = typeof helper === functionType ? helper.call(depth0, options) : helper; }
+  if (!helpers._) { stack1 = blockHelperMissing.call(depth0, stack1, {hash:{},inverse:self.noop,fn:self.program(3, program3, data),data:data}); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "</a></div>\n    </div>\n</div>";
+  return buffer;
+  });;
 /**
  * This is called tipbar for historical reasons.
  * Originally, it appeared as a red bar sliding up from the bottom of the
@@ -5,103 +39,111 @@
  * looks like a bar
  */
 
-$(document).delegate(".tipbar .tipnav a", "click", function() {
-    if (!$(this).hasClass("ui-state-disabled")) {
-        var box = $("#output"),
-            tipData = box.data("tipData");
+window.TipBar = Backbone.View.extend({
+    initialize: function() {
+        this.data = { pos: 0 };
+        this.render();
+        this.bind();
+    },
 
-        tipData.pos += $(this).hasClass("next") ? 1 : -1;
-        box.showTip();
-    }
+    render: function() {
+        this.$el.html(Handlebars.templates["tipbar"]());
+    },
 
-    postParent({ focus: true });
+    bind: function() {
+        var self = this;
 
-    return false;
-});
+        $(document).delegate(".tipbar .tipnav a", "click", function() {
+            if (!$(this).hasClass("ui-state-disabled")) {
+                self.data.pos += $(this).hasClass("next") ? 1 : -1;
+                self.show();
+            }
 
-$(document).delegate(".tipbar.error .text-wrap a", "click", function() {
-    var box = $("#output"),
-        tipData = box.data("tipData"),
-        error = tipData.Error[tipData.pos];
+            Output.postParent({ focus: true });
 
-    postParent({ cursor: error });
-
-    return false;
-});
-
-$.fn.showTip = function(type, texts, callback) {
-    var tipData = this.data("tipData");
-
-    if (!tipData) {
-        tipData = { pos: 0 };
-        this.data("tipData", tipData);
-        this.append($("#tipbar-tmpl").html());
-    }
-
-    type = type || tipData.cur;
-
-    if (texts) {
-        tipData.pos = 0;
-        tipData[type] = texts;
-        tipData.callback = callback;
-    }
-
-    tipData.cur = type;
-    texts = texts || tipData[type];
-    var pos = tipData.pos,
-        bar = this.find(".tipbar")
-        .attr("class", "tipbar " + type.toLowerCase())
-
-        // Inject current text
-        .find(".current-pos").text(texts.length > 1 ? (pos + 1) + "/" + texts.length : "").end()
-        .find(".message").html(texts[pos].text || texts[pos] || "").end()
-        .find("a.prev").toggleClass("ui-state-disabled", pos === 0).end()
-        .find("a.next").toggleClass("ui-state-disabled", pos + 1 === texts.length).end();
-
-    $(".show-me").toggle(texts[pos].row !== -1);
-
-    bar.find(".tipnav").toggle(texts.length > 1);
-
-    // Only animate the bar in if it's not visible
-    if (!bar.is(":visible")) {
-        bar
-            .css({ top: 400, opacity: 0.1 })
-            .show()
-            .animate({ top: this.find(".toolbar").is(":visible") ? 33 : 100, opacity: 1.0 }, 300);
-    }
-
-    if (tipData.callback) {
-        tipData.callback(texts[pos]);
-    }
-
-    return this;
-};
-
-$.fn.hideTip = function(type) {
-    var tipData = this.data("tipData");
-
-    if (tipData && (!type || type === tipData.cur)) {
-        this.find(".tipbar").animate({ top: 400, opacity: 0.1 }, 300, function() {
-            $(this).hide();
+            return false;
         });
+
+        $(document).delegate(".tipbar.error .text-wrap a", "click", function() {
+            var error = self.data.Error[self.data.pos];
+
+            Output.postParent({ cursor: error });
+
+            return false;
+        });
+    },
+
+    show: function(type, texts, callback) {
+        var tipData = this.data;
+
+        type = type || tipData.cur;
+
+        if (texts) {
+            tipData.pos = 0;
+            tipData[type] = texts;
+            tipData.callback = callback;
+        }
+
+        tipData.cur = type;
+        texts = texts || tipData[type];
+        var pos = tipData.pos,
+            bar = this.$el.find(".tipbar")
+            .attr("class", "tipbar " + type.toLowerCase())
+
+            // Inject current text
+            .find(".current-pos").text(texts.length > 1 ? (pos + 1) + "/" + texts.length : "").end()
+            .find(".message").html(texts[pos].text || texts[pos] || "").end()
+            .find("a.prev").toggleClass("ui-state-disabled", pos === 0).end()
+            .find("a.next").toggleClass("ui-state-disabled", pos + 1 === texts.length).end();
+
+        this.$el.find(".show-me").toggle(texts[pos].row !== -1);
+
+        bar.find(".tipnav").toggle(texts.length > 1);
+
+        // Only animate the bar in if it's not visible
+        if (!bar.is(":visible")) {
+            bar
+                .css({ top: 400, opacity: 0.1 })
+                .show()
+                .animate({ top: this.$el.find(".toolbar").is(":visible") ? 33 : 100, opacity: 1.0 }, 300);
+        }
+
+        if (tipData.callback) {
+            tipData.callback(texts[pos]);
+        }
+    },
+
+    hide: function(type) {
+        var tipData = this.data;
+
+        if (tipData && (!type || type === tipData.cur)) {
+            this.$el.find(".tipbar").animate({ top: 400, opacity: 0.1 }, 300, function() {
+                $(this).hide();
+            });
+        }
+    },
+
+    toggle: function(type, texts, callback) {
+        var tipData = this.data;
+
+        if (!tipData || !this.$el.find(".tipbar").is(":visible") || tipData.cur !== type) {
+            this.show(type, texts, callback);
+
+        } else {
+            this.hide();
+        }
     }
+});
+this["Handlebars"] = this["Handlebars"] || {};
+this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
+this["Handlebars"]["templates"]["output"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  
 
-    return this;
-};
 
-$.fn.toggleTip = function(type, texts, callback) {
-    var tipData = this.data("tipData");
-
-    if (!tipData || !this.find(".tipbar").is(":visible") || tipData.cur !== type) {
-        this.showTip(type, texts, callback);
-
-    } else {
-        this.hideTip();
-    }
-
-    return this;
-};
-
+  return "<div id=\"output\">\n    <canvas id=\"output-canvas\" width=\"400\" height=\"400\"></canvas>\n    <div class=\"overlay error-overlay hidden\"></div>\n</div>\n<div id=\"test-errors\" style=\"display: none;\"></div>";
+  });;
 /*
  * BabyHint does a line-by-line check for common beginner programming mistakes,
  * such as misspelling, missing spaces, missing commas, etc.  It is used in
@@ -1405,9 +1447,9 @@ var frameOrigin;
 var Output = {
     recording: false,
 
-    init: function(id) {
-        this.id = id || "output";
-        this.$elem = $("#" + id);
+    init: function(options) {
+        this.$elem = $(options.el);
+        this.render();
 
         // These are the tests (like challenge tests)
         this.validate = null;
@@ -1426,11 +1468,19 @@ var Output = {
             this.config.runVersion(version, "processing", CanvasOutput.canvas);
         }.bind(this));
 
+        this.tipbar = new TipBar({
+            el: this.$elem[0]
+        });
+
         Output.bind();
 
         Output.setOutput(CanvasOutput);
 
         BabyHint.init();
+    },
+
+    render: function() {
+        this.$elem.html(Handlebars.templates["output"]());
     },
 
     bind: function() {      
@@ -1778,6 +1828,7 @@ var Output = {
     },
 
     toggleErrors: function() {
+        var self = this;
         var hasErrors = !!Output.errors.length;
 
         $("#show-errors").toggleClass("ui-state-disabled", !hasErrors);
@@ -1796,12 +1847,12 @@ var Output = {
 
             Output.errorDelay = setTimeout(function() {
                 if (Output.errors.length > 0) {
-                    $("#output").showTip("Error", Output.errors);
+                    self.tipbar.show("Error", Output.errors);
                 }
             }, 1500);
 
         } else {
-            $("#output").hideTip("Error");
+            self.tipbar.hide("Error");
         }
     },
 
