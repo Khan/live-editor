@@ -1495,9 +1495,10 @@ var Output = {
             return;
         }
 
-        Output.execDir = data.execDir;
+        Output.workersDir = data.workersDir;
         Output.externalsDir = data.externalsDir;
         Output.imagesDir = data.imagesDir;
+        Output.jshintFile = data.jshintFile;
 
         // Validation code to run
         if (data.validate != null) {
@@ -3049,7 +3050,7 @@ var PooledWorker = function(filename, onExec) {
 };
 
 PooledWorker.prototype.getURL = function() {
-    return Output.execDir + this.filename +
+    return Output.workersDir + this.filename +
         "?cachebust=B" + (new Date()).toDateString();
 };
 
@@ -3169,7 +3170,8 @@ Output.hintWorker = new PooledWorker(
 
         worker.postMessage({
             code: hintCode,
-            externalsDir: Output.externalsDir
+            externalsDir: Output.externalsDir,
+            jshintFile: Output.jshintFile
         });
     }
 );
@@ -3181,7 +3183,7 @@ Output.worker = {
 
     init: function() {
         var worker = Output.worker.worker =
-            new window.Worker(Output.execDir +
+            new window.Worker(Output.workersDir +
                 "worker.js?cachebust=" + (new Date()).toDateString());
 
         worker.onmessage = function(event) {

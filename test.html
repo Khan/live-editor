@@ -24,10 +24,11 @@
             height: 400,
             editorHeight: "100%",
             autoFocus: true,
-            execDir: "./build/workers/",
+            workersDir: "./build/workers/",
             externalsDir: "./build/external/",
             imagesDir: "./build/images/",
-            execFile: "exec.html"
+            execFile: "exec.html",
+            jshintFile: "./build/external/jshint/jshint.js"
         };
 
         window.liveEditor = new LiveEditor(options);

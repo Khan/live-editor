@@ -10,8 +10,8 @@ self.onmessage = function(event) {
         importScripts(event.data.externalsDir +
             "es5-shim/es5-shim.js?cachebust=" + (new Date()).toDateString());
 
-        importScripts(event.data.externalsDir +
-            "jshint/jshint.js?cachebust=" + (new Date()).toDateString());
+        importScripts(event.data.jshintFile +
+            "?cachebust=" + (new Date()).toDateString());
     }
 
     // Evaluate the code using JSHint

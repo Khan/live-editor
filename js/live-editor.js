@@ -27,10 +27,12 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     initialize: function(options) {
-        this.execDir = this._qualifyURL(options.execDir);
+        this.workersDir = this._qualifyURL(options.workersDir);
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
         this.execFile = this._qualifyURL(options.execFile);
+        this.jshintFile = this._qualifyURL(options.jshintFile ||
+            this.externalsDir + "jshint/jshint.js");
 
         this.editorType = options.editorType || this.defaultEditorType;
         this.editorHeight = options.editorHeight;
@@ -61,7 +63,7 @@ window.LiveEditor = Backbone.View.extend({
 
         this.drawCanvas.on({
             mouseEvent: function(data) {
-                self.postFrame(data);
+                this.postFrame(data);
             }.bind(this),
 
             // Drawing has started
@@ -939,9 +941,10 @@ window.LiveEditor = Backbone.View.extend({
             validate: this.validation || "",
             version: this.config.curVersion(),
             settings: this.settings || {},
-            execDir: this.execDir,
+            workersDir: this.workersDir,
             externalsDir: this.externalsDir,
-            imagesDir: this.imagesDir
+            imagesDir: this.imagesDir,
+            jshintFile: this.jshintFile
         };
 
         this.trigger("runCode", options);
