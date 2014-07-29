@@ -80,9 +80,7 @@ window.TipBar = Backbone.View.extend({
     },
 
     hide: function(type) {
-        var tipData = this.data;
-
-        if (tipData && (!type || type === tipData.cur)) {
+        if (!type || type === tipData.cur) {
             this.$el.find(".tipbar").animate({ top: 400, opacity: 0.1 }, 300, function() {
                 $(this).hide();
             });
@@ -90,9 +88,7 @@ window.TipBar = Backbone.View.extend({
     },
 
     toggle: function(type, texts, callback) {
-        var tipData = this.data;
-
-        if (!tipData || !this.$el.find(".tipbar").is(":visible") || tipData.cur !== type) {
+        if (!this.$el.find(".tipbar").is(":visible") || tipData.cur !== type) {
             this.show(type, texts, callback);
 
         } else {
