@@ -9,7 +9,8 @@
             "external/jqueryui/jquery-ui.js",
             "external/handlebars/handlebars.js",
             "external/underscore/underscore.js",
-            "external/backbone/backbone.js"
+            "external/backbone/backbone.js",
+            "external/jed/jed.js"
         ],
         "editor_ace": [
             "external/ace-builds/src-noconflict/ace.js",
