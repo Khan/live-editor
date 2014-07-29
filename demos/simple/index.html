@@ -1,0 +1,40 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Live Editor Simple Demo</title>
+    <link rel="stylesheet" href="../../build/css/live-editor.core_deps.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.hotnumber.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
+</head>
+<body>
+    <div id="sample-live-editor"></a>
+
+    <script src="../../build/js/live-editor.core_deps.js"></script>
+    <script src="../../build/js/live-editor.editor_ace.js"></script>
+    <script src="../../build/js/live-editor.editor_blockly.js"></script>
+    <script src="../../build/js/live-editor.audio.js"></script>
+    <script src="../../build/js/live-editor.hotnumber.js"></script>
+    <script src="../../build/js/live-editor.shared.js"></script>
+    <script src="../../build/js/live-editor.ui.js"></script>
+
+    <script>
+    window.liveEditor = new LiveEditor({
+        el: $("#sample-live-editor"),
+        code: window.localStorage["test-code"] || "",
+        width: 400,
+        height: 400,
+        editorHeight: "100%",
+        autoFocus: true,
+        workersDir: "../../build/workers/",
+        externalsDir: "../../build/external/",
+        imagesDir: "../../build/images/",
+        execFile: "exec.html",
+        jshintFile: "../../build/external/jshint/jshint.js"
+    });
+    liveEditor.editor.on("change", function() {
+        window.localStorage["test-code"] = liveEditor.editor.text();
+    });
+    </script>
+</body>
+</html>
