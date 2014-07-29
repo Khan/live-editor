@@ -7,7 +7,8 @@
 
 window.TipBar = Backbone.View.extend({
     initialize: function() {
-        this.data = { pos: 0 };
+        this.pos = 0;
+        this.texts = [];
         this.render();
         this.bind();
     },
@@ -19,9 +20,9 @@ window.TipBar = Backbone.View.extend({
     bind: function() {
         var self = this;
 
-        $(document).delegate(".tipbar .tipnav a", "click", function() {
+        this.$el.on("click", ".tipbar .tipnav a", function() {
             if (!$(this).hasClass("ui-state-disabled")) {
-                self.data.pos += $(this).hasClass("next") ? 1 : -1;
+                self.pos += $(this).hasClass("next") ? 1 : -1;
                 self.show();
             }
 
@@ -30,8 +31,8 @@ window.TipBar = Backbone.View.extend({
             return false;
         });
 
-        $(document).delegate(".tipbar.error .text-wrap a", "click", function() {
-            var error = self.data.Error[self.data.pos];
+        this.$el.on("click", ".tipbar .text-wrap a", function() {
+            var error = self.texts[self.pos];
 
             Output.postParent({ cursor: error });
 
@@ -40,23 +41,18 @@ window.TipBar = Backbone.View.extend({
     },
 
     show: function(type, texts, callback) {
-        var tipData = this.data;
-
-        type = type || tipData.cur;
-
         if (texts) {
-            tipData.pos = 0;
-            tipData[type] = texts;
-            tipData.callback = callback;
+            this.pos = 0;
+            this.texts = texts;
+        } else {
+            texts = this.texts;
         }
 
-        tipData.cur = type;
-        texts = texts || tipData[type];
-        var pos = tipData.pos,
-            bar = this.$el.find(".tipbar")
-            .attr("class", "tipbar " + type.toLowerCase())
+        var pos = this.pos;
+        var bar = this.$el.find(".tipbar");
 
             // Inject current text
+        bar
             .find(".current-pos").text(texts.length > 1 ? (pos + 1) + "/" + texts.length : "").end()
             .find(".message").html(texts[pos].text || texts[pos] || "").end()
             .find("a.prev").toggleClass("ui-state-disabled", pos === 0).end()
@@ -74,25 +70,14 @@ window.TipBar = Backbone.View.extend({
                 .animate({ top: this.$el.find(".toolbar").is(":visible") ? 33 : 100, opacity: 1.0 }, 300);
         }
 
-        if (tipData.callback) {
-            tipData.callback(texts[pos]);
+        if (callback) {
+            callback(texts[pos]);
         }
     },
 
-    hide: function(type) {
-        if (!type || type === tipData.cur) {
-            this.$el.find(".tipbar").animate({ top: 400, opacity: 0.1 }, 300, function() {
-                $(this).hide();
-            });
-        }
-    },
-
-    toggle: function(type, texts, callback) {
-        if (!this.$el.find(".tipbar").is(":visible") || tipData.cur !== type) {
-            this.show(type, texts, callback);
-
-        } else {
-            this.hide();
-        }
+    hide: function() {
+        this.$el.find(".tipbar").animate({ top: 400, opacity: 0.1 }, 300, function() {
+            $(this).hide();
+        });
     }
 });

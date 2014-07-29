@@ -50,6 +50,16 @@ gulp.task("scripts_min", scriptTypes.map(function(type) {
     return "script_" + type + "_min";
 }));
 
+gulp.task("workers", function() {
+    gulp.src(paths.workers)
+        .pipe(gulp.dest("build/workers"));
+});
+
+gulp.task("externals", function() {
+    gulp.src(paths.externals, {base: "./"})
+        .pipe(gulp.dest("build/"));
+});
+
 var styleTypes = Object.keys(paths.styles);
 
 styleTypes.forEach(function(type) {
@@ -67,8 +77,13 @@ gulp.task("styles", styleTypes.map(function(type) {
 }));
 
 gulp.task("fonts", function() {
-    gulp.src("css/bootstrap/fonts/*")
+    gulp.src(paths.fonts)
         .pipe(gulp.dest("build/fonts"));
+});
+
+gulp.task("images", function() {
+    gulp.src(paths.images)
+        .pipe(gulp.dest("build/images"));
 });
 
 gulp.task("watch", function() {
@@ -79,6 +94,13 @@ gulp.task("watch", function() {
     styleTypes.forEach(function(type) {
         gulp.watch(paths.styles[type], ["style_" + type]);
     });
+
+    gulp.watch(paths.templates, ["templates"]);
+
+    gulp.watch(paths.workers, ["workers"]);
+
+    gulp.watch(paths.images, ["images"]);
 });
 
-gulp.task("default", ["watch", "templates", "scripts", "styles", "fonts"]);
+gulp.task("default", ["watch", "templates", "scripts", "workers", "styles",
+    "fonts", "images", "externals"]);

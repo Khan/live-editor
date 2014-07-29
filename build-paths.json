@@ -88,6 +88,22 @@
             "js/live-editor.js"
         ]
     },
+    "workers": [
+        "js/exec/jshint-worker.js",
+        "js/exec/test-worker.js",
+        "js/exec/processing-stubs.js",
+        "js/exec/output-tester.js",
+        "js/exec/worker.js"
+    ],
+    "externals": [
+        "external/es5-shim/es5-shim.js",
+        "external/jshint/jshint.js",
+        "external/structuredjs/external/esprima.js",
+        "external/structuredjs/structured.js",
+        "external/underscore/underscore.js",
+        "external/blockly/media/**",
+        "external/SoundManager2/swf/**"
+    ],
     "styles": {
         "core_deps": [
             "css/bootstrap/dist/css/bootstrap.css",
@@ -107,7 +123,10 @@
             "css/ui/style.css"
         ]
     },
+    "fonts": [
+        "css/bootstrap/fonts/*"
+    ],
     "images": [
-        
+        "images/**"
     ]
 }
