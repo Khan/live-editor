@@ -133,8 +133,6 @@
          *     .order[i] is the name of the ith occurring variable.
          */
         function anyPossible(i, wVars, varCallbacks) {
-            var matchResults = matchResults || {_: [], vars: {}};
-
             var order = wVars.order;  // Just for ease-of-notation.
             wVars.skipData[order[i]] = 0;
             do {
@@ -157,12 +155,12 @@
                     wVars.leftToSkip = _.extend({}, wVars.skipData);
                     // Use a copy of peers because peers is destructively
                     // modified in checkMatchTree (via checkNodeArray).
-                    if (checkMatchTree(codeTree, toFind, peers.slice(), wVars, matchResults) &&
+                    if (checkMatchTree(codeTree, toFind, peers.slice(), wVars) &&
                         checkUserVarCallbacks(wVars, varCallbacks)) {
-                        return matchResults;
+                        return true;
                     }
-                } else if (anyPossible(i + 1, wVars, varCallbacks, matchResults)) {
-                    return matchResults;
+                } else if (anyPossible(i + 1, wVars, varCallbacks)) {
+                    return true;
                 }
                 // This guess didn't work out -- skip it and try the next.
                 wVars.skipData[order[i]] += 1;
@@ -396,15 +394,13 @@
      * peersToFind: The remaining ordered syntax nodes that we must find after
      *     toFind (and on the same level as toFind).
      */
-    function checkMatchTree(currTree, toFind, peersToFind, wVars, matchResults) {
-        matchResults = matchResults || {_: [], vars: {}};
-
+    function checkMatchTree(currTree, toFind, peersToFind, wVars) {
         if (_.isArray(toFind)) {
             console.error("toFind should never be an array.");
             console.error(toFind);
         }
-        if (exactMatchNode(currTree, toFind, peersToFind, wVars, matchResults)) {
-            return matchResults;
+        if (exactMatchNode(currTree, toFind, peersToFind, wVars)) {
+            return true;
         }
         // Check children.
         for (var key in currTree) {
@@ -413,10 +409,10 @@
             }
             // Recursively check for matches
             if ((_.isArray(currTree[key]) &&
-                   checkNodeArray(currTree[key], toFind, peersToFind, wVars, matchResults)) ||
+                   checkNodeArray(currTree[key], toFind, peersToFind, wVars)) ||
                 (!_.isArray(currTree[key]) &&
-                checkMatchTree(currTree[key], toFind, peersToFind, wVars, matchResults))) {
-                return matchResults;
+                checkMatchTree(currTree[key], toFind, peersToFind, wVars))) {
+                return true;
             }
         }
         return false;
@@ -426,13 +422,11 @@
      * Returns true if this level of nodeArr matches the node in
      * toFind, and also matches all the nodes in peersToFind in order.
      */
-    function checkNodeArray(nodeArr, toFind, peersToFind, wVars, matchResults) {
-        matchResults = matchResults || {_: [], vars: {}};
-
+    function checkNodeArray(nodeArr, toFind, peersToFind, wVars) {
         for (var i = 0; i < nodeArr.length; i += 1) {
-            if (checkMatchTree(nodeArr[i], toFind, peersToFind, wVars, matchResults)) {
+            if (checkMatchTree(nodeArr[i], toFind, peersToFind, wVars)) {
                 if (!peersToFind || peersToFind.length === 0) {
-                    return matchResults; // Found everything needed on this level.
+                    return true; // Found everything needed on this level.
                 } else {
                     // We matched this node, but we still have more nodes on
                     // this level we need to match on subsequent iterations
@@ -456,9 +450,7 @@
      *         returns true (the objects recursively match to the extent we
      *         care about, though they may not match exactly).
      */
-    function exactMatchNode(currNode, toFind, peersToFind, wVars, matchResults) {
-        matchResults = matchResults || {_: [], vars: {}};
-
+    function exactMatchNode(currNode, toFind, peersToFind, wVars) {
         for (var key in toFind) {
             // Ignore inherited properties; also, null properties can be
             // anything and do not have to exist.
@@ -472,7 +464,6 @@
                 if (subCurr === null || subCurr === undefined) {
                     return false;
                 } else {
-                    matchResults._.push(subCurr);
                     continue;
                 }
             }
@@ -488,8 +479,7 @@
                     //  wVars.values[subFind] so the var references set up in
                     //  simplifyTree behave like currNode. Shallow copy.
                     _.extend(wVars.values[subFind], currNode);
-                    matchResults.vars[subFind.slice(1)] = currNode;
-                    return matchResults;  // This node is now our variable.
+                    return true;  // This node is now our variable.
                 }
                 return false;
             }
@@ -507,12 +497,12 @@
                 }
                 var newToFind = subFind[0];
                 var peers = subFind.slice(1);
-                if (!checkNodeArray(subCurr, newToFind, peers, wVars, matchResults)) {
+                if (!checkNodeArray(subCurr, newToFind, peers, wVars)) {
                     return false;
                 }
             } else if (_.isObject(subCurr)) {
                 // Both are objects, so do a recursive compare.
-                if (!checkMatchTree(subCurr, subFind, peersToFind, wVars, matchResults)) {
+                if (!checkMatchTree(subCurr, subFind, peersToFind, wVars)) {
                     return false;
                 }
             } else if (!_.isObject(subCurr)) {
@@ -527,7 +517,7 @@
                 throw "Error: logic inside of structure analysis code broke.";
             }
         }
-        return matchResults;
+        return true;
     }
 
 
