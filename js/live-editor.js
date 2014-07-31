@@ -937,7 +937,7 @@ window.LiveEditor = Backbone.View.extend({
      */
     runCode: function(code) {
         var options = {
-            code: code,
+            code: arguments.length === 0 ? this.editor.text() : code,
             validate: this.validation || "",
             version: this.config.curVersion(),
             settings: this.settings || {},
