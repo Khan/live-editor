@@ -26,7 +26,7 @@ Building
 
 You can use the pre-built copies of everything inside the `build/` directory. If you wish to make some changes and re-build the library from scratch you'll need to install some dependencies:
 
-    git submodules update
+    git submodule update
     npm install
     bower install
     
