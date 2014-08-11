@@ -43,6 +43,10 @@ window.LiveEditor = Backbone.View.extend({
 
         this.recordingCommands = options.recordingCommands;
         this.recordingMP3 = options.recordingMP3;
+        this.recordingInit = options.recordingInit || {
+            code: this.initialCode,
+            version: this.initialVersion
+        };
 
         this.transloaditTemplate = options.transloaditTemplate;
         this.transloaditAuthKey = options.transloaditAuthKey;
@@ -353,9 +357,7 @@ window.LiveEditor = Backbone.View.extend({
         // Load the recording playback commands as well, if applicable
         if (this.recordingCommands) {
             this.record.loadRecording({
-                init: {
-                    code: this.initialCode
-                },
+                init: this.recordingInit,
                 commands: this.recordingCommands
             });
         }
