@@ -922,28 +922,6 @@ window.CanvasOutput = {
     }
 };
 
-Output.registerOutput(CanvasOutput);
-
-// This adds html tags around quoted lines so they can be formatted
-Output.prettify = function(str) {
-    str = str.split("\"");
-    var htmlString = "";
-    for (var i = 0; i < str.length; i++) {
-        if (i % 2 === 0) {
-            //regular text
-            htmlString += "<span class=\"text\">" + str[i] + "</span>";
-        } else {
-            // text in quotes
-            htmlString += "<span class=\"quote\">" + str[i] + "</span>";
-        }
-    }
-    return htmlString;
-};
-
-Output.clean = function(str) {
-    return String(str).replace(/</g, "&lt;");
-};
-
 var PooledWorker = function(filename, onExec) {
     this.pool = [];
     this.curID = 0;
@@ -1235,4 +1213,4 @@ if (window !== window.top && Object.freeze &&
     Object.freeze(Object.getPrototypeOf(window));
 }
 
-}();
+})();

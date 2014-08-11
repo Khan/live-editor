@@ -554,7 +554,7 @@ var HotNumberModule = function() {
             if (record) {
                 record.handlers.hot = function(e) {
                     _private.checkNumber.call(self);
-                    _private.updateEditor.call(e.hot);
+                    _private.updateEditor.call(self, e.hot);
                     _private.updatePos.call(self);
                 };
             }

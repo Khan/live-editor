@@ -1425,7 +1425,7 @@ window.OutputTester = {
 var frameSource;
 var frameOrigin;
 
-var Output = {
+var LiveEditorOutput = {
     recording: false,
 
     init: function(options) {
@@ -1446,7 +1446,7 @@ var Output = {
         this.config.runCurVersion("jshint");
 
         this.config.on("versionSwitched", function(e, version) {
-            this.config.runVersion(version, "processing", CanvasOutput.canvas);
+            this.config.runVersion(version, "processing", Output.output.canvas);
         }.bind(this));
 
         this.tipbar = new TipBar({
@@ -1455,7 +1455,7 @@ var Output = {
 
         Output.bind();
 
-        Output.setOutput(CanvasOutput);
+        Output.setOutput(options.output);
 
         BabyHint.init();
     },
@@ -1551,8 +1551,8 @@ var Output = {
 
         // Play back recording
         if (data.action) {
-            if (CanvasOutput.handlers[data.name]) {
-                CanvasOutput.handlers[data.name](data.action);
+            if (Output.output.handlers[data.name]) {
+                Output.output.handlers[data.name](data.action);
             }
         }
 
@@ -1605,14 +1605,6 @@ var Output = {
         Output.output = output.init({
             config: this.config
         });
-    },
-
-    registerOutput: function(output) {
-        if (!Output.outputs) {
-            Output.outputs = [];
-        }
-
-        Output.outputs.push(output);
 
         $.extend(Output.testContext, output.testContext);
     },
@@ -1807,6 +1799,26 @@ var Output = {
 
         // Add JSHINT errors at the end
         Output.errors = Output.errors.concat(hintErrors);
+    },
+
+    // This adds html tags around quoted lines so they can be formatted
+    prettify: function(str) {
+        str = str.split("\"");
+        var htmlString = "";
+        for (var i = 0; i < str.length; i++) {
+            if (i % 2 === 0) {
+                //regular text
+                htmlString += "<span class=\"text\">" + str[i] + "</span>";
+            } else {
+                // text in quotes
+                htmlString += "<span class=\"quote\">" + str[i] + "</span>";
+            }
+        }
+        return htmlString;
+    },
+
+    clean: function(str) {
+        return String(str).replace(/</g, "&lt;");
     },
 
     toggleErrors: function() {
@@ -2095,8 +2107,12 @@ var Output = {
 };
 
 // TODO(jlfwong): Stop globalizing Output
-window.Output = Output;
+window.Output = LiveEditorOutput;
+window.LiveEditorOutput = LiveEditorOutput;
 
+})();
+
+(function() {
 
 window.CanvasOutput = {
     // Canvas mouse events to track
@@ -3018,28 +3034,6 @@ window.CanvasOutput = {
         CanvasOutput.canvas.exit();
         CanvasOutput.$elem.hide();
     }
-};
-
-Output.registerOutput(CanvasOutput);
-
-// This adds html tags around quoted lines so they can be formatted
-Output.prettify = function(str) {
-    str = str.split("\"");
-    var htmlString = "";
-    for (var i = 0; i < str.length; i++) {
-        if (i % 2 === 0) {
-            //regular text
-            htmlString += "<span class=\"text\">" + str[i] + "</span>";
-        } else {
-            // text in quotes
-            htmlString += "<span class=\"quote\">" + str[i] + "</span>";
-        }
-    }
-    return htmlString;
-};
-
-Output.clean = function(str) {
-    return String(str).replace(/</g, "&lt;");
 };
 
 var PooledWorker = function(filename, onExec) {

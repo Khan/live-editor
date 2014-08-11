@@ -12,8 +12,9 @@
     <script src="../../build/js/live-editor.output_p5js.js"></script>
     <script src="../../build/js/live-editor.exec.js"></script>
     <script>
-    new LiveEditorOutput({
-        el: $("#live-editor-output")[0]
+    LiveEditorOutput.init({
+        el: $("#live-editor-output")[0],
+        output: CanvasOutput
     });
     </script>
 </body>
