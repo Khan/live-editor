@@ -15,7 +15,8 @@ To configure the LiveEditor...
 
 ## How it Works
 
-Link to doc...
+For a deep dive into the components of the LiveEditor, [read this wiki](https://github.com/Khan/live-editor/wiki/How-the-live-editor-works).
+
 
 ## Building
 
