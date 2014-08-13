@@ -77,7 +77,7 @@
             "js/exec/tipbar.js",
             "build/tmpl/output.js",
             "js/exec/babyhint.js",
-            "js/exec/output-tester.js",
+            "js/workers/output-tester.js",
             "js/exec/output.js"
         ],
         "ui": [

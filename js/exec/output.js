@@ -1046,6 +1046,21 @@ window.CanvasOutput = {
                 return Output.testResults;
             },
 
+            assertEqual: function(actual, expected) {
+                if (_.isEqual(actual, expected)) {
+                    return;
+                }
+                Output.errors.push({
+                    row: -1,
+                    column: -1,
+                    text: $._(
+                        "Expected \"%(actual)s\" but saw \"%(expected)s.\"",
+                        {actual: Output.stringify(actual),
+                         expected: Output.stringify(expected)}),
+                    source: "assertions"
+                });
+            },
+
             // Run a single test (specified by a function)
             // and send the results back to the parent frame
             runTest: function(name, fn) {
