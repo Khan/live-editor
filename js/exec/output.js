@@ -864,23 +864,7 @@ window.CanvasOutput = {
 
         // Dynamically set the width and height based upon the size of the
         // window, which could be changed in the parent page
-        $(window).on("resize", function() {
-            var $window = $(window);
-            var width = $window.width();
-            var height = $window.height();
-
-            if (width !== CanvasOutput.canvas.width ||
-                height !== CanvasOutput.canvas.height) {
-                // Set the canvas element to be the right size
-                $("#output-canvas").width(width).height(height);
-
-                // Set the Processing.js canvas to be the right size
-                CanvasOutput.canvas.size(width, height);
-
-                // Restart execution
-                Output.restart();
-            }
-        });
+        $(window).on("resize", CanvasOutput.setDimensions);
     },
 
     // Handle recording playback
@@ -899,7 +883,25 @@ window.CanvasOutput = {
         CanvasOutput.clear();
 
         // Trigger the setting of the canvas size immediately
-        $(window).resize();
+        CanvasOutput.setDimensions();
+    },
+
+    setDimensions: function() {
+        var $window = $(window);
+        var width = $window.width();
+        var height = $window.height();
+
+        if (width !== CanvasOutput.canvas.width ||
+            height !== CanvasOutput.canvas.height) {
+            // Set the canvas element to be the right size
+            $("#output-canvas").width(width).height(height);
+
+            // Set the Processing.js canvas to be the right size
+            CanvasOutput.canvas.size(width, height);
+
+            // Restart execution
+            Output.restart();
+        }
     },
 
     imageCache: {},
