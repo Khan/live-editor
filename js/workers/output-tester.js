@@ -76,7 +76,9 @@ window.OutputTester = {
                         return fn.apply(this, arguments);
 
                     } catch (e) {
-                        window.console && console.warn(e);
+                        if (window.console) {
+                            console.warn(e);
+                        }
                     }
                 }
             });
@@ -301,7 +303,9 @@ window.OutputTester = {
                     message: callbacks && callbacks.failure
                 };
             } catch (e) {
-                window.console && console.warn(e);
+                if (window.console) {
+                    console.warn(e);
+                }
                 return {
                     success: true,
                     message: $._("Hm, we're having some trouble " +
