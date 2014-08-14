@@ -74,10 +74,18 @@ var Output = {
             return;
         }
 
-        Output.workersDir = data.workersDir;
-        Output.externalsDir = data.externalsDir;
-        Output.imagesDir = data.imagesDir;
-        Output.jshintFile = data.jshintFile;
+        if (data.workersDir) {
+            Output.workersDir = data.workersDir;
+        }
+        if (data.externalsDir) {
+            Output.externalsDir = data.externalsDir;
+        }
+        if (data.imagesDir) {
+            Output.imagesDir = data.imagesDir;
+        }
+        if (data.jshintFile) {
+            Output.jshintFile = data.jshintFile;
+        }
 
         // Validation code to run
         if (data.validate != null) {

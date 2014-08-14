@@ -895,7 +895,7 @@ window.OutputTester = {
                         return fn.apply(this, arguments);
 
                     } catch (e) {
-                        console.warn(e);
+                        window.console && console.warn(e);
                     }
                 }
             });
@@ -1120,7 +1120,7 @@ window.OutputTester = {
                     message: callbacks && callbacks.failure
                 };
             } catch (e) {
-                console.warn(e);
+                window.console && console.warn(e);
                 return {
                     success: true,
                     message: $._("Hm, we're having some trouble " +
@@ -1419,6 +1419,7 @@ window.OutputTester = {
         }
     }
 };
+
 (function() {
 
 // Keep track of the frame source and origin for later
@@ -1495,10 +1496,18 @@ var Output = {
             return;
         }
 
-        Output.workersDir = data.workersDir;
-        Output.externalsDir = data.externalsDir;
-        Output.imagesDir = data.imagesDir;
-        Output.jshintFile = data.jshintFile;
+        if (data.workersDir) {
+            Output.workersDir = data.workersDir;
+        }
+        if (data.externalsDir) {
+            Output.externalsDir = data.externalsDir;
+        }
+        if (data.imagesDir) {
+            Output.imagesDir = data.imagesDir;
+        }
+        if (data.jshintFile) {
+            Output.jshintFile = data.jshintFile;
+        }
 
         // Validation code to run
         if (data.validate != null) {
