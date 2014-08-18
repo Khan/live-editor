@@ -34,6 +34,11 @@ window.ScratchpadAutosuggest = {
             }
         }
 
+        /*
+        // Local completer is currently disabled because it doesn't work
+        // perfectly, even with wrapping it.  I think implementing a custom
+        // one before enabling would be best.
+
         // The internal local completer thinks numbers are identifiers
         // and suggests them if they are used, get rid of that by
         // wrapping the internal local completer in our own!
@@ -52,6 +57,7 @@ window.ScratchpadAutosuggest = {
             }.bind(this)
         };
         langTools.addCompleter(this.localVariableCompleter);
+        */
 
         // Completer for keywords and p5js
         this.customCompleter = {
