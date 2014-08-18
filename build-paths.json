@@ -15,7 +15,8 @@
         "editor_ace": [
             "external/ace-builds/src-noconflict/ace.js",
             "external/ace-builds/src-noconflict/mode-javascript.js",
-            "external/ace-builds/src-noconflict/ext-searchbox.js"
+            "external/ace-builds/src-noconflict/ext-searchbox.js",
+            "external/ace-builds/src-noconflict/ext-language_tools.js"
         ],
         "editor_blockly": [
             "external/blockly/blockly_compressed.js",
@@ -63,6 +64,8 @@
         ],
         "hotnumber": [
             "external/colorpicker/colorpicker.js",
+            "js/ui/autosuggest.js",
+            "js/ui/autosuggest-data.js",
             "js/ui/hotnumber.js",
             "build/tmpl/imagepicker.js"
         ],
@@ -114,6 +117,7 @@
         ],
         "hotnumber": [
             "css/ui/colorpicker.css",
+            "css/ui/autosuggest.css",
             "css/ui/hotnumber.css"
         ],
         "exec": [

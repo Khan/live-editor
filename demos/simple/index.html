@@ -14,8 +14,8 @@
     <script src="../../build/js/live-editor.editor_ace.js"></script>
     <script src="../../build/js/live-editor.editor_blockly.js"></script>
     <script src="../../build/js/live-editor.audio.js"></script>
-    <script src="../../build/js/live-editor.hotnumber.js"></script>
     <script src="../../build/js/live-editor.shared.js"></script>
+    <script src="../../build/js/live-editor.hotnumber.js"></script>
     <script src="../../build/js/live-editor.ui.js"></script>
 
     <script>
@@ -35,6 +35,7 @@
     liveEditor.editor.on("change", function() {
         window.localStorage["test-code"] = liveEditor.editor.text();
     });
+    ScratchpadAutosuggest.init(liveEditor.editor.editor);
     </script>
 </body>
 </html>

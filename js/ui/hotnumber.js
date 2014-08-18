@@ -61,6 +61,7 @@ var HotNumberModule = function() {
 
                 _private.attachScrubber.call(this);
                 _private.attachColorPicker.call(this);
+                _private.attachAutosuggest.call(this);
             }
 
             if (record) {
@@ -78,6 +79,15 @@ var HotNumberModule = function() {
             var pos = editor.selection.getCursor();
             var line = editor.session.getDocument().getLine(pos.row);
             var prefix = line.slice(0, pos.column);
+            var lineCleanedUp = line.trim();
+            if (lineCleanedUp.length && (lineCleanedUp[0] === "/" ||
+                    lineCleanedUp[0] === "*")) {
+                // Comments typically start with a / or a * (for multiline C style)
+                // Get rid of live autocomplete in that case.
+                ScratchpadAutosuggest.enableLiveCompletion(false);
+            } else if (this.curPicker !== this.autosuggest) {
+                ScratchpadAutosuggest.enableLiveCompletion(true);
+            }
 
             if (/\b(background|fill|stroke|color)(\s*)\(\s*([\s\d,]*)\s*$/.test(prefix)) {
                 var paramsPos = pos.column - RegExp.$3.length;
@@ -166,7 +176,7 @@ var HotNumberModule = function() {
                     this.newPicker = this.imagePicker;
                 }
 
-            } else {
+            } else if (/([\d.-]+)$/.test(prefix)) {
                 var before = pos.column - (/([\d.-]+)$/.test(prefix) ? RegExp.$1.length : 0);
 
                 if (/^([\d.-]+)/.test(line.slice(before)) && !isNaN(parseFloat(RegExp.$1))) {
@@ -183,8 +193,23 @@ var HotNumberModule = function() {
                         _private.updateNumberScrubber.call(this, value);
                     };
                 }
-            }
+            } else if (/(\b[^\d.-]+\s*\(\s*)([^\)]*)$/.test(prefix)) {
+                var functionCall = RegExp.$1.substring(0, RegExp.$1.length - 1)
+                                            .split(" ").pop().trim();
+                var paramsPos = pos.column - RegExp.$2.length;
+                var paramsToCursor = RegExp.$2;
+                var lookupParams =
+                    ScratchpadAutosuggest.lookupParamsSafeHTML(functionCall,
+                        paramsToCursor);
+                ScratchpadAutosuggest.enableLiveCompletion(false);
 
+                if (lookupParams) {
+                    this.autosuggest.find(".hotsuggest").empty()
+                                                   .append(lookupParams);
+                    this.newPicker = this.autosuggest;
+                    editor.focus();
+                }
+            }
         },
         onUpdatePosition: function() {
             var editor = this.options.editor;
@@ -193,7 +218,9 @@ var HotNumberModule = function() {
             var editorBB = editor.renderer.scroller.getBoundingClientRect();
             var editorHeight = editorBB.height;
             var coords = editor.renderer.textToScreenCoordinates(pos.row,
-                this.curPicker !== this.scrubber ? editor.session.getDocument().getLine(pos.row).length : pos.column);
+                this.curPicker !== this.scrubber &&
+                this.curPicker !== this.autosuggest ?
+                editor.session.getDocument().getLine(pos.row).length : pos.column);
             var relativePos = coords.pageY - editorBB.top;
             // repeated
             this.curPicker
@@ -353,6 +380,34 @@ var HotNumberModule = function() {
                 console.warn("Unknown editor type");
                 return;
             }
+        },
+        attachAutosuggest: function() {
+            if (this.autosuggest) {
+                return;
+            }
+            var over = false, down = false;
+            var reposition = function($picker) {
+                var pos = editor.selection.getCursor(),
+                    coords = editor.renderer.textToScreenCoordinates(
+                        pos.row, editor.session.getDocument().getLine(
+                            pos.row).length);
+
+                $picker.css({
+                    top: $(window).scrollTop() + coords.pageY,
+                    left: coords.pageX
+                });
+            };
+            this.autosuggest = $("<div class='hotnumber autosuggest'><div class='hotsuggest'></div><div class='arrow'></div></div>")
+                .appendTo("body")
+                .mousedown(function() {
+                    this.autosuggest.hide();
+                    editor.focus();
+                }).hide();
+            $(document).keyup(function(e) {
+                if (e.which === 27) {
+                    this.autosuggest.hide();
+                }
+            });
         },
         attachScrubber: function() {
             if (this.scrubber) {

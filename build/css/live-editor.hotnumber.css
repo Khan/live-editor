@@ -176,6 +176,40 @@
 	background: url(../../images/scratchpads/select.png) center;
 }
 
+.hotnumber.autosuggest {
+    margin-top: -38px;
+    max-width: 500px;
+    opacity: 0.8;
+    color: white;
+    width: auto;
+    font-size: 12px;
+    font-family: monospace;
+}
+
+.hotnumber.autosuggest .autosuggest-error {
+    color: red;
+ }
+
+.hotnumber.autosuggest .autosuggest-function {
+    cursor: pointer;
+    margin-right: 2px;
+ }
+
+.hotnumber.autosuggest .autosuggest-highlight {
+    background-color: #FFFF00;
+    color: black;
+}
+
+.hotnumber.autosuggest .autosuggest-info {
+    color: #ddd;
+}
+
+.hotnumber .current-param {
+    color: lightblue;
+    font-size: 15px;
+    font-weight: 900;
+}
+
 .hotnumber {
     background: black;
     border-radius: 7px;
