@@ -1698,6 +1698,15 @@ Output.testWorker = new PooledWorker(
     function(code, validate, errors, callback) {
         var self = this;
 
+        // If there are syntax errors in the tests themselves,
+        //  then we ignore the request to test.
+        try {
+            OutputTester.exec(validate);
+        } catch(e) {
+            console.warn(e.message);
+            return;
+        }
+
         Output.testing = true;
 
         // Generic function to handle results of testing
@@ -1707,8 +1716,8 @@ Output.testWorker = new PooledWorker(
             Output.testing = false;
         };
 
-        // If there's no Worker or support *or* there
-        //  are syntax errors, we do the testing in
+        // If there's no Worker support *or* there
+        //  are syntax errors in user code, we do the testing in
         //  the browser instead.
         // We do it in-browser in the latter case as
         //  the code is often in a syntax-error state,
