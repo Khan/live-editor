@@ -17,7 +17,7 @@ window.ScratchpadAutosuggestData = {
             "while", "with"]
     },
     _p5jsFunctions: {
-        type: $._("p5js function"),
+        type: $._("function"),
         whitelist: [
             {
                 name: "rect(x, y, width, height, radius*)",
@@ -240,7 +240,7 @@ window.ScratchpadAutosuggestData = {
                 ]
             },
             {
-                name: "urveVertex(x,y)",
+                name: "curveVertex(x,y)",
                 exampleURL: "/cs/curvevertexx-y/6499542019080192",
                 description: $._("Used in conjunction with beginShape() and endShape() to draw shapes with bezier curves for sides. The first and last points in a series of curveVertex() lines will be used to guide the beginning and end of a the curve."),
                 params: [
@@ -839,21 +839,21 @@ window.ScratchpadAutosuggestData = {
         ]
     },
     _p5jsObjectConstructors: {
-        type: $._("p5js object constructor"),
+        type: $._("object constructor"),
         whitelist: ["PVector(x,y)"]
     },
     _p5jsObjects: {
-        type: $._("p5js object"),
+        type: $._("object"),
         whitelist: ["Random"]
     },
     _p5jsVariables: {
-        type: $._("p5js variable"),
+        type: $._("variable"),
         whitelist: ["width", "height", "mouseIsPressed", "keyIsPressed",
             "frameCount", "key", "keyCode", "mouseButton", "mouseX",
             "mouseY", "pmouseX", "pmouseY", "angleMode"]
     },
     _p5jsCallbacks: {
-        type: $._("p5js callback"),
+        type: $._("callback"),
         whitelist: ["draw", "mouseClicked", "mousePressed", "mouseReleased",
             "mouseMoved", "mouseDragged", "mouseOver", "mouseOut",
             "keyPressed", "keyReleased", "keyTyped"]
