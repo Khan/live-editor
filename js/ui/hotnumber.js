@@ -385,6 +385,7 @@ var HotNumberModule = function() {
             if (this.autosuggest) {
                 return;
             }
+            var editor = this.options.editor;
             var over = false, down = false;
             var reposition = function($picker) {
                 var pos = editor.selection.getCursor(),
@@ -402,12 +403,12 @@ var HotNumberModule = function() {
                 .mousedown(function() {
                     this.autosuggest.hide();
                     editor.focus();
-                }).hide();
+                }.bind(this)).hide();
             $(document).keyup(function(e) {
-                if (e.which === 27) {
+                if (e.which === 27 && this.autosuggest) {
                     this.autosuggest.hide();
                 }
-            });
+            }.bind(this));
         },
         attachScrubber: function() {
             if (this.scrubber) {

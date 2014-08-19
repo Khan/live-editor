@@ -121,7 +121,7 @@ window.ScratchpadAutosuggestData = {
             },
             {
                 name: "image(image, x, y, width*, height*)",
-                exampleURL: "",
+                exampleURL: "/cs/imageimage-x-y/937672662",
                 description: $._("Draw an image on the canvas. The only allowed images are those that popup in the image picker when you use the getImage() method. The image is positioned using the x/y as the upper left corner. For alternate ways to position images, see imageMode."),
                 params: [
                     $._("image: an image returned by getImage()"),
@@ -131,14 +131,67 @@ window.ScratchpadAutosuggestData = {
                     $._("height: (Optional) the height of the drawn image")
                 ]
             },
-             // There's some kind of internal ace issue where it adds 2 rect
-             // functions because rect is a prefix of this I guess.
-             // Disabling this one since it isn't too important.
-             // TODO(bbondy): Find a fix and upstream if needed.
-             //"rectMode()", "ellipseMode()","imageMode"
-            //"bezierPoint(a, b, c, d, t)",
-            //"bezierTangent(a,b, c, d, t)",
-            //"bezierVertex(cx1, cy1, cx2, cy2, x, y)",
+            {
+                name: "rectMode(MODE)",
+                exampleURL: "/cs/rectmodemode/4556457341091840",
+                description: $._("Modifies the location from which rectangles draw."),
+                params: [
+                    $._("MODE: The mode, either CORNER, CORNERS, CENTER, or RADIUS. The default is CORNER.")
+                ]
+            },
+            {
+                name: "ellipseMode(MODE)",
+                exampleURL: "cs/ellipsemodemode/6709863212122112",
+                description: $._("Changes how ellipses are drawn."),
+                params: [
+                    $._("MODE: The mode, either CORNER, CORNERS, CENTER, or RADIUS. The default is CENTER.")
+                ]
+            },
+            {
+                name: "imageMode(MODE)",
+                exampleURL: "/cs/imagemodemode/5295050787389440",
+                description: $._("Modifies the location from which images are drawn."),
+                params: [
+                    $._("MODE: Either CENTER, CORNERS, or CORNER. The default is CORNER.")
+                ]
+            },
+            {
+                name: "bezierPoint(a, b, c, d, t)",
+                exampleURL: "/cs/bezierpointa-b-c-d-t/4551007698681856",
+                description: $._("Evaluates the Bezier at point t for points a, b, c, d. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the location of a bezier curve at t."),
+                params: [
+                    $._("a: coordinate of first point on the curve"),
+                    $._("b: coordinate of first control point"),
+                    $._("c: coordinate of second control point"),
+                    $._("d: coordinate of second point on the curve"),
+                    $._("t: value between 0 and 1")
+                ]
+            },
+            {
+                name: "bezierTangent(a,b, c, d, t)",
+                exampleURL: "/cs/beziertangenta-b-c-d-t/4736929853603840",
+                description: $._("Calculates the tangent of a point on a bezier curve. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the tangent of a bezier curve at t."),
+                params: [
+                    $._("a: coordinate of first point on the curve"),
+                    $._("b: coordinate of first control point"),
+                    $._("c: coordinate of second control point"),
+                    $._("d: coordinate of second point on the curve"),
+                    $._("t: value between 0 and 1")
+                ]
+            },
+            {
+                name: "bezierVertex(cx1, cy1, cx2, cy2, x, y)",
+                exampleURL: "/cs/beziervertexcx1-cy1-cx2-cy2-x-y/5085481683386368",
+                description: $._("Used in conjunction with beginShape() and endShape() to draw shapes with bezier curves for sides. Each call to bezierVertex() defines the position of two control points and one anchor point of a Bezier curve, adding a new segment to a line or shape. The first time bezierVertex() is used within a beginShape() call, it must be prefaced with a call to vertex() to set the first anchor point. When using this function, do *not* specify a mode in beginShape()."),
+                params: [
+                    $._("cx1: The x-coordinate of 1st control point"),
+                    $._("cy1: The y-coordinate of 1st control point"),
+                    $._("cx2: The x-coordinate of 2nd control point"),
+                    $._("cy2: The y-coordinate of 2nd control point"),
+                    $._("x: The x-coordinate of anchor point"),
+                    $._("y: The y-coordinate of anchor point")
+                ]
+            },
             {
                 name: "curve(x1, y1, x2, y2, x3, y3, x4, y4)",
                 exampleURL: "/cs/curve/5105742184972288",
@@ -154,10 +207,47 @@ window.ScratchpadAutosuggestData = {
                     $._("y4: the y coordinate of second anchor point")
                 ]
             },
-            //"curvePoint(a, b, c, d, t))",
-            //"curveTangent(a, b, c, d, t)",
-            //"curveTightness(tightness)",
-            //"curveVertex(x,y)",
+            {
+                name: "curvePoint(a, b, c, d, t)",
+                exampleURL: "/cs/curvepointa-b-c-d-t/5879387094253568",
+                description: $._("Evalutes the curve at point t for points a, b, c, d. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the location of a curve at t."),
+                params: [
+                    $._("a: the coordinate of the first point"),
+                    $._("b: the coordinate of the first control point"),
+                    $._("c: the coordinate of the second point"),
+                    $._("d: the coordinate of the second point"),
+                    $._("t: the a value between 0 and 1")
+                ]
+            },
+            {
+                name: "curveTangent(a, b, c, d, t)",
+                exampleURL: "/cs/curvetangenta-b-c-d-t/4708940860358656",
+                description: $._("Calculates the tangent at a point the curve. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the tangent of a curve at t."),
+                params: [
+                    $._("a: the coordinate of the first point"),
+                    $._("b: the coordinate of the first control point"),
+                    $._("c: the coordinate of the second point"),
+                    $._("d: the coordinate of the second point"),
+                    $._("t: the a value between 0 and 1")
+                ]
+            },
+            {
+                name: "curveTightness(tightness)",
+                exampleURL: "/cs/curvetightnesssquishy/4792873740402688",
+                description: $._("Modifies the quality of forms created with curve() and curveVertex(). The tightness parameter determines how the curve fits to the vertex points."),
+                params: [
+                    $._("tightness: amount of deformation from the original vertices")
+                ]
+            },
+            {
+                name: "urveVertex(x,y)",
+                exampleURL: "/cs/curvevertexx-y/6499542019080192",
+                description: $._("Used in conjunction with beginShape() and endShape() to draw shapes with bezier curves for sides. The first and last points in a series of curveVertex() lines will be used to guide the beginning and end of a the curve."),
+                params: [
+                    $._("x: the x-coordinate of the vertex"),
+                    $._("y: the y-coordinate of the vertex")
+                ]
+            },
             {
                 name: "beginShape(MODE*)",
                 exampleURL: "/cs/beginshapeendshape/5462945756610560",
@@ -183,9 +273,8 @@ window.ScratchpadAutosuggestData = {
                     $._("y: the y-coordinate of the vertex")
                 ]
             },
-            // TODO(bbondy):
-            // Can't get autocomplete for this because curPicker in use
-            // Maybe move autosuggest param info to bottom and use both?
+            // We don't need parameter info here because these have different
+            // hotnumber pickers.
             "background(r, g, b)",
             "fill(r, g, b)",
             "stroke(r, g, b)",
@@ -200,9 +289,30 @@ window.ScratchpadAutosuggestData = {
                 exampleURL: "/cs/nostroke/839859412",
                 description: $._("Disables outlines for all shapes drawn after the function call.")
             },
-            //"strokeWeight(thickness)",
-            //"strokeJoin(MODE)",
-            //"strokeCap(MODE*)",
+            {
+                name: "strokeWeight(thickness)",
+                exampleURL: "/cs/strokeweightthickness/877859744",
+                description: $._("Sets the thickness of all lines and outlines drawn after the function call."),
+                params: [
+                    $._("thickness: a number specifying the thickness")
+                ]
+            },
+            {
+                name: "strokeJoin(MODE)",
+                exampleURL: "/cs/strokejoinmode/5662070842327040",
+                description: $._("Sets the style of the joints which connect line segments drawn with vertex(). These joints are either mitered, beveled, or rounded and specified with the corresponding parameters MITER, BEVEL, and ROUND."),
+                params: [
+                    $._("MODE: Either MITER, BEVEL, or ROUND. The default is MITER.")
+                ]
+            },
+            {
+                name: "strokeCap(MODE)",
+                exampleURL: "/cs/strokecapmode/5288182060941312",
+                description: $._("Sets the style for rendering line endings. These ends are either squared, extended, or rounded and specified with the corresponding parameters SQUARE, PROJECT, and ROUND."),
+                params: [
+                    $._("MODE: Either SQUARE, PROJECT, or ROUND. The default is ROUND")
+                ]
+            },
             {
                 name: "blendColor(c1, c2, MODE)",
                 exampleURL: "/cs/blendcolorc1-c2-mode/4530750216994816",
@@ -222,7 +332,14 @@ window.ScratchpadAutosuggestData = {
                     $._("c2: Interpolate to this color")
                 ]
             },
-            //"colorMode(MODE)",
+            {
+                name: "colorMode(MODE)",
+                exampleURL: "/cs/colormode/5833774306689024",
+                description: $._("Changes the way that color values are interpreted when set by fill()/stroke()/background()."),
+                params: [
+                    $._("MODE: Either RGB or HSB. The default is RGB.")
+                ]
+            },
             {
                 name: "red(color)",
                 exampleURL: "/cs/redcolor/5102159326609408",
@@ -586,7 +703,15 @@ window.ScratchpadAutosuggestData = {
                     $._("y: the y-coordinate in noise space (optional)")
                 ]
             },
-            //"noiseDetail(octaves, falloff)",
+            {
+                name: "noiseDetail(octaves, falloff)",
+                exampleURL: "/cs/noisedetailoctaves-falloff/6549875814563840",
+                description: $._("Adjusts the character and level of detail produced by the Perlin noise function."),
+                params: [
+                    $._("octaves: The number of octaves to be used by the noise() function"),
+                    $._("falloff: The falloff factor for each octave")
+                ]
+            },
             {
                 name: "sin(degrees)",
                 exampleURL: "/cs/sindeg/948255306",
