@@ -6,8 +6,22 @@
     <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
     <link rel="stylesheet" href="../../build/css/live-editor.hotnumber.css"/>
     <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        h1 {
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+        #sample-live-editor {
+            padding: 0;
+        }
+    </style>
 </head>
 <body>
+    <h1>Live Editor Example</h1>
     <div id="sample-live-editor"></a>
 
     <script src="../../build/js/live-editor.core_deps.js"></script>
@@ -21,10 +35,10 @@
     <script>
     window.liveEditor = new LiveEditor({
         el: $("#sample-live-editor"),
-        code: window.localStorage["test-code"] || "",
+        code: window.localStorage["test-code"] || "rect(10, 10, 100, 100);",
         width: 400,
         height: 400,
-        editorHeight: "100%",
+        editorHeight: "80%",
         autoFocus: true,
         workersDir: "../../build/workers/",
         externalsDir: "../../build/external/",
