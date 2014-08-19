@@ -204,10 +204,9 @@ var HotNumberModule = function() {
                 ScratchpadAutosuggest.enableLiveCompletion(false);
 
                 if (lookupParams) {
-                    this.autosuggest.find(".hotsuggest").empty()
-                                                   .append(lookupParams);
+                    this.autosuggest.find(".hotsuggest")
+                                    .empty().append(lookupParams);
                     this.newPicker = this.autosuggest;
-                    editor.focus();
                 }
             }
         },
