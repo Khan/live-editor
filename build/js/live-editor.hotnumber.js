@@ -1826,7 +1826,7 @@ var HotNumberModule = function() {
                     this.newPicker = this.imagePicker;
                 }
 
-            } else if (/([\d.-]+)$/.test(prefix)) {
+            } else {
                 var before = pos.column - (/([\d.-]+)$/.test(prefix) ? RegExp.$1.length : 0);
 
                 if (/^([\d.-]+)/.test(line.slice(before)) && !isNaN(parseFloat(RegExp.$1))) {
@@ -1842,21 +1842,21 @@ var HotNumberModule = function() {
                     this.handle = function(value) {
                         _private.updateNumberScrubber.call(this, value);
                     };
-                }
-            } else if (/(\b[^\d.-]+\s*\(\s*)([^\)]*)$/.test(prefix)) {
-                var functionCall = RegExp.$1.substring(0, RegExp.$1.length - 1)
-                                            .split(" ").pop().trim();
-                var paramsPos = pos.column - RegExp.$2.length;
-                var paramsToCursor = RegExp.$2;
-                var lookupParams =
-                    ScratchpadAutosuggest.lookupParamsSafeHTML(functionCall,
-                        paramsToCursor);
-                ScratchpadAutosuggest.enableLiveCompletion(false);
+                } else if (/(\b[^\d.-]+\s*\(\s*)([^\)]*)$/.test(prefix)) {
+                    var functionCall = RegExp.$1.substring(0, RegExp.$1.length - 1)
+                                                .split(" ").pop().trim();
+                    var paramsPos = pos.column - RegExp.$2.length;
+                    var paramsToCursor = RegExp.$2;
+                    var lookupParams =
+                        ScratchpadAutosuggest.lookupParamsSafeHTML(functionCall,
+                            paramsToCursor);
+                    ScratchpadAutosuggest.enableLiveCompletion(false);
 
-                if (lookupParams) {
-                    this.autosuggest.find(".hotsuggest")
-                                    .empty().append(lookupParams);
-                    this.newPicker = this.autosuggest;
+                    if (lookupParams) {
+                        this.autosuggest.find(".hotsuggest")
+                                        .empty().append(lookupParams);
+                        this.newPicker = this.autosuggest;
+                    }
                 }
             }
         },
