@@ -890,6 +890,20 @@ window.LiveEditor = Backbone.View.extend({
         if (data.validate != null) {
             this.validation = data.validate;
         }
+        
+        if (data.results && data.results.assertions) { 
+           var annotations = [];
+           for (var i = 0; i < data.results.assertions.length; i++) { 
+             var unitTest = data.results.assertions[i];
+             annotations.push({
+                  row: unitTest.row, 
+                  column: unitTest.column, 
+                  text: unitTest.text,
+                  type: "warning" 
+                });
+           }
+           this.editor.editor.session.setAnnotations(annotations); 
+        }
 
         // Set the line visibility in the editor
         if (data.lines !== undefined) {

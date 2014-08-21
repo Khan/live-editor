@@ -16,6 +16,8 @@ var Output = {
         // These are the outputted errors
         this.errors = [];
 
+        this.assertions = [];
+
         this.context = {};
         this.loaded = false;
 
@@ -283,6 +285,7 @@ var Output = {
                 Output.globals[global] = true;
             }
         }
+        Output.assertions = [];
 
         Output.babyErrors = BabyHint.babyErrors(userCode, hintErrors);
 
@@ -300,12 +303,12 @@ var Output = {
                 callback(Output.errors);
                 return;
             }
-
             this.postParent({
                 results: {
                     code: userCode,
                     errors: Output.errors,
-                    tests: Output.testResults || []
+                    tests: Output.testResults || [],
+                    assertions: Output.assertions
                 }
             });
 
@@ -1055,17 +1058,47 @@ window.CanvasOutput = {
             },
 
             assertEqual: function(actual, expected) {
+
+                // Uses TraceKit to get stacktrace of caller,
+                // it looks for the line number of the first anonymous eval
+                // Stack traces are pretty nasty and not standardized yet
+                // so this is not as elegant as one might hope.
+                // Safari doesn't even give line numbers for anonymous evals,
+                // so they can go sit in the dunce corner today.
+                // This returns 0 if not found, which will mean that all
+                // the assertion failures are shown on the first line.
+                var getLineNum = function(stacktrace) {
+                    var err = new Error();
+                    TraceKit.remoteFetching = false;
+                    TraceKit.collectWindowErrors = false;
+                    var stacktrace = TraceKit.computeStackTrace.ofCaller();
+                    var lines = stacktrace.stack;
+                    for (var i = 0; i < lines.length; i++) {
+                        if (lines[i].func === "Object.apply.get.message") {
+                            // Chrome
+                            return lines[i].line - 5;
+                        } else if (lines[i].func === "anonymous/<") {
+                            // Firefox
+                            return lines[i].line - 4;
+                        }
+                    }
+                    return -1;
+                };
+
                 if (_.isEqual(actual, expected)) {
                     return;
                 }
-                Output.errors.push({
-                    row: -1,
-                    column: -1,
-                    text: $._(
+                var msg = $._(
                         "Expected \"%(actual)s\" but saw \"%(expected)s.\"",
                         {actual: Output.stringify(actual),
-                         expected: Output.stringify(expected)}),
-                    source: "assertions"
+                         expected: Output.stringify(expected)});
+                var lineNum = getLineNum();
+                if (lineNum < 0) {
+                    lineNum = 0;
+                    msg = $._("Program assertions failed:\n") + msg;
+                }
+                Output.assertions.push({
+                    row: lineNum, column: 0, text: msg
                 });
             },
 
@@ -1078,7 +1111,7 @@ window.CanvasOutput = {
                 }
 
                 var result = !!fn();
-
+		
                 Output.postParent({
                     results: {
                         code: Output.currentCode,
@@ -1669,6 +1702,7 @@ PooledWorker.prototype.getWorkerFromPool = function() {
     if (!worker) {
         worker = new window.Worker(this.getURL());
     }
+
     // Keep track of what number worker we're running so that we know
     // if any new hint workers have been started after this one
     this.curID += 1;

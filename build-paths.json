@@ -105,7 +105,8 @@
         "external/structuredjs/structured.js",
         "external/underscore/underscore.js",
         "external/blockly/media/**",
-        "external/SoundManager2/swf/**"
+        "external/SoundManager2/swf/**",
+        "external/TraceKit/tracekit.js"
     ],
     "styles": {
         "core_deps": [
