@@ -19,15 +19,36 @@ var decimalCount = function(strNumber) {
 var isInParenthesis = function(text) {
     var parenthesisDepth = 0;
     for (var i = 0; i < text.length; i++) {
-        if (text[i] === '(') {
+        if (text[i] === "(") {
             parenthesisDepth++;
-        } else if (text[i] === ')') {
+        } else if (text[i] === ")") {
             parenthesisDepth--;
         }
     }
     return parenthesisDepth > 0;
 };
 
+// Returns true if we're inside a string
+var isWithinString = function(text) {
+    var withinString = false;
+    var lastQuoteChar;
+    for (var i = 0; i < text.length; i++) {
+        if (withinString && text[i] === lastQuoteChar) {
+            withinString = false;
+        } else if (!withinString && text[i] === "'" || text[i] === "\"") {
+            lastQuoteChar = text[i];
+            withinString = true;
+        }
+    }
+    return withinString;
+};
+
+// Returns true if we're inside a comment
+// This isn't a perfect check, but it is close enough.
+var isWithinComment = function(text) {
+    // Comments typically start with a / or a * (for multiline C style)
+    return text.length && (text[0] === "/" || text[0] === "*");
+}
 
 var HotNumberModule = function() {
 
@@ -80,11 +101,13 @@ var HotNumberModule = function() {
             var line = editor.session.getDocument().getLine(pos.row);
             var prefix = line.slice(0, pos.column);
             var lineCleanedUp = line.trim();
-            if (lineCleanedUp.length && (lineCleanedUp[0] === "/" ||
-                    lineCleanedUp[0] === "*")) {
-                // Comments typically start with a / or a * (for multiline C style)
-                // Get rid of live autocomplete in that case.
+            // Get rid of live autocomplete and other pickers if we're within
+            // a comment or string.
+            if (isWithinComment(lineCleanedUp) ||
+                    isWithinString(lineCleanedUp)) {
                 ScratchpadAutosuggest.enableLiveCompletion(false);
+                return;
+            // We don't want autosuggest coming up when param info is displayed
             } else if (this.curPicker !== this.autosuggest) {
                 ScratchpadAutosuggest.enableLiveCompletion(true);
             }
