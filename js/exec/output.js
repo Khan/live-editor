@@ -1089,7 +1089,7 @@ window.CanvasOutput = {
                     return;
                 }
                 var msg = $._(
-                        "Expected \"%(actual)s\" but saw \"%(expected)s.\"",
+                        "Expected \"%(expected)s\" but saw \"%(actual)s.\"",
                         {actual: Output.stringify(actual),
                          expected: Output.stringify(expected)});
                 var lineNum = getLineNum();
