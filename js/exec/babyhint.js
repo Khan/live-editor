@@ -80,7 +80,7 @@ var BabyHint = {
         "bezier": 8,
         "bezierVertex": [6],
         "box": [1, 2, 3],
-        "color": [3, 4],
+        "color": [1, 2, 3, 4],
         "colorMode": [1, 2, 4, 5],
         "createFont": [1, 2],
         "cos": 1,
@@ -107,6 +107,7 @@ var BabyHint = {
         "stroke": [1, 3, 4],
         "tan": 1,
         "text": [3, 5],
+        "textAlign": [1, 2],
         "textFont": [1, 2],
         "translate": [2, 3],
         "vertex": [2, 4]
