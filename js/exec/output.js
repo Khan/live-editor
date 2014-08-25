@@ -1089,14 +1089,16 @@ window.CanvasOutput = {
                     return;
                 }
                 var msg = $._(
-                        "Expected \"%(expected)s\" but saw \"%(actual)s.\"",
+                        "Assertion failed: " +
+                        "%(actual)s is not equal to %(expected)s.",
                         {actual: Output.stringify(actual),
                          expected: Output.stringify(expected)});
                 var lineNum = getLineNum();
+                // Display on first line if we didn't find a line #
                 if (lineNum < 0) {
                     lineNum = 0;
-                    msg = $._("Program assertions failed:\n") + msg;
                 }
+                
                 Output.assertions.push({
                     row: lineNum, column: 0, text: msg
                 });
