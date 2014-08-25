@@ -307,7 +307,11 @@ var ScratchpadConfig = Backbone.Model.extend({
 
                     // Allow variable shadowing. Declaring a var multiple times
                     // is allowed.
-                    shadow: true
+                    shadow: true,
+
+                    // Allow mixing spaces and tabs. We can add a prettify one day
+                    // if we want to fix things up.
+                    smarttabs: true
                 };
             },
 

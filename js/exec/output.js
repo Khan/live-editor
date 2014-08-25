@@ -16,6 +16,8 @@ var LiveEditorOutput = {
         // These are the outputted errors
         this.errors = [];
 
+        this.assertions = [];
+
         this.context = {};
         this.loaded = false;
 
@@ -275,6 +277,7 @@ var LiveEditorOutput = {
                 Output.globals[global] = true;
             }
         }
+        Output.assertions = [];
 
         Output.babyErrors = BabyHint.babyErrors(userCode, hintErrors);
 
@@ -292,12 +295,12 @@ var LiveEditorOutput = {
                 callback(Output.errors);
                 return;
             }
-
             this.postParent({
                 results: {
                     code: userCode,
                     errors: Output.errors,
-                    tests: Output.testResults || []
+                    tests: Output.testResults || [],
+                    assertions: Output.assertions
                 }
             });
 

@@ -10,3 +10,6 @@
 [submodule "external/blockly"]
 	path = external/blockly
 	url = git@github.com:Khan/blockly.git
+[submodule "external/TraceKit"]
+	path = external/TraceKit
+	url = git@github.com:Khan/TraceKit.git

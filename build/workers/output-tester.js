@@ -8,7 +8,7 @@ window.OutputTester = {
         // This will also fill in tests, as it will end up
         //  referencing functions like staticTest and that
         //  function will fill in OutputTester.tests
-        OutputTester.exec(OutputTester.validate, OutputTester.testContext);
+        OutputTester.exec(OutputTester.validate);
 
         OutputTester.testResults = [];
         OutputTester.errors = errors || [];
@@ -44,7 +44,7 @@ window.OutputTester = {
             return true;
         }
 
-        var contexts = Array.prototype.slice.call(arguments, 1);
+        var contexts = [OutputTester.testContext];
 
         function exec_() {
             for (var i = 0; i < contexts.length; i++) {
@@ -76,7 +76,9 @@ window.OutputTester = {
                         return fn.apply(this, arguments);
 
                     } catch (e) {
-                        window.console && console.warn(e);
+                        if (window.console) {
+                            console.warn(e);
+                        }
                     }
                 }
             });
@@ -301,7 +303,9 @@ window.OutputTester = {
                     message: callbacks && callbacks.failure
                 };
             } catch (e) {
-                window.console && console.warn(e);
+                if (window.console) {
+                    console.warn(e);
+                }
                 return {
                     success: true,
                     message: $._("Hm, we're having some trouble " +

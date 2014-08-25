@@ -19,15 +19,36 @@ var decimalCount = function(strNumber) {
 var isInParenthesis = function(text) {
     var parenthesisDepth = 0;
     for (var i = 0; i < text.length; i++) {
-        if (text[i] === '(') {
+        if (text[i] === "(") {
             parenthesisDepth++;
-        } else if (text[i] === ')') {
+        } else if (text[i] === ")") {
             parenthesisDepth--;
         }
     }
     return parenthesisDepth > 0;
 };
 
+// Returns true if we're inside a string
+var isWithinString = function(text) {
+    var withinString = false;
+    var lastQuoteChar;
+    for (var i = 0; i < text.length; i++) {
+        if (withinString && text[i] === lastQuoteChar) {
+            withinString = false;
+        } else if (!withinString && text[i] === "'" || text[i] === "\"") {
+            lastQuoteChar = text[i];
+            withinString = true;
+        }
+    }
+    return withinString;
+};
+
+// Returns true if we're inside a comment
+// This isn't a perfect check, but it is close enough.
+var isWithinComment = function(text) {
+    // Comments typically start with a / or a * (for multiline C style)
+    return text.length && (text[0] === "/" || text[0] === "*");
+}
 
 var HotNumberModule = function() {
 
@@ -61,6 +82,7 @@ var HotNumberModule = function() {
 
                 _private.attachScrubber.call(this);
                 _private.attachColorPicker.call(this);
+                _private.attachAutosuggest.call(this);
             }
 
             if (record) {
@@ -78,6 +100,17 @@ var HotNumberModule = function() {
             var pos = editor.selection.getCursor();
             var line = editor.session.getDocument().getLine(pos.row);
             var prefix = line.slice(0, pos.column);
+            var lineCleanedUp = line.trim();
+            // Get rid of live autocomplete and other pickers if we're within
+            // a comment or string.
+            if (isWithinComment(lineCleanedUp) ||
+                    isWithinString(lineCleanedUp)) {
+                ScratchpadAutosuggest.enableLiveCompletion(false);
+                return;
+            // We don't want autosuggest coming up when param info is displayed
+            } else if (this.curPicker !== this.autosuggest) {
+                ScratchpadAutosuggest.enableLiveCompletion(true);
+            }
 
             if (/\b(background|fill|stroke|color)(\s*)\(\s*([\s\d,]*)\s*$/.test(prefix)) {
                 var paramsPos = pos.column - RegExp.$3.length;
@@ -182,9 +215,23 @@ var HotNumberModule = function() {
                     this.handle = function(value) {
                         _private.updateNumberScrubber.call(this, value);
                     };
+                } else if (/(\b[^\d.-]+\s*\(\s*)([^\)]*)$/.test(prefix)) {
+                    var functionCall = RegExp.$1.substring(0, RegExp.$1.length - 1)
+                                                .split(" ").pop().trim();
+                    var paramsPos = pos.column - RegExp.$2.length;
+                    var paramsToCursor = RegExp.$2;
+                    var lookupParams =
+                        ScratchpadAutosuggest.lookupParamsSafeHTML(functionCall,
+                            paramsToCursor);
+                    ScratchpadAutosuggest.enableLiveCompletion(false);
+
+                    if (lookupParams) {
+                        this.autosuggest.find(".hotsuggest")
+                                        .empty().append(lookupParams);
+                        this.newPicker = this.autosuggest;
+                    }
                 }
             }
-
         },
         onUpdatePosition: function() {
             var editor = this.options.editor;
@@ -193,7 +240,9 @@ var HotNumberModule = function() {
             var editorBB = editor.renderer.scroller.getBoundingClientRect();
             var editorHeight = editorBB.height;
             var coords = editor.renderer.textToScreenCoordinates(pos.row,
-                this.curPicker !== this.scrubber ? editor.session.getDocument().getLine(pos.row).length : pos.column);
+                this.curPicker !== this.scrubber &&
+                this.curPicker !== this.autosuggest ?
+                editor.session.getDocument().getLine(pos.row).length : pos.column);
             var relativePos = coords.pageY - editorBB.top;
             // repeated
             this.curPicker
@@ -353,6 +402,35 @@ var HotNumberModule = function() {
                 console.warn("Unknown editor type");
                 return;
             }
+        },
+        attachAutosuggest: function() {
+            if (this.autosuggest) {
+                return;
+            }
+            var editor = this.options.editor;
+            var over = false, down = false;
+            var reposition = function($picker) {
+                var pos = editor.selection.getCursor(),
+                    coords = editor.renderer.textToScreenCoordinates(
+                        pos.row, editor.session.getDocument().getLine(
+                            pos.row).length);
+
+                $picker.css({
+                    top: $(window).scrollTop() + coords.pageY,
+                    left: coords.pageX
+                });
+            };
+            this.autosuggest = $("<div class='hotnumber autosuggest'><div class='hotsuggest'></div><div class='arrow'></div></div>")
+                .appendTo("body")
+                .mousedown(function() {
+                    this.autosuggest.hide();
+                    editor.focus();
+                }.bind(this)).hide();
+            $(document).keyup(function(e) {
+                if (e.which === 27 && this.autosuggest) {
+                    this.autosuggest.hide();
+                }
+            }.bind(this));
         },
         attachScrubber: function() {
             if (this.scrubber) {
