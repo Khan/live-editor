@@ -895,7 +895,7 @@ window.OutputTester = {
                         return fn.apply(this, arguments);
 
                     } catch (e) {
-                        console.warn(e);
+                        window.console && console.warn(e);
                     }
                 }
             });
@@ -1120,7 +1120,7 @@ window.OutputTester = {
                     message: callbacks && callbacks.failure
                 };
             } catch (e) {
-                console.warn(e);
+                window.console && console.warn(e);
                 return {
                     success: true,
                     message: $._("Hm, we're having some trouble " +
@@ -1419,6 +1419,7 @@ window.OutputTester = {
         }
     }
 };
+
 (function() {
 
 // Keep track of the frame source and origin for later
@@ -1495,10 +1496,18 @@ var LiveEditorOutput = {
             return;
         }
 
-        Output.workersDir = data.workersDir;
-        Output.externalsDir = data.externalsDir;
-        Output.imagesDir = data.imagesDir;
-        Output.jshintFile = data.jshintFile;
+        if (data.workersDir) {
+            Output.workersDir = data.workersDir;
+        }
+        if (data.externalsDir) {
+            Output.externalsDir = data.externalsDir;
+        }
+        if (data.imagesDir) {
+            Output.imagesDir = data.imagesDir;
+        }
+        if (data.jshintFile) {
+            Output.jshintFile = data.jshintFile;
+        }
 
         // Validation code to run
         if (data.validate != null) {
@@ -2301,23 +2310,7 @@ window.CanvasOutput = {
 
         // Dynamically set the width and height based upon the size of the
         // window, which could be changed in the parent page
-        $(window).on("resize", function() {
-            var $window = $(window);
-            var width = $window.width();
-            var height = $window.height();
-
-            if (width !== CanvasOutput.canvas.width ||
-                height !== CanvasOutput.canvas.height) {
-                // Set the canvas element to be the right size
-                $("#output-canvas").width(width).height(height);
-
-                // Set the Processing.js canvas to be the right size
-                CanvasOutput.canvas.size(width, height);
-
-                // Restart execution
-                Output.restart();
-            }
-        });
+        $(window).on("resize", CanvasOutput.setDimensions);
     },
 
     // Handle recording playback
@@ -2336,7 +2329,25 @@ window.CanvasOutput = {
         CanvasOutput.clear();
 
         // Trigger the setting of the canvas size immediately
-        $(window).resize();
+        CanvasOutput.setDimensions();
+    },
+
+    setDimensions: function() {
+        var $window = $(window);
+        var width = $window.width();
+        var height = $window.height();
+
+        if (width !== CanvasOutput.canvas.width ||
+            height !== CanvasOutput.canvas.height) {
+            // Set the canvas element to be the right size
+            $("#output-canvas").width(width).height(height);
+
+            // Set the Processing.js canvas to be the right size
+            CanvasOutput.canvas.size(width, height);
+
+            // Restart execution
+            Output.restart();
+        }
     },
 
     imageCache: {},
@@ -2479,6 +2490,21 @@ window.CanvasOutput = {
             runTests: function() {
                 Output.test();
                 return Output.testResults;
+            },
+
+            assertEqual: function(actual, expected) {
+                if (_.isEqual(actual, expected)) {
+                    return;
+                }
+                Output.errors.push({
+                    row: -1,
+                    column: -1,
+                    text: $._(
+                        "Expected \"%(actual)s\" but saw \"%(expected)s.\"",
+                        {actual: Output.stringify(actual),
+                         expected: Output.stringify(expected)}),
+                    source: "assertions"
+                });
             },
 
             // Run a single test (specified by a function)

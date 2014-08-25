@@ -13,7 +13,9 @@ window.LiveEditor = Backbone.View.extend({
         PLAYBAR_PROGRESS: ".scratchpad-playbar-progress",
         PLAYBAR_PLAY: ".scratchpad-playbar-play",
         PLAYBAR_TIMELEFT: ".scratchpad-playbar-timeleft",
-        PLAYBAR_UI: ".scratchpad-playbar-play, .scratchpad-playbar-progress"
+        PLAYBAR_UI: ".scratchpad-playbar-play, .scratchpad-playbar-progress",
+        OUTPUT_FRAME: "#output-frame",
+        ALL_OUTPUT: "#output, #output-frame"
     },
 
     defaultOutputWidth: 400,
