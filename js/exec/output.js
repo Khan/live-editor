@@ -1174,12 +1174,23 @@ window.CanvasOutput = {
 
                 _.each(Output.globals, function(val, global) {
                     var value = Output.context[global];
-                    context[global] = (
-                        typeof value === "function" || global === "Math" ?
-                        "__STUBBED_FUNCTION__" :
-                        (typeof value !== "object" || $.isPlainObject(value) ?
-                             value :
-                             {}));
+                    var contextVal;
+                    if (typeof value === "function" || global === "Math") {
+                        contextVal = "__STUBBED_FUNCTION__";
+                    } else if (typeof value !== "object" ||
+                        // We can send object literals over, but not
+                        //  objects created with a constructor.
+                        // jQuery thinks PImage is a plain object,
+                        //  so we must specially check for it,
+                        //  otherwise we'll give web workers an object that
+                        //  they can't serialize.
+                        ($.isPlainObject(value) &&
+                        !(value instanceof Output.context.PImage))) {
+                        contextVal = value;
+                    } else {
+                        contextVal = {};
+                    }
+                    context[global] = contextVal;
                 });
 
                 Output.worker.exec(userCode, context, function(userCode) {

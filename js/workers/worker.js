@@ -10,7 +10,7 @@ self.onmessage = function(event) {
             "\nif (typeof draw !== 'undefined' && draw){draw();}}",
         runtimeCost = 0,
         drawMethods = ["background", "bezier", "curve", "ellipse", "line",
-            "quad", "rect", "triangle", "vertex", "text"],
+            "quad", "rect", "triangle", "vertex", "text", "image"],
         willDraw = {};
 
     // Generates a function for counting the rough complexity of a specific
