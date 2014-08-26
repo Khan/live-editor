@@ -2,17 +2,9 @@
 /* global text, color, textFont, fill, text, background, createFont */
 /* global externals, exp, link */
 
-var testutil = require("../testutil.js");
-var Output = require("./output.js");
-var ScratchpadConfig = require("../scratchpads-package/scratchpad-config.js");
-
-var describe = testutil.describe;
-var it = testutil.it;
-var expect = testutil.expect;
-
 var runTest = function(options) {
     if (options.version === undefined) {
-        options.version = ScratchpadConfig.latestVersion();
+        options.version = ScratchpadConfig.prototype.latestVersion();
     }
 
     var displayTitle = options.title +
@@ -31,12 +23,18 @@ var runTest = function(options) {
 
     // Start an asynchronous test
     it(displayTitle, function(done) {
-        Output.init();
+        Output.init({
+            output: CanvasOutput,
+            workersDir: "../build/workers/",
+            externalsDir: "../build/external/",
+            imagesDir: "../build/images/",
+            jshintFile: "../build/external/jshint/jshint.js"
+        });
 
         Output.initTests(options.validate);
 
         // Switch to the Scratchpad's version
-        ScratchpadConfig.switchVersion(options.version);
+        Output.config.switchVersion(options.version);
         
         // Run once to make sure that no errors are thrown
         // during execution
@@ -45,14 +43,16 @@ var runTest = function(options) {
                 expect(errors.length).to.be.equal(0);
             } else {
                 if (options.fromTests) {
-                    expect(Output.testResults).to.have.length.above(0);
+                    expect(Output.testResults).to.not.equal([]);
                     expect(Output.testResults[0].state).to.be.equal("fail");
-                    expect(Output.testResults[0].results[0].meta.alsoMessage).to.be.equal(options.reason);
+                    expect(Output.testResults[0].results[0].meta.alsoMessage)
+                        .to.be.equal(options.reason);
                 } else {
-                    expect(errors).to.have.length.above(0);
+                    expect(errors).to.not.equal([]);
                     if (options.jshint) {
                         expect(errors[0].lint).to.exist;
-                        expect(errors[0].lint.reason).to.be.equal(options.reason);
+                        expect(errors[0].lint.reason)
+                            .to.be.equal(options.reason);
                     } else {
                         var $html = $("<div>" + errors[0].text + "</div>");
                         expect($html.text()).to.be.equal(options.reason);

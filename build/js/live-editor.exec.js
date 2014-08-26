@@ -207,7 +207,7 @@ var BabyHint = {
         "bezier": 8,
         "bezierVertex": [6],
         "box": [1, 2, 3],
-        "color": [3, 4],
+        "color": [1, 2, 3, 4],
         "colorMode": [1, 2, 4, 5],
         "createFont": [1, 2],
         "cos": 1,
@@ -234,6 +234,7 @@ var BabyHint = {
         "stroke": [1, 3, 4],
         "tan": 1,
         "text": [3, 5],
+        "textAlign": [1, 2],
         "textFont": [1, 2],
         "translate": [2, 3],
         "vertex": [2, 4]
@@ -827,7 +828,7 @@ window.OutputTester = {
         // This will also fill in tests, as it will end up
         //  referencing functions like staticTest and that
         //  function will fill in OutputTester.tests
-        OutputTester.exec(OutputTester.validate, OutputTester.testContext);
+        OutputTester.exec(OutputTester.validate);
 
         OutputTester.testResults = [];
         OutputTester.errors = errors || [];
@@ -863,7 +864,7 @@ window.OutputTester = {
             return true;
         }
 
-        var contexts = Array.prototype.slice.call(arguments, 1);
+        var contexts = [OutputTester.testContext];
 
         function exec_() {
             for (var i = 0; i < contexts.length; i++) {
@@ -895,7 +896,9 @@ window.OutputTester = {
                         return fn.apply(this, arguments);
 
                     } catch (e) {
-                        window.console && console.warn(e);
+                        if (window.console) {
+                            console.warn(e);
+                        }
                     }
                 }
             });
@@ -1120,7 +1123,9 @@ window.OutputTester = {
                     message: callbacks && callbacks.failure
                 };
             } catch (e) {
-                window.console && console.warn(e);
+                if (window.console) {
+                    console.warn(e);
+                }
                 return {
                     success: true,
                     message: $._("Hm, we're having some trouble " +
@@ -1433,10 +1438,14 @@ var LiveEditorOutput = {
         this.$elem = $(options.el);
         this.render();
 
+        this.setPaths(options);
+
         // These are the tests (like challenge tests)
         this.validate = null;
         // These are the outputted errors
         this.errors = [];
+
+        this.assertions = [];
 
         this.context = {};
         this.loaded = false;
@@ -1480,6 +1489,28 @@ var LiveEditorOutput = {
             this.handleMessage.bind(this), false);
     },
 
+
+    setPaths: function(data) {
+        if (data.workersDir) {
+            Output.workersDir = Output._qualifyURL(data.workersDir);
+        }
+        if (data.externalsDir) {
+            Output.externalsDir = Output._qualifyURL(data.externalsDir);
+        }
+        if (data.imagesDir) {
+            Output.imagesDir = Output._qualifyURL(data.imagesDir);
+        }
+        if (data.jshintFile) {
+            Output.jshintFile = Output._qualifyURL(data.jshintFile);
+        }
+    },
+
+    _qualifyURL: function(url){
+        var a = document.createElement("a");
+        a.href = url;
+        return a.href;
+    },
+
     handleMessage: function(event) {
         var data;
 
@@ -1496,18 +1527,8 @@ var LiveEditorOutput = {
             return;
         }
 
-        if (data.workersDir) {
-            Output.workersDir = data.workersDir;
-        }
-        if (data.externalsDir) {
-            Output.externalsDir = data.externalsDir;
-        }
-        if (data.imagesDir) {
-            Output.imagesDir = data.imagesDir;
-        }
-        if (data.jshintFile) {
-            Output.jshintFile = data.jshintFile;
-        }
+        // Set the paths from the incoming data, if they exist
+        Output.setPaths(data);
 
         // Validation code to run
         if (data.validate != null) {
@@ -1697,6 +1718,7 @@ var LiveEditorOutput = {
                 Output.globals[global] = true;
             }
         }
+        Output.assertions = [];
 
         Output.babyErrors = BabyHint.babyErrors(userCode, hintErrors);
 
@@ -1714,12 +1736,12 @@ var LiveEditorOutput = {
                 callback(Output.errors);
                 return;
             }
-
             this.postParent({
                 results: {
                     code: userCode,
                     errors: Output.errors,
-                    tests: Output.testResults || []
+                    tests: Output.testResults || [],
+                    assertions: Output.assertions
                 }
             });
 
@@ -2115,7 +2137,6 @@ var LiveEditorOutput = {
     }
 };
 
-// TODO(jlfwong): Stop globalizing Output
 window.Output = LiveEditorOutput;
 window.LiveEditorOutput = LiveEditorOutput;
 
@@ -2310,7 +2331,23 @@ window.CanvasOutput = {
 
         // Dynamically set the width and height based upon the size of the
         // window, which could be changed in the parent page
-        $(window).on("resize", CanvasOutput.setDimensions);
+        $(window).on("resize", function() {
+            var $window = $(window);
+            var width = $window.width();
+            var height = $window.height();
+
+            if (width !== CanvasOutput.canvas.width ||
+                height !== CanvasOutput.canvas.height) {
+                // Set the canvas element to be the right size
+                $("#output-canvas").width(width).height(height);
+
+                // Set the Processing.js canvas to be the right size
+                CanvasOutput.canvas.size(width, height);
+
+                // Restart execution
+                Output.restart();
+            }
+        });
     },
 
     // Handle recording playback
@@ -2329,25 +2366,7 @@ window.CanvasOutput = {
         CanvasOutput.clear();
 
         // Trigger the setting of the canvas size immediately
-        CanvasOutput.setDimensions();
-    },
-
-    setDimensions: function() {
-        var $window = $(window);
-        var width = $window.width();
-        var height = $window.height();
-
-        if (width !== CanvasOutput.canvas.width ||
-            height !== CanvasOutput.canvas.height) {
-            // Set the canvas element to be the right size
-            $("#output-canvas").width(width).height(height);
-
-            // Set the Processing.js canvas to be the right size
-            CanvasOutput.canvas.size(width, height);
-
-            // Restart execution
-            Output.restart();
-        }
+        $(window).resize();
     },
 
     imageCache: {},
@@ -2490,21 +2509,6 @@ window.CanvasOutput = {
             runTests: function() {
                 Output.test();
                 return Output.testResults;
-            },
-
-            assertEqual: function(actual, expected) {
-                if (_.isEqual(actual, expected)) {
-                    return;
-                }
-                Output.errors.push({
-                    row: -1,
-                    column: -1,
-                    text: $._(
-                        "Expected \"%(actual)s\" but saw \"%(expected)s.\"",
-                        {actual: Output.stringify(actual),
-                         expected: Output.stringify(expected)}),
-                    source: "assertions"
-                });
             },
 
             // Run a single test (specified by a function)

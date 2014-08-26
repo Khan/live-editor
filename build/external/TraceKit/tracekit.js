@@ -618,11 +618,8 @@ TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
             return null;
         }
 
-        var url = "\\(?((?:file|http|https):.*?):(\\d+)(?::(\\d+))?\\)?";
-        var chrome = "^\\s*at (?:((?:\\[object object\\])?\\S+(?: \\[as \\S+\\])?) )?(?:\\(eval at \\S+ " + url + ", (.*?):(\\d+)(?::(\\d+))?\\)|" + url + ")\\s*$";
-        chrome = new RegExp(chrome, "i");
-
-        var gecko = /^\s*(\S*)(?:\((.*?)\))?@((?:file|http|https).*?):(\d+)(?::(\d+))?\s*$/i,
+        var chrome = /^\s*at (?:((?:\[object object\])?\S+(?: \[as \S+\])?) )?\(?((?:file|http|https):.*?):(\d+)(?::(\d+))?\)?\s*$/i,
+            gecko = /^\s*(\S*)(?:\((.*?)\))?@((?:file|http|https).*?):(\d+)(?::(\d+))?\s*$/i,
             lines = ex.stack.split('\n'),
             stack = [],
             parts,
@@ -639,21 +636,12 @@ TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
                     'column': parts[5] ? +parts[5] : null
                 };
             } else if ((parts = chrome.exec(lines[i]))) {
-               if(parts[5] !== undefined) {
-      element = {
-        'url': parts[5],
-        'func': parts[1] || 'unknown',
-        'line': +parts[6],
-        'column': parts[7] ? +parts[7] : null
-      };
-    } else {
-      element = {
-        'url': parts[8],
-        'func': parts[1] || 'unknown',
-        'line': +parts[9],
-        'column': parts[10] ? +parts[10] : null
-      };
-    }
+                element = {
+                    'url': parts[2],
+                    'func': parts[1] || UNKNOWN_FUNCTION,
+                    'line': +parts[3],
+                    'column': parts[4] ? +parts[4] : null
+                };
             } else {
                 continue;
             }

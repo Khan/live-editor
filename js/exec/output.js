@@ -11,6 +11,8 @@ var LiveEditorOutput = {
         this.$elem = $(options.el);
         this.render();
 
+        this.setPaths(options);
+
         // These are the tests (like challenge tests)
         this.validate = null;
         // These are the outputted errors
@@ -60,6 +62,28 @@ var LiveEditorOutput = {
             this.handleMessage.bind(this), false);
     },
 
+
+    setPaths: function(data) {
+        if (data.workersDir) {
+            Output.workersDir = Output._qualifyURL(data.workersDir);
+        }
+        if (data.externalsDir) {
+            Output.externalsDir = Output._qualifyURL(data.externalsDir);
+        }
+        if (data.imagesDir) {
+            Output.imagesDir = Output._qualifyURL(data.imagesDir);
+        }
+        if (data.jshintFile) {
+            Output.jshintFile = Output._qualifyURL(data.jshintFile);
+        }
+    },
+
+    _qualifyURL: function(url){
+        var a = document.createElement("a");
+        a.href = url;
+        return a.href;
+    },
+
     handleMessage: function(event) {
         var data;
 
@@ -76,18 +100,8 @@ var LiveEditorOutput = {
             return;
         }
 
-        if (data.workersDir) {
-            Output.workersDir = data.workersDir;
-        }
-        if (data.externalsDir) {
-            Output.externalsDir = data.externalsDir;
-        }
-        if (data.imagesDir) {
-            Output.imagesDir = data.imagesDir;
-        }
-        if (data.jshintFile) {
-            Output.jshintFile = data.jshintFile;
-        }
+        // Set the paths from the incoming data, if they exist
+        Output.setPaths(data);
 
         // Validation code to run
         if (data.validate != null) {

@@ -24,6 +24,10 @@
     "gulp-handlebars": "^2.1.0",
     "gulp-define-module": "^0.1.1",
     "gulp-changed": "^0.4.1",
-    "gulp-declare": "^0.2.0"
+    "gulp-declare": "^0.2.0",
+    "mocha": "^1.21.4",
+    "expect.js": "^0.3.1",
+    "gulp-mocha-phantomjs": "^0.5.0",
+    "node-static": "^0.7.4"
   }
 }
