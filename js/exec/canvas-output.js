@@ -187,23 +187,7 @@ window.CanvasOutput = {
 
         // Dynamically set the width and height based upon the size of the
         // window, which could be changed in the parent page
-        $(window).on("resize", function() {
-            var $window = $(window);
-            var width = $window.width();
-            var height = $window.height();
-
-            if (width !== CanvasOutput.canvas.width ||
-                height !== CanvasOutput.canvas.height) {
-                // Set the canvas element to be the right size
-                $("#output-canvas").width(width).height(height);
-
-                // Set the Processing.js canvas to be the right size
-                CanvasOutput.canvas.size(width, height);
-
-                // Restart execution
-                Output.restart();
-            }
-        });
+        $(window).on("resize", CanvasOutput.setDimensions);
     },
 
     // Handle recording playback
@@ -222,7 +206,25 @@ window.CanvasOutput = {
         CanvasOutput.clear();
 
         // Trigger the setting of the canvas size immediately
-        $(window).resize();
+        CanvasOutput.setDimensions();
+    },
+
+    setDimensions: function() {
+        var $window = $(window);
+        var width = $window.width();
+        var height = $window.height();
+
+        if (width !== CanvasOutput.canvas.width ||
+            height !== CanvasOutput.canvas.height) {
+            // Set the canvas element to be the right size
+            $("#output-canvas").width(width).height(height);
+
+            // Set the Processing.js canvas to be the right size
+            CanvasOutput.canvas.size(width, height);
+
+            // Restart execution
+            Output.restart();
+        }
     },
 
     imageCache: {},
@@ -367,6 +369,53 @@ window.CanvasOutput = {
                 return Output.testResults;
             },
 
+            assertEqual: function(actual, expected) {
+
+                // Uses TraceKit to get stacktrace of caller,
+                // it looks for the line number of the first anonymous eval
+                // Stack traces are pretty nasty and not standardized yet
+                // so this is not as elegant as one might hope.
+                // Safari doesn't even give line numbers for anonymous evals,
+                // so they can go sit in the dunce corner today.
+                // This returns 0 if not found, which will mean that all
+                // the assertion failures are shown on the first line.
+                var getLineNum = function(stacktrace) {
+                    var err = new Error();
+                    TraceKit.remoteFetching = false;
+                    TraceKit.collectWindowErrors = false;
+                    var stacktrace = TraceKit.computeStackTrace.ofCaller();
+                    var lines = stacktrace.stack;
+                    for (var i = 0; i < lines.length; i++) {
+                        if (lines[i].func === "Object.apply.get.message") {
+                            // Chrome
+                            return lines[i].line - 5;
+                        } else if (lines[i].func === "anonymous/<") {
+                            // Firefox
+                            return lines[i].line - 4;
+                        }
+                    }
+                    return -1;
+                };
+
+                if (_.isEqual(actual, expected)) {
+                    return;
+                }
+                var msg = $._(
+                        "Assertion failed: " +
+                        "%(actual)s is not equal to %(expected)s.",
+                        {actual: Output.stringify(actual),
+                         expected: Output.stringify(expected)});
+                var lineNum = getLineNum();
+                // Display on first line if we didn't find a line #
+                if (lineNum < 0) {
+                    lineNum = 0;
+                }
+
+                Output.assertions.push({
+                    row: lineNum, column: 0, text: msg
+                });
+            },
+
             // Run a single test (specified by a function)
             // and send the results back to the parent frame
             runTest: function(name, fn) {
@@ -437,12 +486,23 @@ window.CanvasOutput = {
 
                 _.each(Output.globals, function(val, global) {
                     var value = Output.context[global];
-                    context[global] = (
-                        typeof value === "function" || global === "Math" ?
-                        "__STUBBED_FUNCTION__" :
-                        (typeof value !== "object" || $.isPlainObject(value) ?
-                             value :
-                             {}));
+                    var contextVal;
+                    if (typeof value === "function" || global === "Math") {
+                        contextVal = "__STUBBED_FUNCTION__";
+                    } else if (typeof value !== "object" ||
+                        // We can send object literals over, but not
+                        //  objects created with a constructor.
+                        // jQuery thinks PImage is a plain object,
+                        //  so we must specially check for it,
+                        //  otherwise we'll give web workers an object that
+                        //  they can't serialize.
+                        ($.isPlainObject(value) &&
+                        !(value instanceof Output.context.PImage))) {
+                        contextVal = value;
+                    } else {
+                        contextVal = {};
+                    }
+                    context[global] = contextVal;
                 });
 
                 Output.worker.exec(userCode, context, function(userCode) {
@@ -974,6 +1034,15 @@ Output.testWorker = new PooledWorker(
     function(code, validate, errors, callback) {
         var self = this;
 
+        // If there are syntax errors in the tests themselves,
+        //  then we ignore the request to test.
+        try {
+            OutputTester.exec(validate);
+        } catch(e) {
+            console.warn(e.message);
+            return;
+        }
+
         Output.testing = true;
 
         // Generic function to handle results of testing
@@ -983,8 +1052,8 @@ Output.testWorker = new PooledWorker(
             Output.testing = false;
         };
 
-        // If there's no Worker or support *or* there
-        //  are syntax errors, we do the testing in
+        // If there's no Worker support *or* there
+        //  are syntax errors in user code, we do the testing in
         //  the browser instead.
         // We do it in-browser in the latter case as
         //  the code is often in a syntax-error state,
