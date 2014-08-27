@@ -29,16 +29,16 @@ var LiveEditorOutput = {
         this.config.runCurVersion("jshint");
 
         this.config.on("versionSwitched", function(e, version) {
-            this.config.runVersion(version, "processing", Output.output.canvas);
+            this.config.runVersion(version, "processing", this.output.canvas);
         }.bind(this));
 
         this.tipbar = new TipBar({
             el: this.$elem[0]
         });
 
-        Output.bind();
+        this.bind();
 
-        Output.setOutput(options.output);
+        this.setOutput(options.output);
 
         BabyHint.init();
     },
@@ -65,16 +65,16 @@ var LiveEditorOutput = {
 
     setPaths: function(data) {
         if (data.workersDir) {
-            Output.workersDir = Output._qualifyURL(data.workersDir);
+            this.workersDir = this._qualifyURL(data.workersDir);
         }
         if (data.externalsDir) {
-            Output.externalsDir = Output._qualifyURL(data.externalsDir);
+            this.externalsDir = this._qualifyURL(data.externalsDir);
         }
         if (data.imagesDir) {
-            Output.imagesDir = Output._qualifyURL(data.imagesDir);
+            this.imagesDir = this._qualifyURL(data.imagesDir);
         }
         if (data.jshintFile) {
-            Output.jshintFile = Output._qualifyURL(data.jshintFile);
+            this.jshintFile = this._qualifyURL(data.jshintFile);
         }
     },
 
@@ -101,33 +101,33 @@ var LiveEditorOutput = {
         }
 
         // Set the paths from the incoming data, if they exist
-        Output.setPaths(data);
+        this.setPaths(data);
 
         // Validation code to run
         if (data.validate != null) {
-            Output.initTests(data.validate);
+            this.initTests(data.validate);
         }
 
         // Settings to initialize
         if (data.settings != null) {
-            Output.settings = data.settings;
+            this.settings = data.settings;
         }
 
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            Output.runCode(data.code);
+            this.runCode(data.code);
         }
 
         if (data.onlyRunTests != null) {
-            Output.onlyRunTests = !!(data.onlyRunTests);
+            this.onlyRunTests = !!(data.onlyRunTests);
         } else {
-            Output.onlyRunTests = false;
+            this.onlyRunTests = false;
         }
 
         // Restart the output
         if (data.restart) {
-            Output.restart();
+            this.restart();
         }
 
         // Take a screenshot of the output
@@ -149,13 +149,13 @@ var LiveEditorOutput = {
 
         // Keep track of recording state
         if (data.recording != null) {
-            Output.recording = data.recording;
+            this.recording = data.recording;
         }
 
         // Play back recording
         if (data.action) {
-            if (Output.output.handlers[data.name]) {
-                Output.output.handlers[data.name](data.action);
+            if (this.output.handlers[data.name]) {
+                this.output.handlers[data.name](data.action);
             }
         }
 
@@ -181,16 +181,16 @@ var LiveEditorOutput = {
     //  and it executes the test code to see if its valid
     initTests: function(validate) {
         // Only update the tests if they have changed
-        if (Output.validate === validate) {
+        if (this.validate === validate) {
             return;
         }
 
         // Prime the test queue
-        Output.validate = validate;
+        this.validate = validate;
 
         // We evaluate the test code to see if it itself has any syntax errors
-        // This also ends up pushing the tests onto Output.tests
-        var result = Output.exec(validate, OutputTester.testContext);
+        // This also ends up pushing the tests onto this.tests
+        var result = this.exec(validate, OutputTester.testContext);
 
         // Display errors encountered while evaluating the test code
         if (result && result.message) {
@@ -201,19 +201,19 @@ var LiveEditorOutput = {
     },
 
     setOutput: function(output) {
-        if (Output.output) {
-            Output.output.kill();
+        if (this.output) {
+            this.output.kill();
         }
 
-        Output.output = output.init({
+        this.output = output.init({
             config: this.config
         });
 
-        $.extend(Output.testContext, output.testContext);
+        $.extend(this.testContext, output.testContext);
     },
 
     getUserCode: function() {
-        return Output.currentCode || "";
+        return this.currentCode || "";
     },
 
     // Returns an object that holds all the exposed properties
@@ -221,17 +221,17 @@ var LiveEditorOutput = {
     // correspond to boolean values: true if it cannot be overriden
     // by the user, false if it can be. See: JSHintGlobalString
     exposedProps: function() {
-        return Output.output ? Output.output.props : {};
+        return this.output ? this.output.props : {};
     },
 
     // Banned properties
     bannedProps: function() {
-        return Output.output ? Output.output.bannedProps : {};
+        return this.output ? this.output.bannedProps : {};
     },
 
     // Generate a string list of properties
     propListString: function(props) {
-        var bannedProps = Output.bannedProps();
+        var bannedProps = this.bannedProps();
         var propList = [];
 
         for (var prop in props) {
@@ -244,12 +244,12 @@ var LiveEditorOutput = {
     },
 
     runCode: function(userCode, callback) {
-        Output.currentCode = userCode;
+        this.currentCode = userCode;
 
         // Build a string of options to feed into JSHint
         // All properties are defined in the config
         var hintCode = "/*jshint " +
-            Output.propListString(Output.JSHint) + " */" +
+            this.propListString(this.JSHint) + " */" +
 
             // Build a string of variables names to feed into JSHint
             // This lets JSHint know which variables are globally exposed
@@ -257,73 +257,73 @@ var LiveEditorOutput = {
             // http://www.jshint.com/about/
             // propName: true (is a global property, but can be overridden)
             // propName: false (is a global property, cannot be overridden)
-            "/*global " + Output.propListString(Output.exposedProps()) +
+            "/*global " + this.propListString(this.exposedProps()) +
 
             // The user's code to execute
             "*/\n" + userCode;
 
         var done = function(hintData, hintErrors) {
-            Output.hintDone(userCode, hintData, hintErrors, callback);
-        };
+            this.hintDone(userCode, hintData, hintErrors, callback);
+        }.bind(this);
 
         // Don't run JSHint if there is no code to run
         if (!userCode) {
             done(null, []);
         } else {
-            Output.hintWorker.exec(hintCode, done);
+            this.hintWorker.exec(hintCode, done);
         }
     },
 
     hintDone: function(userCode, hintData, hintErrors, callback) {
-        var externalProps = Output.exposedProps();
+        var externalProps = this.exposedProps();
 
-        Output.globals = {};
+        this.globals = {};
         if (hintData && hintData.globals) {
             for (var i = 0, l = hintData.globals.length; i < l; i++) {
                 var global = hintData.globals[i];
 
                 // Do this so that declared variables are gobbled up
                 // into the global context object
-                if (!externalProps[global] && !(global in Output.context)) {
-                    Output.context[global] = undefined;
+                if (!externalProps[global] && !(global in this.context)) {
+                    this.context[global] = undefined;
                 }
 
-                Output.globals[global] = true;
+                this.globals[global] = true;
             }
         }
-        Output.assertions = [];
+        this.assertions = [];
 
-        Output.babyErrors = BabyHint.babyErrors(userCode, hintErrors);
+        this.babyErrors = BabyHint.babyErrors(userCode, hintErrors);
 
-        Output.errors = [];
-        Output.mergeErrors(hintErrors, Output.babyErrors);
+        this.errors = [];
+        this.mergeErrors(hintErrors, this.babyErrors);
 
         var runDone = function() {
-            if (!Output.loaded) {
+            if (!this.loaded) {
                 this.postParent({ loaded: true });
-                Output.loaded = true;
+                this.loaded = true;
             }
 
             // A callback for working with a test suite
             if (callback) {
-                callback(Output.errors);
+                callback(this.errors);
                 return;
             }
             this.postParent({
                 results: {
                     code: userCode,
-                    errors: Output.errors,
-                    tests: Output.testResults || [],
-                    assertions: Output.assertions
+                    errors: this.errors,
+                    tests: this.testResults || [],
+                    assertions: this.assertions
                 }
             });
 
-            Output.toggleErrors();
+            this.toggleErrors();
         }.bind(this);
 
         // We only need to extract globals when the code has passed
         // the JSHint check
-        Output.globals = {};
+        this.globals = {};
 
         if (hintData && hintData.globals) {
             for (var i = 0, l = hintData.globals.length; i < l; i++) {
@@ -331,38 +331,38 @@ var LiveEditorOutput = {
 
                 // Do this so that declared variables are gobbled up
                 // into the global context object
-                if (!externalProps[global] && !(global in Output.context)) {
-                    Output.context[global] = undefined;
+                if (!externalProps[global] && !(global in this.context)) {
+                    this.context[global] = undefined;
                 }
 
-                Output.globals[global] = true;
+                this.globals[global] = true;
             }
         }
 
         // Run the tests
 
         var doneWithTests = function() {
-            if (Output.errors.length === 0 && !Output.onlyRunTests) {
+            if (this.errors.length === 0 && !this.onlyRunTests) {
                 // Then run the user's code
-                if (Output.output && Output.output.runCode) {
+                if (this.output && this.output.runCode) {
                     try {
-                        Output.output.runCode(userCode, Output.context, runDone);
+                        this.output.runCode(userCode, this.context, runDone);
 
                     } catch (e) {
-                        Output.handleError(e);
+                        this.handleError(e);
                         runDone();
                     }
 
                     return;
 
                 } else {
-                    Output.exec(userCode, Output.context);
+                    this.exec(userCode, this.context);
                 }
             }
             runDone();
-        };
+        }.bind(this);
 
-        Output.testWorker.exec(userCode, Output.validate, Output.errors,
+        this.testWorker.exec(userCode, this.validate, this.errors,
             doneWithTests);
     },
 
@@ -379,30 +379,30 @@ var LiveEditorOutput = {
                 hintErrors.push({
                     row: error.line - 2,
                     column: error.character - 1,
-                    text: _.compose(Output.prettify, Output.clean)(error.reason),
+                    text: _.compose(this.prettify, this.clean)(error.reason),
                     type: "error",
                     lint: error,
                     source: "jshint"
                 });
             }
-        });
+        }.bind(this));
 
         // Add baby errors if JSHINT also broke on those lines, OR we don't want
         // to allow that error
         _.each(babyErrors, function(error) {
             if (_.include(brokenLines, error.row) || error.breaksCode) {
-                Output.errors.push({
+                this.errors.push({
                     row: error.row,
                     column: error.column,
-                    text: _.compose(Output.prettify, Output.clean)(error.text),
+                    text: _.compose(this.prettify, this.clean)(error.text),
                     type: "error",
                     source: error.source
                 });
             }
-        });
+        }.bind(this));
 
         // Add JSHINT errors at the end
-        Output.errors = Output.errors.concat(hintErrors);
+        this.errors = this.errors.concat(hintErrors);
     },
 
     // This adds html tags around quoted lines so they can be formatted
@@ -427,27 +427,27 @@ var LiveEditorOutput = {
 
     toggleErrors: function() {
         var self = this;
-        var hasErrors = !!Output.errors.length;
+        var hasErrors = !!this.errors.length;
 
         $("#show-errors").toggleClass("ui-state-disabled", !hasErrors);
         $("#output .error-overlay").toggle(hasErrors);
 
-        Output.toggle(!hasErrors);
+        this.toggle(!hasErrors);
 
         if (hasErrors) {
-            Output.errors = Output.errors.sort(function(a, b) {
+            this.errors = this.errors.sort(function(a, b) {
                 return a.row - b.row;
             });
 
-            if (Output.errorDelay) {
-                clearTimeout(Output.errorDelay);
+            if (this.errorDelay) {
+                clearTimeout(this.errorDelay);
             }
 
-            Output.errorDelay = setTimeout(function() {
-                if (Output.errors.length > 0) {
-                    self.tipbar.show("Error", Output.errors);
+            this.errorDelay = setTimeout(function() {
+                if (this.errors.length > 0) {
+                    self.tipbar.show("Error", this.errors);
                 }
-            }, 1500);
+            }.bind(this), 1500);
 
         } else {
             self.tipbar.hide("Error");
@@ -455,18 +455,18 @@ var LiveEditorOutput = {
     },
 
     trackFunctions: function() {
-        Output.tracking = {};
-        Output.fnCalls = [];
+        this.tracking = {};
+        this.fnCalls = [];
 
-        _.each(Output.context, function(fn, prop) {
+        _.each(this.context, function(fn, prop) {
             if (typeof fn === "function") {
-                Output.tracking[prop] = fn;
-                Output.context[prop] = function() {
-                    var retVal = Output.tracking[prop].apply(
-                        Output.context, arguments);
+                this.tracking[prop] = fn;
+                this.context[prop] = function() {
+                    var retVal = this.tracking[prop].apply(
+                        this.context, arguments);
 
                     // Track the function call
-                    Output.fnCalls.push({
+                    this.fnCalls.push({
                         name: prop,
                         args: Array.prototype.slice.call(arguments),
                         retVal: retVal
@@ -479,45 +479,45 @@ var LiveEditorOutput = {
     },
 
     endTrackFunctions: function() {
-        _.each(Output.tracking, function(fn, prop) {
-            Output.context[prop] = fn;
+        _.each(this.tracking, function(fn, prop) {
+            this.context[prop] = fn;
         });
 
-        Output.tracking = {};
+        this.tracking = {};
     },
 
     toggle: function(toggle) {
-        if (Output.output && Output.output.toggle) {
-            Output.output.toggle(toggle);
+        if (this.output && this.output.toggle) {
+            this.output.toggle(toggle);
         }
     },
 
     start: function() {
-        if (Output.output && Output.output.start) {
-            Output.output.start();
+        if (this.output && this.output.start) {
+            this.output.start();
         }
     },
 
     stop: function() {
-        if (Output.output && Output.output.stop) {
-            Output.output.stop();
+        if (this.output && this.output.stop) {
+            this.output.stop();
         }
     },
 
     restart: function() {
-        if (Output.output && Output.output.restart) {
-            Output.output.restart();
+        if (this.output && this.output.restart) {
+            this.output.restart();
         }
     },
 
     clear: function() {
-        if (Output.output && Output.output.clear) {
-            Output.output.clear();
+        if (this.output && this.output.clear) {
+            this.output.clear();
         }
     },
 
     handleError: function(e) {
-        if (Output.testing) {
+        if (this.testing) {
             // Note: Scratchpad challenge checks against the exact translated
             // text "A critical problem occurred..." to figure out whether
             // we hit this case.
@@ -532,25 +532,25 @@ var LiveEditorOutput = {
         var row = e.lineno ? e.lineno - 2 : -1;
 
         // Show babyHint errors first
-        _.each(Output.babyErrors, function(error) {
+        _.each(this.babyErrors, function(error) {
             if (error.row + 1 === row) {
-                Output.errors.push({
+                this.errors.push({
                     row: error.row,
                     column: error.column,
-                    text: _.compose(Output.prettify, Output.clean)(error.text),
+                    text: _.compose(this.prettify, this.clean)(error.text),
                     type: "error"
                 });
             }
         });
 
-        Output.errors.push({
+        this.errors.push({
             row: row,
             column: 0,
-            text: Output.clean(e.message),
+            text: this.clean(e.message),
             type: "error"
         });
 
-        Output.toggleErrors();
+        this.toggleErrors();
     },
 
     exec: function(code) {
@@ -569,8 +569,8 @@ var LiveEditorOutput = {
                 return "__env__" + Math.floor(Math.random() * 1000000000);
             };
 
-            if (Output.output && Output.output.compile) {
-                code = Output.output.compile(code);
+            if (this.output && this.output.compile) {
+                code = this.output.compile(code);
             }
 
             var envName = randomEnvName();
@@ -590,7 +590,7 @@ var LiveEditorOutput = {
             // through the 'arguments' binding, so we close over it instead
             code = "var " + envName + " = arguments;\n(function(){\n" + code + "\n}).apply(" + topLevelThis + ");";
 
-            (new Function(code)).apply(Output.context, contexts);
+            (new Function(code)).apply(this.context, contexts);
 
             return true;
         }
@@ -599,7 +599,7 @@ var LiveEditorOutput = {
             return exec_();
 
         } catch (e) {
-            Output.handleError(e);
+            this.handleError(e);
             return e;
         }
     },
@@ -620,7 +620,7 @@ var LiveEditorOutput = {
 
         // Check if we're dealing with an array
         } else if (obj && Object.prototype.toString.call(obj) === "[object Array]") {
-            return Output.stringifyArray(obj);
+            return this.stringifyArray(obj);
 
         // JSON.stringify returns undefined, not as a string, so we specially handle that
         } else if (typeof obj === "undefined") {
@@ -649,7 +649,7 @@ var LiveEditorOutput = {
         var results = [];
 
         for (var i = 0, l = array.length; i < l; i++) {
-            results.push(Output.stringify(array[i]));
+            results.push(this.stringify(array[i]));
         }
 
         return results.join(", ");
@@ -696,17 +696,17 @@ var LiveEditorOutput = {
             // Generate a semi-unique ID for the instance
             obj.__id = function() {
                 return "new " + classFn.__name + "(" +
-                    Output.stringifyArray(args) + ")";
-            };
+                    this.stringifyArray(args) + ")";
+            }.bind(this);
 
             // Keep track of the instances that have been instantiated
-            if (Output.instances) {
-                Output.instances.push(obj);
+            if (this.instances) {
+                this.instances.push(obj);
             }
 
             // Return the new instance
             return obj;
-        };
+        }.bind(this);
     }
 };
 
