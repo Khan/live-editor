@@ -454,38 +454,6 @@ var LiveEditorOutput = {
         }
     },
 
-    trackFunctions: function() {
-        this.tracking = {};
-        this.fnCalls = [];
-
-        _.each(this.context, function(fn, prop) {
-            if (typeof fn === "function") {
-                this.tracking[prop] = fn;
-                this.context[prop] = function() {
-                    var retVal = this.tracking[prop].apply(
-                        this.context, arguments);
-
-                    // Track the function call
-                    this.fnCalls.push({
-                        name: prop,
-                        args: Array.prototype.slice.call(arguments),
-                        retVal: retVal
-                    });
-
-                    return retVal;
-                };
-            }
-        });
-    },
-
-    endTrackFunctions: function() {
-        _.each(this.tracking, function(fn, prop) {
-            this.context[prop] = fn;
-        });
-
-        this.tracking = {};
-    },
-
     toggle: function(toggle) {
         if (this.output && this.output.toggle) {
             this.output.toggle(toggle);
@@ -553,160 +521,18 @@ var LiveEditorOutput = {
         this.toggleErrors();
     },
 
-    exec: function(code) {
-        if (!code) {
-            return true;
-        }
-
-        var contexts = Array.prototype.slice.call(arguments, 1);
-
-        function exec_() {
-            // this is kind of sort of supposed to fake a gensym that the user can't access
-            // but since we're limited to string manipulation, we can't guarantee this fo sho'
-            // so we just change the name to something long and random every time the code runs
-            // and hope for the best!
-            var randomEnvName = function() {
-                return "__env__" + Math.floor(Math.random() * 1000000000);
-            };
-
-            if (this.output && this.output.compile) {
-                code = this.output.compile(code);
-            }
-
-            var envName = randomEnvName();
-
-            for (var i = 0; i < contexts.length; i++) {
-                if (contexts[i]) {
-                    code = "with(" + envName + "[" + i + "]){\n" + code + "\n}";
-                }
-            }
-
-            // the top-level 'this' is empty except for this.externals, which throws this message
-            // this is how users were getting at everything from playing sounds to displaying pop-ups
-            var badProgram = $._("This program uses capabilities we've turned off for security reasons. Khan Academy prohibits showing external images, playing sounds, or displaying pop-ups.");
-            var topLevelThis = "{ get externals() { throw { message: " + JSON.stringify(badProgram) + " } } }";
-
-            // if we pass in the env as a parameter, the user will be able to get at it
-            // through the 'arguments' binding, so we close over it instead
-            code = "var " + envName + " = arguments;\n(function(){\n" + code + "\n}).apply(" + topLevelThis + ");";
-
-            (new Function(code)).apply(this.context, contexts);
-
+    exec: function() {
+        if (!this.output.exec) {
             return true;
         }
 
         try {
-            return exec_();
+            return this.output.exec.apply(this.output, arguments);
 
         } catch (e) {
             this.handleError(e);
             return e;
         }
-    },
-
-    // Turn a JavaScript object into a form that can be executed
-    // (Note: The form will not necessarily be able to pass a JSON linter)
-    // (Note: JSON.stringify might throw an exception. We don't capture it
-    //        here as we'll want to deal with it later.)
-    stringify: function(obj) {
-        // Use toString on functions
-        if (typeof obj === "function") {
-            return obj.toString();
-
-        // If we're dealing with an instantiated object just
-        // use its generated ID
-        } else if (obj && obj.__id) {
-            return obj.__id();
-
-        // Check if we're dealing with an array
-        } else if (obj && Object.prototype.toString.call(obj) === "[object Array]") {
-            return this.stringifyArray(obj);
-
-        // JSON.stringify returns undefined, not as a string, so we specially handle that
-        } else if (typeof obj === "undefined") {
-                return "undefined";
-
-        // If all else fails, attempt to JSON-ify the string
-        // TODO(jeresig): We should probably do recursion to better handle
-        // complex objects that might hold instances.
-        } else {
-            return JSON.stringify(obj, function(k, v) {
-                // Don't jsonify the canvas or its context because it can lead
-                // to circular jsonification errors on chrome.
-                if (v && (v.id !== undefined && v.id === "output-canvas" ||
-                        typeof CanvasRenderingContext2D !== "undefined" &&
-                        v instanceof CanvasRenderingContext2D)) {
-                    return undefined;
-                }
-                return v;
-            });
-        }
-    },
-
-    // Turn an array into a string list
-    // (Especially useful for serializing a list of arguments)
-    stringifyArray: function(array) {
-        var results = [];
-
-        for (var i = 0, l = array.length; i < l; i++) {
-            results.push(this.stringify(array[i]));
-        }
-
-        return results.join(", ");
-    },
-
-    // Defer a 'new' on a function for later
-    // Makes it possible to generate a unique signature for the
-    // instance (see: .__id())
-    // Meant to translate:
-    // new Foo(a, b, c) into: applyInstance(Foo)(a, b, c)
-    applyInstance: function(classFn, className) {
-        // Don't wrap it if we're dealing with a built-in object (like RegExp)
-
-        try {
-            var funcName = (/^function\s*(\w+)/.exec(classFn) || [])[1];
-            if (funcName && window[funcName] === classFn) {
-                return classFn;
-            }
-        } catch(e) {}
-
-        // Make sure a name is set for the class if one has not been set already
-        if (!classFn.__name && className) {
-            classFn.__name = className;
-        }
-
-        // Return a function for later execution.
-        return function() {
-            var args = arguments;
-
-            // Create a temporary constructor function
-            function Class() {
-                classFn.apply(this, args);
-            }
-
-            // Copy the prototype
-            Class.prototype = classFn.prototype;
-
-            // Instantiate the dummy function
-            var obj = new Class();
-
-            // Point back to the original function
-            obj.constructor = classFn;
-
-            // Generate a semi-unique ID for the instance
-            obj.__id = function() {
-                return "new " + classFn.__name + "(" +
-                    this.stringifyArray(args) + ")";
-            }.bind(this);
-
-            // Keep track of the instances that have been instantiated
-            if (this.instances) {
-                this.instances.push(obj);
-            }
-
-            // Return the new instance
-            return obj;
-        }.bind(this);
     }
 };
 

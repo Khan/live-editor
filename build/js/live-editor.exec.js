@@ -1881,38 +1881,6 @@ var LiveEditorOutput = {
         }
     },
 
-    trackFunctions: function() {
-        this.tracking = {};
-        this.fnCalls = [];
-
-        _.each(this.context, function(fn, prop) {
-            if (typeof fn === "function") {
-                this.tracking[prop] = fn;
-                this.context[prop] = function() {
-                    var retVal = this.tracking[prop].apply(
-                        this.context, arguments);
-
-                    // Track the function call
-                    this.fnCalls.push({
-                        name: prop,
-                        args: Array.prototype.slice.call(arguments),
-                        retVal: retVal
-                    });
-
-                    return retVal;
-                };
-            }
-        });
-    },
-
-    endTrackFunctions: function() {
-        _.each(this.tracking, function(fn, prop) {
-            this.context[prop] = fn;
-        });
-
-        this.tracking = {};
-    },
-
     toggle: function(toggle) {
         if (this.output && this.output.toggle) {
             this.output.toggle(toggle);
@@ -1980,160 +1948,18 @@ var LiveEditorOutput = {
         this.toggleErrors();
     },
 
-    exec: function(code) {
-        if (!code) {
-            return true;
-        }
-
-        var contexts = Array.prototype.slice.call(arguments, 1);
-
-        function exec_() {
-            // this is kind of sort of supposed to fake a gensym that the user can't access
-            // but since we're limited to string manipulation, we can't guarantee this fo sho'
-            // so we just change the name to something long and random every time the code runs
-            // and hope for the best!
-            var randomEnvName = function() {
-                return "__env__" + Math.floor(Math.random() * 1000000000);
-            };
-
-            if (this.output && this.output.compile) {
-                code = this.output.compile(code);
-            }
-
-            var envName = randomEnvName();
-
-            for (var i = 0; i < contexts.length; i++) {
-                if (contexts[i]) {
-                    code = "with(" + envName + "[" + i + "]){\n" + code + "\n}";
-                }
-            }
-
-            // the top-level 'this' is empty except for this.externals, which throws this message
-            // this is how users were getting at everything from playing sounds to displaying pop-ups
-            var badProgram = $._("This program uses capabilities we've turned off for security reasons. Khan Academy prohibits showing external images, playing sounds, or displaying pop-ups.");
-            var topLevelThis = "{ get externals() { throw { message: " + JSON.stringify(badProgram) + " } } }";
-
-            // if we pass in the env as a parameter, the user will be able to get at it
-            // through the 'arguments' binding, so we close over it instead
-            code = "var " + envName + " = arguments;\n(function(){\n" + code + "\n}).apply(" + topLevelThis + ");";
-
-            (new Function(code)).apply(this.context, contexts);
-
+    exec: function() {
+        if (!this.output.exec) {
             return true;
         }
 
         try {
-            return exec_();
+            return this.output.exec.apply(this.output, arguments);
 
         } catch (e) {
             this.handleError(e);
             return e;
         }
-    },
-
-    // Turn a JavaScript object into a form that can be executed
-    // (Note: The form will not necessarily be able to pass a JSON linter)
-    // (Note: JSON.stringify might throw an exception. We don't capture it
-    //        here as we'll want to deal with it later.)
-    stringify: function(obj) {
-        // Use toString on functions
-        if (typeof obj === "function") {
-            return obj.toString();
-
-        // If we're dealing with an instantiated object just
-        // use its generated ID
-        } else if (obj && obj.__id) {
-            return obj.__id();
-
-        // Check if we're dealing with an array
-        } else if (obj && Object.prototype.toString.call(obj) === "[object Array]") {
-            return this.stringifyArray(obj);
-
-        // JSON.stringify returns undefined, not as a string, so we specially handle that
-        } else if (typeof obj === "undefined") {
-                return "undefined";
-
-        // If all else fails, attempt to JSON-ify the string
-        // TODO(jeresig): We should probably do recursion to better handle
-        // complex objects that might hold instances.
-        } else {
-            return JSON.stringify(obj, function(k, v) {
-                // Don't jsonify the canvas or its context because it can lead
-                // to circular jsonification errors on chrome.
-                if (v && (v.id !== undefined && v.id === "output-canvas" ||
-                        typeof CanvasRenderingContext2D !== "undefined" &&
-                        v instanceof CanvasRenderingContext2D)) {
-                    return undefined;
-                }
-                return v;
-            });
-        }
-    },
-
-    // Turn an array into a string list
-    // (Especially useful for serializing a list of arguments)
-    stringifyArray: function(array) {
-        var results = [];
-
-        for (var i = 0, l = array.length; i < l; i++) {
-            results.push(this.stringify(array[i]));
-        }
-
-        return results.join(", ");
-    },
-
-    // Defer a 'new' on a function for later
-    // Makes it possible to generate a unique signature for the
-    // instance (see: .__id())
-    // Meant to translate:
-    // new Foo(a, b, c) into: applyInstance(Foo)(a, b, c)
-    applyInstance: function(classFn, className) {
-        // Don't wrap it if we're dealing with a built-in object (like RegExp)
-
-        try {
-            var funcName = (/^function\s*(\w+)/.exec(classFn) || [])[1];
-            if (funcName && window[funcName] === classFn) {
-                return classFn;
-            }
-        } catch(e) {}
-
-        // Make sure a name is set for the class if one has not been set already
-        if (!classFn.__name && className) {
-            classFn.__name = className;
-        }
-
-        // Return a function for later execution.
-        return function() {
-            var args = arguments;
-
-            // Create a temporary constructor function
-            function Class() {
-                classFn.apply(this, args);
-            }
-
-            // Copy the prototype
-            Class.prototype = classFn.prototype;
-
-            // Instantiate the dummy function
-            var obj = new Class();
-
-            // Point back to the original function
-            obj.constructor = classFn;
-
-            // Generate a semi-unique ID for the instance
-            obj.__id = function() {
-                return "new " + classFn.__name + "(" +
-                    this.stringifyArray(args) + ")";
-            }.bind(this);
-
-            // Keep track of the instances that have been instantiated
-            if (this.instances) {
-                this.instances.push(obj);
-            }
-
-            // Return the new instance
-            return obj;
-        }.bind(this);
     }
 };
 
@@ -2196,23 +2022,23 @@ window.CanvasOutput = {
 
         this.$elem.show();
 
-        CanvasOutput.bind();
+        this.bind();
 
-        CanvasOutput.reseedRandom();
-        CanvasOutput.lastGrab = null;
+        this.reseedRandom();
+        this.lastGrab = null;
 
-        CanvasOutput.build(this.$elem[0]);
+        this.build(this.$elem[0]);
 
         // If a list of exposed properties hasn't been generated before
-        if (!CanvasOutput.props) {
-            // CanvasOutput.props holds the names of the properties which
+        if (!this.props) {
+            // this.props holds the names of the properties which
             // are to be exposed by Processing.js to the user.
-            var externalProps = CanvasOutput.props = {},
+            var externalProps = this.props = {},
 
-                // CanvasOutput.safeCalls holds the names of the properties
+                // this.safeCalls holds the names of the properties
                 // which are functions which appear to not have any
                 // side effects when called.
-                safeCalls = CanvasOutput.safeCalls = {};
+                safeCalls = this.safeCalls = {};
 
             // Make sure that only certain properties can be manipulated
             for (var processingProp in Output.context) {
@@ -2282,11 +2108,11 @@ window.CanvasOutput = {
         var offset = this.$elem.offset();
 
         // Go through all of the mouse events to track
-        jQuery.each(CanvasOutput.trackedMouseEvents, function(i, name) {
+        _.each(this.trackedMouseEvents, function(name) {
             var eventType = "mouse" + name;
 
             // Track that event on the Canvas element
-            CanvasOutput.$elem.bind(eventType, function(e) {
+            this.$elem.bind(eventType, function(e) {
                 // Only log if recording is occurring
                 if (Output.recording) {
                     var action = {};
@@ -2304,7 +2130,7 @@ window.CanvasOutput = {
             });
 
             // Handle the command during playback
-            CanvasOutput.handlers[name] = function(e) {
+            this.handlers[name] = function(e) {
                 // Get the command data
                 var action = e[name];
 
@@ -2325,32 +2151,51 @@ window.CanvasOutput = {
                     0, document.documentElement);
 
                 // And execute it upon the canvas element
-                CanvasOutput.$elem[0].dispatchEvent(evt);
-            };
-        });
+                this.$elem[0].dispatchEvent(evt);
+            }.bind(this);
+        }.bind(this));
 
         // Dynamically set the width and height based upon the size of the
         // window, which could be changed in the parent page
-        $(window).on("resize", CanvasOutput.setDimensions);
+        $(window).on("resize", this.setDimensions);
     },
 
     // Handle recording playback
     handlers: {},
 
     build: function(canvas) {
-        CanvasOutput.canvas = Output.context =
+        this.canvas = Output.context =
             new Processing(canvas, function(instance) {
-                instance.draw = CanvasOutput.DUMMY;
-            });
+                instance.draw = this.DUMMY;
+            }.bind(this));
 
-        $.extend(CanvasOutput.canvas, CanvasOutput.processing);
+        this.bindProcessing(this.processing, this.canvas);
 
-        this.config.runCurVersion("processing", CanvasOutput.canvas);
+        this.config.runCurVersion("processing", this.canvas);
 
-        CanvasOutput.clear();
+        this.clear();
 
         // Trigger the setting of the canvas size immediately
-        CanvasOutput.setDimensions();
+        this.setDimensions();
+    },
+
+    bindProcessing: function(obj, bindTo) {
+        for (var prop in obj) {
+            var val = obj[prop];
+
+            if (!(prop in window)) {
+                if (typeof val === "object") {
+                    val = {};
+                    this.bindProcessing(obj[prop], val);
+                }
+
+                if (typeof val === "function") {
+                    val = val.bind(this);
+                }
+            }
+
+            bindTo[prop] = val;
+        }
     },
 
     setDimensions: function() {
@@ -2358,13 +2203,13 @@ window.CanvasOutput = {
         var width = $window.width();
         var height = $window.height();
 
-        if (width !== CanvasOutput.canvas.width ||
-            height !== CanvasOutput.canvas.height) {
+        if (width !== this.canvas.width ||
+            height !== this.canvas.height) {
             // Set the canvas element to be the right size
             $("#output-canvas").width(width).height(height);
 
             // Set the Processing.js canvas to be the right size
-            CanvasOutput.canvas.size(width, height);
+            this.canvas.size(width, height);
 
             // Restart execution
             Output.restart();
@@ -2391,8 +2236,8 @@ window.CanvasOutput = {
 
         // Insert the images into a hidden div to cause them to load
         // but not be visible to the user
-        if (!CanvasOutput.imageHolder) {
-            CanvasOutput.imageHolder = $("<div>")
+        if (!this.imageHolder) {
+            this.imageHolder = $("<div>")
                 .css({
                     height: 0,
                     width: 0,
@@ -2419,7 +2264,7 @@ window.CanvasOutput = {
 
             // Skip if the image has already been cached
             // Or if the getImage call is malformed somehow
-            if (CanvasOutput.imageCache[file] || !fileMatch) {
+            if (this.imageCache[file] || !fileMatch) {
                 return loaded();
             }
 
@@ -2432,13 +2277,13 @@ window.CanvasOutput = {
             var img = document.createElement("img");
             img.onload = loaded;
             img.src = path;
-            CanvasOutput.imageHolder.append(img);
+            this.imageHolder.append(img);
 
             // Cache the img element
             // TODO(jeresig): It might be good to cache the PImage here
             // but PImage may be mutable, so that might not work.
-            CanvasOutput.imageCache[file] = img;
-        });
+            this.imageCache[file] = img;
+        }.bind(this));
     },
 
     // New methods and properties to add to the Processing instance
@@ -2455,7 +2300,7 @@ window.CanvasOutput = {
         // an error message if a file wasn't found.
         // NOTE: Need to make sure that this will be a 'safeCall'
         getImage: function(file) {
-            var cachedFile = CanvasOutput.imageCache[file];
+            var cachedFile = this.imageCache[file];
 
             // Display an error message as the file wasn't located.
             if (!cachedFile) {
@@ -2464,7 +2309,7 @@ window.CanvasOutput = {
             }
 
             // Give the image a representative ID
-            var img = new CanvasOutput.canvas.PImage(cachedFile);
+            var img = new this.canvas.PImage(cachedFile);
             img.__id = function() {
                 return "getImage('" + file + "')";
             };
@@ -2514,7 +2359,6 @@ window.CanvasOutput = {
             },
 
             assertEqual: function(actual, expected) {
-
                 // Uses TraceKit to get stacktrace of caller,
                 // it looks for the line number of the first anonymous eval
                 // Stack traces are pretty nasty and not standardized yet
@@ -2544,11 +2388,13 @@ window.CanvasOutput = {
                 if (_.isEqual(actual, expected)) {
                     return;
                 }
-                var msg = $._(
-                        "Assertion failed: " +
-                        "%(actual)s is not equal to %(expected)s.",
-                        {actual: Output.stringify(actual),
-                         expected: Output.stringify(expected)});
+
+                var msg = $._("Assertion failed: " +
+                    "%(actual)s is not equal to %(expected)s.", {
+                        actual: this.stringify(actual),
+                        expected: this.stringify(expected)
+                });
+
                 var lineNum = getLineNum();
                 // Display on first line if we didn't find a line #
                 if (lineNum < 0) {
@@ -2590,22 +2436,22 @@ window.CanvasOutput = {
     DUMMY: function() {},
 
     preTest: function() {
-        CanvasOutput.oldContext = Output.context;
+        this.oldContext = Output.context;
 
-        if (CanvasOutput.testingContext) {
-            CanvasOutput.canvas = Output.context = CanvasOutput.testingContext;
+        if (this.testingContext) {
+            this.canvas = Output.context = this.testingContext;
 
         } else {
-            CanvasOutput.testCanvas = document.createElement("canvas");
-            CanvasOutput.build(CanvasOutput.testCanvas);
-            CanvasOutput.testingContext = Output.context;
+            this.testCanvas = document.createElement("canvas");
+            this.build(this.testCanvas);
+            this.testingContext = Output.context;
         }
     },
 
     postTest: function() {
-        CanvasOutput.canvas = Output.context = CanvasOutput.oldContext;
+        this.canvas = Output.context = this.oldContext;
 
-        return CanvasOutput.testCanvas;
+        return this.testCanvas;
     },
 
     runTest: function(userCode, test, i) {
@@ -2613,55 +2459,54 @@ window.CanvasOutput = {
         // Create a temporary canvas and a new processing instance
         // temporarily overwrite Output.context
         // Save the canvas for later and return that as the output
-        // CanvasOutput.runCode(userCode);
+        // this.runCode(userCode);
     },
 
     runCode: function(userCode, globalContext, callback) {
+        var runCode = function() {
+            if (!window.Worker) {
+                return this.injectCode(userCode, callback);
+            }
+
+            var context = {};
+
+            _.each(Output.globals, function(val, global) {
+                var value = Output.context[global];
+                var contextVal;
+                if (typeof value === "function" || global === "Math") {
+                    contextVal = "__STUBBED_FUNCTION__";
+                } else if (typeof value !== "object" ||
+                    // We can send object literals over, but not
+                    //  objects created with a constructor.
+                    // jQuery thinks PImage is a plain object,
+                    //  so we must specially check for it,
+                    //  otherwise we'll give web workers an object that
+                    //  they can't serialize.
+                    ($.isPlainObject(value) &&
+                    !(value instanceof Output.context.PImage))) {
+                    contextVal = value;
+                } else {
+                    contextVal = {};
+                }
+                context[global] = contextVal;
+            });
+
+            Output.worker.exec(userCode, context, function(userCode) {
+                try {
+                    this.injectCode(userCode, callback);
+
+                } catch (e) {
+                    Output.handleError(e);
+                    callback();
+                }
+            }.bind(this));
+        }.bind(this);
+
         if (Output.globals.getImage) {
-            CanvasOutput.cacheImages(userCode, runCode);
+            this.cacheImages(userCode, runCode);
 
         } else {
             runCode();
-        }
-
-        function runCode() {
-            if (window.Worker) {
-                var context = {};
-
-                _.each(Output.globals, function(val, global) {
-                    var value = Output.context[global];
-                    var contextVal;
-                    if (typeof value === "function" || global === "Math") {
-                        contextVal = "__STUBBED_FUNCTION__";
-                    } else if (typeof value !== "object" ||
-                        // We can send object literals over, but not
-                        //  objects created with a constructor.
-                        // jQuery thinks PImage is a plain object,
-                        //  so we must specially check for it,
-                        //  otherwise we'll give web workers an object that
-                        //  they can't serialize.
-                        ($.isPlainObject(value) &&
-                        !(value instanceof Output.context.PImage))) {
-                        contextVal = value;
-                    } else {
-                        contextVal = {};
-                    }
-                    context[global] = contextVal;
-                });
-
-                Output.worker.exec(userCode, context, function(userCode) {
-                    try {
-                        CanvasOutput.injectCode(userCode, callback);
-
-                    } catch (e) {
-                        Output.handleError(e);
-                        callback();
-                    }
-                });
-
-            } else {
-                CanvasOutput.injectCode(userCode, callback);
-            }
         }
     },
 
@@ -2673,7 +2518,7 @@ window.CanvasOutput = {
         for (var i = 0, l = this.drawLoopMethods.length; i < l; i++) {
             var name = this.drawLoopMethods[i];
             if (Output.globals[name] ||
-                CanvasOutput.lastGrab && CanvasOutput.lastGrab[name]) {
+                this.lastGrab && this.lastGrab[name]) {
                     return true;
             }
         }
@@ -2689,13 +2534,120 @@ window.CanvasOutput = {
     drawLoopMethodDefined: function() {
         for (var i = 0, l = this.drawLoopMethods.length; i < l; i++) {
             var name = this.drawLoopMethods[i];
-            if (Output.context[name] !== CanvasOutput.DUMMY &&
+            if (Output.context[name] !== this.DUMMY &&
                 Output.context[name] !== undefined) {
                     return true;
             }
         }
 
         return false;
+    },
+
+    // Turn a JavaScript object into a form that can be executed
+    // (Note: The form will not necessarily be able to pass a JSON linter)
+    // (Note: JSON.stringify might throw an exception. We don't capture it
+    //        here as we'll want to deal with it later.)
+    stringify: function(obj) {
+        // Use toString on functions
+        if (typeof obj === "function") {
+            return obj.toString();
+
+        // If we're dealing with an instantiated object just
+        // use its generated ID
+        } else if (obj && obj.__id) {
+            return obj.__id();
+
+        // Check if we're dealing with an array
+        } else if (obj &&
+                Object.prototype.toString.call(obj) === "[object Array]") {
+            return this.stringifyArray(obj);
+
+        // JSON.stringify returns undefined, not as a string, so we specially
+        // handle that
+        } else if (typeof obj === "undefined") {
+                return "undefined";
+        }
+
+        // If all else fails, attempt to JSON-ify the string
+        // TODO(jeresig): We should probably do recursion to better handle
+        // complex objects that might hold instances.
+        return JSON.stringify(obj, function(k, v) {
+            // Don't jsonify the canvas or its context because it can lead
+            // to circular jsonification errors on chrome.
+            if (v && (v.id !== undefined && v.id === "output-canvas" ||
+                    typeof CanvasRenderingContext2D !== "undefined" &&
+                    v instanceof CanvasRenderingContext2D)) {
+                return undefined;
+            }
+            return v;
+        });
+    },
+
+    // Turn an array into a string list
+    // (Especially useful for serializing a list of arguments)
+    stringifyArray: function(array) {
+        var results = [];
+
+        for (var i = 0, l = array.length; i < l; i++) {
+            results.push(this.stringify(array[i]));
+        }
+
+        return results.join(", ");
+    },
+
+    // Defer a 'new' on a function for later
+    // Makes it possible to generate a unique signature for the
+    // instance (see: .__id())
+    // Meant to translate:
+    // new Foo(a, b, c) into: applyInstance(Foo)(a, b, c)
+    applyInstance: function(classFn, className) {
+        // Don't wrap it if we're dealing with a built-in object (like RegExp)
+
+        try {
+            var funcName = (/^function\s*(\w+)/.exec(classFn) || [])[1];
+            if (funcName && window[funcName] === classFn) {
+                return classFn;
+            }
+        } catch(e) {}
+
+        // Make sure a name is set for the class if one has not been
+        // set already
+        if (!classFn.__name && className) {
+            classFn.__name = className;
+        }
+
+        // Return a function for later execution.
+        return function() {
+            var args = arguments;
+
+            // Create a temporary constructor function
+            function Class() {
+                classFn.apply(this, args);
+            }
+
+            // Copy the prototype
+            Class.prototype = classFn.prototype;
+
+            // Instantiate the dummy function
+            var obj = new Class();
+
+            // Point back to the original function
+            obj.constructor = classFn;
+
+            // Generate a semi-unique ID for the instance
+            obj.__id = function() {
+                return "new " + classFn.__name + "(" +
+                    this.stringifyArray(args) + ")";
+            }.bind(this);
+
+            // Keep track of the instances that have been instantiated
+            if (this.instances) {
+                this.instances.push(obj);
+            }
+
+            // Return the new instance
+            return obj;
+        }.bind(this);
     },
 
     /*
@@ -2757,28 +2709,28 @@ window.CanvasOutput = {
             constructors = {},
 
             // The properties exposed by the Processing.js object
-            externalProps = CanvasOutput.props,
+            externalProps = this.props,
 
             // The code string to inject into the live execution
             inject = "";
 
         // Grab all object properties and prototype properties from
         // all objects and function prototypes
-        CanvasOutput.grabObj = {};
+        this.grabObj = {};
 
         // Extract a list of instances that were created using applyInstance
         Output.instances = [];
 
         // Replace all calls to 'new Something' with
-        // CanvasOutput.newInstance(Something)()
+        // this.newInstance(Something)()
         // Used for keeping track of unique instances
         userCode = userCode && userCode.replace(/\bnew[\s\n]+([A-Z]{1,2}[a-z0-9_]+)([\s\n]*\()/g,
-            "Output.applyInstance($1,'$1')$2");
+            "CanvasOutput.applyInstance($1,'$1')$2");
 
         // If we have a draw function then we need to do injection
         // If we had a draw function then we still need to do injection
         // to clean up any live variables.
-        var hasOrHadDrawLoop = CanvasOutput.hasOrHadDrawLoop();
+        var hasOrHadDrawLoop = this.hasOrHadDrawLoop();
 
         // Only do the injection if we have or had a draw loop
         if (hasOrHadDrawLoop) {
@@ -2791,15 +2743,18 @@ window.CanvasOutput = {
             //                save an execution.
             _.each(Output.globals, function(val, global) {
                 var value = Output.context[global];
-                // Expose all the global values, if they already exist although even
-                // if they are undefined, the result will still get sucked into
-                // grabAll) Replace functions that have side effects with
+                // Expose all the global values, if they already exist although
+                // even if they are undefined, the result will still get sucked
+                // into grabAll) Replace functions that have side effects with
                 // placeholders (for later execution)
                 grabAll[global] = ((typeof value === "function" &&
-                        !CanvasOutput.safeCalls[global]) ?
-                    function() { fnCalls.push([global, arguments]); return 0; } :
+                        !this.safeCalls[global]) ?
+                    function() {
+                        fnCalls.push([global, arguments]);
+                        return 0;
+                    } :
                     value);
-            });
+            }.bind(this));
 
             // Run the code with the grabAll context. The code is run with no side
             // effects and instead all function calls and globally-defined variable
@@ -2824,8 +2779,8 @@ window.CanvasOutput = {
             // The instantiated instances have changed, which means that
             // we need to re-run everything.
             if (Output.oldInstances &&
-                    Output.stringifyArray(Output.oldInstances) !==
-                    Output.stringifyArray(Output.instances)) {
+                    this.stringifyArray(Output.oldInstances) !==
+                    this.stringifyArray(Output.instances)) {
                 rerun = true;
             }
 
@@ -2838,7 +2793,7 @@ window.CanvasOutput = {
                 // Reconstruction the function call
                 var args = Array.prototype.slice.call(fnCalls[i][1]);
                 inject += fnCalls[i][0] + "(" +
-                    Output.stringifyArray(args) + ");\n";
+                    this.stringifyArray(args) + ");\n";
             }
 
             // We also look for newly-changed global variables to inject
@@ -2846,17 +2801,17 @@ window.CanvasOutput = {
                 // Turn the result of the extracted value into
                 // a nicely-formatted string
                 try {
-                    grabAll[prop] = Output.stringify(grabAll[prop]);
+                    grabAll[prop] = this.stringify(grabAll[prop]);
 
                     // Check to see that we've done an inject before and that
                     // the property wasn't one that shouldn't have been
                     // overridden, and that either the property wasn't in the
                     // last extraction or that the value of the property has
                     // changed.
-                    if (CanvasOutput.lastGrab &&
+                    if (this.lastGrab &&
                             externalProps[prop] !== false &&
-                            (!(prop in CanvasOutput.lastGrab) ||
-                            grabAll[prop] !== CanvasOutput.lastGrab[prop])) {
+                            (!(prop in this.lastGrab) ||
+                            grabAll[prop] !== this.lastGrab[prop])) {
 
                         // If we hit a function we need to re-execute the code
                         // by injecting it. Preserves the closure.
@@ -2891,34 +2846,34 @@ window.CanvasOutput = {
                     // (Since they won't be detected normally)
                     if (typeof val === "function" &&
                             externalProps[prop] !== false) {
-                        CanvasOutput.objectExtract(prop, val);
-                        CanvasOutput.objectExtract(prop, val, "prototype");
+                        this.objectExtract(prop, val);
+                        this.objectExtract(prop, val, "prototype");
                     }
 
                 // The variable contains something that can't be serialized
                 // (such as instantiated objects) and so we need to extract it
                 } catch (e) {
-                    CanvasOutput.objectExtract(prop, val);
+                    this.objectExtract(prop, val);
                 }
-            });
+            }.bind(this));
 
             // Insertion of new object properties
-            _.each(CanvasOutput.grabObj, function(val, objProp) {
+            _.each(this.grabObj, function(val, objProp) {
                 var baseName = /^[^.[]*/.exec(objProp)[0];
 
                 // If we haven't done an extraction before or if the value
                 // has changed, or if the function was reinitialized,
                 // insert the new value.
-                if (!CanvasOutput.lastGrabObj ||
-                        CanvasOutput.lastGrabObj[objProp] !== val ||
+                if (!this.lastGrabObj ||
+                        this.lastGrabObj[objProp] !== val ||
                         reinit[baseName]) {
                     inject += objProp + " = " + val + ";\n";
                 }
-            });
+            }.bind(this));
 
             // Deletion of old object properties
-            for (var objProp in CanvasOutput.lastGrabObj) {
-                if (!(objProp in CanvasOutput.grabObj)) {
+            for (var objProp in this.lastGrabObj) {
+                if (!(objProp in this.grabObj)) {
                     inject += "delete " + objProp + ";\n";
                 }
             }
@@ -2926,13 +2881,13 @@ window.CanvasOutput = {
             // Make sure that deleted variables are removed.
             // Go through all the previously-defined properties and check to see
             // if they've been removed.
-            for (var oldProp in CanvasOutput.lastGrab) {
+            for (var oldProp in this.lastGrab) {
                 // If the property doesn't exist in this grab extraction and
                 // the property isn't a Processing.js-defined property
                 // (e.g. don't delete 'background') but allow the 'draw'
                 // function to be deleted (as it's user-defined)
                 if (!(oldProp in grabAll) &&
-                        (!(oldProp in CanvasOutput.props) ||
+                        (!(oldProp in this.props) ||
                             oldProp === "draw")) {
                     // Create the code to delete the variable
                     inject += "delete Output.context." + oldProp + ";\n";
@@ -2940,7 +2895,7 @@ window.CanvasOutput = {
                     // If the draw function was deleted we also
                     // need to clear the display
                     if (oldProp === "draw") {
-                        CanvasOutput.clear();
+                        this.clear();
                     }
                 }
             }
@@ -2950,15 +2905,15 @@ window.CanvasOutput = {
         Output.context.resetMatrix();
 
         // Seed the random number generator with the same seed
-        CanvasOutput.restoreRandomSeed();
+        this.restoreRandomSeed();
 
         // Make sure the various draw styles are also reset
         // if they were just removed
-        if (CanvasOutput.lastGrab) {
-            for (var prop in CanvasOutput.liveReset) {
-                if (!Output.globals[prop] && CanvasOutput.lastGrab[prop]) {
-                    CanvasOutput.canvas[prop].apply(CanvasOutput.canvas,
-                        CanvasOutput.liveReset[prop]);
+        if (this.lastGrab) {
+            for (var prop in this.liveReset) {
+                if (!Output.globals[prop] && this.lastGrab[prop]) {
+                    this.canvas[prop].apply(this.canvas,
+                        this.liveReset[prop]);
                 }
             }
         }
@@ -2966,10 +2921,10 @@ window.CanvasOutput = {
         // Re-run the entire program if we don't need to inject the changes
         // (Injection only needs to occur if a draw loop exists and if a prior
         // run took place)
-        if (!hasOrHadDrawLoop || !CanvasOutput.drawLoopMethodDefined() ||
-                !CanvasOutput.lastGrab || rerun) {
+        if (!hasOrHadDrawLoop || !this.drawLoopMethodDefined() ||
+                !this.lastGrab || rerun) {
             // Clear the output if no injection is occurring
-            CanvasOutput.clear();
+            this.clear();
 
             // Force a call to the draw function to force checks for instances
             // and to make sure that errors in the draw loop are caught.
@@ -3002,13 +2957,13 @@ window.CanvasOutput = {
         // Need to make sure that the draw function is never deleted
         // (Otherwise Processing.js starts to freak out)
         if (!Output.context.draw) {
-            Output.context.draw = CanvasOutput.DUMMY;
+            Output.context.draw = this.DUMMY;
         }
 
         // Save the extracted variables for later comparison
         if (hasOrHadDrawLoop) {
-            CanvasOutput.lastGrab = grabAll;
-            CanvasOutput.lastGrabObj = CanvasOutput.grabObj;
+            this.lastGrab = grabAll;
+            this.lastGrabObj = this.grabObj;
         }
 
         if (callback) {
@@ -3045,9 +3000,9 @@ window.CanvasOutput = {
                 // Turn the result of the extracted function into
                 // a nicely-formatted string (maintains the closure)
                 if (typeof obj[objProp] === "function") {
-                    CanvasOutput.grabObj[name + (proto ? "." + proto : "") +
+                    this.grabObj[name + (proto ? "." + proto : "") +
                             "['" + objProp + "']"] =
-                        Output.stringify(obj[objProp]);
+                        this.stringify(obj[objProp]);
 
                 // Otherwise we should probably just inject the value directly
                 } else {
@@ -3066,14 +3021,14 @@ window.CanvasOutput = {
     },
 
     restart: function() {
-        CanvasOutput.lastGrab = null;
-        CanvasOutput.lastGrabObj = null;
+        this.lastGrab = null;
+        this.lastGrabObj = null;
 
         // Grab a new random seed
-        CanvasOutput.reseedRandom();
+        this.reseedRandom();
 
         // Reset frameCount variable on restart
-        CanvasOutput.canvas.frameCount = 0;
+        this.canvas.frameCount = 0;
 
         Output.runCode(Output.getUserCode());
     },
@@ -3086,26 +3041,26 @@ window.CanvasOutput = {
 
     toggle: function(doToggle) {
         if (doToggle) {
-            CanvasOutput.start();
+            this.start();
 
         } else {
-            CanvasOutput.stop();
+            this.stop();
         }
     },
 
     stop: function() {
-        CanvasOutput.canvas.noLoop();
+        this.canvas.noLoop();
     },
 
     start: function() {
-        CanvasOutput.canvas.loop();
+        this.canvas.loop();
     },
 
     clear: function() {
-        for (var prop in CanvasOutput.liveReset) {
-            if (CanvasOutput.liveReset.hasOwnProperty(prop)) {
-                CanvasOutput.canvas[prop].apply(CanvasOutput.canvas,
-                    CanvasOutput.liveReset[prop]);
+        for (var prop in this.liveReset) {
+            if (this.liveReset.hasOwnProperty(prop)) {
+                this.canvas[prop].apply(this.canvas,
+                    this.liveReset[prop]);
             }
         }
     },
@@ -3113,16 +3068,54 @@ window.CanvasOutput = {
     seed: null,
 
     reseedRandom: function() {
-        CanvasOutput.seed = Math.floor(Math.random() * 4294967296);
+        this.seed = Math.floor(Math.random() * 4294967296);
     },
 
     restoreRandomSeed: function() {
-        CanvasOutput.canvas.randomSeed(CanvasOutput.seed);
+        this.canvas.randomSeed(this.seed);
     },
 
     kill: function() {
-        CanvasOutput.canvas.exit();
-        CanvasOutput.$elem.hide();
+        this.canvas.exit();
+        this.$elem.hide();
+    },
+
+    exec: function(code) {
+        if (!code) {
+            return true;
+        }
+
+        var contexts = Array.prototype.slice.call(arguments, 1);
+
+        // this is kind of sort of supposed to fake a gensym that the user
+        // can't access but since we're limited to string manipulation, we
+        // can't guarantee this fo sho' so we just change the name to something
+        // long and random every time the code runs and hope for the best!
+        var envName = "__env__" + Math.floor(Math.random() * 1000000000);
+
+        for (var i = 0; i < contexts.length; i++) {
+            if (contexts[i]) {
+                code = "with(" + envName + "[" + i + "]){\n" + code + "\n}";
+            }
+        }
+
+        // the top-level 'this' is empty except for this.externals, which
+        // throws this message this is how users were getting at everything
+        // from playing sounds to displaying pop-ups
+        var badProgram = $._("This program uses capabilities we've turned " +
+            "off for security reasons. Khan Academy prohibits showing " +
+            "external images, playing sounds, or displaying pop-ups.");
+        var topLevelThis = "{ get externals() { throw { message: " +
+            JSON.stringify(badProgram) + " } } }";
+
+        // if we pass in the env as a parameter, the user will be able to get
+        // at it through the 'arguments' binding, so we close over it instead
+        code = "var " + envName + " = arguments;\n(function(){\n" + code +
+            "\n}).apply(" + topLevelThis + ");";
+
+        (new Function(code)).apply(this.canvas, contexts);
+
+        return true;
     }
 };
 

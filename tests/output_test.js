@@ -100,11 +100,11 @@ var failingTest = function(title, code, code2, errors) {
 };
 
 // Test the lower level functions in Output
-describe("Scratchpad Output functions", function() {
-    it("Output.stringifyArray", function() {
-        var undefArray = Output.stringifyArray([undefined, undefined]);
+describe("Scratchpad CanvasOutput functions", function() {
+    it("stringifyArray", function() {
+        var undefArray = CanvasOutput.stringifyArray([undefined, undefined]);
         expect(undefArray).to.be.equal("undefined, undefined");
-        var primArray = Output.stringifyArray([1, "A"]);
+        var primArray = CanvasOutput.stringifyArray([1, "A"]);
         expect(primArray).to.be.equal("1, \"A\"");
     });
 
