@@ -15,8 +15,6 @@ var LiveEditorOutput = {
 
         // These are the tests (like challenge tests)
         this.validate = null;
-        // These are the outputted errors
-        this.errors = [];
 
         this.assertions = [];
 
@@ -25,47 +23,29 @@ var LiveEditorOutput = {
 
         this.config = new ScratchpadConfig({});
 
-        // Load JSHint config options
-        this.config.runCurVersion("jshint");
-
-        this.config.on("versionSwitched", function(e, version) {
-            this.config.runVersion(version, "processing", this.output.canvas);
-        }.bind(this));
-
         this.tipbar = new TipBar({
             el: this.$elem[0]
         });
 
-        this.bind();
-
         this.setOutput(options.output);
 
-        BabyHint.init();
+        this.bind();
     },
 
     render: function() {
         this.$elem.html(Handlebars.templates["output"]());
     },
 
-    bind: function() {      
-        if (window !== window.top) {
-            window.alert = $.noop;
-            window.open = $.noop;
-            window.showModalDialog = $.noop;
-            window.confirm = $.noop;
-            window.prompt = $.noop;
-            window.eval = $.noop;
-        }
-
+    bind: function() {
         // Handle messages coming in from the parent frame
         window.addEventListener("message",
             this.handleMessage.bind(this), false);
     },
 
-
     setPaths: function(data) {
         if (data.workersDir) {
             this.workersDir = this._qualifyURL(data.workersDir);
+            PooledWorker.prototype.workersDir = this.workersDir;
         }
         if (data.externalsDir) {
             this.externalsDir = this._qualifyURL(data.externalsDir);
@@ -190,115 +170,22 @@ var LiveEditorOutput = {
 
         // We evaluate the test code to see if it itself has any syntax errors
         // This also ends up pushing the tests onto this.tests
-        var result = this.exec(validate, OutputTester.testContext);
+        var error = this.output.initTests(validate);
 
         // Display errors encountered while evaluating the test code
-        if (result && result.message) {
+        if (error && error.message) {
             $("#test-errors").text(result.message).show();
         } else {
             $("#test-errors").hide();
         }
     },
 
-    setOutput: function(output) {
-        if (this.output) {
-            this.output.kill();
-        }
-
-        this.output = output.init({
-            config: this.config
-        });
-
-        $.extend(this.testContext, output.testContext);
-    },
-
-    getUserCode: function() {
-        return this.currentCode || "";
-    },
-
-    // Returns an object that holds all the exposed properties
-    // from the current execution environment. The properties will
-    // correspond to boolean values: true if it cannot be overriden
-    // by the user, false if it can be. See: JSHintGlobalString
-    exposedProps: function() {
-        return this.output ? this.output.props : {};
-    },
-
-    // Banned properties
-    bannedProps: function() {
-        return this.output ? this.output.bannedProps : {};
-    },
-
-    // Generate a string list of properties
-    propListString: function(props) {
-        var bannedProps = this.bannedProps();
-        var propList = [];
-
-        for (var prop in props) {
-            if (!bannedProps[prop]) {
-                propList.push(prop + ":" + props[prop]);
-            }
-        }
-
-        return propList.join(",");
-    },
-
     runCode: function(userCode, callback) {
         this.currentCode = userCode;
 
-        // Build a string of options to feed into JSHint
-        // All properties are defined in the config
-        var hintCode = "/*jshint " +
-            this.propListString(this.JSHint) + " */" +
+        var runDone = function(errors) {
+            errors = this.cleanErrors(errors || []);
 
-            // Build a string of variables names to feed into JSHint
-            // This lets JSHint know which variables are globally exposed
-            // and which can be overridden, more details:
-            // http://www.jshint.com/about/
-            // propName: true (is a global property, but can be overridden)
-            // propName: false (is a global property, cannot be overridden)
-            "/*global " + this.propListString(this.exposedProps()) +
-
-            // The user's code to execute
-            "*/\n" + userCode;
-
-        var done = function(hintData, hintErrors) {
-            this.hintDone(userCode, hintData, hintErrors, callback);
-        }.bind(this);
-
-        // Don't run JSHint if there is no code to run
-        if (!userCode) {
-            done(null, []);
-        } else {
-            this.hintWorker.exec(hintCode, done);
-        }
-    },
-
-    hintDone: function(userCode, hintData, hintErrors, callback) {
-        var externalProps = this.exposedProps();
-
-        this.globals = {};
-        if (hintData && hintData.globals) {
-            for (var i = 0, l = hintData.globals.length; i < l; i++) {
-                var global = hintData.globals[i];
-
-                // Do this so that declared variables are gobbled up
-                // into the global context object
-                if (!externalProps[global] && !(global in this.context)) {
-                    this.context[global] = undefined;
-                }
-
-                this.globals[global] = true;
-            }
-        }
-        this.assertions = [];
-
-        this.babyErrors = BabyHint.babyErrors(userCode, hintErrors);
-
-        this.errors = [];
-        this.mergeErrors(hintErrors, this.babyErrors);
-
-        var runDone = function() {
             if (!this.loaded) {
                 this.postParent({ loaded: true });
                 this.loaded = true;
@@ -306,103 +193,112 @@ var LiveEditorOutput = {
 
             // A callback for working with a test suite
             if (callback) {
-                callback(this.errors);
+                callback(errors);
                 return;
             }
+
             this.postParent({
                 results: {
                     code: userCode,
-                    errors: this.errors,
+                    errors: errors,
                     tests: this.testResults || [],
                     assertions: this.assertions
                 }
             });
 
-            this.toggleErrors();
+            this.toggleErrors(errors);
         }.bind(this);
 
-        // We only need to extract globals when the code has passed
-        // the JSHint check
-        this.globals = {};
-
-        if (hintData && hintData.globals) {
-            for (var i = 0, l = hintData.globals.length; i < l; i++) {
-                var global = hintData.globals[i];
-
-                // Do this so that declared variables are gobbled up
-                // into the global context object
-                if (!externalProps[global] && !(global in this.context)) {
-                    this.context[global] = undefined;
+        this.lint(userCode, function(errors) {
+            // Run the tests (even if there are lint errors)
+            this.test(userCode, this.validate, errors, function(errors) {
+                if (errors.length > 0 || this.onlyRunTests) {
+                    return runDone(errors);
                 }
 
-                this.globals[global] = true;
-            }
-        }
-
-        // Run the tests
-
-        var doneWithTests = function() {
-            if (this.errors.length === 0 && !this.onlyRunTests) {
                 // Then run the user's code
-                if (this.output && this.output.runCode) {
-                    try {
-                        this.output.runCode(userCode, this.context, runDone);
+                try {
+                    this.output.runCode(userCode, this.context, runDone);
 
-                    } catch (e) {
-                        this.handleError(e);
-                        runDone();
-                    }
-
-                    return;
-
-                } else {
-                    this.exec(userCode, this.context);
+                } catch (e) {
+                    runDone([e]);
                 }
-            }
-            runDone();
-        }.bind(this);
-
-        this.testWorker.exec(userCode, this.validate, this.errors,
-            doneWithTests);
+            }.bind(this));
+        }.bind(this));
     },
 
-    mergeErrors: function(jshintErrors, babyErrors) {
-        var brokenLines = [];
-        var hintErrors = [];
+    test: function(userCode, validate, errors, callback) {
+        this.output.test(userCode, validate, errors, callback);
+    },
 
-        // Find which lines JSHINT broke on
-        _.each(jshintErrors, function(error) {
-            if (error && error.line && error.character &&
-                    error.reason &&
-                    !/unable to continue/i.test(error.reason)) {
-                brokenLines.push(error.line - 2);
-                hintErrors.push({
-                    row: error.line - 2,
-                    column: error.character - 1,
-                    text: _.compose(this.prettify, this.clean)(error.reason),
+    lint: function(userCode, callback) {
+        this.output.lint(userCode, callback);
+    },
+
+    setOutput: function(output) {
+        if (this.output) {
+            this.output.kill();
+        }
+
+        this.output = output;
+        output.init({
+            config: this.config
+        });
+    },
+
+    getUserCode: function() {
+        return this.currentCode || "";
+    },
+
+    toggle: function(toggle) {
+        this.output.toggle(toggle);
+    },
+
+    start: function() {
+        this.output.start();
+    },
+
+    stop: function() {
+        this.output.stop();
+    },
+
+    restart: function() {
+        this.output.restart();
+    },
+
+    clear: function() {
+        this.output.clear();
+    },
+
+    cleanErrors: function(errors) {
+        errors = errors.map(function(error) {
+            if (!$.isPlainObject(error)) {
+                return {
+                    row: error.lineno ? error.lineno - 2 : -1,
+                    column: 0,
+                    text: this.clean(error.message),
                     type: "error",
-                    lint: error,
-                    source: "jshint"
-                });
+                    source: "native",
+                    priority: 3
+                };
             }
+
+            return {
+                row: error.row,
+                column: error.column,
+                text: _.compose(this.prettify, this.clean)(error.text),
+                type: error.type,
+                lint: error.lint,
+                source: error.source
+            };
         }.bind(this));
 
-        // Add baby errors if JSHINT also broke on those lines, OR we don't want
-        // to allow that error
-        _.each(babyErrors, function(error) {
-            if (_.include(brokenLines, error.row) || error.breaksCode) {
-                this.errors.push({
-                    row: error.row,
-                    column: error.column,
-                    text: _.compose(this.prettify, this.clean)(error.text),
-                    type: "error",
-                    source: error.source
-                });
-            }
-        }.bind(this));
+        errors = errors.sort(function(a, b) {
+            var diff = a.row - b.row;
+            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
+        });
 
-        // Add JSHINT errors at the end
-        this.errors = this.errors.concat(hintErrors);
+        return errors;
     },
 
     // This adds html tags around quoted lines so they can be formatted
@@ -410,6 +306,10 @@ var LiveEditorOutput = {
         str = str.split("\"");
         var htmlString = "";
         for (var i = 0; i < str.length; i++) {
+            if (str[i].length === 0) {
+                continue;
+            }
+
             if (i % 2 === 0) {
                 //regular text
                 htmlString += "<span class=\"text\">" + str[i] + "</span>";
@@ -425,63 +325,28 @@ var LiveEditorOutput = {
         return String(str).replace(/</g, "&lt;");
     },
 
-    toggleErrors: function() {
-        var self = this;
-        var hasErrors = !!this.errors.length;
+    toggleErrors: function(errors) {
+        var hasErrors = !!errors.length;
 
         $("#show-errors").toggleClass("ui-state-disabled", !hasErrors);
         $("#output .error-overlay").toggle(hasErrors);
 
         this.toggle(!hasErrors);
 
-        if (hasErrors) {
-            this.errors = this.errors.sort(function(a, b) {
-                return a.row - b.row;
-            });
+        if (!hasErrors) {
+            this.tipbar.hide("Error");
+            return;
+        }
 
-            if (this.errorDelay) {
-                clearTimeout(this.errorDelay);
+        if (this.errorDelay) {
+            clearTimeout(this.errorDelay);
+        }
+
+        this.errorDelay = setTimeout(function() {
+            if (errors.length > 0) {
+                this.tipbar.show("Error", errors);
             }
-
-            this.errorDelay = setTimeout(function() {
-                if (this.errors.length > 0) {
-                    self.tipbar.show("Error", this.errors);
-                }
-            }.bind(this), 1500);
-
-        } else {
-            self.tipbar.hide("Error");
-        }
-    },
-
-    toggle: function(toggle) {
-        if (this.output && this.output.toggle) {
-            this.output.toggle(toggle);
-        }
-    },
-
-    start: function() {
-        if (this.output && this.output.start) {
-            this.output.start();
-        }
-    },
-
-    stop: function() {
-        if (this.output && this.output.stop) {
-            this.output.stop();
-        }
-    },
-
-    restart: function() {
-        if (this.output && this.output.restart) {
-            this.output.restart();
-        }
-    },
-
-    clear: function() {
-        if (this.output && this.output.clear) {
-            this.output.clear();
-        }
+        }.bind(this), 1500);
     },
 
     handleError: function(e) {
@@ -495,43 +360,6 @@ var LiveEditorOutput = {
                 $._("A critical problem occurred in your program " +
                     "making it unable to run."));
             return;
-        }
-
-        var row = e.lineno ? e.lineno - 2 : -1;
-
-        // Show babyHint errors first
-        _.each(this.babyErrors, function(error) {
-            if (error.row + 1 === row) {
-                this.errors.push({
-                    row: error.row,
-                    column: error.column,
-                    text: _.compose(this.prettify, this.clean)(error.text),
-                    type: "error"
-                });
-            }
-        });
-
-        this.errors.push({
-            row: row,
-            column: 0,
-            text: this.clean(e.message),
-            type: "error"
-        });
-
-        this.toggleErrors();
-    },
-
-    exec: function() {
-        if (!this.output.exec) {
-            return true;
-        }
-
-        try {
-            return this.output.exec.apply(this.output, arguments);
-
-        } catch (e) {
-            this.handleError(e);
-            return e;
         }
     }
 };

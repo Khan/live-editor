@@ -276,13 +276,8 @@ var ScratchpadConfig = Backbone.Model.extend({
 
             // JSHint configuration
             // See: http://www.jshint.com/options/
-            jshint: function() {
-                // NOTE(joel) - Output is not in scope here
-                if (typeof Output === "undefined") {
-                    return;
-                }
-
-                Output.JSHint = {
+            jshint: function(output) {
+                output.JSHint = {
                     // Prohibit explicitly undefined variables
                     undef: true,
 
@@ -347,17 +342,12 @@ var ScratchpadConfig = Backbone.Model.extend({
         {
             name: "Disable Un-needed JSHint Rules",
 
-            jshint: function() {
-                // NOTE(joel) - Output is not in scope here
-                if (typeof Output === "undefined") {
-                    return;
-                }
-
+            jshint: function(output) {
                 // Re-allow empty braces
-                delete Output.JSHint.noempty;
+                delete output.JSHint.noempty;
 
                 // Re-allow ++ and --
-                delete Output.JSHint.plusplus;
+                delete output.JSHint.plusplus;
             }
         }
     ]

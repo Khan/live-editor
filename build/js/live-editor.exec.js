@@ -271,14 +271,14 @@ var BabyHint = {
     inComment: false,
     spellChecked: false,
 
-    init: function() {
+    init: function(options) {
         // grab globals from Processing object
-        for (var f in Output.context) {
-            if (typeof Output.context[f] === "function") {
+        for (var f in options.context) {
+            if (typeof options.context[f] === "function") {
                 BabyHint.keywords.push(f);
                 if (!(f in BabyHint.functionParamCount) &&
                     !_.include(BabyHint.functionParamBlacklist, f)) {
-                    BabyHint.functionParamCount[f] = Output.context[f].length;
+                    BabyHint.functionParamCount[f] = options.context[f].length;
                 }
             }
         }
@@ -1425,6 +1425,49 @@ window.OutputTester = {
     }
 };
 
+var PooledWorker = function(filename, onExec) {
+    this.pool = [];
+    this.curID = 0;
+    this.filename = filename;
+    this.onExec = onExec || function() {};
+};
+
+PooledWorker.prototype.getURL = function() {
+    return this.workersDir + this.filename +
+        "?cachebust=B" + (new Date()).toDateString();
+};
+
+PooledWorker.prototype.getWorkerFromPool = function() {
+    // NOTE(jeresig): This pool of workers is used to cut down on the
+    // number of new web workers that we need to create. If the user
+    // is typing really fast, or scrubbing numbers, it has the
+    // potential to use a lot of workers. We want to re-use as many of
+    // them as possible as their creation can be expensive. (Chrome
+    // seems to freak out, use lots of memory, and sometimes crash.)
+    var worker = this.pool.shift();
+    if (!worker) {
+        worker = new window.Worker(this.getURL());
+    }
+    // Keep track of what number worker we're running so that we know
+    // if any new hint workers have been started after this one
+    this.curID += 1;
+    worker.id = this.curID;
+    return worker;
+};
+
+/* Returns true if the passed in worker is the most recently created */
+PooledWorker.prototype.isCurrentWorker = function(worker) {
+    return this.curID === worker.id;
+};
+
+PooledWorker.prototype.addWorkerToPool = function(worker) {
+    // Return the worker back to the pool
+    this.pool.push(worker);
+};
+
+PooledWorker.prototype.exec = function() {
+    this.onExec.apply(this, arguments);
+};
 (function() {
 
 // Keep track of the frame source and origin for later
@@ -1442,8 +1485,6 @@ var LiveEditorOutput = {
 
         // These are the tests (like challenge tests)
         this.validate = null;
-        // These are the outputted errors
-        this.errors = [];
 
         this.assertions = [];
 
@@ -1452,47 +1493,29 @@ var LiveEditorOutput = {
 
         this.config = new ScratchpadConfig({});
 
-        // Load JSHint config options
-        this.config.runCurVersion("jshint");
-
-        this.config.on("versionSwitched", function(e, version) {
-            this.config.runVersion(version, "processing", this.output.canvas);
-        }.bind(this));
-
         this.tipbar = new TipBar({
             el: this.$elem[0]
         });
 
-        this.bind();
-
         this.setOutput(options.output);
 
-        BabyHint.init();
+        this.bind();
     },
 
     render: function() {
         this.$elem.html(Handlebars.templates["output"]());
     },
 
-    bind: function() {      
-        if (window !== window.top) {
-            window.alert = $.noop;
-            window.open = $.noop;
-            window.showModalDialog = $.noop;
-            window.confirm = $.noop;
-            window.prompt = $.noop;
-            window.eval = $.noop;
-        }
-
+    bind: function() {
         // Handle messages coming in from the parent frame
         window.addEventListener("message",
             this.handleMessage.bind(this), false);
     },
 
-
     setPaths: function(data) {
         if (data.workersDir) {
             this.workersDir = this._qualifyURL(data.workersDir);
+            PooledWorker.prototype.workersDir = this.workersDir;
         }
         if (data.externalsDir) {
             this.externalsDir = this._qualifyURL(data.externalsDir);
@@ -1617,115 +1640,22 @@ var LiveEditorOutput = {
 
         // We evaluate the test code to see if it itself has any syntax errors
         // This also ends up pushing the tests onto this.tests
-        var result = this.exec(validate, OutputTester.testContext);
+        var error = this.output.initTests(validate);
 
         // Display errors encountered while evaluating the test code
-        if (result && result.message) {
+        if (error && error.message) {
             $("#test-errors").text(result.message).show();
         } else {
             $("#test-errors").hide();
         }
     },
 
-    setOutput: function(output) {
-        if (this.output) {
-            this.output.kill();
-        }
-
-        this.output = output.init({
-            config: this.config
-        });
-
-        $.extend(this.testContext, output.testContext);
-    },
-
-    getUserCode: function() {
-        return this.currentCode || "";
-    },
-
-    // Returns an object that holds all the exposed properties
-    // from the current execution environment. The properties will
-    // correspond to boolean values: true if it cannot be overriden
-    // by the user, false if it can be. See: JSHintGlobalString
-    exposedProps: function() {
-        return this.output ? this.output.props : {};
-    },
-
-    // Banned properties
-    bannedProps: function() {
-        return this.output ? this.output.bannedProps : {};
-    },
-
-    // Generate a string list of properties
-    propListString: function(props) {
-        var bannedProps = this.bannedProps();
-        var propList = [];
-
-        for (var prop in props) {
-            if (!bannedProps[prop]) {
-                propList.push(prop + ":" + props[prop]);
-            }
-        }
-
-        return propList.join(",");
-    },
-
     runCode: function(userCode, callback) {
         this.currentCode = userCode;
 
-        // Build a string of options to feed into JSHint
-        // All properties are defined in the config
-        var hintCode = "/*jshint " +
-            this.propListString(this.JSHint) + " */" +
+        var runDone = function(errors) {
+            errors = this.cleanErrors(errors || []);
 
-            // Build a string of variables names to feed into JSHint
-            // This lets JSHint know which variables are globally exposed
-            // and which can be overridden, more details:
-            // http://www.jshint.com/about/
-            // propName: true (is a global property, but can be overridden)
-            // propName: false (is a global property, cannot be overridden)
-            "/*global " + this.propListString(this.exposedProps()) +
-
-            // The user's code to execute
-            "*/\n" + userCode;
-
-        var done = function(hintData, hintErrors) {
-            this.hintDone(userCode, hintData, hintErrors, callback);
-        }.bind(this);
-
-        // Don't run JSHint if there is no code to run
-        if (!userCode) {
-            done(null, []);
-        } else {
-            this.hintWorker.exec(hintCode, done);
-        }
-    },
-
-    hintDone: function(userCode, hintData, hintErrors, callback) {
-        var externalProps = this.exposedProps();
-
-        this.globals = {};
-        if (hintData && hintData.globals) {
-            for (var i = 0, l = hintData.globals.length; i < l; i++) {
-                var global = hintData.globals[i];
-
-                // Do this so that declared variables are gobbled up
-                // into the global context object
-                if (!externalProps[global] && !(global in this.context)) {
-                    this.context[global] = undefined;
-                }
-
-                this.globals[global] = true;
-            }
-        }
-        this.assertions = [];
-
-        this.babyErrors = BabyHint.babyErrors(userCode, hintErrors);
-
-        this.errors = [];
-        this.mergeErrors(hintErrors, this.babyErrors);
-
-        var runDone = function() {
             if (!this.loaded) {
                 this.postParent({ loaded: true });
                 this.loaded = true;
@@ -1733,103 +1663,112 @@ var LiveEditorOutput = {
 
             // A callback for working with a test suite
             if (callback) {
-                callback(this.errors);
+                callback(errors);
                 return;
             }
+
             this.postParent({
                 results: {
                     code: userCode,
-                    errors: this.errors,
+                    errors: errors,
                     tests: this.testResults || [],
                     assertions: this.assertions
                 }
             });
 
-            this.toggleErrors();
+            this.toggleErrors(errors);
         }.bind(this);
 
-        // We only need to extract globals when the code has passed
-        // the JSHint check
-        this.globals = {};
-
-        if (hintData && hintData.globals) {
-            for (var i = 0, l = hintData.globals.length; i < l; i++) {
-                var global = hintData.globals[i];
-
-                // Do this so that declared variables are gobbled up
-                // into the global context object
-                if (!externalProps[global] && !(global in this.context)) {
-                    this.context[global] = undefined;
+        this.lint(userCode, function(errors) {
+            // Run the tests (even if there are lint errors)
+            this.test(userCode, this.validate, errors, function(errors) {
+                if (errors.length > 0 || this.onlyRunTests) {
+                    return runDone(errors);
                 }
 
-                this.globals[global] = true;
-            }
-        }
-
-        // Run the tests
-
-        var doneWithTests = function() {
-            if (this.errors.length === 0 && !this.onlyRunTests) {
                 // Then run the user's code
-                if (this.output && this.output.runCode) {
-                    try {
-                        this.output.runCode(userCode, this.context, runDone);
+                try {
+                    this.output.runCode(userCode, this.context, runDone);
 
-                    } catch (e) {
-                        this.handleError(e);
-                        runDone();
-                    }
-
-                    return;
-
-                } else {
-                    this.exec(userCode, this.context);
+                } catch (e) {
+                    runDone([e]);
                 }
-            }
-            runDone();
-        }.bind(this);
-
-        this.testWorker.exec(userCode, this.validate, this.errors,
-            doneWithTests);
+            }.bind(this));
+        }.bind(this));
     },
 
-    mergeErrors: function(jshintErrors, babyErrors) {
-        var brokenLines = [];
-        var hintErrors = [];
+    test: function(userCode, validate, errors, callback) {
+        this.output.test(userCode, validate, errors, callback);
+    },
 
-        // Find which lines JSHINT broke on
-        _.each(jshintErrors, function(error) {
-            if (error && error.line && error.character &&
-                    error.reason &&
-                    !/unable to continue/i.test(error.reason)) {
-                brokenLines.push(error.line - 2);
-                hintErrors.push({
-                    row: error.line - 2,
-                    column: error.character - 1,
-                    text: _.compose(this.prettify, this.clean)(error.reason),
+    lint: function(userCode, callback) {
+        this.output.lint(userCode, callback);
+    },
+
+    setOutput: function(output) {
+        if (this.output) {
+            this.output.kill();
+        }
+
+        this.output = output;
+        output.init({
+            config: this.config
+        });
+    },
+
+    getUserCode: function() {
+        return this.currentCode || "";
+    },
+
+    toggle: function(toggle) {
+        this.output.toggle(toggle);
+    },
+
+    start: function() {
+        this.output.start();
+    },
+
+    stop: function() {
+        this.output.stop();
+    },
+
+    restart: function() {
+        this.output.restart();
+    },
+
+    clear: function() {
+        this.output.clear();
+    },
+
+    cleanErrors: function(errors) {
+        errors = errors.map(function(error) {
+            if (!$.isPlainObject(error)) {
+                return {
+                    row: error.lineno ? error.lineno - 2 : -1,
+                    column: 0,
+                    text: this.clean(error.message),
                     type: "error",
-                    lint: error,
-                    source: "jshint"
-                });
+                    source: "native",
+                    priority: 3
+                };
             }
+
+            return {
+                row: error.row,
+                column: error.column,
+                text: _.compose(this.prettify, this.clean)(error.text),
+                type: error.type,
+                lint: error.lint,
+                source: error.source
+            };
         }.bind(this));
 
-        // Add baby errors if JSHINT also broke on those lines, OR we don't want
-        // to allow that error
-        _.each(babyErrors, function(error) {
-            if (_.include(brokenLines, error.row) || error.breaksCode) {
-                this.errors.push({
-                    row: error.row,
-                    column: error.column,
-                    text: _.compose(this.prettify, this.clean)(error.text),
-                    type: "error",
-                    source: error.source
-                });
-            }
-        }.bind(this));
+        errors = errors.sort(function(a, b) {
+            var diff = a.row - b.row;
+            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
+        });
 
-        // Add JSHINT errors at the end
-        this.errors = this.errors.concat(hintErrors);
+        return errors;
     },
 
     // This adds html tags around quoted lines so they can be formatted
@@ -1837,6 +1776,10 @@ var LiveEditorOutput = {
         str = str.split("\"");
         var htmlString = "";
         for (var i = 0; i < str.length; i++) {
+            if (str[i].length === 0) {
+                continue;
+            }
+
             if (i % 2 === 0) {
                 //regular text
                 htmlString += "<span class=\"text\">" + str[i] + "</span>";
@@ -1852,63 +1795,28 @@ var LiveEditorOutput = {
         return String(str).replace(/</g, "&lt;");
     },
 
-    toggleErrors: function() {
-        var self = this;
-        var hasErrors = !!this.errors.length;
+    toggleErrors: function(errors) {
+        var hasErrors = !!errors.length;
 
         $("#show-errors").toggleClass("ui-state-disabled", !hasErrors);
         $("#output .error-overlay").toggle(hasErrors);
 
         this.toggle(!hasErrors);
 
-        if (hasErrors) {
-            this.errors = this.errors.sort(function(a, b) {
-                return a.row - b.row;
-            });
+        if (!hasErrors) {
+            this.tipbar.hide("Error");
+            return;
+        }
 
-            if (this.errorDelay) {
-                clearTimeout(this.errorDelay);
+        if (this.errorDelay) {
+            clearTimeout(this.errorDelay);
+        }
+
+        this.errorDelay = setTimeout(function() {
+            if (errors.length > 0) {
+                this.tipbar.show("Error", errors);
             }
-
-            this.errorDelay = setTimeout(function() {
-                if (this.errors.length > 0) {
-                    self.tipbar.show("Error", this.errors);
-                }
-            }.bind(this), 1500);
-
-        } else {
-            self.tipbar.hide("Error");
-        }
-    },
-
-    toggle: function(toggle) {
-        if (this.output && this.output.toggle) {
-            this.output.toggle(toggle);
-        }
-    },
-
-    start: function() {
-        if (this.output && this.output.start) {
-            this.output.start();
-        }
-    },
-
-    stop: function() {
-        if (this.output && this.output.stop) {
-            this.output.stop();
-        }
-    },
-
-    restart: function() {
-        if (this.output && this.output.restart) {
-            this.output.restart();
-        }
-    },
-
-    clear: function() {
-        if (this.output && this.output.clear) {
-            this.output.clear();
-        }
+        }.bind(this), 1500);
     },
 
     handleError: function(e) {
@@ -1923,43 +1831,6 @@ var LiveEditorOutput = {
                     "making it unable to run."));
             return;
         }
-
-        var row = e.lineno ? e.lineno - 2 : -1;
-
-        // Show babyHint errors first
-        _.each(this.babyErrors, function(error) {
-            if (error.row + 1 === row) {
-                this.errors.push({
-                    row: error.row,
-                    column: error.column,
-                    text: _.compose(this.prettify, this.clean)(error.text),
-                    type: "error"
-                });
-            }
-        });
-
-        this.errors.push({
-            row: row,
-            column: 0,
-            text: this.clean(e.message),
-            type: "error"
-        });
-
-        this.toggleErrors();
-    },
-
-    exec: function() {
-        if (!this.output.exec) {
-            return true;
-        }
-
-        try {
-            return this.output.exec.apply(this.output, arguments);
-
-        } catch (e) {
-            this.handleError(e);
-            return e;
-        }
     }
 };
 
@@ -1967,8 +1838,6 @@ window.Output = LiveEditorOutput;
 window.LiveEditorOutput = LiveEditorOutput;
 
 })();
-
-(function() {
 
 window.CanvasOutput = {
     // Canvas mouse events to track
@@ -2041,11 +1910,11 @@ window.CanvasOutput = {
                 safeCalls = this.safeCalls = {};
 
             // Make sure that only certain properties can be manipulated
-            for (var processingProp in Output.context) {
+            for (var processingProp in this.canvas) {
                 // Processing.js has some "private" methods (beginning with __)
                 // these shouldn't be exposed to the user.
                 if (processingProp.indexOf("__") < 0) {
-                    var value = Output.context[processingProp],
+                    var value = this.canvas[processingProp],
                         isFunction = (typeof value === "function");
 
                     // If the property is a function or begins with an uppercase
@@ -2101,10 +1970,89 @@ window.CanvasOutput = {
             externalProps.draw = true;
         }
 
+        // Load JSHint config options
+        this.config.runCurVersion("jshint", this);
+
+        this.config.on("versionSwitched", function(e, version) {
+            this.config.runVersion(version, "processing", this.canvas);
+        }.bind(this));
+
+        BabyHint.init({
+            context: this.canvas
+        });
+
         return this;
     },
 
     bind: function() {
+        if (window !== window.top) {
+            window.alert = $.noop;
+            window.open = $.noop;
+            window.showModalDialog = $.noop;
+            window.confirm = $.noop;
+            window.prompt = $.noop;
+            window.eval = $.noop;
+        }
+
+        if (window !== window.top && Object.freeze &&
+                Object.getOwnPropertyDescriptor) {
+            // Freezing the whole window, and more specifically
+            // window.location, causes a redirect on Safari 6 and 7.
+            // Test case: http://ejohn.org/files/freeze-test.html
+
+            // Note that freezing the window object in any way in our test
+            // environment will have no side effect, and will remain mutable in
+            // every way.
+
+            // Manually freeze everything except for location for the object's
+            // own properties. The Object prototype chain will be frozen just
+            // after.
+            for (var prop in window) {
+                // Could be combined into check below, but lint requires it
+                // here :(
+                if (window.hasOwnProperty(prop)) {
+                    // The property descriptor check is needed to avoid some
+                    // nasty console messages when trying to freeze non
+                    // configurable properties.
+                    try {
+                        var propDescriptor =
+                            Object.getOwnPropertyDescriptor(window, prop);
+                        if (!propDescriptor || propDescriptor.configurable) {
+                            Object.defineProperty(window, prop, {
+                                value: window[prop],
+                                writable: false,
+                                configurable: false
+                            });
+                        }
+                    } catch(e) {
+                        // Couldn't access property for permissions reasons,
+                        //  like window.frame
+                        // Only happens on prod where it's cross-origin
+                    }
+                }
+            }
+
+            // Prevent further changes to property descriptors and prevent
+            // extensibility on window.
+            var userAgent = navigator.userAgent.toLowerCase();
+            if (/chrome/.test(userAgent)) {
+                Object.freeze(window.location);
+                Object.freeze(window);
+            } else if (/safari/.test(userAgent)) {
+                Object.seal(window);
+            } else {
+                // On other browsers only freeze if we can, on Firefox it
+                // causes an error because window is not configurable.
+                var propDescriptor = Object.getOwnPropertyDescriptor(window);
+                if (!propDescriptor || propDescriptor.configurable) {
+                    Object.freeze(window);
+                }
+            }
+
+            // Completely lock down window's prototype chain
+            Object.freeze(Object.getPrototypeOf(window));
+        }
+
         var offset = this.$elem.offset();
 
         // Go through all of the mouse events to track
@@ -2164,10 +2112,9 @@ window.CanvasOutput = {
     handlers: {},
 
     build: function(canvas) {
-        this.canvas = Output.context =
-            new Processing(canvas, function(instance) {
-                instance.draw = this.DUMMY;
-            }.bind(this));
+        this.canvas = new Processing(canvas, function(instance) {
+            instance.draw = this.DUMMY;
+        }.bind(this));
 
         this.bindProcessing(this.processing, this.canvas);
 
@@ -2304,8 +2251,8 @@ window.CanvasOutput = {
 
             // Display an error message as the file wasn't located.
             if (!cachedFile) {
-                return Output.handleError({ message:
-                      $._("Image '%(file)s' was not found.", {file: file}) });
+                throw {message:
+                      $._("Image '%(file)s' was not found.", {file: file})};
             }
 
             // Give the image a representative ID
@@ -2318,20 +2265,17 @@ window.CanvasOutput = {
 
         // Make sure that loadImage is disabled in favor of getImage
         loadImage: function(file) {
-            Output.handleError({ message:
-                "Use getImage instead of loadImage." });
+            throw {message: "Use getImage instead of loadImage."};
         },
 
         // Make sure that requestImage is disabled in favor of getImage
         requestImage: function(file) {
-            Output.handleError({ message:
-                "Use getImage instead of requestImage." });
+            throw {message: "Use getImage instead of requestImage."};
         },
 
         // Disable link method
         link: function() {
-            Output.handleError({ message:
-                $._("link() method is disabled.") });
+            throw {message: $._("link() method is disabled.")};
         },
 
         // Basic console logging
@@ -2435,31 +2379,136 @@ window.CanvasOutput = {
 
     DUMMY: function() {},
 
-    preTest: function() {
-        this.oldContext = Output.context;
+    // Generate a string list of properties
+    propListString: function(props) {
+        var bannedProps = this.bannedProps;
+        var propList = [];
 
-        if (this.testingContext) {
-            this.canvas = Output.context = this.testingContext;
+        for (var prop in props) {
+            if (!bannedProps[prop]) {
+                propList.push(prop + ":" + props[prop]);
+            }
+        }
 
+        return propList.join(",");
+    },
+
+    lint: function(userCode, callback) {
+        // Build a string of options to feed into JSHint
+        // All properties are defined in the config
+        var hintCode = "/*jshint " +
+            this.propListString(this.JSHint) + " */" +
+
+            // Build a string of variables names to feed into JSHint
+            // This lets JSHint know which variables are globally exposed
+            // and which can be overridden, more details:
+            // http://www.jshint.com/about/
+            // propName: true (is a global property, but can be overridden)
+            // propName: false (is a global property, cannot be overridden)
+            "/*global " + this.propListString(this.props) +
+
+            // The user's code to execute
+            "*/\n" + userCode;
+
+        var done = function(hintData, hintErrors) {
+            this.lintDone(userCode, hintData, hintErrors, callback);
+        }.bind(this);
+
+        // Don't run JSHint if there is no code to run
+        if (!userCode) {
+            done(null, []);
         } else {
-            this.testCanvas = document.createElement("canvas");
-            this.build(this.testCanvas);
-            this.testingContext = Output.context;
+            this.hintWorker.exec(hintCode, done);
         }
     },
 
-    postTest: function() {
-        this.canvas = Output.context = this.oldContext;
+    lintDone: function(userCode, hintData, hintErrors, callback) {
+        var externalProps = this.props;
 
-        return this.testCanvas;
+        this.globals = {};
+
+        if (hintData && hintData.globals) {
+            for (var i = 0, l = hintData.globals.length; i < l; i++) {
+                var global = hintData.globals[i];
+
+                // Do this so that declared variables are gobbled up
+                // into the global context object
+                if (!externalProps[global] && !(global in this.canvas)) {
+                    this.canvas[global] = undefined;
+                }
+
+                this.globals[global] = true;
+            }
+        }
+
+        var errors = this.mergeErrors(hintErrors,
+            BabyHint.babyErrors(userCode, hintErrors));
+
+        // We only need to extract globals when the code has passed
+        // the JSHint check
+        this.globals = {};
+
+        if (hintData && hintData.globals) {
+            for (var i = 0, l = hintData.globals.length; i < l; i++) {
+                var global = hintData.globals[i];
+
+                // Do this so that declared variables are gobbled up
+                // into the global context object
+                if (!externalProps[global] && !(global in this.canvas)) {
+                    this.canvas[global] = undefined;
+                }
+
+                this.globals[global] = true;
+            }
+        }
+
+        callback(errors);
     },
 
-    runTest: function(userCode, test, i) {
-        // TODO(jeresig): Add in Canvas testing
-        // Create a temporary canvas and a new processing instance
-        // temporarily overwrite Output.context
-        // Save the canvas for later and return that as the output
-        // this.runCode(userCode);
+    test: function(userCode, tests, errors, callback) {
+        this.testWorker.exec(userCode, tests, errors, callback);
+    },
+
+    mergeErrors: function(jshintErrors, babyErrors) {
+        var errors = [];
+        var brokenLines = [];
+        var hintErrors = [];
+
+        // Find which lines JSHINT broke on
+        _.each(jshintErrors, function(error) {
+            if (error && error.line && error.character &&
+                    error.reason &&
+                    !/unable to continue/i.test(error.reason)) {
+                brokenLines.push(error.line - 2);
+                hintErrors.push({
+                    row: error.line - 2,
+                    column: error.character - 1,
+                    text: error.reason,
+                    type: "error",
+                    lint: error,
+                    source: "jshint",
+                    priority: 2
+                });
+            }
+        }.bind(this));
+
+        // Add baby errors if JSHINT also broke on those lines, OR we don't want
+        // to allow that error
+        _.each(babyErrors, function(error) {
+            if (_.include(brokenLines, error.row) || error.breaksCode) {
+                errors.push({
+                    row: error.row,
+                    column: error.column,
+                    text: error.text,
+                    type: "error",
+                    source: error.source,
+                    priority: 1
+                });
+            }
+        }.bind(this));
+
+        // Add JSHINT errors at the end
+        return errors.concat(hintErrors);
     },
 
     runCode: function(userCode, globalContext, callback) {
@@ -2470,8 +2519,8 @@ window.CanvasOutput = {
 
             var context = {};
 
-            _.each(Output.globals, function(val, global) {
-                var value = Output.context[global];
+            _.each(this.globals, function(val, global) {
+                var value = this.canvas[global];
                 var contextVal;
                 if (typeof value === "function" || global === "Math") {
                     contextVal = "__STUBBED_FUNCTION__";
@@ -2483,26 +2532,28 @@ window.CanvasOutput = {
                     //  otherwise we'll give web workers an object that
                     //  they can't serialize.
                     ($.isPlainObject(value) &&
-                    !(value instanceof Output.context.PImage))) {
+                    !(value instanceof this.canvas.PImage))) {
                     contextVal = value;
                 } else {
                     contextVal = {};
                 }
                 context[global] = contextVal;
-            });
+            }.bind(this));
 
-            Output.worker.exec(userCode, context, function(userCode) {
+            this.worker.exec(userCode, context, function(errors, userCode) {
+                if (errors && errors.length > 0) {
+                    return callback(errors, userCode);
+                }
+
                 try {
                     this.injectCode(userCode, callback);
-
                 } catch (e) {
-                    Output.handleError(e);
-                    callback();
+                    callback([e]);
                 }
             }.bind(this));
         }.bind(this);
 
-        if (Output.globals.getImage) {
+        if (this.globals.getImage) {
             this.cacheImages(userCode, runCode);
 
         } else {
@@ -2517,7 +2568,7 @@ window.CanvasOutput = {
     hasOrHadDrawLoop: function() {
         for (var i = 0, l = this.drawLoopMethods.length; i < l; i++) {
             var name = this.drawLoopMethods[i];
-            if (Output.globals[name] ||
+            if (this.globals[name] ||
                 this.lastGrab && this.lastGrab[name]) {
                     return true;
             }
@@ -2534,8 +2585,8 @@ window.CanvasOutput = {
     drawLoopMethodDefined: function() {
         for (var i = 0, l = this.drawLoopMethods.length; i < l; i++) {
             var name = this.drawLoopMethods[i];
-            if (Output.context[name] !== this.DUMMY &&
-                Output.context[name] !== undefined) {
+            if (this.canvas[name] !== this.DUMMY &&
+                this.canvas[name] !== undefined) {
                     return true;
             }
         }
@@ -2719,7 +2770,7 @@ window.CanvasOutput = {
         this.grabObj = {};
 
         // Extract a list of instances that were created using applyInstance
-        Output.instances = [];
+        this.instances = [];
 
         // Replace all calls to 'new Something' with
         // this.newInstance(Something)()
@@ -2734,15 +2785,16 @@ window.CanvasOutput = {
 
         // Only do the injection if we have or had a draw loop
         if (hasOrHadDrawLoop) {
-            // Go through all the globally-defined variables (this is determined by
-            // a prior run-through using JSHINT) and ensure that they're all defined
-            // on a single context. Also make sure that any function calls that have
-            // side effects are instead replaced with placeholders that collect a
-            // list of all functions called and their arguments.
-            // TODO(jeresig): See if we can move this off into the worker thread to
-            //                save an execution.
-            _.each(Output.globals, function(val, global) {
-                var value = Output.context[global];
+            // Go through all the globally-defined variables (this is
+            // determined by a prior run-through using JSHINT) and ensure that
+            // they're all defined on a single context. Also make sure that any
+            // function calls that have side effects are instead replaced with
+            // placeholders that collect a list of all functions called and
+            // their arguments.
+            // TODO(jeresig): See if we can move this off into the worker
+            // thread to save an execution.
+            _.each(this.globals, function(val, global) {
+                var value = this.canvas[global];
                 // Expose all the global values, if they already exist although
                 // even if they are undefined, the result will still get sucked
                 // into grabAll) Replace functions that have side effects with
@@ -2756,11 +2808,13 @@ window.CanvasOutput = {
                     value);
             }.bind(this));
 
-            // Run the code with the grabAll context. The code is run with no side
-            // effects and instead all function calls and globally-defined variable
-            // values are extracted. Abort injection on a runtime error.
-            if (!Output.exec(userCode, grabAll)) {
-                return;
+            // Run the code with the grabAll context. The code is run with no
+            // side effects and instead all function calls and globally-defined
+            // variable values are extracted. Abort injection on a runtime
+            // error.
+            var error = this.exec(userCode, grabAll);
+            if (error) {
+                return callback([error]);
             }
 
             // Attach names to all functions
@@ -2772,21 +2826,21 @@ window.CanvasOutput = {
 
             // Keep track of all the constructor functions that may
             // have to be reinitialized
-            for (var i = 0, l = Output.instances.length; i < l; i++) {
-                constructors[Output.instances[i].constructor.__name] = true;
+            for (var i = 0, l = this.instances.length; i < l; i++) {
+                constructors[this.instances[i].constructor.__name] = true;
             }
 
             // The instantiated instances have changed, which means that
             // we need to re-run everything.
-            if (Output.oldInstances &&
-                    this.stringifyArray(Output.oldInstances) !==
-                    this.stringifyArray(Output.instances)) {
+            if (this.oldInstances &&
+                    this.stringifyArray(this.oldInstances) !==
+                    this.stringifyArray(this.instances)) {
                 rerun = true;
             }
 
             // Reset the instances list
-            Output.oldInstances = Output.instances;
-            Output.instances = null;
+            this.oldInstances = this.instances;
+            this.instances = null;
 
             // Look for new top-level function calls to inject
             for (var i = 0; i < fnCalls.length; i++) {
@@ -2837,7 +2891,7 @@ window.CanvasOutput = {
                         // Otherwise it's ok to inject it directly into the
                         // new environment
                         } else {
-                            Output.context[prop] = val;
+                            this.canvas[prop] = val;
                         }
                     }
 
@@ -2890,7 +2944,8 @@ window.CanvasOutput = {
                         (!(oldProp in this.props) ||
                             oldProp === "draw")) {
                     // Create the code to delete the variable
-                    inject += "delete Output.context." + oldProp + ";\n";
+                    // TODO(jeresig): Re-work this!
+                    inject += "delete CanvasOutput.canvas." + oldProp + ";\n";
 
                     // If the draw function was deleted we also
                     // need to clear the display
@@ -2902,7 +2957,7 @@ window.CanvasOutput = {
         }
 
         // Make sure the matrix is always reset
-        Output.context.resetMatrix();
+        this.canvas.resetMatrix();
 
         // Seed the random number generator with the same seed
         this.restoreRandomSeed();
@@ -2911,7 +2966,7 @@ window.CanvasOutput = {
         // if they were just removed
         if (this.lastGrab) {
             for (var prop in this.liveReset) {
-                if (!Output.globals[prop] && this.lastGrab[prop]) {
+                if (!this.globals[prop] && this.lastGrab[prop]) {
                     this.canvas[prop].apply(this.canvas,
                         this.liveReset[prop]);
                 }
@@ -2928,15 +2983,18 @@ window.CanvasOutput = {
 
             // Force a call to the draw function to force checks for instances
             // and to make sure that errors in the draw loop are caught.
-            if (Output.globals.draw) {
+            if (this.globals.draw) {
                 userCode += "\ndraw();";
             }
 
             // Run the code as normal
-            Output.exec(userCode, Output.context);
+            var error = this.exec(userCode, this.canvas);
+            if (error) {
+                return callback([error]);
+            }
 
             // Attach names to all functions
-            _.each(Output.globals, function(val, prop) {
+            _.each(this.globals, function(val, prop) {
                 if (typeof val === "function") {
                     val.__name = prop;
                 }
@@ -2946,18 +3004,21 @@ window.CanvasOutput = {
         } else if (inject) {
             // Force a call to the draw function to force checks for instances
             // and to make sure that errors in the draw loop are caught.
-            if (Output.globals.draw) {
+            if (this.globals.draw) {
                 inject += "\ndraw();";
             }
 
             // Execute the injected code
-            Output.exec(inject, Output.context);
+            var error = this.exec(inject, this.canvas);
+            if (error) {
+                return callback([error]);
+            }
         }
 
         // Need to make sure that the draw function is never deleted
         // (Otherwise Processing.js starts to freak out)
-        if (!Output.context.draw) {
-            Output.context.draw = this.DUMMY;
+        if (!this.canvas.draw) {
+            this.canvas.draw = this.DUMMY;
         }
 
         // Save the extracted variables for later comparison
@@ -2968,7 +3029,7 @@ window.CanvasOutput = {
 
         if (callback) {
             try {
-                callback();
+                callback([]);
             } catch(e) {
                 // Ignore any errors that were generated in the callback
                 // NOTE(jeresig): This is needed because Mocha throws errors
@@ -2982,8 +3043,8 @@ window.CanvasOutput = {
     objectExtract: function(name, obj, proto) {
         // Make sure the object actually exists before we try
         // to inject stuff into it
-        if (!Output.context[name]) {
-            Output.context[name] = $.isArray(obj) ? [] : {};
+        if (!this.canvas[name]) {
+            this.canvas[name] = $.isArray(obj) ? [] : {};
         }
 
         // A specific property to inspect of the object
@@ -3007,7 +3068,7 @@ window.CanvasOutput = {
                 // Otherwise we should probably just inject the value directly
                 } else {
                     // Get the object that we'll be injecting into
-                    var outputObj = Output.context[name];
+                    var outputObj = this.canvas[name];
 
                     if (proto) {
                         outputObj = outputObj[proto];
@@ -3031,12 +3092,6 @@ window.CanvasOutput = {
         this.canvas.frameCount = 0;
 
         Output.runCode(Output.getUserCode());
-    },
-
-    testContext: {
-        testCanvas: function(name, fn) {
-            Output.testContext.test(name, fn, CanvasOutput);
-        }
     },
 
     toggle: function(doToggle) {
@@ -3080,9 +3135,13 @@ window.CanvasOutput = {
         this.$elem.hide();
     },
 
+    initTests: function(validate) {
+        return this.exec(validate, OutputTester.testContext)
+    },
+
     exec: function(code) {
         if (!code) {
-            return true;
+            return;
         }
 
         var contexts = Array.prototype.slice.call(arguments, 1);
@@ -3113,310 +3172,209 @@ window.CanvasOutput = {
         code = "var " + envName + " = arguments;\n(function(){\n" + code +
             "\n}).apply(" + topLevelThis + ");";
 
-        (new Function(code)).apply(this.canvas, contexts);
-
-        return true;
-    }
-};
-
-var PooledWorker = function(filename, onExec) {
-    this.pool = [];
-    this.curID = 0;
-    this.filename = filename;
-    this.onExec = onExec || function() {};
-};
-
-PooledWorker.prototype.getURL = function() {
-    return Output.workersDir + this.filename +
-        "?cachebust=B" + (new Date()).toDateString();
-};
-
-PooledWorker.prototype.getWorkerFromPool = function() {
-    // NOTE(jeresig): This pool of workers is used to cut down on the
-    // number of new web workers that we need to create. If the user
-    // is typing really fast, or scrubbing numbers, it has the
-    // potential to use a lot of workers. We want to re-use as many of
-    // them as possible as their creation can be expensive. (Chrome
-    // seems to freak out, use lots of memory, and sometimes crash.)
-    var worker = this.pool.shift();
-    if (!worker) {
-        worker = new window.Worker(this.getURL());
-    }
-    // Keep track of what number worker we're running so that we know
-    // if any new hint workers have been started after this one
-    this.curID += 1;
-    worker.id = this.curID;
-    return worker;
-};
-
-/* Returns true if the passed in worker is the most recently created */
-PooledWorker.prototype.isCurrentWorker = function(worker) {
-    return this.curID === worker.id;
-};
-
-PooledWorker.prototype.addWorkerToPool = function(worker) {
-    // Return the worker back to the pool
-    this.pool.push(worker);
-};
-
-PooledWorker.prototype.exec = function() {
-    this.onExec.apply(this, arguments);
-};
-
-/*
- * The worker that matches with StructuredJS.
- */
-Output.testWorker = new PooledWorker(
-    "test-worker.js",
-    function(code, validate, errors, callback) {
-        var self = this;
-
-        // If there are syntax errors in the tests themselves,
-        //  then we ignore the request to test.
         try {
-            OutputTester.exec(validate);
-        } catch(e) {
-            console.warn(e.message);
-            return;
-        }
+            (new Function(code)).apply(this.canvas, contexts);
 
-        Output.testing = true;
-
-        // Generic function to handle results of testing
-        var processTesterResults = function(tester) {
-            Output.testResults = tester.testResults;
-            Output.errors.concat(tester.errors);
-            Output.testing = false;
-        };
-
-        // If there's no Worker support *or* there
-        //  are syntax errors in user code, we do the testing in
-        //  the browser instead.
-        // We do it in-browser in the latter case as
-        //  the code is often in a syntax-error state,
-        //  and the browser doesn't like creating that many workers,
-        //  and the syntax error tests that we have are fast.
-        if (!window.Worker || errors.length > 0) {
-            OutputTester.test(code, validate, errors);
-            processTesterResults(OutputTester);
-            callback();
-            return;
-        }
-
-        var worker = this.getWorkerFromPool();
-
-        worker.onmessage = function(event) {
-            if (event.data.type === "test") {
-                if (self.isCurrentWorker(worker)) {
-                    var data = event.data.message;
-                    processTesterResults(data);
-                    callback();
-                }
-                self.addWorkerToPool(worker);
-            }
-        };
-
-        worker.postMessage({
-            code: code,
-            validate: validate,
-            errors: errors,
-            externalsDir: Output.externalsDir
-        });
-    }
-);
-
-/*
- * The worker that analyzes the user's code.
- */
-Output.hintWorker = new PooledWorker(
-    "jshint-worker.js",
-    function(hintCode, callback) {
-        // Fallback in case of no worker support
-        if (!window.Worker) {
-            JSHINT(hintCode);
-            callback(JSHINT.data(), JSHINT.errors);
-            return;
-        }
-
-        var self = this;
-
-        var worker = this.getWorkerFromPool();
-
-        worker.onmessage = function(event) {
-            if (event.data.type === "jshint") {
-                // If a new request has come in since the worker started
-                // then we just ignore the results and don't fire the callback
-                if (self.isCurrentWorker(worker)) {
-                    var data = event.data.message;
-                    callback(data.hintData, data.hintErrors);
-                }
-                self.addWorkerToPool(worker);
-            }
-        };
-
-        worker.postMessage({
-            code: hintCode,
-            externalsDir: Output.externalsDir,
-            jshintFile: Output.jshintFile
-        });
-    }
-);
-
-
-Output.worker = {
-    timeout: null,
-    running: false,
-
-    init: function() {
-        var worker = Output.worker.worker =
-            new window.Worker(Output.workersDir +
-                "worker.js?cachebust=" + (new Date()).toDateString());
-
-        worker.onmessage = function(event) {
-            // Execution of the worker has begun so we wait for it...
-            if (event.data.execStarted) {
-                // If the thread doesn't finish executing quickly, kill it and
-                // don't execute the code
-                Output.worker.timeout = window.setTimeout(function() {
-                    Output.worker.stop();
-                    Output.worker.done({message:
-                        $._("The program is taking too long to run. Perhaps " +
-                            "you have a mistake in your code?")});
-                }, 500);
-
-            } else if (event.data.type === "end") {
-                Output.worker.done();
-
-            } else if (event.data.type === "error") {
-                Output.worker.done({message: event.data.message});
-            }
-        };
-
-        worker.onerror = function(event) {
-            event.preventDefault();
-            Output.worker.done(event);
-        };
-    },
-
-    exec: function(userCode, context, callback) {
-        // Stop old worker from finishing
-        if (Output.worker.running) {
-            Output.worker.stop();
-        }
-
-        if (!Output.worker.worker) {
-            Output.worker.init();
-        }
-
-        Output.worker.done = function(e) {
-            Output.worker.running = false;
-
-            Output.worker.clearTimeout();
-
-            if (e) {
-                Output.handleError(e);
-
-                // Make sure that the caller knows that we're done
-                callback();
-            } else {
-                callback(userCode);
-            }
-        };
-
-        try {
-            Output.worker.worker.postMessage({
-                code: userCode,
-                context: context
-            });
-
-            Output.worker.running = true;
         } catch (e) {
-            // TODO: Object is too complex to serialize, try to find
-            // an alternative workaround
-            Output.worker.done();
+            return e;
         }
     },
 
     /*
-     * Stop long-running execution detection, if still going.
+     * The worker that matches with StructuredJS.
      */
-    clearTimeout: function() {
-        if (Output.worker.timeout !== null) {
-            window.clearTimeout(Output.worker.timeout);
-            Output.worker.timeout = null;
+    testWorker: new PooledWorker(
+        "test-worker.js",
+        function(code, validate, errors, callback) {
+            var self = this;
+
+            // If there are syntax errors in the tests themselves,
+            //  then we ignore the request to test.
+            try {
+                OutputTester.exec(validate);
+            } catch(e) {
+                console.warn(e.message);
+                return;
+            }
+
+            Output.testing = true;
+
+            // Generic function to handle results of testing
+            var processTesterResults = function(tester) {
+                Output.testResults = tester.testResults;
+                errors = errors.concat(tester.errors);
+                Output.testing = false;
+            };
+
+            // If there's no Worker support *or* there
+            //  are syntax errors in user code, we do the testing in
+            //  the browser instead.
+            // We do it in-browser in the latter case as
+            //  the code is often in a syntax-error state,
+            //  and the browser doesn't like creating that many workers,
+            //  and the syntax error tests that we have are fast.
+            if (!window.Worker || errors.length > 0) {
+                OutputTester.test(code, validate, errors);
+                processTesterResults(OutputTester);
+                callback(errors);
+                return;
+            }
+
+            var worker = this.getWorkerFromPool();
+
+            worker.onmessage = function(event) {
+                if (event.data.type === "test") {
+                    if (self.isCurrentWorker(worker)) {
+                        var data = event.data.message;
+                        processTesterResults(data);
+                        callback(errors);
+                    }
+                    self.addWorkerToPool(worker);
+                }
+            };
+
+            worker.postMessage({
+                code: code,
+                validate: validate,
+                errors: errors,
+                externalsDir: Output.externalsDir
+            });
         }
-    },
+    ),
 
     /*
-     * Calling this will stop execution of any currently running worker
-     * Will return true if a worker was running, false if one was not.
+     * The worker that analyzes the user's code.
      */
-    stop: function() {
-        Output.worker.clearTimeout();
+    hintWorker: new PooledWorker(
+        "jshint-worker.js",
+        function(hintCode, callback) {
+            // Fallback in case of no worker support
+            if (!window.Worker) {
+                JSHINT(hintCode);
+                callback(JSHINT.data(), JSHINT.errors);
+                return;
+            }
 
-        if (Output.worker.worker) {
-            Output.worker.worker.terminate();
-            Output.worker.worker = null;
-            return true;
+            var self = this;
+
+            var worker = this.getWorkerFromPool();
+
+            worker.onmessage = function(event) {
+                if (event.data.type === "jshint") {
+                    // If a new request has come in since the worker started
+                    // then we just ignore the results and don't fire the callback
+                    if (self.isCurrentWorker(worker)) {
+                        var data = event.data.message;
+                        callback(data.hintData, data.hintErrors);
+                    }
+                    self.addWorkerToPool(worker);
+                }
+            };
+
+            worker.postMessage({
+                code: hintCode,
+                externalsDir: Output.externalsDir,
+                jshintFile: Output.jshintFile
+            });
         }
+    ),
 
-        return false;
+    worker: {
+        timeout: null,
+        running: false,
+
+        init: function() {
+            var worker = this.worker =
+                new window.Worker(Output.workersDir +
+                    "worker.js?cachebust=" + (new Date()).toDateString());
+
+            worker.onmessage = function(event) {
+                // Execution of the worker has begun so we wait for it...
+                if (event.data.execStarted) {
+                    // If the thread doesn't finish executing quickly, kill it and
+                    // don't execute the code
+                    this.timeout = window.setTimeout(function() {
+                        this.stop();
+                        this.done({message:
+                            $._("The program is taking too long to run. Perhaps " +
+                                "you have a mistake in your code?")});
+                    }.bind(this), 500);
+
+                } else if (event.data.type === "end") {
+                    this.done();
+
+                } else if (event.data.type === "error") {
+                    this.done({message: event.data.message});
+                }
+            }.bind(this);
+
+            worker.onerror = function(event) {
+                event.preventDefault();
+                this.done(event);
+            }.bind(this);
+        },
+
+        exec: function(userCode, context, callback) {
+            // Stop old worker from finishing
+            if (this.running) {
+                this.stop();
+            }
+
+            if (!this.worker) {
+                this.init();
+            }
+
+            this.done = function(e) {
+                this.running = false;
+
+                this.clearTimeout();
+
+                if (e) {
+                    // Make sure that the caller knows that we're done
+                    callback([e]);
+                } else {
+                    callback([], userCode);
+                }
+            }.bind(this);
+
+            try {
+                this.worker.postMessage({
+                    code: userCode,
+                    context: context
+                });
+
+                this.running = true;
+            } catch (e) {
+                // TODO: Object is too complex to serialize, try to find
+                // an alternative workaround
+                this.done();
+            }
+        },
+
+        /*
+         * Stop long-running execution detection, if still going.
+         */
+        clearTimeout: function() {
+            if (this.timeout !== null) {
+                window.clearTimeout(this.timeout);
+                this.timeout = null;
+            }
+        },
+
+        /*
+         * Calling this will stop execution of any currently running worker
+         * Will return true if a worker was running, false if one was not.
+         */
+        stop: function() {
+            this.clearTimeout();
+
+            if (this.worker) {
+                this.worker.terminate();
+                this.worker = null;
+                return true;
+            }
+
+            return false;
+        }
     }
 };
-
-if (window !== window.top && Object.freeze &&
-        Object.getOwnPropertyDescriptor) {
-    // Freezing the whole window, and more specifically window.location, causes
-    // a redirect on Safari 6 and 7.
-    // Test case: http://ejohn.org/files/freeze-test.html
-
-    // Note that freezing the window object in any way in our test environment
-    // will have no side effect, and will remain mutable in every way.
-
-    // Manually freeze everything except for location for the object's own
-    // properties. The Object prototype chain will be frozen just after.
-    for (var prop in window) {
-        // Could be combined into check below, but lint requires it here :(
-        if (window.hasOwnProperty(prop)) {
-            // The property descriptor check is needed to avoid some nasty
-            // console messages when trying to freeze non configurable
-            // properties.
-            try {
-                var propDescriptor = Object.getOwnPropertyDescriptor(window, prop);
-                if (!propDescriptor || propDescriptor.configurable) {
-                    Object.defineProperty(window, prop, {
-                        value: window[prop],
-                        writable: false,
-                        configurable: false
-                    });
-                }
-            } catch(e) {
-                // Couldn't access property for permissions reasons,
-                //  like window.frame
-                // Only happens on prod where it's cross-origin
-            }
-        }
-    }
-
-    // Prevent further changes to property descriptors and prevent
-    // extensibility on window.
-    var userAgent = navigator.userAgent.toLowerCase();
-    if (/chrome/.test(userAgent)) {
-        Object.freeze(window.location);
-        Object.freeze(window);
-    } else if (/safari/.test(userAgent)) {
-        Object.seal(window);
-    } else {
-        // On other browsers only freeze if we can, on Firefox it causes an
-        // error because window is not configurable.
-        var propDescriptor = Object.getOwnPropertyDescriptor(window);
-        if (!propDescriptor || propDescriptor.configurable) {
-            Object.freeze(window);
-        }
-    }
-
-    // Completely lock down window's prototype chain
-    Object.freeze(Object.getPrototypeOf(window));
-}
-
-})();

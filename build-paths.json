@@ -81,6 +81,7 @@
             "build/tmpl/output.js",
             "js/exec/babyhint.js",
             "js/workers/output-tester.js",
+            "js/exec/pooled-worker.js",
             "js/exec/output.js",
             "js/exec/canvas-output.js"
         ],

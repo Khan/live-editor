@@ -144,14 +144,14 @@ var BabyHint = {
     inComment: false,
     spellChecked: false,
 
-    init: function() {
+    init: function(options) {
         // grab globals from Processing object
-        for (var f in Output.context) {
-            if (typeof Output.context[f] === "function") {
+        for (var f in options.context) {
+            if (typeof options.context[f] === "function") {
                 BabyHint.keywords.push(f);
                 if (!(f in BabyHint.functionParamCount) &&
                     !_.include(BabyHint.functionParamBlacklist, f)) {
-                    BabyHint.functionParamCount[f] = Output.context[f].length;
+                    BabyHint.functionParamCount[f] = options.context[f].length;
                 }
             }
         }
