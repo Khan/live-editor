@@ -38,14 +38,14 @@ var runTest = function(options) {
         
         // Run once to make sure that no errors are thrown
         // during execution
-        Output.runCode(code, function(errors) {
+        Output.runCode(code, function(errors, testResults) {
             if (!options.reason) {
                 expect(errors.length).to.be.equal(0);
             } else {
                 if (options.fromTests) {
-                    expect(Output.testResults).to.not.equal([]);
-                    expect(Output.testResults[0].state).to.be.equal("fail");
-                    expect(Output.testResults[0].results[0].meta.alsoMessage)
+                    expect(testResults).to.not.equal([]);
+                    expect(testResults[0].state).to.be.equal("fail");
+                    expect(testResults[0].results[0].meta.alsoMessage)
                         .to.be.equal(options.reason);
                 } else {
                     expect(errors).to.not.equal([]);

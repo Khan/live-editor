@@ -49,12 +49,14 @@ var LiveEditorOutput = {
         }
         if (data.externalsDir) {
             this.externalsDir = this._qualifyURL(data.externalsDir);
+            PooledWorker.prototype.externalsDir = this.externalsDir;
         }
         if (data.imagesDir) {
             this.imagesDir = this._qualifyURL(data.imagesDir);
         }
         if (data.jshintFile) {
             this.jshintFile = this._qualifyURL(data.jshintFile);
+            PooledWorker.prototype.jshintFile = this.jshintFile;
         }
     },
 
@@ -183,7 +185,7 @@ var LiveEditorOutput = {
     runCode: function(userCode, callback) {
         this.currentCode = userCode;
 
-        var runDone = function(errors) {
+        var runDone = function(errors, testResults) {
             errors = this.cleanErrors(errors || []);
 
             if (!this.loaded) {
@@ -193,7 +195,7 @@ var LiveEditorOutput = {
 
             // A callback for working with a test suite
             if (callback) {
-                callback(errors);
+                callback(errors, testResults);
                 return;
             }
 
@@ -201,7 +203,7 @@ var LiveEditorOutput = {
                 results: {
                     code: userCode,
                     errors: errors,
-                    tests: this.testResults || [],
+                    tests: testResults || [],
                     assertions: this.assertions
                 }
             });
@@ -211,17 +213,19 @@ var LiveEditorOutput = {
 
         this.lint(userCode, function(errors) {
             // Run the tests (even if there are lint errors)
-            this.test(userCode, this.validate, errors, function(errors) {
+            this.test(userCode, this.validate, errors, function(errors, testResults) {
                 if (errors.length > 0 || this.onlyRunTests) {
-                    return runDone(errors);
+                    return runDone(errors, testResults);
                 }
 
                 // Then run the user's code
                 try {
-                    this.output.runCode(userCode, runDone);
+                    this.output.runCode(userCode, function(errors) {
+                        runDone(errors, testResults);
+                    });
 
                 } catch (e) {
-                    runDone([e]);
+                    runDone([e], testResults);
                 }
             }.bind(this));
         }.bind(this));
@@ -242,7 +246,8 @@ var LiveEditorOutput = {
 
         this.output = output;
         output.init({
-            config: this.config
+            config: this.config,
+            output: this
         });
     },
 
@@ -255,7 +260,11 @@ var LiveEditorOutput = {
     },
 
     restart: function() {
-        this.output.restart();
+        if (this.output.restart) {
+            this.output.restart();
+        }
+
+        this.runCode(this.getUserCode());
     },
 
     cleanErrors: function(errors) {
@@ -335,20 +344,6 @@ var LiveEditorOutput = {
                 this.tipbar.show("Error", errors);
             }
         }.bind(this), 1500);
-    },
-
-    handleError: function(e) {
-        if (this.testing) {
-            // Note: Scratchpad challenge checks against the exact translated
-            // text "A critical problem occurred..." to figure out whether
-            // we hit this case.
-            var message = $._("Error: %(message)s", { message: e.message });
-            $("#test-errors").text(message).show();
-            OutputTester.testContext.assert(false, message,
-                $._("A critical problem occurred in your program " +
-                    "making it unable to run."));
-            return;
-        }
     }
 };
 

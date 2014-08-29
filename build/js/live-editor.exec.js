@@ -1519,12 +1519,14 @@ var LiveEditorOutput = {
         }
         if (data.externalsDir) {
             this.externalsDir = this._qualifyURL(data.externalsDir);
+            PooledWorker.prototype.externalsDir = this.externalsDir;
         }
         if (data.imagesDir) {
             this.imagesDir = this._qualifyURL(data.imagesDir);
         }
         if (data.jshintFile) {
             this.jshintFile = this._qualifyURL(data.jshintFile);
+            PooledWorker.prototype.jshintFile = this.jshintFile;
         }
     },
 
@@ -1653,7 +1655,7 @@ var LiveEditorOutput = {
     runCode: function(userCode, callback) {
         this.currentCode = userCode;
 
-        var runDone = function(errors) {
+        var runDone = function(errors, testResults) {
             errors = this.cleanErrors(errors || []);
 
             if (!this.loaded) {
@@ -1663,7 +1665,7 @@ var LiveEditorOutput = {
 
             // A callback for working with a test suite
             if (callback) {
-                callback(errors);
+                callback(errors, testResults);
                 return;
             }
 
@@ -1671,7 +1673,7 @@ var LiveEditorOutput = {
                 results: {
                     code: userCode,
                     errors: errors,
-                    tests: this.testResults || [],
+                    tests: testResults || [],
                     assertions: this.assertions
                 }
             });
@@ -1681,17 +1683,19 @@ var LiveEditorOutput = {
 
         this.lint(userCode, function(errors) {
             // Run the tests (even if there are lint errors)
-            this.test(userCode, this.validate, errors, function(errors) {
+            this.test(userCode, this.validate, errors, function(errors, testResults) {
                 if (errors.length > 0 || this.onlyRunTests) {
-                    return runDone(errors);
+                    return runDone(errors, testResults);
                 }
 
                 // Then run the user's code
                 try {
-                    this.output.runCode(userCode, runDone);
+                    this.output.runCode(userCode, function(errors) {
+                        runDone(errors, testResults);
+                    });
 
                 } catch (e) {
-                    runDone([e]);
+                    runDone([e], testResults);
                 }
             }.bind(this));
         }.bind(this));
@@ -1712,7 +1716,8 @@ var LiveEditorOutput = {
 
         this.output = output;
         output.init({
-            config: this.config
+            config: this.config,
+            output: this
         });
     },
 
@@ -1725,7 +1730,11 @@ var LiveEditorOutput = {
     },
 
     restart: function() {
-        this.output.restart();
+        if (this.output.restart) {
+            this.output.restart();
+        }
+
+        this.runCode(this.getUserCode());
     },
 
     cleanErrors: function(errors) {
@@ -1805,20 +1814,6 @@ var LiveEditorOutput = {
                 this.tipbar.show("Error", errors);
             }
         }.bind(this), 1500);
-    },
-
-    handleError: function(e) {
-        if (this.testing) {
-            // Note: Scratchpad challenge checks against the exact translated
-            // text "A critical problem occurred..." to figure out whether
-            // we hit this case.
-            var message = $._("Error: %(message)s", { message: e.message });
-            $("#test-errors").text(message).show();
-            OutputTester.testContext.assert(false, message,
-                $._("A critical problem occurred in your program " +
-                    "making it unable to run."));
-            return;
-        }
     }
 };
 
@@ -1870,6 +1865,7 @@ window.CanvasOutput = {
         this.handlers = {};
 
         this.config = options.config;
+        this.output = options.output;
 
         this.$elem = $("#output-canvas");
 
@@ -2053,7 +2049,7 @@ window.CanvasOutput = {
             // Track that event on the Canvas element
             this.$elem.bind(eventType, function(e) {
                 // Only log if recording is occurring
-                if (Output.recording) {
+                if (this.output.recording) {
                     var action = {};
 
                     // Track the x/y coordinates of the event
@@ -2064,9 +2060,9 @@ window.CanvasOutput = {
                     };
 
                     // Log the command
-                    Output.postParent({ log: action });
+                    this.output.postParent({ log: action });
                 }
-            });
+            }.bind(this));
 
             // Handle the command during playback
             this.handlers[name] = function(e) {
@@ -2147,7 +2143,7 @@ window.CanvasOutput = {
             this.canvas.size(width, height);
 
             // Restart execution
-            Output.restart();
+            this.output.restart();
         }
     },
 
@@ -2206,7 +2202,7 @@ window.CanvasOutput = {
             file = fileMatch[1];
 
             // We only allow images from within a certain path
-            var path = Output.imagesDir + file + ".png";
+            var path = this.output.imagesDir + file + ".png";
 
             // Load the image in the background
             var img = document.createElement("img");
@@ -2276,18 +2272,18 @@ window.CanvasOutput = {
         // Or even run their own tests.
         Program: {
             settings: function() {
-                return Output.settings || {};
+                return this.output.settings || {};
             },
 
             // Force the program to restart (run again)
             restart: function() {
-                Output.restart();
+                this.output.restart();
             },
 
             // Force the tests to run again
-            runTests: function() {
-                Output.test();
-                return Output.testResults;
+            runTests: function(callback) {
+                return this.output.test(this.output.getUserCode(),
+                    this.output.validate, [], callback);
             },
 
             assertEqual: function(actual, expected) {
@@ -2323,8 +2319,8 @@ window.CanvasOutput = {
 
                 var msg = $._("Assertion failed: " +
                     "%(actual)s is not equal to %(expected)s.", {
-                        actual: this.stringify(actual),
-                        expected: this.stringify(expected)
+                        actual: JSON.stringify(actual),
+                        expected: JSON.stringify(expected)
                 });
 
                 var lineNum = getLineNum();
@@ -2333,7 +2329,7 @@ window.CanvasOutput = {
                     lineNum = 0;
                 }
 
-                Output.assertions.push({
+                this.output.assertions.push({
                     row: lineNum, column: 0, text: msg
                 });
             },
@@ -2348,9 +2344,9 @@ window.CanvasOutput = {
 
                 var result = !!fn();
 
-                Output.postParent({
+                this.output.postParent({
                     results: {
-                        code: Output.currentCode,
+                        code: this.output.getUserCode(),
                         errors: [],
                         tests: [{
                             name: name,
@@ -2454,7 +2450,24 @@ window.CanvasOutput = {
     },
 
     test: function(userCode, tests, errors, callback) {
-        this.testWorker.exec(userCode, tests, errors, callback);
+        var errorCount = errors.length;
+
+        this.testWorker.exec(userCode, tests, errors, function(errors, testResults) {
+            if (errorCount !== errors.length) {
+                // Note: Scratchpad challenge checks against the exact
+                // translated text "A critical problem occurred..." to figure
+                // out whether we hit this case.
+                var message = $._("Error: %(message)s",
+                    {message: errors[errors.length - 1].message});
+                // TODO(jeresig): Find a good way to show this
+                //$("#test-errors").text(message).show();
+                OutputTester.testContext.assert(false, message,
+                    $._("A critical problem occurred in your program " +
+                        "making it unable to run."));
+            }
+
+            callback(errors, testResults);
+        });
     },
 
     mergeErrors: function(jshintErrors, babyErrors) {
@@ -2582,118 +2595,11 @@ window.CanvasOutput = {
         return false;
     },
 
-    // Turn a JavaScript object into a form that can be executed
-    // (Note: The form will not necessarily be able to pass a JSON linter)
-    // (Note: JSON.stringify might throw an exception. We don't capture it
-    //        here as we'll want to deal with it later.)
-    stringify: function(obj) {
-        // Use toString on functions
-        if (typeof obj === "function") {
-            return obj.toString();
-
-        // If we're dealing with an instantiated object just
-        // use its generated ID
-        } else if (obj && obj.__id) {
-            return obj.__id();
-
-        // Check if we're dealing with an array
-        } else if (obj &&
-                Object.prototype.toString.call(obj) === "[object Array]") {
-            return this.stringifyArray(obj);
-
-        // JSON.stringify returns undefined, not as a string, so we specially
-        // handle that
-        } else if (typeof obj === "undefined") {
-                return "undefined";
-        }
-
-        // If all else fails, attempt to JSON-ify the string
-        // TODO(jeresig): We should probably do recursion to better handle
-        // complex objects that might hold instances.
-        return JSON.stringify(obj, function(k, v) {
-            // Don't jsonify the canvas or its context because it can lead
-            // to circular jsonification errors on chrome.
-            if (v && (v.id !== undefined && v.id === "output-canvas" ||
-                    typeof CanvasRenderingContext2D !== "undefined" &&
-                    v instanceof CanvasRenderingContext2D)) {
-                return undefined;
-            }
-            return v;
-        });
-    },
-
-    // Turn an array into a string list
-    // (Especially useful for serializing a list of arguments)
-    stringifyArray: function(array) {
-        var results = [];
-
-        for (var i = 0, l = array.length; i < l; i++) {
-            results.push(this.stringify(array[i]));
-        }
-
-        return results.join(", ");
-    },
-
-    // Defer a 'new' on a function for later
-    // Makes it possible to generate a unique signature for the
-    // instance (see: .__id())
-    // Meant to translate:
-    // new Foo(a, b, c) into: applyInstance(Foo)(a, b, c)
-    applyInstance: function(classFn, className) {
-        // Don't wrap it if we're dealing with a built-in object (like RegExp)
-
-        try {
-            var funcName = (/^function\s*(\w+)/.exec(classFn) || [])[1];
-            if (funcName && window[funcName] === classFn) {
-                return classFn;
-            }
-        } catch(e) {}
-
-        // Make sure a name is set for the class if one has not been
-        // set already
-        if (!classFn.__name && className) {
-            classFn.__name = className;
-        }
-
-        // Return a function for later execution.
-        return function() {
-            var args = arguments;
-
-            // Create a temporary constructor function
-            function Class() {
-                classFn.apply(this, args);
-            }
-
-            // Copy the prototype
-            Class.prototype = classFn.prototype;
-
-            // Instantiate the dummy function
-            var obj = new Class();
-
-            // Point back to the original function
-            obj.constructor = classFn;
-
-            // Generate a semi-unique ID for the instance
-            obj.__id = function() {
-                return "new " + classFn.__name + "(" +
-                    this.stringifyArray(args) + ")";
-            }.bind(this);
-
-            // Keep track of the instances that have been instantiated
-            if (this.instances) {
-                this.instances.push(obj);
-            }
-
-            // Return the new instance
-            return obj;
-        }.bind(this);
-    },
-
     /*
      * Injects code into the live Processing.js execution.
      *
      * The first time the code is injected, or if no draw loop exists, all of
-     * the code is just executed normally using Output.exec().
+     * the code is just executed normally using .exec().
      *
      * For all subsequent injections the following workflow takes place:
      *   - The code is executed but with all functions that have side effects
@@ -2821,8 +2727,8 @@ window.CanvasOutput = {
             // The instantiated instances have changed, which means that
             // we need to re-run everything.
             if (this.oldInstances &&
-                    this.stringifyArray(this.oldInstances) !==
-                    this.stringifyArray(this.instances)) {
+                    CanvasOutput.stringifyArray(this.oldInstances) !==
+                    CanvasOutput.stringifyArray(this.instances)) {
                 rerun = true;
             }
 
@@ -2835,7 +2741,7 @@ window.CanvasOutput = {
                 // Reconstruction the function call
                 var args = Array.prototype.slice.call(fnCalls[i][1]);
                 inject += fnCalls[i][0] + "(" +
-                    this.stringifyArray(args) + ");\n";
+                    CanvasOutput.stringifyArray(args) + ");\n";
             }
 
             // We also look for newly-changed global variables to inject
@@ -2843,7 +2749,7 @@ window.CanvasOutput = {
                 // Turn the result of the extracted value into
                 // a nicely-formatted string
                 try {
-                    grabAll[prop] = this.stringify(grabAll[prop]);
+                    grabAll[prop] = CanvasOutput.stringify(grabAll[prop]);
 
                     // Check to see that we've done an inject before and that
                     // the property wasn't one that shouldn't have been
@@ -2933,7 +2839,7 @@ window.CanvasOutput = {
                             oldProp === "draw")) {
                     // Create the code to delete the variable
                     // TODO(jeresig): Re-work this!
-                    inject += "delete CanvasOutput.canvas." + oldProp + ";\n";
+                    inject += "delete this." + oldProp + ";\n";
 
                     // If the draw function was deleted we also
                     // need to clear the display
@@ -3051,7 +2957,7 @@ window.CanvasOutput = {
                 if (typeof obj[objProp] === "function") {
                     this.grabObj[name + (proto ? "." + proto : "") +
                             "['" + objProp + "']"] =
-                        this.stringify(obj[objProp]);
+                        CanvasOutput.stringify(obj[objProp]);
 
                 // Otherwise we should probably just inject the value directly
                 } else {
@@ -3078,8 +2984,6 @@ window.CanvasOutput = {
 
         // Reset frameCount variable on restart
         this.canvas.frameCount = 0;
-
-        Output.runCode(Output.getUserCode());
     },
 
     toggle: function(doToggle) {
@@ -3177,13 +3081,10 @@ window.CanvasOutput = {
                 return;
             }
 
-            Output.testing = true;
-
             // Generic function to handle results of testing
             var processTesterResults = function(tester) {
-                Output.testResults = tester.testResults;
                 errors = errors.concat(tester.errors);
-                Output.testing = false;
+                return tester.testResults;
             };
 
             // If there's no Worker support *or* there
@@ -3195,9 +3096,8 @@ window.CanvasOutput = {
             //  and the syntax error tests that we have are fast.
             if (!window.Worker || errors.length > 0) {
                 OutputTester.test(code, validate, errors);
-                processTesterResults(OutputTester);
-                callback(errors);
-                return;
+                var results = processTesterResults(OutputTester);
+                return callback(errors, results);
             }
 
             var worker = this.getWorkerFromPool();
@@ -3206,8 +3106,8 @@ window.CanvasOutput = {
                 if (event.data.type === "test") {
                     if (self.isCurrentWorker(worker)) {
                         var data = event.data.message;
-                        processTesterResults(data);
-                        callback(errors);
+                        var results = processTesterResults(data);
+                        callback(errors, results);
                     }
                     self.addWorkerToPool(worker);
                 }
@@ -3217,7 +3117,7 @@ window.CanvasOutput = {
                 code: code,
                 validate: validate,
                 errors: errors,
-                externalsDir: Output.externalsDir
+                externalsDir: this.externalsDir
             });
         }
     ),
@@ -3235,79 +3135,42 @@ window.CanvasOutput = {
                 return;
             }
 
-            var self = this;
-
             var worker = this.getWorkerFromPool();
 
             worker.onmessage = function(event) {
                 if (event.data.type === "jshint") {
                     // If a new request has come in since the worker started
                     // then we just ignore the results and don't fire the callback
-                    if (self.isCurrentWorker(worker)) {
+                    if (this.isCurrentWorker(worker)) {
                         var data = event.data.message;
                         callback(data.hintData, data.hintErrors);
                     }
-                    self.addWorkerToPool(worker);
+                    this.addWorkerToPool(worker);
                 }
-            };
+            }.bind(this);
 
             worker.postMessage({
                 code: hintCode,
-                externalsDir: Output.externalsDir,
-                jshintFile: Output.jshintFile
+                externalsDir: this.externalsDir,
+                jshintFile: this.jshintFile
             });
         }
     ),
 
-    worker: {
-        timeout: null,
-        running: false,
+    worker: new PooledWorker(
+        "worker.js",
+        function(userCode, context, callback) {
+            var timeout;
+            var worker = this.getWorkerFromPool();
 
-        init: function() {
-            var worker = this.worker =
-                new window.Worker(Output.workersDir +
-                    "worker.js?cachebust=" + (new Date()).toDateString());
-
-            worker.onmessage = function(event) {
-                // Execution of the worker has begun so we wait for it...
-                if (event.data.execStarted) {
-                    // If the thread doesn't finish executing quickly, kill it and
-                    // don't execute the code
-                    this.timeout = window.setTimeout(function() {
-                        this.stop();
-                        this.done({message:
-                            $._("The program is taking too long to run. Perhaps " +
-                                "you have a mistake in your code?")});
-                    }.bind(this), 500);
-
-                } else if (event.data.type === "end") {
-                    this.done();
-
-                } else if (event.data.type === "error") {
-                    this.done({message: event.data.message});
+            var done = function(e) {
+                if (timeout) {
+                    clearTimeout(timeout);
                 }
-            }.bind(this);
 
-            worker.onerror = function(event) {
-                event.preventDefault();
-                this.done(event);
-            }.bind(this);
-        },
-
-        exec: function(userCode, context, callback) {
-            // Stop old worker from finishing
-            if (this.running) {
-                this.stop();
-            }
-
-            if (!this.worker) {
-                this.init();
-            }
-
-            this.done = function(e) {
-                this.running = false;
-
-                this.clearTimeout();
+                if (worker) {
+                    this.addWorkerToPool(worker);
+                }
 
                 if (e) {
                     // Make sure that the caller knows that we're done
@@ -3317,44 +3180,152 @@ window.CanvasOutput = {
                 }
             }.bind(this);
 
+            worker.onmessage = function(event) {
+                // Execution of the worker has begun so we wait for it...
+                if (event.data.execStarted) {
+                    // If the thread doesn't finish executing quickly, kill it
+                    // and don't execute the code
+                    timeout = window.setTimeout(function() {
+                        worker.terminate();
+                        worker = null;
+                        done({message:
+                            $._("The program is taking too long to run. " +
+                                "Perhaps you have a mistake in your code?")});
+                    }, 500);
+
+                } else if (event.data.type === "end") {
+                    done();
+
+                } else if (event.data.type === "error") {
+                    done({message: event.data.message});
+                }
+            };
+
+            worker.onerror = function(event) {
+                event.preventDefault();
+                done(event);
+            };
+
             try {
-                this.worker.postMessage({
+                worker.postMessage({
                     code: userCode,
                     context: context
                 });
-
-                this.running = true;
             } catch (e) {
                 // TODO: Object is too complex to serialize, try to find
                 // an alternative workaround
-                this.done();
+                done();
             }
-        },
-
-        /*
-         * Stop long-running execution detection, if still going.
-         */
-        clearTimeout: function() {
-            if (this.timeout !== null) {
-                window.clearTimeout(this.timeout);
-                this.timeout = null;
-            }
-        },
-
-        /*
-         * Calling this will stop execution of any currently running worker
-         * Will return true if a worker was running, false if one was not.
-         */
-        stop: function() {
-            this.clearTimeout();
-
-            if (this.worker) {
-                this.worker.terminate();
-                this.worker = null;
-                return true;
-            }
-
-            return false;
         }
-    }
+    )
 };
+
+// Add in some static helper methods
+_.extend(CanvasOutput, {
+    // Turn a JavaScript object into a form that can be executed
+    // (Note: The form will not necessarily be able to pass a JSON linter)
+    // (Note: JSON.stringify might throw an exception. We don't capture it
+    //        here as we'll want to deal with it later.)
+    stringify: function(obj) {
+        // Use toString on functions
+        if (typeof obj === "function") {
+            return obj.toString();
+
+        // If we're dealing with an instantiated object just
+        // use its generated ID
+        } else if (obj && obj.__id) {
+            return obj.__id();
+
+        // Check if we're dealing with an array
+        } else if (obj &&
+                Object.prototype.toString.call(obj) === "[object Array]") {
+            return this.stringifyArray(obj);
+
+        // JSON.stringify returns undefined, not as a string, so we specially
+        // handle that
+        } else if (typeof obj === "undefined") {
+                return "undefined";
+        }
+
+        // If all else fails, attempt to JSON-ify the string
+        // TODO(jeresig): We should probably do recursion to better handle
+        // complex objects that might hold instances.
+        return JSON.stringify(obj, function(k, v) {
+            // Don't jsonify the canvas or its context because it can lead
+            // to circular jsonification errors on chrome.
+            if (v && (v.id !== undefined && v.id === "output-canvas" ||
+                    typeof CanvasRenderingContext2D !== "undefined" &&
+                    v instanceof CanvasRenderingContext2D)) {
+                return undefined;
+            }
+            return v;
+        });
+    },
+
+    // Turn an array into a string list
+    // (Especially useful for serializing a list of arguments)
+    stringifyArray: function(array) {
+        var results = [];
+
+        for (var i = 0, l = array.length; i < l; i++) {
+            results.push(this.stringify(array[i]));
+        }
+
+        return results.join(", ");
+    },
+
+    // Defer a 'new' on a function for later
+    // Makes it possible to generate a unique signature for the
+    // instance (see: .__id())
+    // Meant to translate:
+    // new Foo(a, b, c) into: applyInstance(Foo)(a, b, c)
+    applyInstance: function(classFn, className) {
+        // Don't wrap it if we're dealing with a built-in object (like RegExp)
+
+        try {
+            var funcName = (/^function\s*(\w+)/.exec(classFn) || [])[1];
+            if (funcName && window[funcName] === classFn) {
+                return classFn;
+            }
+        } catch(e) {}
+
+        // Make sure a name is set for the class if one has not been
+        // set already
+        if (!classFn.__name && className) {
+            classFn.__name = className;
+        }
+
+        // Return a function for later execution.
+        return function() {
+            var args = arguments;
+
+            // Create a temporary constructor function
+            function Class() {
+                classFn.apply(this, args);
+            }
+
+            // Copy the prototype
+            Class.prototype = classFn.prototype;
+
+            // Instantiate the dummy function
+            var obj = new Class();
+
+            // Point back to the original function
+            obj.constructor = classFn;
+
+            // Generate a semi-unique ID for the instance
+            obj.__id = function() {
+                return "new " + classFn.__name + "(" +
+                    this.stringifyArray(args) + ")";
+            }.bind(this);
+
+            // Keep track of the instances that have been instantiated
+            if (this.instances) {
+                this.instances.push(obj);
+            }
+
+            // Return the new instance
+            return obj;
+        }.bind(this);
+    }
+});
