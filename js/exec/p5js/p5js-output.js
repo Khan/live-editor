@@ -1244,7 +1244,7 @@ window.CanvasOutput = {
      * The worker that matches with StructuredJS.
      */
     testWorker: new PooledWorker(
-        "test-worker.js",
+        "p5js/test-worker.js",
         function(code, validate, errors, callback) {
             var self = this;
 
@@ -1302,7 +1302,7 @@ window.CanvasOutput = {
      * The worker that analyzes the user's code.
      */
     hintWorker: new PooledWorker(
-        "jshint-worker.js",
+        "p5js/jshint-worker.js",
         function(hintCode, callback) {
             // Fallback in case of no worker support
             if (!window.Worker) {
@@ -1334,7 +1334,7 @@ window.CanvasOutput = {
     ),
 
     worker: new PooledWorker(
-        "worker.js",
+        "p5js/worker.js",
         function(userCode, context, callback) {
             var timeout;
             var worker = this.getWorkerFromPool();

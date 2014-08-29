@@ -54,7 +54,7 @@ gulp.task("scripts_min", scriptTypes.map(function(type) {
 }));
 
 gulp.task("workers", function() {
-    gulp.src(paths.workers)
+    gulp.src(paths.workers, {base: "./js/workers/"})
         .pipe(gulp.dest("build/workers"));
 });
 

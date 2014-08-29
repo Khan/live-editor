@@ -126,6 +126,1010 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
 
   return "<div id=\"output\">\n    <canvas id=\"output-canvas\" width=\"400\" height=\"400\"></canvas>\n    <div class=\"overlay error-overlay hidden\"></div>\n</div>\n<div id=\"test-errors\" style=\"display: none;\"></div>";
   });;
+var PooledWorker = function(filename, onExec) {
+    this.pool = [];
+    this.curID = 0;
+    this.filename = filename;
+    this.onExec = onExec || function() {};
+};
+
+PooledWorker.prototype.getURL = function() {
+    return this.workersDir + this.filename +
+        "?cachebust=B" + (new Date()).toDateString();
+};
+
+PooledWorker.prototype.getWorkerFromPool = function() {
+    // NOTE(jeresig): This pool of workers is used to cut down on the
+    // number of new web workers that we need to create. If the user
+    // is typing really fast, or scrubbing numbers, it has the
+    // potential to use a lot of workers. We want to re-use as many of
+    // them as possible as their creation can be expensive. (Chrome
+    // seems to freak out, use lots of memory, and sometimes crash.)
+    var worker = this.pool.shift();
+    if (!worker) {
+        worker = new window.Worker(this.getURL());
+    }
+    // Keep track of what number worker we're running so that we know
+    // if any new hint workers have been started after this one
+    this.curID += 1;
+    worker.id = this.curID;
+    return worker;
+};
+
+/* Returns true if the passed in worker is the most recently created */
+PooledWorker.prototype.isCurrentWorker = function(worker) {
+    return this.curID === worker.id;
+};
+
+PooledWorker.prototype.addWorkerToPool = function(worker) {
+    // Return the worker back to the pool
+    this.pool.push(worker);
+};
+
+PooledWorker.prototype.exec = function() {
+    this.onExec.apply(this, arguments);
+};
+(function() {
+
+// Keep track of the frame source and origin for later
+var frameSource;
+var frameOrigin;
+
+var LiveEditorOutput = {
+    recording: false,
+
+    init: function(options) {
+        this.$elem = $(options.el);
+        this.render();
+
+        this.setPaths(options);
+
+        // These are the tests (like challenge tests)
+        this.validate = null;
+
+        this.assertions = [];
+
+        this.context = {};
+        this.loaded = false;
+
+        this.config = new ScratchpadConfig({});
+
+        this.tipbar = new TipBar({
+            el: this.$elem[0]
+        });
+
+        this.setOutput(options.output);
+
+        this.bind();
+    },
+
+    render: function() {
+        this.$elem.html(Handlebars.templates["output"]());
+    },
+
+    bind: function() {
+        // Handle messages coming in from the parent frame
+        window.addEventListener("message",
+            this.handleMessage.bind(this), false);
+    },
+
+    setPaths: function(data) {
+        if (data.workersDir) {
+            this.workersDir = this._qualifyURL(data.workersDir);
+            PooledWorker.prototype.workersDir = this.workersDir;
+        }
+        if (data.externalsDir) {
+            this.externalsDir = this._qualifyURL(data.externalsDir);
+            PooledWorker.prototype.externalsDir = this.externalsDir;
+        }
+        if (data.imagesDir) {
+            this.imagesDir = this._qualifyURL(data.imagesDir);
+        }
+        if (data.jshintFile) {
+            this.jshintFile = this._qualifyURL(data.jshintFile);
+            PooledWorker.prototype.jshintFile = this.jshintFile;
+        }
+    },
+
+    _qualifyURL: function(url){
+        var a = document.createElement("a");
+        a.href = url;
+        return a.href;
+    },
+
+    handleMessage: function(event) {
+        var data;
+
+        frameSource = event.source;
+        frameOrigin = event.origin;
+
+        // let the parent know we're up and running
+        this.notifyActive();
+
+        try {
+            data = JSON.parse(event.data);
+
+        } catch (err) {
+            return;
+        }
+
+        // Set the paths from the incoming data, if they exist
+        this.setPaths(data);
+
+        // Validation code to run
+        if (data.validate != null) {
+            this.initTests(data.validate);
+        }
+
+        // Settings to initialize
+        if (data.settings != null) {
+            this.settings = data.settings;
+        }
+
+        // Code to be executed
+        if (data.code != null) {
+            this.config.switchVersion(data.version);
+            this.runCode(data.code);
+        }
+
+        if (data.onlyRunTests != null) {
+            this.onlyRunTests = !!(data.onlyRunTests);
+        } else {
+            this.onlyRunTests = false;
+        }
+
+        // Restart the output
+        if (data.restart) {
+            this.restart();
+        }
+
+        // Take a screenshot of the output
+        if (data.screenshot) {
+            // We want to resize the image to a 200x200 thumbnail,
+            // which we can do by creating a temporary canvas
+            var tmpCanvas = document.createElement("canvas");
+
+            var screenshotSize = data.screenshotSize || 200;
+            tmpCanvas.width = screenshotSize;
+            tmpCanvas.height = screenshotSize;
+            tmpCanvas.getContext("2d").drawImage(
+                $("#output-canvas")[0], 0, 0, screenshotSize, screenshotSize);
+
+            // Send back the screenshot data
+            frameSource.postMessage(tmpCanvas.toDataURL("image/png"),
+                frameOrigin);
+        }
+
+        // Keep track of recording state
+        if (data.recording != null) {
+            this.recording = data.recording;
+        }
+
+        // Play back recording
+        if (data.action) {
+            if (this.output.handlers[data.name]) {
+                this.output.handlers[data.name](data.action);
+            }
+        }
+
+        if (data.documentation) {
+            BabyHint.initDocumentation(data.documentation);
+        }
+    },
+
+    // Send a message back to the parent frame
+    postParent: function(data) {
+        // If there is no frameSource (e.g. we're not embedded in another page)
+        // Then we don't need to care about sending the messages anywhere!
+        if (frameSource) {
+            frameSource.postMessage(JSON.stringify(data), frameOrigin);
+        }
+    },
+
+    notifyActive: _.once(function() {
+        this.postParent({ active: true });
+    }),
+
+    // This function stores the new tests on the validate property
+    //  and it executes the test code to see if its valid
+    initTests: function(validate) {
+        // Only update the tests if they have changed
+        if (this.validate === validate) {
+            return;
+        }
+
+        // Prime the test queue
+        this.validate = validate;
+
+        // We evaluate the test code to see if it itself has any syntax errors
+        // This also ends up pushing the tests onto this.tests
+        var error = this.output.initTests(validate);
+
+        // Display errors encountered while evaluating the test code
+        if (error && error.message) {
+            $("#test-errors").text(result.message).show();
+        } else {
+            $("#test-errors").hide();
+        }
+    },
+
+    runCode: function(userCode, callback) {
+        this.currentCode = userCode;
+
+        var runDone = function(errors, testResults) {
+            errors = this.cleanErrors(errors || []);
+
+            if (!this.loaded) {
+                this.postParent({ loaded: true });
+                this.loaded = true;
+            }
+
+            // A callback for working with a test suite
+            if (callback) {
+                callback(errors, testResults);
+                return;
+            }
+
+            this.postParent({
+                results: {
+                    code: userCode,
+                    errors: errors,
+                    tests: testResults || [],
+                    assertions: this.assertions
+                }
+            });
+
+            this.toggleErrors(errors);
+        }.bind(this);
+
+        this.lint(userCode, function(errors) {
+            // Run the tests (even if there are lint errors)
+            this.test(userCode, this.validate, errors, function(errors, testResults) {
+                if (errors.length > 0 || this.onlyRunTests) {
+                    return runDone(errors, testResults);
+                }
+
+                // Then run the user's code
+                try {
+                    this.output.runCode(userCode, function(errors) {
+                        runDone(errors, testResults);
+                    });
+
+                } catch (e) {
+                    runDone([e], testResults);
+                }
+            }.bind(this));
+        }.bind(this));
+    },
+
+    test: function(userCode, validate, errors, callback) {
+        this.output.test(userCode, validate, errors, callback);
+    },
+
+    lint: function(userCode, callback) {
+        this.output.lint(userCode, callback);
+    },
+
+    setOutput: function(output) {
+        if (this.output) {
+            this.output.kill();
+        }
+
+        this.output = output;
+        output.init({
+            config: this.config,
+            output: this
+        });
+    },
+
+    getUserCode: function() {
+        return this.currentCode || "";
+    },
+
+    toggle: function(toggle) {
+        this.output.toggle(toggle);
+    },
+
+    restart: function() {
+        if (this.output.restart) {
+            this.output.restart();
+        }
+
+        this.runCode(this.getUserCode());
+    },
+
+    cleanErrors: function(errors) {
+        errors = errors.map(function(error) {
+            if (!$.isPlainObject(error)) {
+                return {
+                    row: error.lineno ? error.lineno - 2 : -1,
+                    column: 0,
+                    text: this.clean(error.message),
+                    type: "error",
+                    source: "native",
+                    priority: 3
+                };
+            }
+
+            return {
+                row: error.row,
+                column: error.column,
+                text: _.compose(this.prettify, this.clean)(error.text),
+                type: error.type,
+                lint: error.lint,
+                source: error.source
+            };
+        }.bind(this));
+
+        errors = errors.sort(function(a, b) {
+            var diff = a.row - b.row;
+            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
+        });
+
+        return errors;
+    },
+
+    // This adds html tags around quoted lines so they can be formatted
+    prettify: function(str) {
+        str = str.split("\"");
+        var htmlString = "";
+        for (var i = 0; i < str.length; i++) {
+            if (str[i].length === 0) {
+                continue;
+            }
+
+            if (i % 2 === 0) {
+                //regular text
+                htmlString += "<span class=\"text\">" + str[i] + "</span>";
+            } else {
+                // text in quotes
+                htmlString += "<span class=\"quote\">" + str[i] + "</span>";
+            }
+        }
+        return htmlString;
+    },
+
+    clean: function(str) {
+        return String(str).replace(/</g, "&lt;");
+    },
+
+    toggleErrors: function(errors) {
+        var hasErrors = !!errors.length;
+
+        $("#show-errors").toggleClass("ui-state-disabled", !hasErrors);
+        $("#output .error-overlay").toggle(hasErrors);
+
+        this.toggle(!hasErrors);
+
+        if (!hasErrors) {
+            this.tipbar.hide("Error");
+            return;
+        }
+
+        if (this.errorDelay) {
+            clearTimeout(this.errorDelay);
+        }
+
+        this.errorDelay = setTimeout(function() {
+            if (errors.length > 0) {
+                this.tipbar.show("Error", errors);
+            }
+        }.bind(this), 1500);
+    }
+};
+
+window.Output = LiveEditorOutput;
+window.LiveEditorOutput = LiveEditorOutput;
+
+})();
+
+window.OutputTester = {
+    tests: [],
+    test: function(userCode, validate, errors) {
+        OutputTester.userCode = userCode;
+        OutputTester.validate = validate;
+        OutputTester.tests = [];
+
+        // This will also fill in tests, as it will end up
+        //  referencing functions like staticTest and that
+        //  function will fill in OutputTester.tests
+        OutputTester.exec(OutputTester.validate);
+
+        OutputTester.testResults = [];
+        OutputTester.errors = errors || [];
+
+        OutputTester.curTask = null;
+        OutputTester.curTest = null;
+
+        for (var i = 0; i < OutputTester.tests.length; i++) {
+            OutputTester.testResults.push(
+                OutputTester.runTest(userCode || "", OutputTester.tests[i], i));
+        }
+    },
+
+    runTest: function(userCode, test, i) {
+        var result = {
+            name: test.name,
+            state: "pass",
+            results: []
+        };
+
+        OutputTester.curTest = result;
+        if (OutputTester.validate && test.type === "static") {
+            test.fn();
+        }
+
+        OutputTester.curTest = null;
+
+        return result;
+    },
+
+    exec: function(code) {
+        if (!code) {
+            return true;
+        }
+
+        var contexts = [OutputTester.testContext];
+
+        function exec_() {
+            for (var i = 0; i < contexts.length; i++) {
+                if (contexts[i]) {
+                    code = "with(arguments[" + i + "]){\n" + code + "\n}";
+                }
+            }
+            (new Function(code)).apply({}, contexts);
+            return true;
+        }
+
+        return exec_();
+    },
+
+    testContext: {
+        test: function(name, fn, type) {
+            if (!fn) {
+                fn = name;
+                name = $._("Test Case");
+            }
+
+            OutputTester.tests.push({
+                name: name,
+
+                type: type || "default",
+
+                fn: function() {
+                    try {
+                        return fn.apply(this, arguments);
+
+                    } catch (e) {
+                        if (window.console) {
+                            console.warn(e);
+                        }
+                    }
+                }
+            });
+        },
+
+        staticTest: function(name, fn) {
+            OutputTester.testContext.test(name, fn, "static");
+        },
+
+        log: function(msg, state, expected, type, meta) {
+            type = type || "info";
+
+            var item = {
+                type: type,
+                msg: msg,
+                state: state,
+                expected: expected,
+                meta: meta || {}
+            };
+
+            if (OutputTester.curTest) {
+                if (state !== "pass") {
+                    OutputTester.curTest.state = state;
+                }
+
+                OutputTester.curTest.results.push(item);
+            }
+
+            if (OutputTester.curTask) {
+                if (state !== "pass") {
+                    OutputTester.curTask.state = state;
+                }
+
+                OutputTester.curTask.results.push(item);
+            }
+
+            return item;
+        },
+
+        task: function(msg, tip) {
+            OutputTester.curTask = OutputTester.testContext.log(msg, "pass", tip, "task");
+            OutputTester.curTask.results = [];
+        },
+
+        endTask: function() {
+            OutputTester.curTask = null;
+        },
+
+        assert: function(pass, msg, expected, meta) {
+            pass = !!pass;
+            OutputTester.testContext.log(msg, pass ? "pass" : "fail", expected, "assertion", meta);
+            return pass;
+        },
+
+        isEqual: function(a, b, msg) {
+            return OutputTester.testContext.assert(a === b, msg, [a, b]);
+        },
+
+        hasFnCall: function(name, check) {
+            for (var i = 0, l = OutputTester.fnCalls.length; i < l; i++) {
+                var retVal = OutputTester.testContext.checkFn(OutputTester.fnCalls[i],
+                    name, check);
+
+                if (retVal === true) {
+                    return;
+                }
+            }
+
+            OutputTester.testContext.assert(false, $._("Expected function call to %(name)s was not made.", {name: name}));
+        },
+
+        orderedFnCalls: function(calls) {
+            var callPos = 0;
+
+            for (var i = 0, l = OutputTester.fnCalls.length; i < l; i++) {
+                var retVal = OutputTester.testContext.checkFn(OutputTester.fnCalls[i],
+                    calls[callPos][0], calls[callPos][1]);
+
+                if (retVal === true) {
+                    callPos += 1;
+
+                    if (callPos === calls.length) {
+                        return;
+                    }
+                }
+            }
+
+            OutputTester.testContext.assert(false, $._("Expected function call to %(name)s was not made.", {name: calls[callPos][0]}));
+        },
+
+        checkFn: function(fnCall, name, check) {
+            if (fnCall.name !== name) {
+                return;
+            }
+
+            var pass = true;
+
+            if (typeof check === "object") {
+                if (check.length !== fnCall.args.length) {
+                    pass = false;
+
+                } else {
+                    for (var c = 0; c < check.length; c++) {
+                        if (check[c] !== null &&
+                            check[c] !== fnCall.args[c]) {
+                            pass = false;
+                        }
+                    }
+                }
+
+            } else if (typeof check === "function") {
+                pass = check(fnCall);
+            }
+
+            if (pass) {
+                OutputTester.testContext.assert(true,
+                    $._("Correct function call made to %(name)s.", {name: name}));
+            }
+
+            return pass;
+        },
+
+        /*
+         * Returns a pass result with an optional message
+         */
+        pass: function(message) {
+            return {
+                success: true,
+                message: message
+            };
+        },
+
+        /*
+         * Returns a fail result with an optional message
+         */
+        fail: function(message) {
+            return {
+                success: false,
+                message: message
+            };
+        },
+
+        /*
+         * If any of results passes, returns the first pass. Otherwise, returns the first fail.
+         */
+        anyPass: function() {
+            return _.find(arguments, this.passes) || arguments[0] || this.fail();
+        },
+
+        /*
+         * If any of results fails, returns the first fail. Otherwise, returns the first pass.
+         */
+        allPass: function() {
+            return _.find(arguments, this.fails) || arguments[0] || this.pass();
+        },
+
+        /*
+         * See if any of the patterns match the code
+         */
+        firstMatchingPattern: function(patterns) {
+            return _.find(patterns, _.bind(function(pattern) {
+                    return this.matches(this.structure(pattern));
+                }, this));
+        },
+
+        /*
+         * Returns true if the result represents a pass.
+         */
+        passes: function(result) {
+            return result.success;
+        },
+
+        /*
+         * Returns true if the result represents a fail.
+         */
+        fails: function(result) {
+            return !result.success;
+        },
+
+        /*
+         * Returns the result of matching a structure against the user's code
+         */
+        match: function(structure) {
+            // If there were syntax errors, don't even try to match it
+            if (OutputTester.errors.length) {
+                return {
+                    success: false,
+                    message: $._("Syntax error!")
+                };
+            }
+            // At the top, we take care of some "alternative" uses of this function
+            // For ease of challenge developing, we return a failure() instead of
+            // disallowing these uses altogether
+
+            // If we don't see a pattern property, they probably passed in
+            // a pattern itself, so we'll turn it into a structure
+            if (structure && _.isUndefined(structure.pattern)) {
+                structure = {pattern: structure};
+            }
+
+            // If nothing is passed in or the pattern is non-existent, return failure
+            if (!structure || ! structure.pattern) {
+                return {
+                    success: false,
+                    message: ""
+                };
+            }
+
+            try {
+                var constraint = structure.constraint;
+                var callbacks;
+                if (constraint) {
+                    callbacks = {};
+                    callbacks[constraint.variables.join(", ")] = constraint.fn;
+                }
+                var success = Structured.match(OutputTester.userCode, structure.pattern, {
+                    varCallbacks: callbacks
+                });
+
+                return {
+                    success: success,
+                    message: callbacks && callbacks.failure
+                };
+            } catch (e) {
+                if (window.console) {
+                    console.warn(e);
+                }
+                return {
+                    success: true,
+                    message: $._("Hm, we're having some trouble " +
+                        "verifying your answer for this step, so we'll give you " +
+                        "the benefit of the doubt as we work to fix it. " +
+                        "Please click 'Report a problem' to notify us.")
+                };
+            }
+        },
+
+        /*
+         * Returns true if the structure matches the user's code
+         */
+        matches: function(structure) {
+            return this.match(structure).success;
+        },
+
+        /*
+         * Creates a new test result (i.e. new challenge tab)
+         */
+        assertMatch: function(result, description, hint, image, syntaxChecks) {
+            if (syntaxChecks) {
+                // If we found any syntax errors or warnings, we'll send it
+                // through the special syntax checks
+                var foundErrors = _.any(OutputTester.errors, function(error) {
+                    return error.lint;
+                });
+
+                if (foundErrors) {
+
+                    _.each(syntaxChecks, function(syntaxCheck) {
+                        // Check if we find the regex anywhere in the code
+                        var foundCheck = OutputTester.userCode.search(syntaxCheck.re);
+                        var rowNum = -1, colNum = -1, errorMsg;
+                        if (foundCheck > -1) {
+                            errorMsg = syntaxCheck.msg;
+
+                            // Find line number and character
+                            var lines = OutputTester.userCode.split("\n");
+                            var totalChars = 0;
+                            _.each(lines, function(line, num) {
+                                if (rowNum === -1 && foundCheck < totalChars + line.length) {
+                                    rowNum = num;
+                                    colNum = foundCheck - totalChars;
+                                }
+                                totalChars += line.length;
+                            });
+
+                            OutputTester.errors.splice(0, 1, {
+                                text: errorMsg,
+                                row: rowNum,
+                                col: colNum,
+                                type: "error"
+                            });
+                        }
+                    });
+                }
+            }
+
+            var alternateMessage;
+            var alsoMessage;
+
+            if (result.success) {
+                alternateMessage = result.message;
+            } else {
+                alsoMessage = result.message;
+            }
+
+            OutputTester.testContext.assert(result.success, description, "", {
+                // We can accept string hints here because
+                //  we never match against them anyway
+                structure: _.isString(hint) ? "function() {" + hint + "}" : hint.toString(),
+                alternateMessage: alternateMessage,
+                alsoMessage: alsoMessage,
+                image: image
+            });
+        },
+
+        /*
+         * Returns a new structure from the combination of a pattern and a constraint
+         */
+        structure: function(pattern, constraint) {
+            return {
+                pattern: pattern,
+                constraint: constraint
+            };
+        },
+
+        /*
+         * Creates a new variable constraint
+         */
+        constraint: function(variables, fn) {
+            return {
+                variables: variables,
+                fn: fn
+            };
+        },
+
+        _isVarName: function(str) {
+            return _.isString(str) && str.length > 0 && str[0] === "$";
+        },
+
+        _assertVarName: function(str) {
+            if (!this._isVarName(str)) {
+                throw new Error("Expected " + str + " to be a valid variable name.");
+            }
+        },
+
+        /*
+         * Satisfied when predicate(var) is true.
+         */
+        unaryOp: function(varName, predicate) {
+            this._assertVarName(varName);
+            return this.constraint([varName], function(ast) {
+                return !!(ast && !_.isUndefined(ast.value) && predicate(ast.value));
+            });
+        },
+
+        /*
+         * Satisfied when var is any literal.
+         */
+        isLiteral: function(varName) {
+            function returnsTrue() {
+                return true;
+            }
+
+            return this.unaryOp(varName, returnsTrue);
+        },
+
+        /*
+         * Satisfied when var is a number.
+         */
+        isNumber: function(varName) {
+            return this.unaryOp(varName, _.isNumber);
+        },
+
+        /*
+         * Satisfied when var is an identifier
+         */
+        isIdentifier: function(varName) {
+            return this.constraint([varName], function(ast) {
+                return !!(ast && ast.type && ast.type === "Identifier");
+            });
+        },
+
+        /*
+         * Satisfied when var is a boolean.
+         */
+        isBoolean: function(varName) {
+            return this.unaryOp(varName, _.isBoolean);
+        },
+
+        /*
+         * Satisfied when var is a string.
+         */
+        isString: function(varName) {
+            return this.unaryOp(varName, _.isString);
+        },
+
+        /*
+         * Satisfied when pred(first, second) is true.
+         */
+        binaryOp: function(first, second, predicate) {
+            var variables = [];
+            var fn;
+            if (this._isVarName(first)) {
+                variables.push(first);
+                if (this._isVarName(second)) {
+                    variables.push(second);
+                    fn = function(a, b) {
+                        return !!(a && b && !_.isUndefined(a.value) &&
+                            !_.isUndefined(b.value) && predicate(a.value, b.value));
+                    };
+                } else {
+                    fn = function(a) {
+                        return !!(a && !_.isUndefined(a.value) && predicate(a.value, second));
+                    };
+                }
+            } else if (this._isVarName(second)) {
+                variables.push(second);
+                fn = function(b) {
+                    return !!(b && !_.isUndefined(b.value) && predicate(first, b.value));
+                };
+            } else {
+                throw new Error("Expected either " + first + " or " + second + " to be a valid variable name.");
+            }
+
+            return this.constraint(variables, fn);
+        },
+
+        /*
+         * Satisfied when a < b
+         */
+        lessThan: function(a, b) {
+            return this.binaryOp(a, b, function(a, b) { return a < b; });
+        },
+
+        /*
+         * Satisfied when a <= b
+         */
+        lessThanOrEqual: function(a, b) {
+            return this.binaryOp(a, b, function(a, b) { return a <= b; });
+        },
+
+        /*
+         * Satisfied when a > b
+         */
+        greaterThan: function(a, b) {
+            return this.binaryOp(a, b, function(a, b) { return a > b; });
+        },
+
+        /*
+         * Satisfied when a > 0
+         */
+        positive: function(a) {
+            return this.unaryOp(a, function(a) { return a > 0; });
+        },
+
+        /*
+         * Satisfied when a > 0
+         */
+        negative: function(a) {
+            return this.unaryOp(a, function(a) { return a < 0; });
+        },
+
+        /*
+         * Satisfied when a >= b
+         */
+        greaterThanOrEqual: function(a, b) {
+            return this.binaryOp(a, b, function(a, b) { return a >= b; });
+        },
+
+        /*
+         * Satisfied when min <= val <= max
+         */
+        inRange: function(val, min, max) {
+            return this.and(
+                this.greaterThanOrEqual(val, min),
+                this.lessThanOrEqual(val, max));
+        },
+
+        /*
+         * Satisfied when a === b
+         */
+        equal: function(a, b) {
+            return this.binaryOp(a, b, function(a, b) { return a === b; });
+        },
+
+        /*
+         * Satisfied when a !== b
+         */
+        notEqual: function(a, b) {
+            return this.binaryOp(a, b, function(a, b) { return a !== b; });
+        },
+
+        /*
+         * Satisfied when constraint is not satisfied
+         */
+        not: function(constraint) {
+            return this.constraint(constraint.variables, function() {
+                return !constraint.fn.apply({}, arguments);
+            });
+        },
+
+        _naryShortCircuitingOp: function(allOrAny, args) {
+            var variables = _.union.apply({}, _.pluck(args, "variables"));
+
+            var argNameToIndex = _.object(_.map(variables, function(item, index) {
+                return [item, index];
+            }));
+
+            return this.constraint(variables, function() {
+                var constraintArgs = arguments;
+                return allOrAny(args, function(constraint) {
+                    var fnArgs = _.map(constraint.variables, function(varName) {
+                        return constraintArgs[argNameToIndex[varName]];
+                    });
+
+                    return constraint.fn.apply({}, fnArgs);
+                });
+            });
+        },
+
+        /*
+         * Satisfied when all of the input constraints are satisfied
+         */
+        and: function() {
+            return this._naryShortCircuitingOp(_.all, arguments);
+        },
+
+        /*
+         * Satisfied when any of the input constraints are satisfied
+         */
+        or: function() {
+            return this._naryShortCircuitingOp(_.any, arguments);
+        }
+    }
+};
+
 /*
  * BabyHint does a line-by-line check for common beginner programming mistakes,
  * such as misspelling, missing spaces, missing commas, etc.  It is used in
@@ -818,1010 +1822,6 @@ var BabyHint = {
 };
 // TODO(jlfwong): Stop globalizing BabyHint
 window.BabyHint = BabyHint;
-
-window.OutputTester = {
-    tests: [],
-    test: function(userCode, validate, errors) {
-        OutputTester.userCode = userCode;
-        OutputTester.validate = validate;
-        OutputTester.tests = [];
-
-        // This will also fill in tests, as it will end up
-        //  referencing functions like staticTest and that
-        //  function will fill in OutputTester.tests
-        OutputTester.exec(OutputTester.validate);
-
-        OutputTester.testResults = [];
-        OutputTester.errors = errors || [];
-
-        OutputTester.curTask = null;
-        OutputTester.curTest = null;
-
-        for (var i = 0; i < OutputTester.tests.length; i++) {
-            OutputTester.testResults.push(
-                OutputTester.runTest(userCode || "", OutputTester.tests[i], i));
-        }
-    },
-
-    runTest: function(userCode, test, i) {
-        var result = {
-            name: test.name,
-            state: "pass",
-            results: []
-        };
-
-        OutputTester.curTest = result;
-        if (OutputTester.validate && test.type === "static") {
-            test.fn();
-        }
-
-        OutputTester.curTest = null;
-
-        return result;
-    },
-
-    exec: function(code) {
-        if (!code) {
-            return true;
-        }
-
-        var contexts = [OutputTester.testContext];
-
-        function exec_() {
-            for (var i = 0; i < contexts.length; i++) {
-                if (contexts[i]) {
-                    code = "with(arguments[" + i + "]){\n" + code + "\n}";
-                }
-            }
-            (new Function(code)).apply({}, contexts);
-            return true;
-        }
-
-        return exec_();
-    },
-
-    testContext: {
-        test: function(name, fn, type) {
-            if (!fn) {
-                fn = name;
-                name = $._("Test Case");
-            }
-
-            OutputTester.tests.push({
-                name: name,
-
-                type: type || "default",
-
-                fn: function() {
-                    try {
-                        return fn.apply(this, arguments);
-
-                    } catch (e) {
-                        if (window.console) {
-                            console.warn(e);
-                        }
-                    }
-                }
-            });
-        },
-
-        staticTest: function(name, fn) {
-            OutputTester.testContext.test(name, fn, "static");
-        },
-
-        log: function(msg, state, expected, type, meta) {
-            type = type || "info";
-
-            var item = {
-                type: type,
-                msg: msg,
-                state: state,
-                expected: expected,
-                meta: meta || {}
-            };
-
-            if (OutputTester.curTest) {
-                if (state !== "pass") {
-                    OutputTester.curTest.state = state;
-                }
-
-                OutputTester.curTest.results.push(item);
-            }
-
-            if (OutputTester.curTask) {
-                if (state !== "pass") {
-                    OutputTester.curTask.state = state;
-                }
-
-                OutputTester.curTask.results.push(item);
-            }
-
-            return item;
-        },
-
-        task: function(msg, tip) {
-            OutputTester.curTask = OutputTester.testContext.log(msg, "pass", tip, "task");
-            OutputTester.curTask.results = [];
-        },
-
-        endTask: function() {
-            OutputTester.curTask = null;
-        },
-
-        assert: function(pass, msg, expected, meta) {
-            pass = !!pass;
-            OutputTester.testContext.log(msg, pass ? "pass" : "fail", expected, "assertion", meta);
-            return pass;
-        },
-
-        isEqual: function(a, b, msg) {
-            return OutputTester.testContext.assert(a === b, msg, [a, b]);
-        },
-
-        hasFnCall: function(name, check) {
-            for (var i = 0, l = OutputTester.fnCalls.length; i < l; i++) {
-                var retVal = OutputTester.testContext.checkFn(OutputTester.fnCalls[i],
-                    name, check);
-
-                if (retVal === true) {
-                    return;
-                }
-            }
-
-            OutputTester.testContext.assert(false, $._("Expected function call to %(name)s was not made.", {name: name}));
-        },
-
-        orderedFnCalls: function(calls) {
-            var callPos = 0;
-
-            for (var i = 0, l = OutputTester.fnCalls.length; i < l; i++) {
-                var retVal = OutputTester.testContext.checkFn(OutputTester.fnCalls[i],
-                    calls[callPos][0], calls[callPos][1]);
-
-                if (retVal === true) {
-                    callPos += 1;
-
-                    if (callPos === calls.length) {
-                        return;
-                    }
-                }
-            }
-
-            OutputTester.testContext.assert(false, $._("Expected function call to %(name)s was not made.", {name: calls[callPos][0]}));
-        },
-
-        checkFn: function(fnCall, name, check) {
-            if (fnCall.name !== name) {
-                return;
-            }
-
-            var pass = true;
-
-            if (typeof check === "object") {
-                if (check.length !== fnCall.args.length) {
-                    pass = false;
-
-                } else {
-                    for (var c = 0; c < check.length; c++) {
-                        if (check[c] !== null &&
-                            check[c] !== fnCall.args[c]) {
-                            pass = false;
-                        }
-                    }
-                }
-
-            } else if (typeof check === "function") {
-                pass = check(fnCall);
-            }
-
-            if (pass) {
-                OutputTester.testContext.assert(true,
-                    $._("Correct function call made to %(name)s.", {name: name}));
-            }
-
-            return pass;
-        },
-
-        /*
-         * Returns a pass result with an optional message
-         */
-        pass: function(message) {
-            return {
-                success: true,
-                message: message
-            };
-        },
-
-        /*
-         * Returns a fail result with an optional message
-         */
-        fail: function(message) {
-            return {
-                success: false,
-                message: message
-            };
-        },
-
-        /*
-         * If any of results passes, returns the first pass. Otherwise, returns the first fail.
-         */
-        anyPass: function() {
-            return _.find(arguments, this.passes) || arguments[0] || this.fail();
-        },
-
-        /*
-         * If any of results fails, returns the first fail. Otherwise, returns the first pass.
-         */
-        allPass: function() {
-            return _.find(arguments, this.fails) || arguments[0] || this.pass();
-        },
-
-        /*
-         * See if any of the patterns match the code
-         */
-        firstMatchingPattern: function(patterns) {
-            return _.find(patterns, _.bind(function(pattern) {
-                    return this.matches(this.structure(pattern));
-                }, this));
-        },
-
-        /*
-         * Returns true if the result represents a pass.
-         */
-        passes: function(result) {
-            return result.success;
-        },
-
-        /*
-         * Returns true if the result represents a fail.
-         */
-        fails: function(result) {
-            return !result.success;
-        },
-
-        /*
-         * Returns the result of matching a structure against the user's code
-         */
-        match: function(structure) {
-            // If there were syntax errors, don't even try to match it
-            if (OutputTester.errors.length) {
-                return {
-                    success: false,
-                    message: $._("Syntax error!")
-                };
-            }
-            // At the top, we take care of some "alternative" uses of this function
-            // For ease of challenge developing, we return a failure() instead of
-            // disallowing these uses altogether
-
-            // If we don't see a pattern property, they probably passed in
-            // a pattern itself, so we'll turn it into a structure
-            if (structure && _.isUndefined(structure.pattern)) {
-                structure = {pattern: structure};
-            }
-
-            // If nothing is passed in or the pattern is non-existent, return failure
-            if (!structure || ! structure.pattern) {
-                return {
-                    success: false,
-                    message: ""
-                };
-            }
-
-            try {
-                var constraint = structure.constraint;
-                var callbacks;
-                if (constraint) {
-                    callbacks = {};
-                    callbacks[constraint.variables.join(", ")] = constraint.fn;
-                }
-                var success = Structured.match(OutputTester.userCode, structure.pattern, {
-                    varCallbacks: callbacks
-                });
-
-                return {
-                    success: success,
-                    message: callbacks && callbacks.failure
-                };
-            } catch (e) {
-                if (window.console) {
-                    console.warn(e);
-                }
-                return {
-                    success: true,
-                    message: $._("Hm, we're having some trouble " +
-                        "verifying your answer for this step, so we'll give you " +
-                        "the benefit of the doubt as we work to fix it. " +
-                        "Please click 'Report a problem' to notify us.")
-                };
-            }
-        },
-
-        /*
-         * Returns true if the structure matches the user's code
-         */
-        matches: function(structure) {
-            return this.match(structure).success;
-        },
-
-        /*
-         * Creates a new test result (i.e. new challenge tab)
-         */
-        assertMatch: function(result, description, hint, image, syntaxChecks) {
-            if (syntaxChecks) {
-                // If we found any syntax errors or warnings, we'll send it
-                // through the special syntax checks
-                var foundErrors = _.any(OutputTester.errors, function(error) {
-                    return error.lint;
-                });
-
-                if (foundErrors) {
-
-                    _.each(syntaxChecks, function(syntaxCheck) {
-                        // Check if we find the regex anywhere in the code
-                        var foundCheck = OutputTester.userCode.search(syntaxCheck.re);
-                        var rowNum = -1, colNum = -1, errorMsg;
-                        if (foundCheck > -1) {
-                            errorMsg = syntaxCheck.msg;
-
-                            // Find line number and character
-                            var lines = OutputTester.userCode.split("\n");
-                            var totalChars = 0;
-                            _.each(lines, function(line, num) {
-                                if (rowNum === -1 && foundCheck < totalChars + line.length) {
-                                    rowNum = num;
-                                    colNum = foundCheck - totalChars;
-                                }
-                                totalChars += line.length;
-                            });
-
-                            OutputTester.errors.splice(0, 1, {
-                                text: errorMsg,
-                                row: rowNum,
-                                col: colNum,
-                                type: "error"
-                            });
-                        }
-                    });
-                }
-            }
-
-            var alternateMessage;
-            var alsoMessage;
-
-            if (result.success) {
-                alternateMessage = result.message;
-            } else {
-                alsoMessage = result.message;
-            }
-
-            OutputTester.testContext.assert(result.success, description, "", {
-                // We can accept string hints here because
-                //  we never match against them anyway
-                structure: _.isString(hint) ? "function() {" + hint + "}" : hint.toString(),
-                alternateMessage: alternateMessage,
-                alsoMessage: alsoMessage,
-                image: image
-            });
-        },
-
-        /*
-         * Returns a new structure from the combination of a pattern and a constraint
-         */
-        structure: function(pattern, constraint) {
-            return {
-                pattern: pattern,
-                constraint: constraint
-            };
-        },
-
-        /*
-         * Creates a new variable constraint
-         */
-        constraint: function(variables, fn) {
-            return {
-                variables: variables,
-                fn: fn
-            };
-        },
-
-        _isVarName: function(str) {
-            return _.isString(str) && str.length > 0 && str[0] === "$";
-        },
-
-        _assertVarName: function(str) {
-            if (!this._isVarName(str)) {
-                throw new Error("Expected " + str + " to be a valid variable name.");
-            }
-        },
-
-        /*
-         * Satisfied when predicate(var) is true.
-         */
-        unaryOp: function(varName, predicate) {
-            this._assertVarName(varName);
-            return this.constraint([varName], function(ast) {
-                return !!(ast && !_.isUndefined(ast.value) && predicate(ast.value));
-            });
-        },
-
-        /*
-         * Satisfied when var is any literal.
-         */
-        isLiteral: function(varName) {
-            function returnsTrue() {
-                return true;
-            }
-
-            return this.unaryOp(varName, returnsTrue);
-        },
-
-        /*
-         * Satisfied when var is a number.
-         */
-        isNumber: function(varName) {
-            return this.unaryOp(varName, _.isNumber);
-        },
-
-        /*
-         * Satisfied when var is an identifier
-         */
-        isIdentifier: function(varName) {
-            return this.constraint([varName], function(ast) {
-                return !!(ast && ast.type && ast.type === "Identifier");
-            });
-        },
-
-        /*
-         * Satisfied when var is a boolean.
-         */
-        isBoolean: function(varName) {
-            return this.unaryOp(varName, _.isBoolean);
-        },
-
-        /*
-         * Satisfied when var is a string.
-         */
-        isString: function(varName) {
-            return this.unaryOp(varName, _.isString);
-        },
-
-        /*
-         * Satisfied when pred(first, second) is true.
-         */
-        binaryOp: function(first, second, predicate) {
-            var variables = [];
-            var fn;
-            if (this._isVarName(first)) {
-                variables.push(first);
-                if (this._isVarName(second)) {
-                    variables.push(second);
-                    fn = function(a, b) {
-                        return !!(a && b && !_.isUndefined(a.value) &&
-                            !_.isUndefined(b.value) && predicate(a.value, b.value));
-                    };
-                } else {
-                    fn = function(a) {
-                        return !!(a && !_.isUndefined(a.value) && predicate(a.value, second));
-                    };
-                }
-            } else if (this._isVarName(second)) {
-                variables.push(second);
-                fn = function(b) {
-                    return !!(b && !_.isUndefined(b.value) && predicate(first, b.value));
-                };
-            } else {
-                throw new Error("Expected either " + first + " or " + second + " to be a valid variable name.");
-            }
-
-            return this.constraint(variables, fn);
-        },
-
-        /*
-         * Satisfied when a < b
-         */
-        lessThan: function(a, b) {
-            return this.binaryOp(a, b, function(a, b) { return a < b; });
-        },
-
-        /*
-         * Satisfied when a <= b
-         */
-        lessThanOrEqual: function(a, b) {
-            return this.binaryOp(a, b, function(a, b) { return a <= b; });
-        },
-
-        /*
-         * Satisfied when a > b
-         */
-        greaterThan: function(a, b) {
-            return this.binaryOp(a, b, function(a, b) { return a > b; });
-        },
-
-        /*
-         * Satisfied when a > 0
-         */
-        positive: function(a) {
-            return this.unaryOp(a, function(a) { return a > 0; });
-        },
-
-        /*
-         * Satisfied when a > 0
-         */
-        negative: function(a) {
-            return this.unaryOp(a, function(a) { return a < 0; });
-        },
-
-        /*
-         * Satisfied when a >= b
-         */
-        greaterThanOrEqual: function(a, b) {
-            return this.binaryOp(a, b, function(a, b) { return a >= b; });
-        },
-
-        /*
-         * Satisfied when min <= val <= max
-         */
-        inRange: function(val, min, max) {
-            return this.and(
-                this.greaterThanOrEqual(val, min),
-                this.lessThanOrEqual(val, max));
-        },
-
-        /*
-         * Satisfied when a === b
-         */
-        equal: function(a, b) {
-            return this.binaryOp(a, b, function(a, b) { return a === b; });
-        },
-
-        /*
-         * Satisfied when a !== b
-         */
-        notEqual: function(a, b) {
-            return this.binaryOp(a, b, function(a, b) { return a !== b; });
-        },
-
-        /*
-         * Satisfied when constraint is not satisfied
-         */
-        not: function(constraint) {
-            return this.constraint(constraint.variables, function() {
-                return !constraint.fn.apply({}, arguments);
-            });
-        },
-
-        _naryShortCircuitingOp: function(allOrAny, args) {
-            var variables = _.union.apply({}, _.pluck(args, "variables"));
-
-            var argNameToIndex = _.object(_.map(variables, function(item, index) {
-                return [item, index];
-            }));
-
-            return this.constraint(variables, function() {
-                var constraintArgs = arguments;
-                return allOrAny(args, function(constraint) {
-                    var fnArgs = _.map(constraint.variables, function(varName) {
-                        return constraintArgs[argNameToIndex[varName]];
-                    });
-
-                    return constraint.fn.apply({}, fnArgs);
-                });
-            });
-        },
-
-        /*
-         * Satisfied when all of the input constraints are satisfied
-         */
-        and: function() {
-            return this._naryShortCircuitingOp(_.all, arguments);
-        },
-
-        /*
-         * Satisfied when any of the input constraints are satisfied
-         */
-        or: function() {
-            return this._naryShortCircuitingOp(_.any, arguments);
-        }
-    }
-};
-
-var PooledWorker = function(filename, onExec) {
-    this.pool = [];
-    this.curID = 0;
-    this.filename = filename;
-    this.onExec = onExec || function() {};
-};
-
-PooledWorker.prototype.getURL = function() {
-    return this.workersDir + this.filename +
-        "?cachebust=B" + (new Date()).toDateString();
-};
-
-PooledWorker.prototype.getWorkerFromPool = function() {
-    // NOTE(jeresig): This pool of workers is used to cut down on the
-    // number of new web workers that we need to create. If the user
-    // is typing really fast, or scrubbing numbers, it has the
-    // potential to use a lot of workers. We want to re-use as many of
-    // them as possible as their creation can be expensive. (Chrome
-    // seems to freak out, use lots of memory, and sometimes crash.)
-    var worker = this.pool.shift();
-    if (!worker) {
-        worker = new window.Worker(this.getURL());
-    }
-    // Keep track of what number worker we're running so that we know
-    // if any new hint workers have been started after this one
-    this.curID += 1;
-    worker.id = this.curID;
-    return worker;
-};
-
-/* Returns true if the passed in worker is the most recently created */
-PooledWorker.prototype.isCurrentWorker = function(worker) {
-    return this.curID === worker.id;
-};
-
-PooledWorker.prototype.addWorkerToPool = function(worker) {
-    // Return the worker back to the pool
-    this.pool.push(worker);
-};
-
-PooledWorker.prototype.exec = function() {
-    this.onExec.apply(this, arguments);
-};
-(function() {
-
-// Keep track of the frame source and origin for later
-var frameSource;
-var frameOrigin;
-
-var LiveEditorOutput = {
-    recording: false,
-
-    init: function(options) {
-        this.$elem = $(options.el);
-        this.render();
-
-        this.setPaths(options);
-
-        // These are the tests (like challenge tests)
-        this.validate = null;
-
-        this.assertions = [];
-
-        this.context = {};
-        this.loaded = false;
-
-        this.config = new ScratchpadConfig({});
-
-        this.tipbar = new TipBar({
-            el: this.$elem[0]
-        });
-
-        this.setOutput(options.output);
-
-        this.bind();
-    },
-
-    render: function() {
-        this.$elem.html(Handlebars.templates["output"]());
-    },
-
-    bind: function() {
-        // Handle messages coming in from the parent frame
-        window.addEventListener("message",
-            this.handleMessage.bind(this), false);
-    },
-
-    setPaths: function(data) {
-        if (data.workersDir) {
-            this.workersDir = this._qualifyURL(data.workersDir);
-            PooledWorker.prototype.workersDir = this.workersDir;
-        }
-        if (data.externalsDir) {
-            this.externalsDir = this._qualifyURL(data.externalsDir);
-            PooledWorker.prototype.externalsDir = this.externalsDir;
-        }
-        if (data.imagesDir) {
-            this.imagesDir = this._qualifyURL(data.imagesDir);
-        }
-        if (data.jshintFile) {
-            this.jshintFile = this._qualifyURL(data.jshintFile);
-            PooledWorker.prototype.jshintFile = this.jshintFile;
-        }
-    },
-
-    _qualifyURL: function(url){
-        var a = document.createElement("a");
-        a.href = url;
-        return a.href;
-    },
-
-    handleMessage: function(event) {
-        var data;
-
-        frameSource = event.source;
-        frameOrigin = event.origin;
-
-        // let the parent know we're up and running
-        this.notifyActive();
-
-        try {
-            data = JSON.parse(event.data);
-
-        } catch (err) {
-            return;
-        }
-
-        // Set the paths from the incoming data, if they exist
-        this.setPaths(data);
-
-        // Validation code to run
-        if (data.validate != null) {
-            this.initTests(data.validate);
-        }
-
-        // Settings to initialize
-        if (data.settings != null) {
-            this.settings = data.settings;
-        }
-
-        // Code to be executed
-        if (data.code != null) {
-            this.config.switchVersion(data.version);
-            this.runCode(data.code);
-        }
-
-        if (data.onlyRunTests != null) {
-            this.onlyRunTests = !!(data.onlyRunTests);
-        } else {
-            this.onlyRunTests = false;
-        }
-
-        // Restart the output
-        if (data.restart) {
-            this.restart();
-        }
-
-        // Take a screenshot of the output
-        if (data.screenshot) {
-            // We want to resize the image to a 200x200 thumbnail,
-            // which we can do by creating a temporary canvas
-            var tmpCanvas = document.createElement("canvas");
-
-            var screenshotSize = data.screenshotSize || 200;
-            tmpCanvas.width = screenshotSize;
-            tmpCanvas.height = screenshotSize;
-            tmpCanvas.getContext("2d").drawImage(
-                $("#output-canvas")[0], 0, 0, screenshotSize, screenshotSize);
-
-            // Send back the screenshot data
-            frameSource.postMessage(tmpCanvas.toDataURL("image/png"),
-                frameOrigin);
-        }
-
-        // Keep track of recording state
-        if (data.recording != null) {
-            this.recording = data.recording;
-        }
-
-        // Play back recording
-        if (data.action) {
-            if (this.output.handlers[data.name]) {
-                this.output.handlers[data.name](data.action);
-            }
-        }
-
-        if (data.documentation) {
-            BabyHint.initDocumentation(data.documentation);
-        }
-    },
-
-    // Send a message back to the parent frame
-    postParent: function(data) {
-        // If there is no frameSource (e.g. we're not embedded in another page)
-        // Then we don't need to care about sending the messages anywhere!
-        if (frameSource) {
-            frameSource.postMessage(JSON.stringify(data), frameOrigin);
-        }
-    },
-
-    notifyActive: _.once(function() {
-        this.postParent({ active: true });
-    }),
-
-    // This function stores the new tests on the validate property
-    //  and it executes the test code to see if its valid
-    initTests: function(validate) {
-        // Only update the tests if they have changed
-        if (this.validate === validate) {
-            return;
-        }
-
-        // Prime the test queue
-        this.validate = validate;
-
-        // We evaluate the test code to see if it itself has any syntax errors
-        // This also ends up pushing the tests onto this.tests
-        var error = this.output.initTests(validate);
-
-        // Display errors encountered while evaluating the test code
-        if (error && error.message) {
-            $("#test-errors").text(result.message).show();
-        } else {
-            $("#test-errors").hide();
-        }
-    },
-
-    runCode: function(userCode, callback) {
-        this.currentCode = userCode;
-
-        var runDone = function(errors, testResults) {
-            errors = this.cleanErrors(errors || []);
-
-            if (!this.loaded) {
-                this.postParent({ loaded: true });
-                this.loaded = true;
-            }
-
-            // A callback for working with a test suite
-            if (callback) {
-                callback(errors, testResults);
-                return;
-            }
-
-            this.postParent({
-                results: {
-                    code: userCode,
-                    errors: errors,
-                    tests: testResults || [],
-                    assertions: this.assertions
-                }
-            });
-
-            this.toggleErrors(errors);
-        }.bind(this);
-
-        this.lint(userCode, function(errors) {
-            // Run the tests (even if there are lint errors)
-            this.test(userCode, this.validate, errors, function(errors, testResults) {
-                if (errors.length > 0 || this.onlyRunTests) {
-                    return runDone(errors, testResults);
-                }
-
-                // Then run the user's code
-                try {
-                    this.output.runCode(userCode, function(errors) {
-                        runDone(errors, testResults);
-                    });
-
-                } catch (e) {
-                    runDone([e], testResults);
-                }
-            }.bind(this));
-        }.bind(this));
-    },
-
-    test: function(userCode, validate, errors, callback) {
-        this.output.test(userCode, validate, errors, callback);
-    },
-
-    lint: function(userCode, callback) {
-        this.output.lint(userCode, callback);
-    },
-
-    setOutput: function(output) {
-        if (this.output) {
-            this.output.kill();
-        }
-
-        this.output = output;
-        output.init({
-            config: this.config,
-            output: this
-        });
-    },
-
-    getUserCode: function() {
-        return this.currentCode || "";
-    },
-
-    toggle: function(toggle) {
-        this.output.toggle(toggle);
-    },
-
-    restart: function() {
-        if (this.output.restart) {
-            this.output.restart();
-        }
-
-        this.runCode(this.getUserCode());
-    },
-
-    cleanErrors: function(errors) {
-        errors = errors.map(function(error) {
-            if (!$.isPlainObject(error)) {
-                return {
-                    row: error.lineno ? error.lineno - 2 : -1,
-                    column: 0,
-                    text: this.clean(error.message),
-                    type: "error",
-                    source: "native",
-                    priority: 3
-                };
-            }
-
-            return {
-                row: error.row,
-                column: error.column,
-                text: _.compose(this.prettify, this.clean)(error.text),
-                type: error.type,
-                lint: error.lint,
-                source: error.source
-            };
-        }.bind(this));
-
-        errors = errors.sort(function(a, b) {
-            var diff = a.row - b.row;
-            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
-        });
-
-        return errors;
-    },
-
-    // This adds html tags around quoted lines so they can be formatted
-    prettify: function(str) {
-        str = str.split("\"");
-        var htmlString = "";
-        for (var i = 0; i < str.length; i++) {
-            if (str[i].length === 0) {
-                continue;
-            }
-
-            if (i % 2 === 0) {
-                //regular text
-                htmlString += "<span class=\"text\">" + str[i] + "</span>";
-            } else {
-                // text in quotes
-                htmlString += "<span class=\"quote\">" + str[i] + "</span>";
-            }
-        }
-        return htmlString;
-    },
-
-    clean: function(str) {
-        return String(str).replace(/</g, "&lt;");
-    },
-
-    toggleErrors: function(errors) {
-        var hasErrors = !!errors.length;
-
-        $("#show-errors").toggleClass("ui-state-disabled", !hasErrors);
-        $("#output .error-overlay").toggle(hasErrors);
-
-        this.toggle(!hasErrors);
-
-        if (!hasErrors) {
-            this.tipbar.hide("Error");
-            return;
-        }
-
-        if (this.errorDelay) {
-            clearTimeout(this.errorDelay);
-        }
-
-        this.errorDelay = setTimeout(function() {
-            if (errors.length > 0) {
-                this.tipbar.show("Error", errors);
-            }
-        }.bind(this), 1500);
-    }
-};
-
-window.Output = LiveEditorOutput;
-window.LiveEditorOutput = LiveEditorOutput;
-
-})();
 
 window.CanvasOutput = {
     // Canvas mouse events to track
@@ -3069,7 +3069,7 @@ window.CanvasOutput = {
      * The worker that matches with StructuredJS.
      */
     testWorker: new PooledWorker(
-        "test-worker.js",
+        "p5js/test-worker.js",
         function(code, validate, errors, callback) {
             var self = this;
 
@@ -3127,7 +3127,7 @@ window.CanvasOutput = {
      * The worker that analyzes the user's code.
      */
     hintWorker: new PooledWorker(
-        "jshint-worker.js",
+        "p5js/jshint-worker.js",
         function(hintCode, callback) {
             // Fallback in case of no worker support
             if (!window.Worker) {
@@ -3159,7 +3159,7 @@ window.CanvasOutput = {
     ),
 
     worker: new PooledWorker(
-        "worker.js",
+        "p5js/worker.js",
         function(userCode, context, callback) {
             var timeout;
             var worker = this.getWorkerFromPool();

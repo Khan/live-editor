@@ -79,11 +79,11 @@
             "build/tmpl/tipbar.js",
             "js/exec/tipbar.js",
             "build/tmpl/output.js",
-            "js/exec/babyhint.js",
-            "js/workers/output-tester.js",
             "js/exec/pooled-worker.js",
             "js/exec/output.js",
-            "js/exec/canvas-output.js"
+            "js/workers/p5js/output-tester.js",
+            "js/exec/p5js/babyhint.js",
+            "js/exec/p5js/p5js-output.js"
         ],
         "ui": [
             "build/tmpl/live-editor.js",
@@ -94,11 +94,11 @@
         ]
     },
     "workers": [
-        "js/workers/jshint-worker.js",
-        "js/workers/test-worker.js",
-        "js/workers/processing-stubs.js",
-        "js/workers/output-tester.js",
-        "js/workers/worker.js"
+        "js/workers/p5js/jshint-worker.js",
+        "js/workers/p5js/test-worker.js",
+        "js/workers/p5js/processing-stubs.js",
+        "js/workers/p5js/output-tester.js",
+        "js/workers/p5js/worker.js"
     ],
     "externals": [
         "external/es5-shim/es5-shim.js",
