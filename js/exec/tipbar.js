@@ -6,7 +6,8 @@
  */
 
 window.TipBar = Backbone.View.extend({
-    initialize: function() {
+    initialize: function(options) {
+        this.output = options.output;
         this.pos = 0;
         this.texts = [];
         this.render();
@@ -26,7 +27,7 @@ window.TipBar = Backbone.View.extend({
                 self.show();
             }
 
-            Output.postParent({ focus: true });
+            self.output.postParent({ focus: true });
 
             return false;
         });
@@ -34,7 +35,7 @@ window.TipBar = Backbone.View.extend({
         this.$el.on("click", ".tipbar .text-wrap a", function() {
             var error = self.texts[self.pos];
 
-            Output.postParent({ cursor: error });
+            self.output.postParent({ cursor: error });
 
             return false;
         });
@@ -51,7 +52,7 @@ window.TipBar = Backbone.View.extend({
         var pos = this.pos;
         var bar = this.$el.find(".tipbar");
 
-            // Inject current text
+        // Inject current text
         bar
             .find(".current-pos").text(texts.length > 1 ? (pos + 1) + "/" + texts.length : "").end()
             .find(".message").html(texts[pos].text || texts[pos] || "").end()

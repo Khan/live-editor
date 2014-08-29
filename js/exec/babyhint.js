@@ -19,7 +19,7 @@ var BabyHint = {
 
     EDIT_DISTANCE_THRESHOLD: 2,
 
-    // We'll get function names from Output.context
+    // We'll get function names from the global context
     // non-function keywords go here
     keywords: [
     /* RESERVED WORDS */
@@ -46,7 +46,7 @@ var BabyHint = {
         "var",
         "while",
     /* JAVASCRIPT OBJECT PROPERTIES AND FUNCTIONS */
-    /* Omit those included in Output.context */
+    /* Omit those included in the global context */
         "charAt",
         "charCodeAt",
         "fromCharCode",
@@ -68,7 +68,7 @@ var BabyHint = {
 
     // Expected number of parameters for known functions.
     // (Some functions can take multiple signatures)
-    // We'll get most of these from Output.context,
+    // We'll get most of these from the global context,
     // so these are just the overrides.
     functionParamCount: {
         "acos": 1,
