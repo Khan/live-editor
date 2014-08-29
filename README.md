@@ -29,7 +29,7 @@ You can use the pre-built copies of everything inside the `build/` directory. If
     # Build the Ace editor files
     cd bower_components/ace
     npm install
-    make build
+    node Makefile.dryice.js -nc
 
 At this point you can make a fresh build, using [Gulp](http://gulpjs.com/):
 

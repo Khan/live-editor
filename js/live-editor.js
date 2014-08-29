@@ -101,7 +101,9 @@ window.LiveEditor = Backbone.View.extend({
             config: this.config,
             record: this.record,
             imagesDir: this.imagesDir,
-            externalsDir: this.externalsDir
+            externalsDir: this.externalsDir,
+            workersDir: this.workersDir,
+            type: this.editorType
         });
 
         var code = options.code;

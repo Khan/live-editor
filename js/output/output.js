@@ -38,7 +38,8 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.output = new OutputClass({
             el: this.$el.find(".output"),
             config: this.config,
-            output: this
+            output: this,
+            type: outputType
         });
     },
 
@@ -231,7 +232,9 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     toggle: function(toggle) {
-        this.output.toggle(toggle);
+        if (this.output.toggle) {
+            this.output.toggle(toggle);
+        }
     },
 
     restart: function() {

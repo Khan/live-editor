@@ -15,6 +15,7 @@
         "editor_ace_deps": [
             "external/ace-builds/src-noconflict/ace.js",
             "external/ace-builds/src-noconflict/mode-javascript.js",
+            "external/ace-builds/src-noconflict/mode-html.js",
             "external/ace-builds/src-noconflict/ext-searchbox.js",
             "external/ace-builds/src-noconflict/ext-language_tools.js"
         ],
@@ -86,6 +87,9 @@
             "js/output/p5js/babyhint.js",
             "js/output/p5js/p5js-output.js"
         ],
+        "output_html": [
+            "js/output/html/html-output.js"
+        ],
         "output": [
             "build/tmpl/tipbar.js",
             "js/output/tipbar.js",
@@ -100,7 +104,10 @@
             "js/live-editor.js"
         ]
     },
-    "workers": [
+    "workers_html": [
+        "external/ace-builds/src-noconflict/worker-html.js"
+    ],
+    "workers_p5js": [
         "js/workers/p5js/jshint-worker.js",
         "js/workers/p5js/test-worker.js",
         "js/workers/p5js/processing-stubs.js",

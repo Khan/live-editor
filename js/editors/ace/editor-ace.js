@@ -12,18 +12,24 @@ window.AceEditor = Backbone.View.extend({
         this.autoFocus = options.autoFocus;
         this.config = options.config;
         this.record = options.record;
+        this.type = options.type;
+        this.workersDir = options.workersDir;
         this.editor = ace.edit(this.el);
         this.textarea = this.$(this.dom.TEXT_INPUT);
         this.content = this.$(this.dom.CONTENT);
         this.offset = this.content.offset();
 
         // Attach the hot number picker to the editor
-        var hn = new HotNumber({
-            imagesDir: options.imagesDir,
-            type: "ace",
-            editor: this.editor,
-            record: this.record
-        });
+        // TODO(jeresig): Enable this for other types of content,
+        // once it's ready.
+        if (this.type === "ace_p5js") {
+            new HotNumber({
+                imagesDir: options.imagesDir,
+                type: "ace",
+                editor: this.editor,
+                record: this.record
+            });
+        }
 
         // Make the editor vertically resizable
         if (this.$el.resizable) {
@@ -57,7 +63,7 @@ window.AceEditor = Backbone.View.extend({
         });
 
         this.config.on("versionSwitched", function(version) {
-            self.config.runVersion(version, "editor", self.editor);
+            self.config.runVersion(version, self.type + "_editor", self);
         });
 
         this.config.editor = this;
@@ -283,7 +289,7 @@ window.AceEditor = Backbone.View.extend({
     reset: function(code, focus) {
         code = code || this.defaultCode;
 
-        this.config.runCurVersion("editor", this.editor);
+        this.config.runCurVersion(this.type + "_editor", this);
 
         // Reset the editor
         this.text(code);
@@ -384,3 +390,4 @@ window.AceEditor = Backbone.View.extend({
 });
 
 LiveEditor.registerEditor("ace_p5js", AceEditor);
+LiveEditor.registerEditor("ace_html", AceEditor);

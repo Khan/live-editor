@@ -54,8 +54,11 @@ gulp.task("scripts_min", scriptTypes.map(function(type) {
 }));
 
 gulp.task("workers", function() {
-    gulp.src(paths.workers, {base: "./js/workers/"})
-        .pipe(gulp.dest("build/workers"));
+    gulp.src(paths.workers_html)
+        .pipe(gulp.dest("build/workers/html"));
+
+    gulp.src(paths.workers_p5js)
+        .pipe(gulp.dest("build/workers/p5js"));
 });
 
 gulp.task("externals", function() {
