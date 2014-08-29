@@ -321,6 +321,35 @@ window.P5jsOutput = Backbone.View.extend({
         }
     },
 
+    messageHandlers: {
+        // Take a screenshot of the output
+        screenshot: function(data) {
+            // We want to resize the image to a 200x200 thumbnail,
+            // which we can do by creating a temporary canvas
+            var tmpCanvas = document.createElement("canvas");
+
+            var screenshotSize = data.screenshotSize || 200;
+            tmpCanvas.width = screenshotSize;
+            tmpCanvas.height = screenshotSize;
+            tmpCanvas.getContext("2d").drawImage(
+                this.$canvas[0], 0, 0, screenshotSize, screenshotSize);
+
+            // Send back the screenshot data
+            this.output.postParent(tmpCanvas.toDataURL("image/png"));
+        },
+
+        // Play back recording
+        action: function(data) {
+            if (this.handlers[data.name]) {
+                this.handlers[data.name](data.action);
+            }
+        },
+
+        documentation: function(data) {
+            BabyHint.initDocumentation(data.documentation);
+        }
+    },
+
     imageCache: {},
     imagesCached: false,
     imageCacheStarted: false,

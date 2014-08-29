@@ -275,37 +275,17 @@ window.LiveEditorOutput = Backbone.View.extend({
             this.restart();
         }
 
-        // Take a screenshot of the output
-        if (data.screenshot) {
-            // We want to resize the image to a 200x200 thumbnail,
-            // which we can do by creating a temporary canvas
-            var tmpCanvas = document.createElement("canvas");
-
-            var screenshotSize = data.screenshotSize || 200;
-            tmpCanvas.width = screenshotSize;
-            tmpCanvas.height = screenshotSize;
-            tmpCanvas.getContext("2d").drawImage(
-                $("#output-canvas")[0], 0, 0, screenshotSize, screenshotSize);
-
-            // Send back the screenshot data
-            this.frameSource.postMessage(tmpCanvas.toDataURL("image/png"),
-                this.frameOrigin);
-        }
-
         // Keep track of recording state
         if (data.recording != null) {
             this.recording = data.recording;
         }
 
-        // Play back recording
-        if (data.action) {
-            if (this.output.handlers[data.name]) {
-                this.output.handlers[data.name](data.action);
+        if (this.output.messageHandlers) {
+            for (var prop in data) {
+                if (prop in this.output.messageHandlers) {
+                    this.output.messageHandlers[prop].call(this.output, data);
+                }
             }
-        }
-
-        if (data.documentation) {
-            BabyHint.initDocumentation(data.documentation);
         }
     },
 
@@ -314,7 +294,8 @@ window.LiveEditorOutput = Backbone.View.extend({
         // If there is no frameSource (e.g. we're not embedded in another page)
         // Then we don't need to care about sending the messages anywhere!
         if (this.frameSource) {
-            this.frameSource.postMessage(JSON.stringify(data),
+            this.frameSource.postMessage(
+                typeof data === "string" ? data : JSON.stringify(data),
                 this.frameOrigin);
         }
     },
@@ -487,16 +468,17 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         this.toggle(!hasErrors);
 
+        if (this.errorDelay) {
+            clearTimeout(this.errorDelay);
+        }
+
         if (!hasErrors) {
             this.tipbar.hide("Error");
             return;
         }
 
-        if (this.errorDelay) {
-            clearTimeout(this.errorDelay);
-        }
-
         this.errorDelay = setTimeout(function() {
+            this.errorDelay = null;
             if (errors.length > 0) {
                 this.tipbar.show("Error", errors);
             }
@@ -2123,6 +2105,35 @@ window.P5jsOutput = Backbone.View.extend({
 
             // Restart execution
             this.output.restart();
+        }
+    },
+
+    messageHandlers: {
+        // Take a screenshot of the output
+        screenshot: function(data) {
+            // We want to resize the image to a 200x200 thumbnail,
+            // which we can do by creating a temporary canvas
+            var tmpCanvas = document.createElement("canvas");
+
+            var screenshotSize = data.screenshotSize || 200;
+            tmpCanvas.width = screenshotSize;
+            tmpCanvas.height = screenshotSize;
+            tmpCanvas.getContext("2d").drawImage(
+                this.$canvas[0], 0, 0, screenshotSize, screenshotSize);
+
+            // Send back the screenshot data
+            this.output.postParent(tmpCanvas.toDataURL("image/png"));
+        },
+
+        // Play back recording
+        action: function(data) {
+            if (this.handlers[data.name]) {
+                this.handlers[data.name](data.action);
+            }
+        },
+
+        documentation: function(data) {
+            BabyHint.initDocumentation(data.documentation);
         }
     },
 
