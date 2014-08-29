@@ -1531,3 +1531,5 @@ _.extend(P5jsOutput, {
         }.bind(this);
     }
 });
+
+LiveEditorOutput.registerOutput("p5js", P5jsOutput);

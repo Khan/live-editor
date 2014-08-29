@@ -35,7 +35,7 @@ var runTest = function(options) {
     // Start an asynchronous test
     it(displayTitle, function(done) {
         var output = new LiveEditorOutput({
-            output: P5jsOutput,
+            outputType: "p5js",
             workersDir: "../build/workers/",
             externalsDir: "../build/external/",
             imagesDir: "../build/images/",

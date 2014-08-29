@@ -728,12 +728,7 @@ window.LiveEditor = Backbone.View.extend({
     defaultOutputWidth: 400,
     defaultOutputHeight: 400,
 
-    defaultEditorType: "p5js",
-
-    editor: {
-        p5js: ScratchpadEditor,
-        blocklyp5js: ScratchpadBlocklyEditor
-    },
+    editors: {},
 
     initialize: function(options) {
         this.workersDir = this._qualifyURL(options.workersDir);
@@ -743,7 +738,8 @@ window.LiveEditor = Backbone.View.extend({
         this.jshintFile = this._qualifyURL(options.jshintFile ||
             this.externalsDir + "jshint/jshint.js");
 
-        this.editorType = options.editorType || this.defaultEditorType;
+        this.outputType = options.outputType || "";
+        this.editorType = options.editorType || _.keys(this.editors)[0];
         this.editorHeight = options.editorHeight;
         this.initialCode = options.code;
         this.initialVersion = options.version;
@@ -806,7 +802,7 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // Set up the editor
-        this.editor = new this.editor[this.editorType]({
+        this.editor = new this.editors[this.editorType]({
             el: this.dom.EDITOR,
             autoFocus: options.autoFocus,
             config: this.config,
@@ -1668,7 +1664,8 @@ window.LiveEditor = Backbone.View.extend({
             workersDir: this.workersDir,
             externalsDir: this.externalsDir,
             imagesDir: this.imagesDir,
-            jshintFile: this.jshintFile
+            jshintFile: this.jshintFile,
+            outputType: this.outputType
         };
 
         this.trigger("runCode", options);
@@ -1736,3 +1733,7 @@ window.LiveEditor = Backbone.View.extend({
         return a.href;
     }
 });
+
+LiveEditor.registerEditor = function(name, editor) {
+    LiveEditor.prototype.editors[name] = editor;
+};

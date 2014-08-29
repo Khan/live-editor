@@ -18,6 +18,9 @@
             "external/ace-builds/src-noconflict/ext-searchbox.js",
             "external/ace-builds/src-noconflict/ext-language_tools.js"
         ],
+        "editor_ace": [
+            "js/editors/ace/editor-ace.js"
+        ],
         "editor_blockly_deps": [
             "external/blockly/blockly_compressed.js",
             "external/blockly/javascript_compressed.js",
@@ -48,6 +51,9 @@
             "external/js-to-blockly/jslang/jslang_logical.js",
 
             "js/ui/blockly-processing-blocks.js"
+        ],
+        "editor_blockly": [
+            "js/editors/blockly/editor-blockly.js"
         ],
         "audio": [
             "external/SoundManager2/script/soundmanager2.js",
@@ -86,9 +92,6 @@
             "build/tmpl/output.js",
             "js/output/pooled-worker.js",
             "js/output/output.js"
-        ],
-        "editor_ace": [
-            "js/ui/editor.js"
         ],
         "ui": [
             "build/tmpl/live-editor.js",

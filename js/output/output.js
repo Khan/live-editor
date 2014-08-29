@@ -1,6 +1,7 @@
 window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
+    outputs: {},
 
     initialize: function(options) {
         this.render();
@@ -11,11 +12,9 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         this.config = new ScratchpadConfig({});
 
-        this.output = new options.output({
-            el: this.$el.find(".output"),
-            config: this.config,
-            output: this
-        });
+        if (options.outputType) {
+            this.setOutput(options.outputType);
+        }
 
         this.tipbar = new TipBar({
             el: this.el
@@ -32,6 +31,15 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Handle messages coming in from the parent frame
         window.addEventListener("message",
             this.handleMessage.bind(this), false);
+    },
+
+    setOutput: function(outputType) {
+        var OutputClass = this.outputs[outputType];
+        this.output = new OutputClass({
+            el: this.$el.find(".output"),
+            config: this.config,
+            output: this
+        });
     },
 
     setPaths: function(data) {
@@ -72,6 +80,11 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         } catch (err) {
             return;
+        }
+
+        if (!this.output) {
+            var outputType = data.outputType || _.keys(this.outputs)[0];
+            this.setOutput(outputType);
         }
 
         // Set the paths from the incoming data, if they exist
@@ -314,3 +327,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         }.bind(this), 1500);
     }
 });
+
+LiveEditorOutput.registerOutput = function(name, output) {
+    LiveEditorOutput.prototype.outputs[name] = output;
+};
