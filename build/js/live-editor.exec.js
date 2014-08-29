@@ -1688,7 +1688,7 @@ var LiveEditorOutput = {
 
                 // Then run the user's code
                 try {
-                    this.output.runCode(userCode, this.context, runDone);
+                    this.output.runCode(userCode, runDone);
 
                 } catch (e) {
                     runDone([e]);
@@ -1724,20 +1724,8 @@ var LiveEditorOutput = {
         this.output.toggle(toggle);
     },
 
-    start: function() {
-        this.output.start();
-    },
-
-    stop: function() {
-        this.output.stop();
-    },
-
     restart: function() {
         this.output.restart();
-    },
-
-    clear: function() {
-        this.output.clear();
     },
 
     cleanErrors: function(errors) {
@@ -2511,7 +2499,7 @@ window.CanvasOutput = {
         return errors.concat(hintErrors);
     },
 
-    runCode: function(userCode, globalContext, callback) {
+    runCode: function(userCode, callback) {
         var runCode = function() {
             if (!window.Worker) {
                 return this.injectCode(userCode, callback);
@@ -3096,19 +3084,11 @@ window.CanvasOutput = {
 
     toggle: function(doToggle) {
         if (doToggle) {
-            this.start();
+            this.canvas.loop();
 
         } else {
-            this.stop();
+            this.canvas.noLoop();
         }
-    },
-
-    stop: function() {
-        this.canvas.noLoop();
-    },
-
-    start: function() {
-        this.canvas.loop();
     },
 
     clear: function() {

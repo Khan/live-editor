@@ -218,7 +218,7 @@ var LiveEditorOutput = {
 
                 // Then run the user's code
                 try {
-                    this.output.runCode(userCode, this.context, runDone);
+                    this.output.runCode(userCode, runDone);
 
                 } catch (e) {
                     runDone([e]);
@@ -254,20 +254,8 @@ var LiveEditorOutput = {
         this.output.toggle(toggle);
     },
 
-    start: function() {
-        this.output.start();
-    },
-
-    stop: function() {
-        this.output.stop();
-    },
-
     restart: function() {
         this.output.restart();
-    },
-
-    clear: function() {
-        this.output.clear();
     },
 
     cleanErrors: function(errors) {

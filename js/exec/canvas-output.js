@@ -670,7 +670,7 @@ window.CanvasOutput = {
         return errors.concat(hintErrors);
     },
 
-    runCode: function(userCode, globalContext, callback) {
+    runCode: function(userCode, callback) {
         var runCode = function() {
             if (!window.Worker) {
                 return this.injectCode(userCode, callback);
@@ -1255,19 +1255,11 @@ window.CanvasOutput = {
 
     toggle: function(doToggle) {
         if (doToggle) {
-            this.start();
+            this.canvas.loop();
 
         } else {
-            this.stop();
+            this.canvas.noLoop();
         }
-    },
-
-    stop: function() {
-        this.canvas.noLoop();
-    },
-
-    start: function() {
-        this.canvas.loop();
     },
 
     clear: function() {
