@@ -12,13 +12,13 @@
             "external/backbone/backbone.js",
             "external/jed/jed.js"
         ],
-        "editor_ace": [
+        "editor_ace_deps": [
             "external/ace-builds/src-noconflict/ace.js",
             "external/ace-builds/src-noconflict/mode-javascript.js",
             "external/ace-builds/src-noconflict/ext-searchbox.js",
             "external/ace-builds/src-noconflict/ext-language_tools.js"
         ],
-        "editor_blockly": [
+        "editor_blockly_deps": [
             "external/blockly/blockly_compressed.js",
             "external/blockly/javascript_compressed.js",
             "external/blockly/blocks_compressed.js",
@@ -49,12 +49,6 @@
 
             "js/ui/blockly-processing-blocks.js"
         ],
-        "output_p5js": [
-            "external/processing-js/processing.js",
-            "external/jshint/jshint.js",
-            "external/structuredjs/external/esprima.js",
-            "external/structuredjs/structured.js"
-        ],
         "audio": [
             "external/SoundManager2/script/soundmanager2.js",
             "external/multirecorderjs/multirecorder.js",
@@ -75,20 +69,30 @@
             "js/shared/record.js",
             "js/shared/config.js"
         ],
-        "exec": [
-            "build/tmpl/tipbar.js",
-            "js/exec/tipbar.js",
-            "build/tmpl/output.js",
-            "js/exec/pooled-worker.js",
-            "js/exec/output.js",
+        "output_p5js_deps": [
+            "external/processing-js/processing.js",
+            "external/jshint/jshint.js",
+            "external/structuredjs/external/esprima.js",
+            "external/structuredjs/structured.js"
+        ],
+        "output_p5js": [
             "js/workers/p5js/output-tester.js",
-            "js/exec/p5js/babyhint.js",
-            "js/exec/p5js/p5js-output.js"
+            "js/output/p5js/babyhint.js",
+            "js/output/p5js/p5js-output.js"
+        ],
+        "output": [
+            "build/tmpl/tipbar.js",
+            "js/output/tipbar.js",
+            "build/tmpl/output.js",
+            "js/output/pooled-worker.js",
+            "js/output/output.js"
+        ],
+        "editor_ace": [
+            "js/ui/editor.js"
         ],
         "ui": [
             "build/tmpl/live-editor.js",
             "js/ui/canvas.js",
-            "js/ui/editor.js",
             "js/ui/record.js",
             "js/live-editor.js"
         ]
@@ -123,8 +127,8 @@
             "css/ui/autosuggest.css",
             "css/ui/hotnumber.css"
         ],
-        "exec": [
-            "css/exec/style.css"
+        "output": [
+            "css/output/style.css"
         ],
         "ui": [
             "css/ui/style.css"

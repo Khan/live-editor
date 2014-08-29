@@ -1,4 +1,10 @@
 window.ScratchpadEditor = Backbone.View.extend({
+    dom: {
+        ACTIVE_LINE: ".ace_active_line",
+        TEXT_INPUT: "textarea",
+        CONTENT: "div.ace_content"
+    },
+
     initialize: function(options) {
         var self = this;
 
@@ -50,8 +56,7 @@ window.ScratchpadEditor = Backbone.View.extend({
             self.trigger("change");
         });
 
-        // TODO: Bind directly to object once it's a backbone model
-        $(this.config).on("versionSwitched", function(version) {
+        this.config.on("versionSwitched", function(version) {
             self.config.runVersion(version, "editor", self.editor);
         });
 
@@ -62,12 +67,6 @@ window.ScratchpadEditor = Backbone.View.extend({
         if (this.record) {
             this.bindRecord();
         }
-    },
-
-    dom: {
-        ACTIVE_LINE: ".ace_active_line",
-        TEXT_INPUT: "textarea",
-        CONTENT: "div.ace_content"
     },
 
     bindRecord: function() {

@@ -95,7 +95,8 @@ gulp.task("watch", function() {
     });
 
     // Run output tests when the output code changes
-    gulp.watch(paths.scripts.exec, ["test"]);
+    gulp.watch(paths.scripts.output
+        .concat(paths.scripts.output_p5js), ["test"]);
 
     styleTypes.forEach(function(type) {
         gulp.watch(paths.styles[type], ["style_" + type]);
