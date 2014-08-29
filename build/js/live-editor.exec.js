@@ -1866,6 +1866,9 @@ window.CanvasOutput = {
     },
 
     init: function(options) {
+        // Handle recording playback
+        this.handlers = {};
+
         this.config = options.config;
 
         this.$elem = $("#output-canvas");
@@ -1881,10 +1884,10 @@ window.CanvasOutput = {
 
         this.bind();
 
+        this.build(this.$elem[0]);
+
         this.reseedRandom();
         this.lastGrab = null;
-
-        this.build(this.$elem[0]);
 
         // If a list of exposed properties hasn't been generated before
         if (!this.props) {
@@ -2095,9 +2098,6 @@ window.CanvasOutput = {
         // window, which could be changed in the parent page
         $(window).on("resize", this.setDimensions);
     },
-
-    // Handle recording playback
-    handlers: {},
 
     build: function(canvas) {
         this.canvas = new Processing(canvas, function(instance) {
