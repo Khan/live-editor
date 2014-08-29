@@ -15,7 +15,7 @@ window.TipBar = Backbone.View.extend({
     },
 
     render: function() {
-        this.$el.html(Handlebars.templates["tipbar"]());
+        this.$el.append(Handlebars.templates["tipbar"]());
     },
 
     bind: function() {

@@ -1,39 +1,31 @@
-(function() {
-
-// Keep track of the frame source and origin for later
-var frameSource;
-var frameOrigin;
-
-var LiveEditorOutput = {
+window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
+    loaded: false,
 
-    init: function(options) {
-        this.$elem = $(options.el);
+    initialize: function(options) {
         this.render();
 
         this.setPaths(options);
 
-        // These are the tests (like challenge tests)
-        this.validate = null;
-
         this.assertions = [];
-
-        this.context = {};
-        this.loaded = false;
 
         this.config = new ScratchpadConfig({});
 
-        this.tipbar = new TipBar({
-            el: this.$elem[0]
+        this.output = new options.output({
+            el: this.$el.find(".output"),
+            config: this.config,
+            output: this
         });
 
-        this.setOutput(options.output);
+        this.tipbar = new TipBar({
+            el: this.el
+        });
 
         this.bind();
     },
 
     render: function() {
-        this.$elem.html(Handlebars.templates["output"]());
+        this.$el.html(Handlebars.templates["output"]());
     },
 
     bind: function() {
@@ -69,8 +61,8 @@ var LiveEditorOutput = {
     handleMessage: function(event) {
         var data;
 
-        frameSource = event.source;
-        frameOrigin = event.origin;
+        this.frameSource = event.source;
+        this.frameOrigin = event.origin;
 
         // let the parent know we're up and running
         this.notifyActive();
@@ -125,8 +117,8 @@ var LiveEditorOutput = {
                 $("#output-canvas")[0], 0, 0, screenshotSize, screenshotSize);
 
             // Send back the screenshot data
-            frameSource.postMessage(tmpCanvas.toDataURL("image/png"),
-                frameOrigin);
+            this.frameSource.postMessage(tmpCanvas.toDataURL("image/png"),
+                this.frameOrigin);
         }
 
         // Keep track of recording state
@@ -150,8 +142,9 @@ var LiveEditorOutput = {
     postParent: function(data) {
         // If there is no frameSource (e.g. we're not embedded in another page)
         // Then we don't need to care about sending the messages anywhere!
-        if (frameSource) {
-            frameSource.postMessage(JSON.stringify(data), frameOrigin);
+        if (this.frameSource) {
+            this.frameSource.postMessage(JSON.stringify(data),
+                this.frameOrigin);
         }
     },
 
@@ -176,9 +169,9 @@ var LiveEditorOutput = {
 
         // Display errors encountered while evaluating the test code
         if (error && error.message) {
-            $("#test-errors").text(result.message).show();
+            this.$el.find(".test-errors").text(result.message).show();
         } else {
-            $("#test-errors").hide();
+            this.$el.find(".test-errors").hide();
         }
     },
 
@@ -239,18 +232,6 @@ var LiveEditorOutput = {
         this.output.lint(userCode, callback);
     },
 
-    setOutput: function(output) {
-        if (this.output) {
-            this.output.kill();
-        }
-
-        this.output = output;
-        output.init({
-            config: this.config,
-            output: this
-        });
-    },
-
     getUserCode: function() {
         return this.currentCode || "";
     },
@@ -260,6 +241,12 @@ var LiveEditorOutput = {
     },
 
     restart: function() {
+        // This is called on load and it's possible that the output
+        // hasn't been set yet.
+        if (!this.output) {
+            return;
+        }
+
         if (this.output.restart) {
             this.output.restart();
         }
@@ -325,8 +312,7 @@ var LiveEditorOutput = {
     toggleErrors: function(errors) {
         var hasErrors = !!errors.length;
 
-        $("#show-errors").toggleClass("ui-state-disabled", !hasErrors);
-        $("#output .error-overlay").toggle(hasErrors);
+        this.$el.find(".error-overlay").toggle(hasErrors);
 
         this.toggle(!hasErrors);
 
@@ -345,9 +331,4 @@ var LiveEditorOutput = {
             }
         }.bind(this), 1500);
     }
-};
-
-window.Output = LiveEditorOutput;
-window.LiveEditorOutput = LiveEditorOutput;
-
-})();
+});

@@ -1,4 +1,4 @@
-window.CanvasOutput = {
+window.P5jsOutput = Backbone.View.extend({
     // Canvas mouse events to track
     // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
     trackedMouseEvents: ["move", "over", "out", "down", "up"],
@@ -36,27 +36,17 @@ window.CanvasOutput = {
         textSize: [12]
     },
 
-    init: function(options) {
+    initialize: function(options) {
         // Handle recording playback
         this.handlers = {};
 
         this.config = options.config;
         this.output = options.output;
 
-        this.$elem = $("#output-canvas");
-
-        // If no canvas element is found we make a dummy one and render to it
-        if (this.$elem.length === 0) {
-            this.$elem = $("<canvas>")
-                .attr("id", "output-canvas")
-                .appendTo("body");
-        }
-
-        this.$elem.show();
-
+        this.render();
         this.bind();
 
-        this.build(this.$elem[0]);
+        this.build(this.$canvas[0]);
 
         this.reseedRandom();
         this.lastGrab = null;
@@ -147,6 +137,14 @@ window.CanvasOutput = {
         return this;
     },
 
+    render: function() {
+        this.$el.empty();
+        this.$canvas = $("<canvas>")
+            .attr("id", "output-canvas")
+            .appendTo(this.el)
+            .show();
+    },
+
     bind: function() {
         if (window !== window.top) {
             window.alert = $.noop;
@@ -216,14 +214,14 @@ window.CanvasOutput = {
             Object.freeze(Object.getPrototypeOf(window));
         }
 
-        var offset = this.$elem.offset();
+        var offset = this.$canvas.offset();
 
         // Go through all of the mouse events to track
         _.each(this.trackedMouseEvents, function(name) {
             var eventType = "mouse" + name;
 
             // Track that event on the Canvas element
-            this.$elem.bind(eventType, function(e) {
+            this.$canvas.on(eventType, function(e) {
                 // Only log if recording is occurring
                 if (this.output.recording) {
                     var action = {};
@@ -262,7 +260,7 @@ window.CanvasOutput = {
                     0, document.documentElement);
 
                 // And execute it upon the canvas element
-                this.$elem[0].dispatchEvent(evt);
+                this.canvas[0].dispatchEvent(evt);
             }.bind(this);
         }.bind(this));
 
@@ -313,7 +311,7 @@ window.CanvasOutput = {
         if (width !== this.canvas.width ||
             height !== this.canvas.height) {
             // Set the canvas element to be the right size
-            $("#output-canvas").width(width).height(height);
+            this.$canvas.width(width).height(height);
 
             // Set the Processing.js canvas to be the right size
             this.canvas.size(width, height);
@@ -635,15 +633,15 @@ window.CanvasOutput = {
                 // out whether we hit this case.
                 var message = $._("Error: %(message)s",
                     {message: errors[errors.length - 1].message});
-                // TODO(jeresig): Find a good way to show this
-                //$("#test-errors").text(message).show();
+                // TODO(jeresig): Find a better way to show this
+                this.output.$el.find(".test-errors").text(message).show();
                 OutputTester.testContext.assert(false, message,
                     $._("A critical problem occurred in your program " +
                         "making it unable to run."));
             }
 
             callback(errors, testResults);
-        });
+        }.bind(this));
     },
 
     mergeErrors: function(jshintErrors, babyErrors) {
@@ -846,7 +844,7 @@ window.CanvasOutput = {
         // this.newInstance(Something)()
         // Used for keeping track of unique instances
         userCode = userCode && userCode.replace(/\bnew[\s\n]+([A-Z]{1,2}[a-z0-9_]+)([\s\n]*\()/g,
-            "CanvasOutput.applyInstance($1,'$1')$2");
+            "P5jsOutput.applyInstance($1,'$1')$2");
 
         // If we have a draw function then we need to do injection
         // If we had a draw function then we still need to do injection
@@ -903,8 +901,8 @@ window.CanvasOutput = {
             // The instantiated instances have changed, which means that
             // we need to re-run everything.
             if (this.oldInstances &&
-                    CanvasOutput.stringifyArray(this.oldInstances) !==
-                    CanvasOutput.stringifyArray(this.instances)) {
+                    P5jsOutput.stringifyArray(this.oldInstances) !==
+                    P5jsOutput.stringifyArray(this.instances)) {
                 rerun = true;
             }
 
@@ -917,7 +915,7 @@ window.CanvasOutput = {
                 // Reconstruction the function call
                 var args = Array.prototype.slice.call(fnCalls[i][1]);
                 inject += fnCalls[i][0] + "(" +
-                    CanvasOutput.stringifyArray(args) + ");\n";
+                    P5jsOutput.stringifyArray(args) + ");\n";
             }
 
             // We also look for newly-changed global variables to inject
@@ -925,7 +923,7 @@ window.CanvasOutput = {
                 // Turn the result of the extracted value into
                 // a nicely-formatted string
                 try {
-                    grabAll[prop] = CanvasOutput.stringify(grabAll[prop]);
+                    grabAll[prop] = P5jsOutput.stringify(grabAll[prop]);
 
                     // Check to see that we've done an inject before and that
                     // the property wasn't one that shouldn't have been
@@ -1014,7 +1012,6 @@ window.CanvasOutput = {
                         (!(oldProp in this.props) ||
                             oldProp === "draw")) {
                     // Create the code to delete the variable
-                    // TODO(jeresig): Re-work this!
                     inject += "delete this." + oldProp + ";\n";
 
                     // If the draw function was deleted we also
@@ -1133,7 +1130,7 @@ window.CanvasOutput = {
                 if (typeof obj[objProp] === "function") {
                     this.grabObj[name + (proto ? "." + proto : "") +
                             "['" + objProp + "']"] =
-                        CanvasOutput.stringify(obj[objProp]);
+                        P5jsOutput.stringify(obj[objProp]);
 
                 // Otherwise we should probably just inject the value directly
                 } else {
@@ -1192,7 +1189,7 @@ window.CanvasOutput = {
 
     kill: function() {
         this.canvas.exit();
-        this.$elem.hide();
+        this.canvas.hide();
     },
 
     initTests: function(validate) {
@@ -1394,10 +1391,10 @@ window.CanvasOutput = {
             }
         }
     )
-};
+});
 
 // Add in some static helper methods
-_.extend(CanvasOutput, {
+_.extend(P5jsOutput, {
     // Turn a JavaScript object into a form that can be executed
     // (Note: The form will not necessarily be able to pass a JSON linter)
     // (Note: JSON.stringify might throw an exception. We don't capture it

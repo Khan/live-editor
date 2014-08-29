@@ -34,8 +34,8 @@ var runTest = function(options) {
 
     // Start an asynchronous test
     it(displayTitle, function(done) {
-        Output.init({
-            output: CanvasOutput,
+        var output = new LiveEditorOutput({
+            output: P5jsOutput,
             workersDir: "../build/workers/",
             externalsDir: "../build/external/",
             imagesDir: "../build/images/",
@@ -43,11 +43,11 @@ var runTest = function(options) {
         });
 
         // Switch to the Scratchpad's version
-        Output.config.switchVersion(options.version);
+        output.config.switchVersion(options.version);
 
         // Run once to make sure that no errors are thrown
         // during execution
-        Output.runCode(code, function(errors) {
+        output.runCode(code, function(errors) {
             if (options.expected) {
                 expect(errors).to.have.length(0);
             } else {
@@ -64,7 +64,7 @@ var runTest = function(options) {
             }
 
             if (code2) {
-                Output.runCode(code2, function(errors) {
+                output.runCode(code2, function(errors) {
                     if (options.expected) {
                         expect(errors).to.have.length(0);
                     } else {
@@ -102,9 +102,9 @@ var failingTest = function(title, code, code2, errors) {
 // Test the lower level functions in Output
 describe("Scratchpad CanvasOutput functions", function() {
     it("stringifyArray", function() {
-        var undefArray = CanvasOutput.stringifyArray([undefined, undefined]);
+        var undefArray = P5jsOutput.stringifyArray([undefined, undefined]);
         expect(undefArray).to.be.equal("undefined, undefined");
-        var primArray = CanvasOutput.stringifyArray([1, "A"]);
+        var primArray = P5jsOutput.stringifyArray([1, "A"]);
         expect(primArray).to.be.equal("1, \"A\"");
     });
 

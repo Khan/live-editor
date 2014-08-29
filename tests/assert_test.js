@@ -23,22 +23,22 @@ var runTest = function(options) {
 
     // Start an asynchronous test
     it(displayTitle, function(done) {
-        Output.init({
-            output: CanvasOutput,
+        var output = new LiveEditorOutput({
+            output: P5jsOutput,
             workersDir: "../build/workers/",
             externalsDir: "../build/external/",
             imagesDir: "../build/images/",
             jshintFile: "../build/external/jshint/jshint.js"
         });
 
-        Output.initTests(options.validate);
+        output.initTests(options.validate);
 
         // Switch to the Scratchpad's version
-        Output.config.switchVersion(options.version);
+        output.config.switchVersion(options.version);
         
         // Run once to make sure that no errors are thrown
         // during execution
-        Output.runCode(code, function(errors, testResults) {
+        output.runCode(code, function(errors, testResults) {
             if (!options.reason) {
                 expect(errors.length).to.be.equal(0);
             } else {
