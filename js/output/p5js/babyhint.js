@@ -85,6 +85,7 @@ var BabyHint = {
         "createFont": [1, 2],
         "cos": 1,
         "curve": 8,
+        "cursor": [0, 1, 2, 3],
         "endShape": [0, 1],
         "dist": 4,
         "fill": [1, 3, 4],
