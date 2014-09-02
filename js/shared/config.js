@@ -227,8 +227,8 @@ var ScratchpadConfig = Backbone.Model.extend({
         {
             name: "Initial Configuration",
 
-            // Ace p5js editor configuration
-            ace_p5js_editor: function(editor) {
+            // Ace pjs editor configuration
+            ace_pjs_editor: function(editor) {
                 var aceEditor = editor.editor;
 
                 // Don't highlight the active line
@@ -277,10 +277,10 @@ var ScratchpadConfig = Backbone.Model.extend({
             },
 
             // Ace HTML editor configuration
-            ace_html_editor: function(editor) {
+            ace_webpage_editor: function(editor) {
                 var aceEditor = editor.editor;
 
-                ace.config.set("workerPath", editor.workersDir + "html/");
+                ace.config.set("workerPath", editor.workersDir + "webpage/");
 
                 // Don't highlight the active line
                 aceEditor.setHighlightActiveLine(false);
@@ -370,7 +370,7 @@ var ScratchpadConfig = Backbone.Model.extend({
         {
             name: "Brace Autocompletion Changes",
 
-            ace_p5js_editor: function(editor) {
+            ace_pjs_editor: function(editor) {
                 // Set the brace autocomplete behavior
                 this.bindAutoComplete(editor.editor, {
                     autoBrace: false,

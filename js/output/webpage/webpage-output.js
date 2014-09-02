@@ -4,10 +4,9 @@ window.HTMLOutput = Backbone.View.extend({
         this.output = options.output;
 
         this.render();
-        this.bind();
 
         // Load HTML config options
-        this.config.runCurVersion("html", this);
+        this.config.runCurVersion("webpage", this);
 
         return this;
     },
@@ -20,32 +19,33 @@ window.HTMLOutput = Backbone.View.extend({
             .show();
     },
 
-    bind: function() {
-
-    },
-
     messageHandlers: {
         // Take a screenshot of the output
         screenshot: function(data) {
-            // ...
+            // Convert the page to a screenshot and return
+            // it to the parent frame.
         }
     },
 
     lint: function(userCode, callback) {
+        // Lint the user's code, returning any errors in the
+        // callback.
         callback([]);
     },
 
     initTests: function(validate) {
-        
+        // Initialize any test data
+        // validate holds a string with the test data in it
     },
 
     test: function(userCode, tests, errors, callback) {
+        // Run tests given the user's code, tests, and errors
         callback(errors, {});
     },
 
     runCode: function(userCode, callback) {
         var doc = this.$frame[0].contentWindow.document;
-        doc.open("text/html", "replace");
+        doc.open();
         doc.write(userCode);
         doc.close();
 
@@ -53,12 +53,12 @@ window.HTMLOutput = Backbone.View.extend({
     },
 
     clear: function() {
-
+        // Clear the output
     },
 
     kill: function() {
-
+        // Completely stop and clear the output
     }
 });
 
-LiveEditorOutput.registerOutput("html", HTMLOutput);
+LiveEditorOutput.registerOutput("webpage", HTMLOutput);

@@ -34,10 +34,11 @@
 
     <script>
     window.liveEditor = new LiveEditor({
-        editorType: "ace_html",
-        outputType: "html",
+        editorType: "ace_webpage",
+        outputType: "webpage",
         el: $("#sample-live-editor"),
-        code: window.localStorage["test-code"] || "rect(10, 10, 100, 100);",
+        code: window.localStorage["test-webpage-code"] ||
+            "<!DOCTYPE html>\n<strong>Hello</strong>, world!",
         width: 400,
         height: 400,
         editorHeight: "80%",
@@ -45,11 +46,10 @@
         workersDir: "../../build/workers/",
         externalsDir: "../../build/external/",
         imagesDir: "../../build/images/",
-        execFile: "output_html.html",
-        jshintFile: "../../build/external/jshint/jshint.js"
+        execFile: "output_webpage.html"
     });
     liveEditor.editor.on("change", function() {
-        window.localStorage["test-code"] = liveEditor.editor.text();
+        window.localStorage["test-webpage-code"] = liveEditor.editor.text();
     });
     </script>
 </body>

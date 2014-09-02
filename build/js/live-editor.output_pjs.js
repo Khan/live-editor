@@ -1299,7 +1299,7 @@ var BabyHint = {
 // TODO(jlfwong): Stop globalizing BabyHint
 window.BabyHint = BabyHint;
 
-window.P5jsOutput = Backbone.View.extend({
+window.PJSOutput = Backbone.View.extend({
     // Canvas mouse events to track
     // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
     trackedMouseEvents: ["move", "over", "out", "down", "up"],
@@ -2174,7 +2174,7 @@ window.P5jsOutput = Backbone.View.extend({
         // this.newInstance(Something)()
         // Used for keeping track of unique instances
         userCode = userCode && userCode.replace(/\bnew[\s\n]+([A-Z]{1,2}[a-z0-9_]+)([\s\n]*\()/g,
-            "P5jsOutput.applyInstance($1,'$1')$2");
+            "PJSOutput.applyInstance($1,'$1')$2");
 
         // If we have a draw function then we need to do injection
         // If we had a draw function then we still need to do injection
@@ -2231,8 +2231,8 @@ window.P5jsOutput = Backbone.View.extend({
             // The instantiated instances have changed, which means that
             // we need to re-run everything.
             if (this.oldInstances &&
-                    P5jsOutput.stringifyArray(this.oldInstances) !==
-                    P5jsOutput.stringifyArray(this.instances)) {
+                    PJSOutput.stringifyArray(this.oldInstances) !==
+                    PJSOutput.stringifyArray(this.instances)) {
                 rerun = true;
             }
 
@@ -2245,7 +2245,7 @@ window.P5jsOutput = Backbone.View.extend({
                 // Reconstruction the function call
                 var args = Array.prototype.slice.call(fnCalls[i][1]);
                 inject += fnCalls[i][0] + "(" +
-                    P5jsOutput.stringifyArray(args) + ");\n";
+                    PJSOutput.stringifyArray(args) + ");\n";
             }
 
             // We also look for newly-changed global variables to inject
@@ -2253,7 +2253,7 @@ window.P5jsOutput = Backbone.View.extend({
                 // Turn the result of the extracted value into
                 // a nicely-formatted string
                 try {
-                    grabAll[prop] = P5jsOutput.stringify(grabAll[prop]);
+                    grabAll[prop] = PJSOutput.stringify(grabAll[prop]);
 
                     // Check to see that we've done an inject before and that
                     // the property wasn't one that shouldn't have been
@@ -2460,7 +2460,7 @@ window.P5jsOutput = Backbone.View.extend({
                 if (typeof obj[objProp] === "function") {
                     this.grabObj[name + (proto ? "." + proto : "") +
                             "['" + objProp + "']"] =
-                        P5jsOutput.stringify(obj[objProp]);
+                        PJSOutput.stringify(obj[objProp]);
 
                 // Otherwise we should probably just inject the value directly
                 } else {
@@ -2571,7 +2571,7 @@ window.P5jsOutput = Backbone.View.extend({
      * The worker that matches with StructuredJS.
      */
     testWorker: new PooledWorker(
-        "p5js/test-worker.js",
+        "pjs/test-worker.js",
         function(code, validate, errors, callback) {
             var self = this;
 
@@ -2629,7 +2629,7 @@ window.P5jsOutput = Backbone.View.extend({
      * The worker that analyzes the user's code.
      */
     hintWorker: new PooledWorker(
-        "p5js/jshint-worker.js",
+        "pjs/jshint-worker.js",
         function(hintCode, callback) {
             // Fallback in case of no worker support
             if (!window.Worker) {
@@ -2661,7 +2661,7 @@ window.P5jsOutput = Backbone.View.extend({
     ),
 
     worker: new PooledWorker(
-        "p5js/worker.js",
+        "pjs/worker.js",
         function(userCode, context, callback) {
             var timeout;
             var worker = this.getWorkerFromPool();
@@ -2724,7 +2724,7 @@ window.P5jsOutput = Backbone.View.extend({
 });
 
 // Add in some static helper methods
-_.extend(P5jsOutput, {
+_.extend(PJSOutput, {
     // Turn a JavaScript object into a form that can be executed
     // (Note: The form will not necessarily be able to pass a JSON linter)
     // (Note: JSON.stringify might throw an exception. We don't capture it
@@ -2833,4 +2833,4 @@ _.extend(P5jsOutput, {
     }
 });
 
-LiveEditorOutput.registerOutput("p5js", P5jsOutput);
+LiveEditorOutput.registerOutput("pjs", PJSOutput);

@@ -22,7 +22,7 @@ window.AceEditor = Backbone.View.extend({
         // Attach the hot number picker to the editor
         // TODO(jeresig): Enable this for other types of content,
         // once it's ready.
-        if (this.type === "ace_p5js") {
+        if (this.type === "ace_pjs") {
             new HotNumber({
                 imagesDir: options.imagesDir,
                 type: "ace",
@@ -389,5 +389,5 @@ window.AceEditor = Backbone.View.extend({
     }
 });
 
-LiveEditor.registerEditor("ace_p5js", AceEditor);
-LiveEditor.registerEditor("ace_html", AceEditor);
+LiveEditor.registerEditor("ace_pjs", AceEditor);
+LiveEditor.registerEditor("ace_webpage", AceEditor);

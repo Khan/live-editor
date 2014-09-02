@@ -76,19 +76,19 @@
             "js/shared/record.js",
             "js/shared/config.js"
         ],
-        "output_p5js_deps": [
+        "output_pjs_deps": [
             "external/processing-js/processing.js",
             "external/jshint/jshint.js",
             "external/structuredjs/external/esprima.js",
             "external/structuredjs/structured.js"
         ],
-        "output_p5js": [
-            "js/workers/p5js/output-tester.js",
-            "js/output/p5js/babyhint.js",
-            "js/output/p5js/p5js-output.js"
+        "output_pjs": [
+            "js/workers/pjs/output-tester.js",
+            "js/output/pjs/babyhint.js",
+            "js/output/pjs/pjs-output.js"
         ],
-        "output_html": [
-            "js/output/html/html-output.js"
+        "output_webpage": [
+            "js/output/webpage/webpage-output.js"
         ],
         "output": [
             "build/tmpl/tipbar.js",
@@ -104,15 +104,15 @@
             "js/live-editor.js"
         ]
     },
-    "workers_html": [
+    "workers_webpage": [
         "external/ace-builds/src-noconflict/worker-html.js"
     ],
-    "workers_p5js": [
-        "js/workers/p5js/jshint-worker.js",
-        "js/workers/p5js/test-worker.js",
-        "js/workers/p5js/processing-stubs.js",
-        "js/workers/p5js/output-tester.js",
-        "js/workers/p5js/worker.js"
+    "workers_pjs": [
+        "js/workers/pjs/jshint-worker.js",
+        "js/workers/pjs/test-worker.js",
+        "js/workers/pjs/processing-stubs.js",
+        "js/workers/pjs/output-tester.js",
+        "js/workers/pjs/worker.js"
     ],
     "externals": [
         "external/es5-shim/es5-shim.js",

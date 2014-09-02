@@ -54,11 +54,11 @@ gulp.task("scripts_min", scriptTypes.map(function(type) {
 }));
 
 gulp.task("workers", function() {
-    gulp.src(paths.workers_html)
-        .pipe(gulp.dest("build/workers/html"));
+    gulp.src(paths.workers_webpage)
+        .pipe(gulp.dest("build/workers/webpage"));
 
-    gulp.src(paths.workers_p5js)
-        .pipe(gulp.dest("build/workers/p5js"));
+    gulp.src(paths.workers_pjs)
+        .pipe(gulp.dest("build/workers/pjs"));
 });
 
 gulp.task("externals", function() {
@@ -99,7 +99,7 @@ gulp.task("watch", function() {
 
     // Run output tests when the output code changes
     gulp.watch(paths.scripts.output
-        .concat(paths.scripts.output_p5js), ["test"]);
+        .concat(paths.scripts.output_pjs), ["test"]);
 
     styleTypes.forEach(function(type) {
         gulp.watch(paths.styles[type], ["style_" + type]);
