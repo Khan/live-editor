@@ -84,7 +84,7 @@
 }
 
 .scratchpad-ace-editor .ace_scroller {
-    overflow-x: auto;
+    overflow-x: hidden;
 }
 
 .scratchpad-ace-editor .ace_sb {
