@@ -227,18 +227,20 @@ var ScratchpadConfig = Backbone.Model.extend({
         {
             name: "Initial Configuration",
 
-            // Ace editor configuration
-            editor: function(editor) {
+            // Ace pjs editor configuration
+            ace_pjs_editor: function(editor) {
+                var aceEditor = editor.editor;
+
                 // Don't highlight the active line
-                editor.setHighlightActiveLine(false);
+                aceEditor.setHighlightActiveLine(false);
 
                 // Stop bracket highlighting
-                editor.$highlightBrackets = function() {};
+                aceEditor.$highlightBrackets = function() {};
 
                 // Make sure no horizontal scrollbars are shown
-                editor.renderer.setHScrollBarAlwaysVisible(false);
+                aceEditor.renderer.setHScrollBarAlwaysVisible(false);
 
-                var session = editor.getSession();
+                var session = aceEditor.getSession();
 
                 // Use word wrap
                 session.setUseWrapMode(true);
@@ -250,39 +252,73 @@ var ScratchpadConfig = Backbone.Model.extend({
                 session.setUseWorker(false);
 
                 // Set the font size
-                editor.setFontSize("14px");
+                aceEditor.setFontSize("14px");
 
                 // Disable highlighting the selected word
-                editor.setHighlightSelectedWord(false);
+                aceEditor.setHighlightSelectedWord(false);
 
                 // Show line numbers and enable code collapsing
-                editor.renderer.setShowGutter(true);
+                aceEditor.renderer.setShowGutter(true);
 
                 // Don't show print margin
-                editor.renderer.setShowPrintMargin(false);
+                aceEditor.renderer.setShowPrintMargin(false);
 
                 // Use JavaScript Mode
                 session.setMode("ace/mode/javascript");
 
                 // Set the editor theme
-                editor.setTheme("ace/theme/textmate");
+                aceEditor.setTheme("ace/theme/textmate");
 
                 // Attach the auto-complete for the editor
                 // (must be re-done every time the mode is set)
-                this.bindAutoComplete(editor, {
+                this.bindAutoComplete(aceEditor, {
                     autoBrace: true
                 });
             },
 
+            // Ace HTML editor configuration
+            ace_webpage_editor: function(editor) {
+                var aceEditor = editor.editor;
+
+                ace.config.set("workerPath", editor.workersDir + "webpage/");
+
+                // Don't highlight the active line
+                aceEditor.setHighlightActiveLine(false);
+
+                // Make sure no horizontal scrollbars are shown
+                aceEditor.renderer.setHScrollBarAlwaysVisible(false);
+
+                var session = aceEditor.getSession();
+
+                // Use word wrap
+                session.setUseWrapMode(true);
+
+                // Use soft tabs
+                session.setUseSoftTabs(true);
+
+                // Set the font size
+                aceEditor.setFontSize("14px");
+
+                // Disable highlighting the selected word
+                aceEditor.setHighlightSelectedWord(false);
+
+                // Show line numbers and enable code collapsing
+                aceEditor.renderer.setShowGutter(true);
+
+                // Don't show print margin
+                aceEditor.renderer.setShowPrintMargin(false);
+
+                // Use HTML Mode
+                session.setMode("ace/mode/html");
+
+                // Set the editor theme
+                aceEditor.setTheme("ace/theme/textmate");
+            },
+
             // JSHint configuration
             // See: http://www.jshint.com/options/
-            jshint: function() {
-                // NOTE(joel) - Output is not in scope here
-                if (typeof Output === "undefined") {
-                    return;
-                }
-
-                Output.JSHint = {
+            jshint: function(output) {
+                output.JSHint = {
                     // Prohibit explicitly undefined variables
                     undef: true,
 
@@ -334,9 +370,9 @@ var ScratchpadConfig = Backbone.Model.extend({
         {
             name: "Brace Autocompletion Changes",
 
-            editor: function(editor) {
+            ace_pjs_editor: function(editor) {
                 // Set the brace autocomplete behavior
-                this.bindAutoComplete(editor, {
+                this.bindAutoComplete(editor.editor, {
                     autoBrace: false,
                     braceIndent: true,
                     equalsInsert: true
@@ -347,17 +383,12 @@ var ScratchpadConfig = Backbone.Model.extend({
         {
             name: "Disable Un-needed JSHint Rules",
 
-            jshint: function() {
-                // NOTE(joel) - Output is not in scope here
-                if (typeof Output === "undefined") {
-                    return;
-                }
-
+            jshint: function(output) {
                 // Re-allow empty braces
-                delete Output.JSHint.noempty;
+                delete output.JSHint.noempty;
 
                 // Re-allow ++ and --
-                delete Output.JSHint.plusplus;
+                delete output.JSHint.plusplus;
             }
         }
     ]

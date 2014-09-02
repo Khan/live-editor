@@ -21,7 +21,7 @@
     </style>
 </head>
 <body>
-    <h1>Live Editor Example</h1>
+    <h1>HTML Live Editor Example</h1>
     <div id="sample-live-editor"></a>
 
     <script src="../../build/js/live-editor.core_deps.js"></script>
@@ -34,8 +34,11 @@
 
     <script>
     window.liveEditor = new LiveEditor({
+        editorType: "ace_webpage",
+        outputType: "webpage",
         el: $("#sample-live-editor"),
-        code: window.localStorage["test-code"] || "rect(10, 10, 100, 100);",
+        code: window.localStorage["test-webpage-code"] ||
+            "<!DOCTYPE html>\n<strong>Hello</strong>, world!",
         width: 400,
         height: 400,
         editorHeight: "80%",
@@ -43,13 +46,11 @@
         workersDir: "../../build/workers/",
         externalsDir: "../../build/external/",
         imagesDir: "../../build/images/",
-        execFile: "output.html",
-        jshintFile: "../../build/external/jshint/jshint.js"
+        execFile: "output_webpage.html"
     });
     liveEditor.editor.on("change", function() {
-        window.localStorage["test-code"] = liveEditor.editor.text();
+        window.localStorage["test-webpage-code"] = liveEditor.editor.text();
     });
-    ScratchpadAutosuggest.init(liveEditor.editor.editor);
     </script>
 </body>
 </html>

@@ -12,13 +12,17 @@
             "external/backbone/backbone.js",
             "external/jed/jed.js"
         ],
-        "editor_ace": [
+        "editor_ace_deps": [
             "external/ace-builds/src-noconflict/ace.js",
             "external/ace-builds/src-noconflict/mode-javascript.js",
+            "external/ace-builds/src-noconflict/mode-html.js",
             "external/ace-builds/src-noconflict/ext-searchbox.js",
             "external/ace-builds/src-noconflict/ext-language_tools.js"
         ],
-        "editor_blockly": [
+        "editor_ace": [
+            "js/editors/ace/editor-ace.js"
+        ],
+        "editor_blockly_deps": [
             "external/blockly/blockly_compressed.js",
             "external/blockly/javascript_compressed.js",
             "external/blockly/blocks_compressed.js",
@@ -49,11 +53,8 @@
 
             "js/ui/blockly-processing-blocks.js"
         ],
-        "output_p5js": [
-            "external/processing-js/processing.js",
-            "external/jshint/jshint.js",
-            "external/structuredjs/external/esprima.js",
-            "external/structuredjs/structured.js"
+        "editor_blockly": [
+            "js/editors/blockly/editor-blockly.js"
         ],
         "audio": [
             "external/SoundManager2/script/soundmanager2.js",
@@ -75,28 +76,43 @@
             "js/shared/record.js",
             "js/shared/config.js"
         ],
-        "exec": [
+        "output_pjs_deps": [
+            "external/processing-js/processing.js",
+            "external/jshint/jshint.js",
+            "external/structuredjs/external/esprima.js",
+            "external/structuredjs/structured.js"
+        ],
+        "output_pjs": [
+            "js/workers/pjs/output-tester.js",
+            "js/output/pjs/babyhint.js",
+            "js/output/pjs/pjs-output.js"
+        ],
+        "output_webpage": [
+            "js/output/webpage/webpage-output.js"
+        ],
+        "output": [
             "build/tmpl/tipbar.js",
-            "js/exec/tipbar.js",
+            "js/output/tipbar.js",
             "build/tmpl/output.js",
-            "js/exec/babyhint.js",
-            "js/workers/output-tester.js",
-            "js/exec/output.js"
+            "js/output/pooled-worker.js",
+            "js/output/output.js"
         ],
         "ui": [
             "build/tmpl/live-editor.js",
             "js/ui/canvas.js",
-            "js/ui/editor.js",
             "js/ui/record.js",
             "js/live-editor.js"
         ]
     },
-    "workers": [
-        "js/workers/jshint-worker.js",
-        "js/workers/test-worker.js",
-        "js/workers/processing-stubs.js",
-        "js/workers/output-tester.js",
-        "js/workers/worker.js"
+    "workers_webpage": [
+        "external/ace-builds/src-noconflict/worker-html.js"
+    ],
+    "workers_pjs": [
+        "js/workers/pjs/jshint-worker.js",
+        "js/workers/pjs/test-worker.js",
+        "js/workers/pjs/processing-stubs.js",
+        "js/workers/pjs/output-tester.js",
+        "js/workers/pjs/worker.js"
     ],
     "externals": [
         "external/es5-shim/es5-shim.js",
@@ -121,8 +137,8 @@
             "css/ui/autosuggest.css",
             "css/ui/hotnumber.css"
         ],
-        "exec": [
-            "css/exec/style.css"
+        "output": [
+            "css/output/style.css"
         ],
         "ui": [
             "css/ui/style.css"

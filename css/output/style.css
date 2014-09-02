@@ -4,10 +4,10 @@ body {
     min-width: 0;
     overflow: hidden;
 }
-#output {
+.output {
     position: relative;
 }
-#output canvas {
+.output > * {
     display: block;
 }
 /**

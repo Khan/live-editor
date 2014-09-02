@@ -14,11 +14,11 @@ window.ScratchpadAutosuggest = {
         var langTools = ace.require("ace/ext/language_tools");
 
         var customCompleters = [ScratchpadAutosuggestData._keywords,
-            ScratchpadAutosuggestData._p5jsFunctions,
-            ScratchpadAutosuggestData._p5jsVariables,
-            ScratchpadAutosuggestData._p5jsCallbacks,
-            ScratchpadAutosuggestData._p5jsObjectConstructors,
-            ScratchpadAutosuggestData._p5jsObjects];
+            ScratchpadAutosuggestData._pjsFunctions,
+            ScratchpadAutosuggestData._pjsVariables,
+            ScratchpadAutosuggestData._pjsCallbacks,
+            ScratchpadAutosuggestData._pjsObjectConstructors,
+            ScratchpadAutosuggestData._pjsObjects];
 
         // Remove the default keywords completer, it includes a ton of
         // things we don't want to expose to the user like window,
@@ -59,7 +59,7 @@ window.ScratchpadAutosuggest = {
         langTools.addCompleter(this.localVariableCompleter);
         */
 
-        // Completer for keywords and p5js
+        // Completer for keywords and pjs
         this.customCompleter = {
             getCompletions: function(editor, session, pos, prefix, callback) {
                 if (prefix.length === 0) {
@@ -93,7 +93,7 @@ window.ScratchpadAutosuggest = {
                           score: 299,
                           // The type to display next to the autosuggest
                           // This is a human readable short descriptive name
-                          // such as: p5js function.
+                          // such as: pjs function.
                           meta: c.type,
                       });
                     }.bind(this));
@@ -131,7 +131,7 @@ window.ScratchpadAutosuggest = {
             return;
         }
         var found =_.find(ScratchpadAutosuggestData
-                        ._p5jsFunctions.whitelist,function(o) {
+                        ._pjsFunctions.whitelist,function(o) {
             var f = o;
             if (_.isObject(o)) {
                 f = o.name;

@@ -16,7 +16,7 @@ window.ScratchpadAutosuggestData = {
             "switch", "this", "throw", "try", "typeof", "var", "void",
             "while", "with"]
     },
-    _p5jsFunctions: {
+    _pjsFunctions: {
         type: $._("function"),
         whitelist: [
             {
@@ -838,21 +838,21 @@ window.ScratchpadAutosuggestData = {
             }
         ]
     },
-    _p5jsObjectConstructors: {
+    _pjsObjectConstructors: {
         type: $._("object constructor"),
         whitelist: ["PVector(x,y)"]
     },
-    _p5jsObjects: {
+    _pjsObjects: {
         type: $._("object"),
         whitelist: ["Random"]
     },
-    _p5jsVariables: {
+    _pjsVariables: {
         type: $._("variable"),
         whitelist: ["width", "height", "mouseIsPressed", "keyIsPressed",
             "frameCount", "key", "keyCode", "mouseButton", "mouseX",
             "mouseY", "pmouseX", "pmouseY", "angleMode"]
     },
-    _p5jsCallbacks: {
+    _pjsCallbacks: {
         type: $._("callback"),
         whitelist: ["draw", "mouseClicked", "mousePressed", "mouseReleased",
             "mouseMoved", "mouseDragged", "mouseOver", "mouseOut",

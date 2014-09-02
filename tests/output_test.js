@@ -2,17 +2,9 @@
 /* global text, color, textFont, fill, text, background, createFont, PVector */
 /* global externals, exp, link, width, draw, mouseMoved */
 
-var testutil = require("../testutil.js");
-var Output = require("./output.js");
-var ScratchpadConfig = require("../scratchpads-package/scratchpad-config.js");
-
-var describe = testutil.describe;
-var it = testutil.it;
-var expect = testutil.expect;
-
 var runTest = function(options) {
     if (options.version === undefined) {
-        options.version = ScratchpadConfig.latestVersion();
+        options.version = ScratchpadConfig.prototype.latestVersion();
     }
 
     var displayTitle = options.title +
@@ -42,30 +34,37 @@ var runTest = function(options) {
 
     // Start an asynchronous test
     it(displayTitle, function(done) {
-        Output.init();
+        var output = new LiveEditorOutput({
+            outputType: "pjs",
+            workersDir: "../build/workers/",
+            externalsDir: "../build/external/",
+            imagesDir: "../build/images/",
+            jshintFile: "../build/external/jshint/jshint.js"
+        });
 
         // Switch to the Scratchpad's version
-        ScratchpadConfig.switchVersion(options.version);
+        output.config.switchVersion(options.version);
 
         // Run once to make sure that no errors are thrown
         // during execution
-        Output.runCode(code, function(errors) {
+        output.runCode(code, function(errors) {
             if (options.expected) {
                 expect(errors).to.have.length(0);
             } else {
-                expect(errors).to.have.length.above(0);
+                expect(errors).to.not.equal([]);
                 // In some cases, we actually verify number and line # of errors
                 // We generally can't test the text as it varies per JS engine,
                 // (changes depending on whether we run tests in browser vs. command-line
                 // The column number is more consistent across the engines
                 if (options.errors) {
                     expect(errors.length).to.be.equal(options.errors.length);
-                    expect(errors[0].column).to.be.equal(options.errors[0].column);
+                    expect(errors[0].column)
+                        .to.be.equal(options.errors[0].column);
                 }
             }
 
             if (code2) {
-                Output.runCode(code2, function(errors) {
+                output.runCode(code2, function(errors) {
                     if (options.expected) {
                         expect(errors).to.have.length(0);
                     } else {
@@ -101,11 +100,11 @@ var failingTest = function(title, code, code2, errors) {
 };
 
 // Test the lower level functions in Output
-describe("Scratchpad Output functions", function() {
-    it("Output.stringifyArray", function() {
-        var undefArray = Output.stringifyArray([undefined, undefined]);
+describe("Scratchpad CanvasOutput functions", function() {
+    it("stringifyArray", function() {
+        var undefArray = P5jsOutput.stringifyArray([undefined, undefined]);
         expect(undefArray).to.be.equal("undefined, undefined");
-        var primArray = Output.stringifyArray([1, "A"]);
+        var primArray = P5jsOutput.stringifyArray([1, "A"]);
         expect(primArray).to.be.equal("1, \"A\"");
     });
 
@@ -444,7 +443,7 @@ describe("Scratchpad Output Exec", function() {
         };
 
         var tiles = [];
-        tiles.push(new Tile(getImage("avatars/leaf-green")));
+        tiles.push(new Tile(getImage("creatures/Winston")));
 
         var draw = function() {
             tiles[0].drawFaceUp();
@@ -459,7 +458,7 @@ describe("Scratchpad Output Exec", function() {
         };
 
         var tiles = [];
-        tiles.push(new Tile(getImage("avatars/leaf-green")));
+        tiles.push(new Tile(getImage("creatures/Winston")));
 
         var draw = function() {
             background(0, 0, 255);

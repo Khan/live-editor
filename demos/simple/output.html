@@ -2,17 +2,18 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Live Editor Output</title>
-    <link rel="stylesheet" href="../../build/css/live-editor.exec.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.output.css"/>
 </head>
 <body>
     <div id="live-editor-output"></div>
 
     <script src="../../build/js/live-editor.core_deps.js"></script>
     <script src="../../build/js/live-editor.shared.js"></script>
-    <script src="../../build/js/live-editor.output_p5js.js"></script>
-    <script src="../../build/js/live-editor.exec.js"></script>
+    <script src="../../build/js/live-editor.output_pjs_deps.js"></script>
+    <script src="../../build/js/live-editor.output.js"></script>
+    <script src="../../build/js/live-editor.output_pjs.js"></script>
     <script>
-    Output.init({
+    new LiveEditorOutput({
         el: $("#live-editor-output")[0]
     });
     </script>
