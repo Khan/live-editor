@@ -2239,7 +2239,8 @@ var HotNumberModule = function() {
             if (this.ignore) {
                 return;
             }
-
+            
+            this.range = null;            
             this.oldPicker = this.curPicker;
             this.newPicker = null;
 
