@@ -267,7 +267,8 @@ window.LiveEditorOutput = Backbone.View.extend({
             return {
                 row: error.row,
                 column: error.column,
-                text: _.compose(this.prettify, this.clean)(error.text),
+                text: _.compose(this.prettify, this.clean)(
+                    error.text || error.message || ""),
                 type: error.type,
                 lint: error.lint,
                 source: error.source
