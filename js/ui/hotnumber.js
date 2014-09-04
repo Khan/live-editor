@@ -133,7 +133,7 @@ var HotNumberModule = function() {
                     // Makes it easier to quickly insert a color
                     // TODO: Maybe we should do this for more methods?
                     if (RegExp.$2.length === 0) {
-                        ignore = true;
+                        this.ignore = true;
 
                         if (record) {
                             record.pauseLog();
@@ -258,6 +258,8 @@ var HotNumberModule = function() {
                 return;
             }
 
+            // We set ignore so we can ignore events that come from the
+            //  editor during this time, since we're causing those events
             this.ignore = true;
 
             if (record) {
