@@ -466,6 +466,27 @@ describe("Scratchpad Output Exec", function() {
         };
     });
 
+    test("Make sure draw method is reset", function() {
+        var count = 0;
+
+        var draw = function() {
+            count += 1;
+        };
+    }, function() {
+        var count = 0;
+
+        var xdraw = function() {
+            count += 1;
+        };
+
+        if (typeof draw === "function") {
+            draw();
+            if (count > 0) {
+                throw new Error("draw not replaced");
+            }
+        }
+    });
+
     test("Make sure mouse events are reset", function() {
         var count = 0;
 

@@ -872,7 +872,8 @@ window.PJSOutput = Backbone.View.extend({
         // Replace all calls to 'new Something' with
         // this.newInstance(Something)()
         // Used for keeping track of unique instances
-        userCode = userCode && userCode.replace(/\bnew[\s\n]+([A-Z]{1,2}[a-z0-9_]+)([\s\n]*\()/g,
+        userCode = userCode && userCode.replace(
+            /\bnew[\s\n]+([A-Z]{1,2}[a-z0-9_]+)([\s\n]*\()/g,
             "PJSOutput.applyInstance($1,'$1')$2");
 
         // If we have a draw function then we need to do injection
@@ -899,7 +900,9 @@ window.PJSOutput = Backbone.View.extend({
                 grabAll[global] = ((typeof value === "function" &&
                         !this.safeCalls[global]) ?
                     function() {
-                        fnCalls.push([global, arguments]);
+                        if (typeof fnCalls !== "undefined") {
+                            fnCalls.push([global, arguments]);
+                        }
                         return 0;
                     } :
                     value);
@@ -1041,7 +1044,7 @@ window.PJSOutput = Backbone.View.extend({
                         (!(oldProp in this.props) ||
                             oldProp === "draw")) {
                     // Create the code to delete the variable
-                    inject += "delete this." + oldProp + ";\n";
+                    inject += "delete " + oldProp + ";\n";
 
                     // If the draw function was deleted we also
                     // need to clear the display
