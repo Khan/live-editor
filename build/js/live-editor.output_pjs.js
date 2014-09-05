@@ -1561,7 +1561,7 @@ window.PJSOutput = Backbone.View.extend({
                     0, document.documentElement);
 
                 // And execute it upon the canvas element
-                this.canvas[0].dispatchEvent(evt);
+                this.$canvas[0].dispatchEvent(evt);
             }.bind(this);
         }.bind(this));
 
