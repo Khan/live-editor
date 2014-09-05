@@ -102,9 +102,9 @@ var failingTest = function(title, code, code2, errors) {
 // Test the lower level functions in Output
 describe("Scratchpad CanvasOutput functions", function() {
     it("stringifyArray", function() {
-        var undefArray = P5jsOutput.stringifyArray([undefined, undefined]);
+        var undefArray = PJSOutput.stringifyArray([undefined, undefined]);
         expect(undefArray).to.be.equal("undefined, undefined");
-        var primArray = P5jsOutput.stringifyArray([1, "A"]);
+        var primArray = PJSOutput.stringifyArray([1, "A"]);
         expect(primArray).to.be.equal("1, \"A\"");
     });
 
