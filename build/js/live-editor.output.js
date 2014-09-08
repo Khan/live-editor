@@ -188,7 +188,8 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
 
         this.tipbar = new TipBar({
-            el: this.el
+            el: this.el,
+            output: this
         });
 
         this.bind();
