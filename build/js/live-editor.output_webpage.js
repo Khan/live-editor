@@ -1,14 +1,12 @@
-window.HTMLOutput = Backbone.View.extend({
+window.WebpageOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
 
         this.render();
 
-        // Load HTML config options
+        // Load Webpage config options
         this.config.runCurVersion("webpage", this);
-
-        return this;
     },
 
     render: function() {
@@ -19,12 +17,28 @@ window.HTMLOutput = Backbone.View.extend({
             .show();
     },
 
-    messageHandlers: {
-        // Take a screenshot of the output
-        screenshot: function(data) {
-            // Convert the page to a screenshot and return
-            // it to the parent frame.
-        }
+    getDocument: function() {
+        return this.$frame[0].contentWindow.document;
+    },
+
+    getScreenshot: function(screenshotSize, callback) {
+        html2canvas(this.getDocument().body, {
+            onrendered: function(canvas) {
+                var width = screenshotSize;
+                var height = (screenshotSize / canvas.width) * canvas.height;
+
+                // We want to resize the image to a thumbnail,
+                // which we can do by creating a temporary canvas
+                var tmpCanvas = document.createElement("canvas");
+                tmpCanvas.width = screenshotSize;
+                tmpCanvas.height = screenshotSize;
+                tmpCanvas.getContext("2d").drawImage(
+                    canvas, 0, 0, width, height);
+
+                // Send back the screenshot data
+                callback(tmpCanvas.toDataURL("image/png"));
+            }
+        });
     },
 
     lint: function(userCode, callback) {
@@ -44,7 +58,7 @@ window.HTMLOutput = Backbone.View.extend({
     },
 
     runCode: function(userCode, callback) {
-        var doc = this.$frame[0].contentWindow.document;
+        var doc = this.getDocument();
         doc.open();
         doc.write(userCode);
         doc.close();
@@ -61,4 +75,4 @@ window.HTMLOutput = Backbone.View.extend({
     }
 });
 
-LiveEditorOutput.registerOutput("webpage", HTMLOutput);
+LiveEditorOutput.registerOutput("webpage", WebpageOutput);

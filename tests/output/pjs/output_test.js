@@ -2,103 +2,6 @@
 /* global text, color, textFont, fill, text, background, createFont, PVector */
 /* global externals, exp, link, width, draw, mouseMoved */
 
-var runTest = function(options) {
-    if (options.version === undefined) {
-        options.version = ScratchpadConfig.prototype.latestVersion();
-    }
-
-    var displayTitle = options.title +
-        " (Version: " + options.version + ")";
-
-    // Assume the code is a string, by default
-    var code = options.code;
-
-    // If not then we assume that it's a function so we need to
-    // extract the code to run from the serialized function
-    if (typeof code !== "string") {
-        code = code.toString();
-        code = code.substr(code.indexOf("{") + 1);
-        code = code.substr(0, code.length - 1);
-    }
-
-    // Assume the code is a string, by default
-    var code2 = options.code2;
-
-    // If not then we assume that it's a function so we need to
-    // extract the code to run from the serialized function
-    if (code2 && typeof code2 !== "string") {
-        code2 = code2.toString();
-        code2 = code2.substr(code2.indexOf("{") + 1);
-        code2 = code2.substr(0, code2.length - 1);
-    }
-
-    // Start an asynchronous test
-    it(displayTitle, function(done) {
-        var output = new LiveEditorOutput({
-            outputType: "pjs",
-            workersDir: "../build/workers/",
-            externalsDir: "../build/external/",
-            imagesDir: "../build/images/",
-            jshintFile: "../build/external/jshint/jshint.js"
-        });
-
-        // Switch to the Scratchpad's version
-        output.config.switchVersion(options.version);
-
-        // Run once to make sure that no errors are thrown
-        // during execution
-        output.runCode(code, function(errors) {
-            if (options.expected) {
-                expect(errors).to.have.length(0);
-            } else {
-                expect(errors).to.not.equal([]);
-                // In some cases, we actually verify number and line # of errors
-                // We generally can't test the text as it varies per JS engine,
-                // (changes depending on whether we run tests in browser vs. command-line
-                // The column number is more consistent across the engines
-                if (options.errors) {
-                    expect(errors.length).to.be.equal(options.errors.length);
-                    expect(errors[0].column)
-                        .to.be.equal(options.errors[0].column);
-                }
-            }
-
-            if (code2) {
-                output.runCode(code2, function(errors) {
-                    if (options.expected) {
-                        expect(errors).to.have.length(0);
-                    } else {
-                        expect(errors).to.have.length.above(0);
-                    }
-
-                    done();
-                });
-            } else {
-                done();
-            }
-        });
-    });
-};
-
-var test = function(title, code, code2) {
-    runTest({
-        title: title,
-        code: code,
-        code2: code2,
-        expected: true
-    });
-};
-
-var failingTest = function(title, code, code2, errors) {
-    runTest({
-        title: title,
-        code: code,
-        code2: code2,
-        expected: false, 
-        errors: errors
-    });
-};
-
 // Test the lower level functions in Output
 describe("Scratchpad CanvasOutput functions", function() {
     it("stringifyArray", function() {
@@ -505,6 +408,20 @@ describe("Scratchpad Output Exec", function() {
             if (count > 0) {
                 throw new Error("mouseMoved not replaced");
             }
+        }
+    });
+});
+
+describe("Output Methods", function() {
+    runTest({
+        title: "getScreenshot",
+        code: "background(255, 255, 255);",
+        test: function(output, errors, testResults, callback) {
+            output.output.getScreenshot(200, function(data) {
+                // Testing with a truncated base64 png
+                expect(data).to.contain("data:image/png;base64,iVBOR");
+                callback();
+            });
         }
     });
 });

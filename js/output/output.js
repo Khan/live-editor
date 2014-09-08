@@ -123,6 +123,15 @@ window.LiveEditorOutput = Backbone.View.extend({
             this.recording = data.recording;
         }
 
+        // Take a screenshot of the output
+        if (data.screenshot != null) {
+            var screenshotSize = data.screenshotSize || 200;
+            this.output.getScreenshot(screenshotSize, function(data) {
+                // Send back the screenshot data
+                this.postParent(data);
+            }.bind(this));
+        }
+
         if (this.output.messageHandlers) {
             for (var prop in data) {
                 if (prop in this.output.messageHandlers) {
