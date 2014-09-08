@@ -5,6 +5,7 @@ body {
     overflow: hidden;
 }
 .output {
+    height: 100%;
     position: relative;
 }
 .output > * {
