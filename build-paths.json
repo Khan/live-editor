@@ -80,7 +80,8 @@
             "external/processing-js/processing.js",
             "external/jshint/jshint.js",
             "external/structuredjs/external/esprima.js",
-            "external/structuredjs/structured.js"
+            "external/structuredjs/structured.js",
+            "external/TraceKit/tracekit.js"
         ],
         "output_pjs": [
             "js/workers/pjs/output-tester.js",
@@ -124,8 +125,7 @@
         "external/structuredjs/structured.js",
         "external/underscore/underscore.js",
         "external/blockly/media/**",
-        "external/SoundManager2/swf/**",
-        "external/TraceKit/tracekit.js"
+        "external/SoundManager2/swf/**"
     ],
     "styles": {
         "core_deps": [
