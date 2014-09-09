@@ -89,7 +89,8 @@
             "js/output/pjs/pjs-output.js"
         ],
         "output_webpage_deps": [
-            "external/html2canvas/html2canvas.js"
+            "external/html2canvas/html2canvas.js",
+            "external/slowparse/slowparse.js"
         ],
         "output_webpage": [
             "js/output/webpage/webpage-output.js"

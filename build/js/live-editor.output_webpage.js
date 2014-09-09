@@ -42,9 +42,90 @@ window.WebpageOutput = Backbone.View.extend({
     },
 
     lint: function(userCode, callback) {
-        // Lint the user's code, returning any errors in the
-        // callback.
+        // Lint the user's code, returning any errors in the callback
+        var results = Slowparse.HTML(this.getDocument(), userCode, {
+            disallowActiveAttributes: true,
+            noScript: true
+        });
+
+        if (results.error) {
+            var pos = results.error.cursor;
+            var previous = userCode.slice(0, pos);
+            var column = pos - previous.lastIndexOf("\n") - 1;
+            var row = (previous.match(/\n/g) || []).length;
+
+            return callback([{
+                row: row,
+                column: column,
+                text: this.getLintMessage(results.error),
+                type: "error",
+                source: "slowparse",
+                lint: results.error,
+                priority: 2
+            }]);
+        }
+
         callback([]);
+    },
+
+    flattenError: function(plainError, error, base) {
+        error = error || {};
+        base = base || "";
+
+        for (var prop in plainError) {
+            if (plainError.hasOwnProperty(prop)) {
+                var flatName = (base ? base + "_" + prop : prop);
+                if (typeof plainError[prop] === "object") {
+                    this.flattenError(plainError[prop], error, flatName);
+                } else {
+                    error[flatName] = plainError[prop];
+                }
+            }
+        }
+
+        return error;
+    },
+
+    getLintMessage: function(plainError) {
+        var error = this.flattenError(plainError);
+
+        // Mostly borrowed from:
+        // https://github.com/mozilla/thimble.webmaker.org/blob/master/locale/en_US/thimble-dialog-messages.json
+        return ({
+            ATTRIBUTE_IN_CLOSING_TAG: $._("A closing \"</%(closeTag_name)s>\" tag cannot contain any attributes.", error),
+            CLOSE_TAG_FOR_VOID_ELEMENT: $._("A closing \"</%(closeTag_name)s>\" tag is for a void element (that is, an element that doesn't need to be closed).", error),
+            CSS_MIXED_ACTIVECONTENT: $._("A css property \"%(cssProperty_property)s\" has a \"url()\" value that currently points to an insecure resource.", error),
+            EVENT_HANDLER_ATTR_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using the \"%(attribute_name_value)s\" JavaScript event handler attribute.", error),
+            HTML_CODE_IN_CSS_BLOCK: $._("HTML code was detected in a CSS context.", error),
+            HTTP_LINK_FROM_HTTPS_PAGE: $._("The \"<%(openTag_name)s>\" tag's \"%(attribute_name_value)s\" attribute currently points to an insecure resource.", error),
+            INVALID_ATTR_NAME: $._("The attribute name \"%(attribute_name_value)s\" that is not permitted under HTML5 naming conventions.", error),
+            UNSUPPORTED_ATTR_NAMESPACE: $._("The attribute \"%(attribute_name_value)s\" uses an attribute namespace that is not permitted under HTML5 conventions.", error),
+            MULTIPLE_ATTR_NAMESPACES: $._("The attribute \"%(attribute_name_value)s\" has multiple namespaces. Check your text and make sure there's only a single namespace prefix for the attribute.", error),
+            INVALID_CSS_PROPERTY_NAME: $._("CSS property \"%(cssProperty_property)s\" does not exist.", error),
+            INVALID_TAG_NAME: $._("A \"<\" character appears to be the beginning of a tag, but is not followed by a valid tag name. If you just want a \"<\" to appear on your Web page, try using \"&amp;lt;\" instead.", error),
+            JAVASCRIPT_URL_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using the \"javascript:\" URL.", error),
+            MISMATCHED_CLOSE_TAG: $._("A closing \"</%(closeTag_name)s>\" tag doesn't pair with the opening \"<%(openTag_name)s>\" tag. This is likely due to a missing \"</%(openTag_name)s>\" tag.", error),
+            MISSING_CSS_BLOCK_CLOSER: $._("Missing block closer or next \"property:value;\" pair following \"%(cssValue_value)s\".", error),
+            MISSING_CSS_BLOCK_OPENER: $._("Missing block opener after \"%(cssSelector_selector)s\".", error),
+            MISSING_CSS_PROPERTY: $._("Missing property for \"%(cssSelector_selector)s\".", error),
+            MISSING_CSS_SELECTOR: $._("Missing either a new CSS selector or the \"</style>\" tag.", error),
+            MISSING_CSS_VALUE: $._("Missing value for \"%(cssProperty_property)s\".", error),
+            SCRIPT_ELEMENT_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using \"<script>\" tags.", error),
+            SELF_CLOSING_NON_VOID_ELEMENT: $._("A \"<%(name)s>\" tag can't be self-closed, because \"<%(name)s>\" is not a void element; it must be closed with a separate \"</%(name)s>\" tag.", error),
+            UNCAUGHT_CSS_PARSE_ERROR: $._("A parse error occurred outside expected cases: \"%(error_msg)s\"", error),
+            UNCLOSED_TAG: $._("A \"<%(openTag_name)s>\" tag never closes.", error),
+            UNEXPECTED_CLOSE_TAG: $._("A closing \"</%(closeTag_name)s>\" tag doesn't pair with anything, because there are no opening tags that need to be closed.", error),
+            UNFINISHED_CSS_PROPERTY: $._("Property \"%(cssProperty_property)s\" still needs finalizing with \":\"", error),
+            UNFINISHED_CSS_SELECTOR: $._("Selector \"%(cssSelector_selector)s\" still needs finalizing with \"{\"", error),
+            UNFINISHED_CSS_VALUE: $._("Value \"%(cssValue_value)s\" still needs finalizing with \";\"", error),
+            UNKOWN_CSS_KEYWORD: $._("A CSS @keyword \"%(cssKeyword_value)s\" does not match any known @keywords.", error),
+            UNQUOTED_ATTR_VALUE: $._("An Attribute value should start with an opening double quote.", error),
+            UNTERMINATED_ATTR_VALUE: $._("A \"<%(openTag_name)s>\" tag's \"%(attribute_name_value)s\" attribute has a value that doesn't end with a closing double quote.", error),
+            UNTERMINATED_CLOSE_TAG: $._("A closing \"</%(closeTag_name)s>\" tag doesn't end with a \">\".", error),
+            UNTERMINATED_COMMENT: $._("A comment doesn't end with a \"-->\".", error),
+            UNTERMINATED_CSS_COMMENT: $._("A CSS comment doesn't end with a \"*/\".", error),
+            UNTERMINATED_OPEN_TAG: $._("An opening \"<%(openTag_name)s>\" tag doesn't end with a \">\".", error)
+        })[error.type];
     },
 
     initTests: function(validate) {
