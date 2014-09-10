@@ -19456,7 +19456,8 @@
           height: "15%",
           fontFamily: "sans-serif",
           color: "#ccc",
-          backgroundColor: "black"
+          backgroundColor: "black",
+          paddingBottom: "5px"
         },
         outputStyles = {
           position: "relative",
