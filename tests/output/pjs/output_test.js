@@ -1,6 +1,6 @@
 /* global ellipse, getImage, image, background, loadImage, requestImage */
 /* global text, color, textFont, fill, text, background, createFont, PVector */
-/* global externals, exp, link, width, draw, mouseMoved */
+/* global externals, exp, link, width, draw, mouseMoved, Program */
 
 // Test the lower level functions in Output
 describe("Scratchpad CanvasOutput functions", function() {
@@ -409,6 +409,31 @@ describe("Scratchpad Output Exec", function() {
                 throw new Error("mouseMoved not replaced");
             }
         }
+    });
+
+    runTest({
+        title: "Program functions exist",
+        code: function() {
+            var x = Program.settings();
+            Program.restart();
+            Program.runTests(function() {});
+        },
+        expected: true
+    });
+
+    runTest({
+        title: "Program.assertEqual() sets assertions",
+        code: function() {
+            Program.assertEqual(2, 4);
+        },
+        code2: function() {
+            Program.assertEqual(2, 2);
+        },
+        assertions: [{
+            "row":0,"column":0,
+            "text": "Assertion failed: 2 is not equal to 4."}],
+        assertions2: [],
+        expected: true
     });
 });
 

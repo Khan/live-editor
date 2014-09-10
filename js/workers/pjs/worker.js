@@ -1,6 +1,7 @@
 /* global initProcessingStubs */
 
 importScripts("processing-stubs.js?cachebust=" + (new Date()).toDateString());
+importScripts("program-stubs.js?cachebust=" + (new Date()).toDateString());
 
 self.onmessage = function(event) {
     var data = event.data,
@@ -29,24 +30,31 @@ self.onmessage = function(event) {
 
     // Populates the environment with most of the processing
     // functions that return values
-    var processingContext = initProcessingStubs();
+    var stubbedContext = initProcessingStubs();
+    stubbedContext = initProgramStubs(stubbedContext);
 
     // Go through all the properties exposed by the program
     // (previously extracted via JSHint, et. al.)
-    for (var prop in context) {
-        if (context.hasOwnProperty(prop)) {
-            // We're unable to pass functions to a web worker so we must
-            // pass in a stubbed function placeholder, instead. If possible
-            // we try to replace it with the corresponding function in
-            // Processing.js. If not then we make a dummy function that we
-            // use to track the complexity of the program.
-            if (context[prop] === "__STUBBED_FUNCTION__") {
-                context[prop] = prop in processingContext ?
-                    processingContext[prop] :
-                    drawCounter(prop);
+    var unstubFunctionsInObject = function(object) {
+        for (var prop in object) {
+            if (object.hasOwnProperty(prop)) {
+                // We're unable to pass functions to a web worker so we must
+                // pass in a stubbed function placeholder, instead. If possible
+                // we try to replace it with the corresponding function in
+                // Processing.js. If not then we make a dummy function that we
+                // use to track the complexity of the program.
+                if (object[prop] === "__STUBBED_FUNCTION__") {
+                    object[prop] = prop in stubbedContext ?
+                        stubbedContext[prop] :
+                        drawCounter(prop);
+                } else if (typeof object[prop] === "object") {
+                    unstubFunctionsInObject(object[prop]);
+                }
             }
         }
-    }
+    };
+
+    unstubFunctionsInObject(context);
 
     // Let the parent know that execution is about to begin
     self.postMessage({ execStarted: true });

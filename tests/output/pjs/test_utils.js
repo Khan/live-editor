@@ -1,3 +1,13 @@
+/* Possibly options:
+ *  code: First code to run
+ *  code2: Code to run after
+ *  validate: StructuredJS tests (see assert_test.js)
+ *  assertions: Array of assertions caused by assertEqual() function
+ *  assertions2: Second array (after code2 is run)
+ *  expected: True if there should be no errors, False otherwise
+ *  errors: Array of errors caused by JSHint/BabyHint (see output_test.js)
+ *  test: A callback function to run with all the results
+ */
 var runTest = function(options) {
     if (options.version === undefined) {
         options.version = ScratchpadConfig.prototype.latestVersion();
@@ -45,6 +55,18 @@ var runTest = function(options) {
             output.initTests(options.validate);
         }
 
+        // Used to check assertions (caused by Program.assertEqual())
+        var checkAssertions = function(expectedAssertions, outputAssertions) {
+            if (expectedAssertions !== undefined) {
+                expect(outputAssertions.length).to.be.equal(
+                    expectedAssertions.length);
+                if (expectedAssertions.length > 0) {
+                    expect(outputAssertions[0].text).to.be.equal(
+                        expectedAssertions[0].text);
+                }
+            }
+        };
+
         // Run once to make sure that no errors are thrown
         // during execution
         output.runCode(code, function(errors, testResults) {
@@ -69,6 +91,8 @@ var runTest = function(options) {
                 }
             }
 
+            checkAssertions(options.assertions, output.assertions);
+
             if (code2) {
                 output.runCode(code2, function(errors) {
                     if (options.expected) {
@@ -76,6 +100,8 @@ var runTest = function(options) {
                     } else {
                         expect(errors).to.have.length.above(0);
                     }
+
+                    checkAssertions(options.assertions2, output.assertions);
 
                     done();
                 });
@@ -85,6 +111,7 @@ var runTest = function(options) {
         });
     });
 };
+
 
 var assertTest = function(options) {
     options.test = function(output, errors, testResults, callback) {
@@ -130,4 +157,8 @@ var failingTest = function(title, code, code2, errors) {
         expected: false, 
         errors: errors
     });
+};
+
+var assertEqualTest = function(title, code, assertions) {
+    runTest({title: options.title, code: code, assertions: assertions});
 };

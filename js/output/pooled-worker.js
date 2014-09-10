@@ -7,7 +7,7 @@ var PooledWorker = function(filename, onExec) {
 
 PooledWorker.prototype.getURL = function() {
     return this.workersDir + this.filename +
-        "?cachebust=B" + (new Date()).toDateString();
+        "?cachebust=G" + (new Date()).toDateString();
 };
 
 PooledWorker.prototype.getWorkerFromPool = function() {

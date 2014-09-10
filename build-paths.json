@@ -116,6 +116,7 @@
         "js/workers/pjs/jshint-worker.js",
         "js/workers/pjs/test-worker.js",
         "js/workers/pjs/processing-stubs.js",
+        "js/workers/pjs/program-stubs.js",
         "js/workers/pjs/output-tester.js",
         "js/workers/pjs/worker.js"
     ],

@@ -1911,6 +1911,7 @@ window.PJSOutput = Backbone.View.extend({
         var externalProps = this.props;
 
         this.globals = {};
+        this.output.assertions = [];
 
         if (hintData && hintData.globals) {
             for (var i = 0, l = hintData.globals.length; i < l; i++) {
@@ -2021,6 +2022,29 @@ window.PJSOutput = Backbone.View.extend({
 
             var context = {};
 
+            // Recursively replaces functions with stubs
+            var stubFunctionsInObject = function(object) {
+                // For null and such
+                if (!object) {
+                    return object;
+                }
+
+                var newObj = {};
+                if (_.isArray(object)) {
+                    newObj = [];
+                }
+                _.each(object, function(val, key) {
+                    if (typeof val === "function") {
+                        newObj[key] = "__STUBBED_FUNCTION__";
+                    } else if (typeof value === "object") {
+                        newObj[key] = stubFunctionsInObject(value);
+                    } else {
+                        newObj[key] = val;
+                    }
+                });
+                return newObj;
+            };
+
             _.each(this.globals, function(val, global) {
                 var value = this.canvas[global];
                 var contextVal;
@@ -2035,7 +2059,8 @@ window.PJSOutput = Backbone.View.extend({
                     //  they can't serialize.
                     ($.isPlainObject(value) &&
                     !(value instanceof this.canvas.PImage))) {
-                    contextVal = value;
+                    // We need to stub functions inside this object
+                    contextVal = stubFunctionsInObject(value);
                 } else {
                     contextVal = {};
                 }
