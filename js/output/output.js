@@ -174,7 +174,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Display errors encountered while evaluating the test code
         if (error && error.message) {
-            this.$el.find(".test-errors").text(result.message).show();
+            this.$el.find(".test-errors").text(error.message).show();
         } else {
             this.$el.find(".test-errors").hide();
         }
