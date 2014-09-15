@@ -9,7 +9,7 @@
 	url = https://github.com/Khan/transloadit_xhr
 [submodule "external/blockly"]
 	path = external/blockly
-	url = git@github.com:Khan/blockly.git
+	url = https://github.com/Khan/blockly
 [submodule "external/TraceKit"]
 	path = external/TraceKit
-	url = git@github.com:Khan/TraceKit.git
+	url = https://github.com/Khan/TraceKit
