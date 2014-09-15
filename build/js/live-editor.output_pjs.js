@@ -1448,12 +1448,11 @@ window.PJSOutput = Backbone.View.extend({
 
     bind: function() {
         if (window !== window.top) {
-            window.alert = $.noop;
-            window.open = $.noop;
-            window.showModalDialog = $.noop;
-            window.confirm = $.noop;
-            window.prompt = $.noop;
-            window.eval = $.noop;
+            var windowMethods = ["alert", "open", "showModalDialog",
+                "confirm", "prompt", "eval"];
+            for (var i = 0, l = windowMethods.length; i < l; i++) {
+                window.constructor.prototype[windowMethods[i]] = $.noop;
+            }
         }
 
         if (window !== window.top && Object.freeze &&
