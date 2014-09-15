@@ -43,6 +43,10 @@ window.PJSOutput = Backbone.View.extend({
         this.config = options.config;
         this.output = options.output;
 
+        this.tester = new PJSTester(_.extend(options, {
+            workerFile: "pjs/test-worker.js"
+        }));
+
         this.render();
         this.bind();
 
@@ -652,22 +656,23 @@ window.PJSOutput = Backbone.View.extend({
     test: function(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
-        this.testWorker.exec(userCode, tests, errors, function(errors, testResults) {
-            if (errorCount !== errors.length) {
-                // Note: Scratchpad challenge checks against the exact
-                // translated text "A critical problem occurred..." to figure
-                // out whether we hit this case.
-                var message = $._("Error: %(message)s",
-                    {message: errors[errors.length - 1].message});
-                // TODO(jeresig): Find a better way to show this
-                this.output.$el.find(".test-errors").text(message).show();
-                OutputTester.testContext.assert(false, message,
-                    $._("A critical problem occurred in your program " +
-                        "making it unable to run."));
-            }
+        this.tester.testWorker.exec(userCode, tests, errors,
+            function(errors, testResults) {
+                if (errorCount !== errors.length) {
+                    // Note: Scratchpad challenge checks against the exact
+                    // translated text "A critical problem occurred..." to
+                    // figure out whether we hit this case.
+                    var message = $._("Error: %(message)s",
+                        {message: errors[errors.length - 1].message});
+                    // TODO(jeresig): Find a better way to show this
+                    this.output.$el.find(".test-errors").text(message).show();
+                    this.tester.testContext.assert(false, message,
+                        $._("A critical problem occurred in your program " +
+                            "making it unable to run."));
+                }
 
-            callback(errors, testResults);
-        }.bind(this));
+                callback(errors, testResults);
+            }.bind(this));
     },
 
     mergeErrors: function(jshintErrors, babyErrors) {
@@ -1246,7 +1251,7 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     initTests: function(validate) {
-        return this.exec(validate, OutputTester.testContext)
+        return this.exec(validate, this.tester.testContext)
     },
 
     exec: function(code) {
@@ -1289,64 +1294,6 @@ window.PJSOutput = Backbone.View.extend({
             return e;
         }
     },
-
-    /*
-     * The worker that matches with StructuredJS.
-     */
-    testWorker: new PooledWorker(
-        "pjs/test-worker.js",
-        function(code, validate, errors, callback) {
-            var self = this;
-
-            // If there are syntax errors in the tests themselves,
-            //  then we ignore the request to test.
-            try {
-                OutputTester.exec(validate);
-            } catch(e) {
-                console.warn(e.message);
-                return;
-            }
-
-            // Generic function to handle results of testing
-            var processTesterResults = function(tester) {
-                errors = errors.concat(tester.errors);
-                return tester.testResults;
-            };
-
-            // If there's no Worker support *or* there
-            //  are syntax errors in user code, we do the testing in
-            //  the browser instead.
-            // We do it in-browser in the latter case as
-            //  the code is often in a syntax-error state,
-            //  and the browser doesn't like creating that many workers,
-            //  and the syntax error tests that we have are fast.
-            if (!window.Worker || errors.length > 0) {
-                OutputTester.test(code, validate, errors);
-                var results = processTesterResults(OutputTester);
-                return callback(errors, results);
-            }
-
-            var worker = this.getWorkerFromPool();
-
-            worker.onmessage = function(event) {
-                if (event.data.type === "test") {
-                    if (self.isCurrentWorker(worker)) {
-                        var data = event.data.message;
-                        var results = processTesterResults(data);
-                        callback(errors, results);
-                    }
-                    self.addWorkerToPool(worker);
-                }
-            };
-
-            worker.postMessage({
-                code: code,
-                validate: validate,
-                errors: errors,
-                externalsDir: this.externalsDir
-            });
-        }
-    ),
 
     /*
      * The worker that analyzes the user's code.

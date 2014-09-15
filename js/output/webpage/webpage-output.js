@@ -2,6 +2,9 @@ window.WebpageOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
+        this.externalsDir = options.externalsDir;
+
+        this.tester = new WebpageTester(options);
 
         this.render();
 
@@ -42,6 +45,8 @@ window.WebpageOutput = Backbone.View.extend({
     },
 
     lint: function(userCode, callback) {
+        this.userDOM = null;
+
         // Lint the user's code, returning any errors in the callback
         var results = Slowparse.HTML(this.getDocument(), userCode, {
             disallowActiveAttributes: true,
@@ -64,6 +69,9 @@ window.WebpageOutput = Backbone.View.extend({
                 priority: 2
             }]);
         }
+
+        this.userDOM = document.createElement("div");
+        this.userDOM.appendChild(results.document);
 
         callback([]);
     },
@@ -129,13 +137,43 @@ window.WebpageOutput = Backbone.View.extend({
     },
 
     initTests: function(validate) {
-        // Initialize any test data
-        // validate holds a string with the test data in it
+        if (!validate) {
+            return;
+        }
+
+        try {
+            var code = "with(arguments[0]){\n" + validate + "\n}";
+            (new Function(code)).apply({}, this.tester.testContext);
+
+        } catch (e) {
+            return e;
+        }
     },
 
     test: function(userCode, tests, errors, callback) {
-        // Run tests given the user's code, tests, and errors
-        callback(errors, {});
+        var errorCount = errors.length;
+
+        if (errorCount > 0) {
+            return callback(errors, []);
+        }
+
+        this.tester.test(this.userDOM, tests, errors,
+            function(errors, testResults) {
+                if (errorCount !== errors.length) {
+                    // Note: Scratchpad challenge checks against the exact
+                    // translated text "A critical problem occurred..." to
+                    // figure out whether we hit this case.
+                    var message = $._("Error: %(message)s",
+                        {message: errors[errors.length - 1].message});
+                    // TODO(jeresig): Find a better way to show this
+                    this.output.$el.find(".test-errors").text(message).show();
+                    this.tester.testContext.assert(false, message,
+                        $._("A critical problem occurred in your program " +
+                            "making it unable to run."));
+                }
+
+                callback(errors, testResults);
+            }.bind(this));
     },
 
     runCode: function(userCode, callback) {
