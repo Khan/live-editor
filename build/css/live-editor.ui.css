@@ -83,6 +83,11 @@
     background: #F5F3E5;
 }
 
+/* Otherwise, the tooltip (for assertEqual) is cut off */
+.scratchpad-ace-editor .ace_tooltip {
+    max-width: 550px;
+}
+
 .scratchpad-ace-editor .ace_scroller {
     overflow-x: hidden;
 }
