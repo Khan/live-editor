@@ -12,6 +12,8 @@ if (typeof window === "undefined") {
 var init = false;
 var date = (new Date()).toDateString();
 
+var tester;
+
 self.onmessage = function(event) {
     if (!init) {
         init = true;
@@ -24,17 +26,23 @@ self.onmessage = function(event) {
             "underscore/underscore.js?cachebust=" + date);
         importScripts(event.data.externalsDir +
             "structuredjs/structured.js?cachebust=" + date);
-        importScripts("./output-tester.js?cachebust=" + date);
+
+        // Bring in the testing logic
+        importScripts("../shared/output-tester.js?cachebust=" + date);
+        importScripts("./pjs-tester.js?cachebust=" + date);
+
+        tester = new PJSTester();
     }
 
-    OutputTester.test(event.data.code, event.data.validate, event.data.errors);
-
-    // Return the OutputTester results to the main code
-    self.postMessage({
-         type: "test",
-         message: {
-            testResults: OutputTester.testResults,
-            errors: OutputTester.errors
-        }
-    });
+    tester.test(event.data.code, event.data.validate, event.data.errors,
+        function(errors, testResults) {
+            // Return the test results to the main code
+            self.postMessage({
+                 type: "test",
+                 message: {
+                    testResults: testResults,
+                    errors: errors
+                }
+            });
+        });
 };

@@ -60,6 +60,9 @@ gulp.task("workers", function() {
 
     gulp.src(paths.workers_pjs)
         .pipe(gulp.dest("build/workers/pjs"));
+
+    gulp.src(paths.workers_shared)
+        .pipe(gulp.dest("build/workers/shared"));
 });
 
 gulp.task("externals", function() {
@@ -111,7 +114,8 @@ gulp.task("watch", function() {
 
     gulp.watch(paths.templates, ["templates"]);
 
-    gulp.watch(paths.workers, ["workers"]);
+    gulp.watch(paths.workers_pjs.concat(paths.workers_webpage)
+        .concat(paths.workers_shared), ["workers"]);
 
     gulp.watch(paths.images, ["images"]);
 });

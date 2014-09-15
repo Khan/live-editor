@@ -1,7 +1,98 @@
+var WebpageTester = function(options) {
+    this.initialize(options);
+    this.bindTestContext();
+};
+
+WebpageTester.prototype = new OutputTester();
+
+WebpageTester.prototype.testMethods = {
+    cleanStructure: function(structure) {
+        // Passing in a single selector string is equivalent to passing in
+        // {"selector": 1}
+        if (typeof structure === "string") {
+            var tmp = {};
+            tmp[structure] = 1;
+            structure = tmp;
+        }
+
+        return structure;
+    },
+
+    /*
+     * Returns the result of matching a structure against the user's HTML
+     */
+    match: function(structure) {
+        // If there were syntax errors, don't even try to match it
+        if (this.errors.length) {
+            return {
+                success: false,
+                message: $._("Syntax error!")
+            };
+        }
+
+        structure = this.testContext.cleanStructure(structure);
+
+        for (var selector in structure) {
+            var expected = structure[selector];
+            // TODO(jeresig): Maybe find a way to do this such that we can run
+            // it in a worker thread.
+            var numFound = jQuery(selector, this.userCode).length;
+            if (expected === 0 && numFound !== 0 || numFound < expected) {
+                return {
+                    success: false,
+                    message: $._("Your HTML failed to match the following " +
+                        "selector: '%(selector)s'. Expected '%(expected)s' " +
+                        "elements, found '%(found)s' instead.", {
+                            selector: selector,
+                            expected: expected,
+                            found: numFound
+                        })
+                };
+            }
+        }
+
+        return {
+            success: true
+        };
+    },
+
+    /*
+     * Returns true if the structure matches the user's HTML
+     */
+    matches: function(structure) {
+        return this.testContext.match(structure).success;
+    },
+
+    /*
+     * Creates a new test result (i.e. new challenge tab)
+     */
+    assertMatch: function(result, description, hint, image) {
+        var alternateMessage;
+        var alsoMessage;
+
+        if (result.success) {
+            alternateMessage = result.message;
+        } else {
+            alsoMessage = result.message;
+        }
+
+        this.testContext.assert(result.success, description, "", {
+            // We can accept string hints here because
+            //  we never match against them anyway
+            structure: this.testContext.cleanStructure(hint),
+            alternateMessage: alternateMessage,
+            alsoMessage: alsoMessage,
+            image: image
+        });
+    }
+};
 window.WebpageOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
+        this.externalsDir = options.externalsDir;
+
+        this.tester = new WebpageTester(options);
 
         this.render();
 
@@ -42,6 +133,8 @@ window.WebpageOutput = Backbone.View.extend({
     },
 
     lint: function(userCode, callback) {
+        this.userDOM = null;
+
         // Lint the user's code, returning any errors in the callback
         var results = Slowparse.HTML(this.getDocument(), userCode, {
             disallowActiveAttributes: true,
@@ -64,6 +157,9 @@ window.WebpageOutput = Backbone.View.extend({
                 priority: 2
             }]);
         }
+
+        this.userDOM = document.createElement("div");
+        this.userDOM.appendChild(results.document);
 
         callback([]);
     },
@@ -129,13 +225,43 @@ window.WebpageOutput = Backbone.View.extend({
     },
 
     initTests: function(validate) {
-        // Initialize any test data
-        // validate holds a string with the test data in it
+        if (!validate) {
+            return;
+        }
+
+        try {
+            var code = "with(arguments[0]){\n" + validate + "\n}";
+            (new Function(code)).apply({}, this.tester.testContext);
+
+        } catch (e) {
+            return e;
+        }
     },
 
     test: function(userCode, tests, errors, callback) {
-        // Run tests given the user's code, tests, and errors
-        callback(errors, {});
+        var errorCount = errors.length;
+
+        if (errorCount > 0) {
+            return callback(errors, []);
+        }
+
+        this.tester.test(this.userDOM, tests, errors,
+            function(errors, testResults) {
+                if (errorCount !== errors.length) {
+                    // Note: Scratchpad challenge checks against the exact
+                    // translated text "A critical problem occurred..." to
+                    // figure out whether we hit this case.
+                    var message = $._("Error: %(message)s",
+                        {message: errors[errors.length - 1].message});
+                    // TODO(jeresig): Find a better way to show this
+                    this.output.$el.find(".test-errors").text(message).show();
+                    this.tester.testContext.assert(false, message,
+                        $._("A critical problem occurred in your program " +
+                            "making it unable to run."));
+                }
+
+                callback(errors, testResults);
+            }.bind(this));
     },
 
     runCode: function(userCode, callback) {
