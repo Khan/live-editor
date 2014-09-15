@@ -749,16 +749,16 @@ window.PJSOutput = Backbone.View.extend({
                 var contextVal;
                 if (typeof value === "function" || global === "Math") {
                     contextVal = "__STUBBED_FUNCTION__";
-                } else if (typeof value !== "object" ||
+                } else if (typeof value !== "object") {
+                    contextVal = value;
+                } else if ($.isPlainObject(value) &&
+                    !(value instanceof this.canvas.PImage)) {
                     // We can send object literals over, but not
                     //  objects created with a constructor.
                     // jQuery thinks PImage is a plain object,
                     //  so we must specially check for it,
                     //  otherwise we'll give web workers an object that
                     //  they can't serialize.
-                    ($.isPlainObject(value) &&
-                    !(value instanceof this.canvas.PImage))) {
-                    // We need to stub functions inside this object
                     contextVal = stubFunctionsInObject(value);
                 } else {
                     contextVal = {};
