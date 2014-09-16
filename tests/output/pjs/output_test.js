@@ -321,6 +321,14 @@ describe("Scratchpad Output Exec", function() {
         var letter = String.fromCharCode(65);
     });
 
+    test("Processing's parseFloat, parseInt work", function() {
+        var settings = {};
+        var val = parseInt(settings.val, 10) || 13;
+
+        settings.val = 10;
+        var val2 = parseInt(settings.val, 10) || 13;
+    });
+
     test("Strings aren't replaced", function() {
         if ("Happy new year" !== "Happy new" + " year") {
             throw new Error("Happy new" + " year");

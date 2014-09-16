@@ -1,6 +1,6 @@
 /* global initProcessingStubs */
 
-importScripts("processing-stubs.js?cachebust=" + (new Date()).toDateString());
+importScripts("processing-stubs.js?cachebust=B" + (new Date()).toDateString());
 importScripts("program-stubs.js?cachebust=" + (new Date()).toDateString());
 
 self.onmessage = function(event) {
