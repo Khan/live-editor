@@ -893,7 +893,7 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // Attempt to run the code every 100ms or so
-        setInterval(function() {
+        this.runCodeInterval = setInterval(function() {
             if (toExec !== null) {
                 this.runCode(toExec === true ?
                     this.editor.text() :
@@ -1067,6 +1067,11 @@ window.LiveEditor = Backbone.View.extend({
                 commands: this.recordingCommands
             });
         }
+    },
+
+    remove: function() {
+        clearInterval(this.runCodeInterval);
+        this.$el.remove();
     },
 
     canRecord: function() {

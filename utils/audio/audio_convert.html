@@ -1,0 +1,225 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Live Editor Simple Demo</title>
+    <link rel="stylesheet" href="../../build/css/live-editor.core_deps.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.hotnumber.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        h1 {
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+        #sample-live-editor {
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Editor Example</h1>
+    <div id="sample-live-editor"></a>
+
+    <script src="../../build/js/live-editor.core_deps.js"></script>
+    <script src="../../build/js/live-editor.editor_ace_deps.js"></script>
+    <script src="../../build/js/live-editor.audio.js"></script>
+    <script src="../../build/js/live-editor.shared.js"></script>
+    <script src="../../build/js/live-editor.hotnumber.js"></script>
+    <script src="../../build/js/live-editor.ui.js"></script>
+    <script src="../../build/js/live-editor.editor_ace.js"></script>
+    <script src="../../external/async/lib/async.js"></script>
+    <script>
+    var tutorialJSONURL =
+        "https://www.khanacademy.org/api/labs/scratchpads/tutorial";
+
+    var handleTutorial = function(tutorial, callback) {
+        if (tutorial.id in allData) {
+            return callback();
+        }
+
+        if (window.liveEditor) {
+            liveEditor.remove();
+        }
+
+        var revision = tutorial.revision;
+
+        if (!revision.recording || !revision.mp3_url) {
+            return callback();
+        }
+
+        var $div = $("<div>").appendTo("body");
+
+        var commands = revision.recording.commands || revision.recording;
+        var init = revision.recording.init || {};
+        init.configVersion = init.config_version || revision.config_version;
+
+        window.liveEditor = new LiveEditor({
+            el: $div,
+            width: 400,
+            height: 400,
+            code: revision.code,
+            version: revision.config_version,
+            recordingCommands: commands,
+            recordingMP3: revision.mp3_url,
+            recordingInit: revision.recording.init,
+            autoFocus: true,
+            workersDir: "../../build/workers/",
+            externalsDir: "../../build/external/",
+            imagesDir: "../../build/images/",
+            execFile: "../../demos/simple/output.html",
+            jshintFile: "../../build/external/jshint/jshint.js"
+        });
+
+        var testTracker;
+        var editor = liveEditor.editor.editor;
+        var logStart;
+        var log = [];
+        var testData = [];
+        // Strip out the following commands from the playback
+        var banned = ["cut", "copy", "paste", "cmd", "key",
+            "top", "focus", "hot"];
+
+        liveEditor.record.on({
+            loaded: function() {
+                liveEditor.record.play();
+            },
+
+            playStarted: function() {
+                // Mute the player, to keep our sanity!
+                liveEditor.player.mute();
+
+                // Initialize the starting code
+                liveEditor.editor.text(revision.code);
+
+                logStart = (new Date).getTime();
+
+                testTracker = setInterval(logTestData, 30000);
+            },
+
+            playEnded: function() {
+                clearInterval(testTracker);
+
+                // Log one last testData check
+                logTestData();
+
+                console.log("Merging in old data...");
+
+                // Remove banned commands
+                commands = commands.filter(function(cmd) {
+                    for (var prop in cmd) {
+                        if (banned.indexOf(prop) >= 0) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+
+                // Stitch the commands together
+                log = log.concat(commands).sort(function(a, b) {
+                    return a.time - b.time;
+                });
+
+                console.log("Saving data...");
+
+                allData[tutorial.id] = {
+                    code: revision.code,
+                    version: init.configVersion,
+                    commands: log,
+                    tests: testData
+                };
+
+                try {
+                    window.localStorage["live-editor-convert"] =
+                        JSON.stringify(allData);
+
+                } catch(e) {
+                    console.error("Error saving to localStorage.");
+                }
+
+                liveEditor.remove();
+                liveEditor = null;
+
+                callback();
+            }
+        });
+
+        var logTestData = function() {
+            var data = {
+                text: liveEditor.editor.text(),
+                selection: editor.selection.getRange(),
+                time: (new Date).getTime() - logStart
+            };
+            testData.push(data);
+            console.log(data);
+        };
+
+        var logData = function(data) {
+            if (logStart) {
+                data.time = (new Date).getTime() - logStart;
+                log.push(data);
+                console.log(data);
+            }
+        };
+
+        var handleSelect = function() {
+            var curRange = editor.selection.getRange();
+
+            var diff = {
+                start: {
+                    row: curRange.start.row,
+                    column: curRange.start.column
+                }
+            };
+
+            if (curRange.end.row !== curRange.start.row ||
+                 curRange.end.column !== curRange.start.column) {
+
+                diff.end = {
+                    row: curRange.end.row,
+                    column: curRange.end.column
+                };
+            }
+
+            logData(diff);
+        };
+
+        // Track selection events
+        editor.selection.addEventListener("changeCursor", function() {
+            if (editor.selection.isEmpty()) {
+                handleSelect();
+            }
+        });
+
+        editor.selection.addEventListener("changeSelection", handleSelect);
+
+        // Track text change events
+        editor.session.doc.on("change", function(e) {
+            var data = {};
+            data[e.data.action] = e.data.range;
+            if (e.data.action.indexOf("insert") === 0) {
+                if (e.data.text) {
+                    data.text = e.data.text;
+                }
+                if (e.data.lines) {
+                    data.lines = e.data.lines;
+                }
+            }
+            logData(data);
+        });
+    };
+
+    var allData = JSON.parse(
+        window.localStorage["live-editor-convert"] || "{}");
+
+    $.getJSON(tutorialJSONURL, function(tutorials) {
+        async.eachLimit(tutorials, 1, handleTutorial, function() {
+            console.log("all done");
+        });
+    });
+    </script>
+</body>
+</html>
