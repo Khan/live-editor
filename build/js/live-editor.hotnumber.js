@@ -1061,12 +1061,49 @@ window.ScratchpadAutosuggestData = {
                     $._("y: the y-coordinate of the vertex")
                 ]
             },
-            // We don't need parameter info here because these have different
-            // hotnumber pickers.
-            "background(r, g, b)",
-            "fill(r, g, b)",
-            "stroke(r, g, b)",
-            "color(r, g, b)",
+            {
+                name: "background(r, g, b)",
+                exampleURL: "/cs/backgroundr-g-b/839653892",
+                description: $._("Sets the background color of the canvas. Note that calling this will color over anything drawn before the command."),
+                params: [
+                    $._("r: amount of red, ranges from 0 to 255"),
+                    $._("g: amount of green, ranges from 0 to 255"),
+                    $._("b: amount of blue, ranges from 0 to 255")
+                ]
+            },
+            {
+                name: "fill(r, g, b, a*)",
+                exampleURL: "/cs/fillr-g-b/839774957",
+                description: $._("Sets the fill color for all shapes drawn after the function call."),
+                params: [
+                    $._("r: amount of red, ranges from 0 to 255"),
+                    $._("g: amount of green, ranges from 0 to 255"),
+                    $._("b: amount of blue, ranges from 0 to 255"),
+                    $._("a: (Optional) transparency, ranges from 0 to 255")
+                ]
+            },
+            {
+                name: "stroke(r, g, b, a*)",
+                exampleURL: "/cs/stroker-g-b/839545910",
+                description: $._("Sets the outline color for all shapes drawn after the function call."),
+                params: [
+                    $._("r: amount of red, ranges from 0 to 255"),
+                    $._("g: amount of green, ranges from 0 to 255"),
+                    $._("b: amount of blue, ranges from 0 to 255"),
+                    $._("a: (Optional) transparency, ranges from 0 to 255")
+                ]
+            },
+            {
+                name: "color(r, g, b, a*)",
+                exampleURL: "/cs/colorr-g-b/957020020",
+                description: $._("This function lets you store all three color components in a single variable. You can then pass that one variable to functions like background(), stroke(), and fill()."),
+                params: [
+                    $._("r: amount of red, ranges from 0 to 255"),
+                    $._("g: amount of green, ranges from 0 to 255"),
+                    $._("b: amount of blue, ranges from 0 to 255"),
+                    $._("a: (Optional) transparency, ranges from 0 to 255")
+                ]
+            },
             {
                 name: "noFill()",
                 exampleURL: "/cs/nofill/877946290",
