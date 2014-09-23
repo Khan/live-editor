@@ -4,8 +4,8 @@
  *  validate: StructuredJS tests (see assert_test.js)
  *  assertions: Array of assertions caused by assertEqual() function
  *  assertions2: Second array (after code2 is run)
- *  expected: True if there should be no errors, False otherwise
- *  errors: Array of errors caused by JSHint/BabyHint (see output_test.js)
+ *  errors: Array of errors caused by JSHint/BabyHint (see output_test.js),
+*     or a boolean indicating that errors are expected.
  *  test: A callback function to run with all the results
  */
 var runTest = function(options) {
@@ -16,27 +16,20 @@ var runTest = function(options) {
     var displayTitle = options.title +
         " (Version: " + options.version + ")";
 
-    // Assume the code is a string, by default
-    var code = options.code;
-
-    // If not then we assume that it's a function so we need to
-    // extract the code to run from the serialized function
-    if (typeof code !== "string") {
-        code = code.toString();
-        code = code.substr(code.indexOf("{") + 1);
-        code = code.substr(0, code.length - 1);
-    }
-
-    // Assume the code is a string, by default
-    var code2 = options.code2;
-
-    // If not then we assume that it's a function so we need to
-    // extract the code to run from the serialized function
-    if (code2 && typeof code2 !== "string") {
-        code2 = code2.toString();
-        code2 = code2.substr(code2.indexOf("{") + 1);
-        code2 = code2.substr(0, code2.length - 1);
-    }
+    var getCodeFromOptions = function(code) {
+        // Assume the code is a string, by default
+        // If not then we assume that it's a function so we need to
+        // extract the code to run from the serialized function
+        if (code && typeof code !== "string") {
+            code = code.toString();
+            code = code.substr(code.indexOf("{") + 1);
+            code = code.substr(0, code.length - 1);
+        }
+        return code;
+    };
+    
+    var code1 = getCodeFromOptions(options.code);
+    var code2 = getCodeFromOptions(options.code2);
 
     // Start an asynchronous test
     it(displayTitle, function(done) {
@@ -67,42 +60,57 @@ var runTest = function(options) {
             }
         };
 
-        // Run once to make sure that no errors are thrown
-        // during execution
-        output.runCode(code, function(errors, testResults) {
-            if (options.test) {
-                options.test(output, errors, testResults, done);
-                return;
-            }
-
-            if (options.expected) {
-                expect(errors).to.have.length(0);
+        var checkErrors = function(expectedErrors, outputErrors) {
+            if (!expectedErrors || expectedErrors.length === 0) {
+                expect(outputErrors).to.have.length(0);
             } else {
-                expect(errors).to.not.equal([]);
+                expect(outputErrors).to.not.equal([]);
                 // In some cases, we actually verify number and line # of errors
                 // We generally can't test the text as it varies per JS engine,
                 // (changes depending on whether we run tests in browser vs.
                 // command-line.
                 // The column number is more consistent across the engines
-                if (options.errors) {
-                    expect(errors.length).to.be.equal(options.errors.length);
-                    expect(errors[0].column)
-                        .to.be.equal(options.errors[0].column);
+                if (expectedErrors.length) {
+                    expect(outputErrors.length).to.be.equal(
+                        expectedErrors.length);
+                    expect(outputErrors[0].column)
+                        .to.be.equal(expectedErrors[0].column);
                 }
             }
+        };
 
+        // Theoretically, jQuery.mouseup should work, but it wasn't working
+        //  for me across PhantomJS/browser, and this does.
+        var simulateClick = function() {
+            var ev = document.createEvent("MouseEvent");
+            ev.initMouseEvent(
+                "mouseup",
+                true, true,
+                window, null,
+                0, 0, 0, 0,
+                false, false, false, false,
+                0, null
+            );
+            output.output.$canvas[0].dispatchEvent(ev);
+        };
+
+        // Run once to make sure that no errors are thrown
+        // during execution
+        output.runCode(code1, function(errors, testResults) {
+            if (options.test) {
+                options.test(output, errors, testResults, done);
+                return;
+            }
+
+            checkErrors(options.errors, errors);
             checkAssertions(options.assertions, output.assertions);
+            options.simulateClick && simulateClick();
 
             if (code2) {
                 output.runCode(code2, function(errors) {
-                    if (options.expected) {
-                        expect(errors).to.have.length(0);
-                    } else {
-                        expect(errors).to.have.length.above(0);
-                    }
-
+                    checkErrors(options.errors2, errors);
                     checkAssertions(options.assertions2, output.assertions);
-
+                    options.simulateClick && simulateClick();
                     done();
                 });
             } else {
@@ -145,7 +153,7 @@ var test = function(title, code, code2) {
         title: title,
         code: code,
         code2: code2,
-        expected: true
+        errors: []
     });
 };
 
@@ -153,9 +161,8 @@ var failingTest = function(title, code, code2, errors) {
     runTest({
         title: title,
         code: code,
-        code2: code2,
-        expected: false, 
-        errors: errors
+        code2: code2, 
+        errors: errors || true
     });
 };
 
