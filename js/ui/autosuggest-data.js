@@ -274,13 +274,14 @@ window.ScratchpadAutosuggestData = {
                 ]
             },
             {
-                name: "background(r, g, b)",
+                name: "background(r, g, b, a*)",
                 exampleURL: "/cs/backgroundr-g-b/839653892",
                 description: $._("Sets the background color of the canvas. Note that calling this will color over anything drawn before the command."),
                 params: [
                     $._("r: amount of red, ranges from 0 to 255"),
                     $._("g: amount of green, ranges from 0 to 255"),
-                    $._("b: amount of blue, ranges from 0 to 255")
+                    $._("b: amount of blue, ranges from 0 to 255"),
+                    $._("a: (Optional) transparency, ranges from 0 to 255")
                 ]
             },
             {

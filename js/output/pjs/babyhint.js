@@ -75,7 +75,7 @@ var BabyHint = {
         "asin": 1,
         "atan": 1,
         "atan2": 2,
-        "background": [1, 3],
+        "background": [1, 3, 4],
         "beginShape": [0, 1],
         "bezier": 8,
         "bezierVertex": [6],
