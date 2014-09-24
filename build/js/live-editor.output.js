@@ -102,7 +102,10 @@ window.TipBar = Backbone.View.extend({
             bar
                 .css({ top: 400, opacity: 0.1 })
                 .show()
-                .animate({ top: this.$el.find(".toolbar").is(":visible") ? 33 : 100, opacity: 1.0 }, 300);
+                .animate({
+                    top: this.$el.find(".toolbar").is(":visible") ? 33 : 100,
+                    opacity: 0.9},
+                    300);
         }
 
         if (callback) {

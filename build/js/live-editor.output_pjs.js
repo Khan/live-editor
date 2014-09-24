@@ -531,7 +531,7 @@ var BabyHint = {
         "asin": 1,
         "atan": 1,
         "atan2": 2,
-        "background": [1, 3],
+        "background": [1, 3, 4],
         "beginShape": [0, 1],
         "bezier": 8,
         "bezierVertex": [6],
@@ -1461,8 +1461,9 @@ window.PJSOutput = Backbone.View.extend({
         var width = $window.width();
         var height = $window.height();
 
-        if (width !== this.canvas.width ||
-            height !== this.canvas.height) {
+        if (this.canvas && 
+            (width !== this.canvas.width ||
+            height !== this.canvas.height)) {
             // Set the canvas element to be the right size
             this.$canvas.width(width).height(height);
 
@@ -1889,7 +1890,7 @@ window.PJSOutput = Backbone.View.extend({
                 _.each(object, function(val, key) {
                     if (typeof val === "function") {
                         newObj[key] = "__STUBBED_FUNCTION__";
-                    } else if (typeof value === "object") {
+                    } else if (typeof val === "object") {
                         newObj[key] = stubFunctionsInObject(value);
                     } else {
                         newObj[key] = val;
@@ -2218,7 +2219,7 @@ window.PJSOutput = Backbone.View.extend({
                 // function to be deleted (as it's user-defined)
                 if (!(oldProp in grabAll) &&
                         (!(oldProp in this.props) ||
-                            oldProp === "draw")) {
+                            _.contains(this.drawLoopMethods, oldProp))) {
                     // Create the code to delete the variable
                     inject += "delete " + oldProp + ";\n";
 

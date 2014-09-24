@@ -405,25 +405,36 @@ describe("Scratchpad Output Exec", function() {
         }
     });
 
-    test("Make sure mouse events are reset", function() {
-        var count = 0;
+    /* This test makes sure that we actually delete the mouseClicked 
+      definition after they've deleted it. We can't do the simple thing
+      and call mouseClicked() directly, because doing so will register
+      mouseClick as a global and replace it anyway. We have to simulate the
+      actual path the code will take in this situation by simulating a click on
+      the canvas outside of the program itself.*/
+    runTest({
+        title: "Make sure mouse events are reset",
+        code: function() {
+            var currentLocation = 0;
 
-        var mouseMoved = function() {
-            count += 1;
-        };
-    }, function() {
-        var count = 0;
+            var mouseClicked = function() {
+                fill(255, 0, 0);
+                rect(currentLocation, 0, 10, 10);
+                currentLocation += 10;
+                var fillC = get(20, 1);
+                if (fillC < -1) {
+                    throw new Error("mouseClicked not replaced");
+                }
+            };
+        },
+        code2: function() {
+            var currentLocation = 0;
 
-        var xmouseMoved = function() {
-            count += 1;
-        };
+            var xmouseClicked = function() {
 
-        if (typeof mouseMoved === "function") {
-            mouseMoved();
-            if (count > 0) {
-                throw new Error("mouseMoved not replaced");
-            }
-        }
+            };
+        },
+        simulateClick: true,
+        errors: []
     });
 
     runTest({
@@ -433,7 +444,7 @@ describe("Scratchpad Output Exec", function() {
             Program.restart();
             Program.runTests(function() {});
         },
-        expected: true
+        errors: []
     });
 
     runTest({
@@ -444,12 +455,13 @@ describe("Scratchpad Output Exec", function() {
         code2: function() {
             Program.assertEqual(2, 2);
         },
+        errors: [],
         assertions: [{
             "row":0,"column":0,
             "text": "Assertion failed: 2 is not equal to 4."}],
         assertions2: [],
-        expected: true
     });
+
 });
 
 describe("Output Methods", function() {
