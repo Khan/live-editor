@@ -57,6 +57,11 @@
         var init = revision.recording.init || {};
         init.configVersion = init.config_version || revision.config_version;
 
+        // Force this one to be version 3, it's corrupted
+        if (tutorial.id.toString() === "836683206") {
+            init.configVersion = 3;
+        }
+
         window.liveEditor = new LiveEditor({
             el: $div,
             width: 400,
