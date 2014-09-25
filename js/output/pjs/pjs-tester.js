@@ -6,6 +6,15 @@ var PJSTester = function(options) {
 PJSTester.prototype = new OutputTester();
 
 PJSTester.prototype.testMethods = {
+    /*
+     * See if any of the patterns match the code
+     */
+    firstMatchingPattern: function(patterns) {
+        return _.find(patterns, _.bind(function(pattern) {
+            return this.testContext.matches(pattern);
+        }, this));
+    },
+
     hasFnCall: function(name, check) {
         for (var i = 0, l = this.fnCalls.length; i < l; i++) {
             var retVal = this.testContext.checkFn(

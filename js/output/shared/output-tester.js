@@ -153,7 +153,6 @@ OutputTester.prototype = {
                 fn: function() {
                     try {
                         return fn.apply(this, arguments);
-
                     } catch (e) {
                         if (window.console) {
                             console.warn(e);
@@ -254,15 +253,6 @@ OutputTester.prototype = {
         allPass: function() {
             return _.find(arguments, this.testContext.fails) || arguments[0] ||
                 this.testContext.pass();
-        },
-
-        /*
-         * See if any of the patterns match the code
-         */
-        firstMatchingPattern: function(patterns) {
-            return _.find(patterns, _.bind(function(pattern) {
-                return this.testContext.matches(pattern);
-            }, this));
         },
 
         /*
