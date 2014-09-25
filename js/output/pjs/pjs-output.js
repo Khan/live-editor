@@ -741,7 +741,7 @@ window.PJSOutput = Backbone.View.extend({
                     if (typeof val === "function") {
                         newObj[key] = "__STUBBED_FUNCTION__";
                     } else if (typeof val === "object") {
-                        newObj[key] = stubFunctionsInObject(value);
+                        newObj[key] = stubFunctionsInObject(val);
                     } else {
                         newObj[key] = val;
                     }
