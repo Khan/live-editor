@@ -384,6 +384,27 @@ describe("Scratchpad Output Exec", function() {
         };
     });
 
+    test("Make sure object serialization works in injection", function() {
+        var winston = {
+          age: 19,
+          birthdate: {
+              month: 12
+          }
+        };
+        text("Winston is " + winston + " years old", 10, 50);
+
+    },
+    function() {
+        var winston = {
+          age: 19,
+          birthdate: {
+              month: 12
+          }
+        };
+        text("Winston is " + winston + " years old", 10, 50);
+
+    });
+
     test("Make sure draw method is reset", function() {
         var count = 0;
 
