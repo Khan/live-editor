@@ -135,4 +135,34 @@ describe("Linting", function() {
             {row: 0, column: 3, lint: {type: "EVENT_HANDLER_ATTR_NOT_ALLOWED"}}
         ]
     );
+
+    failingTest("Audio element banned",
+        "<audio></audio>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Video element banned",
+        "<video></video>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Iframe element banned",
+        "<iframe></iframe>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Embed element banned",
+        "<embed></embed>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Object element banned",
+        "<object></object>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
 });

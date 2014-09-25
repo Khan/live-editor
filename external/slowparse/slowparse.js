@@ -191,6 +191,15 @@
         cursor: openTag.start
       };
     },
+    ELEMENT_NOT_ALLOWED: function(tagName, token) {
+      var openTag = this._combine({
+            name: tagName
+          }, token.interval);
+      return {
+        openTag: openTag,
+        cursor: openTag.start
+      };
+    },
     UNEXPECTED_CLOSE_TAG: function(parser, closeTagName, token) {
       var closeTag = this._combine({
             name: closeTagName
@@ -1467,6 +1476,12 @@
             throw new ParseError("INVALID_TAG_NAME", tagName, token);
           } else if (this.options.noScript && tagName === "script") {
             throw new ParseError("SCRIPT_ELEMENT_NOT_ALLOWED", tagName, token);
+          } else if (this.options.disableTags) {
+            for (var i = 0; i < this.options.disableTags.length; i++) {
+              if (tagName === this.options.disableTags[i]) {
+                throw new ParseError("ELEMENT_NOT_ALLOWED", tagName, token);
+              }
+            }
           }
         }
         else {

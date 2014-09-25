@@ -138,7 +138,8 @@ window.WebpageOutput = Backbone.View.extend({
         // Lint the user's code, returning any errors in the callback
         var results = Slowparse.HTML(this.getDocument(), userCode, {
             disallowActiveAttributes: true,
-            noScript: true
+            noScript: true,
+            disableTags: ["audio", "video", "iframe", "embed", "object"]
         });
 
         if (results.error) {
@@ -207,6 +208,7 @@ window.WebpageOutput = Backbone.View.extend({
             MISSING_CSS_SELECTOR: $._("Missing either a new CSS selector or the \"&lt;/style&gt;\" tag.", error),
             MISSING_CSS_VALUE: $._("Missing value for \"%(cssProperty_property)s\".", error),
             SCRIPT_ELEMENT_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using \"&lt;script&gt;\" tags.", error),
+            ELEMENT_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using \"&lt;%(openTag_name)s&gt;\" tags.", error),
             SELF_CLOSING_NON_VOID_ELEMENT: $._("A \"&lt;%(name)s&gt;\" tag can't be self-closed, because \"&lt;%(name)s&gt;\" is not a void element; it must be closed with a separate \"&lt;/%(name)s&gt;\" tag.", error),
             UNCAUGHT_CSS_PARSE_ERROR: $._("A parse error occurred outside expected cases: \"%(error_msg)s\"", error),
             UNCLOSED_TAG: $._("A \"&lt;%(openTag_name)s&gt;\" tag never closes.", error),
