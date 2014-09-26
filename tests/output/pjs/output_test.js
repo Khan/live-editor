@@ -405,6 +405,36 @@ describe("Scratchpad Output Exec", function() {
 
     });
 
+    test("Make sure object with PImage works in injection", function() {
+        var myObj = {
+            x: 5,
+            img: getImage("creatures/OhNoes")
+        };
+        var draw = function() {
+            myObj.x += 2;
+            image(myObj.img, myObj.x, 0); // <-- Remove this semicolon and add it back!
+        };
+
+    },
+    function() {
+        var myObj = {
+            x: 5,
+            img: getImage("creatures/OhNoes")
+        };
+        var draw = function() {
+            myObj.x += 2;
+            image(myObj.img, myObj.x, 0); // <-- Remove this semicolon and add it back!
+        };
+
+    });
+
+    test("Make sure externals works in injection", function() {
+        var externals;
+    },
+    function() {
+        var externals;
+    });
+
     test("Make sure draw method is reset", function() {
         var count = 0;
 

@@ -726,6 +726,19 @@ window.PJSOutput = Backbone.View.extend({
 
             var context = {};
 
+
+            // We can send object literals over, but not
+            //  objects created with a constructor.
+            // jQuery thinks PImage is a plain object,
+            //  so we must specially check for it,
+            //  otherwise we'll give web workers an object that
+            //  they can't serialize.
+            var PImage = this.canvas.PImage;
+            var isStubbableObject = function(value) {
+                return $.isPlainObject(value) && 
+                    !(value instanceof PImage);
+            };
+
             // Recursively replaces functions with stubs
             var stubFunctionsInObject = function(object) {
                 // For null and such
@@ -740,10 +753,12 @@ window.PJSOutput = Backbone.View.extend({
                 _.each(object, function(val, key) {
                     if (typeof val === "function") {
                         newObj[key] = "__STUBBED_FUNCTION__";
-                    } else if (typeof val === "object") {
+                    } else if (typeof val !== "object") {
+                        newObj[key] = val;
+                    } else if (isStubbableObject(val)) {
                         newObj[key] = stubFunctionsInObject(val);
                     } else {
-                        newObj[key] = val;
+                        newObj[key] = {};
                     }
                 });
                 return newObj;
@@ -756,21 +771,14 @@ window.PJSOutput = Backbone.View.extend({
                     contextVal = "__STUBBED_FUNCTION__";
                 } else if (typeof value !== "object") {
                     contextVal = value;
-                } else if ($.isPlainObject(value) &&
-                    !(value instanceof this.canvas.PImage)) {
-                    // We can send object literals over, but not
-                    //  objects created with a constructor.
-                    // jQuery thinks PImage is a plain object,
-                    //  so we must specially check for it,
-                    //  otherwise we'll give web workers an object that
-                    //  they can't serialize.
+                } else if (isStubbableObject(value)) {
                     contextVal = stubFunctionsInObject(value);
                 } else {
                     contextVal = {};
                 }
                 context[global] = contextVal;
             }.bind(this));
-
+    
             this.worker.exec(userCode, context, function(errors, userCode) {
                 if (errors && errors.length > 0) {
                     return callback(errors, userCode);
