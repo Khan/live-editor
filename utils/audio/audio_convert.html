@@ -37,6 +37,11 @@
         "https://www.khanacademy.org/api/labs/scratchpads/tutorial";
 
     var handleTutorial = function(tutorial, callback) {
+        // Ignore this broken tutorial
+        if (tutorial.id.toString() === "836683206") {
+            return callback();
+        }
+
         if (tutorial.id in allData) {
             return callback();
         }
@@ -56,11 +61,6 @@
         var commands = revision.recording.commands || revision.recording;
         var init = revision.recording.init || {};
         init.configVersion = init.config_version || revision.config_version;
-
-        // Force this one to be version 3, it's corrupted
-        if (tutorial.id.toString() === "836683206") {
-            init.configVersion = 3;
-        }
 
         window.liveEditor = new LiveEditor({
             el: $div,
