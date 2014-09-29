@@ -178,7 +178,7 @@ var BabyHint = {
 
     babyErrors: function(source, hintErrors) {
         var errorLines = {};
-        var lines = source.split("\n");
+        var lines = (source || "").split("\n");
         BabyHint.errors = [];
         BabyHint.variables = [];
         BabyHint.inComment = false;

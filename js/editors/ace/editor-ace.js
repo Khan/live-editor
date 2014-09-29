@@ -79,68 +79,21 @@ window.AceEditor = Backbone.View.extend({
         var self = this;
         var editor = this.editor;
         var record = this.record;
+        var doc = editor.session.doc;
 
-        editor.setKeyboardHandler({
-            handleKeyboard: function($data, hashId, keyString, keyCode, e) {
-                if (!record.playing) {
-                    self.trigger("userChangedCode");
-                }
+        // Track text change events
+        doc.on("change", function(e) {
+            var start = e.data.range.start;
+            var end = e.data.range.end;
 
-                // Dont trigger on special keys (ctrl, shift, etc)
-                if (hashId === -1) {
-                    self.trigger("keyInput");
-                }
-
-                if (!record.recording) {
-                    return;
-                }
-
-                var isCommand = editor.commands.findKeyCommand(
-                        hashId, keyString),
-                    isEmpty = jQuery.isEmptyObject(e);
-
-                if (isCommand && !isEmpty) {
-                    record.log({ cmd: isCommand.name });
-                    self.blockSelection();
-
-                    // Prevent commands from having any logged side effects
-                    var oldExec = isCommand.exec;
-
-                    isCommand.exec = function() {
-                        record.recording = false;
-                        var ret = oldExec.apply(this, arguments);
-                        record.recording = true;
-                        return ret;
-                    };
-
-                    return isCommand;
-
-                } else if (!isCommand && isEmpty) {
-                    record.log({ key: keyString });
-                    self.blockSelection();
-                }
+            if (e.data.action.indexOf("insert") === 0) {
+                var insert = e.data.lines || e.data.text;
+                self.record.log(e.data.action,
+                    start.row, start.column, end.row, end.column, insert);
+            } else {
+                self.record.log(e.data.action,
+                    start.row, start.column, end.row, end.column);
             }
-        });
-
-        editor.addEventListener("copy", function() {
-            record.log({ copy: 1 });
-        });
-
-        editor.addEventListener("paste", function(text) {
-            self.trigger("userChangedCode");
-            if (record.recording) {
-                record.log({ paste: text });
-            }
-        });
-
-        editor.addEventListener("cut", function() {
-            self.trigger("userChangedCode");
-            record.log({ cut: 1 });
-            self.blockSelection();
-        });
-
-        editor.renderer.scrollBar.addEventListener("scroll", function(e) {
-            record.log({ top: e.data });
         });
 
         editor.selection.addEventListener("changeCursor", function() {
@@ -154,40 +107,83 @@ window.AceEditor = Backbone.View.extend({
 
         // Add in record playback handlers.
         $.extend(record.handlers, {
-            cut: function() {
-                editor.onCut();
+            insertText: function(startRow, startCol, endRow, endCol, text) {
+                doc.applyDeltas([{
+                    action: "insertText",
+                    range: {
+                        start: {
+                            row: startRow,
+                            column: startCol
+                        },
+                        end: {
+                            row: endRow,
+                            column: endCol
+                        }
+                    },
+                    text: text
+                }]);
             },
 
-            copy: function() {
-                editor.getCopyText();
+            insertLines: function(startRow, startCol, endRow, endCol, lines) {
+                doc.applyDeltas([{
+                    action: "insertLines",
+                    range: {
+                        start: {
+                            row: startRow,
+                            column: startCol
+                        },
+                        end: {
+                            row: endRow,
+                            column: endCol
+                        }
+                    },
+                    lines: lines
+                }]);
             },
 
-            paste: function(e) {
-                editor.onPaste(e.paste);
+            removeText: function(startRow, startCol, endRow, endCol) {
+                doc.applyDeltas([{
+                    action: "removeText",
+                    range: {
+                        start: {
+                            row: startRow,
+                            column: startCol
+                        },
+                        end: {
+                            row: endRow,
+                            column: endCol
+                        }
+                    }
+                }]);
             },
 
-            cmd: function(e) {
-                editor.commands.exec(e.cmd, self.editor);
+            removeLines: function(startRow, startCol, endRow, endCol) {
+                doc.applyDeltas([{
+                    action: "removeLines",
+                    range: {
+                        start: {
+                            row: startRow,
+                            column: startCol
+                        },
+                        end: {
+                            row: endRow,
+                            column: endCol
+                        }
+                    }
+                }]);
             },
 
-            key: function(e) {
-                editor.onTextInput(e.key, false);
-            },
-
-            top: function(e) {
-                editor.renderer.scrollBar.setScrollTop(e.top);
-            },
-
-            start: function(e) {
-                if (!e.end) {
-                    e.end = e.start;
-                }
-
-                editor.selection.setSelectionRange(e);
-            },
-
-            focus: function() {
-                self.textarea[0].focus();
+            select: function(startRow, startCol, endRow, endCol) {
+                editor.selection.setSelectionRange({
+                    start: {
+                        row: startRow,
+                        column: startCol
+                    },
+                    end: {
+                        row: endRow,
+                        column: endCol
+                    }
+                });
             }
         });
 
@@ -212,78 +208,22 @@ window.AceEditor = Backbone.View.extend({
             }
         };
 
-        record.on({
-            runSeek: function() {
-                self.reset(record.initData.code);
-            }
+        record.on("runSeek", function() {
+            self.reset(record.initData.code);
         });
     },
 
-    // Managing user selection
-    doSelect: true,
-    curRange: null,
-
-    blockSelection: function() {
-        var self = this;
-
-        this.doSelect = false;
-
-        setTimeout(function() {
-            self.doSelect = true;
-        }, 13);
-    },
-
     handleSelect: function() {
-        if (!this.doSelect || !this.record.recording) {
+        if (!this.record.recording) {
             return;
         }
 
-        var self = this;
+        var curRange = editor.selection.getRange();
 
-        if (this.curRange) {
-            return;
-        }
+        var start = curRange.start;
+        var end = curRange.end;
 
-        setTimeout(function() {
-            var curRange = self.curRange;
-
-            var diff = {
-                start: {
-                    row: curRange.start.row,
-                    column: curRange.start.column
-                }
-            };
-
-            if (curRange.end.row !== curRange.start.row ||
-                 curRange.end.column !== curRange.start.column) {
-
-                diff.end = {
-                    row: curRange.end.row,
-                    column: curRange.end.column
-                };
-            }
-
-            var lastSelection = self.record.commands[
-                self.record.commands.length - 1];
-
-            // Note: Not sure how I feel about using JSON.stringify for
-            // deep comparisons but boy is it convenient.
-            if (lastSelection) {
-                lastSelection = JSON.stringify({
-                    start: lastSelection.start,
-                    end: lastSelection.end
-                });
-            }
-
-            if (!lastSelection ||
-                lastSelection !== JSON.stringify(diff)) {
-                self.record.log(diff);
-            }
-
-            self.curRange = null;
-        }, 13);
-
-        this.curRange = this.editor.selection.getRange();
+        this.record.log(start.row, start.column, end.row, end.column);
     },
 
     reset: function(code, focus) {

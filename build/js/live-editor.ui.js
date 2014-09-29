@@ -118,7 +118,6 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
     initialize: function(options) {
         this.record = options.record;
 
-        this.undoStack = [];
         this.isDrawing = false;
 
         this.ctx = this.el.getContext("2d");
@@ -135,7 +134,6 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
     },
 
     commands: ["startLine", "drawLine", "endLine", "setColor", "clear"],
-    mouseCommands: ["move", "over", "out", "down", "up"],
 
     colors: {
         black: [0, 0, 0],
@@ -191,11 +189,9 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
             }
         });
 
-        record.on({
-            runSeek: function() {
-                self.clear(true);
-                self.endDraw();
-            }
+        record.on("runSeek", function() {
+            self.clear(true);
+            self.endDraw();
         });
 
         // Handle record seek caching
@@ -236,65 +232,10 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
 
         // Initialize playback commands
         _.each(this.commands, function(name) {
-            record.handlers[name] = function(e) {
-                self[name].apply(self, e[name] || []);
+            record.handlers[name] = function() {
+                self[name].apply(self, arguments);
             };
         });
-
-        // ScratchpadCanvas mouse events to track
-        // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
-        _.each(this.mouseCommands, function(name) {
-            // Handle the command during playback
-            record.handlers[name] = function(e) {
-                // TODO: Get rid of ScratchpadUI in favor or something other
-                // meta-object that manages scratchpad state.
-                self.trigger("mouseEvent", {name: name, action: e});
-            };
-        });
-
-        $(document).on("keydown.draw-canvas", function(e) {
-            // Stop if we aren't running
-            if (!record.playing || !self.isDrawing) {
-                return;
-            }
-
-            // Backspace key
-            if (e.which === 8) {
-                e.preventDefault();
-                self.undo();
-            }
-        });
-    },
-
-    // TODO: Just use the Record log as an undo stack
-    undo: function() {
-        this.record.log({ canvas: "undo" });
-
-        // TODO: Eventually allow for a "redo" stack
-        var cmd = this.undoStack.pop();
-
-        if (cmd && cmd.name === "endLine") {
-            while (cmd.name !== "startLine") {
-                cmd = this.undoStack.pop();
-            }
-        }
-
-        this.redraw();
-    },
-
-    redraw: function() {
-        var stack = this.undoStack.slice(0);
-
-        this.clear(true);
-
-        this.undoStack.length = 0;
-        this.undoRunning = true;
-
-        for (var i = 0, l = stack.length; i < l; i++) {
-            this[stack[i].name].apply(this, stack[i].args);
-        }
-
-        this.undoRunning = false;
     },
 
     startLine: function(x, y) {
@@ -303,7 +244,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
             this.x = x;
             this.y = y;
 
-            this.log("startLine", [x, y]);
+            this.record.log("startLine", x, y);
         }
     },
 
@@ -318,27 +259,15 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
             this.x = x;
             this.y = y;
 
-            this.log("drawLine", [x, y]);
+            this.record.log("drawLine", x, y);
         }
     },
 
     endLine: function() {
         if (this.down) {
             this.down = false;
-            this.log("endLine");
+            this.record.log("endLine");
         }
-    },
-
-    log: function(name, args) {
-        args = args || [];
-
-        if (!this.undoRunning) {
-            var obj = {};
-            obj[name] = args;
-            this.record.log(obj);
-        }
-
-        this.undoStack.push({ name: name, args: args });
     },
 
     setColor: function(color) {
@@ -352,7 +281,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
             this.ctx.shadowColor = "rgba(" + this.colors[color] + ",0.5)";
             this.ctx.strokeStyle = "rgba(" + this.colors[color] + ",1.0)";
 
-            this.log("setColor", [color]);
+            this.record.log("setColor", color);
         }
 
         this.trigger("colorSet", color);
@@ -366,7 +295,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
         this.down = false;
 
         if (force !== true) {
-            this.log("clear");
+            this.record.log("clear");
         }
     },
 
@@ -376,7 +305,6 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
         }
 
         this.isDrawing = true;
-        this.undoStack.length = 0;
 
         if (colorDone !== true) {
             this.setColor("black");
@@ -423,7 +351,6 @@ window.ScratchpadAudioChunks = Backbone.Model.extend({
 
     saveCurrentChunk: function() {
         if (!this.currentChunk) {
-            //KAConsole.log("Tried to save non-existent current chunk");
             return;
         }
         this.audioChunks.push(this.currentChunk);
@@ -579,7 +506,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
         // Start recording
         this.record.startRecordChunk(this.getDurationMsOfSavedAudio());
         // Every chunk should start the cursor at 0, 0 and log the event.
-        this.record.log({start: {column: 0, row: 0}});
+        this.record.log("select", 0, 0);
         this.editor.setCursor({row: 0, column: 0});
     },
 
@@ -664,9 +591,9 @@ window.ScratchpadRecordView = Backbone.View.extend({
         // Add an empty command to force the Record playback to
         // keep playing until the audio track finishes playing
         if (this.record.commands) {
-            this.record.commands.push({
-                time: this.getDurationMsOfSavedAudio()
-            });
+            this.record.commands.push([
+                this.getDurationMsOfSavedAudio(), "seek"
+            ]);
         }
         // Start the play head at 0
         this.record.time = 0;
@@ -725,6 +652,9 @@ window.LiveEditor = Backbone.View.extend({
         ALL_OUTPUT: "#output, #output-frame"
     },
 
+    mouseCommands: ["move", "over", "out", "down", "up"],
+    colors: ["black", "red", "orange", "green", "blue", "lightblue", "violet"],
+
     defaultOutputWidth: 400,
     defaultOutputHeight: 400,
 
@@ -771,10 +701,6 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         this.drawCanvas.on({
-            mouseEvent: function(data) {
-                this.postFrame(data);
-            }.bind(this),
-
             // Drawing has started
             drawStarted: function() {
                 // Activate the canvas
@@ -855,8 +781,7 @@ window.LiveEditor = Backbone.View.extend({
         this.$el.html(Handlebars.templates["live-editor"]({
             execFile: this.execFile,
             imagesDir: this.imagesDir,
-            colors: ["black", "red", "orange", "green", "blue", "lightblue",
-                "violet"]
+            colors: this.colors
         }));
     },
 
@@ -1047,7 +972,7 @@ window.LiveEditor = Backbone.View.extend({
 
         // Handle the restart button
         $el.on("click", "#restart-code", function() {
-            self.record.log({ restart: true });
+            self.record.log("restart");
         });
 
         // Bind the handler to start a new recording
@@ -1234,10 +1159,12 @@ window.LiveEditor = Backbone.View.extend({
                 loaded: function() {
                     // Add an empty command to force the Record playback to
                     // keep playing until the audio track finishes playing
-                    if (record.commands) {
-                        record.commands.push({
-                            time: record.endTime()
-                        });
+                    var commands = record.commands;
+
+                    if (commands) {
+                        commands.push([
+                            Math.max(record.endTime(),
+                                commands[commands.length - 1][0]), "seek"]);
                     }
                     self.updateDurationDisplay();
                 },
@@ -1413,6 +1340,21 @@ window.LiveEditor = Backbone.View.extend({
             }
         });
 
+        // ScratchpadCanvas mouse events to track
+        // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
+        _.each(this.mouseCommands, function(name) {
+            // Handle the command during playback
+            record.handlers[name] = function(x, y) {
+                self.postFrame({
+                    mouseAction: {
+                        name: name,
+                        x: x,
+                        y: y
+                    }
+                });
+            };
+        });
+
         // When a restart occurs during playback, restart the output
         record.handlers.restart = function() {
             var $restart = self.$el.find("#restart-code");
@@ -1424,7 +1366,7 @@ window.LiveEditor = Backbone.View.extend({
                 }, 300);
             }
 
-            self.postFrame({ restart: true });
+            self.postFrame({restart: true});
         };
 
         // Force the recording to sync to the current time of the audio playback
@@ -1633,6 +1575,11 @@ window.LiveEditor = Backbone.View.extend({
         // Set the focus back on the editor
         if (data.focus) {
             this.editor.focus();
+        }
+
+        // Log the recorded action
+        if (data.log) {
+            this.record.log.apply(this, data.log);
         }
     },
 

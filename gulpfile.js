@@ -1,3 +1,7 @@
+var http = require("http");
+var zlib = require("zlib");
+var fs = require("fs");
+
 var gulp = require("gulp");
 
 var concat = require("gulp-concat");
@@ -10,7 +14,7 @@ var declare = require("gulp-declare");
 var runSequence = require("run-sequence");
 var mochaPhantomJS = require("gulp-mocha-phantomjs");
 var staticServe = require("node-static");
-var http = require("http");
+var request = require("request");
 
 var paths = require("./build-paths.json");
 
@@ -154,6 +158,27 @@ gulp.task("test_output_pjs", ["script_output_pjs"],
 
 gulp.task("test_output_webpage", ["script_output_webpage"],
     runTest("output/webpage/index.html"));
+
+// NOTE(jeresig): We don't bundle this data as it's kind of big. Better to
+// download it dynamically, when we need it.
+var recordDataURL = "https://s3.amazonaws.com/ka-cs-scratchpad-audio/" +
+    "tests/recording-data.json.gz";
+var recordDataFile = "tests/record/recording-data.json";
+
+gulp.task("test_record_data", function(done) {
+    if (fs.existsSync(recordDataFile)) {
+        return done();
+    }
+
+    return request(recordDataURL)
+        .pipe(zlib.createGunzip())
+        .pipe(fs.createWriteStream(recordDataFile));
+});
+
+// NOTE(jeresig): Not included in the main tests yet, as they take a
+// long time to run.
+gulp.task("test_record", ["test_record_data"],
+    runTest("record/index.html"));
 
 gulp.task("test", function(callback) {
     runSequence("test_output_pjs", "test_output_webpage", callback);

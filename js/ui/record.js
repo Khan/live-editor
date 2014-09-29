@@ -26,7 +26,6 @@ window.ScratchpadAudioChunks = Backbone.Model.extend({
 
     saveCurrentChunk: function() {
         if (!this.currentChunk) {
-            //KAConsole.log("Tried to save non-existent current chunk");
             return;
         }
         this.audioChunks.push(this.currentChunk);
@@ -182,7 +181,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
         // Start recording
         this.record.startRecordChunk(this.getDurationMsOfSavedAudio());
         // Every chunk should start the cursor at 0, 0 and log the event.
-        this.record.log({start: {column: 0, row: 0}});
+        this.record.log("select", 0, 0);
         this.editor.setCursor({row: 0, column: 0});
     },
 
@@ -267,9 +266,9 @@ window.ScratchpadRecordView = Backbone.View.extend({
         // Add an empty command to force the Record playback to
         // keep playing until the audio track finishes playing
         if (this.record.commands) {
-            this.record.commands.push({
-                time: this.getDurationMsOfSavedAudio()
-            });
+            this.record.commands.push([
+                this.getDurationMsOfSavedAudio(), "seek"
+            ]);
         }
         // Start the play head at 0
         this.record.time = 0;

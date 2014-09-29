@@ -1,24 +1,18 @@
 // Note: All time measurements are handled in milliseconds
-
-
-/* The main consequence of this being a Model instead of a global object
- * is scope -- calling record.play as a method needs to still be bound such that
- * 'this' is the Backbone model. I.e.:
- *       setTimeout(model.record, 30) = BAD, will break
- *       setTimeout(function() {model.record;}, 30) = FINE, will work.
- * There may be other places that need to be updated so the scope is correct.
- */
 window.ScratchpadRecord = Backbone.Model.extend({
-
     initialize: function() {
         // Instance variables, not attributes.
         // Recording handlers, handle both recording and playback
-        this.handlers = {};
+        this.handlers = {
+            // Used for continuing playback until the audio is done
+            seek: function() {}
+        };
+
         // Cache recording state for seeking
         this.seekCache = {};
         this.seekCacheInterval = 20;
         this.initData = {};
-        this.seekTime = null;
+
         // Collection of caching functionality implemented by content
         // producers (for example: ScratchpadCanvas and ScratchpadEditor)
         this.seekCachers = {};
@@ -55,7 +49,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
             var lastTime = 0;
             if (this.allSavedCommands && this.allSavedCommands.length > 0) {
                 if (_.last(this.allSavedCommands).length > 0) {
-                    lastTime = _.last(_.last(this.allSavedCommands)).time;
+                    lastTime = _.last(_.last(this.allSavedCommands))[0];
                 }
             }
             return lastTime;
@@ -72,7 +66,6 @@ window.ScratchpadRecord = Backbone.Model.extend({
         // to, counting from the start of the full recording (full duration)
         this._resetForNewChunk();
     },
-
 
     discardRecordChunk: function() {
         // Reset the current stop time to be the same as the duration up to
@@ -136,46 +129,31 @@ window.ScratchpadRecord = Backbone.Model.extend({
         return this.initData.configVersion || 0;
     },
 
-    // Position the seek cursor and make sure that the seek render
-    // occurs within the next 200ms
+    // Seek to a given position in the playback, executing all the
+    // commands in the interim
     seekTo: function(time) {
-        if (this.seekRunning) {
-            return false;
-        }
-
         // Initialize and seek to the desired position
-        this.seekRunning = true;
-        this.seekTime = time;
         this.pauseTime = (new Date()).getTime();
         this.playStart = this.pauseTime - time;
-
-        if (!this.seekInterval) {
-            // Make sure that we don't attempt to seek too frequently
-            this.seekInterval = setInterval(_.bind(function() {
-                if (this.seekTime !== null) {
-                    this.runSeek(this.seekTime);
-                    this.seekTime = null;
-                }
-            }, this), 200);
-        }
-    },
-
-    // Execute the actual seek commands
-    runSeek: function(time) {
-        this.trigger("runSeek", time);
 
         // Set an initial cache before seeking
         this.cache(-1 * this.seekCacheInterval);
 
-        var seekPos = this.commands.length;
+        var seekPos = this.commands.length - 1;
 
         // Locate the command that we're up to
         for (var i = 0; i < this.commands.length; i++) {
-            if (this.commands[i].time > time) {
+            if (this.commands[i][0] > time) {
                 seekPos = i - 1;
                 break;
             }
         }
+
+        // The play position is always the next command time to check
+        // (see the logic in playInterval)
+        this.playPos = seekPos + 1;
+
+        this.trigger("runSeek");
 
         // Attempt to locate the most recent seek cache
         var lastCache = Math.floor(seekPos / this.seekCacheInterval);
@@ -201,48 +179,14 @@ window.ScratchpadRecord = Backbone.Model.extend({
             this.cacheRestore(-1 * this.seekCacheInterval);
         }
 
-        this.runSeekCommands(cacheOffset, seekPos);
-
-        // The play position is always the next command time to check
-        // (see the logic in playInterval)
-        this.playPos = seekPos + 1;
-    },
-
-    runSeekCommands: function(offset, seekPos) {
         // Execute commands and build cache, bringing state up to current
-        for (var i = offset; i <= seekPos; i++) {
-            var async = (_.bind(function(i) {
-                var cmd = this.commands[i];
-
-                if (cmd) {
-                    this.runCommand(cmd);
-
-                    if (cmd.copy || cmd.cut || cmd.paste || cmd.key) {
-                        setTimeout(_.bind(function() {
-                            this.cache(i);
-                            this.runSeekCommands(i + 1, seekPos);
-                        }, this), 1);
-
-                        return true;
-                    }
-                    
-                    this.cache(i);
-                }
-            }, this))(i);
-
-            // If we run an async command, the setTimeout takes care of all
-            // remaining seek commands, so stop.
-            if (async) {
-                return;
-            }
+        for (var i = cacheOffset; i <= seekPos; i++) {
+            this.runCommand(this.commands[i]);
+            this.cache(i);
         }
-
-        this.seekRunning = false;
 
         this.trigger("seekDone");
     },
-
-
 
     // Cache the result of the specified command
     // (Specified using the position of the command)
@@ -280,7 +224,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
     play: function() {
         // Don't play if we're already playing or recording
         if (this.recording || this.playing || !this.commands ||
-                this.seekRunning || this.commands.length === 0) {
+                this.commands.length === 0) {
             return;
         }
 
@@ -297,15 +241,9 @@ window.ScratchpadRecord = Backbone.Model.extend({
         this.playStart = (new Date).getTime() - startTime;
 
         this.playInterval = setInterval(_.bind(function() {
-            if (this.seekRunning) {
-                // Never run play commands while a seek is still running its
-                // own commands, otherwise they'll stomp on each other.
-                return;
-            }
-
             var evt = this.commands[this.playPos];
 
-            if (evt && this.currentTime() >= evt.time) {
+            if (evt && this.currentTime() >= evt[0]) {
                 this.runCommand(evt);
                 this.cache(this.playPos);
 
@@ -341,9 +279,6 @@ window.ScratchpadRecord = Backbone.Model.extend({
         this.playPos = null;
         this.playStart = null;
         this.pauseTime = null;
-
-        clearInterval(this.seekInterval);
-        this.seekInterval = null;
     },
 
     reset: function() {
@@ -354,13 +289,9 @@ window.ScratchpadRecord = Backbone.Model.extend({
         this.playPos = null;
         this.playStart = null;
         this.pauseTime = null;
-        this.seekTime = null;
         this.playing = false;
         this.recording = false;
         this.recorded = false;
-
-        clearInterval(this.seekInterval);
-        this.seekInterval = null;
     },
 
     currentTime: function() {
@@ -368,26 +299,18 @@ window.ScratchpadRecord = Backbone.Model.extend({
     },
 
     runCommand: function(evt) {
-        if (evt) {
-            for (var handler in this.handlers) {
-                if (typeof evt[handler] !== "undefined") {
-                    try {
-                        return this.handlers[handler](evt);
-                    } catch (e) {
-                        // These errors sometimes happen if the Record
-                        // playback state gets corrupted.
-                        KAConsole.log("Scratchpad playback error: ");
-                        KAConsole.log(e);
-                    }
-                }
-            }
-        }
+        // Commands are stored in the format:
+        // [time, name, arguments...]
+        return this.handlers[evt[1]].apply(this.handlers, evt.slice(2));
     },
 
-    log: function(e) {
+    log: function() {
         if (!this.playing && this.recording && this.commands) {
-            e.time = (new Date).getTime() - this.startTime;
-            this.commands.push(e);
+            // Commands are stored in the format:
+            // [time, name, arguments...]
+            var args = Array.prototype.slice.call(arguments, 0);
+            args.shift((new Date).getTime() - this.startTime);
+            this.commands.push(args);
             return true;
         }
     },
@@ -399,21 +322,5 @@ window.ScratchpadRecord = Backbone.Model.extend({
 
     resumeLog: function() {
         this.recording = this.oldRecording;
-    },
-
-    dump: function() {
-        if (this.commands) {
-            return this.commands.map(function(item) {
-                var ret = [];
-
-                for (var prop in item) {
-                    if (prop !== "time") {
-                        ret.push(prop + ":" + item[prop]);
-                    }
-                }
-
-                return ret.join();
-            }).join();
-        }
     }
 });

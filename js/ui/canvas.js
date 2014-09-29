@@ -2,7 +2,6 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
     initialize: function(options) {
         this.record = options.record;
 
-        this.undoStack = [];
         this.isDrawing = false;
 
         this.ctx = this.el.getContext("2d");
@@ -19,7 +18,6 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
     },
 
     commands: ["startLine", "drawLine", "endLine", "setColor", "clear"],
-    mouseCommands: ["move", "over", "out", "down", "up"],
 
     colors: {
         black: [0, 0, 0],
@@ -75,11 +73,9 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
             }
         });
 
-        record.on({
-            runSeek: function() {
-                self.clear(true);
-                self.endDraw();
-            }
+        record.on("runSeek", function() {
+            self.clear(true);
+            self.endDraw();
         });
 
         // Handle record seek caching
@@ -120,65 +116,10 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
 
         // Initialize playback commands
         _.each(this.commands, function(name) {
-            record.handlers[name] = function(e) {
-                self[name].apply(self, e[name] || []);
+            record.handlers[name] = function() {
+                self[name].apply(self, arguments);
             };
         });
-
-        // ScratchpadCanvas mouse events to track
-        // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
-        _.each(this.mouseCommands, function(name) {
-            // Handle the command during playback
-            record.handlers[name] = function(e) {
-                // TODO: Get rid of ScratchpadUI in favor or something other
-                // meta-object that manages scratchpad state.
-                self.trigger("mouseEvent", {name: name, action: e});
-            };
-        });
-
-        $(document).on("keydown.draw-canvas", function(e) {
-            // Stop if we aren't running
-            if (!record.playing || !self.isDrawing) {
-                return;
-            }
-
-            // Backspace key
-            if (e.which === 8) {
-                e.preventDefault();
-                self.undo();
-            }
-        });
-    },
-
-    // TODO: Just use the Record log as an undo stack
-    undo: function() {
-        this.record.log({ canvas: "undo" });
-
-        // TODO: Eventually allow for a "redo" stack
-        var cmd = this.undoStack.pop();
-
-        if (cmd && cmd.name === "endLine") {
-            while (cmd.name !== "startLine") {
-                cmd = this.undoStack.pop();
-            }
-        }
-
-        this.redraw();
-    },
-
-    redraw: function() {
-        var stack = this.undoStack.slice(0);
-
-        this.clear(true);
-
-        this.undoStack.length = 0;
-        this.undoRunning = true;
-
-        for (var i = 0, l = stack.length; i < l; i++) {
-            this[stack[i].name].apply(this, stack[i].args);
-        }
-
-        this.undoRunning = false;
     },
 
     startLine: function(x, y) {
@@ -187,7 +128,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
             this.x = x;
             this.y = y;
 
-            this.log("startLine", [x, y]);
+            this.record.log("startLine", x, y);
         }
     },
 
@@ -202,27 +143,15 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
             this.x = x;
             this.y = y;
 
-            this.log("drawLine", [x, y]);
+            this.record.log("drawLine", x, y);
         }
     },
 
     endLine: function() {
         if (this.down) {
             this.down = false;
-            this.log("endLine");
+            this.record.log("endLine");
         }
-    },
-
-    log: function(name, args) {
-        args = args || [];
-
-        if (!this.undoRunning) {
-            var obj = {};
-            obj[name] = args;
-            this.record.log(obj);
-        }
-
-        this.undoStack.push({ name: name, args: args });
     },
 
     setColor: function(color) {
@@ -236,7 +165,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
             this.ctx.shadowColor = "rgba(" + this.colors[color] + ",0.5)";
             this.ctx.strokeStyle = "rgba(" + this.colors[color] + ",1.0)";
 
-            this.log("setColor", [color]);
+            this.record.log("setColor", color);
         }
 
         this.trigger("colorSet", color);
@@ -250,7 +179,7 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
         this.down = false;
 
         if (force !== true) {
-            this.log("clear");
+            this.record.log("clear");
         }
     },
 
@@ -260,7 +189,6 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
         }
 
         this.isDrawing = true;
-        this.undoStack.length = 0;
 
         if (colorDone !== true) {
             this.setColor("black");

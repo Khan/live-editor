@@ -1772,14 +1772,6 @@ var HotNumberModule = function() {
                 _private.attachColorPicker.call(this);
                 _private.attachAutosuggest.call(this);
             }
-
-            if (record) {
-                record.handlers.hot = function(e) {
-                    _private.checkNumber.call(self);
-                    _private.updateEditor.call(self, e.hot);
-                    _private.updatePos.call(self);
-                };
-            }
         },
         onNumberCheck: function() {
             var editor = this.options.editor;
@@ -1966,7 +1958,6 @@ var HotNumberModule = function() {
 
             if (record) {
                 record.resumeLog();
-                record.log({ hot: newValue });
             }
 
             this.ignore = false;

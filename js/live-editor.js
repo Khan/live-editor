@@ -18,6 +18,9 @@ window.LiveEditor = Backbone.View.extend({
         ALL_OUTPUT: "#output, #output-frame"
     },
 
+    mouseCommands: ["move", "over", "out", "down", "up"],
+    colors: ["black", "red", "orange", "green", "blue", "lightblue", "violet"],
+
     defaultOutputWidth: 400,
     defaultOutputHeight: 400,
 
@@ -64,10 +67,6 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         this.drawCanvas.on({
-            mouseEvent: function(data) {
-                this.postFrame(data);
-            }.bind(this),
-
             // Drawing has started
             drawStarted: function() {
                 // Activate the canvas
@@ -148,8 +147,7 @@ window.LiveEditor = Backbone.View.extend({
         this.$el.html(Handlebars.templates["live-editor"]({
             execFile: this.execFile,
             imagesDir: this.imagesDir,
-            colors: ["black", "red", "orange", "green", "blue", "lightblue",
-                "violet"]
+            colors: this.colors
         }));
     },
 
@@ -340,7 +338,7 @@ window.LiveEditor = Backbone.View.extend({
 
         // Handle the restart button
         $el.on("click", "#restart-code", function() {
-            self.record.log({ restart: true });
+            self.record.log("restart");
         });
 
         // Bind the handler to start a new recording
@@ -527,10 +525,12 @@ window.LiveEditor = Backbone.View.extend({
                 loaded: function() {
                     // Add an empty command to force the Record playback to
                     // keep playing until the audio track finishes playing
-                    if (record.commands) {
-                        record.commands.push({
-                            time: record.endTime()
-                        });
+                    var commands = record.commands;
+
+                    if (commands) {
+                        commands.push([
+                            Math.max(record.endTime(),
+                                commands[commands.length - 1][0]), "seek"]);
                     }
                     self.updateDurationDisplay();
                 },
@@ -706,6 +706,21 @@ window.LiveEditor = Backbone.View.extend({
             }
         });
 
+        // ScratchpadCanvas mouse events to track
+        // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
+        _.each(this.mouseCommands, function(name) {
+            // Handle the command during playback
+            record.handlers[name] = function(x, y) {
+                self.postFrame({
+                    mouseAction: {
+                        name: name,
+                        x: x,
+                        y: y
+                    }
+                });
+            };
+        });
+
         // When a restart occurs during playback, restart the output
         record.handlers.restart = function() {
             var $restart = self.$el.find("#restart-code");
@@ -717,7 +732,7 @@ window.LiveEditor = Backbone.View.extend({
                 }, 300);
             }
 
-            self.postFrame({ restart: true });
+            self.postFrame({restart: true});
         };
 
         // Force the recording to sync to the current time of the audio playback
@@ -926,6 +941,11 @@ window.LiveEditor = Backbone.View.extend({
         // Set the focus back on the editor
         if (data.focus) {
             this.editor.focus();
+        }
+
+        // Log the recorded action
+        if (data.log) {
+            this.record.log.apply(this, data.log);
         }
     },
 

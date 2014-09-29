@@ -1,2 +1,3 @@
 bower_components
 node_modules
+tests/record/recording-data.json

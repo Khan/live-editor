@@ -643,7 +643,7 @@ var BabyHint = {
 
     babyErrors: function(source, hintErrors) {
         var errorLines = {};
-        var lines = source.split("\n");
+        var lines = (source || "").split("\n");
         BabyHint.errors = [];
         BabyHint.variables = [];
         BabyHint.inComment = false;
@@ -1386,28 +1386,21 @@ window.PJSOutput = Backbone.View.extend({
             this.$canvas.on(eventType, function(e) {
                 // Only log if recording is occurring
                 if (this.output.recording) {
-                    var action = {};
-
-                    // Track the x/y coordinates of the event
-                    // Set to a property with the mouse event name
-                    action[name] = {
-                        x: e.pageX - offset.left,
-                        y: e.pageY - offset.top
-                    };
-
                     // Log the command
-                    this.output.postParent({ log: action });
+                    // Track the x/y coordinates of the event
+                    var x = e.pageX - offset.left;
+                    var y = e.pageY - offset.top;
+                    this.output.postParent({
+                        log: [name, x, y]
+                    });
                 }
             }.bind(this));
 
             // Handle the command during playback
-            this.handlers[name] = function(e) {
-                // Get the command data
-                var action = e[name];
-
+            this.handlers[name] = function(name, x, y) {
                 // Build the clientX and clientY values
-                var pageX = action.x + offset.left;
-                var pageY = action.y + offset.top;
+                var pageX = x + offset.left;
+                var pageY = y + offset.top;
                 var clientX = pageX - $(window).scrollLeft();
                 var clientY = pageY - $(window).scrollTop();
 
@@ -1485,11 +1478,10 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     messageHandlers: {
-        // Play back recording
-        action: function(data) {
-            if (this.handlers[data.name]) {
-                this.handlers[data.name](data.action);
-            }
+        // Play back mouse actions
+        mouseAction: function(data) {
+            data = data.mouseAction;
+            this.handlers[data.name](data.x, data.y);
         },
 
         documentation: function(data) {
