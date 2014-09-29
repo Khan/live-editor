@@ -60,10 +60,7 @@ WebpageTester.prototype.testMethods = {
     htmlMatch: function(structure) {
         // If there were syntax errors, don't even try to match it
         if (this.errors.length) {
-            return {
-                success: false,
-                message: $._("Syntax error!")
-            };
+            return {success: false};
         }
 
         structure = this.testContext.cleanStructure(structure);
@@ -74,16 +71,7 @@ WebpageTester.prototype.testMethods = {
             // it in a worker thread.
             var numFound = jQuery(selector, this.userCode).length;
             if (expected === 0 && numFound !== 0 || numFound < expected) {
-                return {
-                    success: false,
-                    message: $._("Your HTML failed to match the following " +
-                        "selector: '%(selector)s'. Expected '%(expected)s' " +
-                        "elements, found '%(found)s' instead.", {
-                            selector: selector,
-                            expected: expected,
-                            found: numFound
-                        })
-                };
+                return {success: false};
             }
         }
 
@@ -147,6 +135,11 @@ WebpageTester.prototype.testMethods = {
     },
 
     cssMatch: function(pattern, callbacks) {
+        // If there were syntax errors, don't even try to match it
+        if (this.errors.length) {
+            return {success: false};
+        }
+
         var css = this.testContext.getCssMap();
         var cssRules = pattern.split("}").slice(0, -1);
         if (typeof callbacks === "function") {
@@ -208,16 +201,6 @@ WebpageTester.prototype.testMethods = {
         var rule = rawRule.split("{");
         var testSelector = this.testContext.normalizeSelector(rule[0]);
         var testBody = rule[1];
-
-        // If the selector has no wildcard matching in it, we can just look it up in the css map
-        if (!testSelector.match(/(^| )(\$|_\b)/) && !(testSelector in css)) {
-            return {
-                success: false,
-                message: $._("It seems like your CSS is missing a '%(selector)s' selector ", {
-                    selector: testSelector
-                })
-            };
-        }
 
         // Get the properties for this rule
         var testProperties = {};
@@ -301,7 +284,7 @@ WebpageTester.prototype.testMethods = {
             });
             var res = cb.fn.apply({}, cbArgs);
             if (res === false) {
-                return {success: false, message: "FUUUCK"};
+                return {success: false};
             } else if (res.success === false) {
                 return res;
             }
