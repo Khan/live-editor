@@ -105,74 +105,42 @@ window.AceEditor = Backbone.View.extend({
         editor.selection.addEventListener("changeSelection",
             this.handleSelect.bind(this));
 
-        // Add in record playback handlers.
+        // Add in record playback handlers
+        var docOperations = [
+            "insertText",
+            "insertLines",
+            "removeText",
+            "removeLines"
+        ];
+
+        _.each(docOperations, function(op) {
+            record.handlers[op] = function(startRow, startCol, endRow, endCol,
+                    data) {
+                var delta = {
+                    action: op,
+                    range: {
+                        start: {
+                            row: startRow,
+                            column: startCol
+                        },
+                        end: {
+                            row: endRow,
+                            column: endCol
+                        }
+                    }
+                };
+
+                if (op === "insertText") {
+                    delta.text = data;
+                } else if (op === "insertLines") {
+                    delta.line = data;
+                }
+
+                doc.applyDeltas(delta);
+            };
+        });
+
         $.extend(record.handlers, {
-            insertText: function(startRow, startCol, endRow, endCol, text) {
-                doc.applyDeltas([{
-                    action: "insertText",
-                    range: {
-                        start: {
-                            row: startRow,
-                            column: startCol
-                        },
-                        end: {
-                            row: endRow,
-                            column: endCol
-                        }
-                    },
-                    text: text
-                }]);
-            },
-
-            insertLines: function(startRow, startCol, endRow, endCol, lines) {
-                doc.applyDeltas([{
-                    action: "insertLines",
-                    range: {
-                        start: {
-                            row: startRow,
-                            column: startCol
-                        },
-                        end: {
-                            row: endRow,
-                            column: endCol
-                        }
-                    },
-                    lines: lines
-                }]);
-            },
-
-            removeText: function(startRow, startCol, endRow, endCol) {
-                doc.applyDeltas([{
-                    action: "removeText",
-                    range: {
-                        start: {
-                            row: startRow,
-                            column: startCol
-                        },
-                        end: {
-                            row: endRow,
-                            column: endCol
-                        }
-                    }
-                }]);
-            },
-
-            removeLines: function(startRow, startCol, endRow, endCol) {
-                doc.applyDeltas([{
-                    action: "removeLines",
-                    range: {
-                        start: {
-                            row: startRow,
-                            column: startCol
-                        },
-                        end: {
-                            row: endRow,
-                            column: endCol
-                        }
-                    }
-                }]);
-            },
-
             select: function(startRow, startCol, endRow, endCol) {
                 editor.selection.setSelectionRange({
                     start: {
