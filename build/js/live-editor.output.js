@@ -114,9 +114,12 @@ window.TipBar = Backbone.View.extend({
     },
 
     hide: function() {
-        this.$el.find(".tipbar").animate({ top: 400, opacity: 0.1 }, 300, function() {
-            $(this).hide();
-        });
+        var bar = this.$el.find(".tipbar");
+        if (bar.is(':visible')) {
+            bar.animate({ top: 400, opacity: 0.1 }, 300, function() {
+                $(this).hide();
+            });
+        }
     }
 });
 this["Handlebars"] = this["Handlebars"] || {};
@@ -628,6 +631,9 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     runCode: function(userCode, callback) {
+        // Hide the tipbar while we're checking the code.
+        this.tipbar.hide();
+        
         this.currentCode = userCode;
 
         var runDone = function(errors, testResults) {
@@ -785,7 +791,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             if (errors.length > 0) {
                 this.tipbar.show("Error", errors);
             }
-        }.bind(this), 1500);
+        }.bind(this), 1200);
     }
 });
 

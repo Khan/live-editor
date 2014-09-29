@@ -80,8 +80,11 @@ window.TipBar = Backbone.View.extend({
     },
 
     hide: function() {
-        this.$el.find(".tipbar").animate({ top: 400, opacity: 0.1 }, 300, function() {
-            $(this).hide();
-        });
+        var bar = this.$el.find(".tipbar");
+        if (bar.is(':visible')) {
+            bar.animate({ top: 400, opacity: 0.1 }, 300, function() {
+                $(this).hide();
+            });
+        }
     }
 });

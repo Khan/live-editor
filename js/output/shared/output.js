@@ -181,6 +181,9 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     runCode: function(userCode, callback) {
+        // Hide the tipbar while we're checking the code.
+        this.tipbar.hide();
+        
         this.currentCode = userCode;
 
         var runDone = function(errors, testResults) {
@@ -338,7 +341,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             if (errors.length > 0) {
                 this.tipbar.show("Error", errors);
             }
-        }.bind(this), 1500);
+        }.bind(this), 1200);
     }
 });
 
