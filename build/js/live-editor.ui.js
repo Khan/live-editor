@@ -1016,7 +1016,7 @@ window.LiveEditor = Backbone.View.extend({
         var rebootTimer;
 
         soundManager.setup({
-            url: this.externalsDir + "/soundmanager/",
+            url: this.externalsDir + "/SoundManager2/swf/",
             debugMode: false,
             // Un-comment this to test Flash on FF:
             // debugFlash: true, preferFlash: true, useHTML5Audio: false,
@@ -1029,10 +1029,12 @@ window.LiveEditor = Backbone.View.extend({
             //  timeout, clearing the timer if we get an onready during
             //  that time (which happens if user un-blocks flash).
             onready: function() {
+                console.log("onready")
                 window.clearTimeout(rebootTimer);
                 self.audioInit();
             },
             ontimeout: function(error) {
+                console.log("TIMEOUT")
                 // The onready event comes pretty soon after the user
                 //  clicks the flashblock, but not instantaneous, so 3
                 //  seconds seems a good amount of time to give them the
@@ -1048,6 +1050,8 @@ window.LiveEditor = Backbone.View.extend({
             }
         });
         soundManager.beginDelayedInit();
+
+        this.bindRecordHandlers();
     },
 
     audioInit: function() {
@@ -1136,57 +1140,54 @@ window.LiveEditor = Backbone.View.extend({
             }
         }, 16);
 
-        this.bindRecordHandlers();
+        this.bindPlayerHandlers();
     },
 
-    bindRecordHandlers: function() {
-        if (this.recordHandlersBound) {
-            return;
-        }
-
-        this.recordHandlersBound = true;
-
+    bindPlayerHandlers: function() {
         var self = this;
         var record = this.record;
 
         // Bind events to the Record object, to track when playback events occur
-        if (this.player) {
-            this.record.bind({
-                loading: function() {
-                    self.updateDurationDisplay();
-                },
+        this.record.bind({
+            loading: function() {
+                self.updateDurationDisplay();
+            },
 
-                loaded: function() {
-                    // Add an empty command to force the Record playback to
-                    // keep playing until the audio track finishes playing
-                    var commands = record.commands;
+            loaded: function() {
+                // Add an empty command to force the Record playback to
+                // keep playing until the audio track finishes playing
+                var commands = record.commands;
 
-                    if (commands) {
-                        commands.push([
-                            Math.max(record.endTime(),
-                                commands[commands.length - 1][0]), "seek"]);
-                    }
-                    self.updateDurationDisplay();
-                },
-
-                // When play has started
-                playStarted: function() {
-                    // If the audio player is paused, resume playing
-                    if (self.player.paused) {
-                        self.player.resume();
-
-                    // Otherwise we can assume that we need to start playing from the top
-                    } else if (self.player.playState === 0) {
-                        self.player.play();
-                    }
-                },
-
-                // Pause when recording playback pauses
-                playPaused: function() {
-                    self.player.pause();
+                if (commands) {
+                    commands.push([
+                        Math.max(record.endTime(),
+                            commands[commands.length - 1][0]), "seek"]);
                 }
-            });
-        }
+                self.updateDurationDisplay();
+            },
+
+            // When play has started
+            playStarted: function() {
+                // If the audio player is paused, resume playing
+                if (self.player.paused) {
+                    self.player.resume();
+
+                // Otherwise we can assume that we need to start playing from the top
+                } else if (self.player.playState === 0) {
+                    self.player.play();
+                }
+            },
+
+            // Pause when recording playback pauses
+            playPaused: function() {
+                self.player.pause();
+            }
+        });
+    },
+
+    bindRecordHandlers: function() {
+        var self = this;
+        var record = this.record;
 
         /*
          * Bind events to Record (for recording and playback)
