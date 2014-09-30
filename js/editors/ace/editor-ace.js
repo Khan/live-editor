@@ -133,10 +133,10 @@ window.AceEditor = Backbone.View.extend({
                 if (op === "insertText") {
                     delta.text = data;
                 } else if (op === "insertLines") {
-                    delta.line = data;
+                    delta.lines = data;
                 }
 
-                doc.applyDeltas(delta);
+                doc.applyDeltas([delta]);
             };
         });
 
