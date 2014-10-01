@@ -567,12 +567,26 @@ window.WebpageOutput = Backbone.View.extend({
             }.bind(this));
     },
 
+    postProcessing: function() {
+        var doc = this.getDocument();
+        var self = this;
+        $(doc).find("a").attr("rel", "nofollow").each(function() {
+            var url = $(this).attr("href");
+            $(this).attr("href", "javascript:void(0)").click(function() {
+                self.output.postParent({
+                    action: "link-click",
+                    url: url,
+                });
+            });
+        });
+    },
+
     runCode: function(userCode, callback) {
         var doc = this.getDocument();
         doc.open();
         doc.write(userCode);
         doc.close();
-
+        this.postProcessing();
         callback([], userCode);
     },
 
