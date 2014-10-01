@@ -979,6 +979,18 @@ var ScratchpadConfig = Backbone.Model.extend({
                 // Use HTML Mode
                 session.setMode("ace/mode/html");
 
+                // modify auto-complete to be less agressive.
+                // Do not autoclose tags if there is other text after the cursor on the line.
+                var behaviours = session.getMode().$behaviour.getBehaviours();
+                var autoclosingFN = behaviours.autoclosing.insertion;
+                behaviours.autoclosing.insertion = function(state, action, editor, session, text) {
+                    var pos = editor.getCursorPosition();
+                    var line = session.getLine(pos.row);
+                    if (line.slice(pos.column).trim() === "") {
+                        return autoclosingFN.apply(this, arguments);
+                    }
+                };
+
                 // Set the editor theme
                 aceEditor.setTheme("ace/theme/textmate");
             },
