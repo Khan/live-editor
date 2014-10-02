@@ -178,7 +178,7 @@ window.WebpageOutput = Backbone.View.extend({
             }.bind(this));
     },
 
-    postProcessing: function() {
+    postProcessing: function(oldPageTitle) {
         var doc = this.getDocument();
         var self = this;
         $(doc).find("a").attr("rel", "nofollow").each(function() {
@@ -186,18 +186,27 @@ window.WebpageOutput = Backbone.View.extend({
             $(this).attr("href", "javascript:void(0)").click(function() {
                 self.output.postParent({
                     action: "link-click",
-                    url: url,
+                    url: url
                 });
             });
         });
+
+        var titleTag = $(doc).find("head > title");
+        if (titleTag.length > 0 && oldPageTitle != titleTag.text()) {
+            self.output.postParent({
+                action: "page-info",
+                title: titleTag.first().text()
+            });
+        }
     },
 
     runCode: function(userCode, callback) {
         var doc = this.getDocument();
+        var oldPageTitle = $(doc).find("head > title").text();
         doc.open();
         doc.write(userCode);
         doc.close();
-        this.postProcessing();
+        this.postProcessing(oldPageTitle);
         callback([], userCode);
     },
 
