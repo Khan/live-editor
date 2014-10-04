@@ -16,6 +16,7 @@ window.AceEditor = Backbone.View.extend({
             "numberScrubber"
         ],
         ace_webpage: [
+            "imageModal",
             "colorPicker",
             "numberScrubber"
         ]

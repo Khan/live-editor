@@ -68,11 +68,7 @@
             "js/ui/autosuggest.js",
             "js/ui/autosuggest-data.js",
             "js/ui/tooltip-engine.js",
-            "js/ui/tooltips/number-scrubber.js",
-            "js/ui/tooltips/number-scrubber-click.js",
-            "js/ui/tooltips/color-picker.js",
-            "js/ui/tooltips/image-picker.js",
-            "js/ui/tooltips/auto-suggest.js",
+            "js/ui/tooltips/*.js",
             "build/tmpl/imagepicker.js"
         ],
         "shared": [

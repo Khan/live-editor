@@ -278,7 +278,3 @@ window.TooltipBase = Backbone.View.extend({
         return withinString;
     }
 });
-
-TooltipBase.getImagePickerTemplate = function() {
-    return Handlebars.templates["imagepicker"];
-};
