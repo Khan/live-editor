@@ -159,15 +159,39 @@
 .tooltip.imagepicker h3.image-group {
     margin: 5px;
 }
-.tooltip.imagepicker .arrow {
+
+
+.tooltip.imagepicker .arrow, .tooltip.imagemodalpreview .arrow {
     border-bottom: 8px solid transparent;
     border-left: none;
     border-right: 8px solid black;
     border-top: 8px solid transparent;
     bottom: auto;
     left: -7px;
-    top: 27px;
+    top: 40px;
 }
+.tooltip.imagemodalpreview {
+    margin-left: 10px;
+    margin-top: -40px;
+    width: auto;
+    opacity: 1;
+}
+.tooltip.imagemodalpreview .content {
+    background-color: #FFF;
+    height: 135px;
+    width: 100px;
+    padding: 5px;
+    margin-right: 0;
+}
+.tooltip.imagemodalpreview .imshell{
+    height: 100px;
+    width: 100px;
+}
+.tooltip.imagemodalpreview .imshell img {
+    width: 100%;
+    height: 100%;
+}
+
 .tooltip .ui-slider-handle {
     width: 8px;
 }
