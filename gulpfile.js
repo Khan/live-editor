@@ -69,6 +69,9 @@ gulp.task("workers", function() {
 
     gulp.src(paths.workers_shared)
         .pipe(gulp.dest("build/workers/shared"));
+
+    gulp.src(paths.workers_autosuggest)
+        .pipe(gulp.dest("build/workers/autosuggest"));
 });
 
 gulp.task("externals", function() {
@@ -166,6 +169,9 @@ gulp.task("test_output_webpage", ["script_output_webpage"],
 gulp.task("test_tooltips", ["script_tooltips"],
     runTest("tooltips/pjs/index.html"));
 
+gulp.task("test_autosuggest", [],
+    runTest("autosuggest/index.html"));
+
 // NOTE(jeresig): We don't bundle this data as it's kind of big. Better to
 // download it dynamically, when we need it.
 var recordDataURL = "https://s3.amazonaws.com/ka-cs-scratchpad-audio/" +
@@ -188,7 +194,8 @@ gulp.task("test_record", ["test_record_data"],
     runTest("record/index.html"));
 
 gulp.task("test", function(callback) {
-    runSequence("test_output_pjs", "test_output_webpage", "test_tooltips", callback);
+    runSequence("test_output_pjs", "test_output_webpage", "test_tooltips",
+        "test_autosuggest", callback);
 });
 
 gulp.task("default", ["watch", "templates", "scripts", "workers", "styles",
