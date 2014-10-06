@@ -25,7 +25,7 @@
     "jquery-ui": "~1.11.0",
     "es5-shim": "~3.4.0",
     "bootstrap": "~3.2.0",
-    "handlebars": "~1.3.0",
+    "handlebars": "1.0.0-beta.6",
     "jed": "~0.5.4"
   }
 }
