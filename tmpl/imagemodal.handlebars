@@ -1,0 +1,43 @@
+<div class="modal imagemodal">
+    <ul class="nav nav-tabs" role="tablist">
+    {{#patchedEach classes}}
+      <li {{#if $first}}class="active"{{/if}}><a href="#im-class-{{slugify className}}">{{className}}</a></li>
+    {{/patchedEach}}
+    </ul>
+
+    <div class="tab-content">
+    {{#patchedEach classes}}
+      <div class="tab-pane {{#if $first}}active{{/if}}" id="im-class-{{slugify className}}">
+        <div class="imcontent" data-spy="scroll" data-target="#im-pills-{{$index}}">
+        {{#each groups}}
+            <div class="image-group">
+                <h3 class="image-group" id="im-group-{{slugify groupName}}">{{groupName}}</h3>
+                {{#if cite}}
+                    <p><a href="{{citeLink}}" target="_blank">{{cite}}</a></p>
+                {{/if}}
+                {{#each images}}
+                <div class="image" data-path="{{../groupName}}/{{this}}">
+                    <img src="{{../../../imagesDir}}{{../groupName}}{{../thumbsDir}}/{{this}}.png"/>
+                    <span class="name">{{this}}</span>
+                </div>
+                {{/each}}
+            </div>
+        {{/each}}
+        </div>
+
+        <div id="im-pills-{{$index}}" class="right">
+        <ul class="nav nav-pills nav-stackable">
+        {{#each groups}}
+            <li><a href="#im-group-{{slugify groupName}}">{{groupName}}</a></li>
+        {{/each}}
+        </ul>
+        </div>
+      </div>
+    {{/patchedEach}}
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="simple-button" data-dismiss="modal">Close</button>
+      <button type="button" class="simple-button green" data-dismiss="modal">Ok</button>
+    </div>
+</div>

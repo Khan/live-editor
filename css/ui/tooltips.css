@@ -183,13 +183,34 @@
     padding: 5px;
     margin-right: 0;
 }
-.tooltip.imagemodalpreview .imshell{
+.tooltip.imagemodalpreview .imshell {
     height: 100px;
     width: 100px;
+    margin-bottom: 5px;
+    position: relative;
 }
-.tooltip.imagemodalpreview .imshell img {
-    width: 100%;
+.tooltip.imagemodalpreview .imshell:before{ 
     height: 100%;
+    vertical-align: middle;
+    display: inline-block;
+    content: "";
+}
+.tooltip.imagemodalpreview .imshell .imerror {
+    display: inline-block;
+    vertical-align: middle;
+    text-align: center;
+    color: red;
+    font-weight: bold;
+}
+.tooltip.imagemodalpreview .imshell .imimg {
+    max-width: 100%;
+    max-height: 100%;
+}
+.tooltip.imagemodalpreview .imthrobber{
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    margin-left: -9px; 
 }
 
 .tooltip .ui-slider-handle {
@@ -197,4 +218,79 @@
 }
 .tooltip .colorpicker_field {
     display: none;
+}
+
+.imagemodal {
+    width: 520px;
+    margin-left: -250px;
+    padding: 0;
+    top: 150px;
+}
+.imagemodal h3 {
+    font-size: 20px;
+    margin-bottom: 0;
+}
+.imagemodal .imcontent {
+    width: 520px;
+    height: 320px;
+    overflow-y: auto;
+    float: left;
+    position: relative;
+    box-sizing: border-box;
+    padding: 0 120px 0 20px;
+}
+.imagemodal .tab-pane {
+    position: relative;
+}
+.imagemodal .image {
+    display: inline-block;
+    width: 100px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+.imagemodal img {
+    max-width: 100px;
+    max-height: 100px;
+    display: block;
+    margin: auto;
+}
+.imagemodal .image.active img {
+    box-shadow: 0 0 10px 1px #699c52;
+}
+.imagemodal .image .name {
+    width: 100%;
+    display: inline-block;
+    text-align: center;
+    font-style: italic;
+}
+.imagemodal .top-shadow {
+    box-shadow: 0px 5px 7px -6px #888888 inset
+}
+
+.imagemodal .right {
+    width: 100px;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+.imagemodal .modal-footer {
+    clear: both;
+    background-color: white;
+}
+.imagemodal .modal-footer button{
+    margin-left: 10px;
+}
+
+.imagemodal .nav-tabs {
+    margin: 18px 0 0;
+    padding-left: 20px;
+}
+
+.nav-pills a {
+color: #699c52;
+}
+.nav-pills .active a {
+background-color: #77b05d !important;
 }
