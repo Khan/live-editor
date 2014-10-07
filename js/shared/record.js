@@ -21,7 +21,6 @@ window.ScratchpadRecord = Backbone.Model.extend({
         // Array of command arrays for each chunk. Only holds chunks that
         // have been saved.
         this.allSavedCommands = [];
-        this.actualInitData;  // The init data from the first chunk
     },
 
     setActualInitData: function(actualData) {
@@ -108,6 +107,8 @@ window.ScratchpadRecord = Backbone.Model.extend({
             commands = commands.commands;
         }
         this.commands = commands;
+        // Make no more than 50 seek caches
+        this.seekCacheInterval = Math.floor(commands.length / 50);
     },
 
     dumpRecording: function() {
@@ -233,9 +234,6 @@ window.ScratchpadRecord = Backbone.Model.extend({
 
         var startTime = (this.playStart ? this.pauseTime - this.playStart : 0);
 
-        // Make sure everything is reset before playing
-        this.seekTo(startTime);
-
         this.playing = true;
         this.playPos = this.playPos || 0;
         this.playStart = (new Date).getTime() - startTime;
@@ -243,18 +241,26 @@ window.ScratchpadRecord = Backbone.Model.extend({
         this.playInterval = setInterval(_.bind(function() {
             var evt = this.commands[this.playPos];
 
-            if (evt && this.currentTime() >= evt[0]) {
+            while (evt && this.currentTime() >= evt[0]) {
                 this.runCommand(evt);
                 this.cache(this.playPos);
 
-                if (++this.playPos === this.commands.length) {
+                this.playPos += 1;
+
+                if (this.playPos === this.commands.length) {
                     this.stopPlayback(true);
                     this.trigger("playEnded");
+                    return;
                 }
+
+                evt = this.commands[this.playPos];
             }
         }, this), 1);
 
         this.trigger("playStarted", startTime > 0);
+
+        // Make sure everything is reset before playing
+        this.seekTo(startTime);
     },
 
     pausePlayback: function(end) {
@@ -301,7 +307,13 @@ window.ScratchpadRecord = Backbone.Model.extend({
     runCommand: function(evt) {
         // Commands are stored in the format:
         // [time, name, arguments...]
-        return this.handlers[evt[1]].apply(this.handlers, evt.slice(2));
+        var handler = this.handlers[evt[1]];
+
+        if (handler) {
+            return handler.apply(this.handlers, evt.slice(2));
+        }
+
+        console.error("Command not found:", evt[1]);
     },
 
     log: function() {

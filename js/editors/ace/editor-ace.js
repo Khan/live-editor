@@ -142,6 +142,14 @@ window.AceEditor = Backbone.View.extend({
 
         $.extend(record.handlers, {
             select: function(startRow, startCol, endRow, endCol) {
+                if (endRow == null) {
+                    endRow = startRow;
+                }
+
+                if (endCol == null) {
+                    endCol = startCol;
+                }
+
                 editor.selection.setSelectionRange({
                     start: {
                         row: startRow,

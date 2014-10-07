@@ -110,7 +110,11 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
                 self.setColor(cacheData.color);
 
                 // Restore canvas image
+                // Disable shadow (otherwise the image will have a shadow!)
+                var oldShadow = self.ctx.shadowColor;
+                self.ctx.shadowColor = "rgba(0,0,0,0.0)";
                 self.ctx.drawImage(cacheData.canvas, 0, 0);
+                self.ctx.shadowColor = oldShadow;
             }
         };
 

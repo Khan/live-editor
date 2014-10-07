@@ -170,7 +170,6 @@
 }
 
 #output-frame,
-.scratchpad-draw-canvas,
 .scratchpad-ace-editor {
     height: 400px;
     border: 1px solid #D4CCB0;

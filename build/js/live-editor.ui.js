@@ -226,7 +226,11 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
                 self.setColor(cacheData.color);
 
                 // Restore canvas image
+                // Disable shadow (otherwise the image will have a shadow!)
+                var oldShadow = self.ctx.shadowColor;
+                self.ctx.shadowColor = "rgba(0,0,0,0.0)";
                 self.ctx.drawImage(cacheData.canvas, 0, 0);
+                self.ctx.shadowColor = oldShadow;
             }
         };
 
@@ -1029,12 +1033,10 @@ window.LiveEditor = Backbone.View.extend({
             //  timeout, clearing the timer if we get an onready during
             //  that time (which happens if user un-blocks flash).
             onready: function() {
-                console.log("onready")
                 window.clearTimeout(rebootTimer);
                 self.audioInit();
             },
             ontimeout: function(error) {
-                console.log("TIMEOUT")
                 // The onready event comes pretty soon after the user
                 //  clicks the flashblock, but not instantaneous, so 3
                 //  seconds seems a good amount of time to give them the
@@ -1293,7 +1295,8 @@ window.LiveEditor = Backbone.View.extend({
                 }
 
                 // Disable the save button
-                self.$el.find("#save-button, #fork-button").addClass("disabled");
+                self.$el.find("#save-button, #fork-button")
+                    .addClass("disabled");
 
                 // Activate the recording button
                 self.$el.find("#record").addClass("toggled");
@@ -1309,10 +1312,12 @@ window.LiveEditor = Backbone.View.extend({
                 }
 
                 // Re-enable the save button
-                self.$el.find("#save-button, #fork-button").removeClass("disabled");
+                self.$el.find("#save-button, #fork-button")
+                    .removeClass("disabled");
 
                 // Enable playbar UI
-                self.$el.find(self.dom.PLAYBAR_UI).removeClass("ui-state-disabled");
+                self.$el.find(self.dom.PLAYBAR_UI)
+                    .removeClass("ui-state-disabled");
 
                 // Return the recording button to normal
                 self.$el.find("#record").removeClass("toggled disabled");
