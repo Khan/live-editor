@@ -32960,7 +32960,7 @@ in order to offer easy upgrades -- jsgettext.berlios.de
           this.options.missing_key_callback(key);
         }
         res = [ null, singular_key, plural_key ];
-        return res[ getPluralFormFunc(pluralForms)( val ) + 1 ];
+        return res[ getPluralFormFunc()( val ) + 1 ];
       }
 
       res = val_list[ val_idx ];
@@ -32968,7 +32968,7 @@ in order to offer easy upgrades -- jsgettext.berlios.de
       // This includes empty strings on purpose
       if ( ! res  ) {
         res = [ null, singular_key, plural_key ];
-        return res[ getPluralFormFunc(pluralForms)( val ) + 1 ];
+        return res[ getPluralFormFunc()( val ) + 1 ];
       }
       return res;
     }
