@@ -74,16 +74,15 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
         this.$el.find("button").on("click", function() {
             self.$modal.find(".image.active").removeClass("active");
             self.$modal.modal();
-            self.$modal.find(".imcontent").scrollspy({target: "#im-pills"});
+            self.$modal.find(".imcontent").scrollspy("refresh");
         });
 
         Handlebars.registerHelper("slugify", this.slugify);
+        Handlebars.registerHelper("patchedEach", this.handlebarsPatchedEach);
+
         this.$modal = $(Handlebars.templates.imagemodal({
             imagesDir: self.options.imagesDir,
-            groups: _.map(OutputImages, function(data) {
-                data.imagesDir = self.options.imagesDir;
-                return data;
-            })
+            classes: ExtendedOutputImages
         }));
 
         this.$modal.find(".imcontent").on("scroll", function() {
@@ -112,10 +111,20 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
         self.$modal.find('.nav-tabs a').click(function (e) {
           e.preventDefault();
           $(this).tab('show');
+          self.$modal.find(".imcontent").scrollspy("refresh");
         });
     },
 
     slugify: function(text) {
         return text.toLowerCase().match(/[a-z0-9_]+/g).join("-");
+    },
+
+    handlebarsPatchedEach: function(arr,options) {
+        return _.map(arr, function(item,index) {
+            item.$index = index;
+            item.$first = index === 0;
+            item.$last  = index === arr.length-1;
+            return options.fn(item);
+        }).join('');
     }
 });

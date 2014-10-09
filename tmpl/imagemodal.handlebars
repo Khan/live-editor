@@ -1,12 +1,14 @@
 <div class="modal imagemodal">
     <ul class="nav nav-tabs" role="tablist">
-      <li class="active"><a href="#classic">Classic</a></li>
-      <li><a href="#landscapes">Landscapes</a></li>
+    {{#patchedEach classes}}
+      <li {{#if $first}}class="active"{{/if}}><a href="#im-class-{{slugify className}}">{{className}}</a></li>
+    {{/patchedEach}}
     </ul>
 
     <div class="tab-content">
-      <div class="tab-pane active" id="classic">
-        <div class="imcontent" data-spy="scroll" data-target="#im-pills">
+    {{#patchedEach classes}}
+      <div class="tab-pane {{#if $first}}active{{/if}}" id="im-class-{{slugify className}}">
+        <div class="imcontent" data-spy="scroll" data-target="#im-pills-{{$index}}">
         {{#each groups}}
             <div class="image-group">
                 <h3 class="image-group" id="im-group-{{slugify groupName}}">{{groupName}}</h3>
@@ -15,7 +17,7 @@
                 {{/if}}
                 {{#each images}}
                 <div class="image" data-path="{{../groupName}}/{{this}}">
-                    <img src="{{../imagesDir}}{{../groupName}}/{{this}}.png"/>
+                    <img src="{{../../../imagesDir}}{{../groupName}}{{../thumbsDir}}/{{this}}.png"/>
                     <span class="name">{{this}}</span>
                 </div>
                 {{/each}}
@@ -23,7 +25,7 @@
         {{/each}}
         </div>
 
-        <div id="im-pills" class="right">
+        <div id="im-pills-{{$index}}" class="right">
         <ul class="nav nav-pills nav-stackable">
         {{#each groups}}
             <li><a href="#im-group-{{slugify groupName}}">{{groupName}}</a></li>
@@ -31,8 +33,7 @@
         </ul>
         </div>
       </div>
-
-      <div class="tab-pane" id="landscapes">...</div>
+    {{/patchedEach}}
     </div>
 
     <div class="modal-footer">
