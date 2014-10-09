@@ -1,0 +1,42 @@
+<div class="modal imagemodal">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="active"><a href="#classic">Classic</a></li>
+      <li><a href="#landscapes">Landscapes</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane active" id="classic">
+        <div class="imcontent" data-spy="scroll" data-target="#im-pills">
+        {{#each groups}}
+            <div class="image-group">
+                <h3 class="image-group" id="im-group-{{slugify groupName}}">{{groupName}}</h3>
+                {{#if cite}}
+                    <p><a href="{{citeLink}}" target="_blank">{{cite}}</a></p>
+                {{/if}}
+                {{#each images}}
+                <div class="image" data-path="{{../groupName}}/{{this}}">
+                    <img src="{{../imagesDir}}{{../groupName}}/{{this}}.png"/>
+                    <span class="name">{{this}}</span>
+                </div>
+                {{/each}}
+            </div>
+        {{/each}}
+        </div>
+
+        <div id="im-pills" class="right">
+        <ul class="nav nav-pills nav-stackable">
+        {{#each groups}}
+            <li><a href="#im-group-{{slugify groupName}}">{{groupName}}</a></li>
+        {{/each}}
+        </ul>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="landscapes">...</div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="simple-button" data-dismiss="modal">Close</button>
+      <button type="button" class="simple-button green" data-dismiss="modal">Ok</button>
+    </div>
+</div>
