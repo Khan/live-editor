@@ -121,11 +121,10 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
             var targets = _.map( links, function(link){
                 return [$(link).attr("href"), $(link)];
             });
+
             var target_heights = [];
             var $content = $(list).closest(".tab-pane").find(".imcontent");
-            console.log("!!!!", $content);
-            $content.scroll(function(e) {
-                console.log("SCROLL");
+            var scrollspy = function(e) {
                 if (!target_heights.length) {
                     _.each(targets, function(t){
                         var $heading = $content.find(t[0]);
@@ -135,18 +134,28 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
                     });
                     target_heights.sort(function(a, b){ return a[0]-b[0] })
                 }
-                console.log(targets, target_heights);
                 var height = $content.scrollTop();
-                var active = target_heights[0][1];
+                var active = false;
                 for (var index in target_heights) {
                     var t = target_heights[index];
-                    if (height+250 < t[0]) {
-                        active = t[1];
+                    if (t[0] < height+150) {
+                        active = target_heights[index][1];
+                    } else {
                         break;
-                    } 
+                    }
                 }
                 $(list).find(".active").removeClass("active");
-                $(active).addClass("active");/**/
+                $(active).closest("li").addClass("active");
+            };
+
+            $content.scroll(scrollspy);
+            links.on("click", function(e) {
+                var t = $($(this).attr("href"));
+                if (t.length) {
+                    $content.scrollTop(t.position().top);
+                }
+                e.stopPropagation();
+                e.preventDefault();
             });
         });
     },

@@ -9,6 +9,7 @@
     {{#patchedEach classes}}
       <div class="tab-pane {{#if $first}}active{{/if}}" id="im-class-{{slugify className}}">
         <div class="imcontent">
+        <div style="position: relative;">
         {{#each groups}}
             <div class="image-group">
                 <h3 class="image-group" id="im-group-{{slugify groupName}}">{{groupName}}</h3>
@@ -24,12 +25,13 @@
             </div>
         {{/each}}
         </div>
+        </div>
 
         <div class="right">
         <ul class="nav nav-pills nav-stackable">
-        {{#each groups}}
-            <li><a href="#im-group-{{slugify groupName}}">{{groupName}}</a></li>
-        {{/each}}
+        {{#patchedEach groups}}
+            <li {{#if $first}}class="active"{{/if}}><a href="#im-group-{{slugify groupName}}">{{groupName}}</a></li>
+        {{/patchedEach}}
         </ul>
         </div>
 
