@@ -1,0 +1,267 @@
+window.TooltipEngine = Backbone.View.extend({
+    initialize: function(options) {
+        console.log(options);
+        this.options = options;
+        this.editor = options.editor;
+        var record = this.options.record;
+
+        this.tooltips = {};
+        var child_options = {
+            parent: this,
+            editor: this.editor,
+            imagesDir: this.options.imagesDir
+        };
+        _.each(options.tooltips, function(name) {
+            this.tooltips[name] = new TooltipEngine.classes[name](child_options);
+        }.bind(this));
+
+        if (record && !record.handlers.hot) {
+            record.handlers.hot = function(e) {
+                if (this.currentTooltip) {
+                    TooltipBase.prototype.updateText.call(this.currentTooltip, e.hot);
+                }
+            }.bind(this);
+        }
+
+        this.currentTooltip = undefined;
+        this.ignore = false;
+        this.bind();
+    },
+
+    bind: function(){
+        if (this.callbacks) {
+            return;
+        }
+
+        this.callbacks = [{
+            target: this.editor.selection,
+            event: "changeCursor",
+            fn: this.doRequestTooltip.bind(this)
+        }, {
+            target: this.editor.session.getDocument(),
+            event: "change",
+            fn: function(e) {
+                this.doRequestTooltip(e.data);
+            }.bind(this)
+        }, {
+            target: $(this.editor.container),
+            event: "mousedown",
+            fn: function() {
+                this.doRequestTooltip({
+                    action: "click"
+                });
+            }.bind(this)
+        }, {
+            target: this.editor.session,
+            event: "changeScrollTop",
+            fn: function() {
+                if (this.currentTooltip) {
+                    this.currentTooltip.render();
+                }
+            }.bind(this)
+        }];
+        _.each(this.callbacks, function(cb){
+            cb.target.on(cb.event, cb.fn);
+        });
+
+
+        this.requestTooltipDefaultCallback = function() {  //Fallback to hiding
+            ScratchpadAutosuggest.enableLiveCompletion(true);
+            if (this.currentTooltip && this.currentTooltip.$el) {
+                this.currentTooltip.$el.hide();
+                this.currentTooltip = undefined;
+            }
+        }.bind(this);
+
+        this.editor.on("requestTooltip", this.requestTooltipDefaultCallback);   
+    },
+
+    remove: function() {
+        _.each(this.callbacks, function(cb) {
+            cb.target.off(cb.event, cb.fn);
+        });
+        _.each(this.tooltipCallbacks, function(cb) {
+            this.editor.off("requestTooltip", cb);
+        }.bind(this));
+        delete this.callbacks;
+        
+        this.editor.off("requestTooltip", this.requestTooltipDefaultCallback);
+    },
+
+    doRequestTooltip: function(source) {
+        if (this.ignore) {
+            return;
+        }
+        this.last = this.last || {};
+
+        var selection = this.editor.selection;
+        var pos = selection.getCursor();
+        var params = {
+            col: pos.column,
+            row: pos.row,
+            line: this.editor.session.getDocument().getLine(pos.row),
+            selections: selection.getAllRanges(),
+            source: source
+        };
+        params.pre = params.line.slice(0, params.col);
+        params.post = params.line.slice(params.col);
+
+        var duplicate = (params.col === this.last.col &&
+            params.row === this.last.row && params.line === this.last.line);
+
+        if (duplicate && !source) {
+            return false;
+        }
+        if (this.isWithinComment(params.pre)){
+            return false;
+        }
+        this.last = params;
+
+        this.editor._emit("requestTooltip", params);
+    }, 
+
+    // Returns true if we're inside a comment
+    // This isn't a perfect check, but it is close enough.
+    isWithinComment: function(text) {
+        // Comments typically start with a / or a * (for multiline C style)
+        return text.length && (text[0] === "/" || text[0] === "*");
+    }
+});
+
+TooltipEngine.classes = {};
+
+ /*
+  * This is the base that we build all of the tooltips on
+  *
+  * Every Tooltip has the following major parts:
+  * - initialize(), just accepts options and then tries to attach
+  *   the html for the tooltip by callin render() and bind() as required
+  * 
+  * - render() and bind() to set up the HTML
+  * 
+  * - A detector function. The detector functions are all bound to the 
+  *   requestTooltip event in their respective bind() method. They receive an event with 
+  *   information about where the cursor is and whether it got there because of a click, 
+  *   selection character added, etc. It chooses to either load its tooltip or let the 
+  *   event keep bubbling
+  *   > The detector function also sets aceLocation, which saves what portion of the
+  *     text the selector is active for.
+  *   
+  * - updateText replaces whatever text is specified by the aceLocation 
+  *   with the new text. It is common for tooltips to override this function
+  *   so that they can accept a value in a different format, make it into a string 
+  *   and then pass the formatted value back to the function defined in TooltipBase
+  *   to do the actual replace
+  * 
+  * - placeOnScreen which determines where the HTML needs to be moved to in order
+  *   for it to show up on by the cursor. This also pulls information from aceLocation
+  *
+  */
+
+window.TooltipBase = Backbone.View.extend({
+    bindToRequestTooltip: function() {
+        this.callback = this.detector.bind(this);
+        this.parent.editor.on("requestTooltip", this.callback);
+    },
+
+    unbindFromRequestTooltip: function() {
+        this.parent.editor.off("requestTooltip", this.callback);
+    },
+
+    placeOnScreen: function() {
+        var parent = this.parent;
+        if (parent.currentTooltip && parent.currentTooltip !== this) {
+            parent.currentTooltip.$el.hide();
+        }
+        parent.currentTooltip = this;
+
+        var editor = parent.editor;
+        var loc = this.aceLocation;
+        var pos = editor.selection.getCursor();
+        var editorBB = editor.renderer.scroller.getBoundingClientRect();
+        var editorHeight = editorBB.height;
+        if (!loc.tooltipCursor) {
+            loc.tooltipCursor = loc.start + loc.length;
+        }
+        var coords = editor.renderer.textToScreenCoordinates(loc.row, loc.tooltipCursor);
+        var relativePos = coords.pageY - editorBB.top;
+
+        this.$el
+            .css({
+                top: $(window).scrollTop() + coords.pageY,
+                left: coords.pageX
+            })
+            .toggle(!(relativePos < 0 || relativePos >= editorHeight));
+    },
+
+    updateText: function(newText, customSelection) {
+        if (this.parent.options.record.playing) {
+            return;
+        }
+        var parent = this.parent;
+        var editor = parent.editor;
+
+        parent.ignore = true;
+        newText = newText.toString();
+        var Range = ace.require("ace/range").Range;
+        var loc = this.aceLocation;
+        var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
+
+        editor.session.replace(range, newText);
+
+        range.end.column = range.start.column + newText.length;
+        if (customSelection) {
+            range.start.column = loc.start + customSelection.offset;
+            range.end.column = loc.start + customSelection.offset + customSelection.length;
+        }
+        editor.selection.setSelectionRange(range);
+
+        parent.ignore = false;
+        this.aceLocation.length = newText.length;
+    },
+
+    insert: function() {
+        if (this.parent.options.record.playing) {
+            return;
+        }
+        this.parent.editor.session.insert.apply(this.parent.editor.session, arguments);
+    },
+
+    parens: {
+        "(": ")",
+        "{": "}",
+        "[": "]"
+    },
+
+    // Returns true if we're inside an open parenthesis
+    isInParenthesis: function(text) {
+        var parenStack = [];
+        for (var i = 0; i < text.length; i++) {
+            if (text[i] in this.parens) {
+                parenStack.unshift(text[i]);
+            } else if (parenStack && text[i] === this.parens[parenStack[0]]) {
+                parenStack.shift();
+            }
+        }
+        return parenStack.length > 0;
+    },
+
+    // Returns true if we're inside a string
+    isWithinString: function(text) {
+        var withinString = false;
+        var lastQuoteChar;
+        for (var i = 0; i < text.length; i++) {
+            if (withinString && text[i] === lastQuoteChar) {
+                withinString = false;
+            } else if (!withinString && text[i] === "'" || text[i] === "\"") {
+                lastQuoteChar = text[i];
+                withinString = true;
+            }
+        }
+        return withinString;
+    }
+});
+
+TooltipBase.getImagePickerTemplate = function() {
+    return Handlebars.templates["imagepicker"];
+};

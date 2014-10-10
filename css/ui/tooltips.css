@@ -1,4 +1,4 @@
-.hotnumber {
+.tooltip {
     background: black;
     border-radius: 7px;
     box-shadow: 0px 0px 8px #000000;
@@ -14,7 +14,7 @@
     -webkit-box-sizing: content-box;
     box-sizing: content-box;
 }
-.hotnumber.picker {
+.tooltip.picker {
     box-shadow: 0px 0px 4px #000000;
     height: 15px;
     left: 22px;
@@ -23,16 +23,16 @@
     opacity: 1;
     width: 15px;
 }
-.hotnumber.picker:hover,
-.hotnumber.picker.active {
+.tooltip.picker:hover,
+.tooltip.picker.active {
     height: 156px;
     margin-left: 13px;
     width: 196px;
 }
-.hotnumber:hover {
+.tooltip:hover {
     opacity: 1;
 }
-.hotnumber .arrow {
+.tooltip .arrow {
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
     border-top: 8px solid black;
@@ -40,21 +40,21 @@
     left: 21px;
     position: absolute;
 }
-.hotnumber.dragging {
+.tooltip.dragging {
     cursor: none;
     opacity: 1;
 }
-.hotnumber .scrubber {
+.tooltip .scrubber {
     border-radius: 10px;
     cursor: ew-resize;
 }
-.hotnumber .scrubber .scrubber-handle {
+.tooltip .scrubber .scrubber-handle {
     background: black;
     border-radius: 10px;
     color: white;
     text-align: center;
 }
-.hotnumber.picker .arrow {
+.tooltip.picker .arrow {
     border-bottom: 8px solid transparent;
     border-left: none;
     border-right: 8px solid black;
@@ -63,7 +63,7 @@
     left: -7px;
     top: 5px;
 }
-.hotnumber.picker .picker {
+.tooltip.picker .picker {
     border: 1px solid white;
     height: 15px;
     margin-left: -1px;
@@ -72,70 +72,70 @@
     position: relative;
     width: 15px;
 }
-.hotnumber.picker:hover .picker,
-.hotnumber.picker.active .picker {
+.tooltip.picker:hover .picker,
+.tooltip.picker.active .picker {
     height: 160px;
     width: 198px;
     border-width: 0px;
 }
-.hotnumber.picker:hover .picker .colorpicker,
-.hotnumber.picker.active .picker .colorpicker {
+.tooltip.picker:hover .picker .colorpicker,
+.tooltip.picker.active .picker .colorpicker {
     left: -10px;
     top: -10px;
 }
-.hotnumber.picker:hover .colorpicker_new_color,
-.hotnumber.picker.active .colorpicker_new_color {
+.tooltip.picker:hover .colorpicker_new_color,
+.tooltip.picker.active .colorpicker_new_color {
     display: none;
 }
-.hotnumber.picker .picker .colorpicker {
+.tooltip.picker .picker .colorpicker {
     left: 0px;
     position: relative;
     top: 0px;
 }
-.hotnumber.picker .colorpicker_new_color {
+.tooltip.picker .colorpicker_new_color {
     height: 15px;
     left: 0px;
     top: 0px;
     width: 15px;
 }
-.hotnumber.imagepicker {
+.tooltip.imagepicker {
     margin-left: 10px;
     margin-top: -22px;
     opacity: 1;
     width: auto;
 }
-.hotnumber.imagepicker:hover {
+.tooltip.imagepicker:hover {
     max-height: 300px;
     width: 343px;
 }
-.hotnumber.imagepicker:hover div.current-image {
+.tooltip.imagepicker:hover div.current-image {
     display: none;
 }
-.hotnumber.imagepicker:hover div.image-groups {
+.tooltip.imagepicker:hover div.image-groups {
     display: block;
 }
-.hotnumber.imagepicker:hover div.image-groups p {
+.tooltip.imagepicker:hover div.image-groups p {
     font-size: 12px;
     margin: 5px;
 }
-.hotnumber.imagepicker div.current-image {
+.tooltip.imagepicker div.current-image {
     background: #FFF;
     padding: 2px;
 }
-.hotnumber.imagepicker div.current-image img {
+.tooltip.imagepicker div.current-image img {
     max-width: 50px;
     max-height: 50px;
 }
-.hotnumber.imagepicker div.image-groups {
+.tooltip.imagepicker div.image-groups {
     background: white;
     display: none;
     max-height: 300px;
     overflow-y: scroll;
 }
-.hotnumber.imagepicker div.image-group {
+.tooltip.imagepicker div.image-group {
     overflow: auto;
 }
-.hotnumber.imagepicker div.image-group .image {
+.tooltip.imagepicker div.image-group .image {
     background: white;
     border: 2px solid #EEE;
     cursor: pointer;
@@ -147,19 +147,19 @@
     white-space: nowrap;
     width: 140px;
 }
-.hotnumber.imagepicker div.image-group .image.active {
+.tooltip.imagepicker div.image-group .image.active {
     border-color: #000;
 }
-.hotnumber.imagepicker div.image-group .image img {
+.tooltip.imagepicker div.image-group .image img {
     max-height: 50px;
     max-width: 50px;
     margin-right: 5px;
     vertical-align: middle;
 }
-.hotnumber.imagepicker h3.image-group {
+.tooltip.imagepicker h3.image-group {
     margin: 5px;
 }
-.hotnumber.imagepicker .arrow {
+.tooltip.imagepicker .arrow {
     border-bottom: 8px solid transparent;
     border-left: none;
     border-right: 8px solid black;
@@ -168,9 +168,9 @@
     left: -7px;
     top: 27px;
 }
-.hotnumber .ui-slider-handle {
+.tooltip .ui-slider-handle {
     width: 8px;
 }
-.hotnumber .colorpicker_field {
+.tooltip .colorpicker_field {
     display: none;
 }

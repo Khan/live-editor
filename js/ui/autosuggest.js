@@ -107,7 +107,7 @@ window.ScratchpadAutosuggest = {
     /**
      * It's sometimes useful to not have live completion. So expose a way to
      * enable and disable it. This is used for example when entering text
-     * within a comment. The hotnumber code tells us not to do autosuggest.
+     * within a comment. The tooltips code tells us not to do autosuggest.
      * @param enable true to enable autosuggest
      */
     enableLiveCompletion: function(enable) {

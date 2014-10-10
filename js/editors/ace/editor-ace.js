@@ -5,6 +5,22 @@ window.AceEditor = Backbone.View.extend({
         CONTENT: "div.ace_content"
     },
 
+    tooltips: {
+        // The earlier in the list a tooltip appears
+        // the higher priority it gets.
+        ace_pjs: [
+            "imagePicker",
+            "colorPicker",
+            "numberScrubberClick",
+            "autoSuggest",
+            "numberScrubber"
+        ],
+        ace_webpage: [
+            "colorPicker",
+            "numberScrubber"
+        ]
+    },
+
     initialize: function(options) {
         var self = this;
 
@@ -19,17 +35,14 @@ window.AceEditor = Backbone.View.extend({
         this.content = this.$(this.dom.CONTENT);
         this.offset = this.content.offset();
 
-        // Attach the hot number picker to the editor
-        // TODO(jeresig): Enable this for other types of content,
-        // once it's ready.
-        if (this.type === "ace_pjs") {
-            new HotNumber({
-                imagesDir: options.imagesDir,
-                type: "ace",
-                editor: this.editor,
-                record: this.record
-            });
-        }
+        // Attach the picker tooltips to the editor
+        this.tooltipEngine = new TooltipEngine({
+            tooltips: this.tooltips[this.type],
+            type: this.type,
+            imagesDir: options.imagesDir,
+            editor: this.editor,
+            record: this.record
+        });
 
         // Make the editor vertically resizable
         if (this.$el.resizable) {
@@ -45,7 +58,7 @@ window.AceEditor = Backbone.View.extend({
         }
 
         // Kill default selection on the hot number
-        this.$el.on("mousedown", ".hotnumber", function(e) {
+        this.$el.on("mousedown", ".tooltip", function(e) {
             e.preventDefault();
         });
 

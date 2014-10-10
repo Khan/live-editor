@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mocha Test Runner</title>
+        <link rel="stylesheet" href="../../../node_modules/mocha/mocha.css">
+    </head>
+    <body>
+        <div id="faux_editor"></div>
+        <div id="mocha"></div>
+        <script src="../../../build/js/live-editor.core_deps.js"></script>
+        <script>
+        // Works around this issue in PhantomJS:
+        // https://github.com/ariya/phantomjs/pull/12307
+        // Remove once PhantomJS pushes out a new release that fixes this!
+        (function() {
+            var oldSplice = Array.prototype.splice;
+            Array.prototype.splice = function(num) {
+                if (arguments.length === 1) {
+                    return Array.prototype.slice.call(this, num);
+                }
+                return oldSplice.apply(this, arguments);
+            };
+        })();
+        window.LiveEditor = {registerEditor: function(){}}; //So that editor_ace.js doesn't throw an error
+        </script>
+        <script src="../../../build/external/underscore/underscore.js"></script>
+        <script src="../../../build/js/live-editor.editor_ace_deps.js"></script>
+        <script src="../../../build/js/live-editor.shared.js"></script>
+        <script src="../../../build/js/live-editor.editor_ace.js"></script>
+        <script src="../../../build/js/live-editor.tooltips.js"></script>
+        <script src="../../../node_modules/mocha/mocha.js"></script>
+        <script src="../../../node_modules/sinon/lib/sinon.js"></script>
+        <script src="../../../node_modules/sinon/lib/sinon/spy.js"></script>
+        <script src="../../../node_modules/sinon/lib/sinon/call.js"></script>
+        <script src="../../../node_modules/expect.js/index.js"></script>
+        <script>mocha.setup("bdd");</script>
+        <script src="shared.js"></script>
+        <script src="numberScrubber_test.js"></script>
+        <script src="imagePicker_test.js"></script>
+        <script src="colorPicker_test.js"></script>
+        <script src="tooltips_test.js"></script>
+        <script>
+            if (window.mochaPhantomJS) {
+                mochaPhantomJS.run();
+            } else {
+                mocha.run();
+            }
+        </script>
+    </body>
+</html>

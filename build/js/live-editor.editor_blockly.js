@@ -96,14 +96,14 @@ window.BlocklyEditor = Backbone.View.extend({
         }.bind(this));
 
         // Attach the hot number picker to the editor
-        var hn = new HotNumber({
+        this.tooltipEngine = new TooltipEngine({
             blockly: Blockly,
             type: 'blockly',
             imagesDir: options.imagesDir
         });
 
         // Kill default selection on the hot number
-        this.$el.on("mousedown", ".hotnumber", function(e) {
+        this.$el.on("mousedown", ".tooltip", function(e) {
             e.preventDefault();
         });
     },

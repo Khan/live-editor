@@ -111,6 +111,8 @@ gulp.task("watch", function() {
         .concat(["tests/output/pjs/*"]), ["test_output_pjs"]);
     gulp.watch(paths.scripts.output_webpage
         .concat(["tests/output/webpage/*"]), ["test_output_webpage"]);
+    gulp.watch(paths.scripts.tooltips
+        .concat(["tests/tooltips/*"]), ["test_tooltips"]);
 
     styleTypes.forEach(function(type) {
         gulp.watch(paths.styles[type], ["style_" + type]);
@@ -159,6 +161,9 @@ gulp.task("test_output_pjs", ["script_output_pjs"],
 gulp.task("test_output_webpage", ["script_output_webpage"],
     runTest("output/webpage/index.html"));
 
+gulp.task("test_tooltips", ["script_tooltips"],
+    runTest("tooltips/pjs/index.html"));
+
 // NOTE(jeresig): We don't bundle this data as it's kind of big. Better to
 // download it dynamically, when we need it.
 var recordDataURL = "https://s3.amazonaws.com/ka-cs-scratchpad-audio/" +
@@ -181,7 +186,7 @@ gulp.task("test_record", ["test_record_data"],
     runTest("record/index.html"));
 
 gulp.task("test", function(callback) {
-    runSequence("test_output_pjs", "test_output_webpage", callback);
+    runSequence("test_output_pjs", "test_output_webpage", "test_tooltips", callback);
 });
 
 gulp.task("default", ["watch", "templates", "scripts", "workers", "styles",

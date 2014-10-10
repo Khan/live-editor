@@ -63,11 +63,16 @@
             "build/tmpl/dev-record.js",
             "js/ui/jquery.button.js"
         ],
-        "hotnumber": [
+        "tooltips": [
             "external/colorpicker/colorpicker.js",
             "js/ui/autosuggest.js",
             "js/ui/autosuggest-data.js",
-            "js/ui/hotnumber.js",
+            "js/ui/tooltip-engine.js",
+            "js/ui/tooltips/number-scrubber.js",
+            "js/ui/tooltips/number-scrubber-click.js",
+            "js/ui/tooltips/color-picker.js",
+            "js/ui/tooltips/image-picker.js",
+            "js/ui/tooltips/auto-suggest.js",
             "build/tmpl/imagepicker.js"
         ],
         "shared": [
@@ -142,10 +147,10 @@
         "audio": [
             "css/ui/flashblock.css"
         ],
-        "hotnumber": [
+        "tooltips": [
             "css/ui/colorpicker.css",
             "css/ui/autosuggest.css",
-            "css/ui/hotnumber.css"
+            "css/ui/tooltips.css"
         ],
         "output": [
             "css/output/style.css"

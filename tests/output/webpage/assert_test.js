@@ -25,8 +25,7 @@ describe("Challenge Assertions - HTML", function() {
         title: "Failing to complete any step",
         code: "<span></span>",
         validate: divTest,
-        fromTests: true,
-        reason: "Your HTML failed to match the following selector: '#foo div'. Expected '1' elements, found '0' instead."
+        fromTests: true
     });
 
     assertTest({

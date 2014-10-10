@@ -450,7 +450,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
         }
         this.commands = commands;
         // Make no more than 50 seek caches
-        this.seekCacheInterval = Math.floor(commands.length / 50);
+        this.seekCacheInterval = Math.ceil(commands.length / 50);
     },
 
     dumpRecording: function() {
@@ -597,7 +597,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
 
                 evt = this.commands[this.playPos];
             }
-        }, this), 1);
+        }, this), 5);
 
         this.trigger("playStarted", startTime > 0);
 
