@@ -1397,7 +1397,7 @@ window.PJSOutput = Backbone.View.extend({
             }.bind(this));
 
             // Handle the command during playback
-            this.handlers[name] = function(name, x, y) {
+            this.handlers[name] = function(x, y) {
                 // Build the clientX and clientY values
                 var pageX = x + offset.left;
                 var pageY = y + offset.top;
