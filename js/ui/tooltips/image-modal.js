@@ -74,7 +74,6 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
         this.$el.find("button").on("click", function() {
             self.$modal.find(".image.active").removeClass("active");
             self.$modal.modal();
-            self.$modal.find(".imcontent").scrollspy("refresh");
         });
 
         Handlebars.registerHelper("slugify", this.slugify);
@@ -98,7 +97,11 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
             $(this).addClass("active");
         });
 
+        this.$modal.on('shown.bs.modal', function() {
+            $("body").css("overflow", "hidden");
+        });
         this.$modal.on('hidden.bs.modal', function() {
+            $("body").css("overflow", "auto");
             var $active = self.$modal.find(".image.active");
             if ($active.length !== 1) {
                 return;
@@ -108,10 +111,52 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
             self.updateTooltip(path);
         });
 
-        self.$modal.find('.nav-tabs a').click(function (e) {
+        this.$modal.find('.nav-tabs a').click(function (e) {
           e.preventDefault();
           $(this).tab('show');
-          self.$modal.find(".imcontent").scrollspy("refresh");
+        });
+
+        this.$modal.find(".nav-pills").each(function(i, list){
+            var links = $(list).find("a[href]");
+            var targets = _.map( links, function(link){
+                return [$(link).attr("href"), $(link)];
+            });
+
+            var target_heights = [];
+            var $content = $(list).closest(".tab-pane").find(".imcontent");
+            var scrollspy = function(e) {
+                if (!target_heights.length) {
+                    _.each(targets, function(t){
+                        var $heading = $content.find(t[0]);
+                        if ($heading.length) {
+                            target_heights.push([$heading.position().top, t[1]]);
+                        }
+                    });
+                    target_heights.sort(function(a, b){ return a[0]-b[0] })
+                }
+                var height = $content.scrollTop();
+                var active = false;
+                for (var index in target_heights) {
+                    var t = target_heights[index];
+                    if (t[0] < height+150) {
+                        active = target_heights[index][1];
+                    } else {
+                        break;
+                    }
+                }
+                $(list).find(".active").removeClass("active");
+                $(active).closest("li").addClass("active");
+            };
+
+            $content.scroll(scrollspy);
+            links.on("click", function(e) {
+                var t = $($(this).attr("href"));
+                if (t.length) {
+                    $content.scrollTop(t.position().top);
+                }
+                e.stopPropagation();
+                e.preventDefault();
+            });
         });
     },
 

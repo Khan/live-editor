@@ -58,12 +58,7 @@ function program4(depth0,data,depth1) {
   if(typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, { hash: {} }); }
   else if(stack2=== undef) { stack1 = helperMissing.call(depth0, "slugify", stack1, { hash: {} }); }
   else { stack1 = stack2; }
-  buffer += escapeExpression(stack1) + "\">\n        <div class=\"imcontent\" data-spy=\"scroll\" data-target=\"#im-pills-";
-  foundHelper = helpers.$index;
-  stack1 = foundHelper || depth0.$index;
-  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
-  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "$index", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n        ";
+  buffer += escapeExpression(stack1) + "\">\n        <div class=\"imcontent\">\n        <div style=\"position: relative;\">\n        ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   stack2 = helpers.each;
@@ -73,22 +68,19 @@ function program4(depth0,data,depth1) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n        </div>\n\n        <div id=\"im-pills-";
-  foundHelper = helpers.$index;
-  stack1 = foundHelper || depth0.$index;
-  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
-  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "$index", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\" class=\"right\">\n        <ul class=\"nav nav-pills nav-stackable\">\n        ";
+  buffer += "\n        </div>\n        </div>\n\n        <div class=\"right\">\n        <ul class=\"nav nav-pills nav-stackable\">\n        ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
-  stack2 = helpers.each;
+  foundHelper = helpers.patchedEach;
+  stack2 = foundHelper || depth0.patchedEach;
   tmp1 = self.program(12, program12, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
-  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n        </ul>\n        </div>\n      </div>\n    ";
+  buffer += "\n        </ul>\n        </div>\n\n        <div style=\"clear: both;\"></div>\n      </div>\n    ";
   return buffer;}
 function program5(depth0,data) {
   
@@ -190,7 +182,17 @@ function program10(depth0,data,depth1,depth3) {
 function program12(depth0,data) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n            <li><a href=\"#im-group-";
+  buffer += "\n            <li ";
+  foundHelper = helpers.$first;
+  stack1 = foundHelper || depth0.$first;
+  stack2 = helpers['if'];
+  tmp1 = self.program(13, program13, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "><a href=\"#im-group-";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth0.groupName;
   foundHelper = helpers.slugify;
@@ -205,6 +207,10 @@ function program12(depth0,data) {
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
   buffer += escapeExpression(stack1) + "</a></li>\n        ";
   return buffer;}
+function program13(depth0,data) {
+  
+  
+  return "class=\"active\"";}
 
   buffer += "<div class=\"modal imagemodal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n    ";
   foundHelper = helpers.classes;

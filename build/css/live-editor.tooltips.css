@@ -400,6 +400,7 @@
     width: 100px;
     margin-bottom: 5px;
     position: relative;
+    text-align: center;
 }
 .tooltip.imagemodalpreview .imshell:before{ 
     height: 100%;
@@ -415,8 +416,10 @@
     font-weight: bold;
 }
 .tooltip.imagemodalpreview .imshell .imimg {
+    display: inline-block;
     max-width: 100%;
     max-height: 100%;
+    vertical-align: middle;
 }
 .tooltip.imagemodalpreview .imthrobber{
     position: absolute;

@@ -1,6 +1,6 @@
 describe("numberScrubber - detection", function() {
     var mockedNumberScrubber = getMockedTooltip(tooltipClasses.numberScrubber, ["detector", "initialize"]);
-    window.MNS = mockedNumberScrubber;
+    var mockedNumberScrubberClick = getMockedTooltip(tooltipClasses.numberScrubberClick, ["detector", "initialize"]);
 
     //numberScrubber
     it("! Before number", function() {
