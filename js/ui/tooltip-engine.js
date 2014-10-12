@@ -1,18 +1,17 @@
 window.TooltipEngine = Backbone.View.extend({
     initialize: function(options) {
-        console.log(options);
         this.options = options;
         this.editor = options.editor;
         var record = this.options.record;
 
         this.tooltips = {};
-        var child_options = {
+        var childOptions = {
             parent: this,
             editor: this.editor,
             imagesDir: this.options.imagesDir
         };
         _.each(options.tooltips, function(name) {
-            this.tooltips[name] = new TooltipEngine.classes[name](child_options);
+            this.tooltips[name] = new TooltipEngine.classes[name](childOptions);
         }.bind(this));
 
         if (record && !record.handlers.hot) {
@@ -56,7 +55,10 @@ window.TooltipEngine = Backbone.View.extend({
             event: "changeScrollTop",
             fn: function() {
                 if (this.currentTooltip) {
-                    this.currentTooltip.render();
+                    // Hide and un-set current tooltip,
+                    // otherwise we get a pile-up of tooltips
+                    this.currentTooltip.$el.hide();
+                    this.currentTooltip = undefined;
                 }
             }.bind(this)
         }];
