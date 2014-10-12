@@ -188,7 +188,7 @@ window.TooltipBase = Backbone.View.extend({
         var pos = editor.selection.getCursor();
         var editorBB = editor.renderer.scroller.getBoundingClientRect();
         var editorHeight = editorBB.height;
-        if (!loc.tooltipCursor) {
+        if (typeof loc.tooltipCursor !== "number") {
             loc.tooltipCursor = loc.start + loc.length;
         }
         var coords = editor.renderer.textToScreenCoordinates(loc.row, loc.tooltipCursor);
