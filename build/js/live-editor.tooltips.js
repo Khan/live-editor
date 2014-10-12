@@ -1743,10 +1743,7 @@ window.TooltipEngine = Backbone.View.extend({
             event: "changeScrollTop",
             fn: function() {
                 if (this.currentTooltip) {
-                    // Hide and un-set current tooltip,
-                    // otherwise we get a pile-up of tooltips
-                    this.currentTooltip.$el.hide();
-                    this.currentTooltip = undefined;
+                    this.currentTooltip.placeOnScreen();
                 }
             }.bind(this)
         }];
