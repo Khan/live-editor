@@ -1746,6 +1746,15 @@ window.TooltipEngine = Backbone.View.extend({
                     this.currentTooltip.placeOnScreen();
                 }
             }.bind(this)
+        }, {
+            target: this.editor,
+            event: "blur",
+            fn: function() {
+                if (this.currentTooltip) {
+                    this.currentTooltip.$el.hide();
+                    this.currentTooltip = undefined;
+                }
+            }.bind(this)
         }];
         _.each(this.callbacks, function(cb){
             cb.target.on(cb.event, cb.fn);
