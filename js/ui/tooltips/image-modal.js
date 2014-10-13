@@ -1,5 +1,5 @@
 TooltipEngine.classes.imageModal = TooltipBase.extend({
-	initialize: function(options) {
+    initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
         this.render();
@@ -25,13 +25,13 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
         ScratchpadAutosuggest.enableLiveCompletion(false);
     },
 
-    updateTooltip: function(url){
+    updateTooltip: function(url) {
         if (url !== this.currentUrl) {
             this.currentUrl = url;
             var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|localhost:\d+)$/i;
             var match = /\/\/([^\/]*)(?:\/|\?|#|$)/.exec(url);
             var host = match ? match[1] : "";
-            if(!host || allowedHosts.test(host)) {
+            if (!host || allowedHosts.test(host)) {
                 if (url !== this.$el.find(".imimg").attr("src")) {
                     this.$el.find(".imimg").attr("src", url);
                     this.$el.find(".imthrobber").show();
@@ -50,9 +50,9 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
 
     render: function() {
         var self = this;
-        this.$el = $("<div class='tooltip imagemodalpreview'>" +
-        	'<div class="content"><img src="/images/throbber.gif" class="imthrobber" /><div class="imshell"><img class="imimg" /><div class="imerror"></div></div>' +
-        	'<button class="kui-button kui-button-submit kui-button-primary" style="padding: 5px; width: 100%; margin: 0 auto;" >Pick Image</button>'+
+        this.$el = $('<div class="tooltip imagemodalpreview">' +
+            '<div class="content"><img src="/images/throbber.gif" class="imthrobber" /><div class="imshell"><img class="imimg" /><div class="imerror"></div></div>' +
+            '<button class="kui-button kui-button-submit kui-button-primary" style="padding: 5px; width: 100%; margin: 0 auto;" >Pick Image</button>' +
             '</div><div class="arrow"></div></div>')
             .appendTo("body").hide();
 
@@ -63,12 +63,12 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
                 self.$el.find(".imthrobber").hide();
             })
             .on("error", function() {
-                if (self.currentUrl !== $(this).attr("src")) { 
+                if (self.currentUrl !== $(this).attr("src")) {
                     return;
                 }
                 $(this).closest(".imshell").find(".imerror").text($._("That is not a valid image URL.")).show();
                 $(this).hide();
-               self.$el.find(".imthrobber").hide();
+                self.$el.find(".imthrobber").hide();
             });
 
         this.$el.find("button").on("click", function() {
@@ -97,28 +97,31 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
             $(this).addClass("active");
         });
 
-        this.$modal.on('shown.bs.modal', function() {
+        this.$modal.on("shown.bs.modal", function() {
             $("body").css("overflow", "hidden");
         });
-        this.$modal.on('hidden.bs.modal', function() {
+        this.$modal.on("hidden.bs.modal", function() {
             $("body").css("overflow", "auto");
+        });
+
+        this.$modal.find("#im-submit").on("click", function() {
             var $active = self.$modal.find(".image.active");
             if ($active.length !== 1) {
                 return;
             }
-            var path = self.options.imagesDir+$active.attr("data-path")+".png";
+            var path = self.options.imagesDir + $active.attr("data-path") + ".png";
             self.updateText(path);
             self.updateTooltip(path);
+        })
+
+        this.$modal.find(".nav-tabs a").click(function(e) {
+            e.preventDefault();
+            $(this).tab("show");
         });
 
-        this.$modal.find('.nav-tabs a').click(function (e) {
-          e.preventDefault();
-          $(this).tab('show');
-        });
-
-        this.$modal.find(".nav-pills").each(function(i, list){
+        this.$modal.find(".nav-pills").each(function(i, list) {
             var links = $(list).find("a[href]");
-            var targets = _.map( links, function(link){
+            var targets = _.map(links, function(link) {
                 return [$(link).attr("href"), $(link)];
             });
 
@@ -126,19 +129,21 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
             var $content = $(list).closest(".tab-pane").find(".imcontent");
             var scrollspy = function(e) {
                 if (!target_heights.length) {
-                    _.each(targets, function(t){
+                    _.each(targets, function(t) {
                         var $heading = $content.find(t[0]);
                         if ($heading.length) {
                             target_heights.push([$heading.position().top, t[1]]);
                         }
                     });
-                    target_heights.sort(function(a, b){ return a[0]-b[0] })
+                    target_heights.sort(function(a, b) {
+                        return a[0] - b[0]
+                    })
                 }
                 var height = $content.scrollTop();
                 var active = false;
                 for (var index in target_heights) {
                     var t = target_heights[index];
-                    if (t[0] < height+150) {
+                    if (t[0] < height + 150) {
                         active = target_heights[index][1];
                     } else {
                         break;
@@ -164,12 +169,12 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
         return text.toLowerCase().match(/[a-z0-9_]+/g).join("-");
     },
 
-    handlebarsPatchedEach: function(arr,options) {
-        return _.map(arr, function(item,index) {
+    handlebarsPatchedEach: function(arr, options) {
+        return _.map(arr, function(item, index) {
             item.$index = index;
             item.$first = index === 0;
-            item.$last  = index === arr.length-1;
+            item.$last = index === arr.length - 1;
             return options.fn(item);
-        }).join('');
+        }).join("");
     }
 });
