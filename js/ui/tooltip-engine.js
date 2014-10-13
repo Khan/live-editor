@@ -35,7 +35,9 @@ window.TooltipEngine = Backbone.View.extend({
         var checkBlur = function(e) {
             var inEditor = $.contains(this.editor.container, e.target);
             var inTooltip = (this.currentTooltip && $.contains(this.currentTooltip.$el[0], e.target));
-            if (this.currentTooltip && !(inEditor || inTooltip)) {
+            var modalOpen = (this.currentTooltip && this.currentTooltip.$modal &&
+                                this.currentTooltip.$modal.is(":visible"))
+            if (this.currentTooltip && !(inEditor || inTooltip || modalOpen)) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
             }
@@ -52,14 +54,6 @@ window.TooltipEngine = Backbone.View.extend({
                 this.doRequestTooltip(e.data);
             }.bind(this)
         }, {
-            target: $(this.editor.container),
-            event: "mousedown",
-            fn: function() {
-                this.doRequestTooltip({
-                    action: "click"
-                });
-            }.bind(this)
-        }, {
             target: this.editor.session,
             event: "changeScrollTop",
             fn: function() {
@@ -69,19 +63,27 @@ window.TooltipEngine = Backbone.View.extend({
             }.bind(this)
         }, {
             target: $(document),
-            event: "click",
+            event: "mousedown",
             fn: checkBlur
         }, {
             target: $(document),
             event: "contextmenu",
             fn: checkBlur
+        }, {
+            target: $(this.editor.container),
+            event: "mousedown",
+            fn: function() {
+                this.doRequestTooltip({
+                    action: "click"
+                });
+            }.bind(this)
         }];
 
         _.each(this.callbacks, function(cb){
             cb.target.on(cb.event, cb.fn);
         });
 
-
+        
         this.requestTooltipDefaultCallback = function() {  //Fallback to hiding
             ScratchpadAutosuggest.enableLiveCompletion(true);
             if (this.currentTooltip && this.currentTooltip.$el) {
