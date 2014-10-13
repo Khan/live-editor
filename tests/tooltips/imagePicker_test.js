@@ -3,8 +3,8 @@ describe("imagePicker - detection", function() {
 
     it("! Before open paren", function() {
         var line = 'getImage("cute/Blank");';
-        var pre = 'getImage(';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be.ok();
+        var pre = 'getImage';
+        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.not.be.ok();
     });
 
     it("After open paren", function() {
@@ -47,7 +47,7 @@ describe("imagePicker - detection", function() {
 
 
 describe("imagePicker - selection (what it replaces)", function() {
-    var mockedImagePicker = getMockedTooltip(tooltipClasses.imagePicker, ["detector", "updateText", "initialize", "getImagePickerTemplate"]);
+    var mockedImagePicker = getMockedTooltip(tooltipClasses.imagePicker, ["detector", "updateText", "initialize"]);
 
     it("Basic", function() {
         var line = 'getImage("blank/None");';

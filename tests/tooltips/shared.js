@@ -7,12 +7,6 @@ var mockObject = function(obj, mocks) {
 
 window.tooltipClasses = TooltipEngine.classes;
 
-TooltipEngine.classes.imagePicker.prototype.getImagePickerTemplate = function(){
-    return function(){
-        return "";
-    };
-};
-
 window.ACE = new AceEditor({ //Initializes TooltipEngine internally
     el: "#faux_editor",
     autoFocus: true,
@@ -92,7 +86,9 @@ var getTooltipRequestEvent = function(line, pre) {
                 column: pre.length
             }
         }],
-        stopPropagation: sinon.spy()
+        stopPropagation: function() {
+            this.propagationStopped = true;
+        }
     };
 };
 
