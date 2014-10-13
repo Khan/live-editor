@@ -491,10 +491,14 @@
 		var $shell = $(shell);
 		return function() {
 			var pointers = $shell.data("scrollspy.pointers"); // [[height, node], ... ]
-
-			if (!pointers) {
-				$shell.customScrollSpy("refresh");
-				pointers = $shell.data("scrollspy.pointers");
+			if (pointers == undefined) {
+				$shell.data("scrollspy.pointers", "working");
+				setTimeout(function() {
+					$shell.customScrollSpy("refresh")
+				}, 0);
+				return;
+			} else if (pointers == "working") {
+				return;
 			}
 
 			var scroll = $shell.scrollTop();
@@ -2332,7 +2336,8 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
 
         this.$modal.on("shown.bs.modal", function() {
             $("body").css("overflow", "hidden");
-        });
+            this.$modal.find(".tab-pane.active .imcontent").customLazyLoad();
+        }.bind(this));
         this.$modal.on("hidden.bs.modal", function() {
             $("body").css("overflow", "auto");
         });
@@ -2350,11 +2355,16 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
         this.$modal.find(".nav-tabs a").click(function(e) {
             e.preventDefault();
             $(this).tab("show");
+            $(this).customLazyLoad();
         });
 
-        this.$modal.find(".imcontent").customScrollSpy(function(content) {
-            return $(content).closest(".tab-pane").find(".nav-pills");
-        });
+        this.$modal.find(".imcontent")
+            .scroll(_.throttle(function() {
+                $(this).customLazyLoad()
+            }, 200))
+            .customScrollSpy(function(content) { // This function finds the associated pills for a scrollable div.
+                return $(content).closest(".tab-pane").find(".nav-pills");
+            });
     },
 
     slugify: function(text) {
@@ -2862,7 +2872,7 @@ function program10(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                    <img src=\"";
+  buffer += escapeExpression(stack1) + "\">\n                    <div class=\"imshell\"><img src=\"/images/throbber.gif\" data-lazy-src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth3.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -2881,7 +2891,7 @@ function program10(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + ".png\"/>\n                    <span class=\"name\">";
+  buffer += escapeExpression(stack1) + ".png\"/></div>\n                    <span class=\"name\">";
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }

@@ -3,10 +3,14 @@
 		var $shell = $(shell);
 		return function() {
 			var pointers = $shell.data("scrollspy.pointers"); // [[height, node], ... ]
-
-			if (!pointers) {
-				$shell.customScrollSpy("refresh");
-				pointers = $shell.data("scrollspy.pointers");
+			if (pointers == undefined) {
+				$shell.data("scrollspy.pointers", "working");
+				setTimeout(function() {
+					$shell.customScrollSpy("refresh")
+				}, 0);
+				return;
+			} else if (pointers == "working") {
+				return;
 			}
 
 			var scroll = $shell.scrollTop();

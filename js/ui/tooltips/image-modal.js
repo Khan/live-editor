@@ -99,7 +99,8 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
 
         this.$modal.on("shown.bs.modal", function() {
             $("body").css("overflow", "hidden");
-        });
+            this.$modal.find(".tab-pane.active .imcontent").customLazyLoad();
+        }.bind(this));
         this.$modal.on("hidden.bs.modal", function() {
             $("body").css("overflow", "auto");
         });
@@ -117,11 +118,16 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
         this.$modal.find(".nav-tabs a").click(function(e) {
             e.preventDefault();
             $(this).tab("show");
+            $(this).customLazyLoad();
         });
 
-        this.$modal.find(".imcontent").customScrollSpy(function(content) {
-            return $(content).closest(".tab-pane").find(".nav-pills");
-        });
+        this.$modal.find(".imcontent")
+            .scroll(_.throttle(function() {
+                $(this).customLazyLoad()
+            }, 200))
+            .customScrollSpy(function(content) { // This function finds the associated pills for a scrollable div.
+                return $(content).closest(".tab-pane").find(".nav-pills");
+            });
     },
 
     slugify: function(text) {
