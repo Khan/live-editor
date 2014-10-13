@@ -486,6 +486,35 @@
 	});
 })(jQuery);
 
+(function($) {
+	$.fn.loadNow = function() {
+		$.each(this, function(i, t) {
+			$(t).attr("src", $(t).attr("data-lazy-src"));
+			$(t).removeAttr("data-lazy-src");
+		})
+		return this;
+	}
+
+	$.fn.backgroundLoad = function(threads) {
+		if (!threads) {
+			threads = 1;
+		}
+		if (!this.length) {
+			return this;
+		}
+		var target = this.splice(Math.min(0, this.length-threads),threads);
+
+		$(target)
+			.load(function(){ 
+				this.backgroundLoad();
+			}.bind(this))
+			.error(function(){ 
+				this.backgroundLoad();
+			}.bind(this));
+		$(target).loadNow();
+		return this;
+	}
+})(jQuery)
 /**
  * Helper functionality for the Scratchpad auto suggest feature,
  * parameter information and live documentation.
@@ -2334,6 +2363,10 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
                 e.preventDefault();
             });
         });
+
+        $(document).ready(function() {
+            this.$modal.find("img[data-lazy-src]").backgroundLoad(3);
+        }.bind(this))
     },
 
     slugify: function(text) {
@@ -2841,7 +2874,7 @@ function program10(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                    <img src=\"";
+  buffer += escapeExpression(stack1) + "\">\n                    <div class=\"imshell\"><img src=\"/images/throbber.gif\" data-lazy-src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth3.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -2860,7 +2893,7 @@ function program10(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + ".png\"/>\n                    <span class=\"name\">";
+  buffer += escapeExpression(stack1) + ".png\"/></div>\n                    <span class=\"name\">";
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }

@@ -163,6 +163,10 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
                 e.preventDefault();
             });
         });
+
+        $(document).ready(function() {
+            this.$modal.find("img[data-lazy-src]").backgroundLoad(3);
+        }.bind(this))
     },
 
     slugify: function(text) {

@@ -18,7 +18,7 @@
                 {{/if}}
                 {{#each images}}
                 <div class="image" data-path="{{../groupName}}/{{this}}">
-                    <img src="{{../../../imagesDir}}{{../groupName}}{{../thumbsDir}}/{{this}}.png"/>
+                    <div class="imshell"><img src="/images/throbber.gif" data-lazy-src="{{../../../imagesDir}}{{../groupName}}{{../thumbsDir}}/{{this}}.png"/></div>
                     <span class="name">{{this}}</span>
                 </div>
                 {{/each}}

@@ -183,27 +183,27 @@
     padding: 5px;
     margin-right: 0;
 }
-.tooltip.imagemodalpreview .imshell {
+.imshell {
     height: 100px;
     width: 100px;
     margin-bottom: 5px;
     position: relative;
     text-align: center;
 }
-.tooltip.imagemodalpreview .imshell:before{ 
+.imshell:before{ 
     height: 100%;
     vertical-align: middle;
     display: inline-block;
     content: "";
 }
-.tooltip.imagemodalpreview .imshell .imerror {
+.imshell .imerror {
     display: inline-block;
     vertical-align: middle;
     text-align: center;
     color: red;
     font-weight: bold;
 }
-.tooltip.imagemodalpreview .imshell .imimg {
+.imshell img {
     display: inline-block;
     max-width: 100%;
     max-height: 100%;
@@ -253,10 +253,10 @@
     cursor: pointer;
 }
 .imagemodal img {
-    max-width: 100px;
-    max-height: 100px;
-    display: block;
-    margin: auto;
+    max-width: 100%;
+    max-height: 100%;
+    display: inline-block;
+    vertical-align: middle;
 }
 .imagemodal .image.active img {
     box-shadow: 0 0 10px 1px #699c52;
