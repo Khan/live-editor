@@ -1723,7 +1723,7 @@ window.TooltipEngine = Backbone.View.extend({
         var checkBlur = function(e) {
             var inEditor = $.contains(this.editor.container, e.target);
             var inTooltip = (this.currentTooltip && $.contains(this.currentTooltip.$el[0], e.target));
-            if (!(inEditor || inTooltip)) {
+            if (this.currentTooltip && !(inEditor || inTooltip)) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
             }
