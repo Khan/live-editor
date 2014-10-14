@@ -486,6 +486,68 @@
 	});
 })(jQuery);
 
+(function($) {
+	var scrollspy = function(shell) {
+		var $shell = $(shell);
+		return function() {
+			var pointers = $shell.data("scrollspy.pointers"); // [[height, node], ... ]
+
+			if (!pointers) {
+				$shell.customScrollSpy("refresh");
+				pointers = $shell.data("scrollspy.pointers");
+			}
+
+			var scroll = $shell.scrollTop();
+			var active;
+			$.each(pointers, function(i, pointer) {
+				if (pointer[0] < scroll + 150) {
+					active = pointer[1];
+				} else {
+					return false;
+				}
+			});
+
+			$($(shell).data("scrollspy.nav_ul")).find(".active").removeClass("active");
+			$(active).closest("li").addClass("active");
+		}
+	};
+
+	$.fn.customScrollSpy = function(arg) {
+		var shells = this;
+		$.each(shells, function(i, shell) {
+			if (typeof arg === "function") {
+				var nav_ul = arg(shell);
+				$(shell).data("scrollspy.nav_ul", nav_ul);
+				$(shell).on("scroll", _.throttle(scrollspy(shell), 60)) // Uses a closure to capture the shell
+				$(nav_ul).find("li a").on("click", function(e) {
+					var top = $(shell).find($(this).attr("href")).position().top;
+					$(shell).scrollTop(top);
+					e.preventDefault();
+				})
+			} else if (arg == "refresh") {
+				var nav_ul = $(shell).data("scrollspy.nav_ul");
+				if (!nav_ul) {
+					console.warn("tried to refresh scrollspy without first initializing it");
+					return;
+				}
+				var navs = nav_ul.find("li a");
+				var pointers = [];
+				$.each(navs, function(i, nav) {
+					var selector = $(nav).attr("href");
+					var $heading = $(shell).find(selector).first();
+					if ($heading.length) {
+						var y = $heading.position().top;
+						pointers.push([y, nav]);
+					}
+				});
+				pointers.sort(function(a, b) {
+					return a[0] - b[0]
+				})
+				$(shell).data("scrollspy.pointers", pointers);
+			}
+		})
+	};
+})(jQuery);
 /**
  * Helper functionality for the Scratchpad auto suggest feature,
  * parameter information and live documentation.
@@ -2255,13 +2317,13 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
             classes: ExtendedOutputImages
         }));
 
-        this.$modal.find(".imcontent").on("scroll", function() {
+        this.$modal.find(".imcontent").on("scroll", _.throttle(function() {
             if ($(this).scrollTop() > 0) {
                 $(this).addClass("top-shadow");
             } else {
                 $(this).removeClass("top-shadow");
             }
-        });
+        }, 100));
 
         this.$modal.on("click", ".imcontent .image", function() {
             self.$modal.find(".image.active").removeClass("active");
@@ -2290,49 +2352,8 @@ TooltipEngine.classes.imageModal = TooltipBase.extend({
             $(this).tab("show");
         });
 
-        this.$modal.find(".nav-pills").each(function(i, list) {
-            var links = $(list).find("a[href]");
-            var targets = _.map(links, function(link) {
-                return [$(link).attr("href"), $(link)];
-            });
-
-            var target_heights = [];
-            var $content = $(list).closest(".tab-pane").find(".imcontent");
-            var scrollspy = function(e) {
-                if (!target_heights.length) {
-                    _.each(targets, function(t) {
-                        var $heading = $content.find(t[0]);
-                        if ($heading.length) {
-                            target_heights.push([$heading.position().top, t[1]]);
-                        }
-                    });
-                    target_heights.sort(function(a, b) {
-                        return a[0] - b[0]
-                    })
-                }
-                var height = $content.scrollTop();
-                var active = false;
-                for (var index in target_heights) {
-                    var t = target_heights[index];
-                    if (t[0] < height + 150) {
-                        active = target_heights[index][1];
-                    } else {
-                        break;
-                    }
-                }
-                $(list).find(".active").removeClass("active");
-                $(active).closest("li").addClass("active");
-            };
-
-            $content.scroll(scrollspy);
-            links.on("click", function(e) {
-                var t = $($(this).attr("href"));
-                if (t.length) {
-                    $content.scrollTop(t.position().top);
-                }
-                e.stopPropagation();
-                e.preventDefault();
-            });
+        this.$modal.find(".imcontent").customScrollSpy(function(content) {
+            return $(content).closest(".tab-pane").find(".nav-pills");
         });
     },
 
