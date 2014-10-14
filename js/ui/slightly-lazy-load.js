@@ -26,4 +26,4 @@
 		$(target).loadNow();
 		return this;
 	}
-})(jQuery)
+})(jQuery);

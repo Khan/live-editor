@@ -67,6 +67,7 @@
         "tooltips": [
             "external/colorpicker/colorpicker.js",
             "js/ui/slightly-lazy-load.js",
+            "js/ui/custom-scroll-spy.js",
             "js/ui/autosuggest.js",
             "js/ui/autosuggest-data.js",
             "js/ui/tooltip-engine.js",
