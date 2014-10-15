@@ -28,6 +28,7 @@
 		}
 	};
 
+	// This is a KA specific implementation of scrollspy, hence the name.
 	$.fn.customScrollSpy = function(arg) {
 		var shells = this;
 		$.each(shells, function(i, shell) {

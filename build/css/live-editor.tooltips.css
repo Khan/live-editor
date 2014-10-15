@@ -226,6 +226,7 @@
     -webkit-box-sizing: content-box;
     box-sizing: content-box;
 }
+
 .tooltip.picker {
     box-shadow: 0px 0px 4px #000000;
     height: 15px;
@@ -235,15 +236,18 @@
     opacity: 1;
     width: 15px;
 }
+
 .tooltip.picker:hover,
 .tooltip.picker.active {
     height: 156px;
     margin-left: 13px;
     width: 196px;
 }
+
 .tooltip:hover {
     opacity: 1;
 }
+
 .tooltip .arrow {
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
@@ -252,20 +256,24 @@
     left: 21px;
     position: absolute;
 }
+
 .tooltip.dragging {
     cursor: none;
     opacity: 1;
 }
+
 .tooltip .scrubber {
     border-radius: 10px;
     cursor: ew-resize;
 }
+
 .tooltip .scrubber .scrubber-handle {
     background: black;
     border-radius: 10px;
     color: white;
     text-align: center;
 }
+
 .tooltip.picker .arrow {
     border-bottom: 8px solid transparent;
     border-left: none;
@@ -275,6 +283,7 @@
     left: -7px;
     top: 5px;
 }
+
 .tooltip.picker .picker {
     border: 1px solid white;
     height: 15px;
@@ -284,69 +293,84 @@
     position: relative;
     width: 15px;
 }
+
 .tooltip.picker:hover .picker,
 .tooltip.picker.active .picker {
     height: 160px;
     width: 198px;
     border-width: 0px;
 }
+
 .tooltip.picker:hover .picker .colorpicker,
 .tooltip.picker.active .picker .colorpicker {
     left: -10px;
     top: -10px;
 }
+
 .tooltip.picker:hover .colorpicker_new_color,
 .tooltip.picker.active .colorpicker_new_color {
     display: none;
 }
+
 .tooltip.picker .picker .colorpicker {
     left: 0px;
     position: relative;
     top: 0px;
 }
+
 .tooltip.picker .colorpicker_new_color {
     height: 15px;
     left: 0px;
     top: 0px;
     width: 15px;
 }
+
 .tooltip.imagepicker {
     margin-left: 10px;
     margin-top: -22px;
     opacity: 1;
     width: auto;
 }
+
 .tooltip.imagepicker:hover {
     max-height: 300px;
     width: 343px;
 }
+
 .tooltip.imagepicker:hover div.current-image {
     display: none;
 }
+
 .tooltip.imagepicker:hover div.image-groups {
     display: block;
 }
+
 .tooltip.imagepicker:hover div.image-groups p {
     font-size: 12px;
     margin: 5px;
 }
+
 .tooltip.imagepicker div.current-image {
     background: #FFF;
     padding: 2px;
 }
+
 .tooltip.imagepicker div.current-image img {
     max-width: 50px;
     max-height: 50px;
 }
+
 .tooltip.imagepicker div.image-groups {
     background: white;
     display: none;
     max-height: 300px;
     overflow-y: scroll;
 }
+
 .tooltip.imagepicker div.image-group {
     overflow: auto;
 }
+
 .tooltip.imagepicker div.image-group .image {
     background: white;
     border: 2px solid #EEE;
@@ -359,21 +383,23 @@
     white-space: nowrap;
     width: 140px;
 }
+
 .tooltip.imagepicker div.image-group .image.active {
     border-color: #000;
 }
+
 .tooltip.imagepicker div.image-group .image img {
     max-height: 50px;
     max-width: 50px;
     margin-right: 5px;
     vertical-align: middle;
 }
+
 .tooltip.imagepicker h3.image-group {
     margin: 5px;
 }
 
-
-.tooltip.imagepicker .arrow, .tooltip.imagemodalpreview .arrow {
+.tooltip.imagepicker .arrow, .tooltip.imagemodal-preview .arrow {
     border-bottom: 8px solid transparent;
     border-left: none;
     border-right: 8px solid black;
@@ -382,45 +408,52 @@
     left: -7px;
     top: 40px;
 }
-.tooltip.imagemodalpreview {
+
+.tooltip.imagemodal-preview {
     margin-left: 10px;
     margin-top: -40px;
     width: auto;
     opacity: 1;
 }
-.tooltip.imagemodalpreview .content {
+
+.tooltip.imagemodal-preview .content {
     background-color: #FFF;
     height: 135px;
     width: 100px;
     padding: 5px;
     margin-right: 0;
 }
-.imshell {
+
+.thumb-shell {
     height: 100px;
     width: 100px;
     margin-bottom: 5px;
     text-align: center;
 }
-.imshell:before{ 
+
+.thumb-shell:before{ 
     height: 100%;
     vertical-align: middle;
     display: inline-block;
     content: "";
 }
-.imshell .imerror {
+
+.thumb-shell > .thumb-error {
     display: inline-block;
     vertical-align: middle;
     text-align: center;
     color: red;
     font-weight: bold;
 }
-.imshell img {
+
+.thumb-shell img {
     display: inline-block;
     max-width: 100%;
     max-height: 100%;
     vertical-align: middle;
 }
-.tooltip.imagemodalpreview .imthrobber{
+
+.tooltip.imagemodal-preview .thumb-throbber{
     position: absolute;
     top: 14px;
     left: 50%;
@@ -430,6 +463,7 @@
 .tooltip .ui-slider-handle {
     width: 8px;
 }
+
 .tooltip .colorpicker_field {
     display: none;
 }
@@ -440,11 +474,13 @@
     padding: 0;
     top: 150px;
 }
+
 .imagemodal h3 {
     font-size: 20px;
     margin-bottom: 0;
 }
-.imagemodal .imcontent {
+
+.imagemodal .imagemodal-content {
     width: 520px;
     height: 320px;
     overflow-y: auto;
@@ -453,9 +489,11 @@
     box-sizing: border-box;
     padding: 0 120px 0 20px;
 }
+
 .imagemodal .tab-pane {
     position: relative;
 }
+
 .imagemodal .image {
     display: inline-block;
     width: 100px;
@@ -463,21 +501,25 @@
     margin-bottom: 20px;
     cursor: pointer;
 }
+
 .imagemodal img {
     max-width: 100%;
     max-height: 100%;
     display: inline-block;
     vertical-align: middle;
 }
+
 .imagemodal .image.active img {
     box-shadow: 0 0 10px 1px #699c52;
 }
+
 .imagemodal .image .name {
     width: 100%;
     display: inline-block;
     text-align: center;
     font-style: italic;
 }
+
 .imagemodal .top-shadow {
     box-shadow: 0px 5px 7px -6px #888888 inset
 }
@@ -493,6 +535,7 @@
     clear: both;
     background-color: white;
 }
+
 .imagemodal .modal-footer button{
     margin-left: 10px;
 }
@@ -503,8 +546,10 @@
 }
 
 .nav-pills a {
-color: #699c52;
+    color: #699c52;
 }
+
 .nav-pills .active a {
-background-color: #77b05d !important;
+    background-color: #77b05d;
 }
+

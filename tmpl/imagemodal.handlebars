@@ -8,7 +8,7 @@
     <div class="tab-content">
     {{#patchedEach classes}}
       <div class="tab-pane {{#if $first}}active{{/if}}" id="im-class-{{slugify className}}">
-        <div class="imcontent">
+        <div class="imagemodal-content">
         <div style="position: relative;">
         {{#each groups}}
             <div class="image-group">
@@ -18,7 +18,7 @@
                 {{/if}}
                 {{#each images}}
                 <div class="image" data-path="{{../groupName}}/{{this}}">
-                    <div class="imshell"><img src="/images/throbber.gif" data-lazy-src="{{../../../imagesDir}}{{../groupName}}{{../thumbsDir}}/{{this}}.png"/></div>
+                    <div class="thumb-shell"><img src="/images/throbber.gif" data-lazy-src="{{../../../imagesDir}}{{../groupName}}{{../thumbsDir}}/{{this}}.png"/></div>
                     <span class="name">{{this}}</span>
                 </div>
                 {{/each}}
@@ -42,6 +42,6 @@
 
     <div class="modal-footer">
       <button type="button" class="simple-button" data-dismiss="modal">Close</button>
-      <button id="im-submit" type="button" class="simple-button green" data-dismiss="modal">Ok</button>
+      <button type="button" class="simple-button green imagemodal-submit" data-dismiss="modal">Ok</button>
     </div>
 </div>

@@ -31,14 +31,14 @@ window.OutputImages = [
 
 window.ExtendedOutputImages = [
     {
-        className: "classic",
+        className: "Clipart",
         groups: OutputImages
     },
     {
-        className: "landscapes",
+        className: "Photos",
         groups: [
             {
-                groupName: "landscapes",
+                groupName: "animals",
                 thumbsDir: "/thumbs",
                 images: "butterfly cat cheetah collies fox hare horse kangaroos penguins retriever shark sleeping-puppy".split(" ")
             }

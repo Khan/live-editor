@@ -487,6 +487,49 @@
 })(jQuery);
 
 (function($) {
+	// This function loads an image set up for lazy loading,
+	// by setting its src to its data-lazy-src
+	$.fn.loadNow = function() {
+		$.each(this, function(i, elem) {
+			$(elem).attr("src", $(elem).attr("data-lazy-src"));
+			$(elem).removeAttr("data-lazy-src");
+		})
+		return this;
+	}
+
+   /* 
+    * This is a KA specific implementation of lazy loading:
+	* It is targetted specifically at the modal in the imageModal tooltip
+	* (although it is generally applicable to some degree)
+	* It loads images as they are scrolled into view.
+	* It makes the following assumptions
+	* - All lazy-loading images have a "data-lazy-src" attribute with the src we wish to load on-demand
+	* - The div being scrolled is the offset parent of all of the images (http://api.jquery.com/position/)
+	* - If image A comes before image B in the source, then A is at least as high as B on the page.
+	*
+	*/
+
+	$.fn.customLazyLoad = function(tolerance) {
+		tolerance = tolerance || 250;
+		$(this).each(function(i, elem) {
+			var top = $(elem).scrollTop();
+			var bottom = top + $(elem).height();
+			top -= tolerance;
+			bottom += tolerance;
+			$(elem).find("img[data-lazy-src]").each(function(j, img) {
+				var height = $(img).position().top;
+				if (height < top) {
+					return true; // continue;
+				} else if (height < bottom) {
+					$(img).loadNow();
+				} else {
+					return false; // break;
+				}
+			})
+		})
+	}
+})(jQuery);
+(function($) {
 	var scrollspy = function(shell) {
 		var $shell = $(shell);
 		return function() {
@@ -516,6 +559,7 @@
 		}
 	};
 
+	// This is a KA specific implementation of scrollspy, hence the name.
 	$.fn.customScrollSpy = function(arg) {
 		var shells = this;
 		$.each(shells, function(i, shell) {
@@ -2235,151 +2279,192 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }
 });
-TooltipEngine.classes.imageModal = TooltipBase.extend({
-    initialize: function(options) {
-        this.options = options;
-        this.parent = options.parent;
-        this.render();
-        this.bindToRequestTooltip();
-    },
+(function() {
+    var Modal = Backbone.View.extend({
+        initialize: function(options) {
+            this.options = options;
+            this.parent = options.parent;
+            this.render();
+            this.bind();
+            this.$(".imagemodal-content").customScrollSpy(function(content) { // This function finds the associated pills for a scrollable div.
+                    return $(content).closest(".tab-pane").find(".nav-pills");
+                });
+        },
 
-    detector: function(event) {
-        if (!/<img\s+[^>]*?\s*src=["']([^"']*)$/.test(event.pre)) {
-            return;
+        // There are more bindings below in events these are here because scrolle vents cannot be delegated
+        bind: function() {
+            // Handle the heading shadow which appears on scroll
+            $(".imagemodal-content").scroll(
+                _.throttle(function(e) {
+                    var $target = $(e.currentTarget);
+                    if ($target.scrollTop() > 0) {
+                        $target.addClass("top-shadow");
+                    } else {
+                        $target.removeClass("top-shadow");
+                    }
+                }, 100)
+            );
+
+            // Lazy load on scroll
+            $(".imagemodal-content").scroll(
+                _.throttle(function(e) {
+                    $(e.currentTarget).customLazyLoad()
+                }, 200)
+            );
+        },
+
+        events: {
+            // Highlight image when it is clicked
+            "click .imagemodal-content .image":
+                function(e) {
+                    this.$(".image.active").removeClass("active");
+                    $(e.currentTarget).addClass("active");
+                },
+
+            "click .nav-tabs a":
+                function(e) {
+                    $(e.currentTarget).tab("show");
+                    // We need to call LazyLoad any time we are changing the visible content div.
+                    $(e.currentTarget).customLazyLoad(); 
+                    e.preventDefault();
+                },
+
+            "shown.bs.modal":
+                function(e) {
+                    $("body").css("overflow", "hidden");
+                    this.$(".image.active").removeClass("active");
+                    this.$(".tab-pane.active .imagemodal-content").customLazyLoad();
+                },
+            
+            "hidden.bs.modal":
+                function(e) {
+                    $("body").css("overflow", "auto");
+                },
+
+            // Update the url in ACE if someone clicks ok
+            "click .imagemodal-submit":
+                function(e) {
+                    var $active = this.$(".image.active");
+                    if ($active.length !== 1) {
+                        return;
+                    }
+                    var path = this.options.imagesDir + $active.attr("data-path") + ".png";
+                    this.parent.updateText(path);
+                    this.parent.updateTooltip(path);
+                }
+        },
+
+        render: function() {
+            Handlebars.registerHelper("slugify", this.slugify);
+            Handlebars.registerHelper("patchedEach", this.handlebarsPatchedEach);
+            this.$el = $(Handlebars.templates.imagemodal({
+                imagesDir: this.options.imagesDir,
+                classes: ExtendedOutputImages
+            }))
+            this.$el.appendTo("body").hide();
+        },
+
+        slugify: function(text) {
+            return text.toLowerCase().match(/[a-z0-9_]+/g).join("-");
+        },
+
+        handlebarsPatchedEach: function(arr, options) {
+            return _.map(arr, function(item, index) {
+                item.$index = index;
+                item.$first = index === 0;
+                item.$last = index === arr.length - 1;
+                return options.fn(item);
+            }).join("");
         }
-        var urlStart = event.col - RegExp.$1.length;
-        var url = event.line.slice(urlStart).match(/^[^"']*/)[0];
-        this.aceLocation = {
-            start: urlStart,
-            length: url.length,
-            row: event.row
-        };
-        this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + 1;
+    });
 
-        this.updateTooltip(url);
-        this.placeOnScreen();
-        event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
-    },
 
-    updateTooltip: function(url) {
-        if (url !== this.currentUrl) {
-            this.currentUrl = url;
-            var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|localhost:\d+)$/i;
-            var match = /\/\/([^\/]*)(?:\/|\?|#|$)/.exec(url);
-            var host = match ? match[1] : "";
-            if (!host || allowedHosts.test(host)) {
-                if (url !== this.$el.find(".imimg").attr("src")) {
-                    this.$el.find(".imimg").attr("src", url);
-                    this.$el.find(".imthrobber").show();
-                }
-                if (this.$el.find(".imerror").hasClass("domainError")) {
-                    this.$el.find(".imerror").removeClass("domainError").hide();
-                    this.$el.find(".imimg").show();
-                }
-            } else {
-                this.$el.find(".imimg").hide();
-                this.$el.find(".imerror").text($._("Sorry! That server is not permitted.")).addClass("domainError").show();
-                this.$el.find(".imthrobber").hide();
-            }
-        }
-    },
+    TooltipEngine.classes.imageModal = TooltipBase.extend({
+        initialize: function(options) {
+            this.options = options;
+            this.parent = options.parent;
+            this.render();
+            this.bindToRequestTooltip();
+        },
 
-    render: function() {
-        var self = this;
-        this.$el = $('<div class="tooltip imagemodalpreview">' +
-            '<div class="content"><img src="/images/throbber.gif" class="imthrobber" /><div class="imshell"><img class="imimg" /><div class="imerror"></div></div>' +
-            '<button class="kui-button kui-button-submit kui-button-primary" style="padding: 5px; width: 100%; margin: 0 auto;" >Pick Image</button>' +
-            '</div><div class="arrow"></div></div>')
-            .appendTo("body").hide();
-
-        this.$el.find(".imimg")
-            .on("load", function() {
-                $(this).closest(".imshell").find(".imerror").hide();
-                $(this).show();
-                self.$el.find(".imthrobber").hide();
-            })
-            .on("error", function() {
-                if (self.currentUrl !== $(this).attr("src")) {
-                    return;
-                }
-                $(this).closest(".imshell").find(".imerror").text($._("That is not a valid image URL.")).show();
-                $(this).hide();
-                self.$el.find(".imthrobber").hide();
-            });
-
-        this.$el.find("button").on("click", function() {
-            self.$modal.find(".image.active").removeClass("active");
-            self.$modal.modal();
-        });
-
-        Handlebars.registerHelper("slugify", this.slugify);
-        Handlebars.registerHelper("patchedEach", this.handlebarsPatchedEach);
-
-        this.$modal = $(Handlebars.templates.imagemodal({
-            imagesDir: self.options.imagesDir,
-            classes: ExtendedOutputImages
-        }));
-
-        this.$modal.find(".imcontent").on("scroll", _.throttle(function() {
-            if ($(this).scrollTop() > 0) {
-                $(this).addClass("top-shadow");
-            } else {
-                $(this).removeClass("top-shadow");
-            }
-        }, 100));
-
-        this.$modal.on("click", ".imcontent .image", function() {
-            self.$modal.find(".image.active").removeClass("active");
-            $(this).addClass("active");
-        });
-
-        this.$modal.on("shown.bs.modal", function() {
-            $("body").css("overflow", "hidden");
-            this.$modal.find(".tab-pane.active .imcontent").customLazyLoad();
-        }.bind(this));
-        this.$modal.on("hidden.bs.modal", function() {
-            $("body").css("overflow", "auto");
-        });
-
-        this.$modal.find("#im-submit").on("click", function() {
-            var $active = self.$modal.find(".image.active");
-            if ($active.length !== 1) {
+        detector: function(event) {
+            if (!/<img\s+[^>]*?\s*src=["']([^"']*)$/.test(event.pre)) {
                 return;
             }
-            var path = self.options.imagesDir + $active.attr("data-path") + ".png";
-            self.updateText(path);
-            self.updateTooltip(path);
-        })
+            var urlStart = event.col - RegExp.$1.length;
+            var url = event.line.slice(urlStart).match(/^[^"']*/)[0];
+            this.aceLocation = {
+                start: urlStart,
+                length: url.length,
+                row: event.row
+            };
+            this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + 1;
 
-        this.$modal.find(".nav-tabs a").click(function(e) {
-            e.preventDefault();
-            $(this).tab("show");
-            $(this).customLazyLoad();
-        });
+            this.updateTooltip(url);
+            this.placeOnScreen();
+            event.stopPropagation();
+            ScratchpadAutosuggest.enableLiveCompletion(false);
+        },
+        
+        updateTooltip: function(url) {
+            if (url !== this.currentUrl) {
+                this.currentUrl = url;
+                var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|localhost:\d+)$/i;
+                var match = /\/\/([^\/]*)(?:\/|\?|#|$)/.exec(url);
+                var host = match ? match[1] : "";
+                if (!host || allowedHosts.test(host)) {
+                    if (url !== this.$(".thumb").attr("src")) {
+                        this.$(".thumb").attr("src", url);
+                        this.$(".thumb-throbber").show();
+                    }
+                    if (this.$(".thumb-error").hasClass("domainError")) {
+                        this.$(".thumb-error").removeClass("domainError").hide();
+                        this.$(".thumb").show();
+                    }
+                } else {
+                    this.$(".thumb").hide();
+                    this.$(".thumb-error")
+                        .text($._("Sorry! That server is not permitted."))
+                        .addClass("domainError").show();
+                    this.$(".thumb-throbber").hide();
+                }
+            }
+        },
 
-        this.$modal.find(".imcontent")
-            .scroll(_.throttle(function() {
-                $(this).customLazyLoad()
-            }, 200))
-            .customScrollSpy(function(content) { // This function finds the associated pills for a scrollable div.
-                return $(content).closest(".tab-pane").find(".nav-pills");
+        render: function() {
+            var self = this;
+            this.$el = $('<div class="tooltip imagemodal-preview">' +
+                '<div class="content"><img src="/images/throbber.gif" class="thumb-throbber" /><div class="thumb-shell"><img class="thumb" /><div class="thumb-error"></div></div>' +
+                '<button class="kui-button kui-button-submit kui-button-primary" style="padding: 5px; width: 100%; margin: 0 auto;" >' + $._("Pick Image") + '</button>' +
+                '</div><div class="arrow"></div></div>')
+                .appendTo("body").hide();
+
+            this.$(".thumb")
+                .on("load", function() {
+                    $(this).closest(".thumb-shell").find(".thumb-error").hide();
+                    $(this).show();
+                    self.$(".thumb-throbber").hide();
+                })
+                .on("error", function() {
+                    if (self.currentUrl !== $(this).attr("src")) {
+                        return;
+                    }
+                    $(this).closest(".thumb-shell").find(".thumb-error").text($._("That is not a valid image URL.")).show();
+                    $(this).hide();
+                    self.$(".thumb-throbber").hide();
+                });
+
+            this.$("button").on("click", function() {
+                self.modal.$el.modal();
             });
-    },
 
-    slugify: function(text) {
-        return text.toLowerCase().match(/[a-z0-9_]+/g).join("-");
-    },
+            this.modal = new Modal(_.defaults({
+                parent: this
+            }, this.options));
+        }
+    });
+})(); // Close IIFE
 
-    handlebarsPatchedEach: function(arr, options) {
-        return _.map(arr, function(item, index) {
-            item.$index = index;
-            item.$first = index === 0;
-            item.$last = index === arr.length - 1;
-            return options.fn(item);
-        }).join("");
-    }
-});
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.imagePicker = TooltipBase.extend({
     defaultImage: "cute/None",
@@ -2777,7 +2862,7 @@ function program4(depth0,data,depth1) {
   if(typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, { hash: {} }); }
   else if(stack2=== undef) { stack1 = helperMissing.call(depth0, "slugify", stack1, { hash: {} }); }
   else { stack1 = stack2; }
-  buffer += escapeExpression(stack1) + "\">\n        <div class=\"imcontent\">\n        <div style=\"position: relative;\">\n        ";
+  buffer += escapeExpression(stack1) + "\">\n        <div class=\"imagemodal-content\">\n        <div style=\"position: relative;\">\n        ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   stack2 = helpers.each;
@@ -2872,7 +2957,7 @@ function program10(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                    <div class=\"imshell\"><img src=\"/images/throbber.gif\" data-lazy-src=\"";
+  buffer += escapeExpression(stack1) + "\">\n                    <div class=\"thumb-shell\"><img src=\"/images/throbber.gif\" data-lazy-src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth3.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -2955,5 +3040,5 @@ function program13(depth0,data) {
   if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n    </div>\n\n    <div class=\"modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">Close</button>\n      <button id=\"im-submit\" type=\"button\" class=\"simple-button green\" data-dismiss=\"modal\">Ok</button>\n    </div>\n</div>";
+  buffer += "\n    </div>\n\n    <div class=\"modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">Close</button>\n      <button type=\"button\" class=\"simple-button green imagemodal-submit\" data-dismiss=\"modal\">Ok</button>\n    </div>\n</div>";
   return buffer;});;
