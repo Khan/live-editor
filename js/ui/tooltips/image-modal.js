@@ -13,10 +13,10 @@
             );
         },
 
-        // There are more bindings below in events these are here because 
-        // scroll events cannot be delegated
+        // There are more bindings below in events.
+        // These are here because scroll events cannot be delegated
         bind: function() {
-            // Handle the heading shadow which appears on scroll
+            // Handle the shadow which appears on scroll
             this.$(".imagemodal-content").scroll(
                 _.throttle(function(e) {
                     var $target = $(e.currentTarget);
@@ -42,12 +42,14 @@
                 function(e) {
                     this.$(".image.active").removeClass("active");
                     $(e.currentTarget).addClass("active");
+                    this.options.record.log("imagemodal.select_img", $(e.currentTarget).closest(".image").attr("data-path"));
                 },
 
             "click .nav-tabs a":
                 function(e) {
                     $(e.currentTarget).tab("show");
                     // We need to call LazyLoad any time we are changing the visible content div.
+<<<<<<< HEAD
                     TooltipUtils.lazyLoadImgs(e.currentTarget);
                     e.preventDefault();
                 },
@@ -57,11 +59,21 @@
                     $("body").css("overflow", "hidden");
                     this.$(".image.active").removeClass("active");
                     TooltipUtils.lazyLoadImgs(this.$(".tab-pane.active .imagemodal-content"));
+=======
+                    e.preventDefault();
                 },
-            
-            "hidden.bs.modal":
-                function(e) {
+
+            "shown": // Modal or tab
+                function() {
+                    this.$(".tab-pane.active .imagemodal-content").customLazyLoad();
+>>>>>>> Added recording and playback to the HMTL image modal
+                },
+
+            "hide.bs.modal": 
+                function() {
+                    this.scrollStart = undefined;
                     $("body").css("overflow", "auto");
+                    this.options.record.log("imagemodal.hide");
                 },
 
             // Update the url in ACE if someone clicks ok
@@ -75,6 +87,25 @@
                     this.parent.updateText(path);
                     this.parent.updateTooltip(path);
                 }
+        },
+
+        // This can't be included in the event hash, because an indistinguishable
+        //  "show" event also bubbles from the tabs
+        show: function() {
+            this.$el.modal();
+            $("body").css("overflow", "hidden");
+            this.$(".image.active").removeClass("active");
+            this.options.record.log("imagemodal.show");
+        },
+
+        select_img: function(dataPath) {
+            //debugger;
+            var $image = $(".image[data-path='"+dataPath+"']");
+            var $pane = $image.closest(".tab-pane");
+            var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
+            $tab.tab("show");
+            $pane.find(".imagemodal-content").scrollTop($image.position().top-100);
+            $image.find("img").click();
         },
 
         render: function() {
@@ -113,6 +144,11 @@
             this.parent = options.parent;
             this.render();
             this.bindToRequestTooltip();
+            _.extend(this.options.record.handlers, {
+                "imagemodal.show": this.modal.show.bind(this.modal),
+                "imagemodal.hide": function(){ this.modal.$el.modal("hide") }.bind(this),
+                "imagemodal.select_img": this.modal.select_img.bind(this.modal)
+            });
         },
 
         detector: function(event) {
@@ -181,7 +217,7 @@
                 });
 
             this.$("button").on("click", function() {
-                self.modal.$el.modal();
+                self.modal.show();
             });
 
             this.modal = new Modal(_.defaults({

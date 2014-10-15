@@ -683,6 +683,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
         if (!this.playing && this.recording && this.commands) {
             // Commands are stored in the format:
             // [time, name, arguments...]
+
             var args = Array.prototype.slice.call(arguments, 0);
             args.unshift(Math.floor((new Date).getTime() - this.startTime));
             this.commands.push(args);

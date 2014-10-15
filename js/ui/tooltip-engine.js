@@ -5,11 +5,10 @@ window.TooltipEngine = Backbone.View.extend({
         var record = this.options.record;
 
         this.tooltips = {};
-        var childOptions = {
-            parent: this,
-            editor: this.editor,
-            imagesDir: this.options.imagesDir
-        };
+        var childOptions = _.defaults({
+                parent: this
+            }, options);
+
         _.each(options.tooltips, function(name) {
             this.tooltips[name] = new TooltipEngine.classes[name](childOptions);
         }.bind(this));
