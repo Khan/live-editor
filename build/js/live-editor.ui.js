@@ -1021,7 +1021,7 @@ window.LiveEditor = Backbone.View.extend({
         var rebootTimer;
 
         soundManager.setup({
-            url: this.externalsDir + "/SoundManager2/swf/",
+            url: this.externalsDir + "SoundManager2/swf/",
             debugMode: false,
             // Un-comment this to test Flash on FF:
             // debugFlash: true, preferFlash: true, useHTML5Audio: false,
