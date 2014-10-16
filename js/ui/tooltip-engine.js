@@ -35,8 +35,8 @@ window.TooltipEngine = Backbone.View.extend({
         var checkBlur = function(e) {
             var inEditor = $.contains(this.editor.container, e.target);
             var inTooltip = (this.currentTooltip && $.contains(this.currentTooltip.$el[0], e.target));
-            var modalOpen = (this.currentTooltip && this.currentTooltip.$modal &&
-                                this.currentTooltip.$modal.is(":visible"))
+            var modalOpen = (this.currentTooltip && this.currentTooltip.modal &&
+                                this.currentTooltip.modal.$el.is(":visible"))
             if (this.currentTooltip && !(inEditor || inTooltip || modalOpen)) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;

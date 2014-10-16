@@ -486,116 +486,6 @@
 	});
 })(jQuery);
 
-(function($) {
-	// This function loads an image set up for lazy loading,
-	// by setting its src to its data-lazy-src
-	$.fn.loadNow = function() {
-		$.each(this, function(i, elem) {
-			$(elem).attr("src", $(elem).attr("data-lazy-src"));
-			$(elem).removeAttr("data-lazy-src");
-		})
-		return this;
-	}
-
-   /* 
-    * This is a KA specific implementation of lazy loading:
-	* It is targetted specifically at the modal in the imageModal tooltip
-	* (although it is generally applicable to some degree)
-	* It loads images as they are scrolled into view.
-	* It makes the following assumptions
-	* - All lazy-loading images have a "data-lazy-src" attribute with the src we wish to load on-demand
-	* - The div being scrolled is the offset parent of all of the images (http://api.jquery.com/position/)
-	* - If image A comes before image B in the source, then A is at least as high as B on the page.
-	*
-	*/
-
-	$.fn.customLazyLoad = function(tolerance) {
-		tolerance = tolerance || 250;
-		$(this).each(function(i, elem) {
-			var top = $(elem).scrollTop();
-			var bottom = top + $(elem).height();
-			top -= tolerance;
-			bottom += tolerance;
-			$(elem).find("img[data-lazy-src]").each(function(j, img) {
-				var height = $(img).position().top;
-				if (height < top) {
-					return true; // continue;
-				} else if (height < bottom) {
-					$(img).loadNow();
-				} else {
-					return false; // break;
-				}
-			})
-		})
-	}
-})(jQuery);
-(function($) {
-	var scrollspy = function(shell) {
-		var $shell = $(shell);
-		return function() {
-			var pointers = $shell.data("scrollspy.pointers"); // [[height, node], ... ]
-			if (pointers == undefined) {
-				$shell.data("scrollspy.pointers", "working");
-				setTimeout(function() {
-					$shell.customScrollSpy("refresh")
-				}, 0);
-				return;
-			} else if (pointers == "working") {
-				return;
-			}
-
-			var scroll = $shell.scrollTop();
-			var active;
-			$.each(pointers, function(i, pointer) {
-				if (pointer[0] < scroll + 150) {
-					active = pointer[1];
-				} else {
-					return false;
-				}
-			});
-
-			$($(shell).data("scrollspy.nav_ul")).find(".active").removeClass("active");
-			$(active).closest("li").addClass("active");
-		}
-	};
-
-	// This is a KA specific implementation of scrollspy, hence the name.
-	$.fn.customScrollSpy = function(arg) {
-		var shells = this;
-		$.each(shells, function(i, shell) {
-			if (typeof arg === "function") {
-				var nav_ul = arg(shell);
-				$(shell).data("scrollspy.nav_ul", nav_ul);
-				$(shell).on("scroll", _.throttle(scrollspy(shell), 60)) // Uses a closure to capture the shell
-				$(nav_ul).find("li a").on("click", function(e) {
-					var top = $(shell).find($(this).attr("href")).position().top;
-					$(shell).scrollTop(top);
-					e.preventDefault();
-				})
-			} else if (arg == "refresh") {
-				var nav_ul = $(shell).data("scrollspy.nav_ul");
-				if (!nav_ul) {
-					console.warn("tried to refresh scrollspy without first initializing it");
-					return;
-				}
-				var navs = nav_ul.find("li a");
-				var pointers = [];
-				$.each(navs, function(i, nav) {
-					var selector = $(nav).attr("href");
-					var $heading = $(shell).find(selector).first();
-					if ($heading.length) {
-						var y = $heading.position().top;
-						pointers.push([y, nav]);
-					}
-				});
-				pointers.sort(function(a, b) {
-					return a[0] - b[0]
-				})
-				$(shell).data("scrollspy.pointers", pointers);
-			}
-		})
-	};
-})(jQuery);
 /**
  * Helper functionality for the Scratchpad auto suggest feature,
  * parameter information and live documentation.
@@ -1833,8 +1723,8 @@ window.TooltipEngine = Backbone.View.extend({
         var checkBlur = function(e) {
             var inEditor = $.contains(this.editor.container, e.target);
             var inTooltip = (this.currentTooltip && $.contains(this.currentTooltip.$el[0], e.target));
-            var modalOpen = (this.currentTooltip && this.currentTooltip.$modal &&
-                                this.currentTooltip.$modal.is(":visible"))
+            var modalOpen = (this.currentTooltip && this.currentTooltip.modal &&
+                                this.currentTooltip.modal.$el.is(":visible"))
             if (this.currentTooltip && !(inEditor || inTooltip || modalOpen)) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
@@ -2286,12 +2176,16 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             this.parent = options.parent;
             this.render();
             this.bind();
-            this.$(".imagemodal-content").customScrollSpy(function(content) { // This function finds the associated pills for a scrollable div.
+            TooltipUtils.setupScrollSpy(
+                this.$(".imagemodal-content"),
+                function(content) { // This function finds the associated pills for a scrollable div.
                     return $(content).closest(".tab-pane").find(".nav-pills");
-                });
+                }
+            );
         },
 
-        // There are more bindings below in events these are here because scrolle vents cannot be delegated
+        // There are more bindings below in events these are here because 
+        // scroll events cannot be delegated
         bind: function() {
             // Handle the heading shadow which appears on scroll
             $(".imagemodal-content").scroll(
@@ -2308,7 +2202,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             // Lazy load on scroll
             $(".imagemodal-content").scroll(
                 _.throttle(function(e) {
-                    $(e.currentTarget).customLazyLoad()
+                    TooltipUtils.lazyLoadImgs(e.currentTarget);
                 }, 200)
             );
         },
@@ -2325,7 +2219,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 function(e) {
                     $(e.currentTarget).tab("show");
                     // We need to call LazyLoad any time we are changing the visible content div.
-                    $(e.currentTarget).customLazyLoad(); 
+                    TooltipUtils.lazyLoadImgs(e.currentTarget);
                     e.preventDefault();
                 },
 
@@ -2333,7 +2227,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 function(e) {
                     $("body").css("overflow", "hidden");
                     this.$(".image.active").removeClass("active");
-                    this.$(".tab-pane.active .imagemodal-content").customLazyLoad();
+                    TooltipUtils.lazyLoadImgs(this.$(".tab-pane.active .imagemodal-content"));
                 },
             
             "hidden.bs.modal":
@@ -2433,11 +2327,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
 
         render: function() {
             var self = this;
-            this.$el = $('<div class="tooltip imagemodal-preview">' +
-                '<div class="content"><img src="/images/throbber.gif" class="thumb-throbber" /><div class="thumb-shell"><img class="thumb" /><div class="thumb-error"></div></div>' +
-                '<button class="kui-button kui-button-submit kui-button-primary" style="padding: 5px; width: 100%; margin: 0 auto;" >' + $._("Pick Image") + '</button>' +
-                '</div><div class="arrow"></div></div>')
-                .appendTo("body").hide();
+            this.$el = $(Handlebars.templates.imagemodalpreview())
+                            .appendTo("body").hide();
 
             this.$(".thumb")
                 .on("load", function() {
@@ -2449,7 +2340,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                     if (self.currentUrl !== $(this).attr("src")) {
                         return;
                     }
-                    $(this).closest(".thumb-shell").find(".thumb-error").text($._("That is not a valid image URL.")).show();
+                    $(this).closest(".thumb-shell").find(".thumb-error")
+                        .text($._("That is not a valid image URL.")).show();
                     $(this).hide();
                     self.$(".thumb-throbber").hide();
                 });
@@ -2463,7 +2355,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             }, this.options));
         }
     });
-})(); // Close IIFE
+})();
 
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.imagePicker = TooltipBase.extend({
@@ -2700,6 +2592,116 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
 });
 
 
+window.TooltipUtils = {
+    /* 
+     * This is a KA specific implementation of lazy loading:
+	 * It is targetted specifically at the modal in the imageModal tooltip
+	 * (although it is generally applicable to some degree)
+	 * It loads images as they are scrolled into view.
+	 * It makes the following assumptions
+	 * - All lazy-loading images have a "data-lazy-src" attribute with the src we wish to load on-demand
+	 * - The div being scrolled is the offset parent of all of the images (http://api.jquery.com/position/)
+	 * - If image A comes before image B in the source, then A is at least as high as B on the page.
+	 *
+	 */
+	lazyLoadImgs: function(container, tolerance) {
+		tolerance = tolerance || 250;
+		var self = this;
+		$(container).each(function(i, elem) {
+			var top = $(elem).scrollTop();
+			var bottom = top + $(elem).height();
+			top -= tolerance;
+			bottom += tolerance;
+			$(elem).find("img[data-lazy-src]").each(function(j, img) {
+				var height = $(img).position().top;
+				if (height < top) {
+					return true; // continue;
+				} else if (height < bottom) {
+					self.loadNow(img);
+				} else {
+					return false; // break;
+				}
+			})
+		})
+	},
+
+	// This function loads an image set up for lazy loading,
+	// by setting its src to its data-lazy-src
+	loadNow: function(img) {
+		$.each($(img), function(i, elem) {
+			$(elem).attr("src", $(elem).attr("data-lazy-src"));
+			$(elem).removeAttr("data-lazy-src");
+		})
+	},
+
+    /*
+     * This is a KA specific implementation of scrollspy
+     * The second argument can be one of two things:
+     * - A function to determine the nav element.
+     * - The word "refresh" to recalculate heading positions
+     */
+	setupScrollSpy: function(scrollables, arg) {
+		$.each($(scrollables), function(i, shell) {
+			if (arg == "refresh") {
+				var nav_ul = $(shell).data("scrollspy.nav_ul");
+				if (!nav_ul) {
+					console.warn("tried to refresh scrollspy without first initializing it");
+					return;
+				}
+				var navs = nav_ul.find("li a");
+				var pointers = [];
+				$.each(navs, function(i, nav) {
+					var selector = $(nav).attr("href");
+					var $heading = $(shell).find(selector).first();
+					if ($heading.length) {
+						var y = $heading.position().top;
+						pointers.push([y, nav]);
+					}
+				});
+				pointers.sort(function(a, b) {
+					return a[0] - b[0]
+				})
+				$(shell).data("scrollspy.pointers", pointers);
+			} else {
+				var nav_ul = arg(shell);
+				$(shell).data("scrollspy.nav_ul", nav_ul);
+				$(shell).on("scroll", _.throttle(this.doScrollSpy, 60))
+				$(nav_ul).find("li a").on("click", function(e) {
+					var top = $(shell).find($(this).attr("href")).position().top;
+					$(shell).scrollTop(top);
+					e.preventDefault();
+				})
+			}
+		}.bind(this))
+	},
+
+	doScrollSpy: function() {
+		var $this = $(this);
+		var pointers = $this.data("scrollspy.pointers"); // [[height, node], ... ]
+		if (pointers == undefined) {
+			$this.data("scrollspy.pointers", "working");
+			setTimeout(function() {
+				TooltipUtils.setupScrollSpy($this, "refresh")
+			}, 0);
+			return;
+		} else if (pointers == "working") {
+			return;
+		}
+
+		var scroll = $this.scrollTop();
+		var active;
+		$.each(pointers, function(i, pointer) {
+			if (pointer[0] < scroll + 150) {
+				active = pointer[1];
+			} else {
+				return false;
+			}
+		});
+
+		$this.data("scrollspy.nav_ul").find(".active").removeClass("active");
+		$(active).closest("li").addClass("active");
+	}
+}
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
 this["Handlebars"]["templates"]["imagepicker"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -3016,6 +3018,16 @@ function program13(depth0,data) {
   
   return "class=\"active\"";}
 
+function program15(depth0,data) {
+  
+  
+  return "Close";}
+
+function program17(depth0,data) {
+  
+  
+  return "Ok";}
+
   buffer += "<div class=\"modal imagemodal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n    ";
   foundHelper = helpers.classes;
   stack1 = foundHelper || depth0.classes;
@@ -3040,5 +3052,48 @@ function program13(depth0,data) {
   if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n    </div>\n\n    <div class=\"modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">Close</button>\n      <button type=\"button\" class=\"simple-button green imagemodal-submit\" data-dismiss=\"modal\">Ok</button>\n    </div>\n</div>";
+  buffer += "\n    </div>\n\n    <div class=\"modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(15, program15, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "</button>\n      <button type=\"button\" class=\"simple-button green imagemodal-submit\" data-dismiss=\"modal\">";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(17, program17, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "</button>\n    </div>\n</div>";
+  return buffer;});;
+this["Handlebars"] = this["Handlebars"] || {};
+this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
+this["Handlebars"]["templates"]["imagemodalpreview"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  helpers = helpers || Handlebars.helpers;
+  var buffer = "", stack1, foundHelper, tmp1, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
+
+function program1(depth0,data) {
+  
+  
+  return "Pick Image:";}
+
+  buffer += "<div class=\"tooltip imagemodal-preview\">\n	<div class=\"content\">\n	<img src=\"/images/throbber.gif\" class=\"thumb-throbber\" />\n	<div class=\"thumb-shell\"><img class=\"thumb\" /><div class=\"thumb-error\"></div></div> \n	<button class=\"kui-button kui-button-submit kui-button-primary\" style=\"padding: 5px; width: 100%; margin: 0 auto;\" >\n		";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(1, program1, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n	</button> \n	</div><div class=\"arrow\">\n	</div>\n</div>";
   return buffer;});;

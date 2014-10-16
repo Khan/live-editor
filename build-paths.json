@@ -73,7 +73,8 @@
             "js/ui/tooltip-engine.js",
             "js/ui/tooltips/*.js",
             "build/tmpl/imagepicker.js",
-            "build/tmpl/imagemodal.js"
+            "build/tmpl/imagemodal.js",
+            "build/tmpl/imagemodalpreview.js"
         ],
         "shared": [
             "js/shared/i18n.js",

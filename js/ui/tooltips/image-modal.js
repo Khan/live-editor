@@ -5,12 +5,16 @@
             this.parent = options.parent;
             this.render();
             this.bind();
-            this.$(".imagemodal-content").customScrollSpy(function(content) { // This function finds the associated pills for a scrollable div.
+            TooltipUtils.setupScrollSpy(
+                this.$(".imagemodal-content"),
+                function(content) { // This function finds the associated pills for a scrollable div.
                     return $(content).closest(".tab-pane").find(".nav-pills");
-                });
+                }
+            );
         },
 
-        // There are more bindings below in events these are here because scrolle vents cannot be delegated
+        // There are more bindings below in events these are here because 
+        // scroll events cannot be delegated
         bind: function() {
             // Handle the heading shadow which appears on scroll
             $(".imagemodal-content").scroll(
@@ -27,7 +31,7 @@
             // Lazy load on scroll
             $(".imagemodal-content").scroll(
                 _.throttle(function(e) {
-                    $(e.currentTarget).customLazyLoad()
+                    TooltipUtils.lazyLoadImgs(e.currentTarget);
                 }, 200)
             );
         },
@@ -44,7 +48,7 @@
                 function(e) {
                     $(e.currentTarget).tab("show");
                     // We need to call LazyLoad any time we are changing the visible content div.
-                    $(e.currentTarget).customLazyLoad(); 
+                    TooltipUtils.lazyLoadImgs(e.currentTarget);
                     e.preventDefault();
                 },
 
@@ -52,7 +56,7 @@
                 function(e) {
                     $("body").css("overflow", "hidden");
                     this.$(".image.active").removeClass("active");
-                    this.$(".tab-pane.active .imagemodal-content").customLazyLoad();
+                    TooltipUtils.lazyLoadImgs(this.$(".tab-pane.active .imagemodal-content"));
                 },
             
             "hidden.bs.modal":
@@ -152,11 +156,8 @@
 
         render: function() {
             var self = this;
-            this.$el = $('<div class="tooltip imagemodal-preview">' +
-                '<div class="content"><img src="/images/throbber.gif" class="thumb-throbber" /><div class="thumb-shell"><img class="thumb" /><div class="thumb-error"></div></div>' +
-                '<button class="kui-button kui-button-submit kui-button-primary" style="padding: 5px; width: 100%; margin: 0 auto;" >' + $._("Pick Image") + '</button>' +
-                '</div><div class="arrow"></div></div>')
-                .appendTo("body").hide();
+            this.$el = $(Handlebars.templates.imagemodalpreview())
+                            .appendTo("body").hide();
 
             this.$(".thumb")
                 .on("load", function() {
@@ -168,7 +169,8 @@
                     if (self.currentUrl !== $(this).attr("src")) {
                         return;
                     }
-                    $(this).closest(".thumb-shell").find(".thumb-error").text($._("That is not a valid image URL.")).show();
+                    $(this).closest(".thumb-shell").find(".thumb-error")
+                        .text($._("That is not a valid image URL.")).show();
                     $(this).hide();
                     self.$(".thumb-throbber").hide();
                 });
@@ -182,4 +184,4 @@
             }, this.options));
         }
     });
-})(); // Close IIFE
+})();
