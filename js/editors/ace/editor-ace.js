@@ -35,6 +35,12 @@ window.AceEditor = Backbone.View.extend({
         this.content = this.$(this.dom.CONTENT);
         this.offset = this.content.offset();
 
+        // Bind the recording logic first. Should always happen before
+        // other events (such as the tooltip engine)
+        if (this.record) {
+            this.bindRecord();
+        }
+
         // Attach the picker tooltips to the editor
         this.tooltipEngine = new TooltipEngine({
             tooltips: this.tooltips[this.type],
@@ -82,10 +88,6 @@ window.AceEditor = Backbone.View.extend({
         this.config.editor = this;
 
         this.reset();
-
-        if (this.record) {
-            this.bindRecord();
-        }
     },
 
     bindRecord: function() {
@@ -207,12 +209,13 @@ window.AceEditor = Backbone.View.extend({
             return;
         }
 
-        var curRange = editor.selection.getRange();
+        var curRange = this.editor.selection.getRange();
 
         var start = curRange.start;
         var end = curRange.end;
 
-        this.record.log(start.row, start.column, end.row, end.column);
+        this.record.log("select", start.row, start.column, end.row,
+            end.column);
     },
 
     reset: function(code, focus) {

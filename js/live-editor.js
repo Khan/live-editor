@@ -702,9 +702,8 @@ window.LiveEditor = Backbone.View.extend({
                 self.$el.find("#draw-widgets").addClass("hidden").hide();
 
                 // Because we are recording in chunks, do not reset the canvas
-                // to its initial state, but do redraw.
+                // to its initial state.
                 self.drawCanvas.endDraw();
-                self.drawCanvas.redraw();
             }
         });
 
@@ -947,7 +946,7 @@ window.LiveEditor = Backbone.View.extend({
 
         // Log the recorded action
         if (data.log) {
-            this.record.log.apply(this, data.log);
+            this.record.log.apply(this.record, data.log);
         }
     },
 

@@ -385,6 +385,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
         this.editor = options.editor;
         this.record = options.record;
         this.config = options.config;
+        this.drawCanvas = options.drawCanvas;
         this.externalsDir = options.externalsDir;
         this.transloaditTemplate = options.transloaditTemplate;
         this.transloaditAuthKey = options.transloaditAuthKey;
@@ -607,7 +608,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
         // Clear and hide the drawing area
         this.drawCanvas.clear(true);
         this.drawCanvas.endDraw();
-        this.record.runSeek(this.getDurationMsOfSavedAudio());
+        this.record.seekTo(this.getDurationMsOfSavedAudio());
 
         // Set a timeout just to wait for all the commands to finish..
         setTimeout(_.bind(function() {
@@ -1340,9 +1341,8 @@ window.LiveEditor = Backbone.View.extend({
                 self.$el.find("#draw-widgets").addClass("hidden").hide();
 
                 // Because we are recording in chunks, do not reset the canvas
-                // to its initial state, but do redraw.
+                // to its initial state.
                 self.drawCanvas.endDraw();
-                self.drawCanvas.redraw();
             }
         });
 
@@ -1585,7 +1585,7 @@ window.LiveEditor = Backbone.View.extend({
 
         // Log the recorded action
         if (data.log) {
-            this.record.log.apply(this, data.log);
+            this.record.log.apply(this.record, data.log);
         }
     },
 

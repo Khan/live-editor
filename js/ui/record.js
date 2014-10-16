@@ -56,6 +56,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
         this.editor = options.editor;
         this.record = options.record;
         this.config = options.config;
+        this.drawCanvas = options.drawCanvas;
         this.externalsDir = options.externalsDir;
         this.transloaditTemplate = options.transloaditTemplate;
         this.transloaditAuthKey = options.transloaditAuthKey;
@@ -278,7 +279,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
         // Clear and hide the drawing area
         this.drawCanvas.clear(true);
         this.drawCanvas.endDraw();
-        this.record.runSeek(this.getDurationMsOfSavedAudio());
+        this.record.seekTo(this.getDurationMsOfSavedAudio());
 
         // Set a timeout just to wait for all the commands to finish..
         setTimeout(_.bind(function() {

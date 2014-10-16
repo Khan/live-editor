@@ -136,6 +136,7 @@
         "external/structuredjs/external/esprima.js",
         "external/structuredjs/structured.js",
         "external/underscore/underscore.js",
+        "external/multirecorderjs/multirecorder-worker.js",
         "external/blockly/media/**",
         "external/SoundManager2/swf/**"
     ],

@@ -435,6 +435,7 @@ window.WebpageOutput = Backbone.View.extend({
 
     lint: function(userCode, callback) {
         this.userDOM = null;
+        userCode = userCode || "";
 
         // Lint the user's code, returning any errors in the callback
         var results = Slowparse.HTML(this.getDocument(), userCode, {
