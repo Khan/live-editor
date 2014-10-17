@@ -1694,8 +1694,8 @@ window.TooltipEngine = Backbone.View.extend({
 
         this.tooltips = {};
         var childOptions = _.defaults({
-                parent: this
-            }, options);
+            parent: this
+        }, options);
 
         _.each(options.tooltips, function(name) {
             this.tooltips[name] = new TooltipEngine.classes[name](childOptions);
@@ -1723,7 +1723,7 @@ window.TooltipEngine = Backbone.View.extend({
             var inEditor = $.contains(this.editor.container, e.target);
             var inTooltip = (this.currentTooltip && $.contains(this.currentTooltip.$el[0], e.target));
             var modalOpen = (this.currentTooltip && this.currentTooltip.modal &&
-                                this.currentTooltip.modal.$el.is(":visible"))
+                                this.currentTooltip.modal.$el.is(":visible"));
             if (this.currentTooltip && !(inEditor || inTooltip || modalOpen)) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
@@ -2208,55 +2208,39 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
 
         events: {
             // Highlight image when it is clicked
-            "click .imagemodal-content .image":
-                function(e) {
-                    this.$(".image.active").removeClass("active");
-                    $(e.currentTarget).addClass("active");
-                    this.options.record.log("imagemodal.select_img", $(e.currentTarget).closest(".image").attr("data-path"));
-                },
+            "click .imagemodal-content .image": function(e) {
+                this.$(".image.active").removeClass("active");
+                $(e.currentTarget).addClass("active");
+                var img_data_path = $(e.currentTarget).closest(".image").attr("data-path");
+                this.options.record.log("imagemodal.selectImg", img_data_path);
+            },
 
-            "click .nav-tabs a":
-                function(e) {
-                    $(e.currentTarget).tab("show");
-                    // We need to call LazyLoad any time we are changing the visible content div.
-<<<<<<< HEAD
-                    TooltipUtils.lazyLoadImgs(e.currentTarget);
-                    e.preventDefault();
-                },
+            "click .nav-tabs a": function(e) {
+                $(e.currentTarget).tab("show");
+                e.preventDefault();
+            },
 
-            "shown.bs.modal":
-                function(e) {
-                    $("body").css("overflow", "hidden");
-                    this.$(".image.active").removeClass("active");
-                    TooltipUtils.lazyLoadImgs(this.$(".tab-pane.active .imagemodal-content"));
-=======
-                    e.preventDefault();
-                },
+            // Modal or tab
+            "shown": function() {
+                this.$(".tab-pane.active .imagemodal-content").customLazyLoad();
+            },
 
-            "shown": // Modal or tab
-                function() {
-                    this.$(".tab-pane.active .imagemodal-content").customLazyLoad();
->>>>>>> Added recording and playback to the HMTL image modal
-                },
-
-            "hide.bs.modal": 
-                function() {
-                    this.scrollStart = undefined;
-                    $("body").css("overflow", "auto");
-                    this.options.record.log("imagemodal.hide");
-                },
+            "hide.bs.modal": function() {
+                this.scrollStart = undefined;
+                $("body").css("overflow", "auto");
+                this.options.record.log("imagemodal.hide");
+            },
 
             // Update the url in ACE if someone clicks ok
-            "click .imagemodal-submit":
-                function(e) {
-                    var $active = this.$(".image.active");
-                    if ($active.length !== 1) {
-                        return;
-                    }
-                    var path = this.options.imagesDir + $active.attr("data-path") + ".png";
-                    this.parent.updateText(path);
-                    this.parent.updateTooltip(path);
+            "click .imagemodal-submit": function(e) {
+                var $active = this.$(".image.active");
+                if ($active.length !== 1) {
+                    return;
                 }
+                var path = this.options.imagesDir + $active.attr("data-path") + ".png";
+                this.parent.updateText(path);
+                this.parent.updateTooltip(path);
+            }
         },
 
         // This can't be included in the event hash, because an indistinguishable
@@ -2268,7 +2252,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             this.options.record.log("imagemodal.show");
         },
 
-        select_img: function(dataPath) {
+        selectImg: function(dataPath) {
             //debugger;
             var $image = $(".image[data-path='"+dataPath+"']");
             var $pane = $image.closest(".tab-pane");
@@ -2311,8 +2295,10 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             this.bindToRequestTooltip();
             _.extend(this.options.record.handlers, {
                 "imagemodal.show": this.modal.show.bind(this.modal),
-                "imagemodal.hide": function(){ this.modal.$el.modal("hide") }.bind(this),
-                "imagemodal.select_img": this.modal.select_img.bind(this.modal)
+                "imagemodal.hide": function(){ 
+                    this.modal.$el.modal("hide")
+                }.bind(this),
+                "imagemodal.selectImg": this.modal.selectImg.bind(this.modal)
             });
         },
 

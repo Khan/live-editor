@@ -6,8 +6,8 @@ window.TooltipEngine = Backbone.View.extend({
 
         this.tooltips = {};
         var childOptions = _.defaults({
-                parent: this
-            }, options);
+            parent: this
+        }, options);
 
         _.each(options.tooltips, function(name) {
             this.tooltips[name] = new TooltipEngine.classes[name](childOptions);
@@ -35,7 +35,7 @@ window.TooltipEngine = Backbone.View.extend({
             var inEditor = $.contains(this.editor.container, e.target);
             var inTooltip = (this.currentTooltip && $.contains(this.currentTooltip.$el[0], e.target));
             var modalOpen = (this.currentTooltip && this.currentTooltip.modal &&
-                                this.currentTooltip.modal.$el.is(":visible"))
+                                this.currentTooltip.modal.$el.is(":visible"));
             if (this.currentTooltip && !(inEditor || inTooltip || modalOpen)) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;

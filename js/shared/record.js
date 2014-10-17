@@ -321,8 +321,14 @@ window.ScratchpadRecord = Backbone.Model.extend({
             // Commands are stored in the format:
             // [time, name, arguments...]
 
+            if (this.synchronizedTime === undefined) {
+                this.synchronizedTime = Math.floor((new Date).getTime() - this.startTime);
+                setTimeout(function(){ 
+                    this.synchronizedTime = undefined 
+                }.bind(this));
+            }
             var args = Array.prototype.slice.call(arguments, 0);
-            args.unshift(Math.floor((new Date).getTime() - this.startTime));
+            args.unshift(this.synchronizedTime);
             this.commands.push(args);
             return true;
         }
