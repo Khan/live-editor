@@ -17,7 +17,7 @@
         // scroll events cannot be delegated
         bind: function() {
             // Handle the heading shadow which appears on scroll
-            $(".imagemodal-content").scroll(
+            this.$(".imagemodal-content").scroll(
                 _.throttle(function(e) {
                     var $target = $(e.currentTarget);
                     if ($target.scrollTop() > 0) {
@@ -29,7 +29,7 @@
             );
 
             // Lazy load on scroll
-            $(".imagemodal-content").scroll(
+            this.$(".imagemodal-content").scroll(
                 _.throttle(function(e) {
                     TooltipUtils.lazyLoadImgs(e.currentTarget);
                 }, 200)
