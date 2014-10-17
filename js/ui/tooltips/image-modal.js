@@ -91,6 +91,11 @@
             return text.toLowerCase().match(/[a-z0-9_]+/g).join("-");
         },
 
+        // This patches our super old version of Handlebars to
+        // give us access to the iteration index inside an each loop.
+        // This is exactly how it works in Handlebars 1.3+
+        // except that they use @<value> instead of $<value>
+        // when we upgrade Handlebars we can get rid of this.
         handlebarsPatchedEach: function(arr, options) {
             return _.map(arr, function(item, index) {
                 item.$index = index;

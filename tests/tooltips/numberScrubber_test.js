@@ -5,49 +5,49 @@ describe("numberScrubber - detection", function() {
     it("! Before number", function() {
         var line = "Falaffel -123 Falaffel";
         var pre = "Falaffel";
-        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.not.be.ok();
+        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be(false);
     });
 
     it("Start of number", function() {
         var line = "Falaffel 123 Falaffel";
         var pre = "Falaffel ";
-        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be(true);
     });
 
     it("Middle of number", function() {
         var line = "Falaffel 123 Falaffel";
         var pre = "Falaffel 12";
-        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be(true);
     });
 
     it("End of number", function() {
         var line = "Falaffel 123 Falaffel";
         var pre = "Falaffel 123";
-        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be(true);
     });
 
     it("Start of negative", function() {
         var line = "Falaffel -123 Falaffel";
         var pre = "Falaffel ";
-        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be(true);
     });
 
     it("Middle of negative", function() {
         var line = "Falaffel -123 Falaffel";
         var pre = "Falaffel -1";
-        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be(true);
     });
 
     it("! After number", function() {
         var line = "Falaffel 123 Falaffel";
         var pre = "Falaffel 123 ";
-        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.not.be.ok();
+        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be(false);
     });
 
     it("! Random", function() {
         var line = "Alex Rodrigues";
         var pre = "Alex Rod";
-        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.not.be.ok();
+        expect(testMockedTooltipDetection(mockedNumberScrubber, line, pre)).to.be(false);
     });
 });
 

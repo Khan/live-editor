@@ -97,7 +97,7 @@ var testMockedTooltipDetection = function(tooltip, line, pre) {
     var event = getTooltipRequestEvent(line, pre);
     tooltip.placeOnScreen = sinon.spy();
     tooltip.detector(event);
-    return tooltip.placeOnScreen.called;
+    return !!tooltip.placeOnScreen.called;
 };
 
 function testReplace(tooltip, line, pre, updates, result) {

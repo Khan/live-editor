@@ -4,43 +4,43 @@ describe("imagePicker - detection", function() {
     it("! Before open paren", function() {
         var line = 'getImage("cute/Blank");';
         var pre = 'getImage';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.not.be.ok();
+        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(false);
     });
 
     it("After open paren", function() {
         var line = 'getImage("cute/Blank");';
         var pre = 'getImage(';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(true);
     });
 
     it("Middle", function() {
         var line = 'getImage("cute/Blank");';
         var pre = 'getImage("cute';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(true);
     });
 
     it("Before close paren", function() {
         var line = 'getImage("cute/Blank");';
         var pre = 'getImage("cute/Blank"';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(true);
     });
 
     it("! After close paren", function() {
         var line = 'getImage("cute/Blank");';
         var pre = 'getImage("cute/Blank")';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.not.be.ok();
+        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(false);
     });
 
     it("! Random", function() {
         var line = 'randomGibberish';
         var pre = 'rand';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.not.be.ok();
+        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(false);
     });
 
     it("! Different function name", function() {
         var line = 'color("hi");';
         var pre = 'color("hi"';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.not.be.ok();
+        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(false);
     });
 });
 

@@ -4,45 +4,45 @@ describe("colorPicker - detection", function() {
     it("! Before open Paren", function() {
         var line = "fill(255, 244, 0, 21);";
         var pre = "fill";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.not.be.ok();
+        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(false);
     });
 
     it("After open Paren", function() {
         var line = "fill(255, 244, 0, 21);";
         var pre = "fill(";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(true);
     });
 
     it("Middle", function() {
         var line = "fill(255, 244, 0, 21);";
         var pre = "fill(255, ";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(true);
     });
 
     it("Before close paren", function() {
         var line = "fill(255, 244, 0, 21);";
         var pre = "fill(255, 244, 0, 21";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be.ok();
+        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(true);
     });
 
     it("! After close paren", function() {
         var line = "fill(255, 244, 0, 21);";
         var pre = "fill(255, 244, 0, 21)";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.not.be.ok();
+        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(false);
     });
 
     it("All function names", function() {
         _.each(["fill", "background", "stroke", "color"], function(fn) {
             var line = fn + "();";
             var pre = fn + "(";
-            expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be.ok();
+            expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(true);
         });
     });
 
     it("! Different function name", function() {
         var line = "rect(255, 244, 0, 21);";
         var pre = "rect(255, ";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.not.be.ok();
+        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(false);
     });
 });
 
