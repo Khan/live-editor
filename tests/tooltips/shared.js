@@ -13,7 +13,7 @@ window.ACE = new AceEditor({ //Initializes TooltipEngine internally
     config: new ScratchpadConfig({
         version: 3
     }),
-    imagesDir: "",
+    imagesDir: "../../build/images/",
     externalsDir: "",
     workersDir: "",
     record: new ScratchpadRecord(),
@@ -56,16 +56,11 @@ var getMockedTooltip = function(Tooltip, whiteList, blackList) {
             }
         }
     }
-    var tooltip;
-    if (_.contains(blackList, "initialize")) {
-        var old_ini = Tooltip.prototype.initialize;
-        Tooltip.prototype.initialize = sinon.spy();
-        tooltip = new Tooltip(TTEoptions);
-        Tooltip.prototype.initialize = old_ini;
-    } else {
-        tooltip = new Tooltip(TTEoptions);
-    }
-    return mockObject(tooltip, blackList);
+    var oldPrototype = Tooltip.prototype;
+    Tooltip.prototype = mockObject(_.clone(Tooltip.prototype), blackList);
+    tooltip = new Tooltip(TTEoptions);
+    Tooltip.prototype = oldPrototype;
+    return tooltip
 };
 
 var getTooltipRequestEvent = function(line, pre) {
