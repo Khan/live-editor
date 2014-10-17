@@ -386,7 +386,7 @@ window.ScratchpadRecordView = Backbone.View.extend({
         this.record = options.record;
         this.config = options.config;
         this.drawCanvas = options.drawCanvas;
-        this.externalsDir = options.externalsDir;
+        this.workersDir = options.workersDir;
         this.transloaditTemplate = options.transloaditTemplate;
         this.transloaditAuthKey = options.transloaditAuthKey;
         this.audioChunks = new ScratchpadAudioChunks();
@@ -425,9 +425,9 @@ window.ScratchpadRecordView = Backbone.View.extend({
     /* Set up everything and get permission for recording. */
     initializeRecordingAudio: function() {
         // Start recording the presenter's audio
-        this.multirecorder = new MultiRecorder(
-            {workerPath: this.externalsDir +
-                "multirecorderjs/multirecorder-worker.js"});
+        this.multirecorder = new MultiRecorder({
+            workerPath: this.workersDir + "shared/multirecorder-worker.js"
+        });
         this.$recordButton.text("Use the chunks (and give permission)");
         this.setButtonDisableStatus(this.$recordButton, true);
         this.disableChunkButtons(false, true, true, true, true);
@@ -1431,7 +1431,7 @@ window.LiveEditor = Backbone.View.extend({
                 record: this.record,
                 editor: this.editor,
                 config: this.config,
-                externalsDir: this.externalsDir,
+                workersDir: this.workersDir,
                 drawCanvas: this.drawCanvas,
                 transloaditTemplate: this.transloaditTemplate,
                 transloaditAuthKey: this.transloaditAuthKey

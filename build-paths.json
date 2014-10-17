@@ -128,7 +128,8 @@
         "external/ace-builds/src-noconflict/worker-html.js"
     ],
     "workers_shared": [
-        "js/output/shared/output-tester.js"
+        "js/output/shared/output-tester.js",
+        "external/multirecorderjs/multirecorder-worker.js"
     ],
     "externals": [
         "external/es5-shim/es5-shim.js",
@@ -136,7 +137,6 @@
         "external/structuredjs/external/esprima.js",
         "external/structuredjs/structured.js",
         "external/underscore/underscore.js",
-        "external/multirecorderjs/multirecorder-worker.js",
         "external/blockly/media/**",
         "external/SoundManager2/swf/**"
     ],
