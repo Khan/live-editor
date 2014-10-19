@@ -2538,29 +2538,77 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
 
     render: function() {
         var self = this;
+
+        function getExponent(e) {
+            var exp = -self.decimals;
+            if (e.shiftKey && e.altKey) {
+                exp = 0;
+            } else if (e.shiftKey) {
+                exp = 1;
+            } else if (e.altKey) {
+                exp = -1;
+            }
+            return exp;
+        }
+
+        var $leftButton = $("<span>◄</span>");
+        var $rightButton = $("<span>►</span>");
+        var $center = $("<span> ◆ </span>");
+
+        $leftButton.click(function (e) {
+            if (!self.dragged) {
+                var exp = getExponent(e);
+                self.decimals = Math.max(0,-exp);
+                self.intermediateValue = self.value - Math.pow(10, exp);
+                self.updateText(self.intermediateValue.toFixed(self.decimals));
+                self.updateTooltip(self.intermediateValue, self.decimals);
+            }
+        });
+
+        $rightButton.click(function (e) {
+            if (!self.dragged) {
+                var exp = getExponent(e);
+                self.decimals = Math.max(0,-exp);
+                self.intermediateValue = self.value + Math.pow(10, exp);
+                self.updateText(self.intermediateValue.toFixed(self.decimals));
+                self.updateTooltip(self.intermediateValue, self.decimals);
+            }
+        });
+
         var $scrubberHandle = $("<div class='scrubber-handle'/>")
-            .text("◄ ◆ ►")
+            .append($leftButton).append($center).append($rightButton)
             .draggable({
                 axis: "x",
                 start: function() {
                     self.$el.addClass("dragging");
                 },
-                drag: function() {
+                drag: function(e) {
                     var thisOffset = $(this).offset();
                     var parentOffset = $(this).parent().offset();
                     var dx = thisOffset.left - parentOffset.left;
 
-                    self.intermediateValue = self.value + Math.round(dx / 2.0) * Math.pow(10, -self.decimals);
+                    var exp = getExponent(e);
+                    self.decimals = Math.max(0,-exp);
+                    self.intermediateValue = self.value + Math.round(dx / 2.0) * Math.pow(10, exp);
                     self.updateText(self.intermediateValue.toFixed(self.decimals));
+                    self.dragged = true;
                 },
-                stop: function() {
+                stop: function(e) {
                     self.$el.removeClass("dragging");
                     $(this).css({
                         left: 0,
                         top: 0
                     });
 
+                    var exp = getExponent(e);
+                    self.decimals = Math.max(0,-exp);
                     self.updateTooltip(self.intermediateValue, self.decimals);
+
+                    // use a timeout because $leftButton.click and $rightButton.click
+                    // are called after stop
+                    setTimeout(function () {
+                        self.dragged = false;
+                    }, 0);
                 }
             });
 
@@ -2583,7 +2631,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
 
     detector: function(event) {
         // Does not match letters followed by numbers "<h1", "var val2", etc.
-        // Matches numbers in any other context. The cursor can be anywhere from just ahead 
+        // Matches numbers in any other context. The cursor can be anywhere from just ahead
         // of the (optional) leading negative to just after the last digit.
         if ((/[a-zA-Z]\d+$/.test(event.pre) || (/[a-zA-Z]$/.test(event.pre) && /^\d/.test(event.post))) ||
                 !(/\d$/.test(event.pre) || /^-?\d/.test(event.post))) {
