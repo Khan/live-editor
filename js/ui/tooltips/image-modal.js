@@ -41,8 +41,8 @@
             "click .imagemodal-content .image": function(e) {
                 this.$(".image.active").removeClass("active");
                 $(e.currentTarget).addClass("active");
-                var img_data_path = $(e.currentTarget).closest(".image").attr("data-path");
-                this.options.record.log("imagemodal.selectImg", img_data_path);
+                var imgDataPath = $(e.currentTarget).closest(".image").attr("data-path");
+                this.options.record.log("imagemodal.selectImg", imgDataPath);
             },
 
             "click .nav-tabs a": function(e) {
@@ -73,8 +73,9 @@
             }
         },
 
-        // This can't be included in the event hash, because an indistinguishable
-        //  "show" event also bubbles from the tabs
+        // Normally we could just listen to the show event on the modal, 
+        // but an indistinguishable "show" event also bubbles from the tab. 
+        // Instead we call this show() event ourselves when the button is clicked.
         show: function() {
             this.$el.modal();
             $("body").css("overflow", "hidden");
@@ -83,8 +84,7 @@
         },
 
         selectImg: function(dataPath) {
-            //debugger;
-            var $image = $(".image[data-path='"+dataPath+"']");
+            var $image = this.$(".image[data-path='"+dataPath+"']");
             var $pane = $image.closest(".tab-pane");
             var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
             $tab.tab("show");
