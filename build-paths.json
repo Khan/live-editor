@@ -11,7 +11,7 @@
             "external/underscore/underscore.js",
             "external/backbone/backbone.js",
             "external/jed/jed.js",
-            "css/bootstrap/dist/css/bootstrap.js"
+            "external/bootstrap/js/bootstrap-modal.js"
         ],
         "editor_ace_deps": [
             "external/ace-builds/src-noconflict/ace.js",
@@ -143,7 +143,7 @@
     ],
     "styles": {
         "core_deps": [
-            "css/bootstrap/dist/css/bootstrap.css",
+            "external/bootstrap/dist/css/bootstrap.css",
             "css/jquery-ui/ui-lightness/jquery-ui.css" 
         ],
         "audio": [
