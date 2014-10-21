@@ -1424,6 +1424,14 @@ window.LiveEditor = Backbone.View.extend({
 
         if (!this.recordView) {
             var $el = this.$el;
+
+            // NOTE(jeresig): Unfortunately we need to do this to make sure
+            // that we load the web worker from the same domain as the rest
+            // of the site (instead of the domain that the "exec" page is on).
+            // This is dumb and a KA-specific bit of functionality that we
+            // should change, somehow.
+            var workersDir = this.workersDir.replace(/^https?:\/\/[^\/]*/, "");
+
             this.recordView = new ScratchpadRecordView({
                 el: $el.find(".scratchpad-dev-record-row"),
                 recordButton: $el.find("#record"),
@@ -1431,7 +1439,7 @@ window.LiveEditor = Backbone.View.extend({
                 record: this.record,
                 editor: this.editor,
                 config: this.config,
-                workersDir: this.workersDir,
+                workersDir: workersDir,
                 drawCanvas: this.drawCanvas,
                 transloaditTemplate: this.transloaditTemplate,
                 transloaditAuthKey: this.transloaditAuthKey
