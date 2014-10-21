@@ -922,7 +922,6 @@ window.LiveEditor = Backbone.View.extend({
             // Remove previously added markers
             var markers = this.editor.editor.session.getMarkers();
             _.each(markers, function(marker, markerId) {
-                console.log(markerId);
                 this.editor.editor.session.removeMarker(markerId);
             }.bind(this));
 
@@ -944,7 +943,7 @@ window.LiveEditor = Backbone.View.extend({
                    new AceRange(unitTest.row, 0, unitTest.row, line.length),
                    "ace_problem_line", "text", false);
            }
-           
+
            this.editor.editor.session.setAnnotations(annotations);
         }
 
