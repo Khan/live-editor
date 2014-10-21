@@ -88,7 +88,7 @@
             var $pane = $image.closest(".tab-pane");
             var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
             $tab.tab("show");
-            $pane.find(".imagemodal-content").scrollTop($image.position().top-100);
+            $pane.find(".imagemodal-content").scrollTop($image.position().top - 100);
             $image.find("img").click();
         },
 

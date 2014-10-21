@@ -693,7 +693,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
                 this.synchronizedTime = Math.floor((new Date).getTime() - this.startTime);
                 setTimeout(function() { 
                     this.synchronizedTime = undefined;
-                }.bind(this));
+                }.bind(this), 0);
             }
 
             var args = Array.prototype.slice.call(arguments, 0);
