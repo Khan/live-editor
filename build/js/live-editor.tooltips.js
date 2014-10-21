@@ -2265,7 +2265,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         render: function() {
             Handlebars.registerHelper("slugify", this.slugify);
             Handlebars.registerHelper("patchedEach", this.handlebarsPatchedEach);
-            this.$el = $(Handlebars.templates.imagemodal({
+            this.$el = $(Handlebars.templates["image-modal"]({
                 imagesDir: this.options.imagesDir,
                 classes: ExtendedOutputImages
             }))
@@ -2353,7 +2353,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
 
         render: function() {
             var self = this;
-            this.$el = $(Handlebars.templates.imagemodalpreview())
+            this.$el = $(Handlebars.templates["image-modal-preview"]())
                             .appendTo("body").hide();
 
             this.$(".thumb")
@@ -2441,7 +2441,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
 
         var imagesDir = this.options.imagesDir;
 
-        var results = Handlebars.templates["imagepicker"]({
+        var results = Handlebars.templates["image-picker"]({
             imagesDir: imagesDir,
             groups: _.map(OutputImages, function(data) {
                 data.imagesDir = imagesDir;
@@ -2731,7 +2731,7 @@ window.TooltipUtils = {
 }
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["imagepicker"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+this["Handlebars"]["templates"]["image-picker"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   helpers = helpers || Handlebars.helpers;
   var buffer = "", stack1, stack2, foundHelper, tmp1, self=this, functionType="function", helperMissing=helpers.helperMissing, undef=void 0, escapeExpression=this.escapeExpression;
 
@@ -2833,7 +2833,7 @@ function program4(depth0,data,depth1) {
   return buffer;});;
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["imagemodal"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+this["Handlebars"]["templates"]["image-modal"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   helpers = helpers || Handlebars.helpers;
   var buffer = "", stack1, stack2, foundHelper, tmp1, self=this, functionType="function", helperMissing=helpers.helperMissing, undef=void 0, escapeExpression=this.escapeExpression, blockHelperMissing=helpers.blockHelperMissing;
 
@@ -3103,7 +3103,7 @@ function program17(depth0,data) {
   return buffer;});;
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["imagemodalpreview"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+this["Handlebars"]["templates"]["image-modal-preview"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   helpers = helpers || Handlebars.helpers;
   var buffer = "", stack1, foundHelper, tmp1, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
 

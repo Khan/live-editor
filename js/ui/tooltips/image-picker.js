@@ -56,7 +56,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
 
         var imagesDir = this.options.imagesDir;
 
-        var results = Handlebars.templates["imagepicker"]({
+        var results = Handlebars.templates["image-picker"]({
             imagesDir: imagesDir,
             groups: _.map(OutputImages, function(data) {
                 data.imagesDir = imagesDir;

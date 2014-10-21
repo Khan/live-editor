@@ -72,9 +72,9 @@
             "js/ui/autosuggest-data.js",
             "js/ui/tooltip-engine.js",
             "js/ui/tooltips/*.js",
-            "build/tmpl/imagepicker.js",
-            "build/tmpl/imagemodal.js",
-            "build/tmpl/imagemodalpreview.js"
+            "build/tmpl/image-picker.js",
+            "build/tmpl/image-modal.js",
+            "build/tmpl/image-modal-preview.js"
         ],
         "shared": [
             "js/shared/i18n.js",

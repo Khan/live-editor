@@ -1,6 +1,6 @@
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["imagemodalpreview"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+this["Handlebars"]["templates"]["image-modal-preview"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   helpers = helpers || Handlebars.helpers;
   var buffer = "", stack1, foundHelper, tmp1, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
 

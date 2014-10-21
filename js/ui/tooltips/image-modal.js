@@ -95,7 +95,7 @@
         render: function() {
             Handlebars.registerHelper("slugify", this.slugify);
             Handlebars.registerHelper("patchedEach", this.handlebarsPatchedEach);
-            this.$el = $(Handlebars.templates.imagemodal({
+            this.$el = $(Handlebars.templates["image-modal"]({
                 imagesDir: this.options.imagesDir,
                 classes: ExtendedOutputImages
             }))
@@ -183,7 +183,7 @@
 
         render: function() {
             var self = this;
-            this.$el = $(Handlebars.templates.imagemodalpreview())
+            this.$el = $(Handlebars.templates["image-modal-preview"]())
                             .appendTo("body").hide();
 
             this.$(".thumb")
