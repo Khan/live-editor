@@ -159,7 +159,7 @@
         updateTooltip: function(url) {
             if (url !== this.currentUrl) {
                 this.currentUrl = url;
-                var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|localhost:\d+)$/i;
+                var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|localhost:\d+)$/i;
                 var match = /\/\/([^\/]*)(?:\/|\?|#|$)/.exec(url);
                 var host = match ? match[1] : "";
                 if (!host || allowedHosts.test(host)) {

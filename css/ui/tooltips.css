@@ -194,6 +194,9 @@
     border-top: 8px solid transparent;
     bottom: auto;
     left: -7px;
+    top: 27px;
+}
+.tooltip.imagemodal-preview .arrow {
     top: 40px;
 }
 
