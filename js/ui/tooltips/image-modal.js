@@ -52,7 +52,7 @@
 
             // Modal or tab
             "shown": function() {
-                this.$(".tab-pane.active .imagemodal-content").customLazyLoad();
+                TooltipUtils.lazyLoadImgs(this.$(".tab-pane.active .imagemodal-content"));
             },
 
             "hide.bs.modal": function() {

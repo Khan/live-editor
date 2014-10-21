@@ -11,7 +11,7 @@
             "external/underscore/underscore.js",
             "external/backbone/backbone.js",
             "external/jed/jed.js",
-            "external/bootstrap/js/bootstrap-modal.js"
+            "external/bootstrap/js/bootstrap-tab.js"
         ],
         "editor_ace_deps": [
             "external/ace-builds/src-noconflict/ace.js",
