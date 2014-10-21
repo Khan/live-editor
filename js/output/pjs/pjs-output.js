@@ -1107,6 +1107,9 @@ window.PJSOutput = Backbone.View.extend({
             // Clear the output if no injection is occurring
             this.clear();
 
+            // Clear Processing logs
+            this.canvas._clearLogs();
+
             // Force a call to the draw function to force checks for instances
             // and to make sure that errors in the draw loop are caught.
             if (this.globals.draw) {
@@ -1216,6 +1219,9 @@ window.PJSOutput = Backbone.View.extend({
 
         // Reset frameCount variable on restart
         this.canvas.frameCount = 0;
+
+        // Clear Processing logs
+        this.canvas._clearLogs();
     },
 
     toggle: function(doToggle) {
