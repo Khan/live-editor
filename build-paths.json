@@ -7,10 +7,11 @@
             "external/es5-shim/es5-shim.js",
             "external/jquery/dist/jquery.js",
             "external/jqueryui/jquery-ui.js",
-            "external/handlebars/handlebars.js",
+            "external/handlebars/handlebars.runtime.js",
             "external/underscore/underscore.js",
             "external/backbone/backbone.js",
-            "external/jed/jed.js"
+            "external/jed/jed.js",
+            "external/bootstrap/js/bootstrap-tab.js"
         ],
         "editor_ace_deps": [
             "external/ace-builds/src-noconflict/ace.js",
@@ -65,15 +66,15 @@
         ],
         "tooltips": [
             "external/colorpicker/colorpicker.js",
+            "js/ui/custom-lazy-load.js",
+            "js/ui/custom-scroll-spy.js",
             "js/ui/autosuggest.js",
             "js/ui/autosuggest-data.js",
             "js/ui/tooltip-engine.js",
-            "js/ui/tooltips/number-scrubber.js",
-            "js/ui/tooltips/number-scrubber-click.js",
-            "js/ui/tooltips/color-picker.js",
-            "js/ui/tooltips/image-picker.js",
-            "js/ui/tooltips/auto-suggest.js",
-            "build/tmpl/imagepicker.js"
+            "js/ui/tooltips/*.js",
+            "build/tmpl/image-picker.js",
+            "build/tmpl/image-modal.js",
+            "build/tmpl/image-modal-preview.js"
         ],
         "shared": [
             "js/shared/i18n.js",
@@ -142,7 +143,7 @@
     ],
     "styles": {
         "core_deps": [
-            "css/bootstrap/dist/css/bootstrap.css",
+            "external/bootstrap/dist/css/bootstrap.css",
             "css/jquery-ui/ui-lightness/jquery-ui.css" 
         ],
         "audio": [

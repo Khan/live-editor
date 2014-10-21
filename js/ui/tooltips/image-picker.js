@@ -6,8 +6,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         this.options = options;
         this.parent = options.parent;
         setTimeout(this.render.bind(this), 300);
-        this.bindToRequestTooltip(); // This has to be here so that detector will fire 
-                                     // and force-load the tooltip in the first 300 ms
+        this.bindToRequestTooltip();
     },
 
     detector: function(event) {
@@ -57,7 +56,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
 
         var imagesDir = this.options.imagesDir;
 
-        var results = TooltipBase.getImagePickerTemplate()({
+        var results = Handlebars.templates["image-picker"]({
             imagesDir: imagesDir,
             groups: _.map(OutputImages, function(data) {
                 data.imagesDir = imagesDir;

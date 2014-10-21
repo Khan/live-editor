@@ -21,7 +21,9 @@ var paths = require("./build-paths.json");
 gulp.task("templates", function() {
     gulp.src(paths.templates)
         .pipe(changed("build/tmpl", {extension: ".js"}))
-        .pipe(handlebars())
+        .pipe(handlebars({
+            handlebars: require("handlebars")
+        }))
         .pipe(defineModule("plain"))
         .pipe(declare({
             namespace: "Handlebars.templates"

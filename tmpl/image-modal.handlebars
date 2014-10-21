@@ -1,0 +1,47 @@
+<div class="modal imagemodal">
+    <ul class="nav nav-tabs" role="tablist">
+    {{#patchedEach classes}}
+      <li {{#if $first}}class="active"{{/if}}><a href="#im-class-{{slugify className}}">{{className}}</a></li>
+    {{/patchedEach}}
+    </ul>
+
+    <div class="tab-content">
+    {{#patchedEach classes}}
+      <div class="tab-pane {{#if $first}}active{{/if}}" id="im-class-{{slugify className}}">
+        <div class="imagemodal-content">
+        <div style="position: relative;">
+        {{#each groups}}
+            <div class="image-group">
+                <h3 class="image-group" id="im-group-{{slugify groupName}}">{{groupName}}</h3>
+                {{#if cite}}
+                    <p><a href="{{citeLink}}" target="_blank">{{cite}}</a></p>
+                {{/if}}
+                {{#each images}}
+                <div class="image" data-path="{{../groupName}}/{{this}}">
+                    <div class="thumb-shell"><img src="/images/throbber.gif" data-lazy-src="{{../../../imagesDir}}{{../groupName}}{{../thumbsDir}}/{{this}}.png"/></div>
+                    <span class="name">{{this}}</span>
+                </div>
+                {{/each}}
+            </div>
+        {{/each}}
+        </div>
+        </div>
+
+        <div class="right">
+        <ul class="nav nav-pills nav-stackable">
+        {{#patchedEach groups}}
+            <li {{#if $first}}class="active"{{/if}}><a href="#im-group-{{slugify groupName}}">{{groupName}}</a></li>
+        {{/patchedEach}}
+        </ul>
+        </div>
+
+        <div style="clear: both;"></div>
+      </div>
+    {{/patchedEach}}
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="simple-button" data-dismiss="modal">{{#_}}Close{{/_}}</button>
+      <button type="button" class="simple-button green imagemodal-submit" data-dismiss="modal">{{#_}}Ok{{/_}}</button>
+    </div>
+</div>

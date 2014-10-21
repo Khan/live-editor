@@ -320,8 +320,21 @@ window.ScratchpadRecord = Backbone.Model.extend({
         if (!this.playing && this.recording && this.commands) {
             // Commands are stored in the format:
             // [time, name, arguments...]
+
+            // By only rechecking the time when asynchrynous code executes we guarantee that
+            // all event which occured as part of the same action
+            // (and therefore the same paint) have the same timestamp. Meaning they will be
+            // together during playback and not allow paints of intermediate states.
+            // Specifically this applies to replace (which is a remove and an insert back to back)
+            if (this.synchronizedTime === undefined) {
+                this.synchronizedTime = Math.floor((new Date).getTime() - this.startTime);
+                setTimeout(function() { 
+                    this.synchronizedTime = undefined;
+                }.bind(this), 0);
+            }
+
             var args = Array.prototype.slice.call(arguments, 0);
-            args.unshift(Math.floor((new Date).getTime() - this.startTime));
+            args.unshift(this.synchronizedTime);
             this.commands.push(args);
             return true;
         }

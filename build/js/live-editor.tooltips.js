@@ -1693,11 +1693,10 @@ window.TooltipEngine = Backbone.View.extend({
         var record = this.options.record;
 
         this.tooltips = {};
-        var childOptions = {
-            parent: this,
-            editor: this.editor,
-            imagesDir: this.options.imagesDir
-        };
+        var childOptions = _.defaults({
+            parent: this
+        }, options);
+
         _.each(options.tooltips, function(name) {
             this.tooltips[name] = new TooltipEngine.classes[name](childOptions);
         }.bind(this));
@@ -1723,7 +1722,9 @@ window.TooltipEngine = Backbone.View.extend({
         var checkBlur = function(e) {
             var inEditor = $.contains(this.editor.container, e.target);
             var inTooltip = (this.currentTooltip && $.contains(this.currentTooltip.$el[0], e.target));
-            if (this.currentTooltip && !(inEditor || inTooltip)) {
+            var modalOpen = (this.currentTooltip && this.currentTooltip.modal &&
+                                this.currentTooltip.modal.$el.is(":visible"));
+            if (this.currentTooltip && !(inEditor || inTooltip || modalOpen)) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
             }
@@ -1740,14 +1741,6 @@ window.TooltipEngine = Backbone.View.extend({
                 this.doRequestTooltip(e.data);
             }.bind(this)
         }, {
-            target: $(this.editor.container),
-            event: "mousedown",
-            fn: function() {
-                this.doRequestTooltip({
-                    action: "click"
-                });
-            }.bind(this)
-        }, {
             target: this.editor.session,
             event: "changeScrollTop",
             fn: function() {
@@ -1757,19 +1750,27 @@ window.TooltipEngine = Backbone.View.extend({
             }.bind(this)
         }, {
             target: $(document),
-            event: "click",
+            event: "mousedown",
             fn: checkBlur
         }, {
             target: $(document),
             event: "contextmenu",
             fn: checkBlur
+        }, {
+            target: $(this.editor.container),
+            event: "mousedown",
+            fn: function() {
+                this.doRequestTooltip({
+                    action: "click"
+                });
+            }.bind(this)
         }];
 
         _.each(this.callbacks, function(cb){
             cb.target.on(cb.event, cb.fn);
         });
 
-
+        
         this.requestTooltipDefaultCallback = function() {  //Fallback to hiding
             ScratchpadAutosuggest.enableLiveCompletion(true);
             if (this.currentTooltip && this.currentTooltip.$el) {
@@ -1966,13 +1967,8 @@ window.TooltipBase = Backbone.View.extend({
         return withinString;
     }
 });
-
-TooltipBase.getImagePickerTemplate = function() {
-    return Handlebars.templates["imagepicker"];
-};
-
 // A description of general tooltip flow can be found in tooltip-engine.js
-TooltipEngine.classes.numberScrubber = TooltipBase.extend({
+TooltipEngine.classes.autoSuggest = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
@@ -1980,108 +1976,59 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
         this.bind();
     },
 
+    detector: function(event) {
+        if (!/(\b[^\d\W][\w]*)\s*\(\s*([^\)]*)$/.test(event.pre) || this.parent.options.record.playing) {
+            return;
+        }
+        var functionCall = RegExp.$1;
+        var paramsToCursor = RegExp.$2;
+        var lookupParams = ScratchpadAutosuggest.lookupParamsSafeHTML(functionCall, paramsToCursor);
+        if (lookupParams) {
+            this.aceLocation = {
+                start: event.col,
+                length: 0,
+                row: event.row
+            };
+
+            this.updateTooltip(lookupParams);
+            this.placeOnScreen();
+            event.stopPropagation();
+            ScratchpadAutosuggest.enableLiveCompletion(false);
+        }
+    },
+
     render: function() {
-        var self = this;
-        var $scrubberHandle = $("<div class='scrubber-handle'/>")
-            .text("◄ ◆ ►")
-            .draggable({
-                axis: "x",
-                start: function() {
-                    self.$el.addClass("dragging");
-                },
-                drag: function() {
-                    var thisOffset = $(this).offset();
-                    var parentOffset = $(this).parent().offset();
-                    var dx = thisOffset.left - parentOffset.left;
-
-                    self.intermediateValue = self.value + Math.round(dx / 2.0) * Math.pow(10, -self.decimals);
-                    self.updateText(self.intermediateValue.toFixed(self.decimals));
-                },
-                stop: function() {
-                    self.$el.removeClass("dragging");
-                    $(this).css({
-                        left: 0,
-                        top: 0
-                    });
-
-                    self.updateTooltip(self.intermediateValue, self.decimals);
-                }
-            });
-
-        this.$el = $("<div class='tooltip'><div class='scrubber'></div><div class='arrow'></div></div>")
-            .appendTo("body")
-            .find(".scrubber")
-            .append($scrubberHandle)
-            .end()
-            .hide();
+        this.$el = $("<div class='tooltip autosuggest'><div class='hotsuggest'></div><div class='arrow'></div></div>")
+            .appendTo("body").hide();
     },
 
     bind: function() {
+        var over = false;
+        var down = false;
+        this.$el.on("mousedown", function() {
+            this.$el.hide();
+            this.options.editor.focus();
+        }.bind(this));
+
+        this.checkForEscape = function(e) {
+            if (e.which === 27 && this.$el) {
+                this.$el.hide();
+            }
+        }.bind(this);
+
+        $(document).on("keyup", this.checkForEscape);
         this.bindToRequestTooltip();
     },
 
     remove: function() {
         this.$el.remove();
+        $(document).off("keyup", this.checkForEscape);
         this.unbindFromRequestTooltip();
     },
 
-    detector: function(event) {
-        // Does not match letters followed by numbers "<h1", "var val2", etc.
-        // Matches numbers in any other context. The cursor can be anywhere from just ahead 
-        // of the (optional) leading negative to just after the last digit.
-        if ((/[a-zA-Z]\d+$/.test(event.pre) || (/[a-zA-Z]$/.test(event.pre) && /^\d/.test(event.post))) ||
-                !(/\d$/.test(event.pre) || /^-?\d/.test(event.post))) {
-            return;
-        }
-        var reversedPre = event.pre.split("").reverse().join("");
-        var numberStart = event.col - /^[\d.]*(-(?!\s*\w))?/.exec(reversedPre)[0].length;
-        var number = /^-?[\d.]+/.exec(event.line.slice(numberStart))[0];
-        this.aceLocation = {
-            start: numberStart,
-            length: number.length,
-            row: event.row
-        };
-        this.aceLocation.tooltipCursor = event.col;
-        this.updateTooltip(parseFloat(number), this.decimalCount(number));
-        this.placeOnScreen();
-        event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
-    },
-
-    updateTooltip: function(value, decimals) {
-        this.value = value;
-        this.decimals = (decimals <= 5) ? decimals : 5;
-    },
-
-    // Returns the number of decimal places shown in a string representation of
-    // a number.
-    decimalCount: function(strNumber) {
-        var decIndex = strNumber.indexOf(".");
-        return decIndex === -1 ? 0 : strNumber.length - (decIndex + 1);
+    updateTooltip: function(content) {
+        this.$el.find(".hotsuggest").empty().append(content);
     }
-});
-
-
-TooltipEngine.classes.numberScrubberClick = TooltipBase.extend({
-    initialize: function(options) {
-        this.options = options;
-        this.parent = options.parent;
-        this.bindToRequestTooltip();
-    },
-
-    remove: function() {
-        this.unbindFromRequestTooltip();
-    },
-
-    detector: function(event) {
-        if (event.source && event.source.action === "click") {
-            if (this.parent.tooltips.numberScrubber) {
-                this.parent.tooltips.numberScrubber.detector(event);
-            } else {
-                console.warn("FAIL: You loaded the numberScrubberClick tooltip, without the numberScrubber tooltip.");
-            }
-        }
-    },
 });
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.colorPicker = TooltipBase.extend({
@@ -2221,6 +2168,221 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }
 });
+(function() {
+    var Modal = Backbone.View.extend({
+        initialize: function(options) {
+            this.options = options;
+            this.parent = options.parent;
+            this.render();
+            this.bind();
+            TooltipUtils.setupScrollSpy(
+                this.$(".imagemodal-content"),
+                function(content) { // This function finds the associated pills for a scrollable div.
+                    return $(content).closest(".tab-pane").find(".nav-pills");
+                }
+            );
+        },
+
+        // There are more bindings below in events.
+        // These are here because scroll events cannot be delegated
+        bind: function() {
+            // Handle the shadow which appears on scroll
+            this.$(".imagemodal-content").scroll(
+                _.throttle(function(e) {
+                    var $target = $(e.currentTarget);
+                    if ($target.scrollTop() > 0) {
+                        $target.addClass("top-shadow");
+                    } else {
+                        $target.removeClass("top-shadow");
+                    }
+                }, 100)
+            );
+
+            // Lazy load on scroll
+            this.$(".imagemodal-content").scroll(
+                _.throttle(function(e) {
+                    TooltipUtils.lazyLoadImgs(e.currentTarget);
+                }, 200)
+            );
+        },
+
+        events: {
+            // Highlight image when it is clicked
+            "click .imagemodal-content .image": function(e) {
+                this.$(".image.active").removeClass("active");
+                $(e.currentTarget).addClass("active");
+                var imgDataPath = $(e.currentTarget).closest(".image").attr("data-path");
+                this.options.record.log("imagemodal.selectImg", imgDataPath);
+            },
+
+            "click .nav-tabs a": function(e) {
+                $(e.currentTarget).tab("show");
+                e.preventDefault();
+            },
+
+            // Modal or tab
+            "shown": function() {
+                TooltipUtils.lazyLoadImgs(this.$(".tab-pane.active .imagemodal-content"));
+            },
+
+            "hide.bs.modal": function() {
+                this.scrollStart = undefined;
+                $("body").css("overflow", "auto");
+                this.options.record.log("imagemodal.hide");
+            },
+
+            // Update the url in ACE if someone clicks ok
+            "click .imagemodal-submit": function(e) {
+                var $active = this.$(".image.active");
+                if ($active.length !== 1) {
+                    return;
+                }
+                var path = this.options.imagesDir + $active.attr("data-path") + ".png";
+                this.parent.updateText(path);
+                this.parent.updateTooltip(path);
+            }
+        },
+
+        // Normally we could just listen to the show event on the modal, 
+        // but an indistinguishable "show" event also bubbles from the tab. 
+        // Instead we call this show() event ourselves when the button is clicked.
+        show: function() {
+            this.$el.modal();
+            $("body").css("overflow", "hidden");
+            this.$(".image.active").removeClass("active");
+            this.options.record.log("imagemodal.show");
+        },
+
+        selectImg: function(dataPath) {
+            var $image = this.$(".image[data-path='"+dataPath+"']");
+            var $pane = $image.closest(".tab-pane");
+            var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
+            $tab.tab("show");
+            $pane.find(".imagemodal-content").scrollTop($image.position().top - 100);
+            $image.find("img").click();
+        },
+
+        render: function() {
+            Handlebars.registerHelper("slugify", this.slugify);
+            Handlebars.registerHelper("patchedEach", this.handlebarsPatchedEach);
+            this.$el = $(Handlebars.templates["image-modal"]({
+                imagesDir: this.options.imagesDir,
+                classes: ExtendedOutputImages
+            }))
+            this.$el.appendTo("body").hide();
+        },
+
+        slugify: function(text) {
+            return text.toLowerCase().match(/[a-z0-9_]+/g).join("-");
+        },
+
+        // This patches our super old version of Handlebars to
+        // give us access to the iteration index inside an each loop.
+        // This is exactly how it works in Handlebars 1.3+
+        // except that they use @<value> instead of $<value>
+        // when we upgrade Handlebars we can get rid of this.
+        handlebarsPatchedEach: function(arr, options) {
+            return _.map(arr, function(item, index) {
+                item.$index = index;
+                item.$first = index === 0;
+                item.$last = index === arr.length - 1;
+                return options.fn(item);
+            }).join("");
+        }
+    });
+
+
+    TooltipEngine.classes.imageModal = TooltipBase.extend({
+        initialize: function(options) {
+            this.options = options;
+            this.parent = options.parent;
+            this.render();
+            this.bindToRequestTooltip();
+            _.extend(this.options.record.handlers, {
+                "imagemodal.show": this.modal.show.bind(this.modal),
+                "imagemodal.hide": function(){ 
+                    this.modal.$el.modal("hide")
+                }.bind(this),
+                "imagemodal.selectImg": this.modal.selectImg.bind(this.modal)
+            });
+        },
+
+        detector: function(event) {
+            if (!/<img\s+[^>]*?\s*src=["']([^"']*)$/.test(event.pre)) {
+                return;
+            }
+            var urlStart = event.col - RegExp.$1.length;
+            var url = event.line.slice(urlStart).match(/^[^"']*/)[0];
+            this.aceLocation = {
+                start: urlStart,
+                length: url.length,
+                row: event.row
+            };
+            this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + 1;
+
+            this.updateTooltip(url);
+            this.placeOnScreen();
+            event.stopPropagation();
+            ScratchpadAutosuggest.enableLiveCompletion(false);
+        },
+        
+        updateTooltip: function(url) {
+            if (url !== this.currentUrl) {
+                this.currentUrl = url;
+                var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|localhost:\d+)$/i;
+                var match = /\/\/([^\/]*)(?:\/|\?|#|$)/.exec(url);
+                var host = match ? match[1] : "";
+                if (!host || allowedHosts.test(host)) {
+                    if (url !== this.$(".thumb").attr("src")) {
+                        this.$(".thumb").attr("src", url);
+                        this.$(".thumb-throbber").show();
+                    }
+                    if (this.$(".thumb-error").hasClass("domainError")) {
+                        this.$(".thumb-error").removeClass("domainError").hide();
+                        this.$(".thumb").show();
+                    }
+                } else {
+                    this.$(".thumb").hide();
+                    this.$(".thumb-error")
+                        .text($._("Sorry! That server is not permitted."))
+                        .addClass("domainError").show();
+                    this.$(".thumb-throbber").hide();
+                }
+            }
+        },
+
+        render: function() {
+            var self = this;
+            this.$el = $(Handlebars.templates["image-modal-preview"]())
+                            .appendTo("body").hide();
+
+            this.$(".thumb")
+                .on("load", function() {
+                    $(this).closest(".thumb-shell").find(".thumb-error").hide();
+                    $(this).show();
+                    self.$(".thumb-throbber").hide();
+                })
+                .on("error", function() {
+                    if (self.currentUrl !== $(this).attr("src")) {
+                        return;
+                    }
+                    $(this).closest(".thumb-shell").find(".thumb-error")
+                        .text($._("That is not a valid image URL.")).show();
+                    $(this).hide();
+                    self.$(".thumb-throbber").hide();
+                });
+
+            this.$("button").on("click", function() {
+                self.modal.show();
+            });
+
+            this.modal = new Modal(_.defaults({
+                parent: this
+            }, this.options));
+        }
+    });
+})();
+
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.imagePicker = TooltipBase.extend({
     defaultImage: "cute/None",
@@ -2229,8 +2391,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         this.options = options;
         this.parent = options.parent;
         setTimeout(this.render.bind(this), 300);
-        this.bindToRequestTooltip(); // This has to be here so that detector will fire 
-                                     // and force-load the tooltip in the first 300 ms
+        this.bindToRequestTooltip();
     },
 
     detector: function(event) {
@@ -2280,7 +2441,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
 
         var imagesDir = this.options.imagesDir;
 
-        var results = TooltipBase.getImagePickerTemplate()({
+        var results = Handlebars.templates["image-picker"]({
             imagesDir: imagesDir,
             groups: _.map(OutputImages, function(data) {
                 data.imagesDir = imagesDir;
@@ -2345,8 +2506,29 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }
 });
+TooltipEngine.classes.numberScrubberClick = TooltipBase.extend({
+    initialize: function(options) {
+        this.options = options;
+        this.parent = options.parent;
+        this.bindToRequestTooltip();
+    },
+
+    remove: function() {
+        this.unbindFromRequestTooltip();
+    },
+
+    detector: function(event) {
+        if (event.source && event.source.action === "click") {
+            if (this.parent.tooltips.numberScrubber) {
+                this.parent.tooltips.numberScrubber.detector(event);
+            } else {
+                console.warn("FAIL: You loaded the numberScrubberClick tooltip, without the numberScrubber tooltip.");
+            }
+        }
+    },
+});
 // A description of general tooltip flow can be found in tooltip-engine.js
-TooltipEngine.classes.autoSuggest = TooltipBase.extend({
+TooltipEngine.classes.numberScrubber = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
@@ -2354,123 +2536,591 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
         this.bind();
     },
 
-    detector: function(event) {
-        if (!/(\b[^\d\W][\w]*)\s*\(\s*([^\)]*)$/.test(event.pre) || this.parent.options.record.playing) {
-            return;
-        }
-        var functionCall = RegExp.$1;
-        var paramsToCursor = RegExp.$2;
-        var lookupParams = ScratchpadAutosuggest.lookupParamsSafeHTML(functionCall, paramsToCursor);
-        if (lookupParams) {
-            this.aceLocation = {
-                start: event.col,
-                length: 0,
-                row: event.row
-            };
-
-            this.updateTooltip(lookupParams);
-            this.placeOnScreen();
-            event.stopPropagation();
-            ScratchpadAutosuggest.enableLiveCompletion(false);
-        }
-    },
-
     render: function() {
-        this.$el = $("<div class='tooltip autosuggest'><div class='hotsuggest'></div><div class='arrow'></div></div>")
-            .appendTo("body").hide();
+        var self = this;
+        var $scrubberHandle = $("<div class='scrubber-handle'/>")
+            .text("◄ ◆ ►")
+            .draggable({
+                axis: "x",
+                start: function() {
+                    self.$el.addClass("dragging");
+                },
+                drag: function() {
+                    var thisOffset = $(this).offset();
+                    var parentOffset = $(this).parent().offset();
+                    var dx = thisOffset.left - parentOffset.left;
+
+                    self.intermediateValue = self.value + Math.round(dx / 2.0) * Math.pow(10, -self.decimals);
+                    self.updateText(self.intermediateValue.toFixed(self.decimals));
+                },
+                stop: function() {
+                    self.$el.removeClass("dragging");
+                    $(this).css({
+                        left: 0,
+                        top: 0
+                    });
+
+                    self.updateTooltip(self.intermediateValue, self.decimals);
+                }
+            });
+
+        this.$el = $("<div class='tooltip'><div class='scrubber'></div><div class='arrow'></div></div>")
+            .appendTo("body")
+            .find(".scrubber")
+            .append($scrubberHandle)
+            .end()
+            .hide();
     },
 
     bind: function() {
-        var over = false;
-        var down = false;
-        this.$el.on("mousedown", function() {
-            this.$el.hide();
-            this.options.editor.focus();
-        }.bind(this));
-
-        this.checkForEscape = function(e) {
-            if (e.which === 27 && this.$el) {
-                this.$el.hide();
-            }
-        }.bind(this);
-
-        $(document).on("keyup", this.checkForEscape);
         this.bindToRequestTooltip();
     },
 
     remove: function() {
         this.$el.remove();
-        $(document).off("keyup", this.checkForEscape);
         this.unbindFromRequestTooltip();
     },
 
-    updateTooltip: function(content) {
-        this.$el.find(".hotsuggest").empty().append(content);
+    detector: function(event) {
+        // Does not match letters followed by numbers "<h1", "var val2", etc.
+        // Matches numbers in any other context. The cursor can be anywhere from just ahead 
+        // of the (optional) leading negative to just after the last digit.
+        if ((/[a-zA-Z]\d+$/.test(event.pre) || (/[a-zA-Z]$/.test(event.pre) && /^\d/.test(event.post))) ||
+                !(/\d$/.test(event.pre) || /^-?\d/.test(event.post))) {
+            return;
+        }
+        var reversedPre = event.pre.split("").reverse().join("");
+        var numberStart = event.col - /^[\d.]*(-(?!\s*\w))?/.exec(reversedPre)[0].length;
+        var number = /^-?[\d.]+/.exec(event.line.slice(numberStart))[0];
+        this.aceLocation = {
+            start: numberStart,
+            length: number.length,
+            row: event.row
+        };
+        this.aceLocation.tooltipCursor = event.col;
+        this.updateTooltip(parseFloat(number), this.decimalCount(number));
+        this.placeOnScreen();
+        event.stopPropagation();
+        ScratchpadAutosuggest.enableLiveCompletion(false);
+    },
+
+    updateTooltip: function(value, decimals) {
+        this.value = value;
+        this.decimals = (decimals <= 5) ? decimals : 5;
+    },
+
+    // Returns the number of decimal places shown in a string representation of
+    // a number.
+    decimalCount: function(strNumber) {
+        var decIndex = strNumber.indexOf(".");
+        return decIndex === -1 ? 0 : strNumber.length - (decIndex + 1);
     }
 });
+
+
+window.TooltipUtils = {
+    /**
+     * This is a KA specific implementation of lazy loading:
+     * It is targetted specifically at the modal in the imageModal tooltip
+     * (although it is generally applicable to some degree)
+     * It loads images as they are scrolled into view.
+     * It makes the following assumptions
+     * - All lazy-loading images have a "data-lazy-src" with the src 
+     *     we wish to load on-demand
+     * - The div being scrolled is the offset parent of all the images 
+     *     (http://api.jquery.com/position/)
+     * - If image A comes before image B in the source, 
+     *     then A is at least as high as B on the page.
+     *
+     */
+    lazyLoadImgs: function(container, tolerance) {
+        tolerance = tolerance || 250;
+        var self = this;
+        $(container).each(function(i, elem) {
+            var top = $(elem).scrollTop();
+            var bottom = top + $(elem).height();
+            top -= tolerance;
+            bottom += tolerance;
+            $(elem).find("img[data-lazy-src]").each(function(j, img) {
+                var height = $(img).position().top;
+                if (height < top) {
+                    return true; // continue;
+                } else if (height < bottom) {
+                    self.loadNow(img);
+                } else {
+                    return false; // break;
+                }
+            })
+        })
+    },
+
+    loadNow: function(img) {
+        $.each($(img), function(i, elem) {
+            $(elem).attr("src", $(elem).attr("data-lazy-src"));
+            $(elem).removeAttr("data-lazy-src");
+        })
+    },
+
+    /**
+     * This is a KA specific implementation of scrollspy
+     * The second argument can be one of two things:
+     * - A function to determine the nav element.
+     * - The word "refresh" to recalculate heading positions
+     */
+    setupScrollSpy: function(scrollables, arg) {
+        $.each($(scrollables), function(i, shell) {
+            if (arg == "refresh") {
+                var navUl = $(shell).data("scrollspy.navUl");
+                if (!navUl) {
+                    console.warn("tried to refresh scrollspy without first initializing it");
+                    return;
+                }
+                var navs = navUl.find("li a");
+                var pointers = [];
+                $.each(navs, function(i, nav) {
+                    var selector = $(nav).attr("href");
+                    var $heading = $(shell).find(selector).first();
+                    if ($heading.length) {
+                        var y = $heading.position().top;
+                        pointers.push([y, nav]);
+                    }
+                });
+                pointers.sort(function(a, b) {
+                    return a[0] - b[0];
+                })
+                $(shell).data("scrollspy.pointers", pointers);
+            } else {
+                var navUl = arg(shell);
+                $(shell).data("scrollspy.navUl", navUl);
+                $(shell).on("scroll", _.throttle(this.doScrollSpy, 60))
+                $(navUl).find("li a").on("click", function(e) {
+                    var top = $(shell).find($(this).attr("href")).position().top;
+                    $(shell).scrollTop(top);
+                    e.preventDefault();
+                })
+            }
+        }.bind(this))
+    },
+
+    doScrollSpy: function() {
+        var $this = $(this);
+        var pointers = $this.data("scrollspy.pointers"); // [[height, node], ... ]
+        if (pointers == undefined) {
+            $this.data("scrollspy.pointers", "working");
+            setTimeout(function() {
+                TooltipUtils.setupScrollSpy($this, "refresh")
+            }, 0);
+            return;
+        } else if (pointers == "working") {
+            return;
+        }
+
+        var scroll = $this.scrollTop();
+        var active;
+        $.each(pointers, function(i, pointer) {
+            if (pointer[0] < scroll + 150) {
+                active = pointer[1];
+            } else {
+                return false;
+            }
+        });
+
+        $this.data("scrollspy.navUl").find(".active").removeClass("active");
+        $(active).closest("li").addClass("active");
+    }
+}
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["imagepicker"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
-  this.compilerInfo = [4,'>= 1.0.0'];
-helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
-  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression, self=this;
+this["Handlebars"]["templates"]["image-picker"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  helpers = helpers || Handlebars.helpers;
+  var buffer = "", stack1, stack2, foundHelper, tmp1, self=this, functionType="function", helperMissing=helpers.helperMissing, undef=void 0, escapeExpression=this.escapeExpression;
 
 function program1(depth0,data) {
   
-  var buffer = "", stack1, helper;
+  var buffer = "", stack1, stack2;
   buffer += "\n<div class=\"image-group\">\n    <h3 class=\"image-group\">";
-  if (helper = helpers.groupName) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.groupName); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "</h3>\n    ";
-  stack1 = helpers['if'].call(depth0, (depth0 && depth0.cite), {hash:{},inverse:self.noop,fn:self.program(2, program2, data),data:data});
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth0.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "</h3>\n    ";
+  foundHelper = helpers.cite;
+  stack1 = foundHelper || depth0.cite;
+  stack2 = helpers['if'];
+  tmp1 = self.program(2, program2, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n    ";
-  stack1 = helpers.each.call(depth0, (depth0 && depth0.images), {hash:{},inverse:self.noop,fn:self.programWithDepth(4, program4, data, depth0),data:data});
+  foundHelper = helpers.images;
+  stack1 = foundHelper || depth0.images;
+  stack2 = helpers.each;
+  tmp1 = self.programWithDepth(program4, data, depth0);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n</div>\n";
-  return buffer;
-  }
+  return buffer;}
 function program2(depth0,data) {
   
-  var buffer = "", stack1, helper;
+  var buffer = "", stack1;
   buffer += "\n        <p><a href=\"";
-  if (helper = helpers.citeLink) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.citeLink); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "\" target=\"_blank\">";
-  if (helper = helpers.cite) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.cite); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "</a></p>\n    ";
-  return buffer;
-  }
+  foundHelper = helpers.citeLink;
+  stack1 = foundHelper || depth0.citeLink;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "citeLink", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "\" target=\"_blank\">";
+  foundHelper = helpers.cite;
+  stack1 = foundHelper || depth0.cite;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "cite", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "</a></p>\n    ";
+  return buffer;}
 
 function program4(depth0,data,depth1) {
   
   var buffer = "", stack1;
-  buffer += "\n    <div class=\"image\" data-path=\""
-    + escapeExpression(((stack1 = (depth1 && depth1.groupName)),typeof stack1 === functionType ? stack1.apply(depth0) : stack1))
-    + "/"
-    + escapeExpression((typeof depth0 === functionType ? depth0.apply(depth0) : depth0))
-    + "\">\n        <img src=\""
-    + escapeExpression(((stack1 = (depth1 && depth1.imagesDir)),typeof stack1 === functionType ? stack1.apply(depth0) : stack1))
-    + escapeExpression(((stack1 = (depth1 && depth1.groupName)),typeof stack1 === functionType ? stack1.apply(depth0) : stack1))
-    + "/"
-    + escapeExpression((typeof depth0 === functionType ? depth0.apply(depth0) : depth0))
-    + ".png\"/>\n        <span class=\"name\">"
-    + escapeExpression((typeof depth0 === functionType ? depth0.apply(depth0) : depth0))
-    + "</span>\n    </div>\n    ";
-  return buffer;
-  }
+  buffer += "\n    <div class=\"image\" data-path=\"";
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth1.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "\">\n        <img src=\"";
+  foundHelper = helpers.imagesDir;
+  stack1 = foundHelper || depth1.imagesDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...imagesDir", { hash: {} }); }
+  buffer += escapeExpression(stack1);
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth1.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + ".png\"/>\n        <span class=\"name\">";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "</span>\n    </div>\n    ";
+  return buffer;}
 
   buffer += "<div class=\"current-image\"><img src=\"";
-  if (helper = helpers.imagesDir) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.imagesDir); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "cute/Blank.png\"/></div>\n<div class=\"image-groups\">\n";
-  stack1 = helpers.each.call(depth0, (depth0 && depth0.groups), {hash:{},inverse:self.noop,fn:self.program(1, program1, data),data:data});
+  foundHelper = helpers.imagesDir;
+  stack1 = foundHelper || depth0.imagesDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "cute/Blank.png\"/></div>\n<div class=\"image-groups\">\n";
+  foundHelper = helpers.groups;
+  stack1 = foundHelper || depth0.groups;
+  stack2 = helpers.each;
+  tmp1 = self.program(1, program1, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n</div>\n";
-  return buffer;
-  });;
+  return buffer;});;
+this["Handlebars"] = this["Handlebars"] || {};
+this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
+this["Handlebars"]["templates"]["image-modal"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  helpers = helpers || Handlebars.helpers;
+  var buffer = "", stack1, stack2, foundHelper, tmp1, self=this, functionType="function", helperMissing=helpers.helperMissing, undef=void 0, escapeExpression=this.escapeExpression, blockHelperMissing=helpers.blockHelperMissing;
+
+function program1(depth0,data) {
+  
+  var buffer = "", stack1, stack2;
+  buffer += "\n      <li ";
+  foundHelper = helpers.$first;
+  stack1 = foundHelper || depth0.$first;
+  stack2 = helpers['if'];
+  tmp1 = self.program(2, program2, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "><a href=\"#im-class-";
+  foundHelper = helpers.className;
+  stack1 = foundHelper || depth0.className;
+  foundHelper = helpers.slugify;
+  stack2 = foundHelper || depth0.slugify;
+  if(typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, { hash: {} }); }
+  else if(stack2=== undef) { stack1 = helperMissing.call(depth0, "slugify", stack1, { hash: {} }); }
+  else { stack1 = stack2; }
+  buffer += escapeExpression(stack1) + "\">";
+  foundHelper = helpers.className;
+  stack1 = foundHelper || depth0.className;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "className", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "</a></li>\n    ";
+  return buffer;}
+function program2(depth0,data) {
+  
+  
+  return "class=\"active\"";}
+
+function program4(depth0,data,depth1) {
+  
+  var buffer = "", stack1, stack2;
+  buffer += "\n      <div class=\"tab-pane ";
+  foundHelper = helpers.$first;
+  stack1 = foundHelper || depth0.$first;
+  stack2 = helpers['if'];
+  tmp1 = self.program(5, program5, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\" id=\"im-class-";
+  foundHelper = helpers.className;
+  stack1 = foundHelper || depth0.className;
+  foundHelper = helpers.slugify;
+  stack2 = foundHelper || depth0.slugify;
+  if(typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, { hash: {} }); }
+  else if(stack2=== undef) { stack1 = helperMissing.call(depth0, "slugify", stack1, { hash: {} }); }
+  else { stack1 = stack2; }
+  buffer += escapeExpression(stack1) + "\">\n        <div class=\"imagemodal-content\">\n        <div style=\"position: relative;\">\n        ";
+  foundHelper = helpers.groups;
+  stack1 = foundHelper || depth0.groups;
+  stack2 = helpers.each;
+  tmp1 = self.programWithDepth(program7, data, depth1);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </div>\n        </div>\n\n        <div class=\"right\">\n        <ul class=\"nav nav-pills nav-stackable\">\n        ";
+  foundHelper = helpers.groups;
+  stack1 = foundHelper || depth0.groups;
+  foundHelper = helpers.patchedEach;
+  stack2 = foundHelper || depth0.patchedEach;
+  tmp1 = self.program(12, program12, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </ul>\n        </div>\n\n        <div style=\"clear: both;\"></div>\n      </div>\n    ";
+  return buffer;}
+function program5(depth0,data) {
+  
+  
+  return "active";}
+
+function program7(depth0,data,depth2) {
+  
+  var buffer = "", stack1, stack2;
+  buffer += "\n            <div class=\"image-group\">\n                <h3 class=\"image-group\" id=\"im-group-";
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth0.groupName;
+  foundHelper = helpers.slugify;
+  stack2 = foundHelper || depth0.slugify;
+  if(typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, { hash: {} }); }
+  else if(stack2=== undef) { stack1 = helperMissing.call(depth0, "slugify", stack1, { hash: {} }); }
+  else { stack1 = stack2; }
+  buffer += escapeExpression(stack1) + "\">";
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth0.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "</h3>\n                ";
+  foundHelper = helpers.cite;
+  stack1 = foundHelper || depth0.cite;
+  stack2 = helpers['if'];
+  tmp1 = self.program(8, program8, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n                ";
+  foundHelper = helpers.images;
+  stack1 = foundHelper || depth0.images;
+  stack2 = helpers.each;
+  tmp1 = self.programWithDepth(program10, data, depth0, depth2);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n            </div>\n        ";
+  return buffer;}
+function program8(depth0,data) {
+  
+  var buffer = "", stack1;
+  buffer += "\n                    <p><a href=\"";
+  foundHelper = helpers.citeLink;
+  stack1 = foundHelper || depth0.citeLink;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "citeLink", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "\" target=\"_blank\">";
+  foundHelper = helpers.cite;
+  stack1 = foundHelper || depth0.cite;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "cite", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "</a></p>\n                ";
+  return buffer;}
+
+function program10(depth0,data,depth1,depth3) {
+  
+  var buffer = "", stack1;
+  buffer += "\n                <div class=\"image\" data-path=\"";
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth1.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "\">\n                    <div class=\"thumb-shell\"><img src=\"/images/throbber.gif\" data-lazy-src=\"";
+  foundHelper = helpers.imagesDir;
+  stack1 = foundHelper || depth3.imagesDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, ".........imagesDir", { hash: {} }); }
+  buffer += escapeExpression(stack1);
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth1.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1);
+  foundHelper = helpers.thumbsDir;
+  stack1 = foundHelper || depth1.thumbsDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...thumbsDir", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + ".png\"/></div>\n                    <span class=\"name\">";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "</span>\n                </div>\n                ";
+  return buffer;}
+
+function program12(depth0,data) {
+  
+  var buffer = "", stack1, stack2;
+  buffer += "\n            <li ";
+  foundHelper = helpers.$first;
+  stack1 = foundHelper || depth0.$first;
+  stack2 = helpers['if'];
+  tmp1 = self.program(13, program13, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "><a href=\"#im-group-";
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth0.groupName;
+  foundHelper = helpers.slugify;
+  stack2 = foundHelper || depth0.slugify;
+  if(typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, { hash: {} }); }
+  else if(stack2=== undef) { stack1 = helperMissing.call(depth0, "slugify", stack1, { hash: {} }); }
+  else { stack1 = stack2; }
+  buffer += escapeExpression(stack1) + "\">";
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth0.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "</a></li>\n        ";
+  return buffer;}
+function program13(depth0,data) {
+  
+  
+  return "class=\"active\"";}
+
+function program15(depth0,data) {
+  
+  
+  return "Close";}
+
+function program17(depth0,data) {
+  
+  
+  return "Ok";}
+
+  buffer += "<div class=\"modal imagemodal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n    ";
+  foundHelper = helpers.classes;
+  stack1 = foundHelper || depth0.classes;
+  foundHelper = helpers.patchedEach;
+  stack2 = foundHelper || depth0.patchedEach;
+  tmp1 = self.program(1, program1, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n    </ul>\n\n    <div class=\"tab-content\">\n    ";
+  foundHelper = helpers.classes;
+  stack1 = foundHelper || depth0.classes;
+  foundHelper = helpers.patchedEach;
+  stack2 = foundHelper || depth0.patchedEach;
+  tmp1 = self.programWithDepth(program4, data, depth0);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n    </div>\n\n    <div class=\"modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(15, program15, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "</button>\n      <button type=\"button\" class=\"simple-button green imagemodal-submit\" data-dismiss=\"modal\">";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(17, program17, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "</button>\n    </div>\n</div>";
+  return buffer;});;
+this["Handlebars"] = this["Handlebars"] || {};
+this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
+this["Handlebars"]["templates"]["image-modal-preview"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  helpers = helpers || Handlebars.helpers;
+  var buffer = "", stack1, foundHelper, tmp1, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
+
+function program1(depth0,data) {
+  
+  
+  return "Pick Image:";}
+
+  buffer += "<div class=\"tooltip imagemodal-preview\">\n	<div class=\"content\">\n		<img src=\"/images/throbber.gif\" class=\"thumb-throbber\" />\n		<div class=\"thumb-shell\"><img class=\"thumb\" /><div class=\"thumb-error\"></div></div> \n		<button class=\"kui-button kui-button-submit kui-button-primary\" style=\"padding: 5px; width: 100%; margin: 0 auto;\" >\n			";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(1, program1, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n		</button> \n	</div>\n	<div class=\"arrow\"></div>\n</div>";
+  return buffer;});;
