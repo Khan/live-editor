@@ -88,6 +88,11 @@
     max-width: 550px;
 }
 
+.scratchpad-ace-editor .ace_problem_line {
+    border-bottom: 1px dashed orange;
+    position: absolute;
+}
+
 .scratchpad-ace-editor .ace_scroller {
     overflow-x: hidden;
 }

@@ -918,17 +918,34 @@ window.LiveEditor = Backbone.View.extend({
         }
         
         if (data.results && data.results.assertions) { 
-           var annotations = [];
-           for (var i = 0; i < data.results.assertions.length; i++) { 
-             var unitTest = data.results.assertions[i];
-             annotations.push({
-                  row: unitTest.row, 
-                  column: unitTest.column, 
-                  text: unitTest.text,
-                  type: "warning" 
+
+            // Remove previously added markers
+            var markers = this.editor.editor.session.getMarkers();
+            _.each(markers, function(marker, markerId) {
+                console.log(markerId);
+                this.editor.editor.session.removeMarker(markerId);
+            }.bind(this));
+
+            var annotations = [];
+            for (var i = 0; i < data.results.assertions.length; i++) { 
+                var unitTest = data.results.assertions[i];
+                annotations.push({
+                    row: unitTest.row, 
+                    column: unitTest.column, 
+                    text: unitTest.text,
+                    type: "warning" 
                 });
+                // Underline the problem line to make it more obvious
+                //  if they don't notice the gutter icon
+                var AceRange = ace.require("ace/range").Range;
+                var line = this.editor.editor.session
+                    .getDocument().getLine(unitTest.row);
+                this.editor.editor.session.addMarker(
+                   new AceRange(unitTest.row, 0, unitTest.row, line.length),
+                   "ace_problem_line", "text", false);
            }
-           this.editor.editor.session.setAnnotations(annotations); 
+           
+           this.editor.editor.session.setAnnotations(annotations);
         }
 
         // Set the line visibility in the editor
