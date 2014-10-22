@@ -307,6 +307,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
     runCommand: function(evt) {
         // Commands are stored in the format:
         // [time, name, arguments...]
+        console.log(evt);
         var handler = this.handlers[evt[1]];
 
         if (handler) {
