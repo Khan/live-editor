@@ -110,7 +110,7 @@ window.AceEditor = Backbone.View.extend({
                 self.record.log(e.data.action,
                     start.row, start.column, end.row, end.column);
             }
-        });
+        }, true);
 
         editor.selection.addEventListener("changeCursor", function() {
             if (editor.selection.isEmpty()) {
