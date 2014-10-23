@@ -184,6 +184,16 @@ window.WebpageOutput = Backbone.View.extend({
         var self = this;
         $(doc).find("a").attr("rel", "nofollow").each(function() {
             var url = $(this).attr("href");
+            if (url && url[0] === "#") {
+                $(this).attr("href", "javascript:void(0)").click(function() {
+                    var id = url;
+                    $(doc).find("html, body").animate({
+                        scrollTop: $(doc).find(id).offset().top
+                    }, 1000);
+                });
+                return;
+            }
+
             $(this).attr("href", "javascript:void(0)").click(function() {
                 self.output.postParent({
                     action: "link-click",
