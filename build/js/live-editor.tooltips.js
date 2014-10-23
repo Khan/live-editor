@@ -495,7 +495,8 @@ window.ScratchpadAutosuggest = {
      * Initializes the autosuggest functionality and adds/modifies the
      * completers to be applicable to KA.
      */
-    init: function(editor, options) {
+    init: function(options) {
+        var editor = options.editor;
         this.initialized = true;
         this.editor = editor;
         this.enableLiveCompletion(true);
@@ -548,7 +549,7 @@ window.ScratchpadAutosuggest = {
         */
 
         var userVars = [];
-        if (options) {
+        if (options.showUserVariables) {
             var worker = new Worker(options.workersDir +
                 "/autosuggest/autosuggest-worker.js");
             var available = true;

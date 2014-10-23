@@ -49,9 +49,11 @@
     liveEditor.editor.on("change", function() {
         window.localStorage["test-code"] = liveEditor.editor.text();
     });
-    ScratchpadAutosuggest.init(liveEditor.editor.editor, {
-      externalsDir: liveEditor.externalsDir,
-      workersDir: liveEditor.workersDir
+    ScratchpadAutosuggest.init({
+        editor: liveEditor.editor.editor,
+        showUserVariables: true,
+        externalsDir: liveEditor.externalsDir,
+        workersDir: liveEditor.workersDir
     });
     </script>
 </body>

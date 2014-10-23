@@ -23,7 +23,9 @@ window.ACE = new AceEditor({ //Initializes TooltipEngine internally
 window.editor = ACE.editor;
 window.TTE = ACE.tooltipEngine;
 
-ScratchpadAutosuggest.init(editor);
+ScratchpadAutosuggest.init({
+    editor: editor
+});
 editor.focus();
 ACE.setSelection({
     start: {
@@ -127,7 +129,7 @@ function typeChars(text) {
 /*
 // This is for testing only
 // This allows you to see the text sent to typeChars being typed
-// into ace at a regular pace to see exactly what happens. 
+// into ace at a regular pace to see exactly what happens.
 function typeChars(text) {
     if (text) {
         editor.onTextInput(text[0]);
