@@ -2539,36 +2539,40 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
     render: function() {
         var self = this;
 
-        function getExponent(e) {
+        // This function returns different values if alt and/or shift are
+        // pressed: alt -> -1, shift -> 1, alt + shift -> 0.
+        // If there no modifier keys are pressed, the result is based on the
+        // number of decimal places.
+        function getExponent(evt) {
             var exp = -self.decimals;
-            if (e.shiftKey && e.altKey) {
+            if (evt.shiftKey && evt.altKey) {
                 exp = 0;
-            } else if (e.shiftKey) {
+            } else if (evt.shiftKey) {
                 exp = 1;
-            } else if (e.altKey) {
+            } else if (evt.altKey) {
                 exp = -1;
             }
             return exp;
         }
 
-        var $leftButton = $("<span>◄</span>");
-        var $rightButton = $("<span>►</span>");
+        var $leftButton = $("<span role='button'>◄</span>");
+        var $rightButton = $("<span role='button'>►</span>");
         var $center = $("<span> ◆ </span>");
 
-        $leftButton.click(function (e) {
+        $leftButton.click(function (evt) {
             if (!self.dragged) {
-                var exp = getExponent(e);
-                self.decimals = Math.max(0,-exp);
+                var exp = getExponent(evt);
+                self.decimals = Math.max(0, -exp);
                 self.intermediateValue = self.value - Math.pow(10, exp);
                 self.updateText(self.intermediateValue.toFixed(self.decimals));
                 self.updateTooltip(self.intermediateValue, self.decimals);
             }
         });
 
-        $rightButton.click(function (e) {
+        $rightButton.click(function (evt) {
             if (!self.dragged) {
-                var exp = getExponent(e);
-                self.decimals = Math.max(0,-exp);
+                var exp = getExponent(evt);
+                self.decimals = Math.max(0, -exp);
                 self.intermediateValue = self.value + Math.pow(10, exp);
                 self.updateText(self.intermediateValue.toFixed(self.decimals));
                 self.updateTooltip(self.intermediateValue, self.decimals);
@@ -2582,25 +2586,25 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                 start: function() {
                     self.$el.addClass("dragging");
                 },
-                drag: function(e) {
+                drag: function(evt) {
                     var thisOffset = $(this).offset();
                     var parentOffset = $(this).parent().offset();
                     var dx = thisOffset.left - parentOffset.left;
 
-                    var exp = getExponent(e);
-                    self.decimals = Math.max(0,-exp);
+                    var exp = getExponent(evt);
+                    self.decimals = Math.max(0, -exp);
                     self.intermediateValue = self.value + Math.round(dx / 2.0) * Math.pow(10, exp);
                     self.updateText(self.intermediateValue.toFixed(self.decimals));
                     self.dragged = true;
                 },
-                stop: function(e) {
+                stop: function(evt) {
                     self.$el.removeClass("dragging");
                     $(this).css({
                         left: 0,
                         top: 0
                     });
 
-                    var exp = getExponent(e);
+                    var exp = getExponent(evt);
                     self.decimals = Math.max(0,-exp);
                     self.updateTooltip(self.intermediateValue, self.decimals);
 
