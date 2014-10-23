@@ -696,7 +696,6 @@
 
 .tooltip.imagepicker:hover div.image-groups {
     display: block;
-    position: relative;
 }
 
 .tooltip.imagepicker:hover div.image-groups p {
