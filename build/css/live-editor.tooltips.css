@@ -696,6 +696,7 @@
 
 .tooltip.imagepicker:hover div.image-groups {
     display: block;
+    position: relative;
 }
 
 .tooltip.imagepicker:hover div.image-groups p {
@@ -897,7 +898,6 @@
 
 .imagemodal-footer button{
     margin-left: 10px;
-    font-size: 12px;
 }
 
 .imagemodal .nav-tabs {

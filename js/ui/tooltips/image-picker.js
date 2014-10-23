@@ -5,7 +5,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
-        setTimeout(this.render.bind(this), 300);
+        this.render();
         this.bindToRequestTooltip();
     },
 
@@ -41,7 +41,6 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
             path = this.defaultImage;
             this.updateText(path);
         }
-        this.render();
         this.updateTooltip(path);
         this.placeOnScreen();
         event.stopPropagation();
@@ -49,11 +48,6 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
     },
 
     render: function() {
-        if (this.rendered) {
-            return;
-        }
-        this.rendered = true;
-
         var imagesDir = this.options.imagesDir;
 
         var results = Handlebars.templates["image-picker"]({
@@ -68,19 +62,27 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
             "<div class='arrow'></div></div>")
             .appendTo("body").hide();
 
+
         this.bind();
     },
 
     bind: function() {
         var self = this;
+
+        this.$(".image-groups").scroll(_.throttle(function() {
+            TooltipUtils.lazyLoadImgs(this);
+        }, 200, {leading: false}));
+
         this.$el
+            .on("mouseenter", function() {
+                TooltipUtils.lazyLoadImgs($(this));
+            })
             .on("click", ".image", function() {
                 $(this).parents(".imagepicker").find(".active").removeClass("active");
                 $(this).addClass("active");
                 self.updateText($(this).attr("data-path"));
             })
             .on("mouseleave", function() {
-                $(this).hide();
                 self.options.editor.clearSelection();
                 self.options.editor.focus();
             });
