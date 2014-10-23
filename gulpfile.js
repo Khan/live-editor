@@ -164,7 +164,7 @@ gulp.task("test_output_webpage", ["script_output_webpage"],
     runTest("output/webpage/index.html"));
 
 gulp.task("test_tooltips", ["script_tooltips"],
-    runTest("tooltips/pjs/index.html"));
+    runTest("tooltips/index.html"));
 
 // NOTE(jeresig): We don't bundle this data as it's kind of big. Better to
 // download it dynamically, when we need it.

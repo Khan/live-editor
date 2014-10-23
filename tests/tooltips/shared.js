@@ -44,7 +44,10 @@ for (var TooltipName in TooltipEngine.prototype.classes) {
 var TTEoptions = {
     parent: TTE,
     editor: editor,
-    imagesDir: ""
+    imagesDir: "",
+    record: {
+        handlers: {}
+    }
 };
 
 var getMockedTooltip = function(Tooltip, whiteList, blackList) {
@@ -58,9 +61,15 @@ var getMockedTooltip = function(Tooltip, whiteList, blackList) {
     }
     var oldPrototype = Tooltip.prototype;
     Tooltip.prototype = mockObject(_.clone(Tooltip.prototype), blackList);
-    tooltip = new Tooltip(TTEoptions);
+    Tooltip.prototype.render = function () {
+        this.modal = {
+            show: sinon.spy(),
+            selectImg: sinon.spy()
+        };
+    };
+    var tooltip = new Tooltip(TTEoptions);
     Tooltip.prototype = oldPrototype;
-    return tooltip
+    return tooltip;
 };
 
 var getTooltipRequestEvent = function(line, pre) {
@@ -127,7 +136,7 @@ function typeChars(text) {
 /*
 // This is for testing only
 // This allows you to see the text sent to typeChars being typed
-// into ace at a regular pace to see exactly what happens. 
+// into ace at a regular pace to see exactly what happens.
 function typeChars(text) {
     if (text) {
         editor.onTextInput(text[0]);
