@@ -116,10 +116,10 @@ window.AceEditor = Backbone.View.extend({
             if (editor.selection.isEmpty()) {
                 self.handleSelect();
             }
-        });
+        }, true);
 
         editor.selection.addEventListener("changeSelection",
-            this.handleSelect.bind(this));
+            this.handleSelect.bind(this), true);
 
         // Add in record playback handlers
         var docOperations = [
