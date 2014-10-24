@@ -354,10 +354,10 @@ WebpageTester.prototype.testMethods = {
      * Returns true if match() succeeds
      */
     htmlMatches: function(structure) {
-        return this.testContext.htmlMatch(structure).success;
+        return this.testContext.htmlMatch.apply(this, arguments).success;
     },
-    cssMatches: function(structure) {
-        return this.testContext.cssMatch(structure).success;
+    cssMatches: function(pattern, callbacks) {
+        return this.testContext.cssMatch.apply(this, arguments).success;
     },
 
     /*
