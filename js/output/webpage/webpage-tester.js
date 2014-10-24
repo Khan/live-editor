@@ -376,7 +376,7 @@ WebpageTester.prototype.testMethods = {
         this.testContext.assert(result.success, description, "", {
             // We can accept string hints here because
             //  we never match against them anyway
-            structure: this.testContext.cleanStructure(hint),
+            structure: hint,
             alternateMessage: alternateMessage,
             alsoMessage: alsoMessage,
             image: image
