@@ -15,6 +15,8 @@ var runSequence = require("run-sequence");
 var mochaPhantomJS = require("gulp-mocha-phantomjs");
 var staticServe = require("node-static");
 var request = require("request");
+var browserify = require("gulp-browserify");
+var rename = require("gulp-rename");
 
 var paths = require("./build-paths.json");
 
@@ -69,6 +71,9 @@ gulp.task("workers", function() {
 
     gulp.src(paths.workers_shared)
         .pipe(gulp.dest("build/workers/shared"));
+
+    gulp.src(paths.workers_tidy)
+        .pipe(gulp.dest("build/workers/tidy"));
 });
 
 gulp.task("externals", function() {
@@ -102,6 +107,16 @@ gulp.task("images", function() {
         .pipe(gulp.dest("build/images"));
 });
 
+gulp.task("browserify", function() {
+    gulp.src("node_modules/escodegen/escodegen.js")
+        .pipe(browserify({
+            debug: false,
+            standalone: "escodegen"
+        }))
+        .pipe(rename("escodegen.browser.js"))
+        .pipe(gulp.dest("./build/external/escodegen"));
+});
+
 gulp.task("watch", function() {
     scriptTypes.forEach(function(type) {
         gulp.watch(paths.scripts[type], ["script_" + type]);
@@ -118,6 +133,8 @@ gulp.task("watch", function() {
     //    .concat(["tests/output/sql/*"]), ["test_output_sql"]);
     gulp.watch(paths.scripts.tooltips
         .concat(["tests/tooltips/*"]), ["test_tooltips"]);
+    gulp.watch(paths.scripts.tidy
+        .concat(["tests/tidy/*"]), ["test_tidy"]);
 
     styleTypes.forEach(function(type) {
         gulp.watch(paths.styles[type], ["style_" + type]);
@@ -173,6 +190,9 @@ gulp.task("test_output_webpage", ["script_output_webpage"],
 gulp.task("test_tooltips", ["script_tooltips"],
     runTest("tooltips/index.html"));
 
+gulp.task("test_tidy", ["script_tidy"],
+    runTest("tidy/index.html"));
+
 // NOTE(jeresig): We don't bundle this data as it's kind of big. Better to
 // download it dynamically, when we need it.
 var recordDataURL = "https://s3.amazonaws.com/ka-cs-scratchpad-audio/" +
@@ -197,8 +217,8 @@ gulp.task("test_record", ["test_record_data"],
 gulp.task("test", function(callback) {
     // test_output_sql is intentionally left out for now until
     // phantomJS has support for typed arrays
-    runSequence("test_output_pjs", "test_output_webpage", "test_tooltips", callback);
+    runSequence("test_output_pjs", "test_output_webpage", "test_tooltips", "test_tidy", callback);
 });
 
 gulp.task("default", ["watch", "templates", "scripts", "workers", "styles",
-    "fonts", "images", "externals"]);
+    "fonts", "images", "externals", "browserify"]);

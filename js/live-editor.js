@@ -1059,7 +1059,7 @@ window.LiveEditor = Backbone.View.extend({
         // Unbind any handlers this function may have set for previous
         // screenshots
         $(window).off("message.getScreenshot");
-    
+
         // We're only expecting one screenshot back
         $(window).on("message.getScreenshot", function(e) {
             // Only call if the data is actually an image!
@@ -1067,13 +1067,42 @@ window.LiveEditor = Backbone.View.extend({
                 callback(e.originalEvent.data);
             }
         });
-    
+
         // Ask the frame for a screenshot
         this.postFrame({ screenshot: true });
     },
 
     undo: function() {
         this.editor.undo();
+    },
+
+    /**
+     * Show the overlay.  If animate is true the opacity will fade in.
+     * @param {Boolean} animate
+     */
+    disable: function (animate) {
+        var $overlay = this.$el.find(".disable-overlay");
+        
+        $overlay.show();
+        if (animate) {
+            $overlay.animate({ 'opacity': '0.5' }, 200);
+        }
+    },
+
+    /**
+     * Hide the overlay.  If animate is false the opacity will fade out.
+     * @param {Boolean} animate
+     */
+    enable: function (animate) {
+        var $overlay = this.$el.find(".disable-overlay");
+
+        if (animate) {
+            $overlay.animate({ 'opacity': '0.0' }, 200, "swing", function () {
+                $(this).hide();
+            });
+        } else {
+            $overlay.hide();
+        }
     },
 
     _qualifyURL: function(url){
