@@ -495,7 +495,8 @@ window.ScratchpadAutosuggest = {
      * Initializes the autosuggest functionality and adds/modifies the
      * completers to be applicable to KA.
      */
-    init: function(editor) {
+    init: function(options) {
+        var editor = options.editor;
         this.initialized = true;
         this.editor = editor;
         this.enableLiveCompletion(true);
@@ -547,6 +548,30 @@ window.ScratchpadAutosuggest = {
         langTools.addCompleter(this.localVariableCompleter);
         */
 
+        var userVars = [];
+        if (options.showUserVariables) {
+            var worker = new Worker(options.workersDir +
+                "/autosuggest/autosuggest-worker.js");
+            var available = true;
+
+            worker.addEventListener("message", function (e) {
+                if (e.data.type === "userVars") {
+                    userVars = e.data.userVars;
+                }
+                available = true;
+            });
+
+            editor.on("input", function() {
+                if (available) {
+                    available = false;
+                    worker.postMessage({
+                        externalsDir: options.externalsDir,
+                        code: editor.session.doc.getValue()
+                    });
+                }
+            });
+        }
+
         // Completer for keywords and pjs
         this.customCompleter = {
             getCompletions: function(editor, session, pos, prefix, callback) {
@@ -582,12 +607,40 @@ window.ScratchpadAutosuggest = {
                           // The type to display next to the autosuggest
                           // This is a human readable short descriptive name
                           // such as: pjs function.
-                          meta: c.type,
+                          meta: c.type
                       });
                     }.bind(this));
                 }.bind(this));
+
+                var userVars = this.getUserVariables(session, pos);
+                userVars.forEach(function (userVar) {
+                    completions.unshift({
+                        name: userVar.name + "-name",
+                        value: userVar.name,
+                        score: 299,
+                        meta: "user variable"
+                    });
+                });
+
                 callback(null, completions);
-            }
+            },
+            getUserVariables: function(session, pos) {
+                var col = pos.column;
+                var line = session.doc.getLine(pos.row);
+
+                while (col--) {
+                    if (line[col] === ".") {
+                        // TODO(kevinb7): handle properties
+                        return [];
+                    }
+                }
+
+                var cursorIndex = session.doc.positionToIndex(pos);
+                return userVars.filter(function (userVar) {
+                    return userVar.start < cursorIndex
+                });
+            },
+            worker: worker
         };
 
         langTools.addCompleter(this.customCompleter);
@@ -696,7 +749,7 @@ window.ScratchpadAutosuggest = {
             .text(fnParts[0]);
         var descriptionElements = $();
         if (description) {
-            descriptionElements = descriptionElements .add(
+            descriptionElements = descriptionElements.add(
                 fnName.data("param-info",
                     description).data("exampleURL", exampleURL));
         }

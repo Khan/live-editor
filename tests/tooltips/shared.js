@@ -23,7 +23,9 @@ window.ACE = new AceEditor({ //Initializes TooltipEngine internally
 window.editor = ACE.editor;
 window.TTE = ACE.tooltipEngine;
 
-ScratchpadAutosuggest.init(editor);
+ScratchpadAutosuggest.init({
+    editor: editor
+});
 editor.focus();
 ACE.setSelection({
     start: {

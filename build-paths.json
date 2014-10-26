@@ -11,7 +11,8 @@
             "external/underscore/underscore.js",
             "external/backbone/backbone.js",
             "external/jed/jed.js",
-            "external/bootstrap/js/bootstrap-tab.js"
+            "external/bootstrap/js/bootstrap-tab.js",
+            "external/structuredjs/external/esprima.js"
         ],
         "editor_ace_deps": [
             "external/ace-builds/src-noconflict/ace.js",
@@ -117,6 +118,9 @@
             "js/live-editor.js"
         ]
     },
+    "workers_autosuggest": [
+        "js/workers/autosuggest/autosuggest-worker.js"
+    ],
     "workers_pjs": [
         "js/workers/pjs/jshint-worker.js",
         "js/workers/pjs/processing-stubs.js",
@@ -143,7 +147,8 @@
     ],
     "styles": {
         "core_deps": [
-            "css/jquery-ui/ui-lightness/jquery-ui.css" 
+            "css/bootstrap/dist/css/bootstrap.css",
+            "css/jquery-ui/ui-lightness/jquery-ui.css"
         ],
         "audio": [
             "css/ui/flashblock.css"

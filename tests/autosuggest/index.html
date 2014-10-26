@@ -1,0 +1,96 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mocha Test Runner</title>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css">
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        h1 {
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        #sample-live-editor {
+            padding: 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<!--<h1>Live Editor Example</h1>-->
+<div id="sample-live-editor"></div>
+
+<div id="mocha"></div>
+<div id="output-area"></div>
+
+<script src="../../build/js/live-editor.core_deps.js"></script>
+<script>
+    // Works around this issue in PhantomJS:
+    // https://github.com/ariya/phantomjs/pull/12307
+    // Remove once PhantomJS pushes out a new release that fixes this!
+    (function () {
+        var oldSplice = Array.prototype.splice;
+        Array.prototype.splice = function (num) {
+            if (arguments.length === 1) {
+                return Array.prototype.slice.call(this, num);
+            }
+            return oldSplice.apply(this, arguments);
+        };
+    })();
+</script>
+<script src="../../build/js/live-editor.editor_ace_deps.js"></script>
+<script src="../../build/js/live-editor.audio.js"></script>
+<script src="../../build/js/live-editor.shared.js"></script>
+<script src="../../build/js/live-editor.tooltips.js"></script>
+<script src="../../build/js/live-editor.ui.js"></script>
+<script src="../../build/js/live-editor.editor_ace.js"></script>
+
+<script>
+    window.liveEditor = new LiveEditor({
+        el: $("#sample-live-editor"),
+        code: "",
+        width: 400,
+        height: 400,
+        editorHeight: "80%",
+        autoFocus: true,
+        workersDir: "../../build/workers/",
+        externalsDir: "../../build/external/",
+        imagesDir: "../../build/images/",
+        execFile: "../../demos/simple/output.html",
+        jshintFile: "../../build/external/jshint/jshint.js"
+    });
+    liveEditor.editor.on("change", function () {
+        window.localStorage["test-code"] = liveEditor.editor.text();
+    });
+    ScratchpadAutosuggest.init({
+        editor: liveEditor.editor.editor,
+        showUserVariables: true,
+        externalsDir: liveEditor.externalsDir,
+        workersDir: liveEditor.workersDir
+    });
+</script>
+<script src="../../node_modules/mocha/mocha.js"></script>
+<script src="../../node_modules/expect.js/index.js"></script>
+<script>mocha.setup("bdd");</script>
+<script src="test_utils.js"></script>
+<script src="assert_test.js"></script>
+<script>
+    var worker = ScratchpadAutosuggest.customCompleter.worker;
+
+    listenOnce(worker, "message", function () {
+        if (window.mochaPhantomJS) {
+            mochaPhantomJS.run();
+        } else {
+            mocha.run();
+        }
+    });
+
+    liveEditor.editor.editor._emit("input");
+</script>
+</body>
+</html>
