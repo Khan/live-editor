@@ -1,0 +1,71 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Live Editor Simple Demo</title>
+    <link rel="stylesheet" href="../../build/css/live-editor.core_deps.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.tooltips.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        h1 {
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+        #sample-live-editor {
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>SQL Live Editor Example</h1>
+    <div id="sample-live-editor"></a>
+
+    <script src="../../build/js/live-editor.core_deps.js"></script>
+    <script src="../../build/js/live-editor.editor_ace_deps.js"></script>
+    <script src="../../build/js/live-editor.audio.js"></script>
+    <script src="../../build/js/live-editor.shared.js"></script>
+    <script src="../../build/js/live-editor.tooltips.js"></script>
+    <script src="../../build/js/live-editor.ui.js"></script>
+    <script src="../../build/js/live-editor.editor_ace.js"></script>
+
+    <script>
+    var defaultCode = "/**" +
+        " * Create some tables:\n" +
+        " *   - students\n" +
+        " *   - student_grades\n"+
+        " */\n" +
+        "CREATE TABLE students (id INTEGER PRIMARY KEY AUTOINCREMENT, name char, grade_year int NOT NULL);\n" +
+        "CREATE TABLE student_grades (id INTEGER, grade int, FOREIGN KEY (id) REFERENCES students(id));\n\n" +
+        "-- Insert some data\n" +
+        "INSERT INTO students VALUES (1, \"Brian\", 3);\n" +
+        "INSERT INTO students VALUES (2, \"kamil\", 4);\n" +
+        "INSERT INTO student_grades VALUES (1, 95);\n" +
+        "INSERT INTO student_grades VALUES (2, 100);\n\n" +
+        "-- SELECT some data\n" +
+        "SELECT * FROM students INNER JOIN student_grades on students.id = student_grades.id;\n" +
+        "SELECT AVG(student_grades.grade) as \"Average Grade\", MAX(student_grades.grade) as \"Max Grade\" FROM students INNER JOIN student_grades on students.id = student_grades.id;\n";
+
+        window.liveEditor = new LiveEditor({
+        editorType: "ace_sql",
+        outputType: "sql",
+        el: $("#sample-live-editor"),
+        code: window.localStorage["test-sql-code"] || defaultCode,
+        width: 400,
+        height: 400,
+        editorHeight: "80%",
+        autoFocus: true,
+        workersDir: "../../build/workers/",
+        externalsDir: "../../build/external/",
+        imagesDir: "../../build/images/",
+        execFile: "output_sql.html"
+    });
+    liveEditor.editor.on("change", function() {
+        window.localStorage["test-sql-code"] = liveEditor.editor.text();
+    });
+    </script>
+</body>
+</html>

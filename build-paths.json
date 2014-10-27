@@ -17,6 +17,8 @@
             "external/ace-builds/src-noconflict/ace.js",
             "external/ace-builds/src-noconflict/mode-javascript.js",
             "external/ace-builds/src-noconflict/mode-html.js",
+            "external/ace-builds/src-noconflict/ext-static_highlight.js",
+            "external/ace-builds/src-noconflict/mode-sql.js",
             "external/ace-builds/src-noconflict/ext-searchbox.js",
             "external/ace-builds/src-noconflict/ext-language_tools.js"
         ],
@@ -98,9 +100,17 @@
             "external/html2canvas/html2canvas.js",
             "external/slowparse/slowparse.js"
         ],
+        "output_sql_deps": [
+            "external/sqlitejs/sql.js"
+        ],
         "output_webpage": [
             "js/output/webpage/webpage-tester.js",
             "js/output/webpage/webpage-output.js"
+        ],
+        "output_sql": [
+            "build/tmpl/sql-results.js",
+            "js/output/sql/sql-tester.js",
+            "js/output/sql/sql-output.js"
         ],
         "output": [
             "build/tmpl/tipbar.js",

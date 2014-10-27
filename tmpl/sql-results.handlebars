@@ -1,0 +1,104 @@
+<html>
+<head>
+{{!
+These styles are intentionally not put next to the other styles so that
+    they will apply only to the sql iframe output.
+}}
+<style>
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    empty-cells: show;
+    width: 100%;
+    margin-bottom: 20px;
+}
+table thead {
+    background: #e0e0e0;
+    color: #000;
+    text-align: left;
+    vertical-align: bottom;
+}
+th:first-child {
+    border-radius: 6px 0 0 0;
+}
+th:last-child {
+    border-radius: 0 6px 0 0;
+}
+th:only-child{
+    border-radius: 6px 6px 0 0;
+}
+tbody {
+    border: 1px solid #dbdbdb;
+}
+td {
+    border: 1px solid #eeeeee;
+    font-size: inherit;
+    margin: 0;
+    overflow: visible;
+    padding: .3em 1em;
+}
+th {
+    padding: .4em 1em;
+}
+h1 {
+    font-size: 1.4em;
+    clear: both;
+}
+table.sql-schema-table {
+    float:left;
+    width: auto;
+}
+table.sql-schema-table + table.sql-schema-table {
+    margin-left: 10px
+}
+</style>
+</head>
+
+<body>
+<div class="sql-output">
+    {{#if tables}}
+        <h1>Database Schema</h1>
+    {{/if}}
+    {{#each tables}}
+        <table class="sql-schema-table">
+        <thead>
+        <th>{{name}} ({{rowCount}} row(s))</th>
+        </thead>
+        <tbody>
+        {{#each columns}}
+            <tr><td>
+            {{name}} {{#if pk}} (PK){{/if}} {{type}}
+            </td></tr>
+        {{/each}}
+        </tbody>
+        </table>
+    {{/each}}
+
+    {{#if tables}}
+        <h1>Results</h1>
+    {{/if}}
+    {{#each results}}
+        <table class="sql-result-table">
+        <thead>
+        {{#each columns}}
+            <th>{{this}}</th>
+        {{/each}}
+        </thead>
+        <tbody>
+        {{#each values}}
+            <tr>
+                {{#each this}}
+                     {{#if this}}
+                         <td>{{this}}</td>
+                     {{else}}
+                         <td>NULL</td>
+                     {{/if}}
+                {{/each}}
+            </tr>
+        {{/each}}
+        </tbody>
+        </table>
+    {{/each}}
+</div>
+</body>
+</html>
