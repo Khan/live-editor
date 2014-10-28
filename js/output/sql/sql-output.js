@@ -56,7 +56,8 @@ window.SQLOutput = Backbone.View.extend({
                 function(statement, lineNumber) {
             try {
                 if (!statement) {
-                    throw "It looks like you have an unnecessary semicolon.";
+                    throw $._("It looks like you have an " +
+                        "unnecessary semicolon.");
                 }
                 var result =
                     SQLTester.Util.execSingleStatementWithResults(db,
@@ -64,6 +65,25 @@ window.SQLOutput = Backbone.View.extend({
                 if (result) {
                     results.push(result);
                 }
+
+                // SQLite allows any column type name and uses these rules
+                // to determine the storage type:
+                // https://www.sqlite.org/datatype3.html
+                // Instead it would be better for learning purposes to require
+                // the valid names that things coerce to.
+                var tables = SQLTester.Util.getTables(db);
+                tables.forEach(function(table) {
+                    table.columns.forEach(function(column) {
+                        var type =  column.type.toUpperCase();
+                        var allowedTypes = ["TEXT", "NUMERIC", "INTEGER",
+                            "REAL", "NONE"];
+                        if (allowedTypes.indexOf(type) === -1) {
+                            throw $._("Please use one of the valid column " +
+                                "types when creating a table: ") +
+                                allowedTypes.join(", ");
+                        }
+                    });
+                });
 
                 // Check if we have any new foreign key constraint violations
                 var fkResults = db.exec("PRAGMA foreign_key_check;");
