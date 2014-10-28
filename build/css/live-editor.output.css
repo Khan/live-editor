@@ -170,3 +170,46 @@ body {
 .error-overlay {
     background: rgba(255, 255, 255, 0.6);
 }
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    empty-cells: show;
+    width: 100%;
+    margin-bottom: 20px;
+}
+table thead {
+    background: #e0e0e0;
+    color: #000;
+    text-align: left;
+    vertical-align: bottom;
+}
+th:first-child {
+    border-radius: 6px 0 0 0;
+}
+th:last-child {
+    border-radius: 0 6px 0 0;
+}
+th:only-child{
+    border-radius: 6px 6px 0 0;
+}
+tbody {
+    border: 1px solid #dbdbdb;
+}
+td {
+    border: 1px solid #eeeeee;
+    font-size: inherit;
+    margin: 0;
+    overflow: visible;
+    padding: .3em 1em;
+}
+th {
+    padding: .4em 1em;
+}
+h1 {
+    font-size: 1.4em;
+    clear: both;
+}
+table.sql-schema-table + table.sql-schema-table {
+    margin-left: 10px
+}

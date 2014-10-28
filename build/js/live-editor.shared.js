@@ -1041,6 +1041,43 @@ var ScratchpadConfig = Backbone.Model.extend({
                 aceEditor.setTheme("ace/theme/textmate");
             },
 
+            // Ace SQL editor configuration
+            ace_sql_editor: function(editor) {
+                var aceEditor = editor.editor;
+
+                // Don't highlight the active line
+                aceEditor.setHighlightActiveLine(false);
+
+                // Make sure no horizontal scrollbars are shown
+                aceEditor.renderer.setHScrollBarAlwaysVisible(false);
+
+                var session = aceEditor.getSession();
+
+                // Use word wrap
+                session.setUseWrapMode(true);
+
+                // Use soft tabs
+                session.setUseSoftTabs(true);
+
+                // Set the font size
+                aceEditor.setFontSize("14px");
+
+                // Disable highlighting the selected word
+                aceEditor.setHighlightSelectedWord(false);
+
+                // Show line numbers and enable code collapsing
+                aceEditor.renderer.setShowGutter(true);
+
+                // Don't show print margin
+                aceEditor.renderer.setShowPrintMargin(false);
+
+                // Use SQL Mode
+                session.setMode("ace/mode/sql");
+
+                // Set the editor theme
+                aceEditor.setTheme("ace/theme/textmate");
+            },
+
             // JSHint configuration
             // See: http://www.jshint.com/options/
             jshint: function(output) {
