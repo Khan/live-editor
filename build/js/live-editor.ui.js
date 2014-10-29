@@ -1,5 +1,141 @@
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
+this["Handlebars"]["templates"]["tipbar"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  helpers = helpers || Handlebars.helpers;
+  var buffer = "", stack1, foundHelper, tmp1, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
+
+function program1(depth0,data) {
+  
+  
+  return "Oh noes!";}
+
+function program3(depth0,data) {
+  
+  
+  return "Show me where";}
+
+  buffer += "<div class=\"tipbar\">\n    <div class=\"speech-arrow\"></div>\n    <div class=\"error-buddy\"></div>\n    <div class=\"tipnav\">\n        <a href=\"\" class=\"prev\"><span class=\"ui-icon ui-icon-circle-triangle-w\"></span></a>\n        <span class=\"current-pos\"></span>\n        <a href=\"\" class=\"next\"><span class=\"ui-icon ui-icon-circle-triangle-e\"></span></a>\n    </div>\n    <div class=\"text-wrap\">\n        <div class=\"oh-no\">";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(1, program1, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "</div>\n        <div class=\"message\"></div>\n        <div class=\"show-me\"><a href>";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(3, program3, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "</a></div>\n    </div>\n</div>";
+  return buffer;});;
+/**
+ * This is called tipbar for historical reasons.
+ * Originally, it appeared as a red bar sliding up from the bottom of the
+ * canvas. Now it just powers the error reporting mechanism, which no longer
+ * looks like a bar
+ */
+
+window.TipBar = Backbone.View.extend({
+    initialize: function(options) {
+        this.liveEditor = options.liveEditor;
+        this.pos = 0;
+        this.texts = [];
+        this.render();
+        this.bind();
+    },
+
+    render: function() {
+        this.$overlay = $("<div class=\"overlay error-overlay\" style=\"display: none\"></div>").appendTo(this.$el);
+        this.$el.append(Handlebars.templates["tipbar"]());
+    },
+
+    bind: function() {
+        var self = this;
+
+        this.$el.on("click", ".tipbar .tipnav a", function(e) {
+            if (!$(this).hasClass("ui-state-disabled")) {
+                self.pos += $(this).hasClass("next") ? 1 : -1;
+                self.show();
+            }
+
+            self.liveEditor.editor.focus();
+
+            return false;
+        });
+
+        this.$el.on("click", ".tipbar .text-wrap a", function(e) {
+            var error = self.texts[self.pos];
+
+            self.liveEditor.editor.setCursor(error);
+            self.liveEditor.editor.setErrorHighlight(true);
+
+            return false;
+        });
+    },
+
+    show: function() {
+        var texts = this.texts;
+
+        var pos = this.pos;
+        var bar = this.$el.find(".tipbar");
+
+        // Inject current text
+        bar
+            .find(".current-pos").text(texts.length > 1 ? (pos + 1) + "/" + texts.length : "").end()
+            .find(".message").html(texts[pos].text || texts[pos] || "").end()
+            .find("a.prev").toggleClass("ui-state-disabled", pos === 0).end()
+            .find("a.next").toggleClass("ui-state-disabled", pos + 1 === texts.length).end();
+
+        this.$el.find(".show-me").toggle(texts[pos].row !== -1);
+
+        bar.find(".tipnav").toggle(texts.length > 1);
+
+        // Only animate the bar in if it's not visible
+        if (!bar.is(":visible")) {
+            bar
+                .css({ top: 400, opacity: 0.1 })
+                .show()
+                .animate({
+                    top: this.$el.find(".toolbar").is(":visible") ? 33 : 100,
+                    opacity: 0.9},
+                    300);
+        }
+    },
+
+    hide: function() {
+        var bar = this.$el.find(".tipbar");
+        if (bar.is(':visible')) {
+            bar.animate({ top: 400, opacity: 0.1 }, 300, function() {
+                $(this).hide();
+            });
+        }
+        clearTimeout(this.errorDelay);
+    },
+
+    toggleErrors: function(errors) {
+        this.texts = errors;
+        var hasErrors = !!errors.length;
+
+        this.$overlay.toggle(hasErrors);
+
+        if (!hasErrors) {
+            this.hide();
+            return;
+        }
+
+        this.errorDelay = setTimeout(this.show.bind(this), 1200);
+    }
+});
+this["Handlebars"] = this["Handlebars"] || {};
+this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
 this["Handlebars"]["templates"]["live-editor"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   helpers = helpers || Handlebars.helpers;
   var buffer = "", stack1, stack2, foundHelper, tmp1, self=this, functionType="function", helperMissing=helpers.helperMissing, undef=void 0, escapeExpression=this.escapeExpression, blockHelperMissing=helpers.blockHelperMissing;
@@ -691,6 +827,7 @@ window.LiveEditor = Backbone.View.extend({
         PLAYBAR_TIMELEFT: ".scratchpad-playbar-timeleft",
         PLAYBAR_UI: ".scratchpad-playbar-play, .scratchpad-playbar-progress",
         OUTPUT_FRAME: "#output-frame",
+        OUTPUT_DIV: "#output",
         ALL_OUTPUT: "#output, #output-frame"
     },
 
@@ -781,6 +918,11 @@ window.LiveEditor = Backbone.View.extend({
             type: this.editorType
         });
 
+        this.tipbar = new TipBar({
+            el: this.$(this.dom.OUTPUT_DIV),
+            liveEditor: this
+        });
+
         var code = options.code;
 
         // Load the text into the editor
@@ -842,7 +984,7 @@ window.LiveEditor = Backbone.View.extend({
         $el.delegate("#restart-code", "click",
             this.restartCode.bind(this));
 
-        $(window).on("message", this.listenMessages.bind(this));
+        $(window).on("message", this.handleMessages.bind(this));
 
         var toExec = false;
 
@@ -856,8 +998,10 @@ window.LiveEditor = Backbone.View.extend({
 
         // Whenever the user changes code, execute the code
         this.editor.on("change", function() {
+            // We got new code. Hide the tipbar to give them a chance to fix things up
+            this.tipbar.hide();
             toExec = true;
-        });
+        }.bind(this));
 
         // Attempt to run the code every 100ms or so
         this.runCodeInterval = setInterval(function() {
@@ -1559,13 +1703,12 @@ window.LiveEditor = Backbone.View.extend({
         }
     },
 
-    listenMessages: function(e) {
+    handleMessages: function(e) {
         var event = e.originalEvent;
         var data;
 
         try {
             data = JSON.parse(event.data);
-
         } catch (err) {
             // Malformed JSON, we don't care about it
         }
@@ -1623,6 +1766,10 @@ window.LiveEditor = Backbone.View.extend({
            this.editor.editor.session.setAnnotations(annotations);
         }
 
+        if (data.results && _.isArray(data.results.errors)) {
+            this.tipbar.toggleErrors(data.results.errors);
+        }
+
         // Set the line visibility in the editor
         if (data.lines !== undefined) {
             this.editor.toggleGutter(data.lines);
@@ -1631,17 +1778,6 @@ window.LiveEditor = Backbone.View.extend({
         // Restart the execution
         if (data.restart) {
             this.restartCode();
-        }
-
-        // Set the cursor in the editor
-        if (data.cursor) {
-            this.editor.setCursor(data.cursor);
-            this.editor.setErrorHighlight(true);
-        }
-
-        // Set the focus back on the editor
-        if (data.focus) {
-            this.editor.focus();
         }
 
         // Log the recorded action

@@ -16,11 +16,6 @@ window.LiveEditorOutput = Backbone.View.extend({
             this.setOutput(options.outputType);
         }
 
-        this.tipbar = new TipBar({
-            el: this.el,
-            output: this
-        });
-
         this.bind();
     },
 
@@ -104,8 +99,6 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Code to be executed
         if (data.code != null) {
-            // We got new code. Hide the tipbar to give them a chance to fix things up
-            this.tipbar.hide();
             this.config.switchVersion(data.version);
             this.runCode(data.code);
         }
@@ -209,7 +202,7 @@ window.LiveEditorOutput = Backbone.View.extend({
                 }
             });
 
-            this.toggleErrors(errors);
+            this.toggle(!errors.length);
         }.bind(this);
 
         this.lint(userCode, function(errors) {
@@ -318,30 +311,6 @@ window.LiveEditorOutput = Backbone.View.extend({
 
     clean: function(str) {
         return String(str).replace(/</g, "&lt;");
-    },
-
-    toggleErrors: function(errors) {
-        var hasErrors = !!errors.length;
-
-        this.$el.find(".error-overlay").toggle(hasErrors);
-
-        this.toggle(!hasErrors);
-
-        if (this.errorDelay) {
-            clearTimeout(this.errorDelay);
-        }
-
-        if (!hasErrors) {
-            this.tipbar.hide("Error");
-            return;
-        }
-
-        this.errorDelay = setTimeout(function() {
-            this.errorDelay = null;
-            if (errors.length > 0) {
-                this.tipbar.show("Error", errors);
-            }
-        }.bind(this), 1200);
     }
 });
 

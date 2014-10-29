@@ -1,16 +1,3 @@
-html,
-body {
-    margin: 0;
-    min-width: 0;
-    overflow: hidden;
-}
-.output {
-    height: 100%;
-    position: relative;
-}
-.output > * {
-    display: block;
-}
 /**
  * Code Error Reporting
  * --------------------
@@ -34,7 +21,6 @@ body {
     position: absolute;
     top: 100px;
     width: 260px;
-    z-index: 1000;
 }
 .tipbar .error-buddy {
     background: url(../images/scratchpads/error-buddy.png);
@@ -165,8 +151,8 @@ body {
     position: absolute;
     top: 0px;
     width: 100%;
-    z-index: 999;
 }
 .error-overlay {
     background: rgba(255, 255, 255, 0.6);
+    z-index: auto;
 }
