@@ -399,6 +399,8 @@ window.WebpageOutput = Backbone.View.extend({
 
         // Load Webpage config options
         this.config.runCurVersion("webpage", this);
+
+        this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
     },
 
     render: function() {
@@ -433,16 +435,79 @@ window.WebpageOutput = Backbone.View.extend({
         });
     },
 
+    loopCounter: 0,
+    KAInfiniteLoopProtect: function() {
+        if (!(this.loopCounter--)) {
+            this.loopCounter = 10000;
+            var now = new Date().getTime();
+            if (!this.branchStartTime) {
+                this.branchStartTime = now;
+                setTimeout(function() {
+                    this.branchStartTime = 0;
+                    this.loopCounter = 0;
+                }.bind(this), 0);
+            } else if (now - this.branchStartTime > 200) {
+                this.build.success = false;
+                this.postParent({
+                    results: {
+                        errors: [{
+                            text: this.$._("Your javascript is taking too long to run. " +
+                                        "Perhaps you have a mistake in your code?"),
+                            type: "error",
+                            source: "timeout",
+                        }]
+                    }
+                });
+                throw "KA_JAVASCRIPT_TIMEOUT";
+            }
+        }
+    },
+
+    riskyStatements: [
+        "DoWhileStatement",
+        "WhileStatement",
+        "ForStatement",
+        "FunctionStatement",
+        "FunctionDeclaration"
+    ],
+
+    loopProtectAst: function(ast) {
+        if (this.riskyStatements.indexOf(ast.type) !== -1) {
+            ast.body.body.unshift(this.loopBreak);
+        }
+        for (var prop in ast) {
+            if (ast.hasOwnProperty(prop) && _.isObject(ast[prop])) {
+                if (_.isArray(ast[prop])) {
+                    _.each(ast[prop], this.loopProtectAst.bind(this));
+                } else {
+                    this.loopProtectAst(ast[prop]);
+                }
+            }
+        }
+    },
+
+    loopProtect: function(text) {
+        var ast = esprima.parse(text);
+        this.loopProtectAst(ast);
+        text = escodegen.generate(ast);
+        return text;
+    },
+
     lint: function(userCode, callback) {
         this.userDOM = null;
         userCode = userCode || "";
 
         // Lint the user's code, returning any errors in the callback
         var results = Slowparse.HTML(this.getDocument(), userCode, {
+            scriptPreprocessor: this.loopProtect.bind(this) });
+
+        /* Code for disabling script tags
+        var results = Slowparse.HTML(this.getDocument(), userCode, {
             disallowActiveAttributes: true,
             noScript: true,
             disableTags: ["audio", "video", "iframe", "embed", "object"]
         });
+        */
 
         if (results.error) {
             var pos = results.error.cursor;
@@ -458,13 +523,10 @@ window.WebpageOutput = Backbone.View.extend({
                 source: "slowparse",
                 lint: results.error,
                 priority: 2
-            }], userCode);
+            }], false);
         }
 
-        this.userDOM = document.createElement("div");
-        this.userDOM.appendChild(results.document);
-
-        callback([]);
+        callback([], results.cache);
     },
 
     flattenError: function(plainError, error, base) {
@@ -524,7 +586,8 @@ window.WebpageOutput = Backbone.View.extend({
             UNTERMINATED_CLOSE_TAG: $._("A closing \"&lt;/%(closeTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
             UNTERMINATED_COMMENT: $._("A comment doesn't end with a \"--&gt;\".", error),
             UNTERMINATED_CSS_COMMENT: $._("A CSS comment doesn't end with a \"*/\".", error),
-            UNTERMINATED_OPEN_TAG: $._("An opening \"&lt;%(openTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error)
+            UNTERMINATED_OPEN_TAG: $._("An opening \"&lt;%(openTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
+            JAVASCRIPT_ERROR: $._("Javascript Error:\n\"%(message)s\"", error)
         })[error.type];
     },
 
@@ -569,15 +632,14 @@ window.WebpageOutput = Backbone.View.extend({
     },
 
     postProcessing: function(oldPageTitle) {
-        var doc = this.getDocument();
         var self = this;
-        $(doc).find("a").attr("rel", "nofollow").each(function() {
+        $(document).find("a").attr("rel", "nofollow").each(function() {
             var url = $(this).attr("href");
             if (url && url[0] === "#") {
                 $(this).attr("href", "javascript:void(0)").click(function() {
                     var id = url;
-                    $(doc).find("html, body").animate({
-                        scrollTop: $(doc).find(id).offset().top
+                    $(document).find("html, body").animate({
+                        scrollTop: $(document).find(id).offset().top
                     }, 1000);
                 });
                 return;
@@ -591,7 +653,7 @@ window.WebpageOutput = Backbone.View.extend({
             });
         });
 
-        var titleTag = $(doc).find("head > title");
+        var titleTag = $(document).find("head > title");
         if (titleTag.length > 0 && oldPageTitle != titleTag.text()) {
             self.output.postParent({
                 action: "page-info",
@@ -600,14 +662,17 @@ window.WebpageOutput = Backbone.View.extend({
         }
     },
 
-    runCode: function(userCode, callback) {
-        var doc = this.getDocument();
-        var oldPageTitle = $(doc).find("head > title").text();
-        doc.open();
-        doc.write(userCode);
-        doc.close();
+    runCode: function(codeObj, callback) {
+        document.open();
+        document.write("");
+        // This listener got destroyed when we reset everything
+        //window.addEventListener("message", this.handleMessage.bind(this));
+
+        codeObj.replayOn(document);
+
+        var oldPageTitle = $(document).find("head > title").text();
         this.postProcessing(oldPageTitle);
-        callback([], userCode);
+        callback([]);
     },
 
     clear: function() {

@@ -1940,13 +1940,15 @@
       } catch (e) {
         if (e.parseInfo) {
           error = e.parseInfo;
-        } else
+        } else {
           throw e;
+        }
       }
 
       errorDetectors.forEach(function(detector) {
-        if (!error)
+        if (!error) {
           error = detector(html, domBuilder.fragment) || null;
+        }
       });
 
       return {
