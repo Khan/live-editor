@@ -4413,7 +4413,11 @@
           this.domBuilder.currentNode.parseInfo.closeTag = closeTagInterval;
           textInterval.start = token.interval.start;
           textInterval.end = token.interval.end - (closeTagInterval.end - closeTagInterval.start);
-          this.domBuilder.text(text, textInterval);
+          if (tagname === "script") {
+            this.domBuilder.script(text, textInterval);
+          } else {
+            this.domBuilder.text(text, textInterval);
+          }
           this.domBuilder.popElement();
           return;
         }
@@ -4672,10 +4676,77 @@
     },
     // This method appends a text node to the currently active element.
     text: function(text, parseInfo) {
+      if (this.currentNode === this.fragment) {
+        return;
+      }
       var textNode = this.document.createTextNode(text);
       textNode.parseInfo = parseInfo;
       this.currentNode.appendChild(textNode);
     }
+  };
+
+  // ### DOM Cacher
+  // I'm such a Haxor :)
+  function DOMCacher(document, disallowActiveAttributes, scriptPreprocessor) {
+    this.log = [];
+    this.disallowActiveAttributes = disallowActiveAttributes;
+    this.scriptPreprocessor = scriptPreprocessor;
+  }
+
+  DOMCacher.prototype = {
+    // This method pushes a new element onto the DOM builder's stack.
+    // The element is appended to the currently active element and is
+    // then made the new currently active element.
+    pushElement: function(tagName, parseInfo, nameSpace) {
+      this.log.push(["pushElement", arguments]);
+      this.currentNode = {nodeName: tagName, parseInfo: parseInfo, parent: this.currentNode};
+    },
+    // This method pops the current element off the DOM builder's stack,
+    // making its parent element the currently active element.
+    popElement: function() {
+      this.log.push(["popElement", arguments]);
+      this.currentNode = this.currentNode.parent;
+    },
+    // record the cursor position for a context change (text/html/css/script)
+    pushContext: function(context, position) {
+      this.log.push(["pushContext", arguments]);
+    },
+    // This method appends an HTML comment node to the currently active
+    // element.
+    comment: function(data, parseInfo) {
+      this.log.push(["comment", arguments]);
+    },
+    // This method appends an attribute to the currently active element.
+    attribute: function(name, value, parseInfo) {
+      this.log.push(["attribute", arguments]);
+    },
+    // This method appends a text node to the currently active element.
+    text: function(text, parseInfo) {
+      this.log.push(["text", arguments]);
+    },
+    // This method appends a text node to the currently active element.
+    script: function(text, parseInfo) {
+      try {
+        text = this.scriptPreprocessor(text);
+      } catch(err) {
+        // This is meant to handle esprima errors
+        if (err.index && err.description && err.message) {
+          var cursor = this.currentNode.parseInfo.openTag.end + err.index;
+          throw {parseInfo: {type: "JAVASCRIPT_ERROR", message: err.description, cursor: cursor} };
+        } else {
+          throw err;
+        }
+      }
+      this.log.push(["text", [text, parseInfo]]);
+    }
+  };
+
+  DOMCacher.prototype.replayOn = function(doc) {
+    var domBuilder = new DOMBuilder(document, this.disallowActiveAttributes);
+    domBuilder.currentNode = domBuilder.fragment = doc;
+    this.log.forEach(function(action) {
+      domBuilder[action[0]].apply(domBuilder, action[1]);
+    });
   };
 
   // ### Exported Symbols
@@ -4717,17 +4788,17 @@
     //
     //   [error specification]: spec/
     HTML: function(document, html, options) {
-      options = options || {};
+      var options = options || {};
       var stream = new Stream(html),
-          domBuilder,
           parser,
           warnings = null,
           error = null,
           errorDetectors = options.errorDetectors || [],
           disallowActiveAttributes = (typeof options.disallowActiveAttributes === "undefined") ? false : options.disallowActiveAttributes;
 
-      domBuilder = new DOMBuilder(document, disallowActiveAttributes);
-      parser = new HTMLParser(stream, domBuilder, options);
+      var scriptPreprocessor = options.scriptPreprocessor || function(x){return x;};
+      var domCacher = new DOMCacher(document, disallowActiveAttributes, scriptPreprocessor);
+      var parser = new HTMLParser(stream, domCacher);
 
       try {
         var _ = parser.parse();
@@ -4747,8 +4818,7 @@
       });
 
       return {
-        document: domBuilder.fragment,
-        contexts: domBuilder.contexts,
+        cache: domCacher,
         warnings: warnings,
         error: error
       };
