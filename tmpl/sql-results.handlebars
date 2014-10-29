@@ -62,7 +62,11 @@ table.sql-schema-table + table.sql-schema-table {
     {{#each tables}}
         <table class="sql-schema-table">
         <thead>
-        <th>{{name}} ({{rowCount}} row(s))</th>
+        {{#if hasSingleRow}}
+            <th>{{name}} ({{rowCount}} row)</th>
+        {{else}}
+            <th>{{name}} ({{rowCount}} rows)</th>
+        {{/if}}
         </thead>
         <tbody>
         {{#each columns}}
@@ -87,12 +91,12 @@ table.sql-schema-table + table.sql-schema-table {
         <tbody>
         {{#each values}}
             <tr>
-                {{#each this}}
-                     {{#if this}}
-                         <td>{{this}}</td>
-                     {{else}}
-                         <td>NULL</td>
-                     {{/if}}
+                {{#each result}}
+                    {{#if data}}
+                        <td>{{data}}</td>
+                    {{else}}
+                        <td>NULL</td>
+                    {{/if}}
                 {{/each}}
             </tr>
         {{/each}}

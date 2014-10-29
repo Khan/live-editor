@@ -50,6 +50,7 @@ SQLTester.Util = {
             return {
                 name: table,
                 rowCount: rowCount,
+                hasSingleRow: rowCount === 1, // lame, for handlebars :(
                 columns: v.map(function(v) {
                     return {
                         cid: v[0],
@@ -221,7 +222,17 @@ SQLTester.Util = {
             if (!o.columns) {
                 o.columns = stmt.getColumnNames();
             }
-            o.values.push(stmt.get());
+            // Re-map the data so that arrays never contain arrays.
+            // Instead each sub-array will be nested in an object.
+            // For some unknown reason, handlebars 1.0.5 doesn't like
+            // arrays within arrays on Firefox.
+            var rowData = stmt.get();
+            if (rowData) {
+                rowData = rowData.map(function(data) {
+                    return { data: data };
+                });
+            }
+            o.values.push({ result: rowData});
         }
         if (o.columns) {
             return o;
