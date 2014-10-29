@@ -60,12 +60,12 @@ table.sql-schema-table + table.sql-schema-table {
         <h1>Database Schema</h1>
     {{/if}}
     {{#each tables}}
-        <table class="sql-schema-table">
+        <table class="sql-schema-table" data-table-name="{{name}}">
         <thead>
         {{#if hasSingleRow}}
-            <th>{{name}} ({{rowCount}} row)</th>
+            <th><a class="table-link" href="javascript:void(0)">{{name}}</a> ({{rowCount}} row)</th>
         {{else}}
-            <th>{{name}} ({{rowCount}} rows)</th>
+            <th><a class="table-link" href="javascript:void(0)">{{name}}</a> ({{rowCount}} rows)</th>
         {{/if}}
         </thead>
         <tbody>

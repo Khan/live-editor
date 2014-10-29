@@ -172,6 +172,20 @@ window.SQLOutput = Backbone.View.extend({
             }.bind(this));
     },
 
+    postProcessing: function() {
+        var doc = this.getDocument();
+        var self = this;
+        $(doc).find("table.sql-schema-table").each(function() {
+            var tableName = $(this).data("table-name");
+            $(this).find(".table-link").click(function() {
+                self.output.postParent({
+                    action: "sql-table-click",
+                    table: tableName
+                });
+            });
+        });
+    },
+
     runCode: function(userCode, callback) {
         var db = new SQL.Database();
 
@@ -189,6 +203,7 @@ window.SQLOutput = Backbone.View.extend({
         doc.open();
         doc.write(output);
         doc.close();
+        this.postProcessing();
         callback([], userCode);
     },
 
