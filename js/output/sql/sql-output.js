@@ -186,7 +186,7 @@ window.SQLOutput = Backbone.View.extend({
         var self = this;
         $(doc).find("table.sql-schema-table").each(function() {
             var tableName = $(this).data("table-name");
-            $(this).find(".table-link").click(function() {
+            $(this).find("th a").click(function() {
                 self.output.postParent({
                     action: "sql-table-click",
                     table: tableName

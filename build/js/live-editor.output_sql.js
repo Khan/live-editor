@@ -29,7 +29,7 @@ function program3(depth0,data) {
 function program4(depth0,data) {
   
   var buffer = "", stack1, foundHelper;
-  buffer += "\n            <th><a class=\"table-link\" href=\"javascript:void(0)\">";
+  buffer += "\n            <th><a href=\"javascript:void(0)\">";
   foundHelper = helpers.name;
   if (foundHelper) { stack1 = foundHelper.call(depth0, {hash:{}}); }
   else { stack1 = depth0.name; stack1 = typeof stack1 === functionType ? stack1() : stack1; }
@@ -43,7 +43,7 @@ function program4(depth0,data) {
 function program6(depth0,data) {
   
   var buffer = "", stack1, foundHelper;
-  buffer += "\n            <th><a class=\"table-link\" href=\"javascript:void(0)\">";
+  buffer += "\n            <th><a href=\"javascript:void(0)\">";
   foundHelper = helpers.name;
   if (foundHelper) { stack1 = foundHelper.call(depth0, {hash:{}}); }
   else { stack1 = depth0.name; stack1 = typeof stack1 === functionType ? stack1() : stack1; }
@@ -760,7 +760,7 @@ window.SQLOutput = Backbone.View.extend({
         var self = this;
         $(doc).find("table.sql-schema-table").each(function() {
             var tableName = $(this).data("table-name");
-            $(this).find(".table-link").click(function() {
+            $(this).find("th a").click(function() {
                 self.output.postParent({
                     action: "sql-table-click",
                     table: tableName
