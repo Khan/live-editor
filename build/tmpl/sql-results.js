@@ -11,8 +11,12 @@ function program1(depth0,data) {
 
 function program3(depth0,data) {
   
-  var buffer = "", stack1;
-  buffer += "\n        <table class=\"sql-schema-table\">\n        <thead>\n        ";
+  var buffer = "", stack1, foundHelper;
+  buffer += "\n        <table class=\"sql-schema-table\" data-table-name=\"";
+  foundHelper = helpers.name;
+  if (foundHelper) { stack1 = foundHelper.call(depth0, {hash:{}}); }
+  else { stack1 = depth0.name; stack1 = typeof stack1 === functionType ? stack1() : stack1; }
+  buffer += escapeExpression(stack1) + "\">\n        <thead>\n        ";
   stack1 = depth0.hasSingleRow;
   stack1 = helpers['if'].call(depth0, stack1, {hash:{},inverse:self.program(6, program6, data),fn:self.program(4, program4, data)});
   if(stack1 || stack1 === 0) { buffer += stack1; }
@@ -25,11 +29,11 @@ function program3(depth0,data) {
 function program4(depth0,data) {
   
   var buffer = "", stack1, foundHelper;
-  buffer += "\n            <th>";
+  buffer += "\n            <th><a class=\"table-link\" href=\"javascript:void(0)\">";
   foundHelper = helpers.name;
   if (foundHelper) { stack1 = foundHelper.call(depth0, {hash:{}}); }
   else { stack1 = depth0.name; stack1 = typeof stack1 === functionType ? stack1() : stack1; }
-  buffer += escapeExpression(stack1) + " (";
+  buffer += escapeExpression(stack1) + "</a> (";
   foundHelper = helpers.rowCount;
   if (foundHelper) { stack1 = foundHelper.call(depth0, {hash:{}}); }
   else { stack1 = depth0.rowCount; stack1 = typeof stack1 === functionType ? stack1() : stack1; }
@@ -39,11 +43,11 @@ function program4(depth0,data) {
 function program6(depth0,data) {
   
   var buffer = "", stack1, foundHelper;
-  buffer += "\n            <th>";
+  buffer += "\n            <th><a class=\"table-link\" href=\"javascript:void(0)\">";
   foundHelper = helpers.name;
   if (foundHelper) { stack1 = foundHelper.call(depth0, {hash:{}}); }
   else { stack1 = depth0.name; stack1 = typeof stack1 === functionType ? stack1() : stack1; }
-  buffer += escapeExpression(stack1) + " (";
+  buffer += escapeExpression(stack1) + "</a> (";
   foundHelper = helpers.rowCount;
   if (foundHelper) { stack1 = foundHelper.call(depth0, {hash:{}}); }
   else { stack1 = depth0.rowCount; stack1 = typeof stack1 === functionType ? stack1() : stack1; }
@@ -141,7 +145,7 @@ function program20(depth0,data) {
   stack1 = helpers.each.call(depth0, stack1, {hash:{},inverse:self.noop,fn:self.program(3, program3, data)});
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n\n    ";
-  stack1 = depth0.tables;
+  stack1 = depth0.results;
   stack1 = helpers['if'].call(depth0, stack1, {hash:{},inverse:self.noop,fn:self.program(11, program11, data)});
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n    ";
