@@ -55,7 +55,7 @@ SQLTester.Util = {
                     return {
                         cid: v[0],
                         name: v[1],
-                        type: v[2],
+                        type: v[2].toUpperCase(),
                         notnull: v[3],
                         dflt_value: v[4],
                         pk: v[5]
