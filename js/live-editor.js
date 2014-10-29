@@ -15,6 +15,7 @@ window.LiveEditor = Backbone.View.extend({
         PLAYBAR_TIMELEFT: ".scratchpad-playbar-timeleft",
         PLAYBAR_UI: ".scratchpad-playbar-play, .scratchpad-playbar-progress",
         OUTPUT_FRAME: "#output-frame",
+        OUTPUT_DIV: "#output",
         ALL_OUTPUT: "#output, #output-frame"
     },
 
@@ -105,6 +106,11 @@ window.LiveEditor = Backbone.View.extend({
             type: this.editorType
         });
 
+        this.tipbar = new TipBar({
+            el: this.$(this.dom.OUTPUT_DIV),
+            liveEditor: this
+        });
+
         var code = options.code;
 
         // Load the text into the editor
@@ -166,7 +172,7 @@ window.LiveEditor = Backbone.View.extend({
         $el.delegate("#restart-code", "click",
             this.restartCode.bind(this));
 
-        $(window).on("message", this.listenMessages.bind(this));
+        $(window).on("message", this.handleMessages.bind(this));
 
         var toExec = false;
 
@@ -180,8 +186,10 @@ window.LiveEditor = Backbone.View.extend({
 
         // Whenever the user changes code, execute the code
         this.editor.on("change", function() {
+            // We got new code. Hide the tipbar to give them a chance to fix things up
+            this.tipbar.hide();
             toExec = true;
-        });
+        }.bind(this));
 
         // Attempt to run the code every 100ms or so
         this.runCodeInterval = setInterval(function() {
@@ -887,13 +895,12 @@ window.LiveEditor = Backbone.View.extend({
         }
     },
 
-    listenMessages: function(e) {
+    handleMessages: function(e) {
         var event = e.originalEvent;
         var data;
 
         try {
             data = JSON.parse(event.data);
-
         } catch (err) {
             // Malformed JSON, we don't care about it
         }
@@ -951,6 +958,10 @@ window.LiveEditor = Backbone.View.extend({
            this.editor.editor.session.setAnnotations(annotations);
         }
 
+        if (data.results && _.isArray(data.results.errors)) {
+            this.tipbar.toggleErrors(data.results.errors);
+        }
+
         // Set the line visibility in the editor
         if (data.lines !== undefined) {
             this.editor.toggleGutter(data.lines);
@@ -959,17 +970,6 @@ window.LiveEditor = Backbone.View.extend({
         // Restart the execution
         if (data.restart) {
             this.restartCode();
-        }
-
-        // Set the cursor in the editor
-        if (data.cursor) {
-            this.editor.setCursor(data.cursor);
-            this.editor.setErrorHighlight(true);
-        }
-
-        // Set the focus back on the editor
-        if (data.focus) {
-            this.editor.focus();
         }
 
         // Log the recorded action

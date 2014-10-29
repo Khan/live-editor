@@ -114,14 +114,14 @@
             "js/output/sql/sql-output.js"
         ],
         "output": [
-            "build/tmpl/tipbar.js",
-            "js/output/shared/tipbar.js",
             "build/tmpl/output.js",
             "js/output/shared/pooled-worker.js",
             "js/output/shared/output-tester.js",
             "js/output/shared/output.js"
         ],
         "ui": [
+            "build/tmpl/tipbar.js",
+            "js/ui/tipbar.js",
             "build/tmpl/live-editor.js",
             "js/ui/canvas.js",
             "js/ui/record.js",
@@ -165,10 +165,8 @@
             "css/ui/tabs.css",
             "css/ui/tooltips.css"
         ],
-        "output": [
-            "css/output/style.css"
-        ],
         "ui": [
+            "css/ui/tipbar.css",
             "css/ui/style.css"
         ]
     },
