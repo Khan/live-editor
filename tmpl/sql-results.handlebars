@@ -13,7 +13,7 @@ table {
     margin-bottom: 20px;
 }
 table thead {
-    background: #e0e0e0;
+    background: #e6e6e6;
     color: #000;
     text-align: left;
     vertical-align: bottom;
@@ -32,6 +32,7 @@ tbody {
 }
 td {
     border: 1px solid #eeeeee;
+    font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, source-code-pro, monospace;
     font-size: inherit;
     margin: 0;
     overflow: visible;
@@ -40,13 +41,39 @@ td {
 th {
     padding: .4em 1em;
 }
+th a {
+    color: #699c52;
+}
 h1 {
-    font-size: 1.4em;
     clear: both;
+    color: #aaa;
+    font-family: 'Proxima Nova', sans-serif;
+    font-size: 1.1em;
+    font-weight: normal;
+    margin-top: 10px;
+    text-transform: uppercase;
 }
 table.sql-schema-table {
     float:left;
     width: auto;
+}
+table.sql-schema-table row {
+    color: #888;
+    font-family: &quot;Proxima Nova&quot;;
+    font-weight: normal;
+    padding-left: 90px;
+}
+table.sql-schema-table .column-type-wrap {
+    float: right;
+    margin-left: 20px;
+    min-width: 70px;
+}
+table.sql-schema-table .schema-pk {
+    color: #999;
+}
+table.sql-schema-table .schema-column-type {
+    float: left;
+    color: #999;
 }
 table.sql-schema-table + table.sql-schema-table {
     margin-left: 10px
@@ -71,7 +98,7 @@ table.sql-schema-table + table.sql-schema-table {
         <tbody>
         {{#each columns}}
             <tr><td>
-            {{name}} {{#if pk}} (PK){{/if}} {{type}}
+            {{name}} {{#if pk}}<span class="schema-pk">(PK)</span>{{/if}} <span class="column-type-wrap"><span class="schema-column-type">{{type}}</span></span>
             </td></tr>
         {{/each}}
         </tbody>
