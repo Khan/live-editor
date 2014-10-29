@@ -168,50 +168,47 @@ window.LiveEditorOutput = Backbone.View.extend({
         
         this.currentCode = userCode;
 
-        var runDone = function(errors, testResults) {
-            errors = this.cleanErrors(errors || []);
+        var buildDone = function(errors) {
+            this.test(userCode, this.validate, errors, function(errors, testResults) {
+                errors = this.cleanErrors(errors || []);
 
-            if (!this.loaded) {
-                this.postParent({ loaded: true });
-                this.loaded = true;
-            }
-
-            // A callback for working with a test suite
-            if (callback) {
-                callback(errors, testResults);
-                return;
-            }
-
-            this.postParent({
-                results: {
-                    code: userCode,
-                    errors: errors,
-                    tests: testResults || [],
-                    assertions: this.assertions
+                if (!this.loaded) {
+                    this.postParent({ loaded: true });
+                    this.loaded = true;
                 }
-            });
 
-            this.toggle(!errors.length);
+                // A callback for working with a test suite
+                if (callback) {
+                    callback(errors, testResults);
+                    return;
+                }
+
+                this.postParent({
+                    results: {
+                        code: userCode,
+                        errors: errors,
+                        tests: testResults || [],
+                        assertions: this.assertions
+                    }
+                });
+
+                this.toggle(!errors.length);
+            }.bind(this));
         }.bind(this);
 
         var lintDone = function(errors) {
-            // Run the tests (even if there are lint errors)
-            this.test(userCode, this.validate, errors, function(errors, testResults) {
-                if (errors.length > 0 || this.onlyRunTests) {
-                    return runDone(errors, testResults);
-                }
+            if (errors.length > 0 || this.onlyRunTests) {
+                return buildDone(errors);
+            }
 
-                // Then run the user's code
-                try {
-                    this.output.runCode(userCode, function(errors) {
-                        runDone(errors, testResults);
-                    });
-
-                } catch (e) {
-                    runDone([e], testResults);
-                }
-            }.bind(this));
-        }.bind(this);
+            // Then run the user's code
+            try {
+                this.output.runCode(userCode, function(errors) {
+                    buildDone(errors);
+                });
+            } catch (e) {
+                buildDone([e]);
+            }        }.bind(this);
 
         if (noLint && this.firstLint) {
             lintDone([]);
