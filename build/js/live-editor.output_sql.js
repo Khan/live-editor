@@ -2,7 +2,7 @@ this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
 this["Handlebars"]["templates"]["sql-results"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   helpers = helpers || Handlebars.helpers;
-  var buffer = "", stack1, functionType="function", escapeExpression=this.escapeExpression, self=this;
+  var buffer = "", stack1, functionType="function", escapeExpression=this.escapeExpression, self=this, helperMissing=helpers.helperMissing;
 
 function program1(depth0,data) {
   
@@ -113,14 +113,20 @@ function program16(depth0,data) {
   return buffer;}
 function program17(depth0,data) {
   
-  var buffer = "", stack1;
+  var buffer = "", stack1, foundHelper;
   buffer += "\n                    ";
   stack1 = depth0.data;
-  stack1 = helpers['if'].call(depth0, stack1, {hash:{},inverse:self.program(20, program20, data),fn:self.program(18, program18, data)});
+  foundHelper = helpers.isNull;
+  stack1 = foundHelper ? foundHelper.call(depth0, stack1, {hash:{},inverse:self.program(20, program20, data),fn:self.program(18, program18, data)}) : helperMissing.call(depth0, "isNull", stack1, {hash:{},inverse:self.program(20, program20, data),fn:self.program(18, program18, data)});
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n                ";
   return buffer;}
 function program18(depth0,data) {
+  
+  
+  return "\n                        <td>NULL</td>\n                    ";}
+
+function program20(depth0,data) {
   
   var buffer = "", stack1, foundHelper;
   buffer += "\n                        <td>";
@@ -129,11 +135,6 @@ function program18(depth0,data) {
   else { stack1 = depth0.data; stack1 = typeof stack1 === functionType ? stack1() : stack1; }
   buffer += escapeExpression(stack1) + "</td>\n                    ";
   return buffer;}
-
-function program20(depth0,data) {
-  
-  
-  return "\n                        <td>NULL</td>\n                    ";}
 
   buffer += "<html>\n<head>\n";
   buffer += "\n<style>\ntable {\n    border-collapse: collapse;\n    border-spacing: 0;\n    empty-cells: show;\n    width: 100%;\n    margin-bottom: 20px;\n}\ntable thead {\n    background: #e0e0e0;\n    color: #000;\n    text-align: left;\n    vertical-align: bottom;\n}\nth:first-child {\n    border-radius: 6px 0 0 0;\n}\nth:last-child {\n    border-radius: 0 6px 0 0;\n}\nth:only-child{\n    border-radius: 6px 6px 0 0;\n}\ntbody {\n    border: 1px solid #dbdbdb;\n}\ntd {\n    border: 1px solid #eeeeee;\n    font-size: inherit;\n    margin: 0;\n    overflow: visible;\n    padding: .3em 1em;\n}\nth {\n    padding: .4em 1em;\n}\nh1 {\n    font-size: 1.4em;\n    clear: both;\n}\ntable.sql-schema-table {\n    float:left;\n    width: auto;\n}\ntable.sql-schema-table + table.sql-schema-table {\n    margin-left: 10px\n}\n</style>\n</head>\n\n<body>\n<div class=\"sql-output\">\n    ";
@@ -583,6 +584,15 @@ window.SQLOutput = Backbone.View.extend({
 
         // Load SQL config options
         this.config.runCurVersion("sql", this);
+
+        // Register a helper to tell the difference between null and 0
+        Handlebars.registerHelper('isNull', function(variable, options) {
+            if (variable === null) {
+                return options.fn(this);
+            } else {
+                return options.inverse(this);
+            }
+        });
     },
 
     render: function() {

@@ -10,6 +10,15 @@ window.SQLOutput = Backbone.View.extend({
 
         // Load SQL config options
         this.config.runCurVersion("sql", this);
+
+        // Register a helper to tell the difference between null and 0
+        Handlebars.registerHelper('isNull', function(variable, options) {
+            if (variable === null) {
+                return options.fn(this);
+            } else {
+                return options.inverse(this);
+            }
+        });
     },
 
     render: function() {
