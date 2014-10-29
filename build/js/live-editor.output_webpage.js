@@ -458,7 +458,7 @@ window.WebpageOutput = Backbone.View.extend({
                 source: "slowparse",
                 lint: results.error,
                 priority: 2
-            }]);
+            }], userCode);
         }
 
         this.userDOM = document.createElement("div");

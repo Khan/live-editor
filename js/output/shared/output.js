@@ -207,14 +207,14 @@ window.LiveEditorOutput = Backbone.View.extend({
             }.bind(this));
         }.bind(this);
 
-        this.lint(userCode, function(errors) {
+        this.lint(userCode, function(errors, codeObj) {
             if (errors.length > 0 || this.onlyRunTests) {
                 return buildDone(errors);
             }
 
             // Then run the user's code
             try {
-                this.output.runCode(userCode, function(errors) {
+                this.output.runCode(codeObj, function(errors) {
                     buildDone(errors);
                 });
             } catch (e) {

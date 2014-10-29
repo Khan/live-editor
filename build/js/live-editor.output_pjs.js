@@ -1802,7 +1802,7 @@ window.PJSOutput = Backbone.View.extend({
             }
         }
 
-        callback(errors);
+        callback(errors, userCode);
     },
 
     test: function(userCode, tests, errors, callback) {
