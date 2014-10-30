@@ -12246,11 +12246,7 @@ parseStatement: true, parseSourceElement: true */
           this.domBuilder.currentNode.parseInfo.closeTag = closeTagInterval;
           textInterval.start = token.interval.start;
           textInterval.end = token.interval.end - (closeTagInterval.end - closeTagInterval.start);
-          if (tagname === "script") {
-            this.domBuilder.script(text, textInterval);
-          } else {
-            this.domBuilder.text(text, textInterval);
-          }
+          this.domBuilder.text(text, textInterval);
           this.domBuilder.popElement();
           return;
         }
@@ -12447,6 +12443,7 @@ parseStatement: true, parseSourceElement: true */
     }
   };
 
+/*
   // ### The DOM Builder
   //
   // The DOM builder is used to construct a DOM representation of the
@@ -12456,13 +12453,14 @@ parseStatement: true, parseSourceElement: true */
   //
   // The DOM builder is given a single document DOM object that will
   // be used to create all necessary DOM nodes.
-  function DOMBuilder(document, disallowActiveAttributes) {
+  function DOMBuilder(document, disallowActiveAttributes, scriptPreprocessor) {
     this.document = document;
     this.fragment = document.createDocumentFragment();
     this.currentNode = this.fragment;
     this.contexts = [];
     this.pushContext("html", 0);
     this.disallowActiveAttributes = disallowActiveAttributes;
+    this.scriptPreprocessor = scriptPreprocessor;
   }
 
   DOMBuilder.prototype = {
@@ -12518,57 +12516,6 @@ parseStatement: true, parseSourceElement: true */
     },
     // This method appends a text node to the currently active element.
     script: function(text, parseInfo) {
-      window.KA_INFINITE_LOOP = false;
-      var textNode = this.document.createTextNode(text);
-      textNode.parseInfo = parseInfo;
-      this.currentNode.appendChild(textNode);
-      if (window.KA_INFINITE_LOOP) {
-        throw "KA_INFINITE_LOOP";
-      }
-    }
-  };
-
-  // ### DOM Cacher
-  // I'm such a Haxor :)
-  function DOMCacher(document, disallowActiveAttributes, scriptPreprocessor) {
-    this.log = [];
-    this.disallowActiveAttributes = disallowActiveAttributes;
-    this.scriptPreprocessor = scriptPreprocessor;
-  }
-
-  DOMCacher.prototype = {
-    // This method pushes a new element onto the DOM builder's stack.
-    // The element is appended to the currently active element and is
-    // then made the new currently active element.
-    pushElement: function(tagName, parseInfo, nameSpace) {
-      this.log.push(["pushElement", arguments]);
-      this.currentNode = {nodeName: tagName, parseInfo: parseInfo, parent: this.currentNode};
-    },
-    // This method pops the current element off the DOM builder's stack,
-    // making its parent element the currently active element.
-    popElement: function() {
-      this.log.push(["popElement", arguments]);
-      this.currentNode = this.currentNode.parent;
-    },
-    // record the cursor position for a context change (text/html/css/script)
-    pushContext: function(context, position) {
-      this.log.push(["pushContext", arguments]);
-    },
-    // This method appends an HTML comment node to the currently active
-    // element.
-    comment: function(data, parseInfo) {
-      this.log.push(["comment", arguments]);
-    },
-    // This method appends an attribute to the currently active element.
-    attribute: function(name, value, parseInfo) {
-      this.log.push(["attribute", arguments]);
-    },
-    // This method appends a text node to the currently active element.
-    text: function(text, parseInfo) {
-      this.log.push(["text", arguments]);
-    },
-    // This method appends a text node to the currently active element.
-    script: function(text, parseInfo) {
       try {
         text = this.scriptPreprocessor(text);
       } catch(err) {
@@ -12580,16 +12527,73 @@ parseStatement: true, parseSourceElement: true */
           throw err;
         }
       }
-      this.log.push(["script", [text, parseInfo]]);
+      window.KA_INFINITE_LOOP = false;
+      var textNode = this.document.createTextNode(text);
+      textNode.parseInfo = parseInfo;
+      this.currentNode.appendChild(textNode);
+      if (window.KA_INFINITE_LOOP) {
+        throw "KA_INFINITE_LOOP";
+      }
     }
   };
+*/
 
-  DOMCacher.prototype.replayOn = function(doc) {
-    var domBuilder = new DOMBuilder(document, this.disallowActiveAttributes);
-    domBuilder.currentNode = domBuilder.fragment = doc;
-    this.log.forEach(function(action) {
-      domBuilder[action[0]].apply(domBuilder, action[1]);
-    });
+  // ### Text Builder
+  // Output an annotated string instead of a DOM fragment
+  function TextBuilder(sourceCode, disallowActiveAttributes, scriptPreprocessor) {
+    this.sourceCode = sourceCode;
+    this.code = "";
+    this.disallowActiveAttributes = disallowActiveAttributes;
+    this.scriptPreprocessor = scriptPreprocessor;
+    this.fragment = document.createDocumentFragment();
+    this.currentNode = this.fragment;
+    this.depth = 0;
+    this.last = 0;
+  }
+
+  TextBuilder.prototype = {
+    pushElement: function(tagName, parseInfo, nameSpace) {
+      this.currentNode = {nodeName: tagName, parseInfo: parseInfo, parent: this.currentNode, attributes: {}};
+      this.depth++;
+    },
+    popElement: function() {
+      this.depth--;
+      // This is to put the last segment of text in.
+      if (this.depth === 0) {
+        this.code += this.sourceCode.slice(this.last, this.currentNode.parseInfo.closeTag.end);
+        this.last = this.currentNode.parseInfo.closeTag.end;
+      }
+      this.currentNode = this.currentNode.parent;
+    },
+    pushContext: function(context, position) {},
+    comment: function(data, parseInfo) {},
+    attribute: function(name, value, parseInfo) {
+      this.currentNode.attributes[name] = value;
+    },
+    text: function(text, parseInfo) {
+      if(this.currentNode && this.currentNode.attributes){
+        var type = this.currentNode.attributes.type;
+        if (this.currentNode.nodeName === "script" && (!type || type === "text/javascript")) {
+          this.javascript(text, parseInfo);
+        }
+      }
+    },
+    javascript: function(text, parseInfo) {
+      try {
+        text = this.scriptPreprocessor(text);
+      } catch(err) {
+        // This is meant to handle esprima errors
+        if (err.index && err.description && err.message) {
+          var cursor = this.currentNode.parseInfo.openTag.end + err.index;
+          throw {parseInfo: {type: "JAVASCRIPT_ERROR", message: err.description, cursor: cursor} };
+        } else {
+          throw err;
+        }
+      }
+      this.code += this.sourceCode.slice(this.last, parseInfo.start);
+      this.code += text;
+      this.last = parseInfo.end;
+    }
   };
 
   // ### Exported Symbols
@@ -12640,8 +12644,8 @@ parseStatement: true, parseSourceElement: true */
           disallowActiveAttributes = (typeof options.disallowActiveAttributes === "undefined") ? false : options.disallowActiveAttributes;
 
       var scriptPreprocessor = options.scriptPreprocessor || function(x){return x;};
-      var domCacher = new DOMCacher(document, disallowActiveAttributes, scriptPreprocessor);
-      var parser = new HTMLParser(stream, domCacher);
+      var textBuilder = new TextBuilder(html, disallowActiveAttributes, scriptPreprocessor);
+      var parser = new HTMLParser(stream, textBuilder);
 
       try {
         var _ = parser.parse();
@@ -12663,7 +12667,7 @@ parseStatement: true, parseSourceElement: true */
       });
 
       return {
-        cache: domCacher,
+        code: textBuilder.code,
         warnings: warnings,
         error: error
       };

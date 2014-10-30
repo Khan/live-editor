@@ -502,7 +502,7 @@ WebpageTester.prototype.testMethods = {
         },
 
         lint: function(userCode, callback) {
-            this.userDOM = null;
+            this.userCode = userCode;
             userCode = userCode || "";
 
             // Lint the user's code, returning any errors in the callback
@@ -534,7 +534,7 @@ WebpageTester.prototype.testMethods = {
                 }], false);
             }
 
-            callback([], results.cache);
+            callback([], results.code);
         },
 
         flattenError: function(plainError, error, base) {
@@ -673,10 +673,11 @@ WebpageTester.prototype.testMethods = {
         runCode: function(codeObj, callback) {
             this.stateScrubber.clearAll();
             document.open();
-            document.write("");
+            document.write(codeObj);
             // The postMessage listener got destroyed when we reset everything
             window.addEventListener("message", this.output.handleMessage.bind(this.output));
-
+            
+            /*
             try {
                 codeObj.replayOn(document);
             } catch (e) {
@@ -687,6 +688,7 @@ WebpageTester.prototype.testMethods = {
                     throw e;
                 }
             }
+            */
 
             var oldPageTitle = $(document).find("head > title").text();
             this.postProcessing(oldPageTitle);
