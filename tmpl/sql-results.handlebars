@@ -39,6 +39,7 @@ td {
     padding: .3em 1em;
 }
 th {
+    font-family: "Proxima Nova", sans-serif;
     padding: .4em 1em;
 }
 th a {
@@ -47,7 +48,7 @@ th a {
 h1 {
     clear: both;
     color: #aaa;
-    font-family: 'Proxima Nova', sans-serif;
+    font-family: "Proxima Nova", sans-serif;
     font-size: 1.1em;
     font-weight: normal;
     margin-top: 10px;
@@ -59,7 +60,7 @@ table.sql-schema-table {
 }
 table.sql-schema-table row {
     color: #888;
-    font-family: &quot;Proxima Nova&quot;;
+    font-family: "Proxima Nova";
     font-weight: normal;
     padding-left: 90px;
 }
@@ -78,6 +79,13 @@ table.sql-schema-table .schema-column-type {
 table.sql-schema-table + table.sql-schema-table {
     margin-left: 10px
 }
+table.sql-schema-table .row-count {
+    color: #999;
+    float: right;
+    margin-left: 30px;
+    text-align: right;
+    font-weight: normal;
+}
 </style>
 </head>
 
@@ -90,9 +98,9 @@ table.sql-schema-table + table.sql-schema-table {
         <table class="sql-schema-table" data-table-name="{{name}}">
         <thead>
         {{#if hasSingleRow}}
-            <th><a href="javascript:void(0)">{{name}}</a> ({{rowCount}} row)</th>
+            <th><a href="javascript:void(0)">{{name}}</a> <span class="row-count">{{rowCount}} row</span></th>
         {{else}}
-            <th><a href="javascript:void(0)">{{name}}</a> ({{rowCount}} rows)</th>
+            <th><a href="javascript:void(0)">{{name}}</a> <span class="row-count">{{rowCount}} rows</span></th>
         {{/if}}
         </thead>
         <tbody>
