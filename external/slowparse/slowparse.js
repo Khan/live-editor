@@ -1814,6 +1814,16 @@
       var textNode = this.document.createTextNode(text);
       textNode.parseInfo = parseInfo;
       this.currentNode.appendChild(textNode);
+    },
+    // This method appends a text node to the currently active element.
+    script: function(text, parseInfo) {
+      window.KA_INFINITE_LOOP = false;
+      var textNode = this.document.createTextNode(text);
+      textNode.parseInfo = parseInfo;
+      this.currentNode.appendChild(textNode);
+      if (window.KA_INFINITE_LOOP) {
+        throw "KA_INFINITE_LOOP";
+      }
     }
   };
 
@@ -1869,7 +1879,7 @@
           throw err;
         }
       }
-      this.log.push(["text", [text, parseInfo]]);
+      this.log.push(["script", [text, parseInfo]]);
     }
   };
 

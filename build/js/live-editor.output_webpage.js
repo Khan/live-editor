@@ -439,7 +439,14 @@ WebpageTester.prototype.testMethods = {
             });
         },
 
-        loopCounter: 0,
+        infiniteLoopError: {
+            text: $._("Your javascript is taking too long to run. " +
+                        "Perhaps you have a mistake in your code?"),
+            type: "error",
+            source: "timeout",
+        },
+
+        loopCounter: 0,            
         KAInfiniteLoopProtect: function() {
             if (!(this.loopCounter--)) {
                 this.loopCounter = 10000;
@@ -451,17 +458,15 @@ WebpageTester.prototype.testMethods = {
                         this.loopCounter = 0;
                     }.bind(this), 0);
                 } else if (now - this.branchStartTime > 200) {
+                    // This tells slowparse that we hit an infinite loop
+                    // So that slowparse can throw the error up to runCode
+                    window.KA_INFINITE_LOOP = true;
                     this.output.postParent({
                         results: {
-                            errors: [{
-                                text: $._("Your javascript is taking too long to run. " +
-                                            "Perhaps you have a mistake in your code?"),
-                                type: "error",
-                                source: "timeout",
-                            }]
+                            errors: [this.infiniteLoopError]
                         }
                     });
-                    throw "KA_JAVASCRIPT_TIMEOUT";
+                    throw "KA_INFINITE_LOOP";
                 }
             }
         },
@@ -672,7 +677,16 @@ WebpageTester.prototype.testMethods = {
             // The postMessage listener got destroyed when we reset everything
             window.addEventListener("message", this.output.handleMessage.bind(this.output));
 
-            codeObj.replayOn(document);
+            try {
+                codeObj.replayOn(document);
+            } catch (e) {
+                if (e === "KA_INFINITE_LOOP") {
+                    callback([this.infiniteLoopError]);
+                    return;
+                } else {
+                    throw e;
+                }
+            }
 
             var oldPageTitle = $(document).find("head > title").text();
             this.postProcessing(oldPageTitle);
