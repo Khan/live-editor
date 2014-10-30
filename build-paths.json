@@ -110,6 +110,9 @@
             "js/output/shared/output-tester.js",
             "js/output/shared/output.js"
         ],
+        "output_state_scrubber": [
+            "js/output/webpage/state-scrubber.js"
+        ],
         "ui": [
             "build/tmpl/tipbar.js",
             "js/ui/tipbar.js",
