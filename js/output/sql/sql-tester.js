@@ -323,6 +323,26 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
+    matchTableColumnCount: function(templateDBInfo) {
+        // If there were errors from linting, don't even try to match it
+        if (this.errors.length) {
+            return {success: false};
+        }
+
+        var dbInfo = this.userCode;
+        var tables = dbInfo.tables;
+        var templateTables = templateDBInfo.tables;
+
+        for (var i = 0; i < tables.length; i++) {
+            var table = tables[i];
+            var templateTable = templateTables[i];
+            if (table.columns.length !== templateTable.columns.length) {
+                return { success: false };
+            }
+        }
+        return { success: true };
+    },
+
     matchResultCount: function(templateDBInfo) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
@@ -364,7 +384,7 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
-    matchResultValues: function(templateDBInfo) {
+    matchResultValues: function(templateDBInfo, exactValues) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
             return {success: false};
@@ -374,6 +394,10 @@ SQLTester.prototype.testMethods = {
         var results = dbInfo.results;
         var templateResults = templateDBInfo.results;
 
+        if (results.length !== templateResults.length) {
+            return { success: false };
+        }
+
         // Make sure we have similar results
         for (var i = 0; i < results.length; i++) {
             var res = results[i];
@@ -382,9 +406,11 @@ SQLTester.prototype.testMethods = {
             if (res.values.length !== templateRes.values.length) {
                 return { success: false };
             }
-            for (var r = 0; r < res.values.length; r++) {
-                if (res.values[r] !== templateRes.values[r]) {
-                    return { success: false };
+            if (exactValues) {
+                for (var r = 0; r < res.values.length; r++) {
+                    if (res.values[r] !== templateRes.values[r]) {
+                        return { success: false };
+                    }
                 }
             }
         }
