@@ -53,6 +53,8 @@ window.LiveEditor = Backbone.View.extend({
         this.transloaditTemplate = options.transloaditTemplate;
         this.transloaditAuthKey = options.transloaditAuthKey;
 
+        this.outputState = "clean";
+
         this.render();
 
         this.config = new ScratchpadConfig({
@@ -174,37 +176,19 @@ window.LiveEditor = Backbone.View.extend({
 
         $(window).on("message", this.handleMessages.bind(this));
 
-        var toExec = false;
-
         // When the frame loads, execute the code
-        $el.find("#output-frame").on("load", function() {
-            toExec = true;
-            // TODO(leif): properly handle case where the user's code doesn't
-            // initially compile. There is currently a race condition in which
-            // the output frame is not ready for execution
-        });
+        $el.find("#output-frame").on("load", this.markDirty.bind(this));
 
         // Whenever the user changes code, execute the code
         this.editor.on("change", function() {
-            // We got new code. Hide the tipbar to give them a chance to fix things up
+            // They're typing. Hide the tipbar to give them a chance to fix things up
             this.tipbar.hide();
-            toExec = true;
+            this.markDirty();
         }.bind(this));
-
-        // Attempt to run the code every 100ms or so
-        this.runCodeInterval = setInterval(function() {
-            if (toExec !== null) {
-                this.runCode(toExec === true ?
-                    this.editor.text() :
-                    toExec);
-
-                toExec = null;
-            }
-        }.bind(this), 100);
 
         this.config.on("versionSwitched", function(e, version) {
             // Re-run the code after a version switch
-            toExec = true;
+            this.markDirty();
 
             // Run the JSHint config
             this.config.runVersion(version, "jshint");
@@ -369,7 +353,6 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     remove: function() {
-        clearInterval(this.runCodeInterval);
         this.$el.remove();
     },
 
@@ -924,6 +907,15 @@ window.LiveEditor = Backbone.View.extend({
             this.validation = data.validate;
         }
         
+        if (data.results) {
+            if (this.outputState === "running") {
+                this.outputState = "clean";
+            } else if (this.outputState === "dirty") {
+                this.runCode(this.editor.text());
+                this.outputState = "running";
+            }
+        }
+
         if (data.results && data.results.assertions) { 
 
             // Remove previously added markers
@@ -971,6 +963,15 @@ window.LiveEditor = Backbone.View.extend({
         // Log the recorded action
         if (data.log) {
             this.record.log.apply(this.record, data.log);
+        }
+    },
+
+    markDirty: function(){
+        if (this.outputState === "clean") {
+            this.runCode(this.editor.text());
+            this.outputState = "running";
+        } else {
+            this.outputState = "dirty";
         }
     },
 
