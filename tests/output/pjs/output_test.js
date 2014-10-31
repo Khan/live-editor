@@ -22,6 +22,11 @@ describe("Scratchpad Output Exec", function() {
         ellipse(100, 100, 100, 100);
     });
 
+    test("getImage with single quotes or double quotes", function() {
+        getImage('avatars/leaf-yellow');
+        getImage("avatars/leaf-green");
+    });
+
     // Check the actual contents of error message
     failingTest("Use object as function", function() {
         var SmileyFace = function() {};
@@ -456,7 +461,7 @@ describe("Scratchpad Output Exec", function() {
         }
     });
 
-    /* This test makes sure that we actually delete the mouseClicked 
+    /* This test makes sure that we actually delete the mouseClicked
       definition after they've deleted it. We can't do the simple thing
       and call mouseClicked() directly, because doing so will register
       mouseClick as a global and replace it anyway. We have to simulate the

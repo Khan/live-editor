@@ -387,7 +387,7 @@ window.PJSOutput = Backbone.View.extend({
         // Go through all the images and begin loading them
         _.each(images, function(file) {
             // Get the actual file name
-            var fileMatch = /"([A-Za-z0-9_\/-]*?)"/.exec(file);
+            var fileMatch = /["']([A-Za-z0-9_\/-]*?)["']/.exec(file);
 
             // Skip if the image has already been cached
             // Or if the getImage call is malformed somehow
