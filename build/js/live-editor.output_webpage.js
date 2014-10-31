@@ -389,7 +389,7 @@ WebpageTester.prototype.testMethods = {
 };
 // It's important that this closure encapsulate the values of $ & _ because
 // we destroy all global variables every refresh. So these are only availableduring startup
-(function($, _, Slowparse, esprima, escodegen) {
+(function($, _, Slowparse, esprima, escodegen, html2canvas) {
     window.WebpageOutput = Backbone.View.extend({
         initialize: function(options) {
             this.config = options.config;
@@ -705,4 +705,4 @@ WebpageTester.prototype.testMethods = {
     });
 
     LiveEditorOutput.registerOutput("webpage", WebpageOutput);
-})($, _, Slowparse, esprima, escodegen);
+})($, _, Slowparse, esprima, escodegen, html2canvas);
