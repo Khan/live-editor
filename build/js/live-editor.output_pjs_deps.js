@@ -33936,12 +33936,35 @@ parseStatement: true, parseSourceElement: true */
     }
 
     /*
+     * Introspects a callback to determine it's parameters and then
+     * produces a constraint that contains the appropriate variables and callbacks.
+     *
+     * This allows a much terser definition of callback function where you don't have to
+     * explicitly state the parameters in a separate list
+     */
+    function makeConstraint(callback) {
+        var paramText = /^function [^\(]*\(([^\)]*)\)/.exec(callback)[1];
+        var params = paramText.match(/[$_a-zA-z0-9]+/g);
+
+        for (var key in params) {
+            if (params[key][0] !== "$") {
+                console.warn("Invalid parameter in constraint (should begin with a '$'): ", params[key]);
+                return null;
+            }
+        }
+        return {
+            variables: params,
+            fn: callback
+        };
+    }
+
+    /*
      * Returns true if the code (a string) matches the structure in rawStructure
      * Throws an exception if code is not parseable.
      *
      * Example:
      *     var code = "if (y > 30 && x > 13) {x += y;}";
-     *     var rawStructure = function structure() { if(_) {} };
+     *     var rawStructure = function structure() { if (_) {} };
      *     match(code, rawStructure);
      *
      * options.varCallbacks is an object that maps user variable strings like
@@ -33956,27 +33979,67 @@ parseStatement: true, parseSourceElement: true */
      *  varCallback return true.
      *
      * Advanced Example:
-     *    var varCallbacks = {
-     *     "$foo": function(fooObj) {
-     *         return fooObj.value > 92;
+     *   var varCallbacks = [
+     *     function($foo) {
+     *         return $foo.value > 92;
      *     },
-     *     "$foo, $bar, $baz": function(fooObj, barObj, bazObj) {
-     *         if (fooObj.value > barObj.value) {
+     *     function($foo, $bar, $baz) {
+     *         if ($foo.value > $bar.value) {
      *            return {failure: "Check the relationship between values."};
      *         }
-     *         return bazObj !== 48;
+     *         return $baz.value !== 48;
      *     }
-     *   };
+     *   ];
      *   var code = "var a = 400; var b = 120; var c = 500; var d = 49;";
      *   var rawStructure = function structure() {
      *       var _ = $foo; var _ = $bar; var _ = $baz;
      *   };
      *   match(code, rawStructure, {varCallbacks: varCallbacks});
      */
+    var originalVarCallbacks;
     function match(code, rawStructure, options) {
         options = options || {};
-        var varCallbacks = options.varCallbacks || {};
-        var wildcardVars = {order: [], skipData: {}, values: {}};
+        // Many possible inputs formats are accepted for varCallbacks
+        // Constraints can be:
+        // 1. a function (from which we will extract the variables)  
+        // 2. an objects (which already has separate .fn and .variables properties)
+        //
+        // It will also accept a list of either of the above (or a mix of the two).
+        // Finally it can accept an object for which the keys are the variables and 
+        // the values are the callbacks (This option is mainly for historical reasons)
+        var varCallbacks = options.varCallbacks || [];
+        // We need to keep a hold of the original varCallbacks object because 
+        // When structured first came out it returned the failure message by 
+        // changing the .failure property on the varCallbacks object and some uses rely on that.
+        // We hope to get rid of this someday.
+        // TODO: Change over the code so to have a better API
+        originalVarCallbacks = varCallbacks;
+        if (varCallbacks instanceof Function || (varCallbacks.fn && varCallbacks.variables)) {
+            varCallbacks = [varCallbacks];
+        }
+        if (varCallbacks instanceof Array) {
+            for (var key in varCallbacks) {
+                if (varCallbacks[key] instanceof Function) {
+                    varCallbacks[key] = makeConstraint(varCallbacks[key]);
+                }
+            }
+        } else {
+            var realCallbacks = [];
+            for (var vars in varCallbacks) {
+                if (varCallbacks.hasOwnProperty(vars) && vars !== "failure") {
+                    realCallbacks.push({
+                        variables: vars.match(/[$_a-zA-z0-9]+/g),
+                        fn: varCallbacks[vars]
+                    });
+                }
+            }
+            varCallbacks = realCallbacks;
+        }
+        var wildcardVars = {
+            order: [],
+            skipData: {},
+            values: {}
+        };
         // Note: After the parse, structure contains object references into
         // wildcardVars[values] that must be maintained. So, beware of
         // JSON.parse(JSON.stringify), etc. as the tree is no longer static.
@@ -33986,8 +34049,8 @@ parseStatement: true, parseSourceElement: true */
         var codeTree = (cachedCode === code ?
             cachedCodeTree :
             typeof code === "object" ?
-                deepClone(code) :
-                esprima.parse(code));
+            deepClone(code) :
+            esprima.parse(code));
 
         cachedCode = code;
         cachedCodeTree = codeTree;
@@ -34000,7 +34063,10 @@ parseStatement: true, parseSourceElement: true */
             peers = structure.body.slice(1);
         }
         var result;
-        var matchResult = {_: [], vars: {}};
+        var matchResult = {
+            _: [],
+            vars: {}
+        };
         if (wildcardVars.order.length === 0 || options.single) {
             // With no vars to match, our normal greedy approach works great.
             result = checkMatchTree(codeTree, toFind, peers, wildcardVars, matchResult, options);
@@ -34039,7 +34105,7 @@ parseStatement: true, parseSourceElement: true */
          *     .order[i] is the name of the ith occurring variable.
          */
         function anyPossible(i, wVars, varCallbacks, matchResults, options) {
-            var order = wVars.order;  // Just for ease-of-notation.
+            var order = wVars.order; // Just for ease-of-notation.
             wVars.skipData[order[i]] = 0;
             do {
                 // Reset the skip # for all later variables.
@@ -34114,12 +34180,12 @@ parseStatement: true, parseSourceElement: true */
      */
     function checkUserVarCallbacks(wVars, varCallbacks) {
         // Clear old failure message if needed
-        delete varCallbacks.failure;
-        for (var property in varCallbacks) {
+        delete originalVarCallbacks.failure;
+        for (var key in varCallbacks) {
             // Property strings may be "$foo, $bar, $baz" to mimic arrays.
-            var varNames = property.split(",");
+            var varNames = varCallbacks[key].variables;
             var varValues = _.map(varNames, function(varName) {
-                varName = stringLeftTrim(varName);  // Trim whitespace
+                varName = stringLeftTrim(varName); // Trim whitespace
                 // If the var name is in the structure, then it will always
                 // exist in wVars.values after we find a match prior to
                 // checking the var callbacks. So, if a variable name is not
@@ -34136,11 +34202,11 @@ parseStatement: true, parseSourceElement: true */
             // Call the user-defined callback, passing in the var values as
             // parameters in the order that the vars were defined in the
             // property string.
-            var result = varCallbacks[property].apply(null, varValues);
+            var result = varCallbacks[key].fn.apply(null, varValues);
             if (!result || _.has(result, "failure")) {
                 // Set the failure message if the user callback provides one.
                 if (_.has(result, "failure")) {
-                    varCallbacks.failure = result.failure;
+                    originalVarCallbacks.failure = result.failure;
                 }
                 return false;
             }
@@ -34201,7 +34267,7 @@ parseStatement: true, parseSourceElement: true */
     function foldConstants(tree) {
         for (var key in tree) {
             if (!tree.hasOwnProperty(key)) {
-                continue;  // Inherited property
+                continue; // Inherited property
             }
 
             var ast = tree[key];
@@ -34254,7 +34320,7 @@ parseStatement: true, parseSourceElement: true */
     function simplifyTree(tree, wVars) {
         for (var key in tree) {
             if (!tree.hasOwnProperty(key)) {
-                continue;  // Inherited property
+                continue; // Inherited property
             }
             if (_.isObject(tree[key])) {
                 if (isWildcard(tree[key])) {
@@ -34263,8 +34329,10 @@ parseStatement: true, parseSourceElement: true */
                     var varName = tree[key].name;
                     if (!wVars.values[varName]) {
                         // Perform setup for the first occurrence.
-                        wVars.values[varName] = {};  // Filled in later.
-                        tree[key] = {wildcardVar: varName};
+                        wVars.values[varName] = {}; // Filled in later.
+                        tree[key] = {
+                            wildcardVar: varName
+                        };
                         wVars.order.push(varName);
                         wVars.skipData[varName] = 0;
                     } else {
@@ -34301,7 +34369,7 @@ parseStatement: true, parseSourceElement: true */
     function isGlob(node) {
         return node && node.name &&
             ((node.name === "glob_" && "_") ||
-            (node.name.indexOf("glob$") === 0 && node.name.slice(5))) ||
+                (node.name.indexOf("glob$") === 0 && node.name.slice(5))) ||
             node && node.expression && isGlob(node.expression);
     }
 
@@ -34328,13 +34396,13 @@ parseStatement: true, parseSourceElement: true */
         // Check children.
         for (var key in currTree) {
             if (!currTree.hasOwnProperty(key) || !_.isObject(currTree[key])) {
-                continue;  // Skip inherited properties
+                continue; // Skip inherited properties
             }
             // Recursively check for matches
             if ((_.isArray(currTree[key]) &&
-                   checkNodeArray(currTree[key], toFind, peersToFind, wVars, matchResults, options)) ||
+                    checkNodeArray(currTree[key], toFind, peersToFind, wVars, matchResults, options)) ||
                 (!_.isArray(currTree[key]) &&
-                checkMatchTree(currTree[key], toFind, peersToFind, wVars, matchResults, options))) {
+                    checkMatchTree(currTree[key], toFind, peersToFind, wVars, matchResults, options))) {
                 return matchResults;
             }
         }
@@ -34367,7 +34435,7 @@ parseStatement: true, parseSourceElement: true */
                 } else {
                     // We matched this node, but we still have more nodes on
                     // this level we need to match on subsequent iterations
-                    toFind = peersToFind.shift();  // Destructive.
+                    toFind = peersToFind.shift(); // Destructive.
                 }
             }
         }
@@ -34429,7 +34497,7 @@ parseStatement: true, parseSourceElement: true */
                 if (key === "wildcardVar") {
                     if (wVars.leftToSkip[subFind] > 0) {
                         wVars.leftToSkip[subFind] -= 1;
-                        return false;  // Skip, this does not match our wildcard
+                        return false; // Skip, this does not match our wildcard
                     }
                     // We have skipped the required number, so take this guess.
                     // Copy over all of currNode's properties into
@@ -34440,7 +34508,7 @@ parseStatement: true, parseSourceElement: true */
                     if (rootToSet) {
                         matchResults.root = rootToSet;
                     }
-                    return matchResults;  // This node is now our variable.
+                    return matchResults; // This node is now our variable.
                 }
                 return false;
             }
@@ -34583,7 +34651,8 @@ parseStatement: true, parseSourceElement: true */
     // styleMap between runs if desired.
     // Right now just support 7 different variables. Just add more if needed.
     addStyling.styles = ["one", "two", "three", "four", "five", "six",
-        "seven"];
+        "seven"
+    ];
     addStyling.styleMap = {};
     addStyling.counter = 0;
 
@@ -34643,7 +34712,7 @@ parseStatement: true, parseSourceElement: true */
                 continue;
             }
 
-            if (node[prop] && typeof node[prop] === "object" && node[prop].length) {
+            if (node[prop] && typeof node[prop] === "object" && "length" in node[prop]) {
                 for (var i = 0; i < node[prop].length; i++) {
                     var globData = getGlobData(node[prop][i], data);
 
@@ -34652,7 +34721,13 @@ parseStatement: true, parseSourceElement: true */
                             [i, 1].concat(globData));
                         break;
                     } else if (typeof node[prop][i] === "object") {
-                        injectData(node[prop][i], data);
+                        var singleData = getSingleData(node[prop][i], data);
+
+                        if (singleData) {
+                            node[prop][i] = singleData;
+                        } else if (typeof node[prop][i] === "object") {
+                            injectData(node[prop][i], data);
+                        }
                     }
                 }
             } else {
@@ -34682,7 +34757,6 @@ parseStatement: true, parseSourceElement: true */
     };
     exports.prettify = prettyHtml;
 })(typeof window !== "undefined" ? window : global);
-
 /*
  TraceKit - Cross brower stack traces - github.com/occ/TraceKit
  MIT license

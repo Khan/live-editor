@@ -809,15 +809,22 @@
                 continue;
             }
 
-            if (node[prop] && typeof node[prop] === "object" && node[prop].length) {
+            if (node[prop] && typeof node[prop] === "object" && "length" in node[prop]) {
                 for (var i = 0; i < node[prop].length; i++) {
                     var globData = getGlobData(node[prop][i], data);
 
                     if (globData) {
-                        node[prop].splice.apply(node[prop], [i, 1].concat(globData));
+                        node[prop].splice.apply(node[prop],
+                            [i, 1].concat(globData));
                         break;
                     } else if (typeof node[prop][i] === "object") {
-                        injectData(node[prop][i], data);
+                        var singleData = getSingleData(node[prop][i], data);
+
+                        if (singleData) {
+                            node[prop][i] = singleData;
+                        } else if (typeof node[prop][i] === "object") {
+                            injectData(node[prop][i], data);
+                        }
                     }
                 }
             } else {

@@ -40,7 +40,7 @@ window.ExtendedOutputImages = [
             {
                 groupName: "animals",
                 thumbsDir: "/thumbs",
-                images: "butterfly cat cheetah collies rabbit hare horse kangaroos penguins retriever shark sleeping-puppy".split(" ")
+                images: "butterfly cat cheetah fox rabbit horse kangaroos penguins retriever shark collies sleeping-puppy".split(" ")
             }
         ]
     }
