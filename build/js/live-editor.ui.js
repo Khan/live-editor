@@ -1174,13 +1174,17 @@ window.LiveEditor = Backbone.View.extend({
         // bytes from the server (otherwise the player breaks)
         var checkStreaming = setInterval(function() {
             // We've loaded enough to start playing
-            if (self.player && self.player.bytesLoaded > 0) {
+            if (self.audioReadyToPlay()) {
                 clearInterval(checkStreaming);
                 self.trigger("readyToPlay");
             }
         }, 16);
 
         this.bindPlayerHandlers();
+    },
+
+    audioReadyToPlay: function() {
+        return this.player && this.player.bytesLoaded > 0;
     },
 
     bindPlayerHandlers: function() {
