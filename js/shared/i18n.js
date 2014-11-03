@@ -1,4 +1,4 @@
-(function() {
+(function(_) {
     // If no language is specified, or if an unknown language is specified,
     // then fall back to using "en" as the base language
     var defaultLang = "en";
@@ -302,7 +302,7 @@
     };
 
     window.i18n = i18n;
-})();
+})(_);
 
 if (typeof Handlebars !== "undefined") {
     Handlebars.registerHelper("_", i18n.handlebars_underscore);
