@@ -1709,6 +1709,7 @@ window.LiveEditor = Backbone.View.extend({
 
     handleMessages: function(e) {
         var event = e.originalEvent;
+        console.log(event);
         var data;
 
         try {

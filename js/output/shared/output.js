@@ -2,6 +2,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
+    currentCode: "",
 
     initialize: function(options) {
         this.render();
@@ -74,9 +75,13 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         try {
             data = JSON.parse(event.data);
-
         } catch (err) {
             return;
+        }
+
+        if (!this.loaded) {
+            this.postParent({ loaded: true });
+            this.loaded = true;
         }
 
         if (!this.output) {
@@ -87,11 +92,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Set the paths from the incoming data, if they exist
         this.setPaths(data);
 
-        // Validation code to run
-        if (data.validate != null) {
-            this.initTests(data.validate);
-        }
-
         // Settings to initialize
         if (data.settings != null) {
             this.settings = data.settings;
@@ -101,6 +101,19 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (data.code != null) {
             this.config.switchVersion(data.version);
             this.runCode(data.code);
+        }
+
+        // Validation code to run
+        if (data.validate != null) {
+            this.test(this.currentCode, data.validate, [], function(errors, testResults) {
+                this.postParent({
+                    results: {
+                        code: this.currentCode,
+                        errors: errors,
+                        tests: testResults
+                    }
+                }); 
+            }.bind(this));
         }
 
         if (data.onlyRunTests != null) {
@@ -156,13 +169,8 @@ window.LiveEditorOutput = Backbone.View.extend({
     //  and it executes the test code to see if its valid
     initTests: function(validate) {
         // Only update the tests if they have changed
-        if (this.validate === validate) {
-            return;
-        }
-
-        // Prime the test queue
-        this.validate = validate;
-
+        /* This was to check the tests for
+         * errors it is currently broken
         // We evaluate the test code to see if it itself has any syntax errors
         // This also ends up pushing the tests onto this.tests
         var error = this.output.initTests(validate);
@@ -173,38 +181,30 @@ window.LiveEditorOutput = Backbone.View.extend({
         } else {
             this.$el.find(".test-errors").hide();
         }
+        */
     },
 
     runCode: function(userCode, callback) {
-        
         this.currentCode = userCode;
 
         var buildDone = function(errors) {
-            this.test(userCode, this.validate, errors, function(errors, testResults) {
-                errors = this.cleanErrors(errors || []);
+            errors = this.cleanErrors(errors || []);
 
-                if (!this.loaded) {
-                    this.postParent({ loaded: true });
-                    this.loaded = true;
+            // A callback for working with a test suite
+            if (callback) {
+                callback(errors);
+                return;
+            }
+
+            this.postParent({
+                results: {
+                    code: userCode,
+                    errors: errors,
+                    assertions: this.assertions
                 }
+            });
 
-                // A callback for working with a test suite
-                if (callback) {
-                    callback(errors, testResults);
-                    return;
-                }
-
-                this.postParent({
-                    results: {
-                        code: userCode,
-                        errors: errors,
-                        tests: testResults || [],
-                        assertions: this.assertions
-                    }
-                });
-
-                this.toggle(!errors.length);
-            }.bind(this));
+            this.toggle(!errors.length);
         }.bind(this);
 
         this.lint(userCode, function(errors) {
