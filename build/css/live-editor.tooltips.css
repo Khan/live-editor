@@ -912,3 +912,7 @@
     background-color: #77b05d;
 }
 
+.tooltip .flipped-arrow {
+    display: inline-block;
+    transform: rotate(180deg);
+}
