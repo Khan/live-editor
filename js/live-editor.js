@@ -880,7 +880,6 @@ window.LiveEditor = Backbone.View.extend({
 
     handleMessages: function(e) {
         var event = e.originalEvent;
-        console.log(event);
         var data;
 
         try {
@@ -898,6 +897,8 @@ window.LiveEditor = Backbone.View.extend({
         // Hide loading overlay
         if (data.loaded) {
             this.$el.find(this.dom.CANVAS_LOADING).hide();
+            // Execute tests on load
+            this._runTests();
         }
 
         // Set the code in the editor
@@ -912,7 +913,8 @@ window.LiveEditor = Backbone.View.extend({
             this.validation = data.validate;
         }
         
-        if (data.results) {
+        if (data.results && data.results.code) {
+            this.runTests();    
             if (this.outputState === "running") {
                 this.outputState = "clean";
             } else if (this.outputState === "dirty") {
@@ -1009,7 +1011,6 @@ window.LiveEditor = Backbone.View.extend({
     runCode: function(code) {
         var options = {
             code: arguments.length === 0 ? this.editor.text() : code,
-            validate: this.validation || "",
             version: this.config.curVersion(),
             settings: this.settings || {},
             workersDir: this.workersDir,
@@ -1023,6 +1024,25 @@ window.LiveEditor = Backbone.View.extend({
 
         this.postFrame(options);
     },
+
+    _runTests: function() {
+        var options = {
+            validate: this.validation || "",
+            version: this.config.curVersion(),
+            settings: this.settings || {},
+            workersDir: this.workersDir,
+            externalsDir: this.externalsDir,
+            imagesDir: this.imagesDir,
+            jshintFile: this.jshintFile,
+            outputType: this.outputType
+        };
+
+        this.postFrame(options);
+    },
+
+    runTests: _.debounce(function() {
+         this._runTests();
+     }, 1800),
 
     getScreenshot: function(callback) {
         // Unbind any handlers this function may have set for previous

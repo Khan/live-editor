@@ -429,15 +429,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Validation code to run
         if (data.validate != null) {
-            this.test(this.currentCode, data.validate, [], function(errors, testResults) {
-                this.postParent({
-                    results: {
-                        code: this.currentCode,
-                        errors: errors,
-                        tests: testResults
-                    }
-                }); 
-            }.bind(this));
+            this.runTests(data.validate);
         }
 
         if (data.onlyRunTests != null) {
@@ -544,6 +536,16 @@ window.LiveEditorOutput = Backbone.View.extend({
             } catch (e) {
                 buildDone([e]);
             }
+        }.bind(this));
+    },
+
+    runTests: function(validate) {
+        this.test(this.currentCode, validate, [], function(errors, testResults) {
+            this.postParent({
+                results: {
+                    tests: testResults
+                }
+            }); 
         }.bind(this));
     },
 
