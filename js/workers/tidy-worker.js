@@ -14,7 +14,7 @@ self.onmessage = function(event) {
             "structuredjs/external/esprima.js?cachebust=" + (new Date()).toDateString());
 
         importScripts(event.data.externalsDir +
-            "ast-walker/src/walker.js?cachebust=" + (new Date()).toDateString());
+            "ast-walker/walker.js?cachebust=" + (new Date()).toDateString());
 
         importScripts(event.data.externalsDir +
             "jsonpath/lib/jsonpath.js?cachebust=" + (new Date()).toDateString());

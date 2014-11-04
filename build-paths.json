@@ -157,7 +157,7 @@
         "external/underscore/underscore.js",
         "external/blockly/media/**",
         "external/SoundManager2/swf/**",
-        "external/ast-walker/src/walker.js",
+        "external/ast-walker/walker.js",
         "external/jsonpath/lib/jsonpath.js"
     ],
     "styles": {

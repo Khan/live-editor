@@ -224,9 +224,3 @@ Walker.prototype.WithStatement = function (node) {
     this.walk(node.object, "object");
     this.walk(node.body, "body");
 };
-
-// TODO: bring browserify into the workflow
-//    module.exports = {
-//        walk: walk,
-//        setCallback: setCallback
-//    };

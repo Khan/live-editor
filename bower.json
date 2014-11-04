@@ -26,7 +26,8 @@
     "es5-shim": "~3.4.0",
     "bootstrap": "~2.3.0",
     "jed": "~0.5.4",
-    "jsonpath": "*"
+    "jsonpath": "*",
+    "ast-walker": "*"
   },
   "resolutions": {
     "jquery": "~2.1.1"

@@ -13,6 +13,3 @@
 [submodule "external/TraceKit"]
 	path = external/TraceKit
 	url = https://github.com/Khan/TraceKit
-[submodule "external/ast-walker"]
-	path = external/ast-walker
-	url = https://github.com/kevinb7/ast-walker
