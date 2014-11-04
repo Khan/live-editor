@@ -16,7 +16,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         var functionStart = event.col - RegExp.lastMatch.length;
         var paramsStart = functionStart + RegExp.$1.length;
 
-        var pieces = /^(\s*)("?[^\)]*?"?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
+        var pieces = /^(\s*)(["']?[^\)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
         var leadingPadding = pieces[1];
         var pathStart = paramsStart + leadingPadding.length;
         var path = pieces[2];

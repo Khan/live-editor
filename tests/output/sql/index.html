@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mocha Test Runner</title>
+        <link rel="stylesheet" href="../../../node_modules/mocha/mocha.css">
+    </head>
+    <body>
+        <div id="mocha"></div>
+        <div id="output-area"></div>
+        <script src="../../../build/js/live-editor.core_deps.js"></script>
+        <script>
+        // Works around this issue in PhantomJS:
+        // https://github.com/ariya/phantomjs/pull/12307
+        // Remove once PhantomJS pushes out a new release that fixes this!
+        (function() {
+            var oldSplice = Array.prototype.splice;
+            Array.prototype.splice = function(num) {
+                if (arguments.length === 1) {
+                    return Array.prototype.slice.call(this, num);
+                }
+                return oldSplice.apply(this, arguments);
+            };
+        })();
+        </script>
+        <script src="../../../build/js/live-editor.shared.js"></script>
+        <script src="../../../build/js/live-editor.output.js"></script>
+        <script src="../../../build/js/live-editor.output_sql_deps.js"></script>
+        <script src="../../../build/js/live-editor.output_sql.js"></script>
+        <script src="../../../node_modules/mocha/mocha.js"></script>
+        <script src="../../../node_modules/expect.js/index.js"></script>
+        <script>mocha.setup("bdd");</script>
+        <script src="test_utils.js"></script>
+        <script src="output_test.js"></script>
+        <script src="assert_test.js"></script>
+        <script>
+            if (window.mochaPhantomJS) {
+                mochaPhantomJS.run();
+            } else {
+                mocha.run();
+            }
+        </script>
+    </body>
+</html>

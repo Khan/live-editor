@@ -113,6 +113,9 @@ gulp.task("watch", function() {
         .concat(["tests/output/pjs/*"]), ["test_output_pjs"]);
     gulp.watch(paths.scripts.output_webpage
         .concat(["tests/output/webpage/*"]), ["test_output_webpage"]);
+    // TODO(bbondy): Uncomment when PhantomJS has support for typed arrays
+    // gulp.watch(paths.scripts.output_sql
+    //    .concat(["tests/output/sql/*"]), ["test_output_sql"]);
     gulp.watch(paths.scripts.tooltips
         .concat(["tests/tooltips/*"]), ["test_tooltips"]);
 
@@ -163,6 +166,10 @@ gulp.task("test_output_pjs", ["script_output_pjs"],
 gulp.task("test_output_webpage", ["script_output_webpage"],
     runTest("output/webpage/index.html"));
 
+// TODO(bbondy): Uncomment when phantomJS has support for typed arrays
+// gulp.task("test_output_sql", ["script_output_sql"],
+//    runTest("output/sql/index.html"));
+
 gulp.task("test_tooltips", ["script_tooltips"],
     runTest("tooltips/index.html"));
 
@@ -188,6 +195,8 @@ gulp.task("test_record", ["test_record_data"],
     runTest("record/index.html"));
 
 gulp.task("test", function(callback) {
+    // test_output_sql is intentionally left out for now until
+    // phantomJS has support for typed arrays
     runSequence("test_output_pjs", "test_output_webpage", "test_tooltips", callback);
 });
 
