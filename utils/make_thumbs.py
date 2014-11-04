@@ -4,6 +4,8 @@ Point it to a directory and it will create a ./thumbs dir inside the directory,
 and place a thumbnail for every image in the directory inside ./thumbs
 """
 
+print "* This package requires python pillow for image processing.\n* If you don't already have pillow install it with `pip install pillow`"
+
 from PIL import Image
 import os, argparse, sys
 import imghdr
@@ -12,6 +14,7 @@ parser = argparse.ArgumentParser(description='Create thumbs for all the images i
 parser.add_argument('dir', help="The directory the images are in")
 parser.add_argument('--width', help="Thumbnail max-width", type=int, default=128)
 parser.add_argument('--height', help="Thumbnail max-height", type=int, default=128)
+parser.add_argument('--ext', help="The extension you want the files saved as. This defaults to whatever format the source file is.")
  
 args = parser.parse_args()
  
@@ -34,5 +37,8 @@ for imgFile in imgs:
         else:
             t[0] = int(im.size[0]/yratio)
         thumb = im.resize(t, Image.ANTIALIAS)
-        thumb.save(os.path.join(thumbs_dir,os.path.basename(imgFile)))
+        file_name = os.path.basename(imgFile)
+        if args.ext :
+            file_name = os.path.splitext(file_name)[0] + "." + args.ext
+        thumb.save(os.path.join(thumbs_dir,file_name))
 print "Complete."
