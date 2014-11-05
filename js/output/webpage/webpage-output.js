@@ -194,11 +194,12 @@ window.WebpageOutput = Backbone.View.extend({
                 return;
             }
 
-            $(this).attr("href", "javascript:void(0)").click(function() {
+            $(this).click(function() {
                 self.output.postParent({
                     action: "link-click",
                     url: url
                 });
+                return false;
             });
         });
 
