@@ -355,7 +355,17 @@ window.ExtendedOutputImages = [
             {
                 groupName: "animals",
                 thumbsDir: "/thumbs",
-                images: "butterfly cat cheetah fox rabbit horse kangaroos penguins retriever shark collies sleeping-puppy".split(" ")
+                images: "birds_rainbow-lorakeets butterfly butterfly_monarch cat cheetah crocodiles dog_sleeping-puppy dogs_collies fox horse kangaroos komodo-dragon penguins rabbit retriever shark collies sleeping-puppy snake_green-tree-boa spider".split(" ")
+            },
+            {
+                groupName: "landscapes",
+                thumbsDir: "/thumbs",
+                images: "beach-at-dusk beach-in-hawaii beach-sunset beach-waves-at-sunset beach-waves-daytime beach-with-palm-trees beach clouds-from-plane crop-circle fields-of-grain fields-of-wine lake lava lotus-garden mountain_matterhorn mountains-and-lake mountains-in-hawaii mountains-sunset sand-dunes waterfall_niagara-falls".split(" ")
+            },
+            {
+                groupName: "food",
+                thumbsDir: "/thumbs",
+                images: "bananas berries broccoli brussels-sprouts cake chocolates coffee-beans croissant dumplins fish_grilled-snapper fruits grapes hamburger ice-cream mushroom oysters pasta potato-chip potatoes shish-kebab strawberries sushi tomatoes".split(" ")
             }
         ]
     }
