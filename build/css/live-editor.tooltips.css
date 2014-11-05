@@ -580,6 +580,10 @@
     box-sizing: content-box;
 }
 
+html.playing .tooltip:.hide-while-playing {
+    display: none;
+}
+
 .tooltip.picker {
     box-shadow: 0px 0px 4px #000000;
     height: 15px;

@@ -1998,7 +1998,7 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
     },
 
     render: function() {
-        this.$el = $("<div class='tooltip autosuggest'><div class='hotsuggest'></div><div class='arrow'></div></div>")
+        this.$el = $("<div class='tooltip autosuggest hide-while-playing'><div class='hotsuggest'></div><div class='arrow'></div></div>")
             .appendTo("body").hide();
     },
 
