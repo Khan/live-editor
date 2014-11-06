@@ -814,6 +814,7 @@ window.LiveEditor = Backbone.View.extend({
     dom: {
         DRAW_CANVAS: ".scratchpad-draw-canvas",
         DRAW_COLOR_BUTTONS: "#draw-widgets a.draw-color-button",
+        CANVAS_WRAP: ".scratchpad-canvas-wrap",
         EDITOR: ".scratchpad-editor",
         CANVAS_LOADING: ".scratchpad-canvas-loading",
         BIG_PLAY_LOADING: ".scratchpad-editor-bigplay-loading",
@@ -1566,7 +1567,6 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
-        var self = this;
         var saveCode = this.editor.text();
 
         // You must have some code in the editor before you start recording
@@ -1877,7 +1877,7 @@ window.LiveEditor = Backbone.View.extend({
         width = width || this.defaultOutputWidth;
         height = height || this.defaultOutputHeight;
 
-        this.$el.find(this.dom.OUTPUT_FRAME).width(width);
+        this.$el.find(this.dom.CANVAS_WRAP).width(width);
         this.$el.find(this.dom.ALL_OUTPUT).height(height);
 
         // Set the editor height to be the same as the canvas height
