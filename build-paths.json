@@ -25,39 +25,16 @@
         "editor_ace": [
             "js/editors/ace/editor-ace.js"
         ],
-        "editor_blockly_deps": [
-            "external/blockly/blockly_compressed.js",
-            "external/blockly/javascript_compressed.js",
-            "external/blockly/blocks_compressed.js",
-            "external/blockly/msg/js/en.js",
-
+        "editor_structured_blocks_deps": [
+            "external/structured-blocks/external/jquery.ui.touch-punch.min.js",
             "external/structuredjs/external/esprima.js",
-            "external/js-to-blockly/sax.js",
-            "external/js-to-blockly/xml-writer.js",
-            "external/js-to-blockly/xml-mapping.js",
-            "external/js-to-blockly/pattern-match.js",
-            "external/js-to-blockly/js-to-blockly.js",
-
-            "external/js-to-blockly/jslang/index.js",
-            "external/js-to-blockly/jslang/jslang_etc.js",
-            "external/js-to-blockly/jslang/jslang_try_catch.js",
-            "external/js-to-blockly/jslang/jslang_call.js",
-            "external/js-to-blockly/jslang/jslang_member.js",
-            "external/js-to-blockly/jslang/jslang_var.js",
-            "external/js-to-blockly/jslang/jslang_object.js",
-            "external/js-to-blockly/jslang/jslang_function.js",
-            "external/js-to-blockly/jslang/jslang_return.js",
-            "external/js-to-blockly/jslang/jslang_assignment.js",
-            "external/js-to-blockly/jslang/jslang_if.js",
-            "external/js-to-blockly/jslang/jslang_unary.js",
-            "external/js-to-blockly/jslang/jslang_binary.js",
-            "external/js-to-blockly/jslang/jslang_this.js",
-            "external/js-to-blockly/jslang/jslang_logical.js",
-
-            "js/ui/blockly-processing-blocks.js"
+            "external/structuredjs/structured.js",
+            "external/structured-blocks/external/escodegen.browser.js"
         ],
-        "editor_blockly": [
-            "js/editors/blockly/editor-blockly.js"
+        "editor_structured_blocks": [
+            "external/structured-blocks/js/structured-js.js",
+            "external/structured-blocks/js/js-rules.js",
+            "external/structured-blocks/js/pjs-rules.js"
         ],
         "audio": [
             "external/SoundManager2/script/soundmanager2.js",
@@ -149,7 +126,6 @@
         "external/structuredjs/external/esprima.js",
         "external/structuredjs/structured.js",
         "external/underscore/underscore.js",
-        "external/blockly/media/**",
         "external/SoundManager2/swf/**"
     ],
     "styles": {
