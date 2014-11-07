@@ -2177,7 +2177,25 @@ window.PJSOutput = Backbone.View.extend({
                         // Otherwise it's ok to inject it directly into the
                         // new environment
                         } else {
-                            this.canvas[prop] = val;
+                            // If we have an object, then copy over all of the
+                            // properties so we don't accidentally destroy
+                            // function scope from `with()` and closures on the
+                            // object prototypes.
+                            // TODO(bbondy): This may copy over things that
+                            // were deleted. If we ever run into a problematic
+                            // program, we may want to add support here.
+                            if (!_.isArray(val) && _.isObject(val) &&
+                                    !_.isArray(this.canvas[prop]) &&
+                                    _.isObject(this.canvas[prop])) {
+                                // Copy over all of the properties
+                                for (var p in val) {
+                                    if (val.hasOwnProperty(p)) {
+                                        this.canvas[prop][p] = val[p];
+                                    }
+                                }
+                            } else {
+                                this.canvas[prop] = val;
+                            }
                         }
                     }
 

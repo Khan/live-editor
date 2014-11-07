@@ -493,6 +493,65 @@ describe("Scratchpad Output Exec", function() {
         errors: []
     });
 
+    /**
+     * This makes sure that when you have objects, the scope of
+     * closures and with statements are not lost during the code
+     * injection phase.
+     */
+    runTest({
+        title: "Make sure prototype function scope is preserved",
+        code: function() {
+            var x = function() {
+            };
+
+            x.prototype = {
+                d: function() {
+                    println("ok2");
+                },
+                z: function() {
+                    this.y = 3;
+                },
+                r: function() {
+                    println("ok");
+                }
+            };
+
+            var m = new x();
+            var draw = function() {
+                m.d();
+            };
+
+            m.r();
+            m.z();
+
+        },
+        code2: function() {
+            var x = function() {
+            };
+
+            x.prototype = {
+                d: function() {
+                    println("ok2");
+                },
+                z: function() {
+                    this.y = 4;//changed
+                },
+                r: function() {
+                    println("ok");
+                }
+            };
+
+            var m = new x();
+            var draw = function() {
+                m.d();
+            };
+
+            m.r();
+            m.z();
+        },
+        errors: []
+    });
+
     runTest({
         title: "Program functions exist",
         code: function() {
