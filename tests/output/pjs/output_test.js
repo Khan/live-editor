@@ -609,6 +609,21 @@ describe("Scratchpad Output Exec", function() {
         assertions2: [],
     });
 
+    /**
+     * Some calls do not currently work within workers.
+     * For example createGraphics creates a whole new Processing
+     * env for the object which we don't support within a worker.
+     */
+    runTest({
+        title: "Calls which do not work within workers run",
+        code: function() {
+            var osb = createGraphics(30, 30, JAVA2D);
+            osb.beginDraw();
+        },
+        errors: []
+    });
+
+
 });
 
 describe("Output Methods", function() {

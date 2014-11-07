@@ -15,6 +15,13 @@ window.PJSOutput = Backbone.View.extend({
         "mouseOut", "touchStart", "touchEnd", "touchMove", "touchCancel",
         "keyPressed", "keyReleased", "keyTyped"],
 
+    // Some PJS methods don't work well within a worker.
+    // createGraphics: Creates a whole new Processing object and our stubbing
+    //                 code doesn't play well with it.
+    //                 TODO(bbondy): We may be able to fix this if we have
+    //                 time to debug more while still using the worker.
+    workerBreakingMethods: ["createGraphics"],
+
     // During live coding all of the following state must be reset
     // when it's no longer used.
     liveReset: {
@@ -723,7 +730,14 @@ window.PJSOutput = Backbone.View.extend({
 
     runCode: function(userCode, callback) {
         var runCode = function() {
-            if (!window.Worker) {
+
+            // Check for any reason not to use a worker
+            var doNotUserWorker = _(this.workerBreakingMethods)
+                .some(function(w) {
+                    return userCode.indexOf(w) !== -1;
+            });
+
+            if (!window.Worker || doNotUserWorker) {
                 return this.injectCode(userCode, callback);
             }
 
