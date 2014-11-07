@@ -81,8 +81,14 @@ window.TipBar = Backbone.View.extend({
         });
     },
 
-    show: function() {
-        var texts = this.texts;
+    show: function(texts) {
+        if (texts) {
+            this.pos = 0;
+            this.texts = texts;
+        } else {
+            texts = this.texts;
+        }
+
 
         var pos = this.pos;
         var bar = this.$el.find(".tipbar");
@@ -121,7 +127,6 @@ window.TipBar = Backbone.View.extend({
     },
 
     toggleErrors: function(errors) {
-        this.texts = errors;
         var hasErrors = !!errors.length;
 
         this.$overlay.toggle(hasErrors);
@@ -131,7 +136,9 @@ window.TipBar = Backbone.View.extend({
             return;
         }
 
-        this.errorDelay = setTimeout(this.show.bind(this), 1200);
+        this.errorDelay = setTimeout( function() {
+            this.show(errors);
+        }.bind(this), 1200);
     }
 });
 this["Handlebars"] = this["Handlebars"] || {};
