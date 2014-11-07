@@ -1,0 +1,17 @@
+html,
+body {
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    height: 100%;
+}
+.output {
+    height: 100%;
+    position: relative;
+}
+.output > * {
+    display: block;
+}
+#live-editor-output {
+    height: 100%;
+}
