@@ -552,6 +552,38 @@ describe("Scratchpad Output Exec", function() {
         errors: []
     });
 
+
+
+    /**
+     * This makes sure that for injected function calls (in this case
+     * textFont), if it has an object argument passed to it, then that
+     * argument preserves its prototype chain (In this case PFont).
+     */
+    runTest({
+        title: "Make sure function call arguments preserve prototype chain",
+        code: function() {
+            textFont(createFont("monospace"));
+            var draw = function() {
+                background(255, 255, 255);
+                fill(255, 0, 0);
+                textSize(16);
+                textAlign(CENTER, CENTER);
+                text("Hi!", 91, 200);
+            };
+        },
+        code2: function() {
+            textFont(createFont("monospace"));
+            var draw = function() {
+                background(255, 255, 255);
+                fill(255, 0, 0);
+                textSize(16);
+                textAlign(CENTER, CENTER);
+                text("Hi!", 9, 200);//changed
+            };
+        },
+        errors: []
+    });
+
     runTest({
         title: "Program functions exist",
         code: function() {

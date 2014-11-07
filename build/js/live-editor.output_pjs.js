@@ -1195,6 +1195,15 @@ window.PJSOutput = Backbone.View.extend({
         textSize: [12]
     },
 
+    /**
+     * PJS calls which are known to produce no side effects when
+     * called multiple times.
+     * It's a good idea to add things here for functions that have
+     * return values, but still call other PJS functions. In that
+     * exact case, we detect that the function is not safe, but it
+     * should indeed be safe.  So add it here! :)
+     */
+    idempotentCalls: [ "createFont" ],
     initialize: function(options) {
         // Handle recording playback
         this.handlers = {};
@@ -1267,7 +1276,9 @@ window.PJSOutput = Backbone.View.extend({
                             //          objects.
                             //    If all three of these are the case assume then
                             //    assume that there are no side effects.
-                            if (/native code/.test(strValue) ||
+                            if (this.idempotentCalls
+                                    .indexOf(processingProp) !== -1 ||
+                                /native code/.test(strValue) ||
                                 /return /.test(strValue) &&
                                 !/p\./.test(strValue) &&
                                 !/new P/.test(strValue)) {
@@ -2132,8 +2143,24 @@ window.PJSOutput = Backbone.View.extend({
             for (var i = 0; i < fnCalls.length; i++) {
                 // Reconstruction the function call
                 var args = Array.prototype.slice.call(fnCalls[i][1]);
-                inject += fnCalls[i][0] + "(" +
-                    PJSOutput.stringifyArray(args) + ");\n";
+
+
+                var results = [];
+                _(args).each(function(arg, argIndex) {
+                    // Parameters here can come in the form of objects.
+                    // For any object paraemter, we don't want to serialize it
+                    // because we'd lose the whole prototype chain.
+                    // Instead we create temporary variables for each.
+                    if (!_.isArray(arg) && _.isObject(arg)) {
+                        var varName = "__obj__" +
+                            fnCalls[i][0] + "__" + argIndex;
+                        this.canvas[varName] = arg;
+                        results.push(varName);
+                    } else {
+                        results.push(PJSOutput.stringify(arg));
+                    }
+                }.bind(this));
+                inject += fnCalls[i][0] + "(" + results.join(", ") + ");\n";
             }
 
             // We also look for newly-changed global variables to inject
