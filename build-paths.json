@@ -144,6 +144,9 @@
             "css/ui/tabs.css",
             "css/ui/tooltips.css"
         ],
+        "output": [
+            "css/output/style.css"
+        ],
         "ui": [
             "css/ui/tipbar.css",
             "css/ui/style.css"
