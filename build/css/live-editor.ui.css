@@ -353,8 +353,8 @@
 
 #output-frame {
     box-sizing: border-box;
+    height: 100%;
     overflow: hidden;
-    box-sizing: border-box;
 }
 
 #draw-widgets {

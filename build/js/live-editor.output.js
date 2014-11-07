@@ -403,6 +403,8 @@ window.LiveEditorOutput = Backbone.View.extend({
             return;
         }
 
+        console.log(data);
+
         if (!this.loaded) {
             this.postParent({ loaded: true });
             this.loaded = true;

@@ -841,6 +841,8 @@ window.LiveEditor = Backbone.View.extend({
     editors: {},
 
     initialize: function(options) {
+        this.uniq = Math.floor(Math.random()*100);
+
         this.workersDir = this._qualifyURL(options.workersDir);
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
@@ -866,7 +868,7 @@ window.LiveEditor = Backbone.View.extend({
         this.transloaditTemplate = options.transloaditTemplate;
         this.transloaditAuthKey = options.transloaditAuthKey;
 
-        this.outputState = "clean";
+        this.outputState = "dirty";
 
         this.render();
 
@@ -987,10 +989,16 @@ window.LiveEditor = Backbone.View.extend({
         $el.delegate("#restart-code", "click",
             this.restartCode.bind(this));
 
-        $(window).on("message", this.handleMessages.bind(this));
+        this.handleMessagesBound = this.handleMessages.bind(this);
+        $(window).on("message", this.handleMessagesBound);
 
         // When the frame loads, execute the code
-        $el.find("#output-frame").on("load", this.markDirty.bind(this));
+        // We don't use markDirty here, because we know 
+        // that nothing could have succeeded before load
+        $el.find("#output-frame").on("load", function() {
+            this.runCode(this.editor.text());
+            this.outputState = "running";
+        }.bind(this));
 
         // Whenever the user changes code, execute the code
         this.editor.on("change", function() {
@@ -1166,7 +1174,7 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     remove: function() {
-        this.$el.remove();
+        $(window).off("message", this.handleMessagesBound);
     },
 
     canRecord: function() {
@@ -1704,6 +1712,8 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
+        console.log(data);
+
         this.trigger("update", data);
 
         // Hide loading overlay
@@ -1725,7 +1735,7 @@ window.LiveEditor = Backbone.View.extend({
             this.validation = data.validate;
         }
         
-        if (data.results && data.results.code) {
+        if (data.results && _.isString(data.results.code)) {
             this.runTests();    
             if (this.outputState === "running") {
                 this.outputState = "clean";
