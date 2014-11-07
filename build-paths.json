@@ -29,12 +29,13 @@
             "external/structured-blocks/external/jquery.ui.touch-punch.min.js",
             "external/structuredjs/external/esprima.js",
             "external/structuredjs/structured.js",
-            "external/structured-blocks/external/escodegen.browser.js"
-        ],
-        "editor_structured_blocks": [
+            "external/structured-blocks/external/escodegen.browser.js",
             "external/structured-blocks/js/structured-js.js",
             "external/structured-blocks/js/js-rules.js",
             "external/structured-blocks/js/pjs-rules.js"
+        ],
+        "editor_structured_blocks": [
+            "js/editors/structured-blocks/editor-structured-blocks.js"
         ],
         "audio": [
             "external/SoundManager2/script/soundmanager2.js",
@@ -133,7 +134,9 @@
             "css/jquery-ui/ui-lightness/jquery-ui.css" 
         ],
         "editor_structured_blocks": [
-            "external/structured-blocks/css/style.css"
+            "external/structured-blocks/css/style.css",
+            "external/structured-blocks/external/github.css",
+            "css/editors/structured-blocks/style.css"
         ],
         "audio": [
             "css/ui/flashblock.css"

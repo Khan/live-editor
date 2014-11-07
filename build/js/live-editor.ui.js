@@ -921,6 +921,7 @@ window.LiveEditor = Backbone.View.extend({
         // Set up the editor
         this.editor = new this.editors[this.editorType]({
             el: this.dom.EDITOR,
+            code: this.initialCode,
             autoFocus: options.autoFocus,
             config: this.config,
             record: this.record,
@@ -1035,7 +1036,9 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // Set up toolbar buttons
-        $el.buttonize();
+        if (jQuery.fn.buttonize) {
+            $el.buttonize();
+        }
 
         // Handle color button clicks during recording
         $el.on("buttonClick", "a.draw-color-button", function() {
@@ -1750,8 +1753,8 @@ window.LiveEditor = Backbone.View.extend({
             }
         }
 
-        if (data.results && data.results.assertions) { 
-
+        if (this.editorType.indexOf("ace_") === 0 && data.results &&
+                data.results.assertions) {
             // Remove previously added markers
             var markers = this.editor.editor.session.getMarkers();
             _.each(markers, function(marker, markerId) {
