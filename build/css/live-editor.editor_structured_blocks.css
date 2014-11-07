@@ -1,0 +1,34 @@
+.program > .block.block-statements {
+    height: 100%;
+}
+
+.block.block-statements .ui-sortable-placeholder {
+    visibility: visible !important;
+    background: rgba(0, 0, 0, 0.2);
+    box-shadow: #999 0px 0px 5px;
+}
+
+.block.ui-draggable-dragging {
+    box-shadow: #333 0px 0px 10px;
+}
+
+.block.block-inline input {
+    -webkit-appearance: none;
+    background: #FFF;
+    border: 1px solid #CCC;
+    padding: 5px;
+}
+
+.block.block-statement {
+    float: left;
+    clear: left;
+    border: 1px solid #AAA;
+    padding: 3px;
+    margin: 3px;
+    border-radius: 3px;
+    background: #EEE;
+}
+
+.block.block-inline {
+    display: inline-block;
+}

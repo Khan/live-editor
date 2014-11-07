@@ -132,6 +132,9 @@
         "core_deps": [
             "css/jquery-ui/ui-lightness/jquery-ui.css" 
         ],
+        "editor_structured_blocks": [
+            "external/structured-blocks/css/style.css"
+        ],
         "audio": [
             "css/ui/flashblock.css"
         ],
