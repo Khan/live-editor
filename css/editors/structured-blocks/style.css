@@ -1,12 +1,12 @@
 .block-toolbox {
-    width: 300px;
+    width: 200px;
     position: absolute;
     top: 0px;
-    right: 0px;
+    left: 0px;
     background: #ADD8E6;
     height: 100%;
 }
 
 .block-editor {
-    margin-right: 300px;
+    margin-left: 200px;
 }
