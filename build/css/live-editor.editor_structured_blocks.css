@@ -4,12 +4,9 @@
 
 .block.block-statements .ui-sortable-placeholder {
     visibility: visible !important;
-    background: rgba(0, 0, 0, 0.2);
-    box-shadow: #999 0px 0px 5px;
-}
-
-.block.ui-draggable-dragging {
-    box-shadow: #333 0px 0px 10px;
+    height: 3px;
+    background: #ADD8E6;
+    margin: 0 3px;
 }
 
 .block.block-inline input {
@@ -20,8 +17,11 @@
 }
 
 .block.block-statement {
+    overflow: auto;
+}
+
+.block.block-statement > div {
     float: left;
-    clear: left;
     border: 1px solid #AAA;
     padding: 3px;
     margin: 3px;
@@ -29,8 +29,20 @@
     background: #EEE;
 }
 
+.block.ui-draggable-dragging > div {
+    box-shadow: #333 0px 0px 3px;
+}
+
 .block.block-inline {
     display: inline-block;
+}
+
+.block-toolbox h3 {
+    clear: both;
+    margin: 0;
+    font-size: 16px;
+    padding: 5px 3px;
+    font-family: Helvetica;
 }
 /**
  * Textmate-like theme ported from Ace Editor.

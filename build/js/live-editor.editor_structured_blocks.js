@@ -7,17 +7,39 @@ window.StructuredBlocksEditor = Backbone.View.extend({
 
         this.config.editor = this;
 
-        var toolbox = [
-            function() {
-                fill(255, 0, 0);
-            },
-            function() {
-                rect(10, 10, 50, 50);
-            },
-            function() {
-                ellipse(20, 20, 100, 100);
-            }
-        ];
+        var toolbox = {
+            "Shapes": [
+                function() {
+                    rect(10, 10, 50, 50);
+                },
+                function() {
+                    ellipse(20, 20, 100, 100);
+                },
+                function() {
+                    line(10, 10, 50, 50);
+                },
+                function() {
+                    point(100, 100);
+                }
+            ],
+            "Colors": [
+                function() {
+                    fill(255, 0, 0);
+                },
+                function() {
+                    background(255, 0, 0);
+                },
+                function() {
+                    stroke(0, 0, 0);
+                },
+                function() {
+                    noStroke();
+                },
+                function() {
+                    noFill();
+                }
+            ]
+        };
 
         this.editor = new JSToolboxEditor({
             el: this.el,

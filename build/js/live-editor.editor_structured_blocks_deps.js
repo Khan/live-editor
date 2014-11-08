@@ -7621,35 +7621,47 @@ var JSToolbox = Backbone.View.extend({
     className: "block-toolbox",
 
     initialize: function(options) {
-        var toolbox = options.toolbox || [];
+        var toolbox = options.toolbox || {};
 
-        toolbox = toolbox.map(function(item) {
-            if (typeof item === "function") {
-                item = JSRules.parseStructure(item);
-            }
+        _.keys(toolbox).forEach(function(category) {
+            toolbox[category] = toolbox[category].map(function(item) {
+                if (typeof item === "function") {
+                    item = JSRules.parseStructure(item);
+                }
 
-            return JSRules.findRule(item);
+                return JSRules.findRule(item);
+            });
         });
 
         this.toolbox = toolbox;
     },
 
     render: function() {
-        this.$el.html(this.toolbox.map(function(item) {
-            var $item = item.render().$el;
+        var html = [];
+        var toolbox = this.toolbox;
 
-            $item.data("drag-data", item.toAST());
+        _.keys(toolbox).forEach(function(category) {
+            html.push("<h3>" + category + "</h3>");
 
-            $item.draggable({
-                connectToSortable: ".block-statements",
-                helper: function() {
-                    return $item.clone(true);
-                },
-                revert: "invalid"
+            toolbox[category].forEach(function(item) {
+                var $item = item.render().$el;
+
+                $item.data("drag-data", item.toAST());
+
+                $item.draggable({
+                    connectToSortable: ".block-statements",
+                    helper: function() {
+                        return $item.clone(true);
+                    },
+                    revert: "invalid"
+                });
+
+                html.push($item);
             });
+        });
 
-            return $item;
-        }));
+        this.$el.html(html);
+
         return this;
     }
 });
@@ -7750,17 +7762,13 @@ var JSRules = {
 };
 
 var JSStatements = Backbone.Collection.extend({
-    initialize: function(options) {
-        this.parent = options.parent;
-    },
-
-    model: function(attrs) {
+    model: function(attrs, options) {
         // Ignore objects that are already a JSRule model
         if (attrs instanceof JSRule) {
             return attrs;
         }
 
-        return JSRules.findRule(attrs, this.parent);
+        return JSRules.findRule(attrs, options.parent);
     }
 });
 
@@ -8094,7 +8102,7 @@ var JSASTRule = JSRule.extend({
             return token.value;
         });
 
-        this.$el.html(tokens);
+        this.$el.html($("<div>").append(tokens));
 
         return this;
     }
@@ -8163,6 +8171,7 @@ JSRules.addRule(JSRule.extend({
 
     onInput: function(event) {
         this.match.vars.name = event.target.value;
+        event.target.size = event.target.value.length || 1;
 
         this.triggerUpdate();
     },
@@ -8222,6 +8231,7 @@ JSRules.addRule(JSRule.extend({
         }
 
         this.match.vars.value = val;
+        event.target.size = event.target.value.length || 1;
 
         this.triggerUpdate();
     },
