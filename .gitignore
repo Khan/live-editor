@@ -1,14 +1,3 @@
 bower_components
 node_modules
 tests/record/recording-data.json
-css/jquery-ui
-external/SoundManager2
-external/ace-builds
-external/backbone
-external/bootstrap
-external/es5-shim
-external/jed
-external/jquery
-external/jqueryui
-external/structuredjs
-external/underscore
