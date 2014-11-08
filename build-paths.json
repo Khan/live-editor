@@ -155,6 +155,19 @@
             "css/ui/style.css"
         ]
     },
+    "symlinks": {
+        "bower_components/soundmanager": "external/SoundManager2",
+        "bower_components/ace/build": "external/ace-builds",
+        "bower_components/backbone": "external/backbone",
+        "bower_components/bootstrap": "external/bootstrap",
+        "bower_components/es5-shim": "external/es5-shim",
+        "bower_components/jed": "external/jed",
+        "bower_components/jquery": "external/jquery",
+        "bower_components/jquery-ui": "external/jqueryui",
+        "bower_components/structured": "external/structuredjs",
+        "bower_components/underscore": "external/underscore",
+        "bower_components/jquery-ui/themes": "css/jquery-ui"
+    },
     "fonts": [
         "css/bootstrap/fonts/*"
     ],

@@ -34,7 +34,7 @@ gulp.task("templates", function() {
 var scriptTypes = Object.keys(paths.scripts);
 
 scriptTypes.forEach(function(type) {
-    gulp.task("script_" + type, ["templates"], function() {
+    gulp.task("script_" + type, ["symlinks", "templates"], function() {
         var outputFileName = "live-editor." + type + ".js";
         return gulp.src(paths.scripts[type])
             .pipe(newer("build/js/" + outputFileName))
@@ -60,7 +60,7 @@ gulp.task("scripts_min", scriptTypes.map(function(type) {
     return "script_" + type + "_min";
 }));
 
-gulp.task("workers", function() {
+gulp.task("workers", ["symlinks"], function() {
     gulp.src(paths.workers_webpage)
         .pipe(gulp.dest("build/workers/webpage"));
 
@@ -71,7 +71,7 @@ gulp.task("workers", function() {
         .pipe(gulp.dest("build/workers/shared"));
 });
 
-gulp.task("externals", function() {
+gulp.task("externals", ["symlinks"], function() {
     gulp.src(paths.externals, {base: "./"})
         .pipe(gulp.dest("build/"));
 });
@@ -79,7 +79,7 @@ gulp.task("externals", function() {
 var styleTypes = Object.keys(paths.styles);
 
 styleTypes.forEach(function(type) {
-    gulp.task("style_" + type, function() {
+    gulp.task("style_" + type, ["symlinks"], function() {
         var outputFileName = "live-editor." + type + ".css";
         return gulp.src(paths.styles[type])
             .pipe(newer("build/css/" + outputFileName))
@@ -92,14 +92,27 @@ gulp.task("styles", styleTypes.map(function(type) {
     return "style_" + type;
 }));
 
-gulp.task("fonts", function() {
+gulp.task("fonts", ["symlinks"], function() {
     gulp.src(paths.fonts)
         .pipe(gulp.dest("build/fonts"));
 });
 
-gulp.task("images", function() {
+gulp.task("images", ["symlinks"], function() {
     gulp.src(paths.images)
         .pipe(gulp.dest("build/images"));
+});
+
+var symlinks = Object.keys(paths.symlinks);
+
+gulp.task("symlinks", symlinks.map(function(name) {
+    return "symlink_" + name;
+}));
+
+symlinks.forEach(function(name) {
+    gulp.task("symlink_" + name, function() {
+        gulp.src(name)
+            .pipe(gulp.dest(paths.symlinks[name]));
+    });
 });
 
 gulp.task("watch", function() {
