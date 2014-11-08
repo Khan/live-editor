@@ -22,12 +22,13 @@
 }
 
 .block.block-statement > div {
-    float: left;
+    display: inline-block;
     border: 1px solid #AAA;
     padding: 3px;
     margin: 3px;
     border-radius: 3px;
     background: #EEE;
+    white-space: nowrap;
 }
 
 .block.ui-draggable-dragging > div {
