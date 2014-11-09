@@ -2,6 +2,7 @@ window.LiveEditor = Backbone.View.extend({
     dom: {
         DRAW_CANVAS: ".scratchpad-draw-canvas",
         DRAW_COLOR_BUTTONS: "#draw-widgets a.draw-color-button",
+        CANVAS_WRAP: ".scratchpad-canvas-wrap",
         EDITOR: ".scratchpad-editor",
         CANVAS_LOADING: ".scratchpad-canvas-loading",
         BIG_PLAY_LOADING: ".scratchpad-editor-bigplay-loading",
@@ -15,6 +16,7 @@ window.LiveEditor = Backbone.View.extend({
         PLAYBAR_TIMELEFT: ".scratchpad-playbar-timeleft",
         PLAYBAR_UI: ".scratchpad-playbar-play, .scratchpad-playbar-progress",
         OUTPUT_FRAME: "#output-frame",
+        OUTPUT_DIV: "#output",
         ALL_OUTPUT: "#output, #output-frame"
     },
 
@@ -27,6 +29,8 @@ window.LiveEditor = Backbone.View.extend({
     editors: {},
 
     initialize: function(options) {
+        this.uniq = Math.floor(Math.random()*100);
+
         this.workersDir = this._qualifyURL(options.workersDir);
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
@@ -51,6 +55,8 @@ window.LiveEditor = Backbone.View.extend({
 
         this.transloaditTemplate = options.transloaditTemplate;
         this.transloaditAuthKey = options.transloaditAuthKey;
+
+        this.outputState = "dirty";
 
         this.render();
 
@@ -103,6 +109,11 @@ window.LiveEditor = Backbone.View.extend({
             externalsDir: this.externalsDir,
             workersDir: this.workersDir,
             type: this.editorType
+        });
+
+        this.tipbar = new TipBar({
+            el: this.$(this.dom.OUTPUT_DIV),
+            liveEditor: this
         });
 
         var code = options.code;
@@ -166,37 +177,27 @@ window.LiveEditor = Backbone.View.extend({
         $el.delegate("#restart-code", "click",
             this.restartCode.bind(this));
 
-        $(window).on("message", this.listenMessages.bind(this));
-
-        var toExec = false;
+        this.handleMessagesBound = this.handleMessages.bind(this);
+        $(window).on("message", this.handleMessagesBound);
 
         // When the frame loads, execute the code
+        // We don't use markDirty here, because we know 
+        // that nothing could have succeeded before load
         $el.find("#output-frame").on("load", function() {
-            toExec = true;
-            // TODO(leif): properly handle case where the user's code doesn't
-            // initially compile. There is currently a race condition in which
-            // the output frame is not ready for execution
-        });
+            this.runCode(this.editor.text());
+            this.outputState = "running";
+        }.bind(this));
 
         // Whenever the user changes code, execute the code
         this.editor.on("change", function() {
-            toExec = true;
-        });
-
-        // Attempt to run the code every 100ms or so
-        this.runCodeInterval = setInterval(function() {
-            if (toExec !== null) {
-                this.runCode(toExec === true ?
-                    this.editor.text() :
-                    toExec);
-
-                toExec = null;
-            }
-        }.bind(this), 100);
+            // They're typing. Hide the tipbar to give them a chance to fix things up
+            this.tipbar.hide();
+            this.markDirty();
+        }.bind(this));
 
         this.config.on("versionSwitched", function(e, version) {
             // Re-run the code after a version switch
-            toExec = true;
+            this.markDirty();
 
             // Run the JSHint config
             this.config.runVersion(version, "jshint");
@@ -361,8 +362,7 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     remove: function() {
-        clearInterval(this.runCodeInterval);
-        this.$el.remove();
+        $(window).off("message", this.handleMessagesBound);
     },
 
     canRecord: function() {
@@ -763,7 +763,6 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
-        var self = this;
         var saveCode = this.editor.text();
 
         // You must have some code in the editor before you start recording
@@ -887,13 +886,12 @@ window.LiveEditor = Backbone.View.extend({
         }
     },
 
-    listenMessages: function(e) {
+    handleMessages: function(e) {
         var event = e.originalEvent;
         var data;
 
         try {
             data = JSON.parse(event.data);
-
         } catch (err) {
             // Malformed JSON, we don't care about it
         }
@@ -907,6 +905,8 @@ window.LiveEditor = Backbone.View.extend({
         // Hide loading overlay
         if (data.loaded) {
             this.$el.find(this.dom.CANVAS_LOADING).hide();
+            // Execute tests on load
+            this._runTests();
         }
 
         // Set the code in the editor
@@ -921,6 +921,16 @@ window.LiveEditor = Backbone.View.extend({
             this.validation = data.validate;
         }
         
+        if (data.results && _.isString(data.results.code)) {
+            this.runTests();    
+            if (this.outputState === "running") {
+                this.outputState = "clean";
+            } else if (this.outputState === "dirty") {
+                this.runCode(this.editor.text());
+                this.outputState = "running";
+            }
+        }
+
         if (data.results && data.results.assertions) { 
 
             // Remove previously added markers
@@ -951,6 +961,10 @@ window.LiveEditor = Backbone.View.extend({
            this.editor.editor.session.setAnnotations(annotations);
         }
 
+        if (data.results && _.isArray(data.results.errors)) {
+            this.tipbar.toggleErrors(data.results.errors);
+        }
+
         // Set the line visibility in the editor
         if (data.lines !== undefined) {
             this.editor.toggleGutter(data.lines);
@@ -961,20 +975,18 @@ window.LiveEditor = Backbone.View.extend({
             this.restartCode();
         }
 
-        // Set the cursor in the editor
-        if (data.cursor) {
-            this.editor.setCursor(data.cursor);
-            this.editor.setErrorHighlight(true);
-        }
-
-        // Set the focus back on the editor
-        if (data.focus) {
-            this.editor.focus();
-        }
-
         // Log the recorded action
         if (data.log) {
             this.record.log.apply(this.record, data.log);
+        }
+    },
+
+    markDirty: function(){
+        if (this.outputState === "clean") {
+            this.runCode(this.editor.text());
+            this.outputState = "running";
+        } else {
+            this.outputState = "dirty";
         }
     },
 
@@ -1007,7 +1019,6 @@ window.LiveEditor = Backbone.View.extend({
     runCode: function(code) {
         var options = {
             code: arguments.length === 0 ? this.editor.text() : code,
-            validate: this.validation || "",
             version: this.config.curVersion(),
             settings: this.settings || {},
             workersDir: this.workersDir,
@@ -1021,6 +1032,25 @@ window.LiveEditor = Backbone.View.extend({
 
         this.postFrame(options);
     },
+
+    _runTests: function() {
+        var options = {
+            validate: this.validation || "",
+            version: this.config.curVersion(),
+            settings: this.settings || {},
+            workersDir: this.workersDir,
+            externalsDir: this.externalsDir,
+            imagesDir: this.imagesDir,
+            jshintFile: this.jshintFile,
+            outputType: this.outputType
+        };
+
+        this.postFrame(options);
+    },
+
+    runTests: _.debounce(function() {
+         this._runTests();
+     }, 1800),
 
     getScreenshot: function(callback) {
         // Unbind any handlers this function may have set for previous
@@ -1043,7 +1073,7 @@ window.LiveEditor = Backbone.View.extend({
         width = width || this.defaultOutputWidth;
         height = height || this.defaultOutputHeight;
 
-        this.$el.find(this.dom.OUTPUT_FRAME).width(width);
+        this.$el.find(this.dom.CANVAS_WRAP).width(width);
         this.$el.find(this.dom.ALL_OUTPUT).height(height);
 
         // Set the editor height to be the same as the canvas height

@@ -27,7 +27,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
         }
 
         var $leftButton = $("<span role='button'>◄</span>");
-        var $rightButton = $("<span role='button'>►</span>");
+        var $rightButton = $("<span role='button' class='flipped-arrow'>◄</span>");
         var $center = $("<span> ◆ </span>");
 
         $leftButton.click(function (evt) {

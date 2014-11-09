@@ -7,7 +7,7 @@
 
 window.TipBar = Backbone.View.extend({
     initialize: function(options) {
-        this.output = options.output;
+        this.liveEditor = options.liveEditor;
         this.pos = 0;
         this.texts = [];
         this.render();
@@ -15,39 +15,42 @@ window.TipBar = Backbone.View.extend({
     },
 
     render: function() {
+        this.$overlay = $("<div class=\"overlay error-overlay\" style=\"display: none\"></div>").appendTo(this.$el);
         this.$el.append(Handlebars.templates["tipbar"]());
     },
 
     bind: function() {
         var self = this;
 
-        this.$el.on("click", ".tipbar .tipnav a", function() {
+        this.$el.on("click", ".tipbar .tipnav a", function(e) {
             if (!$(this).hasClass("ui-state-disabled")) {
                 self.pos += $(this).hasClass("next") ? 1 : -1;
                 self.show();
             }
 
-            self.output.postParent({ focus: true });
+            self.liveEditor.editor.focus();
 
             return false;
         });
 
-        this.$el.on("click", ".tipbar .text-wrap a", function() {
+        this.$el.on("click", ".tipbar .text-wrap a", function(e) {
             var error = self.texts[self.pos];
 
-            self.output.postParent({ cursor: error });
+            self.liveEditor.editor.setCursor(error);
+            self.liveEditor.editor.setErrorHighlight(true);
 
             return false;
         });
     },
 
-    show: function(type, texts, callback) {
+    show: function(texts) {
         if (texts) {
             this.pos = 0;
             this.texts = texts;
         } else {
             texts = this.texts;
         }
+
 
         var pos = this.pos;
         var bar = this.$el.find(".tipbar");
@@ -73,10 +76,6 @@ window.TipBar = Backbone.View.extend({
                     opacity: 0.9},
                     300);
         }
-
-        if (callback) {
-            callback(texts[pos]);
-        }
     },
 
     hide: function() {
@@ -86,5 +85,21 @@ window.TipBar = Backbone.View.extend({
                 $(this).hide();
             });
         }
+        clearTimeout(this.errorDelay);
+    },
+
+    toggleErrors: function(errors) {
+        var hasErrors = !!errors.length;
+
+        this.$overlay.toggle(hasErrors);
+
+        if (!hasErrors) {
+            this.hide();
+            return;
+        }
+
+        this.errorDelay = setTimeout( function() {
+            this.show(errors);
+        }.bind(this), 1200);
     }
 });

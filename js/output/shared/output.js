@@ -2,6 +2,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
+    currentCode: "",
 
     initialize: function(options) {
         this.render();
@@ -11,21 +12,16 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.assertions = [];
 
         this.config = new ScratchpadConfig({});
-
+        
         if (options.outputType) {
             this.setOutput(options.outputType);
         }
-
-        this.tipbar = new TipBar({
-            el: this.el,
-            output: this
-        });
 
         this.bind();
     },
 
     render: function() {
-        this.$el.html(Handlebars.templates["output"]());
+        this.$el.html("<div class=\"output\"></div>");
     },
 
     bind: function() {
@@ -79,9 +75,13 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         try {
             data = JSON.parse(event.data);
-
         } catch (err) {
             return;
+        }
+
+        if (!this.loaded) {
+            this.postParent({ loaded: true });
+            this.loaded = true;
         }
 
         if (!this.output) {
@@ -92,11 +92,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Set the paths from the incoming data, if they exist
         this.setPaths(data);
 
-        // Validation code to run
-        if (data.validate != null) {
-            this.initTests(data.validate);
-        }
-
         // Settings to initialize
         if (data.settings != null) {
             this.settings = data.settings;
@@ -104,10 +99,13 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Code to be executed
         if (data.code != null) {
-            // We got new code. Hide the tipbar to give them a chance to fix things up
-            this.tipbar.hide();
             this.config.switchVersion(data.version);
             this.runCode(data.code);
+        }
+
+        // Validation code to run
+        if (data.validate != null) {
+            this.runTests(data.validate);
         }
 
         if (data.onlyRunTests != null) {
@@ -163,13 +161,8 @@ window.LiveEditorOutput = Backbone.View.extend({
     //  and it executes the test code to see if its valid
     initTests: function(validate) {
         // Only update the tests if they have changed
-        if (this.validate === validate) {
-            return;
-        }
-
-        // Prime the test queue
-        this.validate = validate;
-
+        /* This was to check the tests for
+         * errors it is currently broken
         // We evaluate the test code to see if it itself has any syntax errors
         // This also ends up pushing the tests onto this.tests
         var error = this.output.initTests(validate);
@@ -180,23 +173,18 @@ window.LiveEditorOutput = Backbone.View.extend({
         } else {
             this.$el.find(".test-errors").hide();
         }
+        */
     },
 
     runCode: function(userCode, callback) {
-        
         this.currentCode = userCode;
 
-        var runDone = function(errors, testResults) {
+        var buildDone = function(errors) {
             errors = this.cleanErrors(errors || []);
-
-            if (!this.loaded) {
-                this.postParent({ loaded: true });
-                this.loaded = true;
-            }
 
             // A callback for working with a test suite
             if (callback) {
-                callback(errors, testResults);
+                callback(errors);
                 return;
             }
 
@@ -204,31 +192,36 @@ window.LiveEditorOutput = Backbone.View.extend({
                 results: {
                     code: userCode,
                     errors: errors,
-                    tests: testResults || [],
                     assertions: this.assertions
                 }
             });
 
-            this.toggleErrors(errors);
+            this.toggle(!errors.length);
         }.bind(this);
 
         this.lint(userCode, function(errors) {
-            // Run the tests (even if there are lint errors)
-            this.test(userCode, this.validate, errors, function(errors, testResults) {
-                if (errors.length > 0 || this.onlyRunTests) {
-                    return runDone(errors, testResults);
-                }
+            if (errors.length > 0 || this.onlyRunTests) {
+                return buildDone(errors);
+            }
 
-                // Then run the user's code
-                try {
-                    this.output.runCode(userCode, function(errors) {
-                        runDone(errors, testResults);
-                    });
+            // Then run the user's code
+            try {
+                this.output.runCode(userCode, function(errors) {
+                    buildDone(errors);
+                });
+            } catch (e) {
+                buildDone([e]);
+            }
+        }.bind(this));
+    },
 
-                } catch (e) {
-                    runDone([e], testResults);
+    runTests: function(validate) {
+        this.test(this.currentCode, validate, [], function(errors, testResults) {
+            this.postParent({
+                results: {
+                    tests: testResults
                 }
-            }.bind(this));
+            }); 
         }.bind(this));
     },
 
@@ -318,30 +311,6 @@ window.LiveEditorOutput = Backbone.View.extend({
 
     clean: function(str) {
         return String(str).replace(/</g, "&lt;");
-    },
-
-    toggleErrors: function(errors) {
-        var hasErrors = !!errors.length;
-
-        this.$el.find(".error-overlay").toggle(hasErrors);
-
-        this.toggle(!hasErrors);
-
-        if (this.errorDelay) {
-            clearTimeout(this.errorDelay);
-        }
-
-        if (!hasErrors) {
-            this.tipbar.hide("Error");
-            return;
-        }
-
-        this.errorDelay = setTimeout(function() {
-            this.errorDelay = null;
-            if (errors.length > 0) {
-                this.tipbar.show("Error", errors);
-            }
-        }.bind(this), 1200);
     }
 });
 

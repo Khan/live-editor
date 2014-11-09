@@ -1998,7 +1998,7 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
     },
 
     render: function() {
-        this.$el = $("<div class='tooltip autosuggest'><div class='hotsuggest'></div><div class='arrow'></div></div>")
+        this.$el = $("<div class='tooltip autosuggest hide-while-playing'><div class='hotsuggest'></div><div class='arrow'></div></div>")
             .appendTo("body").hide();
     },
 
@@ -2558,7 +2558,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
         }
 
         var $leftButton = $("<span role='button'>◄</span>");
-        var $rightButton = $("<span role='button'>►</span>");
+        var $rightButton = $("<span role='button' class='flipped-arrow'>◄</span>");
         var $center = $("<span> ◆ </span>");
 
         $leftButton.click(function (evt) {

@@ -5,4 +5,4 @@ this["Handlebars"]["templates"]["output"] = Handlebars.template(function (Handle
   var foundHelper, self=this;
 
 
-  return "<div class=\"output\"></div>\n<div class=\"overlay error-overlay hidden\"></div>\n<div class=\"test-errors\" style=\"display: none;\"></div>";});;
+  return "<div class=\"output\"></div>\n<div class=\"test-errors\" style=\"display: none;\"></div>";});;

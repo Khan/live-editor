@@ -11,7 +11,9 @@
 }
 
 .scratchpad-wrap .scratchpad-canvas-wrap  #output {
+    overflow: hidden;
     min-width: 402px;
+    min-height: 402px;
 }
 
 .scratchpad-wrap .scratchpad-editor-wrap {
@@ -191,6 +193,8 @@
 }
 
 #output-frame {
+    box-sizing: border-box;
+    height: 100%;
     overflow: hidden;
 }
 
