@@ -99,7 +99,7 @@ gulp.task("fonts", function() {
 
 gulp.task("images", function() {
     gulp.src(paths.images)
-        .pipe(gulp.dest("build/images/scratchpads"));
+        .pipe(gulp.dest("build/images"));
 });
 
 gulp.task("watch", function() {
