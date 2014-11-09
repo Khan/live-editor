@@ -177,6 +177,6 @@
         "css/bootstrap/fonts/*"
     ],
     "images": [
-        "images/**"
+        "images/scratchpads/**"
     ]
 }
