@@ -551,12 +551,12 @@ SQLTester.prototype.testMethods = {
         var results = dbInfo.results;
         var templateResults = templateDBInfo.results;
 
-        if (results.length !== templateResults.length) {
+        if (results.length < templateResults.length) {
             return { success: false };
         }
 
         // Make sure we have similar results
-        for (var i = 0; i < results.length; i++) {
+        for (var i = 0; i < templateResults.length; i++) {
             var res = results[i];
             var templateRes = templateResults[i];
 
