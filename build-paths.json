@@ -159,6 +159,7 @@
         "css/bootstrap/fonts/*"
     ],
     "images": [
-        "images/**"
+        "images/**",
+        "external/structured-blocks/images/**"
     ]
 }

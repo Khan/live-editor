@@ -4,6 +4,7 @@ window.StructuredBlocksEditor = Backbone.View.extend({
         this.autoFocus = options.autoFocus;
         this.config = options.config;
         this.record = options.record;
+        this.imagesDir = options.imagesDir;
 
         this.config.editor = this;
 
@@ -50,7 +51,8 @@ window.StructuredBlocksEditor = Backbone.View.extend({
         this.editor = new JSToolboxEditor({
             el: this.el,
             toolbox: toolbox,
-            code: this.defaultCode || ""
+            code: this.defaultCode || "",
+            imagesDir: this.imagesDir
         });
 
         this.editor.on("updated", function() {

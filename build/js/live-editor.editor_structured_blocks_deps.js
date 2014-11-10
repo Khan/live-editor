@@ -7629,7 +7629,10 @@ var JSToolbox = Backbone.View.extend({
                     item = JSRules.parseStructure(item);
                 }
 
-                return JSRules.findRule(item);
+                var rule = JSRules.findRule(item);
+                rule.imagesDir = options.imagesDir;
+
+                return rule;
             });
         });
 
@@ -7668,6 +7671,8 @@ var JSToolbox = Backbone.View.extend({
 
 var JSToolboxEditor = Backbone.View.extend({
     initialize: function(options) {
+        this.imagesDir = options.imagesDir;
+
         this.editor = new JSEditor({
             code: options.code
         });
@@ -7677,7 +7682,8 @@ var JSToolboxEditor = Backbone.View.extend({
         }.bind(this));
 
         this.toolbox = new JSToolbox({
-            toolbox: options.toolbox
+            toolbox: options.toolbox,
+            imagesDir: options.imagesDir
         });
 
         this.render();
@@ -8110,6 +8116,11 @@ var JSASTRule = JSRule.extend({
             return text;
         });
 
+        if (this.image && this.imagesDir) {
+            tokens.push("<img src='" + this.imagesDir + "toolbox/" +
+                this.image  + "' class='toolbox-image'/>")
+        }
+
         this.$el.html($("<div>").append(tokens));
 
         return this;
@@ -8235,11 +8246,17 @@ JSRules.addRule(JSRule.extend({
         if (type === "boolean") {
             val = (val === "true");
         } else if (type === "number") {
-            val = parseFloat(val);
+            val = parseFloat(val) || 0;
+        }
+
+        var newVal = val.toString();
+
+        if (newVal !== event.target.value) {
+            event.target.value = newVal;
         }
 
         this.match.vars.value = val;
-        event.target.size = event.target.value.length || 1;
+        event.target.size = Math.max(newVal.length, 2);
 
         this.triggerUpdate();
     },
@@ -8273,7 +8290,7 @@ JSRules.addRule(JSRule.extend({
             .attr({
                 type: "text",
                 value: val,
-                size: val.length,
+                size: Math.max(val.length, 2),
                 "class": "constant numeric"
             }));
         return this;
@@ -8282,48 +8299,56 @@ JSRules.addRule(JSRule.extend({
 // Shapes
 
 JSRules.addRule(JSASTRule.extend({
+    image: "rect.png",
     structure: function() {
         rect($x, $y, $width, $height);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
+    image: "line.png",
     structure: function() {
         line(_, _, _, _);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
+    image: "bezier.png",
     structure: function() {
         bezier(_, _, _, _, _, _, _, _);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
+    image: "ellipse.png",
     structure: function() {
         ellipse(_, _, _, _);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
+    image: "point.png",
     structure: function() {
         point(_, _);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
+    image: "quad.png",
     structure: function() {
         quad(_, _, _, _, _, _, _, _);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
+    image: "triangle.png",
     structure: function() {
         triangle(_, _, _, _, _, _);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
+    image: "arc.png",
     structure: function() {
         arc(_, _, _, _, _, _);
     }
@@ -8331,6 +8356,7 @@ JSRules.addRule(JSASTRule.extend({
 
 // TODO: Handle additional height/width args
 JSRules.addRule(JSASTRule.extend({
+    image: "image.png",
     structure: function() {
         image(_, _, _);
     }

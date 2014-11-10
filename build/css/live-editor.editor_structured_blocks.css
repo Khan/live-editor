@@ -13,8 +13,10 @@
     -webkit-appearance: none;
     background: #FFF;
     border: 1px solid #CCC;
+    border-radius: 17px;
     padding: 5px;
     font-size: 13px;
+    text-align: center;
 }
 
 .block.block-statements {
@@ -59,6 +61,14 @@
     display: none;
 }
 
+.block-toolbox > .ui-draggable > div > img.toolbox-image {
+    display: inline-block;
+    height: 20px;
+    vertical-align: middle;
+    border: 1px solid #CCC;
+    margin-left: 5px;
+}
+
 .block-toolbox > .ui-draggable input {
     font-size: 13px;
     padding: 2px;
@@ -70,6 +80,10 @@
 
 .block-toolbox > .ui-draggable.ui-draggable-dragging > div > :not(.function) {
     display: inline-block;
+}
+
+.block-toolbox > .ui-draggable.ui-draggable-dragging > div > img.toolbox-image {
+    display: none;
 }
 
 .block-toolbox > .ui-draggable.ui-draggable-dragging input {
@@ -137,7 +151,7 @@
     color: rgb(49, 132, 149);
 }
 .block-toolbox {
-    width: 100px;
+    width: 150px;
     position: absolute;
     top: 0px;
     left: 0px;
@@ -146,5 +160,5 @@
 }
 
 .block-editor {
-    margin-left: 100px;
+    margin-left: 150px;
 }
