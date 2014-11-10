@@ -17,7 +17,6 @@
   ],
   "dependencies": {
     "jquery": "~2.1.1",
-    "structured": "*",
     "underscore": "~1.6.0",
     "ace": "~1.1.4",
     "soundmanager": "*",

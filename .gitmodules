@@ -13,3 +13,6 @@
 [submodule "external/structured-blocks"]
 	path = external/structured-blocks
 	url = https://github.com/Khan/structured-blocks
+[submodule "external/structuredjs"]
+	path = external/structuredjs
+	url = https://github.com/Khan/structuredjs
