@@ -1050,7 +1050,7 @@ window.LiveEditor = Backbone.View.extend({
 
     runTests: _.debounce(function() {
          this._runTests();
-     }, 1800),
+     }, 800),
 
     getScreenshot: function(callback) {
         // Unbind any handlers this function may have set for previous
