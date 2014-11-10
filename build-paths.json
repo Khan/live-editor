@@ -26,7 +26,7 @@
             "js/editors/ace/editor-ace.js"
         ],
         "editor_structured_blocks_deps": [
-            "external/structured-blocks/bower_components/jquery.ui.touch-punch.min.js",
+            "external/structured-blocks/external/jquery.ui.touch-punch.min.js",
             "bower_components/structured/external/esprima.js",
             "bower_components/structured/structured.js",
             "external/structured-blocks/external/escodegen.browser.js",

@@ -17,6 +17,10 @@
     font-size: 13px;
 }
 
+.block.block-statements {
+    overflow: auto;
+}
+
 .block.block-statement {
     overflow: auto;
 }
