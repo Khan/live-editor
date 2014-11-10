@@ -8102,6 +8102,12 @@ var JSASTRule = JSRule.extend({
             }
 
             return token.value;
+        }).map(function(text) {
+            if (typeof text === "string" && text.indexOf("<") === -1) {
+                return buildTag("text", {value: text});
+            }
+
+            return text;
         });
 
         this.$el.html($("<div>").append(tokens));

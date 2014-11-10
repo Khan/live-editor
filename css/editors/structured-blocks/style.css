@@ -1,5 +1,5 @@
 .block-toolbox {
-    width: 200px;
+    width: 100px;
     position: absolute;
     top: 0px;
     left: 0px;
@@ -8,5 +8,5 @@
 }
 
 .block-editor {
-    margin-left: 200px;
+    margin-left: 100px;
 }

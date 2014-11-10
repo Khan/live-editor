@@ -52,16 +52,24 @@
 }
 
 .block-toolbox > .ui-draggable {
-    font-size: 10px;
+    font-size: 13px;
+}
+
+.block-toolbox > .ui-draggable > div > :not(.function) {
+    display: none;
 }
 
 .block-toolbox > .ui-draggable input {
-    font-size: 10px;
+    font-size: 13px;
     padding: 2px;
 }
 
 .block-toolbox > .ui-draggable.ui-draggable-dragging {
     font-size: 13px;
+}
+
+.block-toolbox > .ui-draggable.ui-draggable-dragging > div > :not(.function) {
+    display: inline-block;
 }
 
 .block-toolbox > .ui-draggable.ui-draggable-dragging input {
@@ -129,7 +137,7 @@
     color: rgb(49, 132, 149);
 }
 .block-toolbox {
-    width: 200px;
+    width: 100px;
     position: absolute;
     top: 0px;
     left: 0px;
@@ -138,5 +146,5 @@
 }
 
 .block-editor {
-    margin-left: 200px;
+    margin-left: 100px;
 }

@@ -13,13 +13,19 @@ window.StructuredBlocksEditor = Backbone.View.extend({
                     rect(10, 10, 50, 50);
                 },
                 function() {
-                    ellipse(20, 20, 100, 100);
+                    ellipse(120, 120, 100, 100);
                 },
                 function() {
                     line(10, 10, 50, 50);
                 },
                 function() {
                     point(100, 100);
+                },
+                function() {
+                    triangle(20, 20, 100, 100, 150, 150);
+                },
+                function() {
+                    arc(150, 150, 100, 100, 0, 360);
                 }
             ],
             "Colors": [
