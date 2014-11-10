@@ -4342,7 +4342,7 @@ parseStatement: true, parseSourceElement: true */
             // currNode does not have the key, but toFind does
             if (subCurr === undefined || subCurr === null) {
                 if (key === "wildcardVar") {
-                    if (wVars.leftToSkip[subFind] > 0) {
+                    if (wVars.leftToSkip && wVars.leftToSkip[subFind] > 0) {
                         wVars.leftToSkip[subFind] -= 1;
                         return false; // Skip, this does not match our wildcard
                     }
@@ -8069,6 +8069,8 @@ var JSASTRule = JSRule.extend({
             if (token.type === "Identifier") {
                 if (token.value === "_") {
                     return children._[_pos++].render().el;
+                } else if (token.value.indexOf("$") === 0) {
+                    return children.vars[token.value.slice(1)].render().el;
                 } else {
                     return buildTag("entity name function call", token);
                 }
@@ -8275,7 +8277,7 @@ JSRules.addRule(JSRule.extend({
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        rect(_, _, _, _);
+        rect($x, $y, $width, $height);
     }
 }));
 
