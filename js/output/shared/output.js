@@ -2,7 +2,6 @@ window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
-    currentCode: "",
 
     initialize: function(options) {
         this.render();
@@ -75,13 +74,9 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         try {
             data = JSON.parse(event.data);
+
         } catch (err) {
             return;
-        }
-
-        if (!this.loaded) {
-            this.postParent({ loaded: true });
-            this.loaded = true;
         }
 
         if (!this.output) {
@@ -92,6 +87,11 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Set the paths from the incoming data, if they exist
         this.setPaths(data);
 
+        // Validation code to run
+        if (data.validate != null) {
+            this.initTests(data.validate);
+        }
+
         // Settings to initialize
         if (data.settings != null) {
             this.settings = data.settings;
@@ -101,11 +101,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (data.code != null) {
             this.config.switchVersion(data.version);
             this.runCode(data.code);
-        }
-
-        // Validation code to run
-        if (data.validate != null) {
-            this.runTests(data.validate);
         }
 
         if (data.onlyRunTests != null) {
@@ -161,30 +156,29 @@ window.LiveEditorOutput = Backbone.View.extend({
     //  and it executes the test code to see if its valid
     initTests: function(validate) {
         // Only update the tests if they have changed
-        /* This was to check the tests for
-         * errors it is currently broken
-        // We evaluate the test code to see if it itself has any syntax errors
-        // This also ends up pushing the tests onto this.tests
-        var error = this.output.initTests(validate);
-
-        // Display errors encountered while evaluating the test code
-        if (error && error.message) {
-            this.$el.find(".test-errors").text(error.message).show();
-        } else {
-            this.$el.find(".test-errors").hide();
+        if (this.validate === validate) {
+            return;
         }
-        */
+
+        // Prime the test queue
+        this.validate = validate;
     },
 
     runCode: function(userCode, callback) {
+        
         this.currentCode = userCode;
 
-        var buildDone = function(errors) {
+        var runDone = function(errors, testResults) {
             errors = this.cleanErrors(errors || []);
+
+            if (!this.loaded) {
+                this.postParent({ loaded: true });
+                this.loaded = true;
+            }
 
             // A callback for working with a test suite
             if (callback) {
-                callback(errors);
+                callback(errors, testResults);
                 return;
             }
 
@@ -192,6 +186,7 @@ window.LiveEditorOutput = Backbone.View.extend({
                 results: {
                     code: userCode,
                     errors: errors,
+                    tests: testResults || [],
                     assertions: this.assertions
                 }
             });
@@ -200,28 +195,22 @@ window.LiveEditorOutput = Backbone.View.extend({
         }.bind(this);
 
         this.lint(userCode, function(errors) {
-            if (errors.length > 0 || this.onlyRunTests) {
-                return buildDone(errors);
-            }
-
-            // Then run the user's code
-            try {
-                this.output.runCode(userCode, function(errors) {
-                    buildDone(errors);
-                });
-            } catch (e) {
-                buildDone([e]);
-            }
-        }.bind(this));
-    },
-
-    runTests: function(validate) {
-        this.test(this.currentCode, validate, [], function(errors, testResults) {
-            this.postParent({
-                results: {
-                    tests: testResults
+            // Run the tests (even if there are lint errors)
+            this.test(userCode, this.validate, errors, function(errors, testResults) {
+                if (errors.length > 0 || this.onlyRunTests) {
+                    return runDone(errors, testResults);
                 }
-            }); 
+
+                // Then run the user's code
+                try {
+                    this.output.runCode(userCode, function(errors) {
+                        runDone(errors, testResults);
+                    });
+
+                } catch (e) {
+                    runDone([e], testResults);
+                }
+            }.bind(this));
         }.bind(this));
     },
 
