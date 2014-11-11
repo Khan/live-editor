@@ -35,6 +35,7 @@
     border-radius: 3px;
     background: #EEE;
     white-space: nowrap;
+    cursor: move;
 }
 
 .block.ui-draggable-dragging > div {
@@ -66,6 +67,7 @@
     height: 20px;
     vertical-align: middle;
     border: 1px solid #CCC;
+    border-radius: 3px;
     margin-left: 5px;
 }
 
