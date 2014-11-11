@@ -282,7 +282,7 @@ function program15(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</span>\n            </button>\n          </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar\">\n            <!-- Row for playback controls -->\n            <div class=\"scratchpad-playbar\" style=\"display:none;\">\n                <div class=\"scratchpad-playbar-area\" style=\"display:none;\">\n                    <button\n                        class=\"simple-button primary scratchpad-playbar-play\"\n                        type=\"button\">\n                        <span class=\"icon-play\"></span>\n                    </button>\n\n                    <div class=\"scratchpad-playbar-progress\"></div>\n\n                    <span class=\"scratchpad-playbar-timeleft\"></span>\n                </div>\n                <div class=\"loading-msg\">\n                    ";
+  buffer += "</span>\n            </button>\n          </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar\">\n            <button class=\"simple-button primary\" id=\"tidy-button\">Tidy</button>\n            <!-- Row for playback controls -->\n            <div class=\"scratchpad-playbar\" style=\"display:none;\">\n                <div class=\"scratchpad-playbar-area\" style=\"display:none;\">\n                    <button\n                        class=\"simple-button primary scratchpad-playbar-play\"\n                        type=\"button\">\n                        <span class=\"icon-play\"></span>\n                    </button>\n\n                    <div class=\"scratchpad-playbar-progress\"></div>\n\n                    <span class=\"scratchpad-playbar-timeleft\"></span>\n                </div>\n                <div class=\"loading-msg\">\n                    ";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(15, program15, data);
@@ -1887,7 +1887,7 @@ window.LiveEditor = Backbone.View.extend({
         // Unbind any handlers this function may have set for previous
         // screenshots
         $(window).off("message.getScreenshot");
-    
+
         // We're only expecting one screenshot back
         $(window).on("message.getScreenshot", function(e) {
             // Only call if the data is actually an image!
@@ -1895,13 +1895,42 @@ window.LiveEditor = Backbone.View.extend({
                 callback(e.originalEvent.data);
             }
         });
-    
+
         // Ask the frame for a screenshot
         this.postFrame({ screenshot: true });
     },
 
     undo: function() {
         this.editor.undo();
+    },
+
+    /**
+     * Show the overlay.  If animate is true the opacity will fade in.
+     * @param {Boolean} animate
+     */
+    disable: function (animate) {
+        var $overlay = this.$el.find(".disable-overlay");
+        
+        $overlay.show();
+        if (animate) {
+            $overlay.animate({ 'opacity': '0.5' }, 200);
+        }
+    },
+
+    /**
+     * Hide the overlay.  If animate is false the opacity will fade out.
+     * @param {Boolean} animate
+     */
+    enable: function (animate) {
+        var $overlay = this.$el.find(".disable-overlay");
+
+        if (animate) {
+            $overlay.animate({ 'opacity': '0.0' }, 200, "swing", function () {
+                $(this).hide();
+            });
+        } else {
+            $overlay.hide();
+        }
     },
 
     _qualifyURL: function(url){

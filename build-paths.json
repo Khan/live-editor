@@ -126,6 +126,9 @@
             "js/ui/canvas.js",
             "js/ui/record.js",
             "js/live-editor.js"
+        ],
+        "tidy": [
+            "js/ui/tidy.js"
         ]
     },
     "workers_pjs": [
@@ -143,6 +146,9 @@
         "js/output/shared/output-tester.js",
         "external/multirecorderjs/multirecorder-worker.js"
     ],
+    "workers_tidy": [
+        "js/workers/tidy-worker.js"
+    ],
     "externals": [
         "external/es5-shim/es5-shim.js",
         "external/jshint/jshint.js",
@@ -150,11 +156,13 @@
         "external/structuredjs/structured.js",
         "external/underscore/underscore.js",
         "external/blockly/media/**",
-        "external/SoundManager2/swf/**"
+        "external/SoundManager2/swf/**",
+        "external/ast-walker/walker.js",
+        "external/jsonpath/lib/jsonpath.js"
     ],
     "styles": {
         "core_deps": [
-            "css/jquery-ui/ui-lightness/jquery-ui.css" 
+            "css/jquery-ui/ui-lightness/jquery-ui.css"
         ],
         "audio": [
             "css/ui/flashblock.css"

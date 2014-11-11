@@ -826,13 +826,13 @@ var BabyHint = {
         var words = line.split(/[^~`@#\$\^\w]/g);
         var skipNext = false;
         _.each(words, function(word) {
-            if (word.length > 0 && !skipNext) { 
+            if (word.length > 0 && !skipNext) {
                 var editDist = BabyHint.editDistance(word);
                 var dist = editDist.editDistance;
                 var keyword = editDist.keyword;
                 if (dist > 0 &&
                     dist <= BabyHint.EDIT_DISTANCE_THRESHOLD &&
-                    dist < keyword.length - 1 && 
+                    dist < keyword.length - 1 &&
                     BabyHint.keywords.indexOf(word) === -1) {
                     var error = {
                         row: lineNumber,
