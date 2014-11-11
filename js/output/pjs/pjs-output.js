@@ -15,6 +15,13 @@ window.PJSOutput = Backbone.View.extend({
         "mouseOut", "touchStart", "touchEnd", "touchMove", "touchCancel",
         "keyPressed", "keyReleased", "keyTyped"],
 
+    // Some PJS methods don't work well within a worker.
+    // createGraphics: Creates a whole new Processing object and our stubbing
+    //                 code doesn't play well with it.
+    //                 TODO(bbondy): We may be able to fix this if we have
+    //                 time to debug more while still using the worker.
+    workerBreakingMethods: ["createGraphics"],
+
     // During live coding all of the following state must be reset
     // when it's no longer used.
     liveReset: {
@@ -36,6 +43,15 @@ window.PJSOutput = Backbone.View.extend({
         textSize: [12]
     },
 
+    /**
+     * PJS calls which are known to produce no side effects when
+     * called multiple times.
+     * It's a good idea to add things here for functions that have
+     * return values, but still call other PJS functions. In that
+     * exact case, we detect that the function is not safe, but it
+     * should indeed be safe.  So add it here! :)
+     */
+    idempotentCalls: [ "createFont" ],
     initialize: function(options) {
         // Handle recording playback
         this.handlers = {};
@@ -108,7 +124,9 @@ window.PJSOutput = Backbone.View.extend({
                             //          objects.
                             //    If all three of these are the case assume then
                             //    assume that there are no side effects.
-                            if (/native code/.test(strValue) ||
+                            if (this.idempotentCalls
+                                    .indexOf(processingProp) !== -1 ||
+                                /native code/.test(strValue) ||
                                 /return /.test(strValue) &&
                                 !/p\./.test(strValue) &&
                                 !/new P/.test(strValue)) {
@@ -712,7 +730,14 @@ window.PJSOutput = Backbone.View.extend({
 
     runCode: function(userCode, callback) {
         var runCode = function() {
-            if (!window.Worker) {
+
+            // Check for any reason not to use a worker
+            var doNotUserWorker = _(this.workerBreakingMethods)
+                .some(function(w) {
+                    return userCode.indexOf(w) !== -1;
+            });
+
+            if (!window.Worker || doNotUserWorker) {
                 return this.injectCode(userCode, callback);
             }
 
@@ -973,8 +998,24 @@ window.PJSOutput = Backbone.View.extend({
             for (var i = 0; i < fnCalls.length; i++) {
                 // Reconstruction the function call
                 var args = Array.prototype.slice.call(fnCalls[i][1]);
-                inject += fnCalls[i][0] + "(" +
-                    PJSOutput.stringifyArray(args) + ");\n";
+
+
+                var results = [];
+                _(args).each(function(arg, argIndex) {
+                    // Parameters here can come in the form of objects.
+                    // For any object parameter, we don't want to serialize it
+                    // because we'd lose the whole prototype chain.
+                    // Instead we create temporary variables for each.
+                    if (!_.isArray(arg) && _.isObject(arg)) {
+                        var varName = "__obj__" +
+                            fnCalls[i][0] + "__" + argIndex;
+                        this.canvas[varName] = arg;
+                        results.push(varName);
+                    } else {
+                        results.push(PJSOutput.stringify(arg));
+                    }
+                }.bind(this));
+                inject += fnCalls[i][0] + "(" + results.join(", ") + ");\n";
             }
 
             // We also look for newly-changed global variables to inject
@@ -1018,7 +1059,25 @@ window.PJSOutput = Backbone.View.extend({
                         // Otherwise it's ok to inject it directly into the
                         // new environment
                         } else {
-                            this.canvas[prop] = val;
+                            // If we have an object, then copy over all of the
+                            // properties so we don't accidentally destroy
+                            // function scope from `with()` and closures on the
+                            // object prototypes.
+                            // TODO(bbondy): This may copy over things that
+                            // were deleted. If we ever run into a problematic
+                            // program, we may want to add support here.
+                            if (!_.isArray(val) && _.isObject(val) &&
+                                    !_.isArray(this.canvas[prop]) &&
+                                    _.isObject(this.canvas[prop])) {
+                                // Copy over all of the properties
+                                for (var p in val) {
+                                    if (val.hasOwnProperty(p)) {
+                                        this.canvas[prop][p] = val[p];
+                                    }
+                                }
+                            } else {
+                                this.canvas[prop] = val;
+                            }
                         }
                     }
 

@@ -88,18 +88,30 @@
             var $pane = $image.closest(".tab-pane");
             var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
             $tab.tab("show");
-            $pane.find(".imagemodal-content").scrollTop($image.position().top - 100);
+            $pane.find(".imagemodal-content").scrollTop(
+                $image.position().top - 100);
             $image.find("img").click();
         },
 
         render: function() {
-            Handlebars.registerHelper("slugify", this.slugify);
-            Handlebars.registerHelper("patchedEach", this.handlebarsPatchedEach);
+            Handlebars.registerHelper("hasMultipleItems",
+                this.hasMultipleItems);
+            Handlebars.registerHelper("slugify",
+                this.slugify);
+            Handlebars.registerHelper("patchedEach",
+                this.handlebarsPatchedEach);
             this.$el = $(Handlebars.templates["image-modal"]({
                 imagesDir: this.options.imagesDir,
                 classes: ExtendedOutputImages
-            }))
+            }));
             this.$el.appendTo("body").hide();
+        },
+
+        hasMultipleItems: function(arr, options) {
+            if(arr && arr.length > 1) {
+                return options.fn(this);
+            }
+            return options.inverse(this);
         },
 
         slugify: function(text) {

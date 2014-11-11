@@ -2258,18 +2258,30 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             var $pane = $image.closest(".tab-pane");
             var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
             $tab.tab("show");
-            $pane.find(".imagemodal-content").scrollTop($image.position().top - 100);
+            $pane.find(".imagemodal-content").scrollTop(
+                $image.position().top - 100);
             $image.find("img").click();
         },
 
         render: function() {
-            Handlebars.registerHelper("slugify", this.slugify);
-            Handlebars.registerHelper("patchedEach", this.handlebarsPatchedEach);
+            Handlebars.registerHelper("hasMultipleItems",
+                this.hasMultipleItems);
+            Handlebars.registerHelper("slugify",
+                this.slugify);
+            Handlebars.registerHelper("patchedEach",
+                this.handlebarsPatchedEach);
             this.$el = $(Handlebars.templates["image-modal"]({
                 imagesDir: this.options.imagesDir,
                 classes: ExtendedOutputImages
-            }))
+            }));
             this.$el.appendTo("body").hide();
+        },
+
+        hasMultipleItems: function(arr, options) {
+            if(arr && arr.length > 1) {
+                return options.fn(this);
+            }
+            return options.inverse(this);
         },
 
         slugify: function(text) {
@@ -2949,35 +2961,72 @@ function program4(depth0,data,depth1) {
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   stack2 = helpers.each;
-  tmp1 = self.programWithDepth(program7, data, depth1);
+  tmp1 = self.programWithDepth(program7, data, depth0, depth1);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n        </div>\n        </div>\n\n        <div class=\"right\">\n        <ul class=\"nav nav-pills nav-stackable\">\n        ";
+  buffer += "\n        </div>\n        </div>\n\n        <div class=\"right\">\n        ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
-  foundHelper = helpers.patchedEach;
-  stack2 = foundHelper || depth0.patchedEach;
-  tmp1 = self.program(12, program12, data);
+  foundHelper = helpers.hasMultipleItems;
+  stack2 = foundHelper || depth0.hasMultipleItems;
+  tmp1 = self.program(14, program14, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
   if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n        </ul>\n        </div>\n\n        <div style=\"clear: both;\"></div>\n      </div>\n    ";
+  buffer += "\n        </div>\n\n        <div style=\"clear: both;\"></div>\n      </div>\n    ";
   return buffer;}
 function program5(depth0,data) {
   
   
   return "active";}
 
-function program7(depth0,data,depth2) {
+function program7(depth0,data,depth1,depth2) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n            <div class=\"image-group\">\n                <h3 class=\"image-group\" id=\"im-group-";
+  buffer += "\n            <div class=\"image-group\">\n                ";
+  foundHelper = helpers.groups;
+  stack1 = foundHelper || depth1.groups;
+  foundHelper = helpers.hasMultipleItems;
+  stack2 = foundHelper || depth0.hasMultipleItems;
+  tmp1 = self.program(8, program8, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n                ";
+  foundHelper = helpers.cite;
+  stack1 = foundHelper || depth0.cite;
+  stack2 = helpers['if'];
+  tmp1 = self.program(10, program10, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n                ";
+  foundHelper = helpers.images;
+  stack1 = foundHelper || depth0.images;
+  stack2 = helpers.each;
+  tmp1 = self.programWithDepth(program12, data, depth0, depth2);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n            </div>\n        ";
+  return buffer;}
+function program8(depth0,data) {
+  
+  var buffer = "", stack1, stack2;
+  buffer += "\n                <h3 class=\"image-group\" id=\"im-group-";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth0.groupName;
   foundHelper = helpers.slugify;
@@ -2991,28 +3040,9 @@ function program7(depth0,data,depth2) {
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
   buffer += escapeExpression(stack1) + "</h3>\n                ";
-  foundHelper = helpers.cite;
-  stack1 = foundHelper || depth0.cite;
-  stack2 = helpers['if'];
-  tmp1 = self.program(8, program8, data);
-  tmp1.hash = {};
-  tmp1.fn = tmp1;
-  tmp1.inverse = self.noop;
-  stack1 = stack2.call(depth0, stack1, tmp1);
-  if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n                ";
-  foundHelper = helpers.images;
-  stack1 = foundHelper || depth0.images;
-  stack2 = helpers.each;
-  tmp1 = self.programWithDepth(program10, data, depth0, depth2);
-  tmp1.hash = {};
-  tmp1.fn = tmp1;
-  tmp1.inverse = self.noop;
-  stack1 = stack2.call(depth0, stack1, tmp1);
-  if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n            </div>\n        ";
   return buffer;}
-function program8(depth0,data) {
+
+function program10(depth0,data) {
   
   var buffer = "", stack1;
   buffer += "\n                    <p><a href=\"";
@@ -3028,7 +3058,7 @@ function program8(depth0,data) {
   buffer += escapeExpression(stack1) + "</a></p>\n                ";
   return buffer;}
 
-function program10(depth0,data,depth1,depth3) {
+function program12(depth0,data,depth1,depth3) {
   
   var buffer = "", stack1;
   buffer += "\n                <div class=\"image\" data-path=\"";
@@ -3066,14 +3096,31 @@ function program10(depth0,data,depth1,depth3) {
   buffer += escapeExpression(stack1) + "</span>\n                </div>\n                ";
   return buffer;}
 
-function program12(depth0,data) {
+function program14(depth0,data) {
+  
+  var buffer = "", stack1, stack2;
+  buffer += "\n        <ul class=\"nav nav-pills nav-stackable\">\n        ";
+  foundHelper = helpers.groups;
+  stack1 = foundHelper || depth0.groups;
+  foundHelper = helpers.patchedEach;
+  stack2 = foundHelper || depth0.patchedEach;
+  tmp1 = self.program(15, program15, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </ul>\n        ";
+  return buffer;}
+function program15(depth0,data) {
   
   var buffer = "", stack1, stack2;
   buffer += "\n            <li ";
   foundHelper = helpers.$first;
   stack1 = foundHelper || depth0.$first;
   stack2 = helpers['if'];
-  tmp1 = self.program(13, program13, data);
+  tmp1 = self.program(16, program16, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -3094,17 +3141,17 @@ function program12(depth0,data) {
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
   buffer += escapeExpression(stack1) + "</a></li>\n        ";
   return buffer;}
-function program13(depth0,data) {
+function program16(depth0,data) {
   
   
   return "class=\"active\"";}
 
-function program15(depth0,data) {
+function program18(depth0,data) {
   
   
   return "Close";}
 
-function program17(depth0,data) {
+function program20(depth0,data) {
   
   
   return "Ok";}
@@ -3136,7 +3183,7 @@ function program17(depth0,data) {
   buffer += "\n    </div>\n\n    <div class=\"imagemodal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(15, program15, data);
+  tmp1 = self.program(18, program18, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -3146,7 +3193,7 @@ function program17(depth0,data) {
   buffer += "</button>\n      <button type=\"button\" class=\"simple-button green imagemodal-submit\" data-dismiss=\"modal\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(17, program17, data);
+  tmp1 = self.program(20, program20, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;

@@ -12,7 +12,9 @@
         <div style="position: relative;">
         {{#each groups}}
             <div class="image-group">
+                {{#hasMultipleItems ../groups}}
                 <h3 class="image-group" id="im-group-{{slugify groupName}}">{{groupName}}</h3>
+                {{/hasMultipleItems}}
                 {{#if cite}}
                     <p><a href="{{citeLink}}" target="_blank">{{cite}}</a></p>
                 {{/if}}
@@ -28,11 +30,13 @@
         </div>
 
         <div class="right">
+        {{#hasMultipleItems groups}}
         <ul class="nav nav-pills nav-stackable">
         {{#patchedEach groups}}
             <li {{#if $first}}class="active"{{/if}}><a href="#im-group-{{slugify groupName}}">{{groupName}}</a></li>
         {{/patchedEach}}
         </ul>
+        {{/hasMultipleItems}}
         </div>
 
         <div style="clear: both;"></div>

@@ -493,6 +493,97 @@ describe("Scratchpad Output Exec", function() {
         errors: []
     });
 
+    /**
+     * This makes sure that when you have objects, the scope of
+     * closures and with statements are not lost during the code
+     * injection phase.
+     */
+    runTest({
+        title: "Make sure prototype function scope is preserved",
+        code: function() {
+            var x = function() {
+            };
+
+            x.prototype = {
+                d: function() {
+                    println("ok2");
+                },
+                z: function() {
+                    this.y = 3;
+                },
+                r: function() {
+                    println("ok");
+                }
+            };
+
+            var m = new x();
+            var draw = function() {
+                m.d();
+            };
+
+            m.r();
+            m.z();
+
+        },
+        code2: function() {
+            var x = function() {
+            };
+
+            x.prototype = {
+                d: function() {
+                    println("ok2");
+                },
+                z: function() {
+                    this.y = 4;//changed
+                },
+                r: function() {
+                    println("ok");
+                }
+            };
+
+            var m = new x();
+            var draw = function() {
+                m.d();
+            };
+
+            m.r();
+            m.z();
+        },
+        errors: []
+    });
+
+
+
+    /**
+     * This makes sure that for injected function calls (in this case
+     * textFont), if it has an object argument passed to it, then that
+     * argument preserves its prototype chain (In this case PFont).
+     */
+    runTest({
+        title: "Make sure function call arguments preserve prototype chain",
+        code: function() {
+            textFont(createFont("monospace"));
+            var draw = function() {
+                background(255, 255, 255);
+                fill(255, 0, 0);
+                textSize(16);
+                textAlign(CENTER, CENTER);
+                text("Hi!", 91, 200);
+            };
+        },
+        code2: function() {
+            textFont(createFont("monospace"));
+            var draw = function() {
+                background(255, 255, 255);
+                fill(255, 0, 0);
+                textSize(16);
+                textAlign(CENTER, CENTER);
+                text("Hi!", 9, 200);//changed
+            };
+        },
+        errors: []
+    });
+
     runTest({
         title: "Program functions exist",
         code: function() {
@@ -517,6 +608,21 @@ describe("Scratchpad Output Exec", function() {
             "text": "Assertion failed: 2 is not equal to 4."}],
         assertions2: [],
     });
+
+    /**
+     * Some calls do not currently work within workers.
+     * For example createGraphics creates a whole new Processing
+     * env for the object which we don't support within a worker.
+     */
+    runTest({
+        title: "Calls which do not work within workers run",
+        code: function() {
+            var osb = createGraphics(30, 30, JAVA2D);
+            osb.beginDraw();
+        },
+        errors: []
+    });
+
 
 });
 

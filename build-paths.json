@@ -153,6 +153,9 @@
         "ui": [
             "css/ui/tipbar.css",
             "css/ui/style.css"
+        ],
+        "output": [
+            "css/output/style.css"
         ]
     },
     "fonts": [
