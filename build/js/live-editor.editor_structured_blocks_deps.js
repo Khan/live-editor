@@ -7698,6 +7698,22 @@ var JSToolboxEditor = Backbone.View.extend({
         return this.editor.toScript();
     },
 
+    codeToHTML: function(code) {
+        if (typeof code === "function") {
+            code = JSRules.parseStructure(code);
+        } else if (typeof code === "string") {
+            code = esprima.parse(code).body[0];
+        }
+
+        var rule = JSRules.findRule(code);
+        var html = rule.render().el.outerHTML;
+
+        // Remove all the inputs and replace them with just the text
+        html = html.replace(/<input.*?value="([^"]*)"[^>]*>/g, "$1");
+
+        return html;
+    },
+
     render: function() {
         this.$el.children().detach();
         this.$el.append([
@@ -8066,9 +8082,11 @@ var JSASTRule = JSRule.extend({
         var children = this.children;
         var tokens = this.tokens;
         var _pos = 0;
+        var skipNext = 0;
 
         var buildTag = function(type, token) {
-            return "<span class='" + type + "'>" + token.value + "</span>";
+            return $("<span class='" + type + "'>" +
+                (token ? token.value : "") + "</span>")[0];
         };
 
         tokens = tokens.map(function(token) {
@@ -8076,7 +8094,16 @@ var JSASTRule = JSRule.extend({
                 if (token.value === "_") {
                     return children._[_pos++].render().el;
                 } else if (token.value.indexOf("$") === 0) {
-                    return children.vars[token.value.slice(1)].render().el;
+                    var el = children.vars[token.value.slice(1)].render().el;
+                    var typePos = token.value.indexOf("_");
+                    if (typePos > 0) {
+                        var type = token.value.slice(typePos + 1);
+                        var span = buildTag("block block-blank block-" + type +
+                            " block-name-" + token.value.slice(1, typePos));
+                        span.appendChild(el);
+                        el = span;
+                    }
+                    return el;
                 } else {
                     return buildTag("entity name function call", token);
                 }
@@ -8301,56 +8328,56 @@ JSRules.addRule(JSRule.extend({
 JSRules.addRule(JSASTRule.extend({
     image: "rect.png",
     structure: function() {
-        rect($x, $y, $width, $height);
+        rect($x_number, $y_number, $w_number, $h_number);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     image: "line.png",
     structure: function() {
-        line(_, _, _, _);
+        line($x1_number, $y1_number, $s2_number, $y2_number);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     image: "bezier.png",
     structure: function() {
-        bezier(_, _, _, _, _, _, _, _);
+        bezier($x1_number, $y1_number, $cx1_number, $cy1_number, $cx2_number, $cy2_number, $x2_number, $y2_number);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     image: "ellipse.png",
     structure: function() {
-        ellipse(_, _, _, _);
+        ellipse($x_number, $y_number, $w_number, $h_number);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     image: "point.png",
     structure: function() {
-        point(_, _);
+        point($x_number, $y_number);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     image: "quad.png",
     structure: function() {
-        quad(_, _, _, _, _, _, _, _);
+        quad($x1_number, $y1_number, $x2_number, $y2_number, $x3_number, $y3_number, $x4_number, $y4_number);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     image: "triangle.png",
     structure: function() {
-        triangle(_, _, _, _, _, _);
+        triangle($x1_number, $y1_number, $x2_number, $y2_number, $x3_number, $y3_number);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     image: "arc.png",
     structure: function() {
-        arc(_, _, _, _, _, _);
+        arc($x_number, $y_number, $w_number, $h_number, $start_number, $stop_number);
     }
 }));
 
@@ -8358,7 +8385,7 @@ JSRules.addRule(JSASTRule.extend({
 JSRules.addRule(JSASTRule.extend({
     image: "image.png",
     structure: function() {
-        image(_, _, _);
+        image($image_image, $x_number, $y_number);
     }
 }));
 
@@ -8366,13 +8393,13 @@ JSRules.addRule(JSASTRule.extend({
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        background(_, _, _);
+        background($r_rgb, $g_rgb, $b_rgb);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        fill(_, _, _);
+        fill($r_rgb, $g_rgb, $b_rgb);
     }
 }));
 
@@ -8384,13 +8411,13 @@ JSRules.addRule(JSASTRule.extend({
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        stroke(_, _, _);
+        stroke($r_rgb, $g_rgb, $b_rgb);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        strokeWeight(_);
+        strokeWeight($thickness_number);
     }
 }));
 
@@ -8402,19 +8429,19 @@ JSRules.addRule(JSASTRule.extend({
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        color(_, _, _);
+        color($r_rgb, $g_rgb, $b_rgb);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        blendColor(_, _, _);
+        blendColor($c1_color, $c2_color, $mode_number);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        lerpColor(_, _, _);
+        lerpColor($c1_color, $c2_color, $amount_number);
     }
 }));
 
@@ -8422,20 +8449,20 @@ JSRules.addRule(JSASTRule.extend({
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        text(_, _, _);
+        text($text_string, $x_number, $y_number);
     }
 }));
 
 // TODO: Handle additional size argument
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        textFont(_, _);
+        textFont($font_string);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        textSize(_);
+        textSize($size_number);
     }
 }));
 
@@ -8443,18 +8470,18 @@ JSRules.addRule(JSASTRule.extend({
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        rotate(_);
+        rotate($angle_number);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        scale(_);
+        scale($amount_number);
     }
 }));
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        translate(_, _);
+        translate($x_number, $y_number);
     }
 }));
