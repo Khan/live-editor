@@ -153,14 +153,15 @@
     color: rgb(49, 132, 149);
 }
 .block-toolbox {
-    width: 150px;
+    width: 120px;
     position: absolute;
     top: 0px;
-    left: 0px;
+    right: 0px;
     background: #ADD8E6;
     height: 100%;
+    box-shadow: rgba(0, 0, 0, 0.3) -3px 0 5px;
 }
 
 .block-editor {
-    margin-left: 150px;
+    margin-right: 120px;
 }
