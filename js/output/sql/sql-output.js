@@ -158,10 +158,6 @@ window.SQLOutput = Backbone.View.extend({
     test: function(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
-        if (errorCount > 0) {
-            return callback(errors, []);
-        }
-
         this.tester.test(this.dbInfo, tests, errors,
             function(errors, testResults) {
                 if (errorCount !== errors.length) {

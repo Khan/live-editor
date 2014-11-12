@@ -553,10 +553,6 @@ window.WebpageOutput = Backbone.View.extend({
     test: function(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
-        if (errorCount > 0) {
-            return callback(errors, []);
-        }
-
         this.tester.test(this.userDOM, tests, errors,
             function(errors, testResults) {
                 if (errorCount !== errors.length) {
@@ -571,7 +567,6 @@ window.WebpageOutput = Backbone.View.extend({
                         $._("A critical problem occurred in your program " +
                             "making it unable to run."));
                 }
-
                 callback(errors, testResults);
             }.bind(this));
     },
