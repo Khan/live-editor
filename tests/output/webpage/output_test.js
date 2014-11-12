@@ -165,4 +165,10 @@ describe("Linting", function() {
             {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
         ]
     );
+
+    failingTest("Fatal slowparse error detected",
+        "<li><a href='</li><img src='https://www.kasandbox.org'>", [
+            {row: 0, column: 0, lint: {type: "UNKNOWN_SLOWPARSE_ERROR"}}
+        ]
+    );
 });

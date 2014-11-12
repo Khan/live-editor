@@ -438,14 +438,21 @@ window.WebpageOutput = Backbone.View.extend({
         userCode = userCode || "";
 
         // Lint the user's code, returning any errors in the callback
-        var results = Slowparse.HTML(this.getDocument(), userCode, {
-            disallowActiveAttributes: true,
-            noScript: true,
-            disableTags: ["audio", "video", "iframe", "embed", "object"]
-        });
+        var results = {};
+        try {
+            results = Slowparse.HTML(this.getDocument(), userCode, {
+                disallowActiveAttributes: true,
+                noScript: true,
+                disableTags: ["audio", "video", "iframe", "embed", "object"]
+            });
+        } catch (e) {
+            results.error = {
+                type: "UNKNOWN_SLOWPARSE_ERROR"
+            };
+        }
 
         if (results.error) {
-            var pos = results.error.cursor;
+            var pos = results.error.cursor || 0;
             var previous = userCode.slice(0, pos);
             var column = pos - previous.lastIndexOf("\n") - 1;
             var row = (previous.match(/\n/g) || []).length;
@@ -524,7 +531,8 @@ window.WebpageOutput = Backbone.View.extend({
             UNTERMINATED_CLOSE_TAG: $._("A closing \"&lt;/%(closeTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
             UNTERMINATED_COMMENT: $._("A comment doesn't end with a \"--&gt;\".", error),
             UNTERMINATED_CSS_COMMENT: $._("A CSS comment doesn't end with a \"*/\".", error),
-            UNTERMINATED_OPEN_TAG: $._("An opening \"&lt;%(openTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error)
+            UNTERMINATED_OPEN_TAG: $._("An opening \"&lt;%(openTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
+            UNKNOWN_SLOWPARSE_ERROR: $._("Something's wrong with the HTML, but we're not sure what.")
         })[error.type];
     },
 
