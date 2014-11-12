@@ -591,7 +591,7 @@ window.WebpageOutput = Backbone.View.extend({
                 return;
             }
 
-            $(this).on("mouseup", function() {
+            $(this).off("mouseup").on("mouseup", function() {
                 self.output.postParent({
                     action: "link-click",
                     url: url
