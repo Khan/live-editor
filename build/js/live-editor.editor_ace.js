@@ -94,6 +94,10 @@ window.AceEditor = Backbone.View.extend({
         this.reset();
     },
 
+    remove: function() {
+        this.tooltipEngine.remove();
+    },
+
     bindRecord: function() {
         var self = this;
         var editor = this.editor;

@@ -18,7 +18,8 @@ describe("General Tooltip Tests", function(){
         expect(TTE.currentTooltip).to.be.equal(TTE.tooltips.numberScrubber);
     })
 
-    it("removing tooltipEngine doesn't throw errors", function() {
+    it("Remove succeeds", function() {
         TTE.remove();
+        expect($('.tooltip').length).to.be.equal(0);
     });
 });

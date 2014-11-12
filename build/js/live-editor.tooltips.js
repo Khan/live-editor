@@ -1783,13 +1783,14 @@ window.TooltipEngine = Backbone.View.extend({
     },
 
     remove: function() {
+
+        console.log("REM");
         _.each(this.callbacks, function(cb) {
             cb.target.off(cb.event, cb.fn);
         });
-        _.each(this.tooltipCallbacks, function(cb) {
-            this.editor.off("requestTooltip", cb);
-        }.bind(this));
-        delete this.callbacks;
+        _.each(this.tooltips, function(tooltip) {
+            tooltip.remove();
+        });
         
         this.editor.off("requestTooltip", this.requestTooltipDefaultCallback);
     },
@@ -2277,6 +2278,10 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             this.$el.appendTo("body").hide();
         },
 
+        remove: function() {
+            this.$el.remove();
+        },
+
         hasMultipleItems: function(arr, options) {
             if(arr && arr.length > 1) {
                 return options.fn(this);
@@ -2391,6 +2396,12 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             this.modal = new Modal(_.defaults({
                 parent: this
             }, this.options));
+        },
+
+        remove: function() {
+            this.$el.remove();
+            this.modal.remove();
+            this.unbindFromRequestTooltip();
         }
     });
 })();

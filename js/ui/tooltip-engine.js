@@ -98,10 +98,9 @@ window.TooltipEngine = Backbone.View.extend({
         _.each(this.callbacks, function(cb) {
             cb.target.off(cb.event, cb.fn);
         });
-        _.each(this.tooltipCallbacks, function(cb) {
-            this.editor.off("requestTooltip", cb);
-        }.bind(this));
-        delete this.callbacks;
+        _.each(this.tooltips, function(tooltip) {
+            tooltip.remove();
+        });
         
         this.editor.off("requestTooltip", this.requestTooltipDefaultCallback);
     },

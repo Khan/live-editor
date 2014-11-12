@@ -1182,6 +1182,7 @@ window.LiveEditor = Backbone.View.extend({
 
     remove: function() {
         $(window).off("message", this.handleMessagesBound);
+        this.editor.remove();
     },
 
     canRecord: function() {

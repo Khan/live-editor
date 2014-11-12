@@ -221,6 +221,12 @@
             this.modal = new Modal(_.defaults({
                 parent: this
             }, this.options));
+        },
+
+        remove: function() {
+            this.$el.remove();
+            this.modal.remove();
+            this.unbindFromRequestTooltip();
         }
     });
 })();
