@@ -6,7 +6,7 @@
         "core_deps": [
             "bower_components/es5-shim/es5-shim.js",
             "bower_components/jquery/dist/jquery.js",
-            "bower_components/jquery-ui/jquery-ui.js",
+            "bower_components/jquery-ui/ui/jquery-ui.custom.js",
             "external/handlebars/handlebars.runtime.js",
             "bower_components/underscore/underscore.js",
             "bower_components/backbone/backbone.js",
@@ -14,13 +14,13 @@
             "bower_components/bootstrap/js/bootstrap-tab.js"
         ],
         "editor_ace_deps": [
-            "bower_components/ace/build/src-noconflict/ace.js",
-            "bower_components/ace/build/src-noconflict/mode-javascript.js",
-            "bower_components/ace/build/src-noconflict/mode-html.js",
-            "bower_components/ace/build/src-noconflict/ext-static_highlight.js",
-            "bower_components/ace/build/src-noconflict/mode-sql.js",
-            "bower_components/ace/build/src-noconflict/ext-searchbox.js",
-            "bower_components/ace/build/src-noconflict/ext-language_tools.js"
+            "bower_components/ace-builds/src-noconflict/ace.js",
+            "bower_components/ace-builds/src-noconflict/mode-javascript.js",
+            "bower_components/ace-builds/src-noconflict/mode-html.js",
+            "bower_components/ace-builds/src-noconflict/ext-static_highlight.js",
+            "bower_components/ace-builds/src-noconflict/mode-sql.js",
+            "bower_components/ace-builds/src-noconflict/ext-searchbox.js",
+            "bower_components/ace-builds/src-noconflict/ext-language_tools.js"
         ],
         "editor_ace": [
             "js/editors/ace/editor-ace.js"
@@ -115,7 +115,7 @@
         "js/workers/pjs/worker.js"
     ],
     "workers_webpage": [
-        "bower_components/ace/build/src-noconflict/worker-html.js"
+        "bower_components/ace-builds/src-noconflict/worker-html.js"
     ],
     "workers_shared": [
         "js/output/shared/output-tester.js",
