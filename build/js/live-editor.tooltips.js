@@ -1783,8 +1783,6 @@ window.TooltipEngine = Backbone.View.extend({
     },
 
     remove: function() {
-
-        console.log("REM");
         _.each(this.callbacks, function(cb) {
             cb.target.off(cb.event, cb.fn);
         });
@@ -2276,10 +2274,6 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 classes: ExtendedOutputImages
             }));
             this.$el.appendTo("body").hide();
-        },
-
-        remove: function() {
-            this.$el.remove();
         },
 
         hasMultipleItems: function(arr, options) {
