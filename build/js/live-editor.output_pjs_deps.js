@@ -34495,7 +34495,7 @@ parseStatement: true, parseSourceElement: true */
             // currNode does not have the key, but toFind does
             if (subCurr === undefined || subCurr === null) {
                 if (key === "wildcardVar") {
-                    if (wVars.leftToSkip[subFind] > 0) {
+                    if (wVars.leftToSkip && wVars.leftToSkip[subFind] > 0) {
                         wVars.leftToSkip[subFind] -= 1;
                         return false; // Skip, this does not match our wildcard
                     }
@@ -34712,15 +34712,22 @@ parseStatement: true, parseSourceElement: true */
                 continue;
             }
 
-            if (node[prop] && typeof node[prop] === "object" && node[prop].length) {
+            if (node[prop] && typeof node[prop] === "object" && "length" in node[prop]) {
                 for (var i = 0; i < node[prop].length; i++) {
                     var globData = getGlobData(node[prop][i], data);
 
                     if (globData) {
-                        node[prop].splice.apply(node[prop], [i, 1].concat(globData));
+                        node[prop].splice.apply(node[prop],
+                            [i, 1].concat(globData));
                         break;
                     } else if (typeof node[prop][i] === "object") {
-                        injectData(node[prop][i], data);
+                        var singleData = getSingleData(node[prop][i], data);
+
+                        if (singleData) {
+                            node[prop][i] = singleData;
+                        } else if (typeof node[prop][i] === "object") {
+                            injectData(node[prop][i], data);
+                        }
                     }
                 }
             } else {

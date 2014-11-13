@@ -4,7 +4,7 @@
   "description": "Live Code Editor",
   "main": "dist/live-editor.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "gulp test"
   },
   "repository": {
     "type": "git",
@@ -33,6 +33,8 @@
     "async": "^0.9.0",
     "request": "^2.44.0",
     "sinon": "^1.10.3",
-    "handlebars": "1.0.5-beta"
+    "handlebars": "1.0.5-beta",
+    "gulp-bower": "0.0.7",
+    "gulp-symlink": "^2.0.1"
   }
 }

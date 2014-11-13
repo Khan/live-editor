@@ -4,63 +4,41 @@
     ],
     "scripts": {
         "core_deps": [
-            "external/es5-shim/es5-shim.js",
-            "external/jquery/dist/jquery.js",
-            "external/jqueryui/jquery-ui.js",
+            "bower_components/es5-shim/es5-shim.js",
+            "bower_components/jquery/dist/jquery.js",
+            "bower_components/jquery-ui/ui/jquery-ui.custom.js",
             "external/handlebars/handlebars.runtime.js",
-            "external/underscore/underscore.js",
-            "external/backbone/backbone.js",
-            "external/jed/jed.js",
-            "external/bootstrap/js/bootstrap-tab.js"
+            "bower_components/underscore/underscore.js",
+            "bower_components/backbone/backbone.js",
+            "bower_components/jed/jed.js",
+            "bower_components/bootstrap/js/bootstrap-tab.js"
         ],
         "editor_ace_deps": [
-            "external/ace-builds/src-noconflict/ace.js",
-            "external/ace-builds/src-noconflict/mode-javascript.js",
-            "external/ace-builds/src-noconflict/mode-html.js",
-            "external/ace-builds/src-noconflict/ext-static_highlight.js",
-            "external/ace-builds/src-noconflict/mode-sql.js",
-            "external/ace-builds/src-noconflict/ext-searchbox.js",
-            "external/ace-builds/src-noconflict/ext-language_tools.js"
+            "bower_components/ace-builds/src-noconflict/ace.js",
+            "bower_components/ace-builds/src-noconflict/mode-javascript.js",
+            "bower_components/ace-builds/src-noconflict/mode-html.js",
+            "bower_components/ace-builds/src-noconflict/ext-static_highlight.js",
+            "bower_components/ace-builds/src-noconflict/mode-sql.js",
+            "bower_components/ace-builds/src-noconflict/ext-searchbox.js",
+            "bower_components/ace-builds/src-noconflict/ext-language_tools.js"
         ],
         "editor_ace": [
             "js/editors/ace/editor-ace.js"
         ],
-        "editor_blockly_deps": [
-            "external/blockly/blockly_compressed.js",
-            "external/blockly/javascript_compressed.js",
-            "external/blockly/blocks_compressed.js",
-            "external/blockly/msg/js/en.js",
-
+        "editor_structured_blocks_deps": [
+            "external/structured-blocks/external/jquery.ui.touch-punch.min.js",
             "external/structuredjs/external/esprima.js",
-            "external/js-to-blockly/sax.js",
-            "external/js-to-blockly/xml-writer.js",
-            "external/js-to-blockly/xml-mapping.js",
-            "external/js-to-blockly/pattern-match.js",
-            "external/js-to-blockly/js-to-blockly.js",
-
-            "external/js-to-blockly/jslang/index.js",
-            "external/js-to-blockly/jslang/jslang_etc.js",
-            "external/js-to-blockly/jslang/jslang_try_catch.js",
-            "external/js-to-blockly/jslang/jslang_call.js",
-            "external/js-to-blockly/jslang/jslang_member.js",
-            "external/js-to-blockly/jslang/jslang_var.js",
-            "external/js-to-blockly/jslang/jslang_object.js",
-            "external/js-to-blockly/jslang/jslang_function.js",
-            "external/js-to-blockly/jslang/jslang_return.js",
-            "external/js-to-blockly/jslang/jslang_assignment.js",
-            "external/js-to-blockly/jslang/jslang_if.js",
-            "external/js-to-blockly/jslang/jslang_unary.js",
-            "external/js-to-blockly/jslang/jslang_binary.js",
-            "external/js-to-blockly/jslang/jslang_this.js",
-            "external/js-to-blockly/jslang/jslang_logical.js",
-
-            "js/ui/blockly-processing-blocks.js"
+            "external/structuredjs/structured.js",
+            "external/structured-blocks/external/escodegen.browser.js",
+            "external/structured-blocks/js/structured-js.js",
+            "external/structured-blocks/js/js-rules.js",
+            "external/structured-blocks/js/pjs-rules.js"
         ],
-        "editor_blockly": [
-            "js/editors/blockly/editor-blockly.js"
+        "editor_structured_blocks": [
+            "js/editors/structured-blocks/editor-structured-blocks.js"
         ],
         "audio": [
-            "external/SoundManager2/script/soundmanager2.js",
+            "bower_components/soundmanager/script/soundmanager2.js",
             "external/multirecorderjs/multirecorder.js",
             "external/transloaditxhr/transloadit_xhr.js",
             "build/tmpl/dev-record.js",
@@ -137,24 +115,28 @@
         "js/workers/pjs/worker.js"
     ],
     "workers_webpage": [
-        "external/ace-builds/src-noconflict/worker-html.js"
+        "bower_components/ace-builds/src-noconflict/worker-html.js"
     ],
     "workers_shared": [
         "js/output/shared/output-tester.js",
         "external/multirecorderjs/multirecorder-worker.js"
     ],
     "externals": [
-        "external/es5-shim/es5-shim.js",
+        "bower_components/es5-shim/es5-shim.js",
         "external/jshint/jshint.js",
         "external/structuredjs/external/esprima.js",
         "external/structuredjs/structured.js",
-        "external/underscore/underscore.js",
-        "external/blockly/media/**",
-        "external/SoundManager2/swf/**"
+        "bower_components/underscore/underscore.js",
+        "bower_components/soundmanager/swf/**"
     ],
     "styles": {
         "core_deps": [
-            "css/jquery-ui/ui-lightness/jquery-ui.css" 
+            "bower_components/jquery-ui/themes/ui-lightness/jquery-ui.css" 
+        ],
+        "editor_structured_blocks": [
+            "external/structured-blocks/css/style.css",
+            "external/structured-blocks/external/github.css",
+            "css/editors/structured-blocks/style.css"
         ],
         "audio": [
             "css/ui/flashblock.css"
@@ -164,6 +146,9 @@
             "css/ui/autosuggest.css",
             "css/ui/tabs.css",
             "css/ui/tooltips.css"
+        ],
+        "output": [
+            "css/output/style.css"
         ],
         "ui": [
             "css/ui/tipbar.css",
@@ -177,6 +162,7 @@
         "css/bootstrap/fonts/*"
     ],
     "images": [
-        "images/**"
+        "images/**",
+        "external/structured-blocks/images/**"
     ]
 }

@@ -1,0 +1,13 @@
+.block-toolbox {
+    width: 120px;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    background: #ADD8E6;
+    height: 100%;
+    box-shadow: rgba(0, 0, 0, 0.3) -3px 0 5px;
+}
+
+.block-editor {
+    margin-right: 120px;
+}

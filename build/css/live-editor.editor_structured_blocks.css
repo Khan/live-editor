@@ -1,0 +1,196 @@
+.block-editor {
+    height: 100%;
+}
+
+.block-editor .program {
+    height: 100%;
+}
+
+.program > .block.block-statements {
+    height: 100%;
+}
+
+.block.block-statements .ui-sortable-placeholder {
+    visibility: visible !important;
+    height: 3px;
+    background: #ADD8E6;
+    margin: 0 3px;
+}
+
+.block.block-inline input, .block.block-inline .input {
+    -webkit-appearance: none;
+    background: #FFF;
+    border: 1px solid #CCC;
+    border-radius: 17px;
+    padding: 5px;
+    font-size: 13px;
+    text-align: center;
+    display: inline-block;
+}
+
+.block.block-statements {
+    overflow: auto;
+}
+
+.block.block-statement {
+    overflow: auto;
+}
+
+.block.block-statement > div {
+    display: inline-block;
+    border: 1px solid #AAA;
+    padding: 3px;
+    margin: 3px;
+    border-radius: 3px;
+    background: #EEE;
+    white-space: nowrap;
+    cursor: move;
+}
+
+.block.ui-draggable-dragging > div {
+    box-shadow: #333 0px 0px 3px;
+}
+
+.block.block-inline {
+    display: inline-block;
+}
+
+.block-toolbox h3 {
+    clear: both;
+    margin: 0;
+    font-size: 16px;
+    padding: 5px 3px;
+    font-family: Helvetica;
+}
+
+.block-toolbox > .ui-draggable {
+    font-size: 13px;
+}
+
+.block-toolbox > .ui-draggable > div > :not(.function) {
+    display: none;
+}
+
+.block-toolbox > .ui-draggable > div > img.toolbox-image {
+    display: inline-block;
+    height: 20px;
+    vertical-align: middle;
+    border: 1px solid #CCC;
+    border-radius: 3px;
+    margin-left: 5px;
+}
+
+.block-toolbox > .ui-draggable input {
+    font-size: 13px;
+    padding: 2px;
+}
+
+.block-toolbox > .ui-draggable.ui-draggable-dragging {
+    font-size: 13px;
+}
+
+.block-toolbox > .ui-draggable.ui-draggable-dragging > div > :not(.function) {
+    display: inline-block;
+}
+
+.block-toolbox > .ui-draggable.ui-draggable-dragging > div > img.toolbox-image {
+    display: none;
+}
+
+.block-toolbox > .ui-draggable.ui-draggable-dragging input {
+    font-size: 13px;
+    padding: 5px;
+}
+
+.block-rgb.block-name-r > div,
+.block-rgb.block-name-r + .text,
+.block-rgb.block-name-g,
+.block-rgb.block-name-g + .text,
+.block-rgb.block-name-b {
+    display: none;
+}
+
+.block-rgb.block-name-r {
+    background: rgb(255, 0, 0);
+    height: 25px;
+    width: 25px;
+    display: inline-block;
+    vertical-align: middle;
+    border: 1px solid #CCC;
+    border-radius: 13px;
+    cursor: pointer;
+    margin: 0 1px;
+}
+/**
+ * Textmate-like theme ported from Ace Editor.
+ *
+ * Only affects code within <... class="block"> tags.
+ *
+ * @author Sophia Westwood
+ * @version 1.0.0
+ */
+.block, .block input {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 13px;
+}
+
+.block .comment {
+    color: rgb(76, 136, 107)
+}
+
+.block .constant {
+    color: rgb(197, 6, 11);
+}
+
+.block .constant.numeric {
+    color: rgb(0, 0, 205);
+}
+
+.block .storage {
+    color: rgb(0, 0, 255);
+}
+
+.block .string {
+    color: rgb(3, 106, 7);
+}
+
+.block .keyword, .block .selector {
+    color: blue;
+}
+
+.block .keyword.operator {
+    color: rgb(104, 118, 135);
+}
+
+.block .inherited-class {
+    font-style: italic;
+}
+
+.block .entity {
+    color: #3E853F;
+}
+
+.block .entity.name.function {
+    color: #0000A2;
+}
+
+.block .support {
+    color: #192140;
+}
+
+.block .variable.global, .block .variable.class, .block .variable.instance {
+    color: rgb(49, 132, 149);
+}
+.block-toolbox {
+    width: 120px;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    background: #ADD8E6;
+    height: 100%;
+    box-shadow: rgba(0, 0, 0, 0.3) -3px 0 5px;
+}
+
+.block-editor {
+    margin-right: 120px;
+}

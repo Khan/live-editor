@@ -7,9 +7,12 @@
 [submodule "external/transloaditxhr"]
 	path = external/transloaditxhr
 	url = https://github.com/Khan/transloadit_xhr
-[submodule "external/blockly"]
-	path = external/blockly
-	url = https://github.com/Khan/blockly
 [submodule "external/TraceKit"]
 	path = external/TraceKit
 	url = https://github.com/Khan/TraceKit
+[submodule "external/structured-blocks"]
+	path = external/structured-blocks
+	url = https://github.com/Khan/structured-blocks
+[submodule "external/structuredjs"]
+	path = external/structuredjs
+	url = https://github.com/Khan/structuredjs
