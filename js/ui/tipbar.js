@@ -66,25 +66,12 @@ window.TipBar = Backbone.View.extend({
 
         bar.find(".tipnav").toggle(texts.length > 1);
 
-        // Only animate the bar in if it's not visible
-        if (!bar.is(":visible")) {
-            bar
-                .css({ top: 400, opacity: 0.1 })
-                .show()
-                .animate({
-                    top: this.$el.find(".toolbar").is(":visible") ? 33 : 100,
-                    opacity: 0.9},
-                    300);
-        }
+        bar.show();
     },
 
     hide: function() {
         var bar = this.$el.find(".tipbar");
-        if (bar.is(':visible')) {
-            bar.animate({ top: 400, opacity: 0.1 }, 300, function() {
-                $(this).hide();
-            });
-        }
+        bar.hide();
         clearTimeout(this.errorDelay);
     },
 
