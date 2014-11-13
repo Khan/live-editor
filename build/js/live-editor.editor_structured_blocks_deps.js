@@ -7702,16 +7702,22 @@ var JSToolboxEditor = Backbone.View.extend({
         if (typeof code === "function") {
             code = JSRules.parseStructure(code);
         } else if (typeof code === "string") {
+            // Remove any sort of wrapper function
+            code = code.replace(/^function\s*\(\s*\)\s*{([\s\S]*)}$/, "$1");
             code = esprima.parse(code).body[0];
         }
 
         var rule = JSRules.findRule(code);
-        var html = rule.render().el.outerHTML;
+        var $el = rule.render().$el;
 
         // Remove all the inputs and replace them with just the text
-        html = html.replace(/<input.*?value="([^"]*)"[^>]*>/g, "$1");
+        $el.find("input").each(function() {
+            $(this).replaceWith($("<span>")
+                .text(this.value)
+                .addClass("input " + this.className));
+        });
 
-        return html;
+        return $el[0].outerHTML;
     },
 
     render: function() {
@@ -7784,13 +7790,17 @@ var JSRules = {
 };
 
 var JSStatements = Backbone.Collection.extend({
-    model: function(attrs, options) {
+    // For Backbone 1.0.0+
+    _prepareModel: function(attrs, options) {
         // Ignore objects that are already a JSRule model
         if (attrs instanceof JSRule) {
+            attrs.collection = this;
             return attrs;
         }
 
-        return JSRules.findRule(attrs, options.parent);
+        var model = JSRules.findRule(attrs, options.parent);
+        model.collection = this;
+        return model;
     }
 });
 
@@ -7848,7 +7858,7 @@ var JSRule = Backbone.View.extend({
 
         if (this.collection) {
             // Ignore cases where the model isn't in this collection
-            if (collection.indexOf(this) < 0) {
+            if (collection.models.indexOf(this) < 0) {
                 return;
             }
 
@@ -7999,60 +8009,84 @@ var JSRule = Backbone.View.extend({
             }
         };
 
+        var ignoreNextOut = false;
         var outside = false;
-        var stopping = false;
+        var external = true;
+        var added = false;
 
         $div.sortable({
             revert: false,
+            start: function(e, ui) {
+                ignoreNextOut = false;
+                outside = false;
+                external = ui.helper.hasClass("ui-draggable");
+                added = !external;
+            },
             change: function(e, ui) {
                 ui.item.trigger("sort-update", getIndex(ui));
             },
-            receive: function(e, ui) {
-                if (outside) {
-                    ui.item.triggerHandler("inside");
-                }
-                outside = false;
-            },
             over: function(e, ui) {
-                if (ui.helper.hasClass("ui-draggable")) {
-                    var data = ui.helper.data("drag-data");
-                    ui.placeholder.trigger("sort-added",
-                        [data, getIndex(ui), ui.item]);
-                }
-
                 outside = false;
+
                 ui.item.triggerHandler("inside");
                 ui.placeholder.removeClass("outside");
-            },
-            beforeStop: function(e, ui) {
-                stopping = true;
 
-                // Remove item when dropped outside the sortable
-                if (outside) {
-                    ui.item.trigger("sort-removed", getIndex(ui));
-                    ui.item.remove();
+                // If we're dealing with an in-sortable item or an external
+                // draggable that we've already seen, we stop.
+                if (!external || added) {
+                    return;
                 }
-            },
-            stop: function(e, ui) {
-                stopping = false;
-                ui.item.triggerHandler("drop");
+
+                ignoreNextOut = true;
+                added = true;
+
+                var data = ui.helper.data("drag-data");
+                ui.placeholder.trigger("sort-added",
+                    [data, getIndex(ui), ui.item]);
+
+                // An 'out' event fires immediately after the first over
+                // event, so we quickly ignore it.
+                setTimeout(function() {
+                    ignoreNextOut = false;
+                }, 0);
             },
             out: function(e, ui) {
-                // An extra 'out' event fires while stopping, we ignore it
-                if (stopping) {
+                if (ignoreNextOut) {
+                    ignoreNextOut = false;
                     return;
                 }
 
                 outside = true;
 
-                // Remove the model when the external draggable is moved
-                // outside of the sortable (sortable already removes the elem)
-                if (ui.helper && ui.helper.hasClass("ui-draggable")) {
-                    ui.item.trigger("sort-removed", getIndex(ui));
-                }
-
                 ui.placeholder.addClass("outside");
                 ui.item.triggerHandler("outside");
+
+                // If we're dealing with an in-sortable item or an external
+                // draggable that we've already removed, we stop.
+                if (!external || !added) {
+                    return;
+                }
+
+                added = false;
+
+                // Remove the model when the external draggable is moved
+                // outside of the sortable (sortable already removes the elem)
+                ui.item.trigger("sort-removed", getIndex(ui));
+            },
+            beforeStop: function(e, ui) {
+                // An 'out' event happens during the stop phase, we ignore
+                // it there, as well.
+                ignoreNextOut = true;
+
+                // Remove item when dropped outside the sortable
+                if (outside && added) {
+                    ui.item.trigger("sort-removed", getIndex(ui));
+                    ui.item.remove();
+                }
+            },
+            stop: function(e, ui) {
+                // Trigger drop event
+                ui.item.triggerHandler("drop");
             }
         });
 

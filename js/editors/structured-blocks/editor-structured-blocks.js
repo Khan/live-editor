@@ -23,7 +23,7 @@ window.StructuredBlocksEditor = Backbone.View.extend({
                     point(100, 100);
                 },
                 function() {
-                    triangle(20, 20, 100, 100, 150, 150);
+                    triangle(20, 20, 100, 100, 250, 50);
                 },
                 function() {
                     arc(150, 150, 100, 100, 0, 360);
@@ -93,4 +93,4 @@ window.StructuredBlocksEditor = Backbone.View.extend({
     }
 });
 
-LiveEditor.registerEditor("structured-blocks_p5js", StructuredBlocksEditor);
+LiveEditor.registerEditor("structured-blocks_pjs", StructuredBlocksEditor);
