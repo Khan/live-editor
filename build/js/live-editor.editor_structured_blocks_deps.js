@@ -7709,12 +7709,32 @@ var JSToolboxEditor = Backbone.View.extend({
 
         var rule = JSRules.findRule(code);
         var $el = rule.render().$el;
+        var vars = {};
+        var varStyles = ["one", "two", "three", "four", "five", "six",
+            "seven"];
 
         // Remove all the inputs and replace them with just the text
         $el.find("input").each(function() {
+            var value = this.value;
+            var className = "input " + this.className;
+
+            if (value === "_") {
+                value = "&nbsp;";
+            } else if (value.indexOf("$") === 0) {
+                value = "&nbsp;";
+                var varName = value.slice(1);
+
+                if (!(varName in vars)) {
+                    vars[varName] = varStyles[_.keys(vars).length] ||
+                        "extra";
+                }
+
+                className += " " + vars[varName];
+            }
+
             $(this).replaceWith($("<span>")
-                .text(this.value)
-                .addClass("input " + this.className));
+                .html(value)
+                .addClass(className));
         });
 
         return $el[0].outerHTML;
