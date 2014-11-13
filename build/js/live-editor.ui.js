@@ -1301,8 +1301,7 @@ window.LiveEditor = Backbone.View.extend({
             // When audio playback is complete, notify everyone listening
             // that playback is officially done
             onfinish: function() {
-                record.trigger("playPaused");
-                record.trigger("playStopped");
+                record.stopPlayback();
                 record.trigger("playEnded");
             },
             onsuspend: function() {
