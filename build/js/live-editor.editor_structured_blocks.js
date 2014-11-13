@@ -73,6 +73,11 @@ window.StructuredBlocksEditor = Backbone.View.extend({
         */
     },
 
+    getAllFolds: function() {
+        return [];
+    },
+
+    setFolds: function() {},
     setOptions: function() {},
     getCursor: function() {},
     setCursor: function() {},

@@ -54,6 +54,11 @@ window.AceEditor = Backbone.View.extend({
             record: this.record
         });
 
+        // TODO(bbondy): Support multiple content types for autosuggest.
+        if (this.tooltips[this.type].indexOf("autoSuggest")) {
+            ScratchpadAutosuggest.init(this.editor);
+        }
+
         // Make the editor vertically resizable
         if (this.$el.resizable) {
             this.$el.resizable({
@@ -66,6 +71,23 @@ window.AceEditor = Backbone.View.extend({
                 }
             });
         }
+
+        var $sensorFrame = $("<iframe>").css({
+            width: "100%",
+            height: 0,
+            position: "absolute",
+            visibility: "none"
+        }).appendTo(this.el);
+
+        $($sensorFrame[0].contentWindow.window).on("resize", function() {
+            // Force the editor to resize.
+            this.editor.resize();
+
+            // Set the font size. Scale the font size down when the
+            // size of the editor is too small.
+            this.editor.setFontSize(this.$el.width() < 400 ?
+                "12px" : "14px");
+        }.bind(this));
 
         // Kill default selection on the hot number
         this.$el.on("mousedown", ".tooltip", function(e) {
@@ -83,6 +105,10 @@ window.AceEditor = Backbone.View.extend({
 
         this.editor.on("change", function() {
             self.trigger("change");
+        });
+
+        this.editor.on("click", function() {
+            self.trigger("click");
         });
 
         this.config.on("versionSwitched", function(version) {
@@ -253,6 +279,19 @@ window.AceEditor = Backbone.View.extend({
     // Allow for toggling of the editor gutter
     toggleGutter: function(toggle) {
         this.editor.renderer.setShowGutter(toggle);
+    },
+
+    getAllFolds: function() {
+        var session = this.editor.session;
+        return _.map(session.getAllFolds(), function(fold) {
+            return [fold.start.row, fold.end.row];
+        });
+    },
+
+    setFolds: function(folds) {
+        _.each(folds, function(fold) {
+            this.editor.session.foldAll(fold[0], fold[1], 0);
+        }.bind(this));
     },
 
     /*
