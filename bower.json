@@ -19,7 +19,7 @@
     "jquery": "2.1.1",
     "underscore": "1.4.4",
     "ace-builds": "1.1.4",
-    "soundmanager": "*",
+    "soundmanager": "V2.97a.20140901",
     "backbone": "1.0.0",
     "jquery-ui": "1.10.1",
     "es5-shim": "3.4.0",
