@@ -8493,15 +8493,15 @@ JSRules.addRule(JSRule.extend({
         }
 
         var newVal = val.toString();
-        var input = this.$el.find("input")[0];
+        var $input = this.$el.find("input");
+        var input = $input[0];
 
         if (newVal !== origVal) {
             input.value = newVal;
         }
 
         this.match.vars.value = val;
-
-        $(event.target).width(JSRules.textWidth(newVal) - 4);
+        $input.width(JSRules.textWidth(newVal) - 4);
 
         this.triggerUpdate();
     },
