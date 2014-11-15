@@ -59,6 +59,10 @@ window.StructuredBlocksEditor = Backbone.View.extend({
             this.trigger("change");
         }.bind(this));
 
+        this.tooltipEngine = new StructuredBlocksTooltips({
+            el: this.el
+        });
+
         /*
         // Attach the hot number picker to the editor
         this.tooltipEngine = new TooltipEngine({

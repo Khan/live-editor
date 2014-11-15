@@ -54,7 +54,8 @@
             "js/ui/tooltips/*.js",
             "build/tmpl/image-picker.js",
             "build/tmpl/image-modal.js",
-            "build/tmpl/image-modal-preview.js"
+            "build/tmpl/image-modal-preview.js",
+            "js/ui/structured-blocks-tooltips.js"
         ],
         "shared": [
             "js/shared/i18n.js",
