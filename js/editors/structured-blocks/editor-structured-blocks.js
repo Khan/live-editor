@@ -45,6 +45,9 @@ window.StructuredBlocksEditor = Backbone.View.extend({
                 function() {
                     noFill();
                 }
+            ],
+            "Extra": [
+                {type: "Line", value: " Comment"}
             ]
         };
 

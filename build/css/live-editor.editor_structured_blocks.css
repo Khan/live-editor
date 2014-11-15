@@ -247,9 +247,8 @@
     position: absolute;
     top: 0px;
     right: 0px;
-    background: #ADD8E6;
+    background: #93C263;
     height: 100%;
-    box-shadow: rgba(0, 0, 0, 0.3) -3px 0 5px;
 }
 
 .block-editor {
