@@ -1865,12 +1865,16 @@ TooltipEngine.classes = {};
 
 window.TooltipBase = Backbone.View.extend({
     bindToRequestTooltip: function() {
-        this.callback = this.detector.bind(this);
-        this.parent.editor.on("requestTooltip", this.callback);
+        if (this.parent) {
+            this.callback = this.detector.bind(this);
+            this.parent.editor.on("requestTooltip", this.callback);
+        }
     },
 
     unbindFromRequestTooltip: function() {
-        this.parent.editor.off("requestTooltip", this.callback);
+        if (this.parent) {
+            this.parent.editor.off("requestTooltip", this.callback);
+        }
     },
 
     placeOnScreen: function() {
@@ -1900,7 +1904,7 @@ window.TooltipBase = Backbone.View.extend({
     },
 
     updateText: function(newText, customSelection) {
-        if (this.parent.options.record.playing) {
+        if (!this.parent || this.parent.options.record.playing) {
             return;
         }
         var parent = this.parent;
@@ -3235,7 +3239,8 @@ function program1(depth0,data) {
 
     window.StructuredBlocksTooltips = Backbone.View.extend({
         events: {
-            "click .block-rgb.block-name-r": "showColorPicker"
+            "click .block-rgb.block-name-r": "showColorPicker",
+            "click .block-number input": "showNumberScrubber"
         },
 
         initialize: function() {
@@ -3258,6 +3263,8 @@ function program1(depth0,data) {
 
             this.colorPicker = this.$colorPicker.find(".colorpicker")
                 .data("colorpicker");
+
+            this.numberScrubber = new TooltipEngine.classes.numberScrubber({});
         },
 
         bind: function() {
@@ -3265,11 +3272,16 @@ function program1(depth0,data) {
                 if (!$.contains(this.$colorPicker[0], e.target)) {
                     this.hideColorPicker();
                 }
+
+                if (!$.contains(this.numberScrubber.$el[0], e.target)) {
+                    this.hideNumberScrubber();
+                }
             }.bind(this));
 
             $(window).on("keydown", function(e) {
                 if (e.which === ESC) {
                     this.hideColorPicker();
+                    this.hideNumberScrubber();
                 }
             }.bind(this));
         },
@@ -3298,6 +3310,38 @@ function program1(depth0,data) {
         hideColorPicker: function() {
             this.colorPicker.onChange = function() {};
             this.$colorPicker.hide();
+        },
+
+        showNumberScrubber: function(e) {
+            var $target = $(e.target);
+            var $block = $target.closest(".block-number");
+            var pos = $target.position();
+
+            this.numberScrubber.updateText = function(val) {
+                $block.trigger("updateValue", val);
+                updateScrubberPos();
+            }.bind(this);
+
+            var updateScrubberPos = function() {
+                this.numberScrubber.$el.css({
+                    top: pos.top + 10,
+                    left: pos.left + Math.round($target.width() / 2)
+                });
+            }.bind(this);
+
+            this.numberScrubber.updateTooltip(
+                parseFloat($block.data("value")), 0);
+
+            this.numberScrubber.$el
+                .appendTo($block)
+                .show();
+
+            updateScrubberPos();
+        },
+
+        hideNumberScrubber: function() {
+            this.numberScrubber.updateText = function() {};
+            this.numberScrubber.$el.hide();
         }
     });
 })();
