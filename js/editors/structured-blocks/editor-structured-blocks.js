@@ -65,19 +65,6 @@ window.StructuredBlocksEditor = Backbone.View.extend({
         this.tooltipEngine = new StructuredBlocksTooltips({
             el: this.el
         });
-
-        /*
-        // Attach the hot number picker to the editor
-        this.tooltipEngine = new TooltipEngine({
-            type: "structured-blocks",
-            imagesDir: options.imagesDir
-        });
-
-        // Kill default selection on the hot number
-        this.$el.on("mousedown", ".tooltip", function(e) {
-            e.preventDefault();
-        });
-        */
     },
 
     getAllFolds: function() {
