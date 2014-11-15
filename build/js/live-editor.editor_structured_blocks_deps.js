@@ -8,7 +8,7 @@
  *  jquery.ui.widget.js
  *  jquery.ui.mouse.js
  */
-!function(a){function f(a,b){if(!(a.originalEvent.touches.length>1)){a.preventDefault();var c=a.originalEvent.changedTouches[0],d=document.createEvent("MouseEvents");d.initMouseEvent(b,!0,!0,window,1,c.screenX,c.screenY,c.clientX,c.clientY,!1,!1,!1,!1,0,null),a.target.dispatchEvent(d)}}if(a.support.touch="ontouchend"in document,a.support.touch){var e,b=a.ui.mouse.prototype,c=b._mouseInit,d=b._mouseDestroy;b._touchStart=function(a){var b=this;!e&&b._mouseCapture(a.originalEvent.changedTouches[0])&&(e=!0,b._touchMoved=!1,f(a,"mouseover"),f(a,"mousemove"),f(a,"mousedown"))},b._touchMove=function(a){e&&(this._touchMoved=!0,f(a,"mousemove"))},b._touchEnd=function(a){e&&(f(a,"mouseup"),f(a,"mouseout"),this._touchMoved||f(a,"click"),e=!1)},b._mouseInit=function(){var b=this;b.element.bind({touchstart:a.proxy(b,"_touchStart"),touchmove:a.proxy(b,"_touchMove"),touchend:a.proxy(b,"_touchEnd")}),c.call(b)},b._mouseDestroy=function(){var b=this;b.element.unbind({touchstart:a.proxy(b,"_touchStart"),touchmove:a.proxy(b,"_touchMove"),touchend:a.proxy(b,"_touchEnd")}),d.call(b)}}}(jQuery);
+(function(b){b.support.touch="ontouchend" in document;if(!b.support.touch){return}var d=b.ui.mouse.prototype,f=d._mouseInit,c=d._mouseDestroy,a;function e(h,i){if(h.originalEvent.touches.length>1){return}h.preventDefault();var j=h.originalEvent.changedTouches[0],g=document.createEvent("MouseEvents");g.initMouseEvent(i,true,true,window,1,j.screenX,j.screenY,j.clientX,j.clientY,false,false,false,false,0,null);h.target.dispatchEvent(g)}d._touchStart=function(h){var g=this;if(h.originalEvent.target.localName=="textarea"||h.originalEvent.target.localName=="input"){return true}if(a||!g._mouseCapture(h.originalEvent.changedTouches[0])){return}a=true;g._touchMoved=false;e(h,"mouseover");e(h,"mousemove");e(h,"mousedown")};d._touchMove=function(g){if(!a){return}this._touchMoved=true;e(g,"mousemove")};d._touchEnd=function(g){if(!a){return}e(g,"mouseup");e(g,"mouseout");if(!this._touchMoved){e(g,"click")}a=false};d._mouseInit=function(){var g=this;g.element.bind({touchstart:b.proxy(g,"_touchStart"),touchmove:b.proxy(g,"_touchMove"),touchend:b.proxy(g,"_touchEnd")});f.call(g)};d._mouseDestroy=function(){var g=this;g.element.unbind({touchstart:b.proxy(g,"_touchStart"),touchmove:b.proxy(g,"_touchMove"),touchend:b.proxy(g,"_touchEnd")});c.call(g)}})(jQuery);
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -7704,7 +7704,7 @@ var JSToolboxEditor = Backbone.View.extend({
         } else if (typeof code === "string") {
             // Remove any sort of wrapper function
             code = code.replace(/^function\s*\(\s*\)\s*{([\s\S]*)}$/, "$1");
-            code = esprima.parse(code).body[0];
+            code = JSRules.parseCode(code).body[0];
         }
 
         var rule = JSRules.findRule(code);
@@ -7785,6 +7785,17 @@ var JSRules = {
         return rule;
     },
 
+    textWidth: function(text) {
+        if (!this.$textSize) {
+            this.$textSize = $("<span>").css({
+                display: "none",
+                "class": "block"
+            }).appendTo("body");
+        }
+
+        return Math.max(this.$textSize.text(text).outerWidth(), 10) + 10;
+    },
+
     tokenize: function(fn) {
         if (typeof fn === "object") {
             return [];
@@ -7798,14 +7809,20 @@ var JSRules = {
         return esprima.tokenize(fn);
     },
 
+    parseCode: function(code) {
+        var ast = esprima.parse(code,
+            {range: true, tokens: true, comment: true});
+        return escodegen.attachComments(ast, ast.comments, ast.tokens);
+    },
+
     parseProgram: function(code) {
         return new JSProgram({
-            node: esprima.parse(code)
+            node: this.parseCode(code)
         });
     },
 
     parseStructure: function(fn) {
-        return esprima.parse("(" + fn + ")").body[0].expression.body.body[0];
+        return this.parseCode("(" + fn + ")").body[0].expression.body.body[0];
     }
 };
 
@@ -7846,6 +7863,10 @@ var JSRule = Backbone.View.extend({
         });
         this.children = this.getChildModels();
         this.parent = options.parent;
+    },
+
+    isComment: function() {
+        return false;
     },
 
     inside: function() {
@@ -7963,7 +7984,19 @@ var JSRule = Backbone.View.extend({
     },
 
     modelMatchArray: function(matches) {
-        return new JSStatements(matches, {
+        var newMatches = [];
+
+        matches.forEach(function(match) {
+            if (match.leadingComments) {
+                newMatches = newMatches.concat(match.leadingComments);
+            }
+            newMatches.push(match);
+            if (match.trailingComments) {
+                newMatches = newMatches.concat(match.trailingComments);
+            }
+        });
+
+        return new JSStatements(newMatches, {
             parent: this
         });
     },
@@ -7977,25 +8010,41 @@ var JSRule = Backbone.View.extend({
     },
 
     toScript: function() {
-        return escodegen.generate(this.toAST());
+        var code = escodegen.generate(this.toAST(), {comment: true});
+
+        // Following comments are placed on the same line as the previous
+        // statement (which is weird). We change this.
+        code = code.replace(/;    \/\//g, ";\n\n//");
+
+        return code;
     },
 
     getAST: function() {
         var state = this.match;
-        var ret = {_: [], vars: {}};
+        var ret = {_: [], vars: {}, leadingComments: []};
 
         for (var i = 0; i < state._.length; i++) {
             var match = state._[i];
-            ret._[i] = _.isArray(match) ?
-                this.astComponentArray(match, "_", i) :
-                this.astComponent(match, "_", i);
+            if (_.isArray(match)) {
+                var array = this.astComponentArray(match, "_", i);
+                ret.leadingComments =
+                    ret.leadingComments.concat(array.leadingComments);
+                ret._[i] = array.data;
+            } else {
+                ret._[i] = this.astComponent(match, "_", i);
+            }
         }
 
         for (var name in state.vars) {
             var match = state.vars[name];
-            ret.vars[name] = _.isArray(match) ?
-                this.astComponentArray(match, "vars", name) :
-                this.astComponent(match, "vars", name);
+            if (_.isArray(match)) {
+                var array = this.astComponentArray(match, "vars", name);
+                ret.leadingComments =
+                    ret.leadingComments.concat(array.leadingComments);
+                ret.vars[name] = array.data;
+            } else {
+                ret.vars[name] = this.astComponent(match, "vars", name);
+            }
         }
 
         return ret;
@@ -8006,9 +8055,27 @@ var JSRule = Backbone.View.extend({
     },
 
     astComponentArray: function(matches, ns, id) {
-        return this.children[ns][id].map(function(model) {
-            return model.toAST();
-        });
+        var ret = {data: [], leadingComments: []};
+
+        this.children[ns][id].forEach(function(model) {
+            var ast = model.toAST();
+
+            if (model.isComment()) {
+                if (ret.data.length > 0) {
+                    var last = ret.data[ret.data.length - 1];
+                    if (!last.trailingComments) {
+                        last.trailingComments = [];
+                    }
+                    last.trailingComments.push(ast);
+                } else {
+                    ret.leadingComments.push(ast);
+                }
+            } else {
+                ret.data.push(ast);
+            }
+        })
+
+        return ret;
     },
 
     renderStatements: function(collection) {
@@ -8036,6 +8103,12 @@ var JSRule = Backbone.View.extend({
 
         $div.sortable({
             revert: false,
+            handle: "> div",
+            helper: function(e, item) {
+                var $item = $(item);
+                return $item.clone(true).width(
+                    $item.children().outerWidth(true));
+            },
             start: function(e, ui) {
                 ignoreNextOut = false;
                 outside = false;
@@ -8050,6 +8123,7 @@ var JSRule = Backbone.View.extend({
 
                 ui.item.triggerHandler("inside");
                 ui.placeholder.removeClass("outside");
+                ui.helper.removeClass("outside");
 
                 // If we're dealing with an in-sortable item or an external
                 // draggable that we've already seen, we stop.
@@ -8079,6 +8153,7 @@ var JSRule = Backbone.View.extend({
                 outside = true;
 
                 ui.placeholder.addClass("outside");
+                ui.helper.addClass("outside");
                 ui.item.triggerHandler("outside");
 
                 // If we're dealing with an in-sortable item or an external
@@ -8159,7 +8234,8 @@ var JSASTRule = JSRule.extend({
                     }
                     return el;
                 } else {
-                    return buildTag("entity name function call", token);
+                    return buildTag("entity name function call show-toolbox",
+                        token);
                 }
             } else if (token.type === "Punctuator") {
                 switch(token.value) {
@@ -8199,42 +8275,123 @@ var JSASTRule = JSRule.extend({
 
         if (this.image && this.imagesDir) {
             tokens.push("<img src='" + this.imagesDir + "toolbox/" +
-                this.image  + "' class='toolbox-image'/>")
+                this.image  +
+                "' class='show-toolbox show-only-toolbox toolbox-image'/>");
         }
 
         this.$el.html($("<div>").append(tokens));
 
+        if (this.postRender) {
+            this.postRender();
+        }
+
         return this;
+    }
+});
+
+var JSASTColorRule = JSASTRule.extend({
+    additionalEvents: {
+        updateColor: "updateColor"
+    },
+
+    updateColor: function(e, color) {
+        this.children.vars.r_rgb.setValue(color.r);
+        this.children.vars.g_rgb.setValue(color.g);
+        this.children.vars.b_rgb.setValue(color.b);
+
+        this.postRender();
+    },
+
+    postRender: function() {
+        var color = {
+            r: this.children.vars.r_rgb.getValue(),
+            g: this.children.vars.g_rgb.getValue(),
+            b: this.children.vars.b_rgb.getValue()
+        };
+
+        this.$el.data("color", color);
+
+        this.children.vars.r_rgb.$el.parent().css("background",
+            "rgb(" + [color.r, color.g, color.b].join(",") + ")");
     }
 });
 var JSProgram = JSRules.addRule(JSRule.extend({
     structure: {type: "Program"},
 
-    additionalEvents: {
-        "updated": "updated"
-    },
-
     className: "program",
 
     updated: function() {
-        this.trigger("updated", this.getAST());
+        this.trigger("updated");
     },
 
     genMatch: function() {
+        var leadingComments = this.node.leadingComments || [];
         return {
-            _: [this.node.body]
+            _: [leadingComments.concat(this.node.body)]
         };
     },
 
     toAST: function() {
+        var ast = this.getAST();
         return {
             type: "Program",
-            body: this.getAST()._[0]
+            leadingComments: ast.leadingComments,
+            body: ast._[0]
         };
     },
 
     render: function() {
         this.$el.html(this.renderStatements(this.children._[0]));
+        return this;
+    }
+}));
+
+var JSComment = JSRules.addRule(JSRule.extend({
+    structure: {type: "Line"},
+
+    className: "block block-statement block-comment",
+
+    additionalEvents: {
+        "input input": "onInput"
+    },
+
+    isComment: function() {
+        return true;
+    },
+
+    genMatch: function() {
+        return {
+            _: [this.node.value]
+        };
+    },
+
+    toAST: function() {
+        return {
+            type: "Line",
+            value: this.match._[0].replace(/^\s*/, " ")
+        };
+    },
+
+    onInput: function(event) {
+        this.match._[0] = event.target.value;
+
+        $(event.target).width(JSRules.textWidth(event.target.value) - 8);
+
+        this.triggerUpdate();
+    },
+
+    render: function() {
+        var value = this.match._[0].replace(/^\s*/, "");
+
+        this.$el.html($("<div>").html([
+            "<span class='show-toolbox comment'>//&nbsp;" +
+            "<span class='show-only-toolbox'>Comment</span></span>",
+            $("<input>").attr({
+                type: "text",
+                value: value,
+                "class": "comment"
+            }).width(JSRules.textWidth(value))
+        ]));
         return this;
     }
 }));
@@ -8271,7 +8428,8 @@ JSRules.addRule(JSRule.extend({
 
     onInput: function(event) {
         this.match.vars.name = event.target.value;
-        event.target.size = event.target.value.length || 1;
+
+        $(event.target).width(JSRules.textWidth(event.target.value) - 4);
 
         this.triggerUpdate();
     },
@@ -8280,10 +8438,10 @@ JSRules.addRule(JSRule.extend({
         var name = this.match.vars.name.toString();
 
         this.$el.html($("<input>")
+            .width(JSRules.textWidth(name))
             .attr({
                 type: "text",
-                value: name,
-                size: name.length
+                value: name
             }));
         return this;
     }
@@ -8320,8 +8478,12 @@ JSRules.addRule(JSRule.extend({
         };
     },
 
-    onInput: function(event) {
-        var val = event.target.value;
+    getValue: function() {
+        return this.match.vars.value;
+    },
+
+    setValue: function(val) {
+        var origVal = val;
         var type = this.getType();
 
         if (type === "boolean") {
@@ -8331,15 +8493,21 @@ JSRules.addRule(JSRule.extend({
         }
 
         var newVal = val.toString();
+        var input = this.$el.find("input")[0];
 
-        if (newVal !== event.target.value) {
-            event.target.value = newVal;
+        if (newVal !== origVal) {
+            input.value = newVal;
         }
 
         this.match.vars.value = val;
-        event.target.size = Math.max(newVal.length, 2);
+
+        $(event.target).width(JSRules.textWidth(newVal) - 4);
 
         this.triggerUpdate();
+    },
+
+    onInput: function(event) {
+        this.setValue(event.target.value);
     },
 
     onKeyDown: function(e) {
@@ -8368,10 +8536,10 @@ JSRules.addRule(JSRule.extend({
 
         this.$el.addClass("block-" + type);
         this.$el.html($("<input>")
+            .width(JSRules.textWidth(val))
             .attr({
                 type: "text",
                 value: val,
-                size: Math.max(val.length, 2),
                 "class": "constant numeric"
             }));
         return this;
@@ -8445,13 +8613,13 @@ JSRules.addRule(JSASTRule.extend({
 
 // Colors
 
-JSRules.addRule(JSASTRule.extend({
+JSRules.addRule(JSASTColorRule.extend({
     structure: function() {
         background($r_rgb, $g_rgb, $b_rgb);
     }
 }));
 
-JSRules.addRule(JSASTRule.extend({
+JSRules.addRule(JSASTColorRule.extend({
     structure: function() {
         fill($r_rgb, $g_rgb, $b_rgb);
     }
@@ -8463,7 +8631,7 @@ JSRules.addRule(JSASTRule.extend({
     }
 }));
 
-JSRules.addRule(JSASTRule.extend({
+JSRules.addRule(JSASTColorRule.extend({
     structure: function() {
         stroke($r_rgb, $g_rgb, $b_rgb);
     }
@@ -8481,7 +8649,7 @@ JSRules.addRule(JSASTRule.extend({
     }
 }));
 
-JSRules.addRule(JSASTRule.extend({
+JSRules.addRule(JSASTColorRule.extend({
     structure: function() {
         color($r_rgb, $g_rgb, $b_rgb);
     }
