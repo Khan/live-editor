@@ -7928,14 +7928,11 @@ var JSRule = Backbone.View.extend({
         if (collection) {
             var model = collection.at(index);
             collection.remove(model);
+            this.triggerUpdate();
         }
-
-        this.triggerUpdate();
     },
 
     triggerUpdate: function() {
-        this.trigger("updated");
-
         if (this.parent) {
             this.parent.triggerUpdate();
         }
@@ -8078,6 +8075,7 @@ var JSRule = Backbone.View.extend({
         return ret;
     },
 
+    // TODO: Move this into some sort of collection renderer
     renderStatements: function(collection) {
         var $div = $("<div>").addClass("block block-statements");
 
@@ -8087,14 +8085,77 @@ var JSRule = Backbone.View.extend({
 
         var getIndex = function(ui) {
             if (ui.helper) {
+                var exclude = ui.item.data("multi") || ui.item;
                 return ui.placeholder.parent().children()
                     .not(".ui-sortable-helper")
-                    .not(ui.item)
+                    .not(exclude)
                     .index(ui.placeholder);
             } else {
                 return ui.item.index();
             }
         };
+
+        // Enable a selection box to be drawn around the statements
+        $div.selectable({
+            filter: ".block-statement",
+            cancel: ".block-statement *"
+        });
+
+        // Blur the active input if the focus has moved (e.g. starting a
+        // selection or a drag)
+        $div.on("mousedown", function(e) {
+            var active = document.activeElement;
+
+            if (active && e.target !== active) {
+                active.blur();
+            }
+        });
+
+        // Since we cancel mouse interactions on the block-statement children
+        // we need to replicate the selection interaction.
+        $div.on("click", ".block-statement > div", function(e) {
+            var $block = $(this).parent();
+            var $selected = $block.siblings(".ui-selected");
+
+            if (e.metaKey || e.ctrlKey) {
+                $block.toggleClass("ui-selected");
+
+            } else if ($block.hasClass("ui-selected")) {
+                if ($selected.length > 0) {
+                    $selected.removeClass("ui-selected");
+                } else {
+                    $block.removeClass("ui-selected");
+                }
+
+            } else {
+                $selected.removeClass("ui-selected");
+                $block.addClass("ui-selected");
+            }
+        });
+
+        $(document).on("keydown", function(e) {
+            // Ignore actions in text inputs
+            if ($(e.target).is("input, textarea")) {
+                return;
+            }
+
+            // ESC
+            if (e.which === 27) {
+                $div.children().removeClass("ui-selected");
+                e.preventDefault();
+
+            // Backspace and delete keys
+            } else if (e.which === 8 || e.which === 46) {
+                var $selected = $div.children(".ui-selected");
+
+                $selected.each(function() {
+                    $(this).trigger("sort-removed", $(this).index());
+                    $(this).remove();
+                });
+
+                e.preventDefault();
+            }
+        });
 
         var ignoreNextOut = false;
         var outside = false;
@@ -8104,24 +8165,98 @@ var JSRule = Backbone.View.extend({
         $div.sortable({
             revert: false,
             handle: "> div",
-            helper: function(e, item) {
-                var $item = $(item);
-                return $item.clone(true).width(
-                    $item.children().outerWidth(true));
+            helper: function(e, $item) {
+                if (!$item.hasClass("ui-selected")) {
+                    // Un-select all the other nodes, if we just clicked this
+                    $item.parent().children().removeClass("ui-selected");
+
+                    // And mark this one as selected
+                    $item.addClass("ui-selected");
+                }
+
+                // Find the selected elements
+                var $selected = $item.parent().children(".ui-selected");
+                var $clone = $selected.clone(true);
+
+                // Add all the dragged nodes to a data property
+                $item.data("multi", $selected);
+
+                // Remember where the dragged elements started
+                $item.data("multi-curIndex", $selected.first().index());
+
+                // Compute a sane width on the helper, this should be equal to
+                // the width of the largest element being dragged
+                var maxWidth = 0;
+
+                $selected.each(function() {
+                    var width = $(this).children().outerWidth(true);
+                    maxWidth = Math.max(width, maxWidth);
+                });
+
+                // Remove all the other elements that are being dragged
+                $selected.not($item[0]).hide();
+
+                // Refresh the sortable list after the nodes have been removed
+                $div.sortable("refresh");
+
+                return $("<div>").html($clone).width(maxWidth);
             },
             start: function(e, ui) {
                 ignoreNextOut = false;
                 outside = false;
                 external = ui.helper.hasClass("ui-draggable");
                 added = !external;
+
+                // De-select any already-selected elements when a new external
+                // element is added.
+                if (external) {
+                    ui.item.parent().children().removeClass("ui-selected");
+                }
             },
             change: function(e, ui) {
-                ui.item.trigger("sort-update", getIndex(ui));
+                var multi = ui.item.data("multi");
+                var index = getIndex(ui);
+
+                if (!multi) {
+                    ui.item.trigger("sort-update", index);
+                    return;
+                }
+
+                ui.item.data("multi-curIndex", index);
+
+                var curIndex = ui.item.data("multi-curIndex");
+                var past = (index > curIndex);
+
+                if (past) {
+                    index += multi.length - 1;
+                }
+
+                // Insert the items in reverse, to make sure they'll
+                // be in the right position upon completion.
+                multi.each(function() {
+                    $(this).trigger("sort-update", index);
+                    if (!past) {
+                        index += 1;
+                    }
+                });
             },
             over: function(e, ui) {
                 outside = false;
 
-                ui.item.triggerHandler("inside");
+                if (ui.helper.hasClass("ui-draggable")) {
+                    var data = ui.helper.data("drag-data");
+                    ui.placeholder.trigger("sort-added",
+                        [data, getIndex(ui), ui.item]);
+                }
+
+                var multi = ui.item.data("multi");
+
+                if (multi) {
+                    multi.triggerHandler("inside");
+                } else {
+                    ui.item.triggerHandler("inside");
+                }
+
                 ui.placeholder.removeClass("outside");
                 ui.helper.removeClass("outside");
 
@@ -8152,9 +8287,16 @@ var JSRule = Backbone.View.extend({
 
                 outside = true;
 
+                var multi = ui.item.data("multi");
+
+                if (multi) {
+                    multi.triggerHandler("outside");
+                } else {
+                    ui.item.triggerHandler("outside");
+                }
+
                 ui.placeholder.addClass("outside");
                 ui.helper.addClass("outside");
-                ui.item.triggerHandler("outside");
 
                 // If we're dealing with an in-sortable item or an external
                 // draggable that we've already removed, we stop.
@@ -8173,15 +8315,46 @@ var JSRule = Backbone.View.extend({
                 // it there, as well.
                 ignoreNextOut = true;
 
+                var multi = ui.item.data("multi");
+
+                if (multi) {
+                    // Move all the elements to be after the placeholder
+                    multi.show().insertAfter(ui.placeholder);
+                }
+
                 // Remove item when dropped outside the sortable
                 if (outside && added) {
-                    ui.item.trigger("sort-removed", getIndex(ui));
-                    ui.item.remove();
+                    var index = getIndex(ui);
+
+                    if (multi) {
+                        multi.each(function() {
+                            $(this).trigger("sort-removed", index);
+                            $(this).remove();
+                        });
+
+                    } else {
+                        ui.item.trigger("sort-removed", index);
+                        ui.item.remove();
+                    }
                 }
             },
             stop: function(e, ui) {
                 // Trigger drop event
-                ui.item.triggerHandler("drop");
+                var multi = ui.item.data("multi");
+
+                if (multi) {
+                    multi.triggerHandler("drop");
+
+                    // NOTE(jeresig): Do we want to do this for only single?
+                    multi.removeClass("ui-selected");
+
+                } else {
+                    ui.item.triggerHandler("drop");
+                    ui.item.removeClass("ui-selected");
+                }
+
+                // Remove any multi drag data
+                ui.item.removeData("multi");
             }
         });
 
@@ -8281,7 +8454,38 @@ var JSASTRule = JSRule.extend({
 
         this.$el.html($("<div>").append(tokens));
 
+        if (this.postRender) {
+            this.postRender();
+        }
+
         return this;
+    }
+});
+
+var JSASTColorRule = JSASTRule.extend({
+    additionalEvents: {
+        updateColor: "updateColor"
+    },
+
+    updateColor: function(e, color) {
+        this.children.vars.r_rgb.setValue(color.r);
+        this.children.vars.g_rgb.setValue(color.g);
+        this.children.vars.b_rgb.setValue(color.b);
+
+        this.postRender();
+    },
+
+    postRender: function() {
+        var color = {
+            r: this.children.vars.r_rgb.getValue(),
+            g: this.children.vars.g_rgb.getValue(),
+            b: this.children.vars.b_rgb.getValue()
+        };
+
+        this.$el.data("color", color);
+
+        this.children.vars.r_rgb.$el.parent().css("background",
+            "rgb(" + [color.r, color.g, color.b].join(",") + ")");
     }
 });
 var JSProgram = JSRules.addRule(JSRule.extend({
@@ -8289,8 +8493,16 @@ var JSProgram = JSRules.addRule(JSRule.extend({
 
     className: "program",
 
-    updated: function() {
-        this.trigger("updated");
+    triggerUpdate: function() {
+        // Prevent many updates from spamming updated events
+        if (this.updateDelay) {
+            return;
+        }
+
+        this.updateDelay = setTimeout(function() {
+            this.updateDelay = null;
+            this.trigger("updated");
+        }.bind(this), 0);
     },
 
     genMatch: function() {
@@ -8425,7 +8637,8 @@ JSRules.addRule(JSRule.extend({
         "click": "activate",
         "input input": "onInput",
         "blur input": "deactivate",
-        "keydown input": "onKeyDown"
+        "keydown input": "onKeyDown",
+        "updateValue": "updateValue"
     },
 
     getType: function() {
@@ -8441,14 +8654,35 @@ JSRules.addRule(JSRule.extend({
     },
 
     toAST: function() {
+        var value = this.match.vars.value;
+
+        // Negative numbers are handled with a different expression
+        if (this.getType() === "number" && value < 0) {
+            return {
+                type: "UnaryExpression",
+                operator: "-",
+                prefix: true,
+                argument: {
+                    type: "Literal",
+                    value: Math.abs(value)
+                }
+            };
+        }
+
         return {
             type: "Literal",
-            value: this.match.vars.value
+            value: value
         };
     },
 
-    onInput: function(event) {
-        var val = event.target.value;
+    getValue: function() {
+        return this.match.vars.value;
+    },
+
+    setValue: function(val) {
+        var $input = this.$el.find("input");
+        var input = $input[0];
+
         var type = this.getType();
 
         if (type === "boolean") {
@@ -8459,15 +8693,22 @@ JSRules.addRule(JSRule.extend({
 
         var newVal = val.toString();
 
-        if (newVal !== event.target.value) {
-            event.target.value = newVal;
+        if (newVal !== input.value) {
+            input.value = newVal;
         }
 
         this.match.vars.value = val;
-
-        $(event.target).width(JSRules.textWidth(newVal) - 4);
+        $input.width(JSRules.textWidth(newVal) - 4);
 
         this.triggerUpdate();
+    },
+
+    updateValue: function(e, val) {
+        this.setValue(val);
+    },
+
+    onInput: function(e) {
+        this.setValue(e.target.value);
     },
 
     onKeyDown: function(e) {
@@ -8502,6 +8743,7 @@ JSRules.addRule(JSRule.extend({
                 value: val,
                 "class": "constant numeric"
             }));
+        this.$el.data("value", val);
         return this;
     }
 }));
@@ -8573,13 +8815,13 @@ JSRules.addRule(JSASTRule.extend({
 
 // Colors
 
-JSRules.addRule(JSASTRule.extend({
+JSRules.addRule(JSASTColorRule.extend({
     structure: function() {
         background($r_rgb, $g_rgb, $b_rgb);
     }
 }));
 
-JSRules.addRule(JSASTRule.extend({
+JSRules.addRule(JSASTColorRule.extend({
     structure: function() {
         fill($r_rgb, $g_rgb, $b_rgb);
     }
@@ -8591,7 +8833,7 @@ JSRules.addRule(JSASTRule.extend({
     }
 }));
 
-JSRules.addRule(JSASTRule.extend({
+JSRules.addRule(JSASTColorRule.extend({
     structure: function() {
         stroke($r_rgb, $g_rgb, $b_rgb);
     }
@@ -8609,7 +8851,7 @@ JSRules.addRule(JSASTRule.extend({
     }
 }));
 
-JSRules.addRule(JSASTRule.extend({
+JSRules.addRule(JSASTColorRule.extend({
     structure: function() {
         color($r_rgb, $g_rgb, $b_rgb);
     }

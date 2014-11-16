@@ -66,7 +66,7 @@
     overflow: hidden;
 }
 
-.block.block-statement > div {
+.block.block-statement > div:not(.tooltip) {
     display: inline-block;
     border: 1px solid #AAA;
     padding: 3px;
@@ -77,6 +77,11 @@
     cursor: move;
     vertical-align: middle;
     line-height: 25px;
+}
+
+.block.block-statement.ui-selected > div,
+.block.block-statement.ui-selecting > div {
+    border: 1px solid red;
 }
 
 .block.ui-draggable-dragging > div {
