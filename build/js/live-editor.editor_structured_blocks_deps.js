@@ -8222,10 +8222,10 @@ var JSRule = Backbone.View.extend({
                     return;
                 }
 
-                ui.item.data("multi-curIndex", index);
-
                 var curIndex = ui.item.data("multi-curIndex");
                 var past = (index > curIndex);
+
+                ui.item.data("multi-curIndex", index);
 
                 if (past) {
                     index += multi.length - 1;
