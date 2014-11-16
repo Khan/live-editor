@@ -8243,12 +8243,6 @@ var JSRule = Backbone.View.extend({
             over: function(e, ui) {
                 outside = false;
 
-                if (ui.helper.hasClass("ui-draggable")) {
-                    var data = ui.helper.data("drag-data");
-                    ui.placeholder.trigger("sort-added",
-                        [data, getIndex(ui), ui.item]);
-                }
-
                 var multi = ui.item.data("multi");
 
                 if (multi) {
