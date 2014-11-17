@@ -65,7 +65,7 @@
     overflow: hidden;
 }
 
-.block.block-statement > div:not(.tooltip) {
+.block.block-statement .block-wrapper {
     display: inline-block;
     border: 1px solid #AAA;
     padding: 3px;
@@ -78,12 +78,12 @@
     line-height: 25px;
 }
 
-.block.block-statement.ui-selected > div,
-.block.block-statement.ui-selecting > div {
+.block.block-statement.ui-selected .block-wrapper,
+.block.block-statement.ui-selecting .block-wrapper {
     border: 1px solid red;
 }
 
-.block.ui-draggable-dragging > div {
+.block.ui-draggable-dragging .block-wrapper {
     box-shadow: #333 0px 0px 3px;
 }
 
@@ -108,11 +108,11 @@
     font-size: 13px;
 }
 
-.block-toolbox > .ui-draggable > div > :not(.show-toolbox) {
+.block-toolbox > .ui-draggable .block-wrapper > :not(.show-toolbox) {
     display: none;
 }
 
-.block-toolbox > .ui-draggable > div > img.toolbox-image {
+.block-toolbox > .ui-draggable .block-wrapper > img.toolbox-image {
     display: inline-block;
     height: 20px;
     vertical-align: middle;
@@ -130,19 +130,19 @@
     font-size: 13px;
 }
 
-.block-toolbox > .ui-draggable.ui-draggable-dragging > div > :not(.show-toolbox) {
+.block-toolbox > .ui-draggable.ui-draggable-dragging .block-wrapper > :not(.show-toolbox) {
     display: inline-block;
 }
 
-.block-toolbox > .ui-draggable.ui-draggable-dragging > div .show-only-toolbox {
+.block-toolbox > .ui-draggable.ui-draggable-dragging .block-wrapper .show-only-toolbox {
     display: none;
 }
 
-.block-statement > div .show-only-toolbox {
+.block-statement .block-wrapper .show-only-toolbox {
     display: none;
 }
 
-.block-toolbox .block-statement > div .show-only-toolbox {
+.block-toolbox .block-statement .block-wrapper .show-only-toolbox {
     display: inline-block;
 }
 
@@ -159,7 +159,7 @@
     opacity: 0.3;
 }
 
-.ui-sortable-helper.outside > div {
+.ui-sortable-helper.outside .block-wrapper {
     cursor: not-allowed;
 }
 
