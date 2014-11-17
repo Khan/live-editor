@@ -569,6 +569,7 @@
     box-shadow: 0px 0px 8px #000000;
     display: block;
     font-size: 12px;
+    line-height: 12px;
     margin-left: -28px;
     margin-top: -37px;
     opacity: 0.2;
@@ -580,7 +581,7 @@
     box-sizing: content-box;
 }
 
-html.playing .tooltip:.hide-while-playing {
+html.playing .tooltip.hide-while-playing {
     display: none;
 }
 

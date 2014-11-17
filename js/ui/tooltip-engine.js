@@ -177,12 +177,16 @@ TooltipEngine.classes = {};
 
 window.TooltipBase = Backbone.View.extend({
     bindToRequestTooltip: function() {
-        this.callback = this.detector.bind(this);
-        this.parent.editor.on("requestTooltip", this.callback);
+        if (this.parent) {
+            this.callback = this.detector.bind(this);
+            this.parent.editor.on("requestTooltip", this.callback);
+        }
     },
 
     unbindFromRequestTooltip: function() {
-        this.parent.editor.off("requestTooltip", this.callback);
+        if (this.parent) {
+            this.parent.editor.off("requestTooltip", this.callback);
+        }
     },
 
     placeOnScreen: function() {
@@ -212,7 +216,7 @@ window.TooltipBase = Backbone.View.extend({
     },
 
     updateText: function(newText, customSelection) {
-        if (this.parent.options.record.playing) {
+        if (!this.parent || this.parent.options.record.playing) {
             return;
         }
         var parent = this.parent;
