@@ -25,8 +25,7 @@
     background: #FFF;
     border: 1px solid #CCC;
     border-radius: 17px;
-    padding-bottom: 5px;
-    padding-top: 5px;
+    padding: 5px 0;
     text-align: center;
     display: inline-block;
 }
