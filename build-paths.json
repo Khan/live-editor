@@ -11,7 +11,8 @@
             "bower_components/underscore/underscore.js",
             "bower_components/backbone/backbone.js",
             "bower_components/jed/jed.js",
-            "bower_components/bootstrap/js/bootstrap-tab.js"
+            "bower_components/bootstrap/js/bootstrap-tab.js",
+            "js/shared/i18n.js"
         ],
         "editor_ace_deps": [
             "bower_components/ace-builds/src-noconflict/ace.js",
@@ -58,7 +59,6 @@
             "js/ui/structured-blocks-tooltips.js"
         ],
         "shared": [
-            "js/shared/i18n.js",
             "js/shared/images.js",
             "js/shared/record.js",
             "js/shared/config.js"
