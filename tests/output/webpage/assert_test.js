@@ -158,6 +158,18 @@ describe("Full CSS matching with wildcards", function() {
             return parseInt($h1) > parseInt($h2);
         }
     }, {
+        res: true,
+        title: "notDefaultColor() passes",
+        pat: "_{color: $1}",
+        css: "h1 { color: rgb(255, 255,  255); }",
+        callbacks: 'notDefaultColor("$1")'
+    }, {
+        res: false,
+        title: "notDefaultColor() fails",
+        pat: "_{color: $1}",
+        css: "h1 { color: rgb(255, 0, 0); }",
+        callbacks: 'notDefaultColor("$1")'
+    }, {
         res: true, 
         title: "Concatenating multiple stylesheets",
         pat: "h1{color: red} h2{color: black}",
@@ -196,7 +208,7 @@ describe("Full CSS matching with wildcards", function() {
             validate: options.validate,
             code: options.html,
             test: function (output, errors, testResults) {
-                expect(options.res).to.be.equal(testResults[0].state != "fail");
+                expect(testResults[0].state !== "fail").to.be.equal(options.res);
             }
         });
     });
