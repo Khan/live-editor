@@ -123,9 +123,10 @@ window.TipBar = Backbone.View.extend({
             return;
         }
 
+        clearTimeout(this.errorDelay);
         this.errorDelay = setTimeout( function() {
             this.show(errors);
-        }.bind(this), 1200);
+        }.bind(this), 1500);
     }
 });
 this["Handlebars"] = this["Handlebars"] || {};
@@ -989,8 +990,6 @@ window.LiveEditor = Backbone.View.extend({
 
         // Whenever the user changes code, execute the code
         this.editor.on("change", function() {
-            // They're typing. Hide the tipbar to give them a chance to fix things up
-            this.tipbar.hide();
             this.markDirty();
         }.bind(this));
 
@@ -1775,27 +1774,28 @@ window.LiveEditor = Backbone.View.extend({
     },
 
 
-    markDirty: function(force){
+    markDirty: function(force) {
+        // They're typing. Hide the tipbar to give them a chance to fix things up
+        this.tipbar.hide();
         if (this.outputState === "clean" || force) {
             this.runCode(this.editor.text());
             this.outputState = "running";
 
             // This will either be called when we receive the results
             // Or it will timeout.
-            this.cleanUp = _.once(function(){
+            this.cleanUp = _.once(function() {
                 var lastOutputState = this.outputState;
                 this.outputState = "clean";
                 if (lastOutputState === "dirty") {
                     this.markDirty();
                 }
             });
+            // 500ms is an arbitrary delay. Hopefully long enough for reasonable programs
+            // to execute, but short enough for editor to not feel laggy
             setTimeout(this.cleanUp.bind(this), 500);
         } else {
             this.outputState = "dirty";
         }
-    },
-    cleanUp: function(){ 
-        console.warn("LiveEditor: received a result set before sending anything"); 
     },
     // This stops us from sending  any updates until
     // we call markDirty("force") as a part of the frame load handler
@@ -1899,7 +1899,7 @@ window.LiveEditor = Backbone.View.extend({
         this.editor.undo();
     },
 
-    _qualifyURL: function(url){
+    _qualifyURL: function(url) {
         var a = document.createElement("a");
         a.href = url;
         return a.href;

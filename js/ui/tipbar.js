@@ -85,8 +85,9 @@ window.TipBar = Backbone.View.extend({
             return;
         }
 
+        clearTimeout(this.errorDelay);
         this.errorDelay = setTimeout( function() {
             this.show(errors);
-        }.bind(this), 1200);
+        }.bind(this), 1500);
     }
 });

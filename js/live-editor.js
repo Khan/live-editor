@@ -183,8 +183,6 @@ window.LiveEditor = Backbone.View.extend({
 
         // Whenever the user changes code, execute the code
         this.editor.on("change", function() {
-            // They're typing. Hide the tipbar to give them a chance to fix things up
-            this.tipbar.hide();
             this.markDirty();
         }.bind(this));
 
@@ -970,6 +968,8 @@ window.LiveEditor = Backbone.View.extend({
 
 
     markDirty: function(force) {
+        // They're typing. Hide the tipbar to give them a chance to fix things up
+        this.tipbar.hide();
         if (this.outputState === "clean" || force) {
             this.runCode(this.editor.text());
             this.outputState = "running";
