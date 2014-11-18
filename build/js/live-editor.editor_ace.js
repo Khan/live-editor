@@ -55,7 +55,7 @@ window.AceEditor = Backbone.View.extend({
         });
 
         // TODO(bbondy): Support multiple content types for autosuggest.
-        if (this.tooltips[this.type].indexOf("autoSuggest")) {
+        if (this.tooltips[this.type].indexOf("autoSuggest") !== -1) {
             ScratchpadAutosuggest.init(this.editor);
         }
 
