@@ -170,7 +170,13 @@
         
         updateTooltip: function(url) {
             if (url !== this.currentUrl) {
-                this.currentUrl = url;
+                this.currentUrl = url.trim();
+                if (url === "") {
+                    this.$(".thumb").hide();
+                    this.$(".thumb-throbber").hide();
+                    this.$(".thumb-error").text($._("Enter an image URL.")).show();
+                    return;
+                }
                 var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|localhost:\d+)$/i;
                 var match = /\/\/([^\/]*)(?:\/|\?|#|$)/.exec(url);
                 var host = match ? match[1] : "";
