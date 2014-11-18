@@ -29,8 +29,6 @@ window.LiveEditor = Backbone.View.extend({
     editors: {},
 
     initialize: function(options) {
-        this.uniq = Math.floor(Math.random()*100);
-
         this.workersDir = this._qualifyURL(options.workersDir);
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
@@ -55,8 +53,6 @@ window.LiveEditor = Backbone.View.extend({
 
         this.transloaditTemplate = options.transloaditTemplate;
         this.transloaditAuthKey = options.transloaditAuthKey;
-
-        this.outputState = "dirty";
 
         this.render();
 
@@ -181,12 +177,8 @@ window.LiveEditor = Backbone.View.extend({
         this.handleMessagesBound = this.handleMessages.bind(this);
         $(window).on("message", this.handleMessagesBound);
 
-        // When the frame loads, execute the code
-        // We don't use markDirty here, because we know 
-        // that nothing could have succeeded before load
         $el.find("#output-frame").on("load", function() {
-            this.runCode(this.editor.text());
-            this.outputState = "running";
+            this.markDirty("force");
         }.bind(this));
 
         // Whenever the user changes code, execute the code
@@ -923,12 +915,7 @@ window.LiveEditor = Backbone.View.extend({
         }
         
         if (data.results) {
-            if (this.outputState === "running") {
-                this.outputState = "clean";
-            } else if (this.outputState === "dirty") {
-                this.runCode(this.editor.text());
-                this.outputState = "running";
-            }
+            this.cleanUp();
         }
 
         if (this.editorType.indexOf("ace_") === 0 && data.results &&
@@ -981,14 +968,31 @@ window.LiveEditor = Backbone.View.extend({
         }
     },
 
-    markDirty: function(){
-        if (this.outputState === "clean") {
+
+    markDirty: function(force) {
+        if (this.outputState === "clean" || force) {
             this.runCode(this.editor.text());
             this.outputState = "running";
+
+            // This will either be called when we receive the results
+            // Or it will timeout.
+            this.cleanUp = _.once(function() {
+                var lastOutputState = this.outputState;
+                this.outputState = "clean";
+                if (lastOutputState === "dirty") {
+                    this.markDirty();
+                }
+            });
+            // 500ms is an arbitrary delay. Hopefully long enough for reasonable programs
+            // to execute, but short enough for editor to not feel laggy
+            setTimeout(this.cleanUp.bind(this), 500);
         } else {
             this.outputState = "dirty";
         }
     },
+    // This stops us from sending  any updates until
+    // we call markDirty("force") as a part of the frame load handler
+    outputState: "dirty",
 
     // Extract the origin from the embedded frame location
     postFrameOrigin: function() {
@@ -1088,7 +1092,7 @@ window.LiveEditor = Backbone.View.extend({
         this.editor.undo();
     },
 
-    _qualifyURL: function(url){
+    _qualifyURL: function(url) {
         var a = document.createElement("a");
         a.href = url;
         return a.href;

@@ -142,7 +142,7 @@ WebpageTester.prototype.testMethods = {
 
         var css = this.testContext.getCssMap();
         var cssRules = pattern.split("}").slice(0, -1);
-        if (typeof callbacks === "function") {
+        if (!_.isArray(callbacks)) {
             callbacks = [callbacks];
         }
         callbacks = _.map(callbacks, function(cb) {
@@ -384,6 +384,9 @@ WebpageTester.prototype.testMethods = {
     },
 
     notDefaultColor: constraintPartial(function(color) {
-        return color !== "rgb(255, 0, 0)";
+        var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
+                      /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
+        var isDefault = color.replace(/\s+/, "") === "rgb(255,0,0)";
+        return isRGB && !isDefault;
     })
 };

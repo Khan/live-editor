@@ -142,7 +142,7 @@ WebpageTester.prototype.testMethods = {
 
         var css = this.testContext.getCssMap();
         var cssRules = pattern.split("}").slice(0, -1);
-        if (typeof callbacks === "function") {
+        if (!_.isArray(callbacks)) {
             callbacks = [callbacks];
         }
         callbacks = _.map(callbacks, function(cb) {
@@ -384,7 +384,7 @@ WebpageTester.prototype.testMethods = {
     },
 
     notDefaultColor: constraintPartial(function(color) {
-        return color !== "rgb(255, 0, 0)";
+        return color.replace(/\s+/, "") !== "rgb(255,0,0)";
     })
 };
 window.WebpageOutput = Backbone.View.extend({

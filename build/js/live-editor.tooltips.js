@@ -2384,6 +2384,12 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         updateTooltip: function(url) {
             if (url !== this.currentUrl) {
                 this.currentUrl = url;
+                if (url === "") {
+                    this.$(".thumb").hide();
+                    this.$(".thumb-throbber").hide();
+                    this.$(".thumb-error").text("Enter an image URL.").show();
+                    return;
+                }
                 var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|localhost:\d+)$/i;
                 var match = /\/\/([^\/]*)(?:\/|\?|#|$)/.exec(url);
                 var host = match ? match[1] : "";
