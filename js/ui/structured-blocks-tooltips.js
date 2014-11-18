@@ -54,6 +54,7 @@
             var $target = $(e.currentTarget);
             var $block = $target.closest(".block-statement");
             var pos = $target.position();
+            var $offsetParent = $target.offsetParent();
 
             this.colorPicker.onChange = function(hsb, hex, rgb) {
                 $block.trigger("updateColor", rgb);
@@ -62,8 +63,9 @@
             this.$colorPicker
                 .appendTo($block)
                 .css({
-                    top: pos.top + 5,
-                    left: pos.left + $target.width() + 5
+                    top: pos.top + 5 + $offsetParent[0].scrollTop,
+                    left: pos.left + $target.width() + 5 +
+                        $offsetParent[0].scrollLeft
                 })
                 .find(".picker")
                     .ColorPickerSetColor($block.data("color"))
@@ -80,6 +82,7 @@
             var $target = $(e.target);
             var $block = $target.closest(".block-number");
             var pos = $target.position();
+            var $offsetParent = $target.offsetParent();
 
             this.numberScrubber.updateText = function(val) {
                 $block.trigger("updateValue", val);
@@ -88,8 +91,10 @@
 
             var updateScrubberPos = function() {
                 this.numberScrubber.$el.css({
-                    top: pos.top + $target.outerHeight(),
-                    left: pos.left + Math.round($target.width() / 2)
+                    top: pos.top + $target.outerHeight() +
+                        $offsetParent[0].scrollTop,
+                    left: pos.left + Math.round($target.width() / 2) +
+                        $offsetParent[0].scrollLeft
                 });
             }.bind(this);
 

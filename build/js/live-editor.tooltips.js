@@ -2383,11 +2383,11 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         
         updateTooltip: function(url) {
             if (url !== this.currentUrl) {
-                this.currentUrl = url;
+                this.currentUrl = url.trim();
                 if (url === "") {
                     this.$(".thumb").hide();
                     this.$(".thumb-throbber").hide();
-                    this.$(".thumb-error").text("Enter an image URL.").show();
+                    this.$(".thumb-error").text($._("Enter an image URL.")).show();
                     return;
                 }
                 var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|localhost:\d+)$/i;
@@ -3336,6 +3336,7 @@ function program1(depth0,data) {
             var $target = $(e.currentTarget);
             var $block = $target.closest(".block-statement");
             var pos = $target.position();
+            var $offsetParent = $target.offsetParent();
 
             this.colorPicker.onChange = function(hsb, hex, rgb) {
                 $block.trigger("updateColor", rgb);
@@ -3344,8 +3345,9 @@ function program1(depth0,data) {
             this.$colorPicker
                 .appendTo($block)
                 .css({
-                    top: pos.top + 5,
-                    left: pos.left + $target.width() + 5
+                    top: pos.top + 5 + $offsetParent[0].scrollTop,
+                    left: pos.left + $target.width() + 5 +
+                        $offsetParent[0].scrollLeft
                 })
                 .find(".picker")
                     .ColorPickerSetColor($block.data("color"))
@@ -3362,6 +3364,7 @@ function program1(depth0,data) {
             var $target = $(e.target);
             var $block = $target.closest(".block-number");
             var pos = $target.position();
+            var $offsetParent = $target.offsetParent();
 
             this.numberScrubber.updateText = function(val) {
                 $block.trigger("updateValue", val);
@@ -3370,8 +3373,10 @@ function program1(depth0,data) {
 
             var updateScrubberPos = function() {
                 this.numberScrubber.$el.css({
-                    top: pos.top + $target.outerHeight(),
-                    left: pos.left + Math.round($target.width() / 2)
+                    top: pos.top + $target.outerHeight() +
+                        $offsetParent[0].scrollTop,
+                    left: pos.left + Math.round($target.width() / 2) +
+                        $offsetParent[0].scrollLeft
                 });
             }.bind(this);
 

@@ -8,6 +8,7 @@
 
 .program > .block.block-statements {
     height: 100%;
+    position: relative;
 }
 
 .block.block-statements .ui-sortable-placeholder {
