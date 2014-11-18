@@ -7,6 +7,9 @@
 	display: none;
     z-index: 999;
 }
+.colorpicker, .colorpicker * {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
 .colorpicker_color {
 	width: 150px;
 	height: 150px;
@@ -920,4 +923,24 @@ html.playing .tooltip.hide-while-playing {
 .tooltip .flipped-arrow {
     display: inline-block;
     transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+}
+
+.block .tooltip:not(.picker) {
+    margin-left: -24px;
+    margin-top: 5px;
+    opacity: 1;
+    padding: 1px;
+}
+
+.block .tooltip:not(.picker) .scrubber-handle {
+    padding: 4px;
+}
+
+.block .tooltip:not(.picker) .arrow {
+    border-top: none;
+    border-bottom: 8px solid #000;
+    bottom: auto;
+    left: 17px;
+    top: -8px;
 }

@@ -7,6 +7,9 @@
 	display: none;
     z-index: 999;
 }
+.colorpicker, .colorpicker * {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
 .colorpicker_color {
 	width: 150px;
 	height: 150px;

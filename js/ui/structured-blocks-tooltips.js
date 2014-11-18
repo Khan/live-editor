@@ -4,7 +4,7 @@
     window.StructuredBlocksTooltips = Backbone.View.extend({
         events: {
             "click .block-rgb.block-name-r": "showColorPicker",
-            "click .block-number input": "showNumberScrubber"
+            "click .block-number .input": "showNumberScrubber"
         },
 
         initialize: function() {
@@ -88,7 +88,7 @@
 
             var updateScrubberPos = function() {
                 this.numberScrubber.$el.css({
-                    top: pos.top + 10,
+                    top: pos.top + $target.outerHeight(),
                     left: pos.left + Math.round($target.width() / 2)
                 });
             }.bind(this);

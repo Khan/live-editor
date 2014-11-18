@@ -7656,7 +7656,7 @@ var JSToolbox = Backbone.View.extend({
                     helper: function() {
                         return $item.clone(true);
                     },
-                    revert: "invalid"
+                    revert: false
                 });
 
                 html.push($item);
@@ -8168,7 +8168,7 @@ var JSRule = Backbone.View.extend({
 
         $div.sortable({
             revert: false,
-            handle: ".block-wrapper",
+            handle: ".block-wrapper > :first-child",
             helper: function(e, $item) {
                 if (!$item.hasClass("ui-selected")) {
                     // Un-select all the other nodes, if we just clicked this
@@ -8354,6 +8354,20 @@ var JSRule = Backbone.View.extend({
 
                 // Remove any multi drag data
                 ui.item.removeData("multi");
+            }
+        });
+
+        // From: https://github.com/luster-io/prevent-overscroll
+        $div.on("touchstart", function(e) {
+            var div = $div[0];
+            var top = div.scrollTop;
+            var totalScroll = div.scrollHeight;
+            var currentScroll = top + div.offsetHeight;
+
+            if (top <= 0) {
+                div.scrollTop = 1;
+            } else if (currentScroll >= totalScroll) {
+                div.scrollTop = top - 1;
             }
         });
 
@@ -8633,9 +8647,7 @@ JSRules.addRule(JSRule.extend({
     className: "block block-inline",
 
     additionalEvents: {
-        "click": "activate",
         "input input": "onInput",
-        "blur input": "deactivate",
         "keydown input": "onKeyDown",
         "updateValue": "updateValue"
     },
@@ -8679,9 +8691,6 @@ JSRules.addRule(JSRule.extend({
     },
 
     setValue: function(val) {
-        var $input = this.$el.find("input");
-        var input = $input[0];
-
         var type = this.getType();
 
         if (type === "boolean") {
@@ -8692,14 +8701,36 @@ JSRules.addRule(JSRule.extend({
 
         var newVal = val.toString();
 
-        if (newVal !== input.value) {
-            input.value = newVal;
+        if (newVal !== this.getInputValue()) {
+            this.setInputValue(newVal);
         }
 
         this.match.vars.value = val;
-        $input.width(JSRules.textWidth(newVal) - 4);
+        this.getInput().width(JSRules.textWidth(newVal) - 4);
 
         this.triggerUpdate();
+    },
+
+    getInput: function() {
+        return this.$el.find(".input");
+    },
+
+    getInputValue: function() {
+        var $input = this.getInput();
+
+        return $input.is("input") ?
+            $input.val() :
+            $input.text();
+    },
+
+    setInputValue: function(val) {
+        var $input = this.getInput();
+
+        if ($input.is("input")) {
+            $input.val(val);
+        } else {
+            $input.text(val);
+        }
     },
 
     updateValue: function(e, val) {
@@ -8717,32 +8748,27 @@ JSRules.addRule(JSRule.extend({
         }
     },
 
-    deactivate: function() {
-        this.active = false;
-    },
-
-    activate: function() {
-        if (this.editable) {
-            this.active = true;
-            var input = this.$el.find("input")[0];
-            input.focus();
-            input.select();
-        }
-    },
-
     render: function() {
         var type = this.getType();
         var val = this.match.vars.value.toString();
 
         this.$el.addClass("block-" + type);
-        this.$el.html($("<input>")
-            .width(JSRules.textWidth(val))
-            .attr({
-                type: "text",
-                value: val,
-                "class": "constant numeric"
-            }));
+
+        var $input = $("<input>").attr({
+            type: "text",
+            value: val
+        });
+
+        if (JSRules.isTouchDevice) {
+            $input = $("<span>").text(val);
+        }
+
+        $input.width(JSRules.textWidth(val))
+            .addClass("input constant numeric");
+
+        this.$el.html($input);
         this.$el.data("value", val);
+
         return this;
     }
 }));

@@ -73,9 +73,12 @@
     border-radius: 3px;
     background: #EEE;
     white-space: nowrap;
-    cursor: move;
     vertical-align: middle;
     line-height: 25px;
+}
+
+.block.block-statement .block-wrapper > :first-child {
+    cursor: move;
 }
 
 .block.block-statement.ui-selected .block-wrapper,
