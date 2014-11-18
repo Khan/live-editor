@@ -29,26 +29,6 @@ window.OutputImages = [
     }
 ];
 
-/*
-disco-ball.png          hannukah-dreidel.png        snow-crystal1.png       xmas-ornament-on-tree.png
-father-winston.png      hannukah-menorah.png        snow-crystal2.png       xmas-ornaments.png
-fireworks-2015.png      hopper-partying.png     snow-crystal3.png       xmas-presents.png
-fireworks-in-sky.png        hopper-reindeer.png     snowman.png         xmas-scene-holly-border.png
-fireworks-over-harbor.png   house-with-lights.png       snownoes.png            xmas-tree-with-presents.png
-fireworks-scattered.png     penguin-with-presents.png   snowy-slope-with-trees.png  xmas-tree.png
-gingerbread-family.png      red-nosed-winston.png       stocking-empty.png      xmas-wreath.png
-gingerbread-house.png       reindeer-with-hat.png       thumbs
-gingerbread-houses.png      reindeer.png            xmas-cookies.png
-gingerbread-man.png     santa-with-bag.png      xmas-ornament-boat.png
-*/
-/*
-var seasonalClipart = {
-    groupName: "seasonal",
-    thumbsDir: "/thumbs",
-    images: "disco-ball father-winston gingerbread-man hannukah-dreidel hannukah-menorah hopper-partying hopper-reindeer penguin-with-presents red-nosed-winston reindeer-with-hat santa-with-bag snownoes stocking-empty xmas-scene-holly-border xmas-tree-with-presents"
-};
-*/
-
 window.ExtendedOutputImages = [
     {
         className: "Clipart",
@@ -60,7 +40,7 @@ window.ExtendedOutputImages = [
             {
                 groupName: "animals",
                 thumbsDir: "/thumbs",
-                images: "birds_rainbow-lorakeets butterfly butterfly_monarch cat cheetah crocodiles dog_sleeping-puppy dogs_collies fox horse kangaroos komodo-dragon penguins rabbit retriever shark collies sleeping-puppy snake_green-tree-boa spider".split(" ")
+                images: "birds_rainbow-lorakeets butterfly butterfly_monarch cat cheetah crocodiles dog_sleeping-puppy dogs_collies fox horse kangaroos komodo-dragon penguins rabbit retriever shark collies snake_green-tree-boa spider".split(" ")
             },
             {
                 groupName: "landscapes",
@@ -70,9 +50,8 @@ window.ExtendedOutputImages = [
             {
                 groupName: "food",
                 thumbsDir: "/thumbs",
-                images: "bananas berries broccoli brussels-sprouts cake chocolates coffee-beans croissant dumplins fish_grilled-snapper fruits grapes hamburger ice-cream mushroom oysters pasta potato-chip potatoes shish-kebab strawberries sushi tomatoes".split(" ")
+                images: "bananas berries broccoli brussels-sprouts cake chocolates coffee-beans croissant dumplings fish_grilled-snapper fruits grapes hamburger ice-cream mushroom oysters pasta potato-chips potatoes shish-kebab strawberries sushi tomatoes".split(" ")
             }
-            
         ]
     },
     {
