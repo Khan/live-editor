@@ -623,16 +623,19 @@ html.playing .tooltip.hide-while-playing {
     opacity: 1;
 }
 
-.tooltip .scrubber {
+.tooltip .scrubber, .scrubber-handle {
     border-radius: 10px;
     cursor: ew-resize;
 }
 
-.tooltip .scrubber .scrubber-handle {
+.scrubber-handle {
     background: black;
     border-radius: 10px;
     color: white;
     text-align: center;
+    font-size: 12px;
+    line-height: 12px;
+    z-index: 100;
 }
 
 .tooltip.picker .arrow {
@@ -920,7 +923,7 @@ html.playing .tooltip.hide-while-playing {
     background-color: #77b05d;
 }
 
-.tooltip .flipped-arrow {
+.scrubber-handle .flipped-arrow {
     display: inline-block;
     transform: rotate(180deg);
     -webkit-transform: rotate(180deg);
@@ -933,7 +936,7 @@ html.playing .tooltip.hide-while-playing {
     padding: 1px;
 }
 
-.block .tooltip:not(.picker) .scrubber-handle {
+.scrubber-handle {
     padding: 4px;
 }
 

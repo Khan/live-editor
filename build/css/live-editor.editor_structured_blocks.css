@@ -1,3 +1,7 @@
+.block-toolbox-editor {
+    position: relative;
+}
+
 .block-editor {
     height: 100%;
 }
@@ -108,15 +112,15 @@
     font-family: Helvetica;
 }
 
-.block-toolbox > .ui-draggable {
+.block-toolbox .ui-draggable {
     font-size: 13px;
 }
 
-.block-toolbox > .ui-draggable .block-wrapper > :not(.show-toolbox) {
+.block-toolbox .ui-draggable .block-wrapper > :not(.show-toolbox) {
     display: none;
 }
 
-.block-toolbox > .ui-draggable .block-wrapper > img.toolbox-image {
+.block-toolbox .ui-draggable .block-wrapper > img.toolbox-image {
     display: inline-block;
     height: 20px;
     vertical-align: middle;
@@ -125,20 +129,20 @@
     margin-left: 5px;
 }
 
-.block-toolbox > .ui-draggable input {
+.block-toolbox .ui-draggable input {
     font-size: 13px;
     padding: 2px;
 }
 
-.block-toolbox > .ui-draggable.ui-draggable-dragging {
+.block-toolbox .ui-draggable.ui-draggable-dragging {
     font-size: 13px;
 }
 
-.block-toolbox > .ui-draggable.ui-draggable-dragging .block-wrapper > :not(.show-toolbox) {
+.block-toolbox .ui-draggable.ui-draggable-dragging .block-wrapper > :not(.show-toolbox) {
     display: inline-block;
 }
 
-.block-toolbox > .ui-draggable.ui-draggable-dragging .block-wrapper .show-only-toolbox {
+.block-toolbox .ui-draggable.ui-draggable-dragging .block-wrapper .show-only-toolbox {
     display: none;
 }
 
@@ -150,7 +154,7 @@
     display: inline-block;
 }
 
-.block-toolbox > .ui-draggable.ui-draggable-dragging input {
+.block-toolbox .ui-draggable.ui-draggable-dragging input {
     font-size: 13px;
     padding: 5px;
 }
@@ -251,7 +255,7 @@
     color: rgb(49, 132, 149);
 }
 .block-toolbox {
-    width: 120px;
+    width: 180px;
     position: absolute;
     top: 0px;
     right: 0px;
@@ -259,6 +263,10 @@
     height: 100%;
 }
 
+.block-toolbox .toolbox-group {
+    float: left;
+}
+
 .block-editor {
-    margin-right: 120px;
+    margin-right: 180px;
 }

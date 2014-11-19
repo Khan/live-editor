@@ -1,5 +1,5 @@
 .block-toolbox {
-    width: 120px;
+    width: 180px;
     position: absolute;
     top: 0px;
     right: 0px;
@@ -7,6 +7,10 @@
     height: 100%;
 }
 
+.block-toolbox .toolbox-group {
+    float: left;
+}
+
 .block-editor {
-    margin-right: 120px;
+    margin-right: 180px;
 }

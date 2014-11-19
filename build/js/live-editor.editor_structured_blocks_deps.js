@@ -7644,7 +7644,9 @@ var JSToolbox = Backbone.View.extend({
         var toolbox = this.toolbox;
 
         _.keys(toolbox).forEach(function(category) {
-            html.push("<h3>" + category + "</h3>");
+            var groupHTML = [];
+
+            groupHTML.push("<h3>" + category + "</h3>");
 
             toolbox[category].forEach(function(item) {
                 var $item = item.render().$el;
@@ -7652,6 +7654,7 @@ var JSToolbox = Backbone.View.extend({
                 $item.data("drag-data", item.toAST());
 
                 $item.draggable({
+                    appendTo: ".block-toolbox-editor",
                     connectToSortable: ".block-statements",
                     helper: function() {
                         return $item.clone(true);
@@ -7659,8 +7662,10 @@ var JSToolbox = Backbone.View.extend({
                     revert: false
                 });
 
-                html.push($item);
+                groupHTML.push($item);
             });
+
+            html.push($("<div>").addClass("toolbox-group").html(groupHTML));
         });
 
         this.$el.html(html);
@@ -7741,6 +7746,7 @@ var JSToolboxEditor = Backbone.View.extend({
     },
 
     render: function() {
+        this.$el.addClass("block-toolbox-editor");
         this.$el.children().detach();
         this.$el.append([
             this.editor.render().$el,
@@ -8167,6 +8173,7 @@ var JSRule = Backbone.View.extend({
         var added = false;
 
         $div.sortable({
+            appendTo: ".block-toolbox-editor",
             revert: false,
             handle: ".block-wrapper > :first-child",
             helper: function(e, $item) {

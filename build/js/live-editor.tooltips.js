@@ -2652,11 +2652,15 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
             .append($leftButton).append($center).append($rightButton)
             .draggable({
                 axis: "x",
+                appendTo: "body",
+                helper: function() {
+                    return $(this).clone().css($(this).offset());
+                },
                 start: function() {
                     self.$el.addClass("dragging");
                 },
-                drag: function(evt) {
-                    var thisOffset = $(this).offset();
+                drag: function(evt, ui) {
+                    var thisOffset = ui.helper.offset();
                     var parentOffset = $(this).parent().offset();
                     var dx = thisOffset.left - parentOffset.left;
 
