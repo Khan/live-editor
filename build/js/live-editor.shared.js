@@ -40,7 +40,7 @@ window.ExtendedOutputImages = [
             {
                 groupName: "animals",
                 thumbsDir: "/thumbs",
-                images: "birds_rainbow-lorakeets butterfly butterfly_monarch cat cheetah crocodiles dog_sleeping-puppy dogs_collies fox horse kangaroos komodo-dragon penguins rabbit retriever shark collies snake_green-tree-boa spider".split(" ")
+                images: "birds_rainbow-lorakeets butterfly butterfly_monarch cat cheetah crocodiles dog_sleeping-puppy dogs_collies fox horse kangaroos komodo-dragon penguins rabbit retriever shark snake_green-tree-boa spider".split(" ")
             },
             {
                 groupName: "landscapes",
