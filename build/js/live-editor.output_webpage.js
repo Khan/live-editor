@@ -384,7 +384,10 @@ WebpageTester.prototype.testMethods = {
     },
 
     notDefaultColor: constraintPartial(function(color) {
-        return color.replace(/\s+/, "") !== "rgb(255,0,0)";
+        var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
+                      /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
+        var isDefault = color.replace(/\s+/, "") === "rgb(255,0,0)";
+        return isRGB && !isDefault;
     })
 };
 window.WebpageOutput = Backbone.View.extend({
@@ -446,6 +449,9 @@ window.WebpageOutput = Backbone.View.extend({
                 disableTags: ["audio", "video", "iframe", "embed", "object"]
             });
         } catch (e) {
+            if (window.console) {
+                console.warn(e);
+            }
             results.error = {
                 type: "UNKNOWN_SLOWPARSE_ERROR"
             };
@@ -574,7 +580,9 @@ window.WebpageOutput = Backbone.View.extend({
     postProcessing: function(oldPageTitle) {
         var doc = this.getDocument();
         var self = this;
-        $(doc).find("a").attr("rel", "nofollow").each(function() {
+        
+        $(doc).find("a").attr("target", "_blank")
+            .attr("rel", "nofollow").each(function() {
             var url = $(this).attr("href");
             if (url && url[0] === "#") {
                 $(this).attr("href", "javascript:void(0)").click(function() {
