@@ -142,7 +142,7 @@ WebpageTester.prototype.testMethods = {
 
         var css = this.testContext.getCssMap();
         var cssRules = pattern.split("}").slice(0, -1);
-        if (!_.isArray(callbacks)) {
+        if (!_.isArray(callbacks) && !_.isUndefined(callbacks)) {
             callbacks = [callbacks];
         }
         callbacks = _.map(callbacks, function(cb) {
@@ -388,5 +388,24 @@ WebpageTester.prototype.testMethods = {
                       /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
         var isDefault = color.replace(/\s+/, "") === "rgb(255,0,0)";
         return isRGB && !isDefault;
+    }),
+
+    isValidColor:  constraintPartial(function(color) {
+        var isValidNum = function(val) {
+            var num = parseInt(val, 10);
+            return num >= 0 && num <= 255;
+        };
+        var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
+                      /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
+        if (isRGB) {
+            var vals = color.split("(")[1].split(",");
+            return (isValidNum(vals[0]) &&
+                    isValidNum(vals[1]) &&
+                    isValidNum(vals[2]));
+        }
+
+        // If they're trying to use a color name, it should be at least 
+        //  three letters long and not equal to rgb
+        return color.length >= 3 && color.indexOf("rgb") === -1;
     })
 };

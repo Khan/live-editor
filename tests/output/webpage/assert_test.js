@@ -32,7 +32,7 @@ describe("Challenge Assertions - HTML", function() {
         title: "Getting a Slowparse syntax error",
         code: "<div></div",
         validate: divTest,
-        reason: "A closing </div> tag doesn\'t end with a >."
+        reason: "It looks like your closing </div> tag doesn\'t end with a >."
     });
 
     assertTest({
@@ -143,6 +143,11 @@ describe("Full CSS matching with wildcards", function() {
         }
     }, {
         res: true,
+        title: "Using wildcards without callbacks works",
+        pat: ".apples { color: $1; }",
+        css: ".apples { color: red; }"
+    }, {
+        res: true,
         title: "Callbacks forcing recursion",
         pat: "_{height: $h2} _{height:  $h1} ",
         css: "h1 { height: 9px; } h2 { height: 6px; }",
@@ -169,6 +174,30 @@ describe("Full CSS matching with wildcards", function() {
         pat: "_{color: $1}",
         css: "h1 { color: rgb(255, 0, 0); }",
         callbacks: 'notDefaultColor("$1")'
+    },  {
+        res: true,
+        title: "isValidColor() passes for rgb color",
+        pat: "_ {color: $1}",
+        css: "h1 { color: rgb(255, 0, 0); }",
+        callbacks: 'isValidColor("$1")'
+    },  {
+        res: true,
+        title: "isValidColor() passes for named color",
+        pat: "_ {color: $1}",
+        css: "h1 { color: red; }",
+        callbacks: 'isValidColor("$1")'
+    }, {
+        res: false,
+        title: "isValidColor() fails for no rgb args ",
+        pat: "_ {color: $1}",
+        css: "h1 { color: rgb(); }",
+        callbacks: 'isValidColor("$1")'
+    }, {
+        res: false,
+        title: "isValidColor() fails for no rgb parantheses",
+        pat: "_ {color: $1}",
+        css: "h1 { color: rgb; }",
+        callbacks: 'isValidColor("$1")'
     }, {
         res: true, 
         title: "Concatenating multiple stylesheets",
