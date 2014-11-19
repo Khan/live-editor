@@ -311,11 +311,11 @@ window.AceEditor = Backbone.View.extend({
         }
 
         aceEditor.onCut = function(clipboardText) {
-            editor.lastCopied = this.getSelectedText();
+            aceEditor.lastCopied = this.getSelectedText();
             aceEditor.originalCut.apply(aceEditor);
         };
         aceEditor.onCopy = function(clipboardText) {
-            editor.lastCopied = this.getSelectedText();
+            aceEditor.lastCopied = this.getSelectedText();
             aceEditor.originalCopy.apply(aceEditor);
         };
         aceEditor.onPaste = function(clipboardText) {
@@ -325,7 +325,7 @@ window.AceEditor = Backbone.View.extend({
             var isUrl = function(str) {
                 return str.match(/\s*https?:\/\/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)\s*/);
             };
-            if (clipboardText === editor.lastCopied ||
+            if (clipboardText === aceEditor.lastCopied ||
                 clipboardText.length < 3 ||
                 isUrl(clipboardText)) {
                 aceEditor.originalPaste.apply(aceEditor, [clipboardText]);
