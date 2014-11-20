@@ -1773,34 +1773,6 @@ window.LiveEditor = Backbone.View.extend({
         }
     },
 
-
-    markDirty: function(force) {
-        // They're typing. Hide the tipbar to give them a chance to fix things up
-        this.tipbar.hide();
-        if (this.outputState === "clean" || force) {
-            this.runCode(this.editor.text());
-            this.outputState = "running";
-
-            // This will either be called when we receive the results
-            // Or it will timeout.
-            this.cleanUp = _.once(function() {
-                var lastOutputState = this.outputState;
-                this.outputState = "clean";
-                if (lastOutputState === "dirty") {
-                    this.markDirty();
-                }
-            });
-            // 500ms is an arbitrary delay. Hopefully long enough for reasonable programs
-            // to execute, but short enough for editor to not feel laggy
-            setTimeout(this.cleanUp.bind(this), 500);
-        } else {
-            this.outputState = "dirty";
-        }
-    },
-    // This stops us from sending  any updates until
-    // we call markDirty("force") as a part of the frame load handler
-    outputState: "dirty",
-
     // Extract the origin from the embedded frame location
     postFrameOrigin: function() {
         var match = /^.*:\/\/[^\/]*/.exec(
@@ -1826,8 +1798,12 @@ window.LiveEditor = Backbone.View.extend({
 
     /*
      * Execute some code in the output frame.
+     * 
+     * DO NOT CALL THIS DIRECTLY
+     * Instead call markDirty because it will handle
+     * throttling requests properly.
      */
-    runCode: function(code) {
+    _runCode: function(code) {
         var options = {
             code: arguments.length === 0 ? this.editor.text() : code,
             validate: this.validation || "",
@@ -1844,6 +1820,33 @@ window.LiveEditor = Backbone.View.extend({
 
         this.postFrame(options);
     },
+
+    markDirty: function(force) {
+        // They're typing. Hide the tipbar to give them a chance to fix things up
+        this.tipbar.hide();
+        if (this.outputState === "clean" || force) {
+            this._runCode();
+            this.outputState = "running";
+
+            // This will either be called when we receive the results
+            // Or it will timeout.
+            this.cleanUp = _.once(function() {
+                var lastOutputState = this.outputState;
+                this.outputState = "clean";
+                if (lastOutputState === "dirty") {
+                    this.markDirty();
+                }
+            });
+            // 500ms is an arbitrary delay. Hopefully long enough for reasonable programs
+            // to execute, but short enough for editor to not feel laggy
+            setTimeout(this.cleanUp.bind(this), 500);
+        } else {
+            this.outputState = "dirty";
+        }
+    },
+    // This stops us from sending  any updates until
+    // we call markDirty("force") as a part of the frame load handler
+    outputState: "dirty",
 
     getScreenshot: function(callback) {
         // Unbind any handlers this function may have set for previous
