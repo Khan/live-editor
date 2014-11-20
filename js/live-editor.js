@@ -971,7 +971,7 @@ window.LiveEditor = Backbone.View.extend({
         // They're typing. Hide the tipbar to give them a chance to fix things up
         this.tipbar.hide();
         if (this.outputState === "clean" || force) {
-            this.runCode(this.editor.text());
+            setTimeout(this.runCode.bind(this), 0);
             this.outputState = "running";
 
             // This will either be called when we receive the results
