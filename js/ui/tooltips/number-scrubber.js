@@ -58,8 +58,9 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                 helper: function() {
                     return $(this).clone().css($(this).offset());
                 },
-                start: function() {
+                start: function(e, ui) {
                     self.$el.addClass("dragging");
+                    $(this).css("visibility", "hidden");
                 },
                 drag: function(evt, ui) {
                     var thisOffset = ui.helper.offset();
@@ -72,12 +73,9 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     self.updateText(self.intermediateValue.toFixed(self.decimals));
                     self.dragged = true;
                 },
-                stop: function(evt) {
+                stop: function(evt, ui) {
                     self.$el.removeClass("dragging");
-                    $(this).css({
-                        left: 0,
-                        top: 0
-                    });
+                    $(this).css("visibility", "visible");
 
                     var exp = getExponent(evt);
                     self.decimals = Math.max(0,-exp);

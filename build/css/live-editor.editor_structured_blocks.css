@@ -73,7 +73,7 @@
 .block.block-statement .block-wrapper {
     display: inline-block;
     border: 1px solid #AAA;
-    padding: 3px;
+    padding: 5px 3px;
     margin: 3px;
     border-radius: 3px;
     background: #EEE;
@@ -88,7 +88,7 @@
 
 .block.block-statement.ui-selected .block-wrapper,
 .block.block-statement.ui-selecting .block-wrapper {
-    border: 1px solid red;
+    border: 1px solid #000;
 }
 
 .block.ui-draggable-dragging .block-wrapper {
@@ -113,7 +113,11 @@
 }
 
 .block-toolbox .ui-draggable {
-    font-size: 13px;
+    font-size: 16px;
+}
+
+.block-toolbox .ui-draggable .block-wrapper {
+    min-width: 90px;
 }
 
 .block-toolbox .ui-draggable .block-wrapper > :not(.show-toolbox) {
@@ -122,6 +126,7 @@
 
 .block-toolbox .ui-draggable .block-wrapper > img.toolbox-image {
     display: inline-block;
+    float: right;
     height: 20px;
     vertical-align: middle;
     border: 1px solid #CCC;
@@ -130,12 +135,12 @@
 }
 
 .block-toolbox .ui-draggable input {
-    font-size: 13px;
+    font-size: 16px;
     padding: 2px;
 }
 
 .block-toolbox .ui-draggable.ui-draggable-dragging {
-    font-size: 13px;
+    font-size: 16px;
 }
 
 .block-toolbox .ui-draggable.ui-draggable-dragging .block-wrapper > :not(.show-toolbox) {
@@ -155,7 +160,7 @@
 }
 
 .block-toolbox .ui-draggable.ui-draggable-dragging input {
-    font-size: 13px;
+    font-size: 16px;
     padding: 5px;
 }
 
@@ -185,12 +190,12 @@
 
 .block-rgb.block-name-r {
     background: rgb(255, 0, 0);
-    height: 25px;
-    width: 25px;
+    height: 28px;
+    width: 28px;
     display: inline-block;
     vertical-align: middle;
     border: 1px solid #CCC;
-    border-radius: 13px;
+    border-radius: 15px;
     cursor: pointer;
     margin: 0 1px;
 }
@@ -204,7 +209,7 @@
  */
 .block, .block input {
     font-family: 'Proxima Nova Semibold', 'Helvetica', 'Arial', sans-serif;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .block .comment {
@@ -255,7 +260,7 @@
     color: rgb(49, 132, 149);
 }
 .block-toolbox {
-    width: 180px;
+    width: 208px;
     position: absolute;
     top: 0px;
     right: 0px;

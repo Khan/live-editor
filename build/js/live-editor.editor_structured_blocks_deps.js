@@ -7795,10 +7795,8 @@ var JSRules = {
 
     textWidth: function(text) {
         if (!this.$textSize) {
-            this.$textSize = $("<span>").css({
-                display: "none",
-                "class": "block"
-            }).appendTo("body");
+            this.$textSize = $("<span>").hide()
+                .addClass("block").appendTo("body");
         }
 
         return Math.max(this.$textSize.text(text).outerWidth(), 10) + 10;

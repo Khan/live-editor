@@ -362,20 +362,24 @@ html.playing .tooltip.hide-while-playing {
 }
 
 .block .tooltip:not(.picker) {
-    margin-left: -24px;
+    margin-left: -35px;
     margin-top: 5px;
     opacity: 1;
     padding: 1px;
+    width: 70px;
 }
 
-.scrubber-handle {
-    padding: 4px;
+body > .scrubber-handle,
+.block .tooltip:not(.picker) .scrubber-handle {
+    font-size: 16px;
+    line-height: 16px;
+    padding: 8px;
 }
 
 .block .tooltip:not(.picker) .arrow {
     border-top: none;
     border-bottom: 8px solid #000;
     bottom: auto;
-    left: 17px;
+    left: 28px;
     top: -8px;
 }
