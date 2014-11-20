@@ -230,6 +230,8 @@ var ScratchpadConfig = Backbone.Model.extend({
             // Ace pjs editor configuration
             ace_pjs_editor: function(editor) {
                 var aceEditor = editor.editor;
+                
+                aceEditor.session.setOption("useWorker", false);
 
                 // Don't highlight the active line
                 aceEditor.setHighlightActiveLine(false);
@@ -280,7 +282,7 @@ var ScratchpadConfig = Backbone.Model.extend({
             ace_webpage_editor: function(editor) {
                 var aceEditor = editor.editor;
 
-                ace.config.set("workerPath", editor.workersDir + "webpage/");
+                aceEditor.session.setOption("useWorker", false);
 
                 // Don't highlight the active line
                 aceEditor.setHighlightActiveLine(false);
