@@ -1,6 +1,9 @@
 """ This is a command line tool to create thumbnails for a group of images.
 Point it to a directory and it will create a ./thumbs dir inside the directory,
 and place a thumbnail for every image in the directory inside ./thumbs
+
+Recommend also downloading ImageOptimCL and running it over the directory after:
+imageoptim -a -d images/seasonal
 """
 
 print "* This package requires python pillow for image processing.\n* If you don't already have pillow install it with `pip install pillow`"
