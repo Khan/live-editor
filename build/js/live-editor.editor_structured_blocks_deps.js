@@ -7799,7 +7799,10 @@ var JSRules = {
                 .addClass("block").appendTo("body");
         }
 
-        return Math.max(this.$textSize.text(text).outerWidth(), 10) + 10;
+        // Replace spaces with non-breaking spaces to preserve width
+        this.$textSize.text(text.replace(/\s/g, "\xA0"));
+
+        return Math.max(this.$textSize.outerWidth(), 10) + 10;
     },
 
     tokenize: function(fn) {
@@ -8554,6 +8557,8 @@ var JSComment = JSRules.addRule(JSRule.extend({
         "input input": "onInput"
     },
 
+    defaultValue: $._("Your comment..."),
+
     isComment: function() {
         return true;
     },
@@ -8574,7 +8579,9 @@ var JSComment = JSRules.addRule(JSRule.extend({
     onInput: function(event) {
         this.match._[0] = event.target.value;
 
-        $(event.target).width(JSRules.textWidth(event.target.value) - 8);
+        var value = event.target.value || this.defaultValue;
+
+        $(event.target).width(JSRules.textWidth(value) - 3);
 
         this.triggerUpdate();
     },
@@ -8588,8 +8595,9 @@ var JSComment = JSRules.addRule(JSRule.extend({
             $("<input>").attr({
                 type: "text",
                 value: value,
+                placeholder: this.defaultValue,
                 "class": "comment"
-            }).width(JSRules.textWidth(value))
+            }).width(JSRules.textWidth(value || this.defaultValue) + 4)
         ]));
         return this;
     }
@@ -8628,7 +8636,7 @@ JSRules.addRule(JSRule.extend({
     onInput: function(event) {
         this.match.vars.name = event.target.value;
 
-        $(event.target).width(JSRules.textWidth(event.target.value) - 4);
+        $(event.target).width(JSRules.textWidth(event.target.value) - 2);
 
         this.triggerUpdate();
     },
@@ -8711,7 +8719,7 @@ JSRules.addRule(JSRule.extend({
         }
 
         this.match.vars.value = val;
-        this.getInput().width(JSRules.textWidth(newVal) - 4);
+        this.getInput().width(JSRules.textWidth(newVal) - 2);
 
         this.triggerUpdate();
     },
