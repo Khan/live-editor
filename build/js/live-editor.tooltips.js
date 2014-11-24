@@ -2607,6 +2607,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
 
     render: function() {
         var self = this;
+        var clickOnly = self.options.clickOnly;
 
         // This function returns different values if alt and/or shift are
         // pressed: alt -> -1, shift -> 1, alt + shift -> 0.
@@ -2624,33 +2625,49 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
             return exp;
         }
 
-        var $leftButton = $("<span role='button'>◄</span>");
-        var $rightButton = $("<span role='button' class='flipped-arrow'>◄</span>");
-        var $center = $("<span> ◆ </span>");
+        var leftArrow = clickOnly ? "-" : "◄";
+        var rightArrow = clickOnly ? "+" : "◄";
+        var center = clickOnly ? "" : " ◆ ";
 
-        $leftButton.click(function (evt) {
+        var $leftButton = $("<span role='button'>" + leftArrow + "</span>");
+        var $rightButton = $("<span role='button' class='flipped-arrow'>" + rightArrow + "</span>");
+        var $center = $("<span>" + center + "</span>");
+
+        var updateNumber = function(num, evt) {
+            var exp = evt ? getExponent(evt) : -self.decimals;
+            self.decimals = Math.max(0, -exp);
+            self.intermediateValue = self.value + (num * Math.pow(10, exp));
+            self.updateText(self.intermediateValue.toFixed(self.decimals));
+            self.updateTooltip(self.intermediateValue, self.decimals);
+        };
+
+        $leftButton.click(function(evt) {
+            if (self.noClick) {
+                self.noClick = false;
+                return;
+            }
+
             if (!self.dragged) {
-                var exp = getExponent(evt);
-                self.decimals = Math.max(0, -exp);
-                self.intermediateValue = self.value - Math.pow(10, exp);
-                self.updateText(self.intermediateValue.toFixed(self.decimals));
-                self.updateTooltip(self.intermediateValue, self.decimals);
+                updateNumber(-1, evt);
             }
         });
 
-        $rightButton.click(function (evt) {
+        $rightButton.click(function(evt) {
+            if (self.noClick) {
+                self.noClick = false;
+                return;
+            }
+
             if (!self.dragged) {
-                var exp = getExponent(evt);
-                self.decimals = Math.max(0, -exp);
-                self.intermediateValue = self.value + Math.pow(10, exp);
-                self.updateText(self.intermediateValue.toFixed(self.decimals));
-                self.updateTooltip(self.intermediateValue, self.decimals);
+                updateNumber(1, evt);
             }
         });
 
         var $scrubberHandle = $("<div class='scrubber-handle'/>")
-            .append($leftButton).append($center).append($rightButton)
-            .draggable({
+            .append($leftButton).append($center).append($rightButton);
+
+        if (!clickOnly) {
+            $scrubberHandle.draggable({
                 axis: "x",
                 appendTo: "body",
                 helper: function() {
@@ -2686,6 +2703,49 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     }, 0);
                 }
             });
+        } else {
+            var clickInterval;
+
+            var numberUpdater = function(evt, rate) {
+                var updateRate = 300;
+                var start = (new Date).getTime();
+
+                var update = function() {
+                    clickInterval = setTimeout(function() {
+                        self.noClick = true;
+                        updateNumber(rate, evt);
+
+                        var curTime = (new Date).getTime() - start;
+
+                        if (curTime >= 5000) {
+                            updateRate = 16;
+                        } else if (curTime >= 2000) {
+                            updateRate = 30;
+                        }
+
+                        update();
+                    }, updateRate);
+                };
+
+                update();
+            };
+
+            $leftButton.on("mousedown", function(evt) {
+                numberUpdater(evt, -1);
+            });
+
+            $leftButton.on("mouseup", function() {
+                clearInterval(clickInterval);
+            });
+
+            $rightButton.on("mousedown", function(evt) {
+                numberUpdater(evt, 1);
+            });
+
+            $rightButton.on("mouseup", function() {
+                clearInterval(clickInterval);
+            });
+        }
 
         this.$el = $("<div class='tooltip'><div class='scrubber'></div><div class='arrow'></div></div>")
             .appendTo("body")
@@ -2693,6 +2753,10 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
             .append($scrubberHandle)
             .end()
             .hide();
+
+        if (clickOnly) {
+            this.$el.addClass("click-only");
+        }
     },
 
     bind: function() {
@@ -3312,7 +3376,9 @@ function program1(depth0,data) {
             this.colorPicker = this.$colorPicker.find(".colorpicker")
                 .data("colorpicker");
 
-            this.numberScrubber = new TooltipEngine.classes.numberScrubber({});
+            this.numberScrubber = new TooltipEngine.classes.numberScrubber({
+                clickOnly: true
+            });
         },
 
         bind: function() {

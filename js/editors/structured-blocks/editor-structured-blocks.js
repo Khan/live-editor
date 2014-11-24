@@ -20,9 +20,6 @@ window.StructuredBlocksEditor = Backbone.View.extend({
                     line(10, 10, 50, 50);
                 },
                 function() {
-                    point(100, 100);
-                },
-                function() {
                     triangle(20, 20, 100, 100, 250, 50);
                 },
                 function() {
@@ -38,6 +35,9 @@ window.StructuredBlocksEditor = Backbone.View.extend({
                 },
                 function() {
                     stroke(0, 0, 0);
+                },
+                function() {
+                    strokeWeight(3);
                 },
                 function() {
                     noStroke();

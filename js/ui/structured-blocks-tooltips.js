@@ -28,7 +28,9 @@
             this.colorPicker = this.$colorPicker.find(".colorpicker")
                 .data("colorpicker");
 
-            this.numberScrubber = new TooltipEngine.classes.numberScrubber({});
+            this.numberScrubber = new TooltipEngine.classes.numberScrubber({
+                clickOnly: true
+            });
         },
 
         bind: function() {

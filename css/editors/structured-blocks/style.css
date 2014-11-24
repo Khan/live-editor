@@ -1,5 +1,5 @@
 .block-toolbox {
-    width: 208px;
+    width: 214px;
     position: absolute;
     top: 0px;
     right: 0px;
@@ -9,6 +9,10 @@
 
 .block-toolbox .toolbox-group {
     float: left;
+}
+
+.block-toolbox .ui-draggable .block-wrapper {
+    min-width: 92px;
 }
 
 .block-editor {

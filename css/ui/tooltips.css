@@ -383,3 +383,35 @@ body > .scrubber-handle,
     left: 28px;
     top: -8px;
 }
+
+.block .tooltip:not(.picker).click-only {
+    width: 94px;
+    margin-left: -47px;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.block .tooltip:not(.picker).click-only .scrubber-handle {
+    background: none;
+    cursor: default;
+}
+
+.block .tooltip:not(.picker).click-only .scrubber-handle span[role=button] {
+    background: #000;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    line-height: 27px;
+    font-size: 30px;
+    display: inline-block;
+    border-radius: 15px;
+    border: 1px solid #FFF;
+}
+
+.block .tooltip:not(.picker).click-only .scrubber-handle span[role=button]:not(.flipped-arrow) {
+    margin-right: 16px;
+}
+
+.block .tooltip:not(.picker).click-only .arrow {
+    left: 40px;
+    border-bottom-color: rgba(0, 0, 0, 0.8);
+}
