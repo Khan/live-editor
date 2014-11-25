@@ -65,6 +65,21 @@ window.StructuredBlocksEditor = Backbone.View.extend({
         this.tooltipEngine = new StructuredBlocksTooltips({
             el: this.el
         });
+
+        this.render();
+    },
+
+    render: function() {
+        this.$el.find(".block-trash").html(
+            "<div class='text-out'>" +
+                "<div class='trash-icon'>" +
+                    "<div class='lid'></div>" +
+                    "<div class='lidcap'></div>" +
+                    "<div class='bin'></div>" +
+                "</div>" +
+                "<span>" + $._("Drag block here to delete.") + "</span>" +
+            "</div>"
+        );
     },
 
     getAllFolds: function() {

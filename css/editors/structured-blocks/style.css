@@ -1,3 +1,7 @@
+.block-editor {
+    margin-right: 180px;
+}
+
 .block-toolbox {
     width: 214px;
     position: absolute;
@@ -15,6 +19,64 @@
     min-width: 92px;
 }
 
-.block-editor {
-    margin-right: 180px;
+.block-toolbox .block-trash .text-out {
+    color: #FFF;
+    font-size: 24px;
+    font-family: Helvetica;
+    text-align: center;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* CSS Trash icon from: http://codepen.io/gab/pen/qLmDg */
+
+.block-toolbox .block-trash .trash-icon {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 10px auto;
+}
+
+.block-toolbox .block-trash.over .trash-icon .lid,
+.block-toolbox .block-trash.over .trash-icon .lidcap {
+    transform: rotate(10deg);
+    margin-bottom: 10.5px;
+}
+
+.block-toolbox .block-trash .lidcap,
+.block-toolbox .block-trash .lid,
+.block-toolbox .block-trash .bin {
+    position: absolute;
+}
+
+.block-toolbox .block-trash .lidcap,
+.block-toolbox .block-trash .lid {
+    border-top-left-radius: 2.8px;
+    border-top-right-radius: 2.8px;
+    background: #FFF;
+    transition: transform .2s linear, margin .2s linear;
+}
+
+.block-toolbox .block-trash .lidcap {
+    bottom: 96.6px;
+    left: 63.0px;
+    height: 7px;
+    width: 14px;
+}
+
+.block-toolbox .block-trash .lid {
+    bottom: 84px;
+    left: 21px;
+    width: 98px;
+    height: 14px;
+}
+
+.block-toolbox .block-trash .bin {
+    bottom: 0;
+    left: 28px;
+    width: 70px;
+    border-top: 84px solid #FFF;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
 }
