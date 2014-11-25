@@ -159,9 +159,6 @@
             "css/output/style.css"
         ]
     },
-    "fonts": [
-        "css/bootstrap/fonts/*"
-    ],
     "images": [
         "images/**",
         "external/structured-blocks/images/**"

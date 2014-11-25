@@ -92,11 +92,6 @@ gulp.task("styles", styleTypes.map(function(type) {
     return "style_" + type;
 }));
 
-gulp.task("fonts", function() {
-    gulp.src(paths.fonts)
-        .pipe(gulp.dest("build/fonts"));
-});
-
 gulp.task("images", function() {
     gulp.src(paths.images)
         .pipe(gulp.dest("build/images"));
@@ -201,4 +196,4 @@ gulp.task("test", function(callback) {
 });
 
 gulp.task("default", ["watch", "templates", "scripts", "workers", "styles",
-    "fonts", "images", "externals"]);
+    "images", "externals"]);
