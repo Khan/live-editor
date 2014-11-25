@@ -271,7 +271,8 @@ html.playing .tooltip.hide-while-playing {
     width: 520px;
     margin-left: -250px;
     padding: 0;
-    top: 150px;
+    top: 50%;
+    margin-top: -225px;
 }
 
 .imagemodal h3 {
