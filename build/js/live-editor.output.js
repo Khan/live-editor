@@ -322,6 +322,17 @@ OutputTester.prototype = {
     }
 };
 
+window.Timer = function(title) {
+    this.start = new Date().getTime();
+    this.title = title;
+};
+window.Timer.prototype = {
+    show: function() {
+        console.log("Timer", this.title, new Date().getTime() - this.start);
+    }
+};
+
+
 window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
@@ -413,7 +424,9 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Validation code to run
         if (data.validate != null) {
+            var t = new Timer("initTests");
             this.initTests(data.validate);
+            t.show();
         }
 
         // Settings to initialize
@@ -489,6 +502,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     runCode: function(userCode, callback) {
+        var RC = new Timer("runCode")
         
         this.currentCode = userCode;
 
@@ -516,18 +530,25 @@ window.LiveEditorOutput = Backbone.View.extend({
             });
 
             this.toggle(!errors.length);
+            RC.show()
         }.bind(this);
 
+        var LINT = new Timer("lint")
         this.lint(userCode, function(errors) {
+            LINT.show();
+            var TEST = new Timer("test")
             // Run the tests (even if there are lint errors)
             this.test(userCode, this.validate, errors, function(errors, testResults) {
+                TEST.show()
                 if (errors.length > 0 || this.onlyRunTests) {
                     return runDone(errors, testResults);
                 }
 
                 // Then run the user's code
                 try {
+                    var ORC = new Timer("output.runCode")
                     this.output.runCode(userCode, function(errors) {
+                        ORC.show()
                         runDone(errors, testResults);
                     });
 

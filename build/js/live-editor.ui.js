@@ -1778,6 +1778,9 @@ window.LiveEditor = Backbone.View.extend({
         // They're typing. Hide the tipbar to give them a chance to fix things up
         this.tipbar.hide();
         if (this.outputState === "clean" || force) {
+            // We will run at the end of this code block
+            // This stops replace from trying to execute code
+            // between deleting the old code and adding the new code
             setTimeout(this.runCode.bind(this), 0);
             this.outputState = "running";
 
