@@ -3,8 +3,10 @@
 
     window.StructuredBlocksTooltips = Backbone.View.extend({
         events: {
-            "click .block-rgb.block-name-r": "showColorPicker",
-            "click .block-number .input": "showNumberScrubber"
+            "mousedown .block-rgb.block-name-r": "showColorPicker",
+            "focusin .block-rgb.block-name-r": "showColorPicker",
+            "mousedown .block-number .input": "showNumberScrubber",
+            "focusin .block-number .input": "showNumberScrubber"
         },
 
         initialize: function() {
@@ -35,11 +37,22 @@
 
         bind: function() {
             $(window).on("mousedown", function(e) {
-                if (!$.contains(this.$colorPicker[0], e.target)) {
+                var target = e.target;
+
+                if (target.nodeName.toLowerCase() === "input") {
+                    target = target.parentNode;
+                }
+
+                var colorPicker = this.$colorPicker[0];
+                var numberScrubber = this.numberScrubber.$el[0];
+
+                if (!$.contains(target, colorPicker) &&
+                    !$.contains(colorPicker, target)) {
                     this.hideColorPicker();
                 }
 
-                if (!$.contains(this.numberScrubber.$el[0], e.target)) {
+                if (!$.contains(target, numberScrubber) &&
+                    !$.contains(numberScrubber, target)) {
                     this.hideNumberScrubber();
                 }
             }.bind(this));

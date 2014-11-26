@@ -7738,6 +7738,22 @@ var JSToolbox = Backbone.View.extend({
 
         this.$el.html(html);
 
+        // Blur the active input if the focus has moved (e.g. starting a
+        // selection or a drag)
+        this.$el.on("mousedown", ".block-statement", function(e) {
+            // Everything else becomes inactive
+            $(".input.active, .block-statement.active").removeClass("active");
+            $(".block-statement.ui-selected").removeClass("ui-selected");
+
+            $(this).addClass("active");
+        });
+
+        // Remove the active state class on focusout
+        // (only happens on desktop when tabbing around)
+        this.$el.on("mouseup mouseleave", ".block-statement", function(e) {
+            $(this).removeClass("active");
+        });
+
         return this;
     }
 });
@@ -7817,9 +7833,14 @@ var JSToolboxEditor = Backbone.View.extend({
         this.$el.addClass("block-toolbox-editor");
         this.$el.children().detach();
         this.$el.append([
-            this.editor.render().$el,
-            this.toolbox.render().$el
+            this.toolbox.render().$el,
+            this.editor.render().$el
         ]);
+
+        // The toolbox needs to be positioned to the right of the
+        // editor, we do this by setting its left margin equal to
+        // the editor width (it is positioned fixed)
+        this.toolbox.$el.css("marginLeft", this.editor.$el.width());
     }
 });
 
@@ -7963,6 +7984,13 @@ var JSRule = Backbone.View.extend({
         // Remove the draggable related classes/styling
         this.$el.removeClass("ui-draggable ui-draggable-handle")
             .css({width: "", height: ""});
+
+        var $el = this.$el;
+
+        // To animate in the element on drop
+        setTimeout(function() {
+            $el.addClass("ui-selectee");
+        }, 0);
 
         // Re-render after dropping the element, to avoid any dummy
         // element shenanigans from jQuery UI
@@ -8182,11 +8210,27 @@ var JSRule = Backbone.View.extend({
 
         // Blur the active input if the focus has moved (e.g. starting a
         // selection or a drag)
-        $div.on("mousedown", function(e) {
-            var active = document.activeElement;
+        $div.on("mousedown focusin", function(e) {
+            var $curActive = $(".input.active");
+            var $check = $curActive.parent();
+            var $target = $(e.target);
 
-            if (active && e.target !== active) {
-                active.blur();
+            if (!$check[0] ||
+                (!$.contains($target[0], $check[0]) &&
+                !$.contains($check[0], $target[0]))) {
+                $curActive.removeClass("active").blur();
+
+                if ($target.hasClass("input")) {
+                    $target.addClass("active");
+                }
+
+                // Update the selection to make sure the statement
+                // we're inside of is marked as selected.
+                var $block = $target.closest(".block-statement");
+                var $selected = $block.siblings(".ui-selected");
+
+                $selected.removeClass("ui-selected");
+                $block.addClass("ui-selected");
             }
         });
 
@@ -8202,8 +8246,6 @@ var JSRule = Backbone.View.extend({
             } else if ($block.hasClass("ui-selected")) {
                 if ($selected.length > 0) {
                     $selected.removeClass("ui-selected");
-                } else {
-                    $block.removeClass("ui-selected");
                 }
 
             } else {
@@ -8244,6 +8286,9 @@ var JSRule = Backbone.View.extend({
             appendTo: ".block-toolbox-editor",
             revert: false,
             handle: ".block-wrapper > :first-child",
+            scroll: true,
+            scrollSensitivity: 10,
+            scrollSpeed: 10,
             helper: function(e, $item) {
                 if (!$item.hasClass("ui-selected")) {
                     // Un-select all the other nodes, if we just clicked this
@@ -8296,6 +8341,7 @@ var JSRule = Backbone.View.extend({
                     var $trash = $(".block-trash").show();
                     setTimeout(function() {
                         $trash.addClass("visible");
+                        ui.placeholder.addClass("inline");
                     }, 0);
                 }
             },
@@ -8403,15 +8449,14 @@ var JSRule = Backbone.View.extend({
 
         // From: https://github.com/luster-io/prevent-overscroll
         $div.on("touchstart", function(e) {
-            var div = $div[0];
-            var top = div.scrollTop;
-            var totalScroll = div.scrollHeight;
-            var currentScroll = top + div.offsetHeight;
+            var top = this.scrollTop;
+            var totalScroll = this.scrollHeight;
+            var currentScroll = top + this.offsetHeight;
 
             if (top <= 0) {
-                div.scrollTop = 1;
+                this.scrollTop = 1;
             } else if (currentScroll >= totalScroll) {
-                div.scrollTop = top - 1;
+                this.scrollTop = top - 1;
             }
         });
 
@@ -8457,9 +8502,13 @@ var JSASTRule = JSRule.extend({
                     var typePos = token.value.indexOf("_");
                     if (typePos > 0) {
                         var type = token.value.slice(typePos + 1);
+                        var name = token.value.slice(1, typePos);
                         var span = buildTag("block block-blank block-" + type +
-                            " block-name-" + token.value.slice(1, typePos));
+                            " block-name-" + name);
                         span.appendChild(el);
+                        var nameTag = buildTag("block-name");
+                        nameTag.appendChild(buildTag("block-text", {value: name}));
+                        span.appendChild(nameTag);
                         el = span;
                     }
                     return el;
@@ -8916,7 +8965,7 @@ JSRules.addRule(JSASTColorRule.extend({
 
 JSRules.addRule(JSASTRule.extend({
     structure: function() {
-        strokeWeight($thickness_number);
+        strokeWeight($size_number);
     }
 }));
 

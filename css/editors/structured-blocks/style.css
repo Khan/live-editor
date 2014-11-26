@@ -1,22 +1,16 @@
 .block-editor {
-    margin-right: 180px;
+    margin-right: 214px;
 }
 
 .block-toolbox {
     width: 214px;
-    position: absolute;
-    top: 0px;
-    right: 0px;
+    position: fixed;
     background: #93C263;
     height: 100%;
 }
 
 .block-toolbox .toolbox-group {
     float: left;
-}
-
-.block-toolbox .ui-draggable .block-wrapper {
-    min-width: 92px;
 }
 
 .block-toolbox .block-trash .text-out {

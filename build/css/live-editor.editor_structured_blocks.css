@@ -1,25 +1,34 @@
 .block-toolbox-editor {
     position: relative;
+    overflow: auto;
 }
 
 .block-editor {
-    height: 100%;
+    min-height: 100%;
 }
 
 .block-editor .program {
-    height: 100%;
+    min-height: 100%;
 }
 
 .program > .block.block-statements {
-    height: 100%;
+    min-height: 100%;
     position: relative;
+    margin: 10px 0 50px 0;
 }
 
-.block.block-statements .ui-sortable-placeholder {
+.block-editor .block.block-statements .block.block-statement.ui-sortable-placeholder {
     visibility: visible !important;
-    height: 3px;
+    height: 2px;
     background: #ADD8E6;
-    margin: 0 3px;
+    margin: -1px 3px 30px 3px;
+    -webkit-transition: margin-bottom 0.2s;
+    transition: margin-bottom 0.2s;
+}
+
+.block-editor .block.block-statements .block.block-statement.ui-sortable-placeholder.inline,
+.block-editor .block.block-statements .block.block-statement.ui-sortable-placeholder.ui-draggable {
+    margin-bottom: -1px;
 }
 
 .block.block-comment input,
@@ -33,6 +42,14 @@
     padding: 5px 0;
     text-align: center;
     display: inline-block;
+    outline: none;
+}
+
+.block.block-comment input.active,
+.block.block-comment .input.active,
+.block.block-inline input.active,
+.block.block-inline .input.active {
+    border-color: #000;
 }
 
 .block.block-comment input,
@@ -61,18 +78,23 @@
 }
 
 .block.block-statements {
-    overflow: auto;
     -webkit-user-select: none;
     user-select: none;
 }
 
-.block.block-statement {
-    overflow: hidden;
+.block-editor .block.block-statement:not(.ui-draggable) {
+    margin-bottom: -48px;
+    -webkit-transition: margin-bottom 0.2s;
+    transition: margin-bottom 0.2s;
+}
+
+.block-editor .block.block-statement.ui-selectee:not(.ui-sortable-placeholder) {
+    margin-bottom: 0;
 }
 
 .block.block-statement .block-wrapper {
     display: inline-block;
-    border: 1px solid #AAA;
+    border: 1px outset #AAA;
     padding: 5px 3px;
     margin: 3px;
     border-radius: 3px;
@@ -87,8 +109,10 @@
 }
 
 .block.block-statement.ui-selected .block-wrapper,
-.block.block-statement.ui-selecting .block-wrapper {
-    border: 1px solid #000;
+.block.block-statement.ui-selecting .block-wrapper,
+.block.block-statement.active .block-wrapper {
+    background: #BDDD94;
+    box-shadow: #333 0px 0px 3px;
 }
 
 .block.ui-draggable-dragging .block-wrapper {
@@ -114,10 +138,6 @@
 
 .block-toolbox .ui-draggable {
     font-size: 16px;
-}
-
-.block-toolbox .ui-draggable .block-wrapper {
-    min-width: 90px;
 }
 
 .block-toolbox .ui-draggable .block-wrapper > :not(.show-toolbox) {
@@ -216,6 +236,44 @@
     cursor: pointer;
     margin: 0 1px;
 }
+
+.block-editor .block-blank {
+    display: inline-block;
+    position: relative;
+}
+
+.block-name {
+    display: none;
+}
+
+.block-editor .block-name {
+    display: none;
+    position: absolute;
+    top: -15px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+}
+
+.block-editor .block.block-statement.ui-selected .block-name {
+    display: inline-block;
+}
+
+/* Never show the color name, it's confusing! */
+.block-editor .block.block-statement.ui-selected .block-rgb .block-name {
+    display: none;
+}
+
+.block-editor .block-name .block-text {
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    line-height: 12px;
+    color: #FFF;
+    border-radius: 7px;
+    margin: auto;
+    height: 12px;
+    padding: 1px 4px;
+}
 /**
  * Textmate-like theme ported from Ace Editor.
  *
@@ -277,24 +335,18 @@
     color: rgb(49, 132, 149);
 }
 .block-editor {
-    margin-right: 180px;
+    margin-right: 214px;
 }
 
 .block-toolbox {
     width: 214px;
-    position: absolute;
-    top: 0px;
-    right: 0px;
+    position: fixed;
     background: #93C263;
     height: 100%;
 }
 
 .block-toolbox .toolbox-group {
     float: left;
-}
-
-.block-toolbox .ui-draggable .block-wrapper {
-    min-width: 92px;
 }
 
 .block-toolbox .block-trash .text-out {

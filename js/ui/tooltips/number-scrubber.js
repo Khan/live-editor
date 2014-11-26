@@ -136,7 +136,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                 numberUpdater(evt, -1);
             });
 
-            $leftButton.on("mouseup", function() {
+            $leftButton.on("mouseup mouseleave", function() {
                 clearInterval(clickInterval);
             });
 
@@ -144,7 +144,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                 numberUpdater(evt, 1);
             });
 
-            $rightButton.on("mouseup", function() {
+            $rightButton.on("mouseup mouseleave", function() {
                 clearInterval(clickInterval);
             });
         }
