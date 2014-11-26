@@ -410,10 +410,16 @@ WebpageTester.prototype.testMethods = {
     })
 };
 window.WebpageOutput = Backbone.View.extend({
+    messageHandlers: {},
+
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
         this.externalsDir = options.externalsDir;
+
+        this.messageHandlers.setCursor = function(data) {
+            this.setCursor(data.setCursor);
+        }.bind(this);
 
         this.tester = new WebpageTester(options);
 
@@ -631,14 +637,111 @@ window.WebpageOutput = Backbone.View.extend({
         }
     },
 
-    runCode: function(userCode, callback) {
+    injectStyles: function(code) {
+        var injection = "<style type\"text/css\">"+
+        ".ka_active_element { box-shadow: 0 0 10px 1px #85B2F7; }"+
+        "</style>";
+
+        var top = "";
+        if(/^[\d\D]*?<head[\d\D]*?>/.test(code), code) {
+            top = RegExp.lastMatch;
+        } else if (/^[\d\D]*?<html[\d\D]*?>/.test(code).test(code)) {
+            top = RegExp.lastMatch;
+        }
+        code = code.slice(0,top.length)+injection+code.slice(top.length);
+        return code;
+    },
+
+    runCode: function(userCode, callback, cursor) {
         var doc = this.getDocument();
         var oldPageTitle = $(doc).find("head > title").text();
+        userCode = this.injectStyles(userCode);
         doc.open();
         doc.write(userCode);
         doc.close();
         this.postProcessing(oldPageTitle);
         callback([], userCode);
+        // This can be a post processing step no need to block everything else
+        // Especially considering it cannot raise errors (wrapped in try-catch)
+        this.setCursor(cursor);
+    },
+
+    setCursor: function(cursor) {
+        if (!this.output.lastRunWasSuccess) {
+            return;
+        }
+        if (this.lastCursor === cursor) {
+            return;
+        } else {
+            this.lastCursor = cursor;
+        }
+
+        // This should be stable, however since one of the HTML strings is parsed by Slowparse and one
+        // is parsed by the browser there is always the possibility of a mismatch leading to an error
+        // In that case its not the user's fault, don't bother them about it.
+        try {
+            cursor = {
+                start: Math.min(cursor.start, cursor.end),
+                end: Math.max(cursor.start, cursor.end)
+            };
+            var tag = this.findTagForCursor(cursor, this.userDOM, this.getDocument());
+
+            $(this.getDocument()).find(".ka_active_element").removeClass("ka_active_element");
+            if (tag && tag.tagName && tag.tagName.toLowerCase() !== "html" && tag.tagName.toLowerCase() !== "body") {
+                $(tag).addClass("ka_active_element");
+            }
+        } catch (e) {
+            if (console) {
+                console.error("Error setting cursor: ", e);
+            }
+        }
+    },
+
+    findTagForCursor: function(cursor, annotated, target) {
+        var notTextNode = function(n) {
+            return n.nodeType !== 3;
+        };
+        var isSelection = (cursor.start !== cursor.end);
+        var nodes = _.filter(annotated.childNodes, notTextNode);
+        for (var i=0; i<nodes.length; i++) {
+            node = nodes[i];
+            var openTagStart = (node.parseInfo.openTag ? node.parseInfo.openTag.start : node.parseInfo.start);
+            var openTagEnd = (node.parseInfo.openTag ? node.parseInfo.openTag.end : node.parseInfo.end);
+            var endPos = (node.parseInfo.closeTag ? node.parseInfo.closeTag.end : openTagEnd);
+
+            // If none of the selection is inside the tag then move along
+            if (cursor.start >= endPos) {
+                continue;
+            // If the cursor is anywhere inside the tag
+            } else if (cursor.start > openTagStart) {
+                // If the cursor is inside the start tag select it
+                if (!isSelection && cursor.start < openTagEnd) {
+                    var tagIndex = $(annotated).find(node.tagName).index(node);
+                    return $(target).find(node.tagName)[tagIndex];
+                } 
+                // If the cursor is somewhere between the start and end tags
+                // try searching its children
+                if (node.parseInfo.closeTag && cursor.start >= openTagEnd && cursor.end <= node.parseInfo.closeTag.start) {
+                    var tagIndex = $(annotated).find(node.tagName).index(node);
+                    var targetNode = $(target).find(node.tagName)[tagIndex];
+                    return this.findTagForCursor(cursor, node, targetNode);
+                }
+                break;
+            // If the cursor is a selection and it contains exactly one tag select it
+            } else if (isSelection && cursor.end >= endPos) {
+                if (i < (nodes.length-1)) {
+                    var next = nodes[i+1];
+                    var nextOpenTagStart = (next.parseInfo.openTag ? next.parseInfo.openTag.start
+                                                                    : next.parseInfo.start);
+                    if (cursor.end > nextOpenTagStart) {
+                        break;
+                    }
+                }
+                var tagIndex = $(annotated).find(node.tagName).index(node);
+                return $(target).find(node.tagName)[tagIndex];
+            }
+        }
+        return undefined;
     },
 
     clear: function() {

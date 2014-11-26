@@ -111,6 +111,13 @@ window.AceEditor = Backbone.View.extend({
             self.trigger("click");
         });
 
+        this.editor.selection.on("changeCursor", function() {
+            self.trigger("changeCursor");
+        });
+        this.editor.selection.on("changeSelection", function() {
+            self.trigger("changeCursor");
+        });
+
         this.config.on("versionSwitched", function(version) {
             self.config.runVersion(version, self.type + "_editor", self);
         });
@@ -364,6 +371,16 @@ window.AceEditor = Backbone.View.extend({
 
     getCursor: function() {
         return this.editor.getCursorPosition();
+    },
+
+    getSelectionIndices: function() {
+        var rng = this.editor.getSelectionRange();
+        var doc = this.editor.getSession().getDocument();
+
+        return {
+            start: doc.positionToIndex(rng.start), 
+            end: doc.positionToIndex(rng.end)
+        };
     },
 
     // Set the cursor position on the editor
