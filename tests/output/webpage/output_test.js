@@ -12,6 +12,99 @@ describe("Output Methods", function() {
     });
 });
 
+describe("Tag highlighting", function() {
+    var tests = [{
+        title: "Cursor at start of tag",
+        html: "<div id='selected'>Hello</div>",
+        pre: "<"
+    }, {
+        title: "Cursor at end of tag",
+        html: "<div id='selected'>Hello</div>",
+        pre: "<div id='selected'"
+    }, {
+        title: "Cursor in body",
+        html: "<div>Hello</div>",
+        pre: "<div>"
+    }, {
+        title: "Cursor in close tag",
+        html: "<div>Hello</div>",
+        pre: "<div>Hello</d"
+    }, {
+        title: "Tag selected",
+        html: "<div id='selected'>Hello</div>",
+        pre: "",
+        body: "<div id='selected'>Hello</div>",
+    }, {
+        title: "Selected less first char",
+        html: "<div>Hello</div>",
+        pre: "<",
+        body: "div>Hello</div>",
+    }, {
+        title: "Selected less last char",
+        html: "<div>Hello</div>",
+        pre: "",
+        body: "<div>Hello</div",
+    }, {
+        title: "Selected up to siblings",
+        html: "<span></span> <div id='selected'>Hello</div> <span></span>",
+        pre: "<span></span>",
+        body: " <div id='selected'>Hello</div> ",
+    }, {
+        title: "Selected too far left",
+        html: "<span></span> <div>Hello</div> <span></span>",
+        pre: "<span></span",
+        body: "> <div>Hello</div> ",
+    }, {
+        title: "Selected too far right",
+        html: "<span></span> <div>Hello</div> <span></span>",
+        pre: "<span></span>",
+        body: " <div>Hello</div> <",
+    }, {
+        title: "Selected including parent end tag",
+        html: "<div> <span></span> <div>Hello</div> </div>",
+        pre: "<div> <span></span> ",
+        body: "<div>Hello</div> <",
+    }];
+
+    var mockedOutput = new WebpageOutput({
+        output: {
+            lastRunWasSuccess: true
+        },
+        config: {
+            runCurVersion: function(){}
+        }
+    });
+
+    var $container = $("<div style='display: none;'>").appendTo("body");
+
+    _.each(tests, function(test) {
+        if (!test.body) test.body = "";
+        if (test.result == undefined) {
+            test.result = true;
+        }
+        var dom1 = $("<div>").append(Slowparse.HTML(document, test.html).document)[0];
+        var dom2 = $("<div>").append($(test.html))[0];
+        $container.append(dom1).append(dom2);
+        var cursor = {
+            start: test.pre.length,
+            end: test.pre.length + test.body.length
+        };
+        if (!$(dom2).find("#selected").length) {
+            test.title = "!"+test.title;
+        }
+
+        it(test.title, function() {
+            if (test.pre+test.body !== test.html.slice(0,test.pre.length+test.body.length)) {
+                throw "Invalid prefix/body";
+            } 
+            var tag = mockedOutput.findTagForCursor(cursor, dom1, dom2);
+            expect($(tag).length).to.be.equal($(dom2).find("#selected").length);
+            $(dom1).remove();
+            $(dom2).remove();
+        });
+    });
+});
+
 describe("Linting", function() {
     // Tests brought over from the Slowparse test suite
 
