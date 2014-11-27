@@ -3386,9 +3386,12 @@ function program1(depth0,data) {
         bind: function() {
             $(window).on("mousedown", function(e) {
                 var target = e.target;
+                var $target = $(target);
 
                 if (target.nodeName.toLowerCase() === "input") {
                     target = target.parentNode;
+                } else if ($target.hasClass("block-name-r")) {
+                    target = $target.closest(".block-statement")[0];
                 }
 
                 var colorPicker = this.$colorPicker[0];
