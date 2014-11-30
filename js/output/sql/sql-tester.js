@@ -376,7 +376,7 @@ SQLTester.prototype.testMethods = {
                 return { success: false };
             }
             for (var c = 0; c < res.columns.length; c++) {
-                if (res.columns[c] !== templateRes.columns[c]) {
+                if (res.columns[c].toLowerCase() !== templateRes.columns[c].toLowerCase()) {
                     return { success: false };
                 }
             }
