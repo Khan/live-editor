@@ -533,7 +533,10 @@ SQLTester.prototype.testMethods = {
                 return { success: false };
             }
             for (var c = 0; c < res.columns.length; c++) {
-                if (res.columns[c].toLowerCase() !== templateRes.columns[c].toLowerCase()) {
+                var col = res.columns[c].toLowerCase().replace(/ /g,'');
+                var templateCol =
+                    templateRes.columns[c].toLowerCase().replace(/ /g,'');
+                if (col !== templateCol) {
                     return { success: false };
                 }
             }
