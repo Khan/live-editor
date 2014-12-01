@@ -134,17 +134,21 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
 
             $leftButton.on("mousedown", function(evt) {
                 numberUpdater(evt, -1);
+                $(this).addClass("active");
             });
 
             $leftButton.on("mouseup mouseleave", function() {
+                $(this).removeClass("active");
                 clearInterval(clickInterval);
             });
 
             $rightButton.on("mousedown", function(evt) {
                 numberUpdater(evt, 1);
+                $(this).addClass("active");
             });
 
             $rightButton.on("mouseup mouseleave", function() {
+                $(this).removeClass("active");
                 clearInterval(clickInterval);
             });
         }

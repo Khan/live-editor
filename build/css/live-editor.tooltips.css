@@ -976,6 +976,12 @@ body > .scrubber-handle,
     border: 1px solid #FFF;
 }
 
+.block .tooltip:not(.picker).click-only .scrubber-handle span[role=button].active {
+    background: #FFF;
+    color: #000;
+    border: 1px solid #000;
+}
+
 .block .tooltip:not(.picker).click-only .scrubber-handle span[role=button]:not(.flipped-arrow) {
     margin-right: 16px;
 }
