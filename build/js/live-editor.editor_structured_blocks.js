@@ -121,6 +121,10 @@ window.StructuredBlocksEditor = Backbone.View.extend({
 
     text: function(code) {
         if (code != null) {
+            code = code.trim();
+            if (code) {
+                this.$el.find(".empty-help").remove();
+            }
             this.editor.setCode(code);
         }
 
