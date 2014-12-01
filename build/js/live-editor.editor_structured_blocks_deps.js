@@ -7840,7 +7840,7 @@ var JSToolboxEditor = Backbone.View.extend({
         // The toolbox needs to be positioned to the right of the
         // editor, we do this by setting its left margin equal to
         // the editor width (it is positioned fixed)
-        this.toolbox.$el.css("marginLeft", this.editor.$el.width());
+        // this.toolbox.$el.css("marginLeft", this.editor.$el.width());
     }
 });
 
@@ -8582,12 +8582,20 @@ var JSASTColorRule = JSASTRule.extend({
     },
 
     postRender: function() {
-        var color = {
-            r: this.children.vars.r_rgb.getValue(),
-            g: this.children.vars.g_rgb.getValue(),
-            b: this.children.vars.b_rgb.getValue()
-        };
-
+        var color;
+        try {
+            color = {
+                r: this.children.vars.r_rgb.getValue(),
+                g: this.children.vars.g_rgb.getValue(),
+                b: this.children.vars.b_rgb.getValue()
+            };
+        } catch(e) {
+            // In the case of no values, just default to white
+            //  (happens for hint code in challenges)
+            color = {
+                r: 255, g: 255, b: 255
+            };
+        }
         this.$el.data("color", color);
 
         this.children.vars.r_rgb.$el.parent().css("background",

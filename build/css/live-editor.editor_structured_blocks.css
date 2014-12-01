@@ -340,7 +340,7 @@
 
 .block-toolbox {
     width: 214px;
-    position: fixed;
+    float: right;
     background: #93C263;
     height: 100%;
 }
