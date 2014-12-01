@@ -1,12 +1,21 @@
+window.timer_log = [];
+
 window.Timer = function(title) {
     this.start = new Date().getTime();
     this.title = title;
 };
 window.Timer.prototype = {
     show: function() {
-        console.log("Timer", this.title, new Date().getTime() - this.start);
+        //console.log("Timer", this.title, new Date().getTime() - this.start);
+        timer_log.push([this.title, new Date().getTime() - this.start]);
     }
 };
+
+setInterval(function() {
+    window.parent.postMessage(JSON.stringify({
+        timer_log: timer_log
+    }), "*");
+}, 1000);
 
 
 window.LiveEditorOutput = Backbone.View.extend({

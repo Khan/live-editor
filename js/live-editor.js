@@ -1,3 +1,12 @@
+var setFirebase = function(endpoint, value) {
+    endpoint = endpoint.replace(/\./g, "/");
+    return $.ajax({
+        url: "https://radiant-fire-3867.firebaseio.com/"+endpoint+".json",
+        method: "PUT",
+        data: JSON.stringify(value)
+    });
+};
+
 window.LiveEditor = Backbone.View.extend({
     dom: {
         DRAW_CANVAS: ".scratchpad-draw-canvas",
@@ -963,6 +972,10 @@ window.LiveEditor = Backbone.View.extend({
         // Log the recorded action
         if (data.log) {
             this.record.log.apply(this.record, data.log);
+        }
+
+        if (data.timer_log) {
+            setFirebase(window.location.pathname.split('/').slice(-1)[0], data.timer_log);
         }
     },
 

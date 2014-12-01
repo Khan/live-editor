@@ -84,6 +84,7 @@ window.WebpageOutput = Backbone.View.extend({
 
         this.userDOM = document.createElement("div");
         this.userDOM.appendChild(results.document);
+        $("body").append(this.userDOM);
 
         callback([]);
     },
