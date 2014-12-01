@@ -93,7 +93,7 @@
     transition: opacity .3s linear;
 }
 
-.empty-help.hidden {
+.empty-help.help-hidden {
     opacity: 0;
 }
 

@@ -1,6 +1,6 @@
 window.StructuredBlocksEditor = Backbone.View.extend({
     initialize: function(options) {
-        this.defaultCode = options.code;
+        this.defaultCode = (options.code || "").trim();
         this.autoFocus = options.autoFocus;
         this.config = options.config;
         this.record = options.record;
@@ -63,7 +63,7 @@ window.StructuredBlocksEditor = Backbone.View.extend({
 
             if (!this.defaultCode) {
                 var $help = this.$el.find(".empty-help");
-                $help.addClass("hidden");
+                $help.addClass("help-hidden");
                 setTimeout(function() {
                     $help.remove();
                 }, 300);
