@@ -4,17 +4,21 @@
 }
 
 .block-editor {
+    display: flex;
     min-height: 100%;
 }
 
 .block-editor .program {
+    display: flex;
     min-height: 100%;
+    width: 100%;
 }
 
 .program > .block.block-statements {
     min-height: 100%;
+    width: 100%;
     position: relative;
-    margin: 10px 0 50px 0;
+    padding: 10px 0 50px 0;
 }
 
 .block-editor .block.block-statements .block.block-statement.ui-sortable-placeholder {
@@ -335,12 +339,14 @@
     color: rgb(49, 132, 149);
 }
 .block-editor {
-    margin-right: 214px;
+    margin-right: 215px;
 }
 
 .block-toolbox {
-    width: 214px;
-    float: right;
+    width: 215px;
+    position: absolute;
+    top: 0px;
+    right: 0px;
     background: #93C263;
     height: 100%;
 }

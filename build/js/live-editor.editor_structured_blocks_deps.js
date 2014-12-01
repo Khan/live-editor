@@ -7612,6 +7612,19 @@ var JSEditor = Backbone.View.extend({
     },
 
     render: function() {
+        // From: https://github.com/luster-io/prevent-overscroll
+        this.$el.on("touchstart", function(e) {
+            var top = this.scrollTop;
+            var totalScroll = this.scrollHeight;
+            var currentScroll = top + this.offsetHeight;
+
+            if (top <= 0) {
+                this.scrollTop = 1;
+            } else if (currentScroll >= totalScroll) {
+                this.scrollTop = top - 1;
+            }
+        });
+
         this.$el.html(this.code.render().$el);
         return this;
     }
@@ -7637,6 +7650,11 @@ var JSToolbox = Backbone.View.extend({
         });
 
         this.toolbox = toolbox;
+    },
+
+    // Move the position of the toolbox on scroll
+    scroll: function(top) {
+        this.el.style.top = top + "px";
     },
 
     render: function() {
@@ -7759,6 +7777,10 @@ var JSToolbox = Backbone.View.extend({
 });
 
 var JSToolboxEditor = Backbone.View.extend({
+    events: {
+        "scroll": "scroll"
+    },
+
     initialize: function(options) {
         this.imagesDir = options.imagesDir;
 
@@ -7776,6 +7798,10 @@ var JSToolboxEditor = Backbone.View.extend({
         });
 
         this.render();
+    },
+
+    scroll: function() {
+        this.toolbox.scroll(this.el.scrollTop);
     },
 
     setCode: function(code) {
@@ -7836,11 +7862,6 @@ var JSToolboxEditor = Backbone.View.extend({
             this.toolbox.render().$el,
             this.editor.render().$el
         ]);
-
-        // The toolbox needs to be positioned to the right of the
-        // editor, we do this by setting its left margin equal to
-        // the editor width (it is positioned fixed)
-        // this.toolbox.$el.css("marginLeft", this.editor.$el.width());
     }
 });
 
@@ -8444,19 +8465,6 @@ var JSRule = Backbone.View.extend({
                 setTimeout(function() {
                     $trash.hide();
                 }, 500);
-            }
-        });
-
-        // From: https://github.com/luster-io/prevent-overscroll
-        $div.on("touchstart", function(e) {
-            var top = this.scrollTop;
-            var totalScroll = this.scrollHeight;
-            var currentScroll = top + this.offsetHeight;
-
-            if (top <= 0) {
-                this.scrollTop = 1;
-            } else if (currentScroll >= totalScroll) {
-                this.scrollTop = top - 1;
             }
         });
 

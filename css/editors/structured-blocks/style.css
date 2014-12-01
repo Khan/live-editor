@@ -1,10 +1,12 @@
 .block-editor {
-    margin-right: 214px;
+    margin-right: 215px;
 }
 
 .block-toolbox {
-    width: 214px;
-    float: right;
+    width: 215px;
+    position: absolute;
+    top: 0px;
+    right: 0px;
     background: #93C263;
     height: 100%;
 }
