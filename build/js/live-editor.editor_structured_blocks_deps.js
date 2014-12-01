@@ -7589,6 +7589,10 @@ require("/tools/entry-point.js");
 var JSEditor = Backbone.View.extend({
     className: "block-editor",
 
+    events: {
+        "touchstart": "touchstart"
+    },
+
     initialize: function(options) {
         this.setCode(options.code);
     },
@@ -7611,20 +7615,20 @@ var JSEditor = Backbone.View.extend({
         return this.code.toScript();
     },
 
+    // From: https://github.com/luster-io/prevent-overscroll
+    touchstart: function(e) {
+        var top = this.scrollTop;
+        var totalScroll = this.scrollHeight;
+        var currentScroll = top + this.offsetHeight;
+
+        if (top <= 0) {
+            this.scrollTop = 1;
+        } else if (currentScroll >= totalScroll) {
+            this.scrollTop = top - 1;
+        }
+    },
+
     render: function() {
-        // From: https://github.com/luster-io/prevent-overscroll
-        this.$el.on("touchstart", function(e) {
-            var top = this.scrollTop;
-            var totalScroll = this.scrollHeight;
-            var currentScroll = top + this.offsetHeight;
-
-            if (top <= 0) {
-                this.scrollTop = 1;
-            } else if (currentScroll >= totalScroll) {
-                this.scrollTop = top - 1;
-            }
-        });
-
         this.$el.html(this.code.render().$el);
         return this;
     }

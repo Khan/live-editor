@@ -60,6 +60,14 @@ window.StructuredBlocksEditor = Backbone.View.extend({
 
         this.editor.on("updated", function() {
             this.trigger("change");
+
+            if (!this.defaultCode) {
+                var $help = this.$el.find(".empty-help");
+                $help.addClass("hidden");
+                setTimeout(function() {
+                    $help.remove();
+                }, 300);
+            }
         }.bind(this));
 
         this.tooltipEngine = new StructuredBlocksTooltips({
@@ -70,6 +78,19 @@ window.StructuredBlocksEditor = Backbone.View.extend({
     },
 
     render: function() {
+        if (!this.defaultCode) {
+            this.$el.append(
+                "<div class='empty-help'>" +
+                    "<span>" +
+                        $._("Drag a block from the toolbox") +
+                    " <strong>→</strong></span>" +
+                    "<span><strong>↑</strong> " +
+                        $._("And put it up here to get started!") +
+                    "</span>" +
+                "</div>"
+            );
+        }
+
         this.$el.find(".block-trash").html(
             "<div class='text-out'>" +
                 "<div class='trash-icon'>" +

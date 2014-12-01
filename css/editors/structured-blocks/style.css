@@ -76,3 +76,35 @@
     border-left: 7px solid transparent;
     border-right: 7px solid transparent;
 }
+
+.empty-help {
+    background: rgba(0, 0, 0, 0.5);
+    color: #FFF;
+    position: absolute;
+    top: 100px;
+    left: 20px;
+    right: 20px;
+    border-radius: 10px;
+    padding: 10px;
+    margin-right: 215px;
+    font-family: Helvetica;
+    font-size: 20px;
+    opacity: 1;
+    transition: opacity .3s linear;
+}
+
+.empty-help.hidden {
+    opacity: 0;
+}
+
+.empty-help span {
+    display: block;
+}
+
+.empty-help span:first-child {
+    text-align: right;
+}
+
+.empty-help span strong {
+    font-size: 1.2em;
+}
