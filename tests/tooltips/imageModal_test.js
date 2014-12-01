@@ -29,6 +29,12 @@ describe("imageModal - detection", function() {
         expect(testMockedTooltipDetection(mockedImageModal, line, pre)).to.be(true);
     });
 
+    it("Spaces around equal sign", function() {
+        var line = '<img src = "hello world.png" />';
+        var pre = '<img src = "hello ';
+        expect(testMockedTooltipDetection(mockedImageModal, line, pre)).to.be(true);
+    });
+
     it("! After close quote", function() {
         var line = '<img src="hello world.png" />';
         var pre = '<img src="hello world.png"';

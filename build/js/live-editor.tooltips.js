@@ -2356,14 +2356,14 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             _.extend(this.options.record.handlers, {
                 "imagemodal.show": this.modal.show.bind(this.modal),
                 "imagemodal.hide": function(){ 
-                    this.modal.$el.modal("hide")
+                    this.modal.$el.modal("hide");
                 }.bind(this),
                 "imagemodal.selectImg": this.modal.selectImg.bind(this.modal)
             });
         },
 
         detector: function(event) {
-            if (!/<img\s+[^>]*?\s*src=["']([^"']*)$/.test(event.pre)) {
+            if (!/<img\s+[^>]*?\s*src\s*=\s*["']([^"']*)$/.test(event.pre)) {
                 return;
             }
             var urlStart = event.col - RegExp.$1.length;
