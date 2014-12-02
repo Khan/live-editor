@@ -7589,10 +7589,6 @@ require("/tools/entry-point.js");
 var JSEditor = Backbone.View.extend({
     className: "block-editor",
 
-    events: {
-        "touchstart": "touchstart"
-    },
-
     initialize: function(options) {
         this.setCode(options.code);
     },
@@ -7613,19 +7609,6 @@ var JSEditor = Backbone.View.extend({
 
     toScript: function() {
         return this.code.toScript();
-    },
-
-    // From: https://github.com/luster-io/prevent-overscroll
-    touchstart: function(e) {
-        var top = this.scrollTop;
-        var totalScroll = this.scrollHeight;
-        var currentScroll = top + this.offsetHeight;
-
-        if (top <= 0) {
-            this.scrollTop = 1;
-        } else if (currentScroll >= totalScroll) {
-            this.scrollTop = top - 1;
-        }
     },
 
     render: function() {
@@ -7860,6 +7843,21 @@ var JSToolboxEditor = Backbone.View.extend({
     },
 
     render: function() {
+        // From: https://github.com/luster-io/prevent-overscroll
+        // NOTE: We actually don't want to delegate this, want it
+        // to be on this element, directly.
+        this.$el.on("touchstart", function(e) {
+            var top = this.scrollTop;
+            var totalScroll = this.scrollHeight;
+            var currentScroll = top + this.offsetHeight;
+
+            if (top <= 0) {
+                this.scrollTop = 1;
+            } else if (currentScroll >= totalScroll) {
+                this.scrollTop = top - 1;
+            }
+        });
+
         this.$el.addClass("block-toolbox-editor");
         this.$el.children().detach();
         this.$el.append([
