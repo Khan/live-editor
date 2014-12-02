@@ -3449,7 +3449,9 @@ function program1(depth0,data) {
 
         hideColorPicker: function() {
             this.colorPicker.onChange = function() {};
-            this.$colorPicker.hide();
+            this.$colorPicker
+                .appendTo("body")
+                .hide();
         },
 
         showNumberScrubber: function(e) {
@@ -3484,7 +3486,9 @@ function program1(depth0,data) {
 
         hideNumberScrubber: function() {
             this.numberScrubber.updateText = function() {};
-            this.numberScrubber.$el.hide();
+            this.numberScrubber.$el
+                .appendTo("body")
+                .hide();
         }
     });
 })();
