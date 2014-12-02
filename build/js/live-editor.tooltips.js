@@ -3362,8 +3362,10 @@ function program1(depth0,data) {
     window.StructuredBlocksTooltips = Backbone.View.extend({
         events: {
             "mousedown .block-rgb.block-name-r": "showColorPicker",
+            "touchstart .block-rgb.block-name-r": "showColorPicker",
             "focusin .block-rgb.block-name-r": "showColorPicker",
             "mousedown .block-number .input": "showNumberScrubber",
+            "touchstart .block-number .input": "showNumberScrubber",
             "focusin .block-number .input": "showNumberScrubber"
         },
 
