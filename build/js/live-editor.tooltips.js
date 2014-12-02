@@ -2737,6 +2737,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
             $leftButton.on("touchstart mousedown", function(evt) {
                 numberUpdater(evt, -1);
                 $(this).addClass("active");
+                evt.preventDefault();
             });
 
             $leftButton.on("touchend touchleave mouseup mouseleave", function() {
@@ -2747,6 +2748,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
             $rightButton.on("touchstart mousedown", function(evt) {
                 numberUpdater(evt, 1);
                 $(this).addClass("active");
+                evt.preventDefault();
             });
 
             $rightButton.on("touchend touchleave mouseup mouseleave", function() {

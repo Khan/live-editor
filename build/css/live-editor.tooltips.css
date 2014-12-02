@@ -582,6 +582,8 @@
     z-index: 100;
     -webkit-box-sizing: content-box;
     box-sizing: content-box;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
 html.playing .tooltip.hide-while-playing {
@@ -626,6 +628,8 @@ html.playing .tooltip.hide-while-playing {
 .tooltip .scrubber, .scrubber-handle {
     border-radius: 10px;
     cursor: ew-resize;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
 .scrubber-handle {
