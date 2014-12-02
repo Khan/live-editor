@@ -3,6 +3,9 @@
     -webkit-overflow-scrolling: auto;
     overflow-y: auto;
     overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
 .block-editor {
@@ -86,6 +89,7 @@
 .block.block-statements {
     -webkit-user-select: none;
     user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
 .block-editor .block.block-statement:not(.ui-draggable) {
@@ -132,6 +136,7 @@
 .block-toolbox {
     -webkit-user-select: none;
     user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
 .block-toolbox h3 {
