@@ -59,9 +59,11 @@ window.StructuredBlocksEditor = Backbone.View.extend({
         });
 
         this.editor.on("updated", function() {
-            this.trigger("change");
+            var code = this.editor.toScript();
 
-            if (!this.defaultCode) {
+            this.trigger("change", code);
+
+            if (!this.defaultCode && code) {
                 var $help = this.$el.find(".empty-help");
                 $help.addClass("help-hidden");
                 setTimeout(function() {
