@@ -40,7 +40,7 @@
                 var target = e.target;
                 var $target = $(target);
 
-                if (target.nodeName.toLowerCase() === "input") {
+                if ($target.hasClass("input")) {
                     target = target.parentNode;
                 } else if ($target.hasClass("block-name-r")) {
                     target = $target.closest(".block-statement")[0];

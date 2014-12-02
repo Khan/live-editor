@@ -2641,7 +2641,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
             self.updateTooltip(self.intermediateValue, self.decimals);
         };
 
-        $leftButton.click(function(evt) {
+        $leftButton.on("click touchend", function(evt) {
             if (self.noClick) {
                 self.noClick = false;
                 return;
@@ -2652,7 +2652,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
             }
         });
 
-        $rightButton.click(function(evt) {
+        $rightButton.on("click touchend", function(evt) {
             if (self.noClick) {
                 self.noClick = false;
                 return;
@@ -2711,6 +2711,8 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                 var start = (new Date).getTime();
 
                 var update = function() {
+                    self.noClick = false;
+
                     clickInterval = setTimeout(function() {
                         self.noClick = true;
                         updateNumber(rate, evt);
@@ -2718,10 +2720,12 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                         var curTime = (new Date).getTime() - start;
 
                         if (curTime >= 5000) {
-                            updateRate = 16;
-                        } else if (curTime >= 2000) {
-                            updateRate = 30;
+                            rate = (rate < 1 ? -1 : 1) * 3;
+                        } else if (curTime > 2000) {
+                            rate = (rate < 1 ? -1 : 1) * 2;
                         }
+
+                        updateRate = 16;
 
                         update();
                     }, updateRate);
@@ -2730,22 +2734,22 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                 update();
             };
 
-            $leftButton.on("mousedown", function(evt) {
+            $leftButton.on("touchstart mousedown", function(evt) {
                 numberUpdater(evt, -1);
                 $(this).addClass("active");
             });
 
-            $leftButton.on("mouseup mouseleave", function() {
+            $leftButton.on("touchend touchleave mouseup mouseleave", function() {
                 $(this).removeClass("active");
                 clearInterval(clickInterval);
             });
 
-            $rightButton.on("mousedown", function(evt) {
+            $rightButton.on("touchstart mousedown", function(evt) {
                 numberUpdater(evt, 1);
                 $(this).addClass("active");
             });
 
-            $rightButton.on("mouseup mouseleave", function() {
+            $rightButton.on("touchend touchleave mouseup mouseleave", function() {
                 $(this).removeClass("active");
                 clearInterval(clickInterval);
             });
@@ -3392,7 +3396,7 @@ function program1(depth0,data) {
                 var target = e.target;
                 var $target = $(target);
 
-                if (target.nodeName.toLowerCase() === "input") {
+                if ($target.hasClass("input")) {
                     target = target.parentNode;
                 } else if ($target.hasClass("block-name-r")) {
                     target = $target.closest(".block-statement")[0];
