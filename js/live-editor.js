@@ -980,6 +980,7 @@ window.LiveEditor = Backbone.View.extend({
             // This will either be called when we receive the results
             // Or it will timeout.
             this.cleanUp = _.once(function() {
+                clearTimeout(this.cleanUpTimeout);
                 var lastOutputState = this.outputState;
                 this.outputState = "clean";
                 if (lastOutputState === "dirty") {
@@ -988,7 +989,7 @@ window.LiveEditor = Backbone.View.extend({
             });
             // 500ms is an arbitrary delay. Hopefully long enough for reasonable programs
             // to execute, but short enough for editor to not feel laggy
-            setTimeout(this.cleanUp.bind(this), 500);
+            this.cleanUpTimeout = setTimeout(this.cleanUp.bind(this), 500);
         } else {
             this.outputState = "dirty";
         }

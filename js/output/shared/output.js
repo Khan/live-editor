@@ -165,10 +165,6 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     runCode: function(userCode, callback, noLint) {
-        if (this.testTimeout) {
-            clearTimeout(this.testTimeout);
-            this.testTimeout = false;
-        }
         this.currentCode = userCode;
 
         var buildDone = function(errors) {
@@ -195,15 +191,17 @@ window.LiveEditorOutput = Backbone.View.extend({
 
             this.toggle(!errors.length);
 
-            this.testTimeout = setTimeout(function() {
-                this.test(userCode, this.validate, errors, function(errors, testResults) {
-                    this.postParent({
-                        results: {
-                            tests: testResults
-                        }
-                    });
-                }.bind(this));
-            }, 200);
+            // This is debounced (async)
+            this.test(userCode, this.validate, errors, function(errors, testResults) {
+                this.postParent({
+                    results: {
+                        code: userCode,
+                        errors: errors,
+                        tests: testResults
+                    }
+                });
+            }.bind(this));
+
         }.bind(this);
 
         var lintDone = function(errors) {
@@ -228,9 +226,9 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
     },
 
-    test: function(userCode, validate, errors, callback) {
+    test: _.throttle(function(userCode, validate, errors, callback) {
         this.output.test(userCode, validate, errors, callback);
-    },
+    }, 200),
 
     lint: function(userCode, callback) {
         this.output.lint(userCode, callback);
