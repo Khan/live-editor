@@ -100,7 +100,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code);
+            this.runCode(data.code, null, data.noLint);
         }
 
         if (data.onlyRunTests != null) {
@@ -164,7 +164,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.validate = validate;
     },
 
-    runCode: function(userCode, callback) {
+    runCode: function(userCode, callback, noLint) {
         
         this.currentCode = userCode;
 
@@ -194,7 +194,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             this.toggle(!errors.length);
         }.bind(this);
 
-        this.lint(userCode, function(errors) {
+        var lintDone = function(errors) {
             // Run the tests (even if there are lint errors)
             this.test(userCode, this.validate, errors, function(errors, testResults) {
                 if (errors.length > 0 || this.onlyRunTests) {
@@ -211,7 +211,14 @@ window.LiveEditorOutput = Backbone.View.extend({
                     runDone([e], testResults);
                 }
             }.bind(this));
-        }.bind(this));
+        }.bind(this);
+
+        if (noLint && this.firstLint) {
+            lintDone([]);
+        } else {
+            this.lint(userCode, lintDone);
+            this.firstLint = true;
+        }
     },
 
     test: function(userCode, validate, errors, callback) {

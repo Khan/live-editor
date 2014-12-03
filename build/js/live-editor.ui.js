@@ -1834,6 +1834,7 @@ window.LiveEditor = Backbone.View.extend({
         var options = {
             code: arguments.length === 0 ? this.editor.text() : code,
             validate: this.validation || "",
+            noLint: (this.editorType === "structured-blocks_pjs"),
             version: this.config.curVersion(),
             settings: this.settings || {},
             workersDir: this.workersDir,
