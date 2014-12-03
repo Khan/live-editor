@@ -75,7 +75,7 @@
 */
 
 .block.block-statement + .block.block-comment {
-    margin-top: 40px;
+    margin-top: 15px;
 }
 
 .block.block-statement.block-comment + .block.block-comment {
@@ -114,8 +114,36 @@
     line-height: 25px;
 }
 
-.block.block-statement .block-wrapper > :first-child {
+.block.block-statement .block-wrapper > .grab-handle {
+    display: inline-block;
+    height: 30px;
     cursor: move;
+}
+
+.block.block-statement .block-wrapper .grabber {
+    position: relative;
+    background: #BBB;
+    display: inline-block;
+    vertical-align: middle;
+    height: 30px;
+    width: 2px;
+    margin: 0 10px 0 5px;
+}
+
+.block.block-statement .block-wrapper .grabber:before,
+.block.block-statement .block-wrapper .grabber:after {
+    position: absolute;
+    display: block;
+    width: 2px;
+    height: 30px;
+    background: #BBB;
+    left: -4px;
+    top: 0;
+    content: " ";
+}
+
+.block.block-statement .block-wrapper .grabber:after {
+    left: 4px;
 }
 
 .block.block-statement.ui-selected .block-wrapper,
@@ -151,7 +179,15 @@
     font-size: 16px;
 }
 
-.block-toolbox .ui-draggable .block-wrapper > :not(.show-toolbox) {
+.block-toolbox .ui-draggable .block-wrapper > :not(.grab-handle) {
+    display: none;
+}
+
+.block-toolbox .ui-draggable .block-wrapper > .grab-handle {
+    height: auto;
+}
+
+.block-toolbox .ui-draggable .block-wrapper > .grab-handle .grabber {
     display: none;
 }
 
