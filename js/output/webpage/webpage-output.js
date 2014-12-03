@@ -232,11 +232,12 @@ window.WebpageOutput = Backbone.View.extend({
         "</style>";
 
         var top = "";
-        if(/^[\d\D]*?<head[\d\D]*?>/.test(code), code) {
+        if(/^[\d\D]*?<head[\d\D]*?>/.test(code)) {
             top = RegExp.lastMatch;
-        } else if (/^[\d\D]*?<html[\d\D]*?>/.test(code).test(code)) {
+        } else if (/^[\d\D]*?<html[\d\D]*?>/.test(code)) {
             top = RegExp.lastMatch;
         }
+        console.log(top);
         code = code.slice(0,top.length)+injection+code.slice(top.length);
         return code;
     },
@@ -255,6 +256,11 @@ window.WebpageOutput = Backbone.View.extend({
         this.setCursor(cursor);
     },
 
+    /*
+     * This function will search down the parse tree created by slowparse until it finds where the 
+     * current cursor is. If the cursor is currently in an open tag or we are currently selecting
+     * exactly one element, it will highlight that element.
+     */
     setCursor: function(cursor) {
         if (!this.output.lastRunWasSuccess) {
             return;

@@ -425,7 +425,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code, undefined, data.cursor, data.noLint));\
+            this.runCode(data.code, undefined, data.cursor, data.noLint);
         }
 
         if (data.onlyRunTests != null) {
@@ -543,7 +543,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             try {
                 this.output.runCode(userCode, function(errors) {
                     buildDone(errors);
-                });
+                }, cursor);
 
             } catch (e) {
                 buildDone([e]);
