@@ -237,7 +237,6 @@ window.WebpageOutput = Backbone.View.extend({
         } else if (/^[\d\D]*?<html[\d\D]*?>/.test(code)) {
             top = RegExp.lastMatch;
         }
-        console.log(top);
         code = code.slice(0,top.length)+injection+code.slice(top.length);
         return code;
     },
