@@ -2,6 +2,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
+    lastRunWasSuccess: false,
 
     initialize: function(options) {
         this.render();
@@ -100,7 +101,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code, null, data.noLint);
+            this.runCode(data.code, undefined, data.cursor, data.noLint));\
         }
 
         if (data.onlyRunTests != null) {
@@ -164,11 +165,12 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.validate = validate;
     },
 
-    runCode: function(userCode, callback, noLint) {
+    runCode: function(userCode, callback, cursor, noLint) {
         this.currentCode = userCode;
 
         var buildDone = function(errors) {
             errors = this.cleanErrors(errors || []);
+            this.lastRunWasSuccess = !errors.length;
 
             if (!this.loaded) {
                 this.postParent({ loaded: true });
@@ -201,6 +203,7 @@ window.LiveEditorOutput = Backbone.View.extend({
                             code: userCode,
                             errors: errors,
                             tests: testResults
+
                         }
                     });
                 }.bind(this));
@@ -217,6 +220,7 @@ window.LiveEditorOutput = Backbone.View.extend({
                 this.output.runCode(userCode, function(errors) {
                     buildDone(errors);
                 });
+
             } catch (e) {
                 buildDone([e]);
             }        
@@ -230,6 +234,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             this.firstLint = true;
         }
     },
+
 
     test: _.throttle(function() {
         this._test.apply(this, arguments);
