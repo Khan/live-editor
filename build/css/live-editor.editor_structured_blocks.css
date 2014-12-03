@@ -75,7 +75,7 @@
 */
 
 .block.block-statement + .block.block-comment {
-    margin-top: 15px;
+    margin-top: 40px;
 }
 
 .block.block-statement.block-comment + .block.block-comment {
