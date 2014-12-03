@@ -965,8 +965,7 @@ window.LiveEditor = Backbone.View.extend({
             this.record.log.apply(this.record, data.log);
         }
     },
-
-
+    
     markDirty: function(force) {
         // They're typing. Hide the tipbar to give them a chance to fix things up
         this.tipbar.hide();
@@ -1028,8 +1027,15 @@ window.LiveEditor = Backbone.View.extend({
 
     /*
      * Execute some code in the output frame.
+     *
+     * A note about the throttling:
+     * This limits updates to 50FPS. No point in updating faster than that.
+     * 
+     * DO NOT CALL THIS DIRECTLY
+     * Instead call markDirty because it will handle
+     * throttling requests properly.
      */
-    runCode: function(code) {
+    _runCode: _.throttle(function(code) {
         var options = {
             code: arguments.length === 0 ? this.editor.text() : code,
             validate: this.validation || "",
@@ -1046,7 +1052,38 @@ window.LiveEditor = Backbone.View.extend({
         this.trigger("runCode", options);
 
         this.postFrame(options);
+    }, 20),
+
+    markDirty: function(force) {
+        // They're typing. Hide the tipbar to give them a chance to fix things up
+        this.tipbar.hide();
+        if (this.outputState === "clean" || force) {
+            // We will run at the end of this code block
+            // This stops replace from trying to execute code
+            // between deleting the old code and adding the new code
+            setTimeout(this._runCode.bind(this), 0);
+
+            this.outputState = "running";
+
+            // This will either be called when we receive the results
+            // Or it will timeout.
+            this.cleanUp = _.once(function() {
+                var lastOutputState = this.outputState;
+                this.outputState = "clean";
+                if (lastOutputState === "dirty") {
+                    this.markDirty();
+                }
+            });
+            // 500ms is an arbitrary delay. Hopefully long enough for reasonable programs
+            // to execute, but short enough for editor to not feel laggy
+            setTimeout(this.cleanUp.bind(this), 500);
+        } else {
+            this.outputState = "dirty";
+        }
     },
+    // This stops us from sending  any updates until
+    // we call markDirty("force") as a part of the frame load handler
+    outputState: "dirty",
 
     getScreenshot: function(callback) {
         // Unbind any handlers this function may have set for previous
