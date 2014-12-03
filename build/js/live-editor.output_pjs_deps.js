@@ -34455,6 +34455,90 @@ parseStatement: true, parseSourceElement: true */
         return false;
     }
 
+
+    /*
+     * This discards all wildcard vars that were part of a failed match
+     * this provides an important speedup by stopping anyPossible from having to increment
+     * every match on a doomed set of arguments.
+     * If the any argument set fails no amount of incrementing can save it.
+     */
+    function discardWVarsOnFailureDecorator(callback) {
+        return function(currTree, toFind, peersToFind, wVars, matchResults, options) {
+            var lastWVar;
+            for (lastWVar=0; lastWVar<wVars.order.length; lastWVar++) {
+                var candidate = wVars.values[wVars.order[lastWVar]];
+                if (_.isEmpty(candidate)) {
+                    break;
+                }
+            }
+            var result = callback(currTree, toFind, peersToFind, wVars, matchResults, options);
+            if (!result) {
+                for (; lastWVar<wVars.order.length; lastWVar++) {
+                    var candidate = wVars.values[wVars.order[lastWVar]];
+                    if (!_.isEmpty(candidate)) {
+                        // Reset the wildcard vars' guesses. Delete the properties
+                        // rather than setting to {} in order to maintain shared
+                        // object references in the structure tree (toFind, peers)
+                        _.each(candidate, function(v, k) {
+                            delete candidate[k];
+                        });
+                    } else {
+                        break;
+                    }
+                }
+                wVars._last = lastWVar;
+            }
+            return result;
+        };
+    }
+
+    /*
+     * Returns true if and only if all arguments from the pattern match the corresponding
+     * argument in the test code
+     */
+    var checkArgumentsArray = discardWVarsOnFailureDecorator(function(nodeArr, toFind, peersToFind, wVars, matchResults, options) {
+        var curGlob;
+
+        for (var i = 0; i < nodeArr.length; i += 1) {
+            if (isGlob(toFind)) {
+                if (!curGlob) {
+                    curGlob = [];
+                    var globName = isGlob(toFind);
+                    if (globName === "_") {
+                        matchResults._.push(curGlob);
+                    } else {
+                        matchResults.vars[globName] = curGlob;
+                    }
+                }
+                curGlob.push(nodeArr[i]);
+            } else {
+                if (checkMatchTree(nodeArr[i], toFind, peersToFind, wVars, matchResults, options)) {
+                    if (!peersToFind || peersToFind.length === 0) {
+                        return matchResults;
+                    } else {
+                        toFind = peersToFind.shift();
+                    }
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        if (curGlob) {
+            return matchResults;
+        } else if (isGlob(toFind)) {
+            var globName = isGlob(toFind);
+            if (globName === "_") {
+                matchResults._.push([]);
+            } else {
+                matchResults.vars[globName] = [];
+            }
+            return matchResults;
+        }
+
+        return false;
+    });
+
     /*
      * Checks whether the currNode exactly matches the node toFind.
      *
@@ -34526,7 +34610,11 @@ parseStatement: true, parseSourceElement: true */
                 }
                 var newToFind = subFind[0];
                 var peers = subFind.slice(1);
-                if (!checkNodeArray(subCurr, newToFind, peers, wVars, matchResults, options)) {
+                if (key === "params" || key === "arguments") {
+                    if (!checkArgumentsArray(subCurr, newToFind, peers, wVars, matchResults, options)) {
+                        return false;
+                    }
+                } else if (!checkNodeArray(subCurr, newToFind, peers, wVars, matchResults, options)) {
                     return false;
                 }
             } else if (_.isObject(subCurr)) {
