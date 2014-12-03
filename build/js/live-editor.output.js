@@ -326,6 +326,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
+    lastRunWasSuccess: false,
 
     initialize: function(options) {
         this.render();
@@ -424,7 +425,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code);
+            this.runCode(data.code, undefined, data.cursor, data.noLint);
         }
 
         if (data.onlyRunTests != null) {
@@ -488,57 +489,81 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.validate = validate;
     },
 
-    runCode: function(userCode, callback) {
-        
+    runCode: function(userCode, callback, cursor, noLint) {
         this.currentCode = userCode;
 
-        var runDone = function(errors, testResults) {
+        var buildDone = function(errors) {
             errors = this.cleanErrors(errors || []);
+            this.lastRunWasSuccess = !errors.length;
 
             if (!this.loaded) {
                 this.postParent({ loaded: true });
                 this.loaded = true;
             }
-
-            // A callback for working with a test suite
-            if (callback) {
-                callback(errors, testResults);
-                return;
-            }
-
             this.postParent({
                 results: {
                     code: userCode,
                     errors: errors,
-                    tests: testResults || [],
                     assertions: this.assertions
                 }
             });
 
             this.toggle(!errors.length);
+
+            // A callback for working with a test suite
+            if (callback) {
+                //This is synchrynous
+                this._test(userCode, this.validate, errors, function(errors, testResults) {
+                    callback(errors, testResults);
+                    return;
+                });
+            // Normal case
+            } else {
+                // This is debounced (async)
+                this.test(userCode, this.validate, errors, function(errors, testResults) {
+
+                    this.postParent({
+                        results: {
+                            code: userCode,
+                            errors: errors,
+                            tests: testResults
+
+                        }
+                    });
+                }.bind(this));
+            }
         }.bind(this);
 
-        this.lint(userCode, function(errors) {
-            // Run the tests (even if there are lint errors)
-            this.test(userCode, this.validate, errors, function(errors, testResults) {
-                if (errors.length > 0 || this.onlyRunTests) {
-                    return runDone(errors, testResults);
-                }
+        var lintDone = function(errors) {
+            if (errors.length > 0 || this.onlyRunTests) {
+                return buildDone(errors);
+            }
 
-                // Then run the user's code
-                try {
-                    this.output.runCode(userCode, function(errors) {
-                        runDone(errors, testResults);
-                    });
+            // Then run the user's code
+            try {
+                this.output.runCode(userCode, function(errors) {
+                    buildDone(errors);
+                }, cursor);
 
-                } catch (e) {
-                    runDone([e], testResults);
-                }
-            }.bind(this));
-        }.bind(this));
+            } catch (e) {
+                buildDone([e]);
+            }        
+        }.bind(this);
+
+        // Always lint the first time, so that PJS can populate its list of globals
+        if (noLint && this.firstLint) {
+            lintDone([]);
+        } else {
+            this.lint(userCode, lintDone);
+            this.firstLint = true;
+        }
     },
 
-    test: function(userCode, validate, errors, callback) {
+
+    test: _.throttle(function() {
+        this._test.apply(this, arguments);
+    }, 200),
+    _test: function(userCode, validate, errors, callback) {
         this.output.test(userCode, validate, errors, callback);
     },
 

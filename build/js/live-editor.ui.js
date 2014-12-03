@@ -993,6 +993,29 @@ window.LiveEditor = Backbone.View.extend({
             this.markDirty();
         }.bind(this));
 
+        this.on("runDone", this.runDone.bind(this));
+
+        // This function will fire once after each synchrynous block which changes the cursor
+        // or the current selection. We use it for tag highlighting in webpages.
+        var cursorDirty = function() {
+            if (self.outputState !== "clean" ) {
+                // This will fire after markDirty() itself gets a chance to start a new run
+                // So it will just keep resetting itself until one run comes back and there are
+                // no changes waiting
+                self.once("runDone", cursorDirty);
+            } else {
+                setTimeout(function() {
+                    if (self.editor.getSelectionIndices) {
+                        self.postFrame({
+                            setCursor: self.editor.getSelectionIndices()
+                        });
+                    }
+                    self.editor.once("changeCursor", cursorDirty);
+                }, 0);                
+            }
+        };
+        this.editor.once("changeCursor", cursorDirty);
+
         this.config.on("versionSwitched", function(e, version) {
             // Re-run the code after a version switch
             this.markDirty();
@@ -1720,7 +1743,7 @@ window.LiveEditor = Backbone.View.extend({
         }
         
         if (data.results) {
-            this.cleanUp();
+            this.trigger("runDone");
         }
 
         if (this.editorType.indexOf("ace_") === 0 && data.results &&
@@ -1773,37 +1796,6 @@ window.LiveEditor = Backbone.View.extend({
         }
     },
 
-
-    markDirty: function(force) {
-        // They're typing. Hide the tipbar to give them a chance to fix things up
-        this.tipbar.hide();
-        if (this.outputState === "clean" || force) {
-            // We will run at the end of this code block
-            // This stops replace from trying to execute code
-            // between deleting the old code and adding the new code
-            setTimeout(this.runCode.bind(this), 0);
-            this.outputState = "running";
-
-            // This will either be called when we receive the results
-            // Or it will timeout.
-            this.cleanUp = _.once(function() {
-                var lastOutputState = this.outputState;
-                this.outputState = "clean";
-                if (lastOutputState === "dirty") {
-                    this.markDirty();
-                }
-            });
-            // 500ms is an arbitrary delay. Hopefully long enough for reasonable programs
-            // to execute, but short enough for editor to not feel laggy
-            setTimeout(this.cleanUp.bind(this), 500);
-        } else {
-            this.outputState = "dirty";
-        }
-    },
-    // This stops us from sending  any updates until
-    // we call markDirty("force") as a part of the frame load handler
-    outputState: "dirty",
-
     // Extract the origin from the embedded frame location
     postFrameOrigin: function() {
         var match = /^.*:\/\/[^\/]*/.exec(
@@ -1829,11 +1821,20 @@ window.LiveEditor = Backbone.View.extend({
 
     /*
      * Execute some code in the output frame.
+     *
+     * A note about the throttling:
+     * This limits updates to 50FPS. No point in updating faster than that.
+     * 
+     * DO NOT CALL THIS DIRECTLY
+     * Instead call markDirty because it will handle
+     * throttling requests properly.
      */
-    runCode: function(code) {
+    runCode: _.throttle(function(code) {
         var options = {
             code: arguments.length === 0 ? this.editor.text() : code,
+            cursor: this.editor.getSelectionIndices ? this.editor.getSelectionIndices() : -1,
             validate: this.validation || "",
+            noLint: (this.editorType === "structured-blocks_pjs"),
             version: this.config.curVersion(),
             settings: this.settings || {},
             workersDir: this.workersDir,
@@ -1846,7 +1847,38 @@ window.LiveEditor = Backbone.View.extend({
         this.trigger("runCode", options);
 
         this.postFrame(options);
+    }, 20),
+    
+    markDirty: function(force) {
+        // They're typing. Hide the tipbar to give them a chance to fix things up
+        this.tipbar.hide();
+        if (this.outputState === "clean" || force) {
+            // We will run at the end of this code block
+            // This stops replace from trying to execute code
+            // between deleting the old code and adding the new code
+            setTimeout(this.runCode.bind(this), 0);
+            this.outputState = "running";
+
+            // 500ms is an arbitrary timeout. Hopefully long enough for reasonable programs
+            // to execute, but short enough for editor to not freeze
+            this.runTimeout = setTimeout(function() { this.trigger("runDone"); }.bind(this), 500);
+        } else {
+            this.outputState = "dirty";
+        }
     },
+    // This will either be called when we receive the results
+    // Or it will timeout.
+    runDone: function() {
+        clearTimeout(this.runTimeout);
+        var lastOutputState = this.outputState;
+        this.outputState = "clean";
+        if (lastOutputState === "dirty") {
+            this.markDirty();
+        }
+    },
+    // This stops us from sending  any updates until
+    // we call markDirty("force") as a part of the frame load handler
+    outputState: "dirty",
 
     getScreenshot: function(callback) {
         // Unbind any handlers this function may have set for previous
