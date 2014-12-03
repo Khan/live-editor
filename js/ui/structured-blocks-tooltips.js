@@ -38,26 +38,34 @@
         },
 
         bind: function() {
-            $(window).on("mousedown", function(e) {
+            $(window).on("mousedown touchstart", function(e) {
                 var target = e.target;
                 var $target = $(target);
+
+                var colorPicker = this.$colorPicker[0];
+                var numberScrubber = this.numberScrubber.$el[0];
 
                 if ($target.hasClass("input")) {
                     target = target.parentNode;
                 } else if ($target.hasClass("block-name-r")) {
                     target = $target.closest(".block-statement")[0];
+                } else {
+                    if (!$.contains(colorPicker, target)) {
+                        this.hideColorPicker();
+                    }
+
+                    if (!$.contains(numberScrubber, target)) {
+                        this.hideNumberScrubber();
+                    }
+
+                    return;
                 }
 
-                var colorPicker = this.$colorPicker[0];
-                var numberScrubber = this.numberScrubber.$el[0];
-
-                if (!$.contains(target, colorPicker) &&
-                    !$.contains(colorPicker, target)) {
+                if (!$.contains(target, colorPicker)) {
                     this.hideColorPicker();
                 }
 
-                if (!$.contains(target, numberScrubber) &&
-                    !$.contains(numberScrubber, target)) {
+                if (!$.contains(target, numberScrubber)) {
                     this.hideNumberScrubber();
                 }
             }.bind(this));

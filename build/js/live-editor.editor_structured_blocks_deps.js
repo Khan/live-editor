@@ -7747,18 +7747,18 @@ var JSToolbox = Backbone.View.extend({
 
         // Blur the active input if the focus has moved (e.g. starting a
         // selection or a drag)
-        this.$el.on("mousedown", ".block-statement", function(e) {
+        this.$el.on("mousedown touchstart", ".block-statement .block-wrapper", function(e) {
             // Everything else becomes inactive
             $(".input.active, .block-statement.active").removeClass("active");
             $(".block-statement.ui-selected").removeClass("ui-selected");
 
-            $(this).addClass("active");
+            $(this).closest(".block-statement").addClass("active");
         });
 
         // Remove the active state class on focusout
         // (only happens on desktop when tabbing around)
-        this.$el.on("mouseup mouseleave", ".block-statement", function(e) {
-            $(this).removeClass("active");
+        this.$el.on("mouseup mouseleave touchend touchleave", ".block-statement .block-wrapper", function(e) {
+            $(this).closest(".block-statement").removeClass("active");
         });
 
         return this;
@@ -7855,7 +7855,11 @@ var JSToolboxEditor = Backbone.View.extend({
 
             // Don't allow scrolling if there is nothing to scroll!
             if (totalScroll === this.offsetHeight) {
-                e.preventDefault();
+                // Don't prevent the touchstart event when the user is
+                // attempting to update an input
+                if (e.target.nodeName.toLowerCase() !== "input") {
+                    e.preventDefault();
+                }
             } else if (top <= 0) {
                 this.scrollTop = 1;
             } else if (currentScroll >= totalScroll) {
@@ -8238,12 +8242,16 @@ var JSRule = Backbone.View.extend({
 
         // Blur the active input if the focus has moved (e.g. starting a
         // selection or a drag)
-        $div.on("mousedown focusin", function(e) {
+        $div.on("mousedown focusin touchstart", function(e) {
             var $curActive = $(".input.active");
             var $check = $curActive.parent();
             var $target = $(e.target);
 
-            if (!$check[0] ||
+            if ($target.closest(".block-wrapper").length === 0) {
+                $(".ui-selected").removeClass("ui-selected");
+                $curActive.removeClass("active").blur();
+
+            } else if (!$check[0] ||
                 (!$.contains($target[0], $check[0]) &&
                 !$.contains($check[0], $target[0]))) {
                 $curActive.removeClass("active").blur();
@@ -8265,7 +8273,7 @@ var JSRule = Backbone.View.extend({
         // Since we cancel mouse interactions on the block-statement children
         // we need to replicate the selection interaction.
         $div.on("click", ".block-statement .block-wrapper", function(e) {
-            var $block = $(this).parent();
+            var $block = $(this).closest(".block-statement");
             var $selected = $block.siblings(".ui-selected");
 
             if (e.metaKey || e.ctrlKey) {
@@ -8704,7 +8712,7 @@ var JSComment = JSRules.addRule(JSRule.extend({
                 type: "text",
                 value: value,
                 placeholder: this.defaultValue,
-                "class": "comment"
+                "class": "comment input"
             }).width(Math.max(
                 JSRules.textWidth(value || this.defaultValue) + 4, 40))
         ]));
