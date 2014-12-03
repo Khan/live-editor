@@ -997,6 +997,11 @@ window.LiveEditor = Backbone.View.extend({
     // This stops us from sending  any updates until
     // we call markDirty("force") as a part of the frame load handler
     outputState: "dirty",
+    cleanUp: function(){ 
+        if (console) {
+            console.warn("called cleanUp, before declaring it");
+        }
+    },
 
     // Extract the origin from the embedded frame location
     postFrameOrigin: function() {
