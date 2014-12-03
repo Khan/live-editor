@@ -174,13 +174,6 @@ window.LiveEditorOutput = Backbone.View.extend({
                 this.postParent({ loaded: true });
                 this.loaded = true;
             }
-
-            // A callback for working with a test suite
-            if (callback) {
-                callback(errors, testResults);
-                return;
-            }
-
             this.postParent({
                 results: {
                     code: userCode,
@@ -191,17 +184,27 @@ window.LiveEditorOutput = Backbone.View.extend({
 
             this.toggle(!errors.length);
 
-            // This is debounced (async)
-            this.test(userCode, this.validate, errors, function(errors, testResults) {
-                this.postParent({
-                    results: {
-                        code: userCode,
-                        errors: errors,
-                        tests: testResults
-                    }
+            // A callback for working with a test suite
+            if (callback) {
+                //This is synchrynous
+                this._test(userCode, this.validate, errors, function(errors, testResults) {
+                    callback(errors, testResults);
+                    return;
                 });
-            }.bind(this));
+            // Normal case
+            } else {
+                // This is debounced (async)
+                this.test(userCode, this.validate, errors, function(errors, testResults) {
 
+                    this.postParent({
+                        results: {
+                            code: userCode,
+                            errors: errors,
+                            tests: testResults
+                        }
+                    });
+                }.bind(this));
+            }
         }.bind(this);
 
         var lintDone = function(errors) {
@@ -216,8 +219,10 @@ window.LiveEditorOutput = Backbone.View.extend({
                 });
             } catch (e) {
                 buildDone([e]);
-            }        }.bind(this);
+            }        
+        }.bind(this);
 
+        // Always lint the first time, so that PJS can populate its list of globals
         if (noLint && this.firstLint) {
             lintDone([]);
         } else {
@@ -226,9 +231,12 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
     },
 
-    test: _.throttle(function(userCode, validate, errors, callback) {
-        this.output.test(userCode, validate, errors, callback);
+    test: _.throttle(function() {
+        this._test.apply(this, arguments);
     }, 200),
+    _test: function(userCode, validate, errors, callback) {
+        this.output.test(userCode, validate, errors, callback);
+    },
 
     lint: function(userCode, callback) {
         this.output.lint(userCode, callback);

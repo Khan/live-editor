@@ -27,9 +27,14 @@ var runTest = function(options) {
         }
 
         output.runCode(code, function(errors, testResults) {
+            console.log(options.pass, errors);
             if (options.pass) {
                 expect(errors).to.have.length(0);
             } else {
+                console.log(errors.length)
+                if (errors.length === 0) {
+                    console.log("Hellow")
+                }
                 expect(errors).to.not.have.length(0);
             }
             done();
