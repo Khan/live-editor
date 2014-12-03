@@ -165,35 +165,45 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     runCode: function(userCode, callback, noLint) {
-        
+        if (this.testTimeout) {
+            clearTimeout(this.testTimeout);
+            this.testTimeout = false;
+        }
         this.currentCode = userCode;
 
         var buildDone = function(errors) {
-            this.test(userCode, this.validate, errors, function(errors, testResults) {
-                errors = this.cleanErrors(errors || []);
+            errors = this.cleanErrors(errors || []);
 
-                if (!this.loaded) {
-                    this.postParent({ loaded: true });
-                    this.loaded = true;
+            if (!this.loaded) {
+                this.postParent({ loaded: true });
+                this.loaded = true;
+            }
+
+            // A callback for working with a test suite
+            if (callback) {
+                callback(errors, testResults);
+                return;
+            }
+
+            this.postParent({
+                results: {
+                    code: userCode,
+                    errors: errors,
+                    assertions: this.assertions
                 }
+            });
 
-                // A callback for working with a test suite
-                if (callback) {
-                    callback(errors, testResults);
-                    return;
-                }
+            this.toggle(!errors.length);
 
-                this.postParent({
-                    results: {
-                        code: userCode,
-                        errors: errors,
-                        tests: testResults || [],
-                        assertions: this.assertions
-                    }
-                });
-
-                this.toggle(!errors.length);
-            }.bind(this));
+            this.testTimeout = setTimeout(function() {
+                this.test(userCode, this.validate, errors, function(errors, testResults) {
+                    this.postParent({
+                        results: {
+                            tests: testResults
+                        }
+                    });
+                }.bind(this));
+            }, 200);
         }.bind(this);
 
         var lintDone = function(errors) {
