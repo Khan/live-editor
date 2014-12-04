@@ -47,7 +47,7 @@
     -webkit-appearance: none;
     background: #FFF;
     border: 1px solid #CCC;
-    border-radius: 17px;
+    border-radius: 20px;
     padding: 5px 0;
     text-align: center;
     display: inline-block;
@@ -122,7 +122,7 @@
 
 .block.block-statement .block-wrapper .grabber {
     position: relative;
-    background: #BBB;
+    background: #CCC;
     display: inline-block;
     vertical-align: middle;
     height: 30px;
@@ -136,14 +136,14 @@
     display: block;
     width: 2px;
     height: 30px;
-    background: #BBB;
-    left: -4px;
+    background: #CCC;
+    left: -5px;
     top: 0;
     content: " ";
 }
 
 .block.block-statement .block-wrapper .grabber:after {
-    left: 4px;
+    left: 5px;
 }
 
 .block.block-statement.ui-selected .block-wrapper,
@@ -334,6 +334,10 @@
     font-size: 16px;
 }
 
+.block .text {
+    color: #999;
+}
+
 .block .comment {
     color: rgb(76, 136, 107)
 }
@@ -343,7 +347,7 @@
 }
 
 .block .constant.numeric {
-    color: rgb(0, 0, 205);
+    color: #444;
 }
 
 .block .storage {
@@ -371,7 +375,7 @@
 }
 
 .block .entity.name.function {
-    color: #0000A2;
+    color: #444;
 }
 
 .block .support {
