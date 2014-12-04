@@ -9,6 +9,13 @@
  *  test: A callback function to run with all the results
  */
 var runTest = function(options) {
+    if ((!options.errors || !options.errors.length) && !options.noLint) {
+        var noLintOpts = _.extend({}, options);
+        noLintOpts.noLint = true;
+        noLintOpts.title = options.title + " (noLint)";
+        runTest(noLintOpts);
+    }
+
     if (options.version === undefined) {
         options.version = ScratchpadConfig.prototype.latestVersion();
     }
