@@ -9011,7 +9011,7 @@ JSRules.addRule(JSASTRule.extend({
 JSRules.addRule(JSASTRule.extend({
     image: "line.png",
     structure: function() {
-        line($x1_number, $y1_number, $s2_number, $y2_number);
+        line($x1_number, $y1_number, $x2_number, $y2_number);
     }
 }));
 
