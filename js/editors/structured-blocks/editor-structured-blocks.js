@@ -8,46 +8,47 @@ window.StructuredBlocksEditor = Backbone.View.extend({
 
         this.config.editor = this;
 
-        var toolbox = {
-            "Shapes": [
-                function() {
-                    rect(10, 10, 50, 50);
-                },
-                function() {
-                    ellipse(120, 120, 100, 100);
-                },
-                function() {
-                    line(10, 10, 50, 50);
-                },
-                function() {
-                    triangle(20, 20, 100, 100, 250, 50);
-                },
-                function() {
-                    arc(150, 150, 100, 100, 0, 360);
-                },
-                {type: "Line", value: ""}
-            ],
-            "Colors": [
-                function() {
-                    fill(255, 0, 0);
-                },
-                function() {
-                    background(255, 0, 0);
-                },
-                function() {
-                    stroke(0, 0, 0);
-                },
-                function() {
-                    strokeWeight(3);
-                },
-                function() {
-                    noStroke();
-                },
-                function() {
-                    noFill();
-                }
-            ]
-        };
+        var toolbox = {};
+
+        toolbox[$._("Shapes")] = [
+            function() {
+                rect(10, 10, 50, 50);
+            },
+            function() {
+                ellipse(120, 120, 100, 100);
+            },
+            function() {
+                line(10, 10, 50, 50);
+            },
+            function() {
+                triangle(20, 20, 100, 100, 250, 50);
+            },
+            function() {
+                arc(150, 150, 100, 100, 0, 360);
+            },
+            {type: "Line", value: ""}
+        ];
+
+        toolbox[$._("Colors")] = [
+            function() {
+                fill(255, 0, 0);
+            },
+            function() {
+                background(255, 0, 0);
+            },
+            function() {
+                stroke(0, 0, 0);
+            },
+            function() {
+                strokeWeight(3);
+            },
+            function() {
+                noStroke();
+            },
+            function() {
+                noFill();
+            }
+        ];
 
         this.editor = new JSToolboxEditor({
             el: this.el,
