@@ -386,11 +386,11 @@
     color: rgb(49, 132, 149);
 }
 .block-editor {
-    margin-right: 215px;
+    margin-right: 218px;
 }
 
 .block-toolbox {
-    width: 215px;
+    display: table;
     position: absolute;
     top: 0px;
     right: 0px;
@@ -399,7 +399,7 @@
 }
 
 .block-toolbox .toolbox-group {
-    float: left;
+    display: table-cell;
 }
 
 .block-toolbox .block-trash .text-out {

@@ -24,7 +24,8 @@ window.StructuredBlocksEditor = Backbone.View.extend({
                 },
                 function() {
                     arc(150, 150, 100, 100, 0, 360);
-                }
+                },
+                {type: "Line", value: ""}
             ],
             "Colors": [
                 function() {
@@ -45,9 +46,6 @@ window.StructuredBlocksEditor = Backbone.View.extend({
                 function() {
                     noFill();
                 }
-            ],
-            "Extra": [
-                {type: "Line", value: ""}
             ]
         };
 

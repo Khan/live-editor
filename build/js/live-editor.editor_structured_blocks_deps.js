@@ -7892,21 +7892,27 @@ var JSToolboxEditor = Backbone.View.extend({
 
     codeToHTML: function(code) {
         if (typeof code === "function") {
-            code = JSRules.parseStructure(code);
-        } else if (typeof code === "string") {
-            // Remove any sort of wrapper function
-            code = code.replace(/^function\s*\(\s*\)\s*{([\s\S]*)}$/, "$1");
-            code = JSRules.parseCode(code).body[0];
+            code = code.toString();
         }
 
-        var rule = JSRules.findRule(code);
-        var $el = rule.render().$el;
+        if (typeof code === "string") {
+            // Remove any sort of wrapper function
+            code = code.replace(/^function\s*\(\s*\)\s*{([\s\S]*)}$/, "$1");
+            code = JSRules.parseCode(code).body;
+        }
+
+        var $ret = $("<div>");
         var vars = {};
         var varStyles = ["one", "two", "three", "four", "five", "six",
             "seven"];
 
+        code.forEach(function(ast) {
+            var rule = JSRules.findRule(ast);
+            rule.render().$el.appendTo($ret);
+        });
+
         // Remove all the inputs and replace them with just the text
-        $el.find("input").each(function() {
+        $ret.find("input").each(function() {
             var value = this.value;
             var className = "input " + this.className;
 
@@ -7929,7 +7935,7 @@ var JSToolboxEditor = Backbone.View.extend({
                 .addClass(className));
         });
 
-        return $el[0].outerHTML;
+        return $ret[0].outerHTML;
     },
 
     render: function() {
