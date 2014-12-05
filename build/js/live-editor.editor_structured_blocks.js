@@ -99,7 +99,7 @@ window.StructuredBlocksEditor = Backbone.View.extend({
                     "<div class='lidcap'></div>" +
                     "<div class='bin'></div>" +
                 "</div>" +
-                "<span>" + $._("Drag block here to delete.") + "</span>" +
+                "<span>" + $._("Drag block here to remove.") + "</span>" +
             "</div>"
         );
     },
