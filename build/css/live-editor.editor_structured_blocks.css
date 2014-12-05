@@ -65,6 +65,7 @@
 .block.block-comment .input {
     padding-left: 5px;
     text-align: left;
+    max-width: 345px;
 }
 
 /*
@@ -165,6 +166,7 @@
     -webkit-user-select: none;
     user-select: none;
     -webkit-tap-highlight-color: rgba(0,0,0,0);
+    z-index: 1;
 }
 
 .block-toolbox h3 {

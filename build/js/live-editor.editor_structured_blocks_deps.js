@@ -8674,17 +8674,17 @@ var JSASTRule = JSRule.extend({
             return text;
         });
 
-        if (this.image && this.imagesDir) {
-            tokens.push("<img src='" + this.imagesDir + "toolbox/" +
-                this.image  +
-                "' class='show-toolbox show-only-toolbox toolbox-image'/>");
-        }
-
         tokens.unshift($(buildTag("grab-handle")).html([
             // Add a grabber handle
             buildTag("grabber"),
             tokens.shift()
         ]));
+
+        if (this.image && this.imagesDir) {
+            tokens.unshift("<img src='" + this.imagesDir + "toolbox/" +
+                this.image  +
+                "' class='show-toolbox show-only-toolbox toolbox-image'/>");
+        }
 
         this.$el.html($("<div>").addClass("block-wrapper").append(tokens));
 
