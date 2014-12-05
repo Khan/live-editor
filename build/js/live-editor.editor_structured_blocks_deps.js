@@ -8333,10 +8333,12 @@ var JSRule = Backbone.View.extend({
 
         // Enable a selection box to be drawn around the statements
         if (!JSRules.isTouchDevice) {
-            $div.selectable({
-                filter: ".block-statement",
-                cancel: ".block-statement *"
-            });
+            // NOTE(jeresig): Disabling until after Hour of Code
+            // See: https://github.com/Khan/structured-blocks/issues/77
+            //$div.selectable({
+            //    filter: ".block-statement",
+            //    cancel: ".block-statement *"
+            //});
         }
 
         // Blur the active input if the focus has moved (e.g. starting a
