@@ -5,8 +5,9 @@
 .block-toolbox {
     display: table;
     position: absolute;
-    top: 0px;
-    right: 0px;
+    top: 0;
+    right: -300px;
+    padding-right: 300px;
     background: #93C263;
     height: 100%;
 }

@@ -7878,6 +7878,11 @@ var JSToolboxEditor = Backbone.View.extend({
     },
 
     scroll: function() {
+        // Prevent any horizontal scrolling
+        this.el.scrollLeft = 0;
+
+        // Pass the top scroll position to the toolbox so that it can
+        // re-position itself
         this.toolbox.scroll(this.el.scrollTop);
     },
 
