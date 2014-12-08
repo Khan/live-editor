@@ -28,7 +28,7 @@ WebpageTester.prototype.testMethods = {
      * explicitly state the parameters in a separate list
      */
     constraint: function(callback) {
-        var paramText = /^function [^\(]*\(([^\)]*)\)/.exec(callback.toString())[1];
+        var paramText = /^function\s*[^\(]*\(([^\)]*)\)/.exec(callback.toString())[1];
         var params = paramText.match(/[$_a-zA-z0-9]+/g);
 
         for (key in params) {
