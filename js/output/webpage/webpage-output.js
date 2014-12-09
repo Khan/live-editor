@@ -117,7 +117,8 @@
             var results = Slowparse.HTML(document, userCode/*, {
                 scriptPreprocessor: this.loopProtect.bind(this) }*/);
 
-            this.slowparseDOM = results.document;
+            this.slowparseResults = results;
+            console.log(results);
 
             if (results.error) {
                 var pos = results.error.cursor;
@@ -221,16 +222,9 @@
                 return callback(errors, []);
             }
 
-            // Gather CSS rules from all stylesheets on the page.
-            var cssRules = _.flatten(
-                _.map($(this.userCode).find("style"), function(styleTag) {
-                    return styleTag.childNodes[0].parseInfo.rules;
-                }), 
-            true);
-
             var testData = {
                 document: document,
-                cssRules: cssRules
+                cssRules: this.slowparseResults.rules
             };
 
             this.tester.test(testData, tests, errors,
