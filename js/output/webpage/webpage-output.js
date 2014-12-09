@@ -221,7 +221,19 @@
                 return callback(errors, []);
             }
 
-            this.tester.test(document, tests, errors,
+            // Gather CSS rules from all stylesheets on the page.
+            var cssRules = _.flatten(
+                _.map($(this.userCode).find("style"), function(styleTag) {
+                    return styleTag.childNodes[0].parseInfo.rules;
+                }), 
+            true);
+
+            var testData = {
+                document: document,
+                cssRules: cssRules
+            };
+
+            this.tester.test(testData, tests, errors,
                 function(errors, testResults) {
                     if (errorCount !== errors.length) {
                         // Note: Scratchpad challenge checks against the exact

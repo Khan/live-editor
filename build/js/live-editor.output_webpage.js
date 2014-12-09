@@ -69,7 +69,7 @@ WebpageTester.prototype.testMethods = {
             var expected = structure[selector];
             // TODO(jeresig): Maybe find a way to do this such that we can run
             // it in a worker thread.
-            var numFound = jQuery(selector, this.userCode).length;
+            var numFound = jQuery(selector, this.userCode.document).length;
             if (expected === 0 && numFound !== 0 || numFound < expected) {
                 return {success: false};
             }
@@ -94,16 +94,9 @@ WebpageTester.prototype.testMethods = {
      * }
      */
     getCssMap: function() {
-        // Gather CSS rules from all stylesheets on the page.
-        var mergedRules = _.flatten(
-            _.map($(this.userCode).find("style"), function(styleTag) {
-                return styleTag.childNodes[0].parseInfo.rules;
-            }), 
-        true);
-
         // Convert CSS rules from a list of parsed objects into a map.
         var css = {};
-        _.each(mergedRules, function(rule) {
+        _.each(this.userCode.cssRules, function(rule) {
             // Parse all properties for this rule into map
             var properties = {};
             _.each(rule.declarations.properties, function(property) {
@@ -632,7 +625,19 @@ WebpageTester.prototype.testMethods = {
                 return callback(errors, []);
             }
 
-            this.tester.test(document, tests, errors,
+            // Gather CSS rules from all stylesheets on the page.
+            var cssRules = _.flatten(
+                _.map($(this.userCode).find("style"), function(styleTag) {
+                    return styleTag.childNodes[0].parseInfo.rules;
+                }), 
+            true);
+
+            var testData = {
+                document: document,
+                cssRules: cssRules
+            };
+
+            this.tester.test(testData, tests, errors,
                 function(errors, testResults) {
                     if (errorCount !== errors.length) {
                         // Note: Scratchpad challenge checks against the exact
