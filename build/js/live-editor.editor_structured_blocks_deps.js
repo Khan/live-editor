@@ -8401,7 +8401,10 @@ var JSRule = Backbone.View.extend({
             if (e.which === 27) {
                 $div.children().removeClass("ui-selected");
                 e.preventDefault();
+            }
 
+            /*
+            // NOTE(jeresig): Disabled temporarily during Hour of Code.
             // Backspace and delete keys
             } else if (e.which === 8 || e.which === 46) {
                 var $selected = $div.children(".ui-selected");
@@ -8413,6 +8416,7 @@ var JSRule = Backbone.View.extend({
 
                 e.preventDefault();
             }
+            */
         });
 
         var ignoreNextOut = false;
