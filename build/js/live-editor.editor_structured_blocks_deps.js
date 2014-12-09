@@ -8401,22 +8401,21 @@ var JSRule = Backbone.View.extend({
             if (e.which === 27) {
                 $div.children().removeClass("ui-selected");
                 e.preventDefault();
-            }
 
-            /*
-            // NOTE(jeresig): Disabled temporarily during Hour of Code.
             // Backspace and delete keys
             } else if (e.which === 8 || e.which === 46) {
+                /*
+                // NOTE(jeresig): Disabled temporarily during Hour of Code.
                 var $selected = $div.children(".ui-selected");
 
                 $selected.each(function() {
                     $(this).trigger("sort-removed", $(this).index());
                     $(this).remove();
                 });
+                */
 
                 e.preventDefault();
             }
-            */
         });
 
         var ignoreNextOut = false;
