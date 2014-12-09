@@ -118,7 +118,6 @@
                 scriptPreprocessor: this.loopProtect.bind(this) }*/);
 
             this.slowparseResults = results;
-            console.log(results);
 
             if (results.error) {
                 var pos = results.error.cursor;
@@ -223,7 +222,8 @@
             }
 
             var testData = {
-                document: document,
+                // Append to a div because jQuery doens't work on a document fragmen
+                document: $("<div>").append(this.slowparseResults.document),
                 cssRules: this.slowparseResults.rules
             };
 

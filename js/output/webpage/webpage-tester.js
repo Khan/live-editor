@@ -12,7 +12,7 @@
         }
 
         code = "with(arguments[0]){\n" + code + "\n}";
-        (new Function(code)).call({}, _.extend({"$":$, "_":_}, this.testContext));
+        (new Function("context", "$", "_", code)).apply({}, [this.testContext, $, _]);
 
         return true;
     };

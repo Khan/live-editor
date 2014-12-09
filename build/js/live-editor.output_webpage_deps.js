@@ -11331,50 +11331,89 @@ require("/tools/entry-point.js");
     }
   };
 
-  // ### Text Builder 
-  // Output an annotated string instead of a DOM fragment 
-  function TextBuilder(sourceCode, disallowActiveAttributes, scriptPreprocessor) { 
-    this.sourceCode = sourceCode; 
-    this.code = "Hello world"; 
+
+  // ### The DOM Builder
+  //
+  // The DOM builder is used to construct a DOM representation of the
+  // HTML/CSS being parsed. Each node contains a `parseInfo` expando
+  // property that contains information about the text extents of the
+  // original source code that the DOM element maps to.
+  //
+  // The DOM builder is given a single document DOM object that will
+  // be used to create all necessary DOM nodes.
+  function DOMBuilder(sourceCode, disallowActiveAttributes, scriptPreprocessor) { 
     this.disallowActiveAttributes = disallowActiveAttributes; 
     this.scriptPreprocessor = scriptPreprocessor; 
-    this.fragment = document.createDocumentFragment(); 
+    this.document = document;
+    this.sourceCode = sourceCode; 
+    this.code = "Hello world"; 
+    this.fragment = document.createDocumentFragment();
     this.currentNode = this.fragment;
+    this.contexts = [];
     this.rules = [];
-    this.depth = 0; 
     this.last = 0; 
-  } 
- 
-  TextBuilder.prototype = { 
-    pushElement: function(tagName, parseInfo, nameSpace) { 
-      this.currentNode = {nodeName: tagName, parseInfo: parseInfo, parent: this.currentNode, attributes: {}};
-      this.depth++; 
-    }, 
-    popElement: function() { 
-      this.depth--; 
-      // This is to put the last segment of text in. 
-      if (this.depth === 0) { 
-        this.code += this.sourceCode.slice(this.last, this.currentNode.parseInfo.closeTag.end); 
-        this.last = this.currentNode.parseInfo.closeTag.end; 
-      } 
-      this.currentNode = this.currentNode.parent; 
-    }, 
-    pushContext: function(context, position) {}, 
-    comment: function(data, parseInfo) {}, 
-    attribute: function(name, value, parseInfo) { 
-      this.currentNode.attributes[name] = value; 
-    }, 
-    text: function(text, parseInfo) { 
+    this.pushContext("html", 0);
+  }
+
+  DOMBuilder.prototype = {
+    // This method pushes a new element onto the DOM builder's stack.
+    // The element is appended to the currently active element and is
+    // then made the new currently active element.
+    pushElement: function(tagName, parseInfo, nameSpace) {
+      var node = (nameSpace ? this.document.createElementNS(nameSpace,tagName)
+                            : this.document.createElement(tagName));
+      node.parseInfo = parseInfo;
+      this.currentNode.appendChild(node);
+      this.currentNode = node;
+    },
+    // This method pops the current element off the DOM builder's stack,
+    // making its parent element the currently active element.
+    popElement: function() {
+      this.currentNode = this.currentNode.parentNode;
+    },
+    // record the cursor position for a context change (text/html/css/script)
+    pushContext: function(context, position) {
+      this.contexts.push({
+        context: context,
+        position: position
+      });
+    },
+    // This method appends an HTML comment node to the currently active
+    // element.
+    comment: function(data, parseInfo) {
+      var comment = this.document.createComment('');
+      comment.nodeValue = data;
+      comment.parseInfo = parseInfo;
+      this.currentNode.appendChild(comment);
+    },
+    // This method appends an attribute to the currently active element.
+    attribute: function(name, value, parseInfo) {
+      var attrNode = this.document.createAttribute(name);
+      attrNode.parseInfo = parseInfo;
+      if (this.disallowActiveAttributes && name.substring(0,2).toLowerCase() === "on") {
+        attrNode.nodeValue = "";
+      } else {
+        attrNode.nodeValue = value;
+      }
+      this.currentNode.attributes.setNamedItem(attrNode);
+    },
+    // This method appends a text node to the currently active element.
+    text: function(text, parseInfo) {
       if(this.currentNode && this.currentNode.attributes){ 
         var type = this.currentNode.attributes.type || "";
         type = type.toLowerCase(); 
         if (this.currentNode.nodeName.toLowerCase() === "script" && (!type || type === "text/javascript")) { 
           this.javascript(text, parseInfo); 
+          // Don't actually add javascript to the DOM we're building because it will execute and we don't want that.
+          return;
         } else if (this.currentNode.nodeName.toLowerCase() === "style") {
           this.rules.push.apply(this.rules, parseInfo.rules);
         } 
       } 
-    }, 
+      var textNode = this.document.createTextNode(text);
+      textNode.parseInfo = parseInfo;
+      this.currentNode.appendChild(textNode);
+    },
     javascript: function(text, parseInfo) { 
       try { 
         text = this.scriptPreprocessor(text); 
@@ -11390,9 +11429,11 @@ require("/tools/entry-point.js");
       this.code += this.sourceCode.slice(this.last, parseInfo.start); 
       this.code += text; 
       this.last = parseInfo.end; 
+    },
+    close: function() {
+      this.code += this.sourceCode.slice(this.last); 
     }
   };
-
 
   // ### Exported Symbols
   //
@@ -11442,11 +11483,12 @@ require("/tools/entry-point.js");
           disallowActiveAttributes = (typeof options.disallowActiveAttributes === "undefined") ? false : options.disallowActiveAttributes;
 
       var scriptPreprocessor = options.scriptPreprocessor || function(x){return x;}; 
-      var textBuilder = new TextBuilder(html, disallowActiveAttributes, scriptPreprocessor); 
-      var parser = new HTMLParser(stream, textBuilder); 
+      var domBuilder = new DOMBuilder(html, disallowActiveAttributes, scriptPreprocessor); 
+      var parser = new HTMLParser(stream, domBuilder); 
 
       try {
         var _ = parser.parse();
+        domBuilder.close();
         if (_.warnings) {
           warnings = _.warnings;
         }
@@ -11465,8 +11507,9 @@ require("/tools/entry-point.js");
       });
 
       return {
-        code: textBuilder.code,
-        rules: textBuilder.rules,
+        document: domBuilder.fragment,
+        code: domBuilder.code,
+        rules: domBuilder.rules,
         warnings: warnings,
         error: error
       };

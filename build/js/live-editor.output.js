@@ -205,13 +205,13 @@ PooledWorker.prototype.exec = function() {
                     type: type || "default",
 
                     fn: function() {
-                        try {
+                        //try {
                             return fn.apply(this, arguments);
-                        } catch (e) {
+                        /*} catch (e) {
                             if (window.console) {
                                 console.warn(e);
                             }
-                        }
+                        }*/
                     }
                 });
             },
@@ -324,7 +324,7 @@ PooledWorker.prototype.exec = function() {
             }
         }
     };
-})();
+})($, _);
 
 // This code has to encapsulate all globals because it has to be able to run in
 // the context of webpage-output where globals are constantly getting scrubbed 

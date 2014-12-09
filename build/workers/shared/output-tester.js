@@ -154,13 +154,13 @@
                     type: type || "default",
 
                     fn: function() {
-                        try {
+                        //try {
                             return fn.apply(this, arguments);
-                        } catch (e) {
+                        /*} catch (e) {
                             if (window.console) {
                                 console.warn(e);
                             }
-                        }
+                        }*/
                     }
                 });
             },
@@ -273,4 +273,4 @@
             }
         }
     };
-})();
+})($, _);

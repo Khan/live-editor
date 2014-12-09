@@ -12,7 +12,7 @@
         }
 
         code = "with(arguments[0]){\n" + code + "\n}";
-        (new Function(code)).call({}, _.extend({"$":$, "_":_}, this.testContext));
+        (new Function("context", "$", "_", code)).apply({}, [this.testContext, $, _]);
 
         return true;
     };
@@ -535,7 +535,6 @@
                 scriptPreprocessor: this.loopProtect.bind(this) }*/);
 
             this.slowparseResults = results;
-            console.log(results);
 
             if (results.error) {
                 var pos = results.error.cursor;
@@ -640,7 +639,8 @@
             }
 
             var testData = {
-                document: document,
+                // Append to a div because jQuery doens't work on a document fragmen
+                document: $("<div>").append(this.slowparseResults.document),
                 cssRules: this.slowparseResults.rules
             };
 
