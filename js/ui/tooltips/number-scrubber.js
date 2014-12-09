@@ -112,6 +112,10 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                 var updateRate = 300;
                 var start = (new Date).getTime();
 
+                if (self.setCurValue) {
+                    self.setCurValue();
+                }
+
                 var update = function() {
                     self.noClick = false;
 

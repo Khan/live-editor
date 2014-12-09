@@ -119,6 +119,11 @@
                 updateScrubberPos();
             }.bind(this);
 
+            this.numberScrubber.setCurValue = function(val) {
+                this.numberScrubber.updateTooltip(
+                    parseFloat($block.data("value")), 0);
+            }.bind(this);
+
             var updateScrubberPos = function() {
                 this.numberScrubber.$el.css({
                     top: pos.top + $target.outerHeight() +

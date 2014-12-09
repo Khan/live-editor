@@ -2710,6 +2710,10 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                 var updateRate = 300;
                 var start = (new Date).getTime();
 
+                if (self.setCurValue) {
+                    self.setCurValue();
+                }
+
                 var update = function() {
                     self.noClick = false;
 
@@ -3475,6 +3479,11 @@ function program1(depth0,data) {
             this.numberScrubber.updateText = function(val) {
                 $block.trigger("updateValue", val);
                 updateScrubberPos();
+            }.bind(this);
+
+            this.numberScrubber.setCurValue = function(val) {
+                this.numberScrubber.updateTooltip(
+                    parseFloat($block.data("value")), 0);
             }.bind(this);
 
             var updateScrubberPos = function() {
