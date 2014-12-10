@@ -11346,7 +11346,7 @@ require("/tools/entry-point.js");
     this.scriptPreprocessor = scriptPreprocessor; 
     this.document = document;
     this.sourceCode = sourceCode; 
-    this.code = "Hello world"; 
+    this.code = ""; 
     this.fragment = document.createDocumentFragment();
     this.currentNode = this.fragment;
     this.contexts = [];
@@ -11536,3 +11536,130 @@ require("/tools/entry-point.js");
     window.Slowparse = Slowparse;
   }
 }());
+
+window.LoopProtector = function(callback) {
+	this.callback = callback || function() {};
+	this.branchStartTime = 0;
+	this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
+};
+
+window.LoopProtector.prototype = {
+	// Make sure to attach this function to the global scope/
+	KAInfiniteLoopProtect: function() {
+        var now = new Date().getTime();
+        if (!this.branchStartTime) {
+            this.branchStartTime = now;
+            setTimeout(function() {
+                this.branchStartTime = 0;
+            }.bind(this), 0);
+        } else if (now - this.branchStartTime > 200) {
+        	this.callback();
+            throw "KA_INFINITE_LOOP";
+        }
+    },
+
+    riskyStatements: [
+        "DoWhileStatement",
+        "WhileStatement",
+        "ForStatement",
+        "FunctionStatement",
+        "FunctionDeclaration"
+    ],
+
+    protectAst: function(ast) {
+        if (this.riskyStatements.indexOf(ast.type) !== -1) {
+            ast.body.body.unshift(this.loopBreak);
+        }
+        for (var prop in ast) {
+            if (ast.hasOwnProperty(prop) && _.isObject(ast[prop])) {
+                if (_.isArray(ast[prop])) {
+                    _.each(ast[prop], this.protectAst.bind(this));
+                } else {
+                    this.protectAst(ast[prop]);
+                }
+            }
+        }
+    },
+
+	protect: function(ast, callback) {
+		callback = callback || function(){};
+
+		if (_.isString(ast)) {
+        	var ast = esprima.parse(ast);
+		}
+        this.protectAst(ast);
+        text = escodegen.generate(ast);
+        return text;
+	}
+};
+/**
+ * StateScrubber
+ * Resets global javascript state.
+ */
+window.StateScrubber = function(target){
+    this.target = target;
+    this.firstTimeout = target.setTimeout(function(){}, 0);
+
+    // We will record all the variables that we see on window on startup
+    // these will be the only keys we leave intact when we reset window
+    this.globalVariables = {};
+    for (var prop in target) {
+        if (target.hasOwnProperty(prop)) {
+            this.globalVariables[prop] = true;
+        }
+    }
+
+    // Since variables initially on window will not be reset, try to freeze them to
+    // avoid state leaking between extecutions.
+    for (var prop in this.globalVariables) {
+        try {
+            var propDescriptor =
+                Object.getOwnPropertyDescriptor(target, prop);
+            if (!propDescriptor || propDescriptor.configurable) {
+                Object.defineProperty(target, prop, {
+                    value: target[prop],
+                    writable: false,
+                    configurable: false
+                });
+            }
+        } catch(e) {
+            // Couldn't access property for permissions reasons,
+            // like window.frame
+            // Only happens on prod where it's cross-origin
+        }
+    }
+    // Completely lock down window's prototype chain
+    Object.freeze(Object.getPrototypeOf(target));
+};
+
+window.StateScrubber.prototype = {
+    clearGlobals: function() {
+        for (var prop in this.target) {
+            if (!this.globalVariables[prop] && this.target.hasOwnProperty(prop)) {
+                // This should get rid of variables which cannot be deleted
+                // http://perfectionkills.com/understanding-delete/
+                this.target[prop] = undefined;
+                delete this.target[prop];
+            }
+        }
+    },
+
+    clearTimeoutsAndIntervals: function() {
+    	// Intervals are acutally also timeouts under the hood, so clearing all the 
+    	// timeouts since last time is sufficient.
+    	// (If you're interested intervals are timeouts with the repeat flag set to true:
+    	// www.w3.org/TR/html5/webappapis.html#timers)
+        var lastTimeout = this.target.setTimeout(function(){}, 0);
+
+        for (var i=this.firstTimeout; i<lastTimeout; i++) {
+            this.target.clearTimeout(i);
+        }
+
+        this.firstTimeout = lastTimeout;
+    },
+
+    clearAll: function() {
+    	this.clearGlobals();
+    	this.clearTimeoutsAndIntervals();
+    }
+};

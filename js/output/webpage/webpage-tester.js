@@ -1,21 +1,10 @@
-(function($, _){
+(function(){
     window.WebpageTester = function(options) {
         this.initialize(options);
         this.bindTestContext();
     };
 
     WebpageTester.prototype = new OutputTester();
-    // Override exec to inject $ & _ so they are available even though we're clobbering globals.
-    WebpageTester.prototype.exec = function(code) {
-        if (!code) {
-            return true;
-        }
-
-        code = "with(arguments[0]){\n" + code + "\n}";
-        (new Function("context", "$", "_", code)).apply({}, [this.testContext, $, _]);
-
-        return true;
-    };
 
 
     /*
@@ -414,4 +403,4 @@
             return color.length >= 3 && color.indexOf("rgb") === -1;
         })
     };
-})($, _);
+})();

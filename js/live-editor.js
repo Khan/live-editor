@@ -1045,7 +1045,7 @@ window.LiveEditor = Backbone.View.extend({
     markDirty: function(force) {
         // They're typing. Hide the tipbar to give them a chance to fix things up
         this.tipbar.hide();
-        if (this.outputState === "clean" || force) {
+        if (this.outputState === "clean") {
             // We will run at the end of this code block
             // This stops replace from trying to execute code
             // between deleting the old code and adding the new code
@@ -1071,7 +1071,7 @@ window.LiveEditor = Backbone.View.extend({
     },
     // This stops us from sending  any updates until
     // we call markDirty("force") as a part of the frame load handler
-    outputState: "dirty",
+    outputState: "clean",
 
     getScreenshot: function(callback) {
         // Unbind any handlers this function may have set for previous

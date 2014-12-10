@@ -1,31 +1,29 @@
 /**
  * StateScrubber
  * Resets global javascript state.
- *  
- * This file is built as a worker file so that it can be accessed as-is by webapp
- * (i.e. no packaging) and then included inline to guarantee that it is the first 
- * script to run.
  */
+window.StateScrubber = function(target){
+    this.target = target;
+    this.firstTimeout = target.setTimeout(function(){}, 0);
 
- (function() {
- 	// We will record all the variables that we see on window on startup
- 	// these will be the only keys we leave intact when we reset window
-    var windowVariables = {};
-    for (var prop in window) {
-        if (window.hasOwnProperty(prop)) {
-            windowVariables[prop] = true;
+    // We will record all the variables that we see on window on startup
+    // these will be the only keys we leave intact when we reset window
+    this.globalVariables = {};
+    for (var prop in target) {
+        if (target.hasOwnProperty(prop)) {
+            this.globalVariables[prop] = true;
         }
     }
 
-    // Since window variables will not be reset, try to freeze them to
+    // Since variables initially on window will not be reset, try to freeze them to
     // avoid state leaking between extecutions.
-    for (var prop in windowVariables) {
+    for (var prop in this.globalVariables) {
         try {
             var propDescriptor =
-                Object.getOwnPropertyDescriptor(window, prop);
+                Object.getOwnPropertyDescriptor(target, prop);
             if (!propDescriptor || propDescriptor.configurable) {
-                Object.defineProperty(window, prop, {
-                    value: window[prop],
+                Object.defineProperty(target, prop, {
+                    value: target[prop],
                     writable: false,
                     configurable: false
                 });
@@ -37,40 +35,37 @@
         }
     }
     // Completely lock down window's prototype chain
-    Object.freeze(Object.getPrototypeOf(window));
+    Object.freeze(Object.getPrototypeOf(target));
+};
 
-    window.StateScrubber = {
-    	windowVariables: windowVariables,
-    	firstTimeout: 0,
-
-        clearGlobals: function() {
-            for (var prop in window) {
-                if (!windowVariables[prop] && window.hasOwnProperty(prop)) {
-                    // This should get rid of variables which cannot be deleted
-                    // http://perfectionkills.com/understanding-delete/
-                    window[prop] = undefined;
-                    delete window[prop];
-                }
+window.StateScrubber.prototype = {
+    clearGlobals: function() {
+        for (var prop in this.target) {
+            if (!this.globalVariables[prop] && this.target.hasOwnProperty(prop)) {
+                // This should get rid of variables which cannot be deleted
+                // http://perfectionkills.com/understanding-delete/
+                this.target[prop] = undefined;
+                delete this.target[prop];
             }
-        },
-
-        clearTimeoutsAndIntervals: function() {
-	    	// Intervals are acutally also timeouts under the hood, so clearing all the 
-	    	//  timeouts since last time is sufficient.
-	    	// (If you're interested intervals are timeouts with the repeat flag set to true:
-	    	// www.w3.org/TR/html5/webappapis.html#timers)
-            var lastTimeout = setTimeout(function(){}, 0);
-
-            for (var i=this.firstTimeout; i<=lastTimeout; i++) {
-                clearTimeout(i);
-            }
-
-            this.firstTimeout = lastTimeout;
-        },
-
-        clearAll: function() {
-        	this.clearGlobals();
-        	this.clearTimeoutsAndIntervals();
         }
-    };
-})();
+    },
+
+    clearTimeoutsAndIntervals: function() {
+    	// Intervals are acutally also timeouts under the hood, so clearing all the 
+    	// timeouts since last time is sufficient.
+    	// (If you're interested intervals are timeouts with the repeat flag set to true:
+    	// www.w3.org/TR/html5/webappapis.html#timers)
+        var lastTimeout = this.target.setTimeout(function(){}, 0);
+
+        for (var i=this.firstTimeout; i<lastTimeout; i++) {
+            this.target.clearTimeout(i);
+        }
+
+        this.firstTimeout = lastTimeout;
+    },
+
+    clearAll: function() {
+    	this.clearGlobals();
+    	this.clearTimeoutsAndIntervals();
+    }
+};

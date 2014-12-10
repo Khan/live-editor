@@ -1757,7 +1757,7 @@
     this.scriptPreprocessor = scriptPreprocessor; 
     this.document = document;
     this.sourceCode = sourceCode; 
-    this.code = "Hello world"; 
+    this.code = ""; 
     this.fragment = document.createDocumentFragment();
     this.currentNode = this.fragment;
     this.contexts = [];
