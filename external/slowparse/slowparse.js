@@ -707,7 +707,7 @@
       var token = this.substream(nextPos - currentPos);
       var captureGroups = token.match(pattern);
       this.pos = currentPos;
-      if(captureGroups) {
+      if (captureGroups) {
         return captureGroups[groupNumber];
       }
       return false;
@@ -929,19 +929,19 @@
             name = token.value.trim();
 
         // we currently support @keyframes (with prefixes)
-        if(name.match(/@(-[^-]+-)?keyframes/)) {
+        if (name.match(/@(-[^-]+-)?keyframes/)) {
           this.stream.next();
           return this._parseSelector();
         }
 
         // and media queries
-        if(name.match(/@media\s*\([^{)]+\)/)) {
+        if (name.match(/@media\s*\([^{)]+\)/)) {
           this.stream.next();
           return this._parseSelector();
         }
 
         // and @font-face
-        if(name === "@font-face") {
+        if (name === "@font-face") {
           this.stream.rewind(token.value.length);
           this.stream.markTokenStart();
           return this._parseSelector();
@@ -1167,7 +1167,7 @@
       var rule = this.stream.eatCSSWhile(/[^}<;]/),
           token = this.stream.makeToken();
 
-      if(token === null) {
+      if (token === null) {
         throw new ParseError("MISSING_CSS_VALUE", this, propertyStart, propertyStart+property.length, property);
       }
 
@@ -1493,9 +1493,9 @@
 
         // If the preceding tag and the active tag is omittableCloseTag pairs,
         // we tell our DOM builder that we're done.
-        if (activeTagNode && parentTagNode != this.domBuilder.fragment){
+        if (activeTagNode && parentTagNode != this.domBuilder.fragment) {
           var activeTagName = activeTagNode.nodeName.toLowerCase();
-          if(this._knownOmittableCloseTags(activeTagName, tagName)) {
+          if (this._knownOmittableCloseTags(activeTagName, tagName)) {
             this.domBuilder.popElement();
           }
         }
@@ -1563,7 +1563,7 @@
     _parseEndCloseTag: function() {
       this.stream.eatSpace();
       if (this.stream.next() != '>') {
-        if(this.containsAttribute(this.stream)) {
+        if (this.containsAttribute(this.stream)) {
           throw new ParseError("ATTRIBUTE_IN_CLOSING_TAG", this);
         } else {
           throw new ParseError("UNTERMINATED_CLOSE_TAG", this);
@@ -1610,7 +1610,7 @@
           // If the open tag represents a optional-omit-close-tag element, there may be
           // an optional closing element, so we save the currentNode into activeTag for next step check.
           activeTagNode = false;
-          if (tagName && this._knownOmittableCloseTagHtmlElement(tagName)){
+          if (tagName && this._knownOmittableCloseTagHtmlElement(tagName)) {
             activeTagNode = this.domBuilder.currentNode;
           }
 
@@ -1640,14 +1640,14 @@
           }
 
           // if there is no more content in the parent element, we tell DOM builder that we're done.
-          if(parentTagNode && parentTagNode != this.domBuilder.fragment) {
+          if (parentTagNode && parentTagNode != this.domBuilder.fragment) {
             var parentTagName = parentTagNode.nodeName.toLowerCase(),
                 nextIsParent = isNextTagParent(this.stream, parentTagName),
                 needsEndTag = !allowsOmmitedEndTag(parentTagName, tagName),
                 optionalEndTag = this._knownOmittableCloseTagHtmlElement(parentTagName),
                 nextTagCloses = isNextCloseTag(this.stream);
-            if(nextIsParent && (needsEndTag || (optionalEndTag && nextTagCloses))) {
-              if(this._knownOmittableCloseTagHtmlElement(tagName)) {
+            if (nextIsParent && (needsEndTag || (optionalEndTag && nextTagCloses))) {
+              if (this._knownOmittableCloseTagHtmlElement(tagName)) {
                 this.domBuilder.popElement();
               }
             }
@@ -1680,14 +1680,14 @@
       if (this.stream.peek() == '=') {
         this.stream.next();
 
-        if(nameTok.value.indexOf(":") !== -1) {
+        if (nameTok.value.indexOf(":") !== -1) {
           var parts = nameTok.value.split(":");
-          if(parts.length > 2) {
+          if (parts.length > 2) {
             throw new ParseError("MULTIPLE_ATTR_NAMESPACES", this, nameTok);
           }
           var nameSpace = parts[0],
               attributeName = parts[1];
-          if(!this._supportedAttributeNameSpace(nameSpace)) {
+          if (!this._supportedAttributeNameSpace(nameSpace)) {
             throw new ParseError("UNSUPPORTED_ATTR_NAMESPACE", this, nameTok);
           }
         }
@@ -1810,7 +1810,7 @@
     },
     // This method appends a text node to the currently active element.
     text: function(text, parseInfo) {
-      if(this.currentNode && this.currentNode.attributes){ 
+      if (this.currentNode && this.currentNode.attributes) { 
         var type = this.currentNode.attributes.type || "";
         type = type.toLowerCase(); 
         if (this.currentNode.nodeName.toLowerCase() === "script" && (!type || type === "text/javascript")) { 
@@ -1893,7 +1893,7 @@
           errorDetectors = options.errorDetectors || [],
           disallowActiveAttributes = (typeof options.disallowActiveAttributes === "undefined") ? false : options.disallowActiveAttributes;
 
-      var scriptPreprocessor = options.scriptPreprocessor || function(x){return x;}; 
+      var scriptPreprocessor = options.scriptPreprocessor || function(x) {return x;}; 
       var domBuilder = new DOMBuilder(html, disallowActiveAttributes, scriptPreprocessor); 
       var parser = new HTMLParser(stream, domBuilder); 
 
@@ -1938,7 +1938,7 @@
   }
 
   // Node.js context
-  else if(typeof module !== "undefined" && module.exports) {
+  else if (typeof module !== "undefined" && module.exports) {
     module.exports = Slowparse;
   }
 

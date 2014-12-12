@@ -985,7 +985,8 @@ window.LiveEditor = Backbone.View.extend({
         $(window).on("message", this.handleMessagesBound);
 
         $el.find("#output-frame").on("load", function() {
-            this.markDirty("force");
+            this.outputState = "clean";
+            this.markDirty();
         }.bind(this));
 
         // Whenever the user changes code, execute the code
@@ -1849,7 +1850,7 @@ window.LiveEditor = Backbone.View.extend({
         this.postFrame(options);
     }, 20),
     
-    markDirty: function(force) {
+    markDirty: function() {
         // They're typing. Hide the tipbar to give them a chance to fix things up
         this.tipbar.hide();
         if (this.outputState === "clean") {
@@ -1877,8 +1878,8 @@ window.LiveEditor = Backbone.View.extend({
         }
     },
     // This stops us from sending  any updates until
-    // we call markDirty("force") as a part of the frame load handler
-    outputState: "clean",
+    // Reset output state to clean as a part of the frame load handler
+    outputState: "dirty",
 
     getScreenshot: function(callback) {
         // Unbind any handlers this function may have set for previous

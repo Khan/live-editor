@@ -27,7 +27,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Handle messages coming in from the parent frame
         window.addEventListener("message",
             this.handleMessage.bind(this), false);
-            //function(){console.log("msg")});
     },
 
     setOutput: function(outputType) {

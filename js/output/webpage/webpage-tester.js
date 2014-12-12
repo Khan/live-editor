@@ -1,4 +1,4 @@
-(function(){
+(function() {
     window.WebpageTester = function(options) {
         this.initialize(options);
         this.bindTestContext();
@@ -32,7 +32,7 @@
             var paramText = /^function\s*[^\(]*\(([^\)]*)\)/.exec(callback.toString())[1];
             var params = paramText.match(/[$_a-zA-z0-9]+/g);
 
-            for (key in params) {
+            for (var key in params) {
                 if (params[key][0] !== "$") {
                     console.warn("Invalid parameter in constraint (should begin with a '$'): ", params[key]);
                     return null;

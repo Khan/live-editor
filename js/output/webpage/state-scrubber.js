@@ -2,9 +2,9 @@
  * StateScrubber
  * Resets global javascript state.
  */
-window.StateScrubber = function(target){
+window.StateScrubber = function(target) {
     this.target = target;
-    this.firstTimeout = target.setTimeout(function(){}, 0);
+    this.firstTimeout = target.setTimeout(function() {}, 0);
 
     // We will record all the variables that we see on window on startup
     // these will be the only keys we leave intact when we reset window
@@ -55,7 +55,7 @@ window.StateScrubber.prototype = {
     	// timeouts since last time is sufficient.
     	// (If you're interested intervals are timeouts with the repeat flag set to true:
     	// www.w3.org/TR/html5/webappapis.html#timers)
-        var lastTimeout = this.target.setTimeout(function(){}, 0);
+        var lastTimeout = this.target.setTimeout(function() {}, 0);
 
         for (var i=this.firstTimeout; i<lastTimeout; i++) {
             this.target.clearTimeout(i);

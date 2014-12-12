@@ -43,7 +43,7 @@ window.LoopProtector.prototype = {
     },
 
 	protect: function(ast, callback) {
-		callback = callback || function(){};
+		callback = callback || function() {};
 
 		if (_.isString(ast)) {
         	var ast = esprima.parse(ast);
