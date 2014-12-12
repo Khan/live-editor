@@ -204,24 +204,15 @@ window.WebpageOutput = Backbone.View.extend({
 
     postProcessing: function(oldPageTitle) {
         var self = this;
-        $(this.$frameDoc).find("a").attr("rel", "nofollow").each(function() {
+        $(this.$frameDoc).on("click", "a", function() {
             var url = $(this).attr("href");
-            if (url && url[0] === "#") {
-                $(this).attr("href", "javascript:void(0)").click(function() {
-                    var id = url;
-                    $(this.$frameDoc).find("html, body").animate({
-                        scrollTop: this.$frameDoc.find(id).offset().top
-                    }, 1000);
-                });
-                return;
-            }
-
-            $(this).attr("href", "javascript:void(0)").click(function() {
+            if (url[0] !== "#") {
                 self.output.postParent({
                     action: "link-click",
                     url: url
                 });
-            });
+            }
+            return false;
         });
 
         var titleTag = $(this.$frameDoc).find("head > title");
