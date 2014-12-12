@@ -185,14 +185,6 @@ OutputTester.prototype = {
                 this.curTest.results.push(item);
             }
 
-            if (this.curTask) {
-                if (state !== "pass") {
-                    this.curTask.state = state;
-                }
-
-                this.curTask.results.push(item);
-            }
-
             return item;
         },
 
