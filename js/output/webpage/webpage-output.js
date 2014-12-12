@@ -212,7 +212,7 @@ window.WebpageOutput = Backbone.View.extend({
 
     postProcessing: function(oldPageTitle) {
         var self = this;
-        $(this.$frameDoc).on("click", "a", function() {
+        $(this.$frameDoc).on("mouseup", "a", function() {
             var url = $(this).attr("href");
             if (url[0] !== "#") {
                 self.output.postParent({
@@ -224,10 +224,12 @@ window.WebpageOutput = Backbone.View.extend({
         });
 
         var titleTag = $(this.$frameDoc).find("head > title");
-        if (titleTag.length > 0 && oldPageTitle !== titleTag.text()) {
+        var title = titleTag.first().text();
+        if (titleTag.length > 0 && this.oldPageTitle !== title) {
+            this.oldPageTitle = title;
             self.output.postParent({
                 action: "page-info",
-                title: titleTag.first().text()
+                title: title
             });
         }
     },
@@ -239,8 +241,7 @@ window.WebpageOutput = Backbone.View.extend({
         this.$frameDoc.write(this.slowparseResults.code);
         this.$frameDoc.close();
 
-        var oldPageTitle = $(this.$frameDoc).find("head > title").text();
-        this.postProcessing(oldPageTitle);
+        this.postProcessing();
 
         if (this.KA_INFINITE_LOOP) {
             callback([this.infiniteLoopError]);

@@ -1,6 +1,7 @@
 /**
  * StateScrubber
- * Resets global javascript state.
+ * Resets the global javascript state in the browser
+ * (timeouts, intervals and global variables)
  */
 window.StateScrubber = function(target) {
     this.target = target;
