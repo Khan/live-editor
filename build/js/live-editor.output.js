@@ -202,13 +202,13 @@ OutputTester.prototype = {
                 type: type || "default",
 
                 fn: function() {
-                    //try {
+                    try {
                         return fn.apply(this, arguments);
-                    /*} catch (e) {
+                    } catch (e) {
                         if (window.console) {
                             console.warn(e);
                         }
-                    }*/
+                    }
                 }
             });
         },
@@ -537,14 +537,14 @@ window.LiveEditorOutput = Backbone.View.extend({
             }
 
             // Then run the user's code
-            //try {
+            try {
                 this.output.runCode(userCode, function(errors) {
                     buildDone(errors);
                 }, cursor);
 
-            /*} catch (e) {
+            } catch (e) {
                 buildDone([e]);
-            }       */ 
+            }
         }.bind(this);
 
         // Always lint the first time, so that PJS can populate its list of globals
