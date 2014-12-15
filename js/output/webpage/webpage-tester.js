@@ -387,6 +387,38 @@
             });
         },
 
+        /*
+         * Asynchrynously update a test
+         */
+        updateTest: function(index, result, description, hint, image) {
+            var alternateMessage;
+            var alsoMessage;
+
+            if (result.success) {
+                alternateMessage = result.message;
+            } else {
+                alsoMessage = result.message;
+            }
+
+            this.curTest = this.testContext.__output.lastRun.tests[index];
+            _.extend(this.curTest, {
+                state: "pass",
+                results: []
+            });
+
+            this.testContext.assert(result.success, description, "", {
+                // We can accept string hints here because
+                //  we never match against them anyway
+                structure: hint,
+                alternateMessage: alternateMessage,
+                alsoMessage: alsoMessage,
+                image: image
+            });
+
+            this.curTest = null;
+            this.testContext.__output.phoneHome();
+        },
+
         notDefaultColor: constraintPartial(function(color) {
             var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
                           /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );

@@ -18,6 +18,9 @@ window.WebpageOutput = Backbone.View.extend({
         this.$frame.contentWindow.KAInfiniteLoopProtect = 
             this.loopProtector.KAInfiniteLoopProtect.bind(this.loopProtector);
         this.stateScrubber.globalVariables["KAInfiniteLoopProtect"] = true;
+        // Inject test edit/send functions
+        this.$frame.contentWindow.testContext = this.tester.testContext;
+        this.stateScrubber.globalVariables["testContext"] = true;
     },
 
     render: function() {
@@ -200,7 +203,8 @@ window.WebpageOutput = Backbone.View.extend({
             $doc: $(this.frameDoc),
             $docSP: $("<div>").append(this.slowparseResults.document),
             $docNoJS: $(this.frameDocNoJs),
-            cssRules: this.slowparseResults.cssRules
+            cssRules: this.slowparseResults.cssRules,
+            __output: this.output
         });
 
         this.tester.test("", tests, errors,

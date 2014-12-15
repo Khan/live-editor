@@ -387,6 +387,38 @@
             });
         },
 
+        /*
+         * Asynchrynously update a test
+         */
+        updateTest: function(index, result, description, hint, image) {
+            var alternateMessage;
+            var alsoMessage;
+
+            if (result.success) {
+                alternateMessage = result.message;
+            } else {
+                alsoMessage = result.message;
+            }
+
+            this.curTest = this.testContext.__output.lastRun.tests[index];
+            _.extend(this.curTest, {
+                state: "pass",
+                results: []
+            });
+
+            this.testContext.assert(result.success, description, "", {
+                // We can accept string hints here because
+                //  we never match against them anyway
+                structure: hint,
+                alternateMessage: alternateMessage,
+                alsoMessage: alsoMessage,
+                image: image
+            });
+
+            this.curTest = null;
+            this.testContext.__output.phoneHome();
+        },
+
         notDefaultColor: constraintPartial(function(color) {
             var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
                           /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
@@ -434,6 +466,9 @@ window.WebpageOutput = Backbone.View.extend({
         this.$frame.contentWindow.KAInfiniteLoopProtect = 
             this.loopProtector.KAInfiniteLoopProtect.bind(this.loopProtector);
         this.stateScrubber.globalVariables["KAInfiniteLoopProtect"] = true;
+        // Inject test edit/send functions
+        this.$frame.contentWindow.testContext = this.tester.testContext;
+        this.stateScrubber.globalVariables["testContext"] = true;
     },
 
     render: function() {
@@ -616,7 +651,8 @@ window.WebpageOutput = Backbone.View.extend({
             $doc: $(this.frameDoc),
             $docSP: $("<div>").append(this.slowparseResults.document),
             $docNoJS: $(this.frameDocNoJs),
-            cssRules: this.slowparseResults.cssRules
+            cssRules: this.slowparseResults.cssRules,
+            __output: this.output
         });
 
         this.tester.test("", tests, errors,

@@ -4,7 +4,6 @@ window.LiveEditorOutput = Backbone.View.extend({
     outputs: {},
 
     initialize: function(options) {
-        setTimeout(function(){ console.log("heartbeat"); }, 1000)
         this.render();
 
         this.setPaths(options);
