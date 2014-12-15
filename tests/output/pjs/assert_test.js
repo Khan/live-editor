@@ -96,4 +96,66 @@ describe("Challenge Assertions", function() {
         reason: "It looks like you're missing a semicolon.",
         jshint: true
     });
+
+    var callbackTest = function() {
+        staticTest("More X, Less Y", function() {
+            var pattern = function() {
+                rect($a, $b, _, _);
+            };
+            var callback = constraint(["$a", "$b"], function(a, b) {
+                return a.value > b.value;
+            });        
+            var result = match(structure(pattern, callback));
+            if (fails(result)) {
+                result = fail("Make your X bigger than your Y");
+            }    
+            assertMatch(result, "", "");
+        });
+    }.toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
+
+    assertTest({
+        title: "Callbacks failing",
+        code: "rect(60, 70, 10, 20);",
+        validate: callbackTest,
+        reason: "Make your X bigger than your Y",
+        fromTests: true
+    });
+
+    assertTest({
+        title: "Callbacks passing",
+        code: "rect(80, 70, 10, 20);",
+        validate: callbackTest,
+        fromTests: true
+    });
+
+    var newStyleCallbackTest = function() {
+        staticTest("More X, Less Y", function() {
+            var pattern = function() {
+                rect($a, $b, _, _);
+            };
+            var callback = function($a, $b) {
+                return $a.value > $b.value;
+            };        
+            var result = match(structure(pattern, callback));
+            if (fails(result)) {
+                result = fail("Make your X bigger than your Y");
+            }    
+            assertMatch(result, "", "");
+        });
+    }.toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
+
+    assertTest({
+        title: "New Style Callbacks failing",
+        code: "rect(60, 70, 10, 20);",
+        validate: callbackTest,
+        reason: "Make your X bigger than your Y",
+        fromTests: true
+    });
+
+    assertTest({
+        title: "New Style Callbacks passing",
+        code: "rect(80, 70, 10, 20);",
+        validate: callbackTest,
+        fromTests: true
+    });
 });

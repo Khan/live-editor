@@ -362,12 +362,7 @@ PJSTester.prototype.testMethods = {
         }
 
         try {
-            var constraint = structure.constraint;
-            var callbacks;
-            if (constraint) {
-                callbacks = {};
-                callbacks[constraint.variables.join(", ")] = constraint.fn;
-            }
+            var callbacks = structure.constraint;
             var success = Structured.match(this.userCode,
                 structure.pattern, {
                     varCallbacks: callbacks
