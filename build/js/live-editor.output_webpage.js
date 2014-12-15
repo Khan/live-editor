@@ -22,6 +22,16 @@
 
     WebpageTester.prototype.testMethods = {
         /*
+         * Injects these additional value. 
+         * {
+         *   $doc: ->iframe document,
+         *   $docSP: ->SlowParse document
+         *   $docNoJS: ->iframe without js
+         *   cssRules: ->parsed list of all cssRules
+         * }
+        */
+
+        /*
          * Introspect a callback to determine it's parameters and then
          * produces a constraint that contains the appropriate variables and callbacks.
          *
@@ -70,7 +80,7 @@
                 var expected = structure[selector];
                 // TODO(jeresig): Maybe find a way to do this such that we can run
                 // it in a worker thread.
-                var numFound = $(selector, this.userCode.document).length;
+                var numFound = $(selector, this.testContext.$docSP).length;
                 if (expected === 0 && numFound !== 0 || numFound < expected) {
                     return {success: false};
                 }
@@ -97,7 +107,7 @@
         getCssMap: function() {
             // Convert CSS rules from a list of parsed objects into a map.
             var css = {};
-            _.each(this.userCode.cssRules, function(rule) {
+            _.each(this.testContext.cssRules, function(rule) {
                 // Parse all properties for this rule into map
                 var properties = {};
                 _.each(rule.declarations.properties, function(property) {
@@ -152,7 +162,7 @@
 
         /*
          * Make it so that equivalent CSS property values are
-         * be equal strings. In particular this targets odd spacing
+         * equal strings. In particular this targets odd spacing
          * in rgb(0,0,0) or border: 1px solid black;
          */
         normalizePropertyValue: function(property) {
@@ -428,15 +438,20 @@ window.WebpageOutput = Backbone.View.extend({
 
     render: function() {
         this.$el.empty();
-        this.$frame = $("<iframe>")
+        this.$frame = $("<iframe sandbox=\"allow-same-origin allow-scripts\">")
             .css({width: "100%", height: "100%", border: "0"})
             .appendTo(this.el)
             .show()[0];
-        this.$frameDoc = this.$frame.contentWindow.document;
+        this.frameDoc = this.$frame.contentDocument;
+
+        this.$frameNoJs = $("<iframe sandbox=\"allow-same-origin\">")
+            .appendTo(this.el)
+            .hide()[0];
+        this.frameDocNoJs = this.$frameNoJs.contentDocument;
     },
 
     getScreenshot: function(screenshotSize, callback) {
-        html2canvas(this.$frameDoc.body, {
+        html2canvas(this.frameDoc.body, {
             onrendered: function(canvas) {
                 var width = screenshotSize;
                 var height = (screenshotSize / canvas.width) * canvas.height;
@@ -463,13 +478,11 @@ window.WebpageOutput = Backbone.View.extend({
     },
 
     infiniteLoopCallback:  function() {
-        this.output.postParent({
-            results: {
-                code: this.output.currentCode,
-                errors: [this.infiniteLoopError]
-            }
-        });
         this.KA_INFINITE_LOOP = true;
+        if (!this.running) {
+            this.output.lastRun.errors.push(this.infiniteLoopError);
+            this.output.phoneHome();
+        }
     },
 
     lint: function(userCode, callback) {
@@ -591,13 +604,22 @@ window.WebpageOutput = Backbone.View.extend({
     test: function(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
-        var testData = {
-            // Append to a div because jQuery doens't work on a document fragmen
-            document: $("<div>").append(this.slowparseResults.document),
-            cssRules: this.slowparseResults.rules
-        };
+        // Write a version of the page with no scripts
+        // (And unmodified JS text - i.e. no loop breaking)
+        this.frameDocNoJs.open();
+        this.frameDocNoJs.write(userCode);
+        this.frameDocNoJs.close();
 
-        this.tester.test(testData, tests, errors,
+        // Attach these variables instead of passing values in
+        // This method allows direct access in the tests.
+        _.extend(this.tester.testContext, {
+            $doc: $(this.frameDoc),
+            $docSP: $("<div>").append(this.slowparseResults.document),
+            $docNoJS: $(this.frameDocNoJs),
+            cssRules: this.slowparseResults.cssRules
+        });
+
+        this.tester.test("", tests, errors,
             function(errors, testResults) {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact
@@ -618,7 +640,7 @@ window.WebpageOutput = Backbone.View.extend({
 
     postProcessing: function(oldPageTitle) {
         var self = this;
-        $(this.$frameDoc).on("click", "a", function() {
+        $(this.frameDoc).on("click", "a", function() {
             var url = $(this).attr("href");
             if (url[0] !== "#") {
                 self.output.postParent({
@@ -629,7 +651,7 @@ window.WebpageOutput = Backbone.View.extend({
             return false;
         });
 
-        var titleTag = $(this.$frameDoc).find("head > title");
+        var titleTag = $(this.frameDoc).find("head > title");
         var title = titleTag.first().text();
         if (titleTag.length > 0 && this.oldPageTitle !== title) {
             this.oldPageTitle = title;
@@ -643,9 +665,11 @@ window.WebpageOutput = Backbone.View.extend({
     runCode: function(codeObj, callback) {
         this.stateScrubber.clearAll();
         this.KA_INFINITE_LOOP = false;
-        this.$frameDoc.open();
-        this.$frameDoc.write(this.slowparseResults.code);
-        this.$frameDoc.close();
+        this.frameDoc.open();
+        this.running = true;
+        this.frameDoc.write(this.slowparseResults.code);
+        this.running = false;
+        this.frameDoc.close();
 
         this.postProcessing();
 

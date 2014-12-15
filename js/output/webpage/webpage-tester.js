@@ -22,6 +22,16 @@
 
     WebpageTester.prototype.testMethods = {
         /*
+         * Injects these additional value. 
+         * {
+         *   $doc: ->iframe document,
+         *   $docSP: ->SlowParse document
+         *   $docNoJS: ->iframe without js
+         *   cssRules: ->parsed list of all cssRules
+         * }
+        */
+
+        /*
          * Introspect a callback to determine it's parameters and then
          * produces a constraint that contains the appropriate variables and callbacks.
          *
@@ -70,7 +80,7 @@
                 var expected = structure[selector];
                 // TODO(jeresig): Maybe find a way to do this such that we can run
                 // it in a worker thread.
-                var numFound = $(selector, this.userCode.document).length;
+                var numFound = $(selector, this.testContext.$docSP).length;
                 if (expected === 0 && numFound !== 0 || numFound < expected) {
                     return {success: false};
                 }
@@ -97,7 +107,7 @@
         getCssMap: function() {
             // Convert CSS rules from a list of parsed objects into a map.
             var css = {};
-            _.each(this.userCode.cssRules, function(rule) {
+            _.each(this.testContext.cssRules, function(rule) {
                 // Parse all properties for this rule into map
                 var properties = {};
                 _.each(rule.declarations.properties, function(property) {
@@ -152,7 +162,7 @@
 
         /*
          * Make it so that equivalent CSS property values are
-         * be equal strings. In particular this targets odd spacing
+         * equal strings. In particular this targets odd spacing
          * in rgb(0,0,0) or border: 1px solid black;
          */
         normalizePropertyValue: function(property) {

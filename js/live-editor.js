@@ -1003,7 +1003,7 @@ window.LiveEditor = Backbone.View.extend({
     postFrame: function(data) {
         // Send the data to the frame using postMessage
         this.$el.find("#output-frame")[0].contentWindow.postMessage(
-            JSON.stringify(data), this.postFrameOrigin());
+            JSON.stringify(data), "*");//this.postFrameOrigin());
     },
 
     /*
@@ -1028,7 +1028,6 @@ window.LiveEditor = Backbone.View.extend({
             code: arguments.length === 0 ? this.editor.text() : code,
             cursor: this.editor.getSelectionIndices ? this.editor.getSelectionIndices() : -1,
             validate: this.validation || "",
-            noLint: false,
             version: this.config.curVersion(),
             settings: this.settings || {},
             workersDir: this.workersDir,

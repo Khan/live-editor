@@ -319,6 +319,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     outputs: {},
 
     initialize: function(options) {
+        setTimeout(function(){ console.log("heartbeat"); }, 1000)
         this.render();
 
         this.setPaths(options);
@@ -414,7 +415,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code, undefined, data.cursor, data.noLint);
+            this.runCode(data.code, undefined, data.cursor);
         }
 
         if (data.onlyRunTests != null) {
@@ -478,7 +479,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.validate = validate;
     },
 
-    runCode: function(userCode, callback, cursor, noLint) {
+    runCode: function(userCode, callback, cursor) {
         this.currentCode = userCode;
 
         var buildDone = function(errors) {
@@ -488,13 +489,13 @@ window.LiveEditorOutput = Backbone.View.extend({
                 this.postParent({ loaded: true });
                 this.loaded = true;
             }
-            this.postParent({
-                results: {
-                    code: userCode,
-                    errors: errors,
-                    assertions: this.assertions
-                }
-            });
+
+            this.lastRun = {
+                code: userCode,
+                errors: errors,
+                assertions: this.assertions
+            };
+            this.phoneHome("refresh");
 
             this.toggle(!errors.length);
 
@@ -510,17 +511,15 @@ window.LiveEditorOutput = Backbone.View.extend({
                 // This is debounced (async)
                 var oldErrorsLength = errors.length;
                 this.test(userCode, this.validate, errors, function(errors, testResults) {
-                    var results = {
-                        code: userCode,
-                        tests: testResults
-                    };
+                    this.lastRun.tests = testResults;
                     if (oldErrorsLength === 0 && errors.length > oldErrorsLength) {
-                        results.errors = errors;
+                        this.lastRun.errors = errors;
                     }
-                    this.postParent({ results: results });
+                    this.phoneHome();
                 }.bind(this));
             }
         }.bind(this);
+
 
         var lintDone = function(errors) {
             if (errors.length > 0 || this.onlyRunTests) {
@@ -528,25 +527,29 @@ window.LiveEditorOutput = Backbone.View.extend({
             }
 
             // Then run the user's code
-            try {
+            //try {
                 this.output.runCode(userCode, function(errors) {
                     buildDone(errors);
                 }, cursor);
 
-            } catch (e) {
+            /*} catch (e) {
                 buildDone([e]);
-            }
+            }*/
         }.bind(this);
 
-        // Always lint the first time, so that PJS can populate its list of globals
-        if (noLint && this.firstLint) {
-            lintDone([]);
-        } else {
-            this.lint(userCode, lintDone);
-            this.firstLint = true;
-        }
+        this.lint(userCode, lintDone);
+        this.firstLint = true;
     },
 
+    phoneHome: function(mode) {
+        if (this.lastSent && this.lastSent.errors && mode !== "refresh") {
+            this.lastRun.errors = this.lastSent.errors;
+        }
+        this.postParent({
+            results: this.lastRun
+        });
+        this.lastSent = this.lastRun;
+    },
 
     test: _.throttle(function() {
         this._test.apply(this, arguments);
