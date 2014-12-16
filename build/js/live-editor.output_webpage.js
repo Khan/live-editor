@@ -173,11 +173,10 @@ WebpageTester.prototype.testMethods = {
      * can be split by spaces
      */
     normalizeSelector: function(selector) {
-        selector = selector.replace(/\s+/g, " ").replace(/(>|~|,) /g, "$1").trim();
-        if (selector.indexOf(",") !== -1) {
-            var selectors = selector.split(",");
-            selector = selectors.sort().join(",");
-        }
+        selector = selector.replace(/\s+/g, " ").replace(/(>|~|,) /g, "$1");
+        var pieces = selector.split(",");
+        pieces = pieces.map(function(s) { return s.trim(); });
+        selector = pieces.sort().join(",");
         return selector;
     },
 

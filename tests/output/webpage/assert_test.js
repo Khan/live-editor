@@ -119,6 +119,10 @@ describe("Full CSS matching with wildcards", function() {
         css: "div, li { }"
     }, {
         res: true,
+        pat: "h1 ,h2{}",
+        css: "h1,h2{ }"
+    }, {
+        res: true,
         title: "Single selector matches Multiple selectors",
         pat: "div {color: red; height: 5px;} div, li {display: none;}",
         css: "div, li {color: red; display: none;} div {height: 5px;}"
