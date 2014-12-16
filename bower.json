@@ -24,7 +24,11 @@
     "jquery-ui": "1.10.1",
     "es5-shim": "3.4.0",
     "bootstrap": "2.3.0",
-    "jed": "0.5.0"
+    "jed": "0.5.0",
+    "structured": "*",
+    "escope": "~1.0.0",
+    "iframe-overlay": "*",
+    "poster": "*"
   },
   "resolutions": {
     "jquery": "~2.1.1"

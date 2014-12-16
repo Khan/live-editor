@@ -346,8 +346,29 @@ window.LiveEditorOutput = Backbone.View.extend({
             el: this.$el.find(".output"),
             config: this.config,
             output: this,
-            type: outputType
+            type: outputType,
+            useStepper: true
         });
+
+        if (this.output.debugger) {
+            var debugr = this.output.debugger;
+            var self = this;
+
+            debugr.onBreakpoint = function () {
+                self.postParent({
+                    type: "debugger",
+                    action: "step",
+                    line: debugr.currentLine
+                });
+            };
+
+            debugr.onFunctionDone = function () {
+                self.postParent({
+                    type: "debugger",
+                    action: "done"
+                });
+            };
+        }
     },
 
     setPaths: function(data) {
@@ -383,15 +404,22 @@ window.LiveEditorOutput = Backbone.View.extend({
         // let the parent know we're up and running
         this.notifyActive();
 
+        if (typeof(event.data) === "object") {
+            return;
+        }
         try {
             data = JSON.parse(event.data);
-
         } catch (err) {
             return;
         }
         if (!this.output) {
             var outputType = data.outputType || _.keys(this.outputs)[0];
             this.setOutput(outputType);
+        }
+
+        if (data.type === "debugger") {
+            this.handleDebuggerMessage(data);
+            return;
         }
 
         // Set the paths from the incoming data, if they exist
@@ -444,6 +472,65 @@ window.LiveEditorOutput = Backbone.View.extend({
                     this.output.messageHandlers[prop].call(this.output, data);
                 }
             }
+        }
+    },
+
+    handleDebuggerMessage: function (data) {
+        var debugr = this.output.debugger;
+
+        if (data.action === "debug") {
+            if (data.state === "on") {
+                this.output.debugger.breakpointsEnabled = true;
+            } else if (data.state === "off") {
+                this.output.debugger.breakpointsEnabled = false;
+                debugr.resume();
+                this.output.restart();
+            }
+        }
+
+        if (data.action === "start") {
+            this.output.clear();
+            debugr.breakpoints = data.breakpoints;
+            debugr.start(data.paused);
+        }
+
+        if (data.action === "resume") {
+            debugr.resume();
+        }
+
+        if (data.action === "stepIn") {
+            debugr.stepIn();
+            this.postParent({
+                type: "debugger",
+                action: "step",
+                line: debugr.currentLine
+            });
+        }
+
+        if (data.action === "stepOver") {
+            debugr.stepOver();
+            this.postParent({
+                type: "debugger",
+                action: "step",
+                line: debugr.currentLine
+            });
+        }
+
+        if (data.action === "stepOut") {
+            debugr.stepOut();
+            this.postParent({
+                type: "debugger",
+                action: "step",
+                line: debugr.currentLine
+            });
+        }
+
+        if (data.action === "setBreakpoint") {
+            debugr.setBreakpoint(data.line);
+        }
+
+        if (data.action === "clearBreakpoint") {
+            debugr.clearBreakpoint(data.line);
         }
     },
 

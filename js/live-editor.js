@@ -113,6 +113,21 @@ window.LiveEditor = Backbone.View.extend({
             liveEditor: this
         });
 
+        // Set up the debugger;
+        if (options.useDebugger) {
+            this.debugger = new ScratchpadDebugger({
+                liveEditor: this,
+                editor: this.editor.editor
+            });
+            this.debugger.on("enabled", function (enabled) {
+                if (enabled) {
+                    this.$el.find("#restart-code").attr("disabled", "");
+                } else {
+                    this.$el.find("#restart-code").removeAttr("disabled");
+                }
+            }, this);
+        }
+
         var code = options.code;
 
         // Load the text into the editor
@@ -914,6 +929,10 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         if (!data) {
+            return;
+        }
+
+        if (data.type === "stepper") {
             return;
         }
 

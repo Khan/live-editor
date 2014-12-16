@@ -1918,6 +1918,10 @@ window.TooltipBase = Backbone.View.extend({
     },
 
     placeOnScreen: function() {
+        // don't show tool tips when the editor is in readonly mode
+        if (this.parent.editor.getReadOnly()) {
+            return;
+        }
         var parent = this.parent;
         if (parent.currentTooltip && parent.currentTooltip !== this) {
             parent.currentTooltip.$el.hide();

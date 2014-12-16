@@ -503,8 +503,18 @@ describe("Scratchpad Output Exec", function() {
      * This makes sure that when you have objects, the scope of
      * closures and with statements are not lost during the code
      * injection phase.
+     *
+     * This test is skipped when debugging because users can't make
+     * changes to the program while debugging.  Also, there are
+     * technical issues with replacing the prototype.  Currently,
+     * all functions are converted to generator functions which
+     * have a .next() function.  Replacing the prototype gets rid
+     * of the .next() function and the generator ceases to exist
+     * which breaks the debugger.  This issue will eventually be
+     * resolved but shouldn't have any immediate impact on users.
      */
     runTest({
+        skip: usingDebugger,
         title: "Make sure prototype function scope is preserved",
         code: function() {
             var x = function() {
@@ -612,7 +622,7 @@ describe("Scratchpad Output Exec", function() {
         assertions: [{
             "row":0,"column":0,
             "text": "Assertion failed: 2 is not equal to 4."}],
-        assertions2: [],
+        assertions2: []
     });
 
     /**

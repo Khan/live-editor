@@ -280,7 +280,7 @@ function program15(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n                </div>\n            </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar scratchpad-dev-record-row\" style=\"display:none;\"></div>\n    </div>\n</div>";
+  buffer += "\n                </div>\n            </div>\n            <div class=\"scratchpad-debugger\"></div>\n        </div>\n\n        <div class=\"scratchpad-toolbar scratchpad-dev-record-row\" style=\"display:none;\"></div>\n    </div>\n</div>";
   return buffer;});;
 window.ScratchpadDrawCanvas = Backbone.View.extend({
     initialize: function(options) {
@@ -919,6 +919,21 @@ window.LiveEditor = Backbone.View.extend({
             el: this.$(this.dom.OUTPUT_DIV),
             liveEditor: this
         });
+
+        // Set up the debugger;
+        if (options.useDebugger) {
+            this.debugger = new ScratchpadDebugger({
+                liveEditor: this,
+                editor: this.editor.editor
+            });
+            this.debugger.on("enabled", function (enabled) {
+                if (enabled) {
+                    this.$el.find("#restart-code").attr("disabled", "");
+                } else {
+                    this.$el.find("#restart-code").removeAttr("disabled");
+                }
+            }, this);
+        }
 
         var code = options.code;
 
@@ -1721,6 +1736,10 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         if (!data) {
+            return;
+        }
+
+        if (data.type === "stepper") {
             return;
         }
 

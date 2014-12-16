@@ -17554,7 +17554,7 @@
       p.key = c;
       p.keyCode = code;
       p.keyPressed();
-      p.keyCode = 0;
+      //p.keyCode = 0;  // the debugger sets this value before calling p.keyTyped
       p.keyTyped();
       updateKeyPressed();
     }
