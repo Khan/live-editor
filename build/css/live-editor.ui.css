@@ -344,7 +344,6 @@
 .scratchpad-draw-canvas,
 #output-frame {
     width: 400px;
-    /*position: absolute;*/
     top: 0;
     left: auto;
     bottom: auto;

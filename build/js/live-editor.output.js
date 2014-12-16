@@ -346,8 +346,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             el: this.$el.find(".output"),
             config: this.config,
             output: this,
-            type: outputType,
-            useStepper: true
+            type: outputType
         });
 
         if (this.output.debugger) {

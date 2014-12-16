@@ -589,6 +589,8 @@ window.ScratchpadDebugger = Backbone.View.extend({
     },
 
     isSupported: function () {
+        // Source:
+        // https://github.com/kangax/compat-table/blob/gh-pages/data-es6.js#L1554-L1564
         try {
             var code = "\n" +
                 "var generator = (function* () {\n" +
@@ -794,17 +796,17 @@ window.ScratchpadDebugger = Backbone.View.extend({
             var len, firstRow;
             len = range.end.row - range.start.row;
 
-            if (delta.action == "insertText") {
-                firstRow = range.start.column ? range.start.row + 1 : range.start.row;
-            } else {
-                firstRow = range.start.row;
-            }
-
             if (delta.action === "insertText" || delta.action === "insertLines") {
+                if (delta.action === "insertText") {
+                    firstRow = range.start.column ? range.start.row + 1 : range.start.row;
+                }
+
                 var args = new Array(len);
                 args.unshift(firstRow, 0);
                 Array.prototype.splice.apply(session.$breakpoints, args);
-            } else {
+            } else if (delta.action === "removeText" || delta.action === "removeLines") {
+                firstRow = range.start.row;
+
                 if (range.start.column === 0 && range.end.column === 0) {
                     session.$breakpoints.splice(firstRow, len);
                 } else {
@@ -813,7 +815,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
             }
         });
     },
-    
+
     getBreakpoints: function () {
         var breakpoints = {};
         this.editor.session.getBreakpoints().forEach(function (value, index) {

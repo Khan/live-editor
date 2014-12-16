@@ -17554,7 +17554,16 @@
       p.key = c;
       p.keyCode = code;
       p.keyPressed();
-      //p.keyCode = 0;  // the debugger sets this value before calling p.keyTyped
+      if (!p.usingDebugger) {
+        p.keyCode = 0;
+        // When the debugger is in use all callbacks are queued and thus not
+        // run synchronously therefore, setting keyCode = 0; immediatedly as 
+        // it is without this check results keyCode being 0 when keyPressed()
+        // is finally run which is not the behaviour we want.
+        // The ProcessingDebugger sets keyCode to 0 right before it calls 
+        // keyTyped().
+        // https://github.com/kevinb7/stepper/blob/master/src/processing-debugger.ts#L41-L43
+      }
       p.keyTyped();
       updateKeyPressed();
     }

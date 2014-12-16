@@ -52,7 +52,6 @@ window.PJSOutput = Backbone.View.extend({
      * should indeed be safe.  So add it here! :)
      */
     idempotentCalls: [ "createFont" ],
-
     initialize: function(options) {
         // Handle recording playback
         this.handlers = {};
@@ -77,6 +76,7 @@ window.PJSOutput = Backbone.View.extend({
             this.debugger = new ProcessingDebugger(this.canvas);
             this.debugger.breakpointsEnabled = false;
             this.debugger.onNewObject = PJSOutput.newCallback.bind(PJSOutput);
+            this.canvas.usingDebugger = true;
         }
 
         this.reseedRandom();
@@ -768,7 +768,7 @@ window.PJSOutput = Backbone.View.extend({
             //  they can't serialize.
             var PImage = this.canvas.PImage;
             var isStubbableObject = function(value) {
-                return $.isPlainObject(value) &&
+                return $.isPlainObject(value) && 
                     !(value instanceof PImage);
             };
 
@@ -811,7 +811,7 @@ window.PJSOutput = Backbone.View.extend({
                 }
                 context[global] = contextVal;
             }.bind(this));
-
+    
             this.worker.exec(userCode, context, function(errors, userCode) {
                 if (errors && errors.length > 0) {
                     return callback(errors, userCode);

@@ -932,7 +932,8 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
-        if (data.type === "stepper") {
+        if (data.type === "debugger") {
+            // these messages are handled by ui/debugger.js:listenMessages
             return;
         }
 

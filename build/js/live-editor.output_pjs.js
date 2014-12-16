@@ -1230,6 +1230,7 @@ window.PJSOutput = Backbone.View.extend({
             this.debugger = new ProcessingDebugger(this.canvas);
             this.debugger.breakpointsEnabled = false;
             this.debugger.onNewObject = PJSOutput.newCallback.bind(PJSOutput);
+            this.canvas.usingDebugger = true;
         }
 
         this.reseedRandom();
@@ -1486,7 +1487,7 @@ window.PJSOutput = Backbone.View.extend({
         var width = $window.width();
         var height = $window.height();
 
-        if (this.canvas && 
+        if (this.canvas &&
             (width !== this.canvas.width ||
             height !== this.canvas.height)) {
             // Set the canvas element to be the right size

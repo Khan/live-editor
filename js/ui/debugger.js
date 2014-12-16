@@ -15,6 +15,8 @@ window.ScratchpadDebugger = Backbone.View.extend({
     },
 
     isSupported: function () {
+        // Source:
+        // https://github.com/kangax/compat-table/blob/gh-pages/data-es6.js#L1554-L1564
         try {
             var code = "\n" +
                 "var generator = (function* () {\n" +

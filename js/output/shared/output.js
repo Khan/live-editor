@@ -13,7 +13,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (options.outputType) {
             this.setOutput(options.outputType);
         }
-
+        
         this.bind();
     },
 
@@ -33,8 +33,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             el: this.$el.find(".output"),
             config: this.config,
             output: this,
-            type: outputType,
-            useStepper: true
+            type: outputType
         });
 
         if (this.output.debugger) {
@@ -303,7 +302,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
             } catch (e) {
                 buildDone([e]);
-            }
+            }        
         }.bind(this);
 
         // Always lint the first time, so that PJS can populate its list of globals
