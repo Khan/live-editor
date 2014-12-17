@@ -22,13 +22,14 @@ window.WebpageOutput = Backbone.View.extend({
         // Load Webpage config options
         this.config.runCurVersion("webpage", this);
 
-        this.stateScrubber = new StateScrubber(this.$frame.contentWindow);
+        // Set up infinite loop protection
         this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this));
-
-        // Inject the infinite loop protection function
         this.$frame.contentWindow.KAInfiniteLoopProtect = 
             this.loopProtector.KAInfiniteLoopProtect;
-        this.stateScrubber.globalVariables["KAInfiniteLoopProtect"] = true;
+
+        // Do this at the end so variables I add to the global scope stay
+        // i.e.  KAInfiniteLoopProtect
+        this.stateScrubber = new StateScrubber(this.$frame.contentWindow);
     },
 
     render: function() {
