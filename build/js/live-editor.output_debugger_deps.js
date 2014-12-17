@@ -1,3 +1,2290 @@
+/*
+  Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
+  Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+/*jslint vars:false, bitwise:true*/
+/*jshint indent:4*/
+/*global exports:true, define:true*/
+(function (root, factory) {
+    'use strict';
+
+    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
+    // and plain browser loading,
+    if (typeof define === 'function' && define.amd) {
+        define(['exports'], factory);
+    } else if (typeof exports !== 'undefined') {
+        factory(exports);
+    } else {
+        factory((root.estraverse = {}));
+    }
+}(this, function (exports) {
+    'use strict';
+
+    var Syntax,
+        isArray,
+        VisitorOption,
+        VisitorKeys,
+        objectCreate,
+        objectKeys,
+        BREAK,
+        SKIP,
+        REMOVE;
+
+    function ignoreJSHintError() { }
+
+    isArray = Array.isArray;
+    if (!isArray) {
+        isArray = function isArray(array) {
+            return Object.prototype.toString.call(array) === '[object Array]';
+        };
+    }
+
+    function deepCopy(obj) {
+        var ret = {}, key, val;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                val = obj[key];
+                if (typeof val === 'object' && val !== null) {
+                    ret[key] = deepCopy(val);
+                } else {
+                    ret[key] = val;
+                }
+            }
+        }
+        return ret;
+    }
+
+    function shallowCopy(obj) {
+        var ret = {}, key;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                ret[key] = obj[key];
+            }
+        }
+        return ret;
+    }
+    ignoreJSHintError(shallowCopy);
+
+    // based on LLVM libc++ upper_bound / lower_bound
+    // MIT License
+
+    function upperBound(array, func) {
+        var diff, len, i, current;
+
+        len = array.length;
+        i = 0;
+
+        while (len) {
+            diff = len >>> 1;
+            current = i + diff;
+            if (func(array[current])) {
+                len = diff;
+            } else {
+                i = current + 1;
+                len -= diff + 1;
+            }
+        }
+        return i;
+    }
+
+    function lowerBound(array, func) {
+        var diff, len, i, current;
+
+        len = array.length;
+        i = 0;
+
+        while (len) {
+            diff = len >>> 1;
+            current = i + diff;
+            if (func(array[current])) {
+                i = current + 1;
+                len -= diff + 1;
+            } else {
+                len = diff;
+            }
+        }
+        return i;
+    }
+    ignoreJSHintError(lowerBound);
+
+    objectCreate = Object.create || (function () {
+        function F() { }
+
+        return function (o) {
+            F.prototype = o;
+            return new F();
+        };
+    })();
+
+    objectKeys = Object.keys || function (o) {
+        var keys = [], key;
+        for (key in o) {
+            keys.push(key);
+        }
+        return keys;
+    };
+
+    function extend(to, from) {
+        objectKeys(from).forEach(function (key) {
+            to[key] = from[key];
+        });
+        return to;
+    }
+
+    Syntax = {
+        AssignmentExpression: 'AssignmentExpression',
+        ArrayExpression: 'ArrayExpression',
+        ArrayPattern: 'ArrayPattern',
+        ArrowFunctionExpression: 'ArrowFunctionExpression',
+        AwaitExpression: 'AwaitExpression', // CAUTION: It's deferred to ES7.
+        BlockStatement: 'BlockStatement',
+        BinaryExpression: 'BinaryExpression',
+        BreakStatement: 'BreakStatement',
+        CallExpression: 'CallExpression',
+        CatchClause: 'CatchClause',
+        ClassBody: 'ClassBody',
+        ClassDeclaration: 'ClassDeclaration',
+        ClassExpression: 'ClassExpression',
+        ComprehensionBlock: 'ComprehensionBlock',  // CAUTION: It's deferred to ES7.
+        ComprehensionExpression: 'ComprehensionExpression',  // CAUTION: It's deferred to ES7.
+        ConditionalExpression: 'ConditionalExpression',
+        ContinueStatement: 'ContinueStatement',
+        DebuggerStatement: 'DebuggerStatement',
+        DirectiveStatement: 'DirectiveStatement',
+        DoWhileStatement: 'DoWhileStatement',
+        EmptyStatement: 'EmptyStatement',
+        ExportBatchSpecifier: 'ExportBatchSpecifier',
+        ExportDeclaration: 'ExportDeclaration',
+        ExportSpecifier: 'ExportSpecifier',
+        ExpressionStatement: 'ExpressionStatement',
+        ForStatement: 'ForStatement',
+        ForInStatement: 'ForInStatement',
+        ForOfStatement: 'ForOfStatement',
+        FunctionDeclaration: 'FunctionDeclaration',
+        FunctionExpression: 'FunctionExpression',
+        GeneratorExpression: 'GeneratorExpression',  // CAUTION: It's deferred to ES7.
+        Identifier: 'Identifier',
+        IfStatement: 'IfStatement',
+        ImportDeclaration: 'ImportDeclaration',
+        ImportDefaultSpecifier: 'ImportDefaultSpecifier',
+        ImportNamespaceSpecifier: 'ImportNamespaceSpecifier',
+        ImportSpecifier: 'ImportSpecifier',
+        Literal: 'Literal',
+        LabeledStatement: 'LabeledStatement',
+        LogicalExpression: 'LogicalExpression',
+        MemberExpression: 'MemberExpression',
+        MethodDefinition: 'MethodDefinition',
+        ModuleSpecifier: 'ModuleSpecifier',
+        NewExpression: 'NewExpression',
+        ObjectExpression: 'ObjectExpression',
+        ObjectPattern: 'ObjectPattern',
+        Program: 'Program',
+        Property: 'Property',
+        ReturnStatement: 'ReturnStatement',
+        SequenceExpression: 'SequenceExpression',
+        SpreadElement: 'SpreadElement',
+        SwitchStatement: 'SwitchStatement',
+        SwitchCase: 'SwitchCase',
+        TaggedTemplateExpression: 'TaggedTemplateExpression',
+        TemplateElement: 'TemplateElement',
+        TemplateLiteral: 'TemplateLiteral',
+        ThisExpression: 'ThisExpression',
+        ThrowStatement: 'ThrowStatement',
+        TryStatement: 'TryStatement',
+        UnaryExpression: 'UnaryExpression',
+        UpdateExpression: 'UpdateExpression',
+        VariableDeclaration: 'VariableDeclaration',
+        VariableDeclarator: 'VariableDeclarator',
+        WhileStatement: 'WhileStatement',
+        WithStatement: 'WithStatement',
+        YieldExpression: 'YieldExpression'
+    };
+
+    VisitorKeys = {
+        AssignmentExpression: ['left', 'right'],
+        ArrayExpression: ['elements'],
+        ArrayPattern: ['elements'],
+        ArrowFunctionExpression: ['params', 'defaults', 'rest', 'body'],
+        AwaitExpression: ['argument'], // CAUTION: It's deferred to ES7.
+        BlockStatement: ['body'],
+        BinaryExpression: ['left', 'right'],
+        BreakStatement: ['label'],
+        CallExpression: ['callee', 'arguments'],
+        CatchClause: ['param', 'body'],
+        ClassBody: ['body'],
+        ClassDeclaration: ['id', 'body', 'superClass'],
+        ClassExpression: ['id', 'body', 'superClass'],
+        ComprehensionBlock: ['left', 'right'],  // CAUTION: It's deferred to ES7.
+        ComprehensionExpression: ['blocks', 'filter', 'body'],  // CAUTION: It's deferred to ES7.
+        ConditionalExpression: ['test', 'consequent', 'alternate'],
+        ContinueStatement: ['label'],
+        DebuggerStatement: [],
+        DirectiveStatement: [],
+        DoWhileStatement: ['body', 'test'],
+        EmptyStatement: [],
+        ExportBatchSpecifier: [],
+        ExportDeclaration: ['declaration', 'specifiers', 'source'],
+        ExportSpecifier: ['id', 'name'],
+        ExpressionStatement: ['expression'],
+        ForStatement: ['init', 'test', 'update', 'body'],
+        ForInStatement: ['left', 'right', 'body'],
+        ForOfStatement: ['left', 'right', 'body'],
+        FunctionDeclaration: ['id', 'params', 'defaults', 'rest', 'body'],
+        FunctionExpression: ['id', 'params', 'defaults', 'rest', 'body'],
+        GeneratorExpression: ['blocks', 'filter', 'body'],  // CAUTION: It's deferred to ES7.
+        Identifier: [],
+        IfStatement: ['test', 'consequent', 'alternate'],
+        ImportDeclaration: ['specifiers', 'source'],
+        ImportDefaultSpecifier: ['id'],
+        ImportNamespaceSpecifier: ['id'],
+        ImportSpecifier: ['id', 'name'],
+        Literal: [],
+        LabeledStatement: ['label', 'body'],
+        LogicalExpression: ['left', 'right'],
+        MemberExpression: ['object', 'property'],
+        MethodDefinition: ['key', 'value'],
+        ModuleSpecifier: [],
+        NewExpression: ['callee', 'arguments'],
+        ObjectExpression: ['properties'],
+        ObjectPattern: ['properties'],
+        Program: ['body'],
+        Property: ['key', 'value'],
+        ReturnStatement: ['argument'],
+        SequenceExpression: ['expressions'],
+        SpreadElement: ['argument'],
+        SwitchStatement: ['discriminant', 'cases'],
+        SwitchCase: ['test', 'consequent'],
+        TaggedTemplateExpression: ['tag', 'quasi'],
+        TemplateElement: [],
+        TemplateLiteral: ['quasis', 'expressions'],
+        ThisExpression: [],
+        ThrowStatement: ['argument'],
+        TryStatement: ['block', 'handlers', 'handler', 'guardedHandlers', 'finalizer'],
+        UnaryExpression: ['argument'],
+        UpdateExpression: ['argument'],
+        VariableDeclaration: ['declarations'],
+        VariableDeclarator: ['id', 'init'],
+        WhileStatement: ['test', 'body'],
+        WithStatement: ['object', 'body'],
+        YieldExpression: ['argument']
+    };
+
+    // unique id
+    BREAK = {};
+    SKIP = {};
+    REMOVE = {};
+
+    VisitorOption = {
+        Break: BREAK,
+        Skip: SKIP,
+        Remove: REMOVE
+    };
+
+    function Reference(parent, key) {
+        this.parent = parent;
+        this.key = key;
+    }
+
+    Reference.prototype.replace = function replace(node) {
+        this.parent[this.key] = node;
+    };
+
+    Reference.prototype.remove = function remove() {
+        if (isArray(this.parent)) {
+            this.parent.splice(this.key, 1);
+            return true;
+        } else {
+            this.replace(null);
+            return false;
+        }
+    };
+
+    function Element(node, path, wrap, ref) {
+        this.node = node;
+        this.path = path;
+        this.wrap = wrap;
+        this.ref = ref;
+    }
+
+    function Controller() { }
+
+    // API:
+    // return property path array from root to current node
+    Controller.prototype.path = function path() {
+        var i, iz, j, jz, result, element;
+
+        function addToPath(result, path) {
+            if (isArray(path)) {
+                for (j = 0, jz = path.length; j < jz; ++j) {
+                    result.push(path[j]);
+                }
+            } else {
+                result.push(path);
+            }
+        }
+
+        // root node
+        if (!this.__current.path) {
+            return null;
+        }
+
+        // first node is sentinel, second node is root element
+        result = [];
+        for (i = 2, iz = this.__leavelist.length; i < iz; ++i) {
+            element = this.__leavelist[i];
+            addToPath(result, element.path);
+        }
+        addToPath(result, this.__current.path);
+        return result;
+    };
+
+    // API:
+    // return type of current node
+    Controller.prototype.type = function () {
+        var node = this.current();
+        return node.type || this.__current.wrap;
+    };
+
+    // API:
+    // return array of parent elements
+    Controller.prototype.parents = function parents() {
+        var i, iz, result;
+
+        // first node is sentinel
+        result = [];
+        for (i = 1, iz = this.__leavelist.length; i < iz; ++i) {
+            result.push(this.__leavelist[i].node);
+        }
+
+        return result;
+    };
+
+    // API:
+    // return current node
+    Controller.prototype.current = function current() {
+        return this.__current.node;
+    };
+
+    Controller.prototype.__execute = function __execute(callback, element) {
+        var previous, result;
+
+        result = undefined;
+
+        previous  = this.__current;
+        this.__current = element;
+        this.__state = null;
+        if (callback) {
+            result = callback.call(this, element.node, this.__leavelist[this.__leavelist.length - 1].node);
+        }
+        this.__current = previous;
+
+        return result;
+    };
+
+    // API:
+    // notify control skip / break
+    Controller.prototype.notify = function notify(flag) {
+        this.__state = flag;
+    };
+
+    // API:
+    // skip child nodes of current node
+    Controller.prototype.skip = function () {
+        this.notify(SKIP);
+    };
+
+    // API:
+    // break traversals
+    Controller.prototype['break'] = function () {
+        this.notify(BREAK);
+    };
+
+    // API:
+    // remove node
+    Controller.prototype.remove = function () {
+        this.notify(REMOVE);
+    };
+
+    Controller.prototype.__initialize = function(root, visitor) {
+        this.visitor = visitor;
+        this.root = root;
+        this.__worklist = [];
+        this.__leavelist = [];
+        this.__current = null;
+        this.__state = null;
+        this.__fallback = visitor.fallback === 'iteration';
+        this.__keys = VisitorKeys;
+        if (visitor.keys) {
+            this.__keys = extend(objectCreate(this.__keys), visitor.keys);
+        }
+    };
+
+    function isNode(node) {
+        if (node == null) {
+            return false;
+        }
+        return typeof node === 'object' && typeof node.type === 'string';
+    }
+
+    function isProperty(nodeType, key) {
+        return (nodeType === Syntax.ObjectExpression || nodeType === Syntax.ObjectPattern) && 'properties' === key;
+    }
+
+    Controller.prototype.traverse = function traverse(root, visitor) {
+        var worklist,
+            leavelist,
+            element,
+            node,
+            nodeType,
+            ret,
+            key,
+            current,
+            current2,
+            candidates,
+            candidate,
+            sentinel;
+
+        this.__initialize(root, visitor);
+
+        sentinel = {};
+
+        // reference
+        worklist = this.__worklist;
+        leavelist = this.__leavelist;
+
+        // initialize
+        worklist.push(new Element(root, null, null, null));
+        leavelist.push(new Element(null, null, null, null));
+
+        while (worklist.length) {
+            element = worklist.pop();
+
+            if (element === sentinel) {
+                element = leavelist.pop();
+
+                ret = this.__execute(visitor.leave, element);
+
+                if (this.__state === BREAK || ret === BREAK) {
+                    return;
+                }
+                continue;
+            }
+
+            if (element.node) {
+
+                ret = this.__execute(visitor.enter, element);
+
+                if (this.__state === BREAK || ret === BREAK) {
+                    return;
+                }
+
+                worklist.push(sentinel);
+                leavelist.push(element);
+
+                if (this.__state === SKIP || ret === SKIP) {
+                    continue;
+                }
+
+                node = element.node;
+                nodeType = element.wrap || node.type;
+                candidates = this.__keys[nodeType];
+                if (!candidates) {
+                    if (this.__fallback) {
+                        candidates = objectKeys(node);
+                    } else {
+                        throw new Error('Unknown node type ' + nodeType + '.');
+                    }
+                }
+
+                current = candidates.length;
+                while ((current -= 1) >= 0) {
+                    key = candidates[current];
+                    candidate = node[key];
+                    if (!candidate) {
+                        continue;
+                    }
+
+                    if (isArray(candidate)) {
+                        current2 = candidate.length;
+                        while ((current2 -= 1) >= 0) {
+                            if (!candidate[current2]) {
+                                continue;
+                            }
+                            if (isProperty(nodeType, candidates[current])) {
+                                element = new Element(candidate[current2], [key, current2], 'Property', null);
+                            } else if (isNode(candidate[current2])) {
+                                element = new Element(candidate[current2], [key, current2], null, null);
+                            } else {
+                                continue;
+                            }
+                            worklist.push(element);
+                        }
+                    } else if (isNode(candidate)) {
+                        worklist.push(new Element(candidate, key, null, null));
+                    }
+                }
+            }
+        }
+    };
+
+    Controller.prototype.replace = function replace(root, visitor) {
+        function removeElem(element) {
+            var i,
+                key,
+                nextElem,
+                parent;
+
+            if (element.ref.remove()) {
+                // When the reference is an element of an array.
+                key = element.ref.key;
+                parent = element.ref.parent;
+
+                // If removed from array, then decrease following items' keys.
+                i = worklist.length;
+                while (i--) {
+                    nextElem = worklist[i];
+                    if (nextElem.ref && nextElem.ref.parent === parent) {
+                        if  (nextElem.ref.key < key) {
+                            break;
+                        }
+                        --nextElem.ref.key;
+                    }
+                }
+            }
+        }
+
+        var worklist,
+            leavelist,
+            node,
+            nodeType,
+            target,
+            element,
+            current,
+            current2,
+            candidates,
+            candidate,
+            sentinel,
+            outer,
+            key;
+
+        this.__initialize(root, visitor);
+
+        sentinel = {};
+
+        // reference
+        worklist = this.__worklist;
+        leavelist = this.__leavelist;
+
+        // initialize
+        outer = {
+            root: root
+        };
+        element = new Element(root, null, null, new Reference(outer, 'root'));
+        worklist.push(element);
+        leavelist.push(element);
+
+        while (worklist.length) {
+            element = worklist.pop();
+
+            if (element === sentinel) {
+                element = leavelist.pop();
+
+                target = this.__execute(visitor.leave, element);
+
+                // node may be replaced with null,
+                // so distinguish between undefined and null in this place
+                if (target !== undefined && target !== BREAK && target !== SKIP && target !== REMOVE) {
+                    // replace
+                    element.ref.replace(target);
+                }
+
+                if (this.__state === REMOVE || target === REMOVE) {
+                    removeElem(element);
+                }
+
+                if (this.__state === BREAK || target === BREAK) {
+                    return outer.root;
+                }
+                continue;
+            }
+
+            target = this.__execute(visitor.enter, element);
+
+            // node may be replaced with null,
+            // so distinguish between undefined and null in this place
+            if (target !== undefined && target !== BREAK && target !== SKIP && target !== REMOVE) {
+                // replace
+                element.ref.replace(target);
+                element.node = target;
+            }
+
+            if (this.__state === REMOVE || target === REMOVE) {
+                removeElem(element);
+                element.node = null;
+            }
+
+            if (this.__state === BREAK || target === BREAK) {
+                return outer.root;
+            }
+
+            // node may be null
+            node = element.node;
+            if (!node) {
+                continue;
+            }
+
+            worklist.push(sentinel);
+            leavelist.push(element);
+
+            if (this.__state === SKIP || target === SKIP) {
+                continue;
+            }
+
+            nodeType = element.wrap || node.type;
+            candidates = this.__keys[nodeType];
+            if (!candidates) {
+                if (this.__fallback) {
+                    candidates = objectKeys(node);
+                } else {
+                    throw new Error('Unknown node type ' + nodeType + '.');
+                }
+            }
+
+            current = candidates.length;
+            while ((current -= 1) >= 0) {
+                key = candidates[current];
+                candidate = node[key];
+                if (!candidate) {
+                    continue;
+                }
+
+                if (isArray(candidate)) {
+                    current2 = candidate.length;
+                    while ((current2 -= 1) >= 0) {
+                        if (!candidate[current2]) {
+                            continue;
+                        }
+                        if (isProperty(nodeType, candidates[current])) {
+                            element = new Element(candidate[current2], [key, current2], 'Property', new Reference(candidate, current2));
+                        } else if (isNode(candidate[current2])) {
+                            element = new Element(candidate[current2], [key, current2], null, new Reference(candidate, current2));
+                        } else {
+                            continue;
+                        }
+                        worklist.push(element);
+                    }
+                } else if (isNode(candidate)) {
+                    worklist.push(new Element(candidate, key, null, new Reference(node, key)));
+                }
+            }
+        }
+
+        return outer.root;
+    };
+
+    function traverse(root, visitor) {
+        var controller = new Controller();
+        return controller.traverse(root, visitor);
+    }
+
+    function replace(root, visitor) {
+        var controller = new Controller();
+        return controller.replace(root, visitor);
+    }
+
+    function extendCommentRange(comment, tokens) {
+        var target;
+
+        target = upperBound(tokens, function search(token) {
+            return token.range[0] > comment.range[0];
+        });
+
+        comment.extendedRange = [comment.range[0], comment.range[1]];
+
+        if (target !== tokens.length) {
+            comment.extendedRange[1] = tokens[target].range[0];
+        }
+
+        target -= 1;
+        if (target >= 0) {
+            comment.extendedRange[0] = tokens[target].range[1];
+        }
+
+        return comment;
+    }
+
+    function attachComments(tree, providedComments, tokens) {
+        // At first, we should calculate extended comment ranges.
+        var comments = [], comment, len, i, cursor;
+
+        if (!tree.range) {
+            throw new Error('attachComments needs range information');
+        }
+
+        // tokens array is empty, we attach comments to tree as 'leadingComments'
+        if (!tokens.length) {
+            if (providedComments.length) {
+                for (i = 0, len = providedComments.length; i < len; i += 1) {
+                    comment = deepCopy(providedComments[i]);
+                    comment.extendedRange = [0, tree.range[0]];
+                    comments.push(comment);
+                }
+                tree.leadingComments = comments;
+            }
+            return tree;
+        }
+
+        for (i = 0, len = providedComments.length; i < len; i += 1) {
+            comments.push(extendCommentRange(deepCopy(providedComments[i]), tokens));
+        }
+
+        // This is based on John Freeman's implementation.
+        cursor = 0;
+        traverse(tree, {
+            enter: function (node) {
+                var comment;
+
+                while (cursor < comments.length) {
+                    comment = comments[cursor];
+                    if (comment.extendedRange[1] > node.range[0]) {
+                        break;
+                    }
+
+                    if (comment.extendedRange[1] === node.range[0]) {
+                        if (!node.leadingComments) {
+                            node.leadingComments = [];
+                        }
+                        node.leadingComments.push(comment);
+                        comments.splice(cursor, 1);
+                    } else {
+                        cursor += 1;
+                    }
+                }
+
+                // already out of owned node
+                if (cursor === comments.length) {
+                    return VisitorOption.Break;
+                }
+
+                if (comments[cursor].extendedRange[0] > node.range[1]) {
+                    return VisitorOption.Skip;
+                }
+            }
+        });
+
+        cursor = 0;
+        traverse(tree, {
+            leave: function (node) {
+                var comment;
+
+                while (cursor < comments.length) {
+                    comment = comments[cursor];
+                    if (node.range[1] < comment.extendedRange[0]) {
+                        break;
+                    }
+
+                    if (node.range[1] === comment.extendedRange[0]) {
+                        if (!node.trailingComments) {
+                            node.trailingComments = [];
+                        }
+                        node.trailingComments.push(comment);
+                        comments.splice(cursor, 1);
+                    } else {
+                        cursor += 1;
+                    }
+                }
+
+                // already out of owned node
+                if (cursor === comments.length) {
+                    return VisitorOption.Break;
+                }
+
+                if (comments[cursor].extendedRange[0] > node.range[1]) {
+                    return VisitorOption.Skip;
+                }
+            }
+        });
+
+        return tree;
+    }
+
+    exports.version = '1.8.1-dev';
+    exports.Syntax = Syntax;
+    exports.traverse = traverse;
+    exports.replace = replace;
+    exports.attachComments = attachComments;
+    exports.VisitorKeys = VisitorKeys;
+    exports.VisitorOption = VisitorOption;
+    exports.Controller = Controller;
+}));
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+/*
+  Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
+  Copyright (C) 2013 Alex Seville <hi@alexanderseville.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/*jslint bitwise:true */
+/*global exports:true, define:true, require:true*/
+(function (factory, global) {
+    'use strict';
+
+    function namespace(str, obj) {
+        var i, iz, names, name;
+        names = str.split('.');
+        for (i = 0, iz = names.length; i < iz; ++i) {
+            name = names[i];
+            if (obj.hasOwnProperty(name)) {
+                obj = obj[name];
+            } else {
+                obj = (obj[name] = {});
+            }
+        }
+        return obj;
+    }
+
+    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
+    // and plain browser loading,
+    if (typeof define === 'function' && define.amd) {
+        define('escope', ['exports', 'estraverse'], function (exports, estraverse) {
+            factory(exports, global, estraverse);
+        });
+    } else if (typeof exports !== 'undefined') {
+        factory(exports, global, require('estraverse'));
+    } else {
+        factory(namespace('escope', global), global, global.estraverse);
+    }
+}(function (exports, global, estraverse) {
+    'use strict';
+
+    var Syntax,
+        Map,
+        currentScope,
+        globalScope,
+        scopes,
+        options;
+
+    Syntax = estraverse.Syntax;
+
+    if (typeof global.Map !== 'undefined') {
+        // ES6 Map
+        Map = global.Map;
+    } else {
+        Map = function Map() {
+            this.__data = {};
+        };
+
+        Map.prototype.get = function MapGet(key) {
+            key = '$' + key;
+            if (this.__data.hasOwnProperty(key)) {
+                return this.__data[key];
+            }
+            return undefined;
+        };
+
+        Map.prototype.has = function MapHas(key) {
+            key = '$' + key;
+            return this.__data.hasOwnProperty(key);
+        };
+
+        Map.prototype.set = function MapSet(key, val) {
+            key = '$' + key;
+            this.__data[key] = val;
+        };
+
+        Map.prototype['delete'] = function MapDelete(key) {
+            key = '$' + key;
+            return delete this.__data[key];
+        };
+    }
+
+    function assert(cond, text) {
+        if (!cond) {
+            throw new Error(text);
+        }
+    }
+
+    function defaultOptions() {
+        return {
+            optimistic: false,
+            directive: false
+        };
+    }
+
+    function updateDeeply(target, override) {
+        var key, val;
+
+        function isHashObject(target) {
+            return typeof target === 'object' && target instanceof Object && !(target instanceof RegExp);
+        }
+
+        for (key in override) {
+            if (override.hasOwnProperty(key)) {
+                val = override[key];
+                if (isHashObject(val)) {
+                    if (isHashObject(target[key])) {
+                        updateDeeply(target[key], val);
+                    } else {
+                        target[key] = updateDeeply({}, val);
+                    }
+                } else {
+                    target[key] = val;
+                }
+            }
+        }
+        return target;
+    }
+
+    function Reference(ident, scope, flag, writeExpr, maybeImplicitGlobal) {
+        this.identifier = ident;
+        this.from = scope;
+        this.tainted = false;
+        this.resolved = null;
+        this.flag = flag;
+        if (this.isWrite()) {
+            this.writeExpr = writeExpr;
+        }
+        this.__maybeImplicitGlobal = maybeImplicitGlobal;
+    }
+
+    Reference.READ = 0x1;
+    Reference.WRITE = 0x2;
+    Reference.RW = 0x3;
+
+    Reference.prototype.isStatic = function isStatic() {
+        return !this.tainted && this.resolved && this.resolved.scope.isStatic();
+    };
+
+    Reference.prototype.isWrite = function isWrite() {
+        return this.flag & Reference.WRITE;
+    };
+
+    Reference.prototype.isRead = function isRead() {
+        return this.flag & Reference.READ;
+    };
+
+    Reference.prototype.isReadOnly = function isReadOnly() {
+        return this.flag === Reference.READ;
+    };
+
+    Reference.prototype.isWriteOnly = function isWriteOnly() {
+        return this.flag === Reference.WRITE;
+    };
+
+    Reference.prototype.isReadWrite = function isReadWrite() {
+        return this.flag === Reference.RW;
+    };
+
+    function Variable(name, scope) {
+        this.name = name;
+        this.identifiers = [];
+        this.references = [];
+
+        this.defs = [];
+
+        this.tainted = false;
+        this.stack = true;
+        this.scope = scope;
+    }
+
+    Variable.CatchClause = 'CatchClause';
+    Variable.Parameter = 'Parameter';
+    Variable.FunctionName = 'FunctionName';
+    Variable.Variable = 'Variable';
+    Variable.ImplicitGlobalVariable = 'ImplicitGlobalVariable';
+
+    function isStrictScope(scope, block) {
+        var body, i, iz, stmt, expr;
+
+        // When upper scope is exists and strict, inner scope is also strict.
+        if (scope.upper && scope.upper.isStrict) {
+            return true;
+        }
+
+        if (scope.type === 'function') {
+            body = block.body;
+        } else if (scope.type === 'global') {
+            body = block;
+        } else {
+            return false;
+        }
+
+        if (options.directive) {
+            for (i = 0, iz = body.body.length; i < iz; ++i) {
+                stmt = body.body[i];
+                if (stmt.type !== 'DirectiveStatement') {
+                    break;
+                }
+                if (stmt.raw === '"use strict"' || stmt.raw === '\'use strict\'') {
+                    return true;
+                }
+            }
+        } else {
+            for (i = 0, iz = body.body.length; i < iz; ++i) {
+                stmt = body.body[i];
+                if (stmt.type !== Syntax.ExpressionStatement) {
+                    break;
+                }
+                expr = stmt.expression;
+                if (expr.type !== Syntax.Literal || typeof expr.value !== 'string') {
+                    break;
+                }
+                if (expr.raw != null) {
+                    if (expr.raw === '"use strict"' || expr.raw === '\'use strict\'') {
+                        return true;
+                    }
+                } else {
+                    if (expr.value === 'use strict') {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    function Scope(block, opt) {
+        var variable, body;
+
+        this.type =
+            (block.type === Syntax.CatchClause) ? 'catch' :
+            (block.type === Syntax.WithStatement) ? 'with' :
+            (block.type === Syntax.Program) ? 'global' : 'function';
+        this.set = new Map();
+        this.taints = new Map();
+        this.dynamic = this.type === 'global' || this.type === 'with';
+        this.block = block;
+        this.through = [];
+        this.variables = [];
+        this.references = [];
+        this.left = [];
+        this.variableScope =
+            (this.type === 'global' || this.type === 'function') ? this : currentScope.variableScope;
+        this.functionExpressionScope = false;
+        this.directCallToEvalScope = false;
+        this.thisFound = false;
+        body = this.type === 'function' ? block.body : block;
+        if (opt.naming) {
+            this.__define(block.id, {
+                type: Variable.FunctionName,
+                name: block.id,
+                node: block
+            });
+            this.functionExpressionScope = true;
+        } else {
+            if (this.type === 'function') {
+                variable = new Variable('arguments', this);
+                this.taints.set('arguments', true);
+                this.set.set('arguments', variable);
+                this.variables.push(variable);
+            }
+
+            if (block.type === Syntax.FunctionExpression && block.id) {
+                new Scope(block, { naming: true });
+            }
+        }
+
+        this.upper = currentScope;
+        this.isStrict = isStrictScope(this, block);
+
+        this.childScopes = [];
+        if (currentScope) {
+            currentScope.childScopes.push(this);
+        }
+
+
+        // RAII
+        currentScope = this;
+        if (this.type === 'global') {
+            globalScope = this;
+            globalScope.implicit = {
+                set: new Map(),
+                variables: []
+            };
+        }
+        scopes.push(this);
+    }
+
+    Scope.prototype.__close = function __close() {
+        var i, iz, ref, current, node, implicit;
+
+        // Because if this is global environment, upper is null
+        if (!this.dynamic || options.optimistic) {
+            // static resolve
+            for (i = 0, iz = this.left.length; i < iz; ++i) {
+                ref = this.left[i];
+                if (!this.__resolve(ref)) {
+                    this.__delegateToUpperScope(ref);
+                }
+            }
+        } else {
+            // this is "global" / "with" / "function with eval" environment
+            if (this.type === 'with') {
+                for (i = 0, iz = this.left.length; i < iz; ++i) {
+                    ref = this.left[i];
+                    ref.tainted = true;
+                    this.__delegateToUpperScope(ref);
+                }
+            } else {
+                for (i = 0, iz = this.left.length; i < iz; ++i) {
+                    // notify all names are through to global
+                    ref = this.left[i];
+                    current = this;
+                    do {
+                        current.through.push(ref);
+                        current = current.upper;
+                    } while (current);
+                }
+            }
+        }
+
+        if (this.type === 'global') {
+            implicit = [];
+            for (i = 0, iz = this.left.length; i < iz; ++i) {
+                ref = this.left[i];
+                if (ref.__maybeImplicitGlobal && !this.set.has(ref.identifier.name)) {
+                    implicit.push(ref.__maybeImplicitGlobal);
+                }
+            }
+
+            // create an implicit global variable from assignment expression
+            for (i = 0, iz = implicit.length; i < iz; ++i) {
+                node = implicit[i];
+                this.__defineImplicit(node.left, {
+                    type: Variable.ImplicitGlobalVariable,
+                    name: node.left,
+                    node: node
+                });
+            }
+        }
+
+        this.left = null;
+        currentScope = this.upper;
+    };
+
+    Scope.prototype.__resolve = function __resolve(ref) {
+        var variable, name;
+        name = ref.identifier.name;
+        if (this.set.has(name)) {
+            variable = this.set.get(name);
+            variable.references.push(ref);
+            variable.stack = variable.stack && ref.from.variableScope === this.variableScope;
+            if (ref.tainted) {
+                variable.tainted = true;
+                this.taints.set(variable.name, true);
+            }
+            ref.resolved = variable;
+            return true;
+        }
+        return false;
+    };
+
+    Scope.prototype.__delegateToUpperScope = function __delegateToUpperScope(ref) {
+        if (this.upper) {
+            this.upper.left.push(ref);
+        }
+        this.through.push(ref);
+    };
+
+    Scope.prototype.__defineImplicit = function __defineImplicit(node, info) {
+        var name, variable;
+        if (node && node.type === Syntax.Identifier) {
+            name = node.name;
+            if (!this.implicit.set.has(name)) {
+                variable = new Variable(name, this);
+                variable.identifiers.push(node);
+                variable.defs.push(info);
+                this.implicit.set.set(name, variable);
+                this.implicit.variables.push(variable);
+            } else {
+                variable = this.implicit.set.get(name);
+                variable.identifiers.push(node);
+                variable.defs.push(info);
+            }
+        }
+    };
+
+    Scope.prototype.__define = function __define(node, info) {
+        var name, variable;
+        if (node && node.type === Syntax.Identifier) {
+            name = node.name;
+            if (!this.set.has(name)) {
+                variable = new Variable(name, this);
+                variable.identifiers.push(node);
+                variable.defs.push(info);
+                this.set.set(name, variable);
+                this.variables.push(variable);
+            } else {
+                variable = this.set.get(name);
+                variable.identifiers.push(node);
+                variable.defs.push(info);
+            }
+        }
+    };
+
+    Scope.prototype.__referencing = function __referencing(node, assign, writeExpr, maybeImplicitGlobal) {
+        var ref;
+        // because Array element may be null
+        if (node && node.type === Syntax.Identifier) {
+            ref = new Reference(node, this, assign || Reference.READ, writeExpr, maybeImplicitGlobal);
+            this.references.push(ref);
+            this.left.push(ref);
+        }
+    };
+
+    Scope.prototype.__detectEval = function __detectEval() {
+        var current;
+        current = this;
+        this.directCallToEvalScope = true;
+        do {
+            current.dynamic = true;
+            current = current.upper;
+        } while (current);
+    };
+
+    Scope.prototype.__detectThis = function __detectThis() {
+        this.thisFound = true;
+    };
+
+    Scope.prototype.__isClosed = function isClosed() {
+        return this.left === null;
+    };
+
+    // API Scope#resolve(name)
+    // returns resolved reference
+    Scope.prototype.resolve = function resolve(ident) {
+        var ref, i, iz;
+        assert(this.__isClosed(), 'scope should be closed');
+        assert(ident.type === Syntax.Identifier, 'target should be identifier');
+        for (i = 0, iz = this.references.length; i < iz; ++i) {
+            ref = this.references[i];
+            if (ref.identifier === ident) {
+                return ref;
+            }
+        }
+        return null;
+    };
+
+    // API Scope#isStatic
+    // returns this scope is static
+    Scope.prototype.isStatic = function isStatic() {
+        return !this.dynamic;
+    };
+
+    // API Scope#isArgumentsMaterialized
+    // return this scope has materialized arguments
+    Scope.prototype.isArgumentsMaterialized = function isArgumentsMaterialized() {
+        // TODO(Constellation)
+        // We can more aggressive on this condition like this.
+        //
+        // function t() {
+        //     // arguments of t is always hidden.
+        //     function arguments() {
+        //     }
+        // }
+        var variable;
+
+        // This is not function scope
+        if (this.type !== 'function') {
+            return true;
+        }
+
+        if (!this.isStatic()) {
+            return true;
+        }
+
+        variable = this.set.get('arguments');
+        assert(variable, 'always have arguments variable');
+        return variable.tainted || variable.references.length  !== 0;
+    };
+
+    // API Scope#isThisMaterialized
+    // return this scope has materialized `this` reference
+    Scope.prototype.isThisMaterialized = function isThisMaterialized() {
+        // This is not function scope
+        if (this.type !== 'function') {
+            return true;
+        }
+        if (!this.isStatic()) {
+            return true;
+        }
+        return this.thisFound;
+    };
+
+    Scope.mangledName = '__$escope$__';
+
+    Scope.prototype.attach = function attach() {
+        if (!this.functionExpressionScope) {
+            this.block[Scope.mangledName] = this;
+        }
+    };
+
+    Scope.prototype.detach = function detach() {
+        if (!this.functionExpressionScope) {
+            delete this.block[Scope.mangledName];
+        }
+    };
+
+    Scope.prototype.isUsedName = function (name) {
+        if (this.set.has(name)) {
+            return true;
+        }
+        for (var i = 0, iz = this.through.length; i < iz; ++i) {
+            if (this.through[i].identifier.name === name) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    function ScopeManager(scopes) {
+        this.scopes = scopes;
+        this.attached = false;
+    }
+
+    // Returns appropliate scope for this node
+    ScopeManager.prototype.__get = function __get(node) {
+        var i, iz, scope;
+        if (this.attached) {
+            return node[Scope.mangledName] || null;
+        }
+        if (Scope.isScopeRequired(node)) {
+            for (i = 0, iz = this.scopes.length; i < iz; ++i) {
+                scope = this.scopes[i];
+                if (!scope.functionExpressionScope) {
+                    if (scope.block === node) {
+                        return scope;
+                    }
+                }
+            }
+        }
+        return null;
+    };
+
+    ScopeManager.prototype.acquire = function acquire(node) {
+        return this.__get(node);
+    };
+
+    ScopeManager.prototype.release = function release(node) {
+        var scope = this.__get(node);
+        if (scope) {
+            scope = scope.upper;
+            while (scope) {
+                if (!scope.functionExpressionScope) {
+                    return scope;
+                }
+                scope = scope.upper;
+            }
+        }
+        return null;
+    };
+
+    ScopeManager.prototype.attach = function attach() {
+        var i, iz;
+        for (i = 0, iz = this.scopes.length; i < iz; ++i) {
+            this.scopes[i].attach();
+        }
+        this.attached = true;
+    };
+
+    ScopeManager.prototype.detach = function detach() {
+        var i, iz;
+        for (i = 0, iz = this.scopes.length; i < iz; ++i) {
+            this.scopes[i].detach();
+        }
+        this.attached = false;
+    };
+
+    Scope.isScopeRequired = function isScopeRequired(node) {
+        return Scope.isVariableScopeRequired(node) || node.type === Syntax.WithStatement || node.type === Syntax.CatchClause;
+    };
+
+    Scope.isVariableScopeRequired = function isVariableScopeRequired(node) {
+        return node.type === Syntax.Program || node.type === Syntax.FunctionExpression || node.type === Syntax.FunctionDeclaration;
+    };
+
+    function analyze(tree, providedOptions) {
+        var resultScopes;
+
+        options = updateDeeply(defaultOptions(), providedOptions);
+        resultScopes = scopes = [];
+        currentScope = null;
+        globalScope = null;
+
+        // attach scope and collect / resolve names
+        estraverse.traverse(tree, {
+            enter: function enter(node) {
+                var i, iz, decl;
+                if (Scope.isScopeRequired(node)) {
+                    new Scope(node, {});
+                }
+
+                switch (node.type) {
+                case Syntax.AssignmentExpression:
+                    if (node.operator === '=') {
+                        currentScope.__referencing(node.left, Reference.WRITE, node.right, (!currentScope.isStrict && node.left.name != null) && node);
+                    } else {
+                        currentScope.__referencing(node.left, Reference.RW, node.right);
+                    }
+                    currentScope.__referencing(node.right);
+                    break;
+
+                case Syntax.ArrayExpression:
+                    for (i = 0, iz = node.elements.length; i < iz; ++i) {
+                        currentScope.__referencing(node.elements[i]);
+                    }
+                    break;
+
+                case Syntax.BlockStatement:
+                    break;
+
+                case Syntax.BinaryExpression:
+                    currentScope.__referencing(node.left);
+                    currentScope.__referencing(node.right);
+                    break;
+
+                case Syntax.BreakStatement:
+                    break;
+
+                case Syntax.CallExpression:
+                    currentScope.__referencing(node.callee);
+                    for (i = 0, iz = node['arguments'].length; i < iz; ++i) {
+                        currentScope.__referencing(node['arguments'][i]);
+                    }
+
+                    // check this is direct call to eval
+                    if (!options.ignoreEval && node.callee.type === Syntax.Identifier && node.callee.name === 'eval') {
+                        currentScope.variableScope.__detectEval();
+                    }
+                    break;
+
+                case Syntax.CatchClause:
+                    currentScope.__define(node.param, {
+                        type: Variable.CatchClause,
+                        name: node.param,
+                        node: node
+                    });
+                    break;
+
+                case Syntax.ConditionalExpression:
+                    currentScope.__referencing(node.test);
+                    currentScope.__referencing(node.consequent);
+                    currentScope.__referencing(node.alternate);
+                    break;
+
+                case Syntax.ContinueStatement:
+                    break;
+
+                case Syntax.DirectiveStatement:
+                    break;
+
+                case Syntax.DoWhileStatement:
+                    currentScope.__referencing(node.test);
+                    break;
+
+                case Syntax.DebuggerStatement:
+                    break;
+
+                case Syntax.EmptyStatement:
+                    break;
+
+                case Syntax.ExpressionStatement:
+                    currentScope.__referencing(node.expression);
+                    break;
+
+                case Syntax.ForStatement:
+                    currentScope.__referencing(node.init);
+                    currentScope.__referencing(node.test);
+                    currentScope.__referencing(node.update);
+                    break;
+
+                case Syntax.ForInStatement:
+                    if (node.left.type === Syntax.VariableDeclaration) {
+                        currentScope.__referencing(node.left.declarations[0].id, Reference.WRITE, null, false);
+                    } else {
+                        currentScope.__referencing(node.left, Reference.WRITE, null, (!currentScope.isStrict && node.left.name != null) && node);
+                    }
+                    currentScope.__referencing(node.right);
+                    break;
+
+                case Syntax.FunctionDeclaration:
+                    // FunctionDeclaration name is defined in upper scope
+                    currentScope.upper.__define(node.id, {
+                        type: Variable.FunctionName,
+                        name: node.id,
+                        node: node
+                    });
+                    for (i = 0, iz = node.params.length; i < iz; ++i) {
+                        currentScope.__define(node.params[i], {
+                            type: Variable.Parameter,
+                            name: node.params[i],
+                            node: node,
+                            index: i
+                        });
+                    }
+                    break;
+
+                case Syntax.FunctionExpression:
+                    // id is defined in upper scope
+                    for (i = 0, iz = node.params.length; i < iz; ++i) {
+                        currentScope.__define(node.params[i], {
+                            type: Variable.Parameter,
+                            name: node.params[i],
+                            node: node,
+                            index: i
+                        });
+                    }
+                    break;
+
+                case Syntax.Identifier:
+                    break;
+
+                case Syntax.IfStatement:
+                    currentScope.__referencing(node.test);
+                    break;
+
+                case Syntax.Literal:
+                    break;
+
+                case Syntax.LabeledStatement:
+                    break;
+
+                case Syntax.LogicalExpression:
+                    currentScope.__referencing(node.left);
+                    currentScope.__referencing(node.right);
+                    break;
+
+                case Syntax.MemberExpression:
+                    currentScope.__referencing(node.object);
+                    if (node.computed) {
+                        currentScope.__referencing(node.property);
+                    }
+                    break;
+
+                case Syntax.NewExpression:
+                    currentScope.__referencing(node.callee);
+                    for (i = 0, iz = node['arguments'].length; i < iz; ++i) {
+                        currentScope.__referencing(node['arguments'][i]);
+                    }
+                    break;
+
+                case Syntax.ObjectExpression:
+                    break;
+
+                case Syntax.Program:
+                    break;
+
+                case Syntax.Property:
+                    currentScope.__referencing(node.value);
+                    break;
+
+                case Syntax.ReturnStatement:
+                    currentScope.__referencing(node.argument);
+                    break;
+
+                case Syntax.SequenceExpression:
+                    for (i = 0, iz = node.expressions.length; i < iz; ++i) {
+                        currentScope.__referencing(node.expressions[i]);
+                    }
+                    break;
+
+                case Syntax.SwitchStatement:
+                    currentScope.__referencing(node.discriminant);
+                    break;
+
+                case Syntax.SwitchCase:
+                    currentScope.__referencing(node.test);
+                    break;
+
+                case Syntax.ThisExpression:
+                    currentScope.variableScope.__detectThis();
+                    break;
+
+                case Syntax.ThrowStatement:
+                    currentScope.__referencing(node.argument);
+                    break;
+
+                case Syntax.TryStatement:
+                    break;
+
+                case Syntax.UnaryExpression:
+                    currentScope.__referencing(node.argument);
+                    break;
+
+                case Syntax.UpdateExpression:
+                    currentScope.__referencing(node.argument, Reference.RW, null);
+                    break;
+
+                case Syntax.VariableDeclaration:
+                    for (i = 0, iz = node.declarations.length; i < iz; ++i) {
+                        decl = node.declarations[i];
+                        currentScope.variableScope.__define(decl.id, {
+                            type: Variable.Variable,
+                            name: decl.id,
+                            node: decl,
+                            index: i,
+                            parent: node
+                        });
+                        if (decl.init) {
+                            // initializer is found
+                            currentScope.__referencing(decl.id, Reference.WRITE, decl.init, false);
+                            currentScope.__referencing(decl.init);
+                        }
+                    }
+                    break;
+
+                case Syntax.VariableDeclarator:
+                    break;
+
+                case Syntax.WhileStatement:
+                    currentScope.__referencing(node.test);
+                    break;
+
+                case Syntax.WithStatement:
+                    // WithStatement object is referenced at upper scope
+                    currentScope.upper.__referencing(node.object);
+                    break;
+                }
+            },
+
+            leave: function leave(node) {
+                while (currentScope && node === currentScope.block) {
+                    currentScope.__close();
+                }
+            }
+        });
+
+        assert(currentScope === null);
+        globalScope = null;
+        scopes = null;
+        options = null;
+
+        return new ScopeManager(resultScopes);
+    }
+
+    exports.version = '1.0.0';
+    exports.Reference = Reference;
+    exports.Variable = Variable;
+    exports.Scope = Scope;
+    exports.ScopeManager = ScopeManager;
+    exports.analyze = analyze;
+}, this));
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.iframeOverlay=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var Poster = require("../node_modules/poster/lib/poster");
+var EventSim = require("../node_modules/eventsim/lib/eventsim");
+var basic = require("../node_modules/basic-ds/lib/basic");
+function createOverlay(iframe) {
+    var wrapper = document.createElement("span");
+    wrapper.setAttribute("style", "position:relative;padding:0;margin:0;display:inline-block;");
+    wrapper.setAttribute("class", "wrapper");
+    var overlay = document.createElement("span");
+    overlay.setAttribute("style", "position:absolute;left:0;top:0;width:100%;height:100%;");
+    overlay.setAttribute("class", "overlay");
+    overlay.setAttribute("tabindex", "0");
+    var parent = iframe.parentElement;
+    parent.insertBefore(wrapper, iframe);
+    wrapper.appendChild(iframe);
+    wrapper.appendChild(overlay);
+    var down = false;
+    var paused = false;
+    var queue = new basic.LinkedList();
+    var poster = new Poster(iframe.contentWindow);
+    function postMouseEvent(e) {
+        if (paused) {
+            e["timestamp"] = Date.now();
+            queue.push_front(e);
+        }
+        else {
+            var bounds = wrapper.getBoundingClientRect();
+            poster.post("mouse", {
+                type: e.type,
+                x: e.pageX - bounds.left,
+                y: e.pageY - bounds.top,
+                shiftKey: e.shiftKey,
+                altKey: e.altKey,
+                ctrlKey: e.ctrlKey,
+                metaKey: e.metaKey
+            });
+        }
+    }
+    function postKeyboardEvent(e) {
+        if (paused) {
+            e["timestamp"] = Date.now();
+            queue.push_front(e);
+        }
+        else {
+            poster.post("keyboard", {
+                type: e.type,
+                keyCode: e.keyCode,
+                shiftKey: e.shiftKey,
+                altKey: e.altKey,
+                ctrlKey: e.ctrlKey,
+                metaKey: e.metaKey
+            });
+        }
+    }
+    overlay.addEventListener("click", function (e) { return postMouseEvent(e); });
+    overlay.addEventListener("dblclick", function (e) { return postMouseEvent(e); });
+    overlay.addEventListener("mouseover", function (e) { return postMouseEvent(e); });
+    overlay.addEventListener("mouseout", function (e) { return postMouseEvent(e); });
+    overlay.addEventListener("mousedown", function (e) {
+        down = true;
+        postMouseEvent(e);
+    });
+    overlay.addEventListener("mousemove", function (e) {
+        if (!down) {
+            postMouseEvent(e);
+        }
+    });
+    window.addEventListener("mousemove", function (e) {
+        if (down) {
+            postMouseEvent(e);
+        }
+    });
+    window.addEventListener("mouseup", function (e) {
+        if (down) {
+            down = false;
+            postMouseEvent(e);
+        }
+    });
+    overlay.addEventListener("keydown", function (e) { return postKeyboardEvent(e); });
+    overlay.addEventListener("keypress", function (e) { return postKeyboardEvent(e); });
+    overlay.addEventListener("keyup", function (e) { return postKeyboardEvent(e); });
+    var keyEventRegex = /key(up|down|press)/;
+    var mouseEventRegex = /click|dblclick|mouse(up|down|move|over|out)/;
+    return {
+        pause: function () {
+            paused = true;
+        },
+        resume: function () {
+            if (!paused) {
+                return;
+            }
+            paused = false;
+            function pop() {
+                if (paused) {
+                    return;
+                }
+                var e = queue.pop_back();
+                if (!e) {
+                    return;
+                }
+                if (e instanceof MouseEvent) {
+                    postMouseEvent(e);
+                }
+                else if (e instanceof KeyboardEvent) {
+                    postKeyboardEvent(e);
+                }
+                else if (mouseEventRegex.test(e.type)) {
+                    postMouseEvent(e);
+                }
+                else if (keyEventRegex.test(e.type)) {
+                    postKeyboardEvent(e);
+                }
+                if (queue.last && queue.last.value) {
+                    var next = queue.last.value;
+                    var delay = next["timestamp"] - e["timestamp"];
+                    setTimeout(pop, delay);
+                }
+            }
+            pop();
+        }
+    };
+}
+exports.createOverlay = createOverlay;
+function createRelay(element) {
+    var poster = new Poster(window.parent);
+    poster.listen("mouse", function (e) {
+        EventSim.simulate(element, e.type, {
+            clientX: e.x,
+            clientY: e.y,
+            altKey: e.altKey,
+            shiftKey: e.shiftKey,
+            metaKey: e.metaKey,
+            ctrlKey: e.ctrlKey
+        });
+    });
+    poster.listen("keyboard", function (e) {
+        EventSim.simulate(element, e.type, {
+            keyCode: e.keyCode,
+            altKey: e.altKey,
+            shiftKey: e.shiftKey,
+            metaKey: e.metaKey,
+            ctrlKey: e.ctrlKey
+        });
+    });
+}
+exports.createRelay = createRelay;
+
+},{"../node_modules/basic-ds/lib/basic":2,"../node_modules/eventsim/lib/eventsim":4,"../node_modules/poster/lib/poster":5}],2:[function(require,module,exports){
+var basic;
+(function (basic) {
+    var ListNode = (function () {
+        function ListNode(value) {
+            this.value = value;
+            this.next = null;
+            this.prev = null;
+        }
+        ListNode.prototype.destroy = function () {
+            this.value = null;
+            this.prev = null;
+            this.next = null;
+        };
+        return ListNode;
+    })();
+    basic.ListNode = ListNode;
+    var LinkedList = (function () {
+        function LinkedList() {
+            this.first = null;
+            this.last = null;
+        }
+        LinkedList.prototype.push_back = function (value) {
+            var node = new ListNode(value);
+            if (this.first === null && this.last === null) {
+                this.first = node;
+                this.last = node;
+            }
+            else {
+                node.prev = this.last;
+                this.last.next = node;
+                this.last = node;
+            }
+        };
+        LinkedList.prototype.push_front = function (value) {
+            var node = new ListNode(value);
+            if (this.first === null && this.last === null) {
+                this.first = node;
+                this.last = node;
+            }
+            else {
+                node.next = this.first;
+                this.first.prev = node;
+                this.first = node;
+            }
+        };
+        LinkedList.prototype.pop_back = function () {
+            if (this.last) {
+                var value = this.last.value;
+                if (this.last.prev) {
+                    var last = this.last;
+                    this.last = last.prev;
+                    this.last.next = null;
+                    last.destroy();
+                }
+                else {
+                    this.last = null;
+                    this.first = null;
+                }
+                return value;
+            }
+            else {
+                return null;
+            }
+        };
+        LinkedList.prototype.pop_front = function () {
+            if (this.first) {
+                var value = this.first.value;
+                if (this.first.next) {
+                    var first = this.first;
+                    this.first = first.next;
+                    this.first.prev = null;
+                    first.destroy();
+                }
+                else {
+                    this.first = null;
+                    this.last = null;
+                }
+                return value;
+            }
+            else {
+                return null;
+            }
+        };
+        LinkedList.prototype.clear = function () {
+            this.first = this.last = null;
+        };
+        LinkedList.prototype.insertBeforeNode = function (refNode, value) {
+            if (refNode === this.first) {
+                this.push_front(value);
+            }
+            else {
+                var node = new ListNode(value);
+                node.prev = refNode.prev;
+                node.next = refNode;
+                refNode.prev.next = node;
+                refNode.prev = node;
+            }
+        };
+        LinkedList.prototype.forEachNode = function (callback, _this) {
+            var node = this.first;
+            var index = 0;
+            while (node !== null) {
+                callback.call(_this, node, index);
+                node = node.next;
+                index++;
+            }
+        };
+        LinkedList.prototype.forEach = function (callback, _this) {
+            this.forEachNode(function (node, index) { return callback.call(_this, node.value, index); }, _this);
+        };
+        LinkedList.prototype.nodeAtIndex = function (index) {
+            var i = 0;
+            var node = this.first;
+            while (node !== null) {
+                if (index === i) {
+                    return node;
+                }
+                i++;
+                node = node.next;
+            }
+            return null;
+        };
+        LinkedList.prototype.valueAtIndex = function (index) {
+            var node = this.nodeAtIndex(index);
+            return node ? node.value : undefined;
+        };
+        LinkedList.prototype.toArray = function () {
+            var array = [];
+            var node = this.first;
+            while (node !== null) {
+                array.push(node.value);
+                node = node.next;
+            }
+            return array;
+        };
+        LinkedList.fromArray = function (array) {
+            var list = new LinkedList();
+            array.forEach(function (value) {
+                list.push_back(value);
+            });
+            return list;
+        };
+        return LinkedList;
+    })();
+    basic.LinkedList = LinkedList;
+})(basic || (basic = {}));
+var basic;
+(function (basic) {
+    var Stack = (function () {
+        function Stack() {
+            this.items = [];
+            this.poppedLastItem = function (item) {
+            };
+        }
+        Stack.prototype.push = function (item) {
+            this.items.push(item);
+        };
+        Stack.prototype.pop = function () {
+            var item = this.items.pop();
+            if (this.isEmpty) {
+                this.poppedLastItem(item);
+            }
+            return item;
+        };
+        Stack.prototype.peek = function () {
+            return this.items[this.items.length - 1];
+        };
+        Object.defineProperty(Stack.prototype, "size", {
+            get: function () {
+                return this.items.length;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Stack.prototype, "isEmpty", {
+            get: function () {
+                return this.items.length === 0;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        return Stack;
+    })();
+    basic.Stack = Stack;
+})(basic || (basic = {}));
+module.exports = basic;
+
+},{}],3:[function(require,module,exports){
+var initKeyboardEvent_variant = (function (event) {
+    try {
+        event.initKeyboardEvent("keyup", false, false, window, "+", 3, true, false, true, false, false);
+        if ((event["keyIdentifier"] || event["key"]) == "+" && (event["keyLocation"] || event["location"]) == 3) {
+            return event.ctrlKey ? (event.altKey ? 1 : 3) : (event.shiftKey ? 2 : 4);
+        }
+        return 9;
+    }
+    catch (e) {
+        return 0;
+    }
+})(document.createEvent("KeyboardEvent"));
+var keyboardEventProperties = {
+    "char": "",
+    "key": "",
+    "location": 0,
+    "ctrlKey": false,
+    "shiftKey": false,
+    "altKey": false,
+    "metaKey": false,
+    "repeat": false,
+    "locale": "",
+    "detail": 0,
+    "bubbles": false,
+    "cancelable": false,
+    "keyCode": 0,
+    "charCode": 0,
+    "which": 0
+};
+function createModifersList(dict) {
+    var modifiers = ["Ctrl", "Shift", "Alt", "Meta", "AltGraph"];
+    return modifiers.filter(function (mod) {
+        return dict.hasOwnProperty([mod.toLowerCase() + "Key"]);
+    }).join(" ");
+}
+function createKeyboardEvent(type, dict) {
+    var event;
+    if (initKeyboardEvent_variant) {
+        event = document.createEvent("KeyboardEvent");
+    }
+    else {
+        event = document.createEvent("Event");
+    }
+    var propName, localDict = {};
+    for (propName in keyboardEventProperties) {
+        if (keyboardEventProperties.hasOwnProperty(propName)) {
+            if (dict && dict.hasOwnProperty(propName)) {
+                localDict[propName] = dict[propName];
+            }
+            else {
+                localDict[propName] = keyboardEventProperties[propName];
+            }
+        }
+    }
+    var ctrlKey = localDict["ctrlKey"];
+    var shiftKey = localDict["shiftKey"];
+    var altKey = localDict["altKey"];
+    var metaKey = localDict["metaKey"];
+    var altGraphKey = localDict["altGraphKey"];
+    var key = localDict["key"] + "";
+    var char = localDict["char"] + "";
+    var location = localDict["location"];
+    var keyCode = localDict["keyCode"] || (localDict["keyCode"] = key && key.charCodeAt(0) || 0);
+    var charCode = localDict["charCode"] || (localDict["charCode"] = char && char.charCodeAt(0) || 0);
+    var bubbles = localDict["bubbles"];
+    var cancelable = localDict["cancelable"];
+    var repeat = localDict["repeat"];
+    var local = localDict["locale"];
+    var view = window;
+    localDict["which"] || (localDict["which"] = localDict["keyCode"]);
+    if ("initKeyEvent" in event) {
+        event.initKeyEvent(type, bubbles, cancelable, view, ctrlKey, altKey, shiftKey, metaKey, keyCode, charCode);
+    }
+    else if (initKeyboardEvent_variant && "initKeyboardEvent" in event) {
+        switch (initKeyboardEvent_variant) {
+            case 1:
+                event.initKeyboardEvent(type, bubbles, cancelable, view, key, location, ctrlKey, shiftKey, altKey, metaKey, altGraphKey);
+                break;
+            case 2:
+                event.initKeyboardEvent(type, bubbles, cancelable, view, ctrlKey, altKey, shiftKey, metaKey, keyCode, charCode);
+                break;
+            case 3:
+                event.initKeyboardEvent(type, bubbles, cancelable, view, key, location, ctrlKey, altKey, shiftKey, metaKey, altGraphKey);
+                break;
+            case 4:
+                event.initKeyboardEvent(type, bubbles, cancelable, view, key, location, createModifersList(localDict), repeat, local);
+                break;
+            default:
+                event.initKeyboardEvent(type, bubbles, cancelable, view, char, key, location, createModifersList(localDict), repeat, local);
+        }
+    }
+    else {
+        event.initEvent(type, bubbles, cancelable);
+    }
+    for (propName in keyboardEventProperties) {
+        if (keyboardEventProperties.hasOwnProperty(propName)) {
+            if (event[propName] != localDict[propName]) {
+                try {
+                    delete event[propName];
+                    Object.defineProperty(event, propName, { writable: true, value: localDict[propName] });
+                }
+                catch (e) {
+                }
+            }
+        }
+    }
+    return event;
+}
+module.exports = createKeyboardEvent;
+
+},{}],4:[function(require,module,exports){
+var createKeyboardEvent = require("./createKeyboardEvent");
+var EventSim;
+(function (EventSim) {
+    var mouseRegex = /click|dblclick|(mouse(down|move|up|over|out|enter|leave))/;
+    var pointerRegex = /pointer(down|move|up|over|out|enter|leave)/;
+    var keyboardRegex = /key(up|down|press)/;
+    function simulate(target, name, options) {
+        var event;
+        if (mouseRegex.test(name)) {
+            event = new MouseEvent(name, options);
+        }
+        else if (keyboardRegex.test(name)) {
+            event = createKeyboardEvent(name, options);
+        }
+        else if (pointerRegex.test(name)) {
+            event = new PointerEvent(name, options);
+        }
+        target.dispatchEvent(event);
+    }
+    EventSim.simulate = simulate;
+})(EventSim || (EventSim = {}));
+module.exports = EventSim;
+
+},{"./createKeyboardEvent":3}],5:[function(require,module,exports){
+var posters = [];
+if (self.document) {
+    self.addEventListener("message", function (e) {
+        var channel = e.data.channel;
+        posters.forEach(function (poster) {
+            if (poster.target === e.source) {
+                var listeners = poster.channels[channel];
+                if (listeners) {
+                    listeners.forEach(function (listener) { return listener.apply(null, e.data.args); });
+                }
+            }
+        });
+    });
+}
+else {
+    self.addEventListener("message", function (e) {
+        var channel = e.data.channel;
+        posters.forEach(function (poster) {
+            var listeners = poster.channels[channel];
+            if (listeners) {
+                listeners.forEach(function (listener) { return listener.apply(null, e.data.args); });
+            }
+        });
+    });
+}
+var Poster = (function () {
+    function Poster(target, origin) {
+        var _this = this;
+        if (origin === void 0) { origin = "*"; }
+        this.origin = origin;
+        this.target = target;
+        this.channels = {};
+        if (self.window && this.target instanceof Worker) {
+            this.target.addEventListener("message", function (e) {
+                var channel = e.data.channel;
+                var listeners = _this.channels[channel];
+                if (listeners) {
+                    listeners.forEach(function (listener) { return listener.apply(null, e.data.args); });
+                }
+            });
+        }
+        posters.push(this);
+    }
+    Poster.prototype.post = function (channel) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        var message = {
+            channel: channel,
+            args: args
+        };
+        if (self.document && !(this.target instanceof Worker)) {
+            this.target.postMessage(message, this.origin);
+        }
+        else {
+            this.target.postMessage(message);
+        }
+    };
+    Poster.prototype.emit = function (channel) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        args.unshift(channel);
+        this.post.apply(this, args);
+    };
+    Poster.prototype.listen = function (channel, callback) {
+        var listeners = this.channels[channel];
+        if (listeners === undefined) {
+            listeners = this.channels[channel] = [];
+        }
+        listeners.push(callback);
+        return this;
+    };
+    Poster.prototype.addListener = function (channel, callback) {
+        return this.listen(channel, callback);
+    };
+    Poster.prototype.on = function (channel, callback) {
+        return this.listen(channel, callback);
+    };
+    Poster.prototype.removeListener = function (channel, callback) {
+        var listeners = this.channels[channel];
+        if (listeners) {
+            var index = listeners.indexOf(callback);
+            if (index !== -1) {
+                listeners.splice(index, 1);
+            }
+        }
+    };
+    Poster.prototype.removeAllListeners = function (channel) {
+        this.channels[channel] = [];
+    };
+    Poster.prototype.listeners = function (channel) {
+        var listeners = this.channels[channel];
+        return listeners || [];
+    };
+    return Poster;
+})();
+module.exports = Poster;
+
+},{}]},{},[1])(1)
+});
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.escodegen=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global){
 /*
@@ -6338,2290 +8625,1102 @@ module.exports={
 
 },{}]},{},[1])(1)
 });
-/*
-  Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
-  Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-/*jslint vars:false, bitwise:true*/
-/*jshint indent:4*/
-/*global exports:true, define:true*/
-(function (root, factory) {
-    'use strict';
-
-    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
-    // and plain browser loading,
-    if (typeof define === 'function' && define.amd) {
-        define(['exports'], factory);
-    } else if (typeof exports !== 'undefined') {
-        factory(exports);
-    } else {
-        factory((root.estraverse = {}));
+!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.ProcessingDebugger=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"./lib/processing-debugger.js":[function(require,module,exports){
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var Debugger = require("./debugger");
+function emptyFunction() {
+}
+var ProcessingDebugger = (function (_super) {
+    __extends(ProcessingDebugger, _super);
+    function ProcessingDebugger(context, onBreakpoint, onFunctionDone) {
+        _super.call(this, context, onBreakpoint, onFunctionDone);
+        this._repeater = null;
     }
-}(this, function (exports) {
-    'use strict';
-
-    var Syntax,
-        isArray,
-        VisitorOption,
-        VisitorKeys,
-        objectCreate,
-        objectKeys,
-        BREAK,
-        SKIP,
-        REMOVE;
-
-    function ignoreJSHintError() { }
-
-    isArray = Array.isArray;
-    if (!isArray) {
-        isArray = function isArray(array) {
-            return Object.prototype.toString.call(array) === '[object Array]';
-        };
-    }
-
-    function deepCopy(obj) {
-        var ret = {}, key, val;
-        for (key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                val = obj[key];
-                if (typeof val === 'object' && val !== null) {
-                    ret[key] = deepCopy(val);
-                } else {
-                    ret[key] = val;
-                }
-            }
+    ProcessingDebugger.prototype.onMainStart = function () {
+        var _this = this;
+        if (this._repeater) {
+            this._repeater.stop();
         }
-        return ret;
-    }
-
-    function shallowCopy(obj) {
-        var ret = {}, key;
-        for (key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                ret[key] = obj[key];
-            }
-        }
-        return ret;
-    }
-    ignoreJSHintError(shallowCopy);
-
-    // based on LLVM libc++ upper_bound / lower_bound
-    // MIT License
-
-    function upperBound(array, func) {
-        var diff, len, i, current;
-
-        len = array.length;
-        i = 0;
-
-        while (len) {
-            diff = len >>> 1;
-            current = i + diff;
-            if (func(array[current])) {
-                len = diff;
-            } else {
-                i = current + 1;
-                len -= diff + 1;
-            }
-        }
-        return i;
-    }
-
-    function lowerBound(array, func) {
-        var diff, len, i, current;
-
-        len = array.length;
-        i = 0;
-
-        while (len) {
-            diff = len >>> 1;
-            current = i + diff;
-            if (func(array[current])) {
-                i = current + 1;
-                len -= diff + 1;
-            } else {
-                len = diff;
-            }
-        }
-        return i;
-    }
-    ignoreJSHintError(lowerBound);
-
-    objectCreate = Object.create || (function () {
-        function F() { }
-
-        return function (o) {
-            F.prototype = o;
-            return new F();
-        };
-    })();
-
-    objectKeys = Object.keys || function (o) {
-        var keys = [], key;
-        for (key in o) {
-            keys.push(key);
-        }
-        return keys;
+        ProcessingDebugger.events.forEach(function (event) { return _this.context[event] = emptyFunction; });
+        this.context.draw = emptyFunction;
     };
-
-    function extend(to, from) {
-        objectKeys(from).forEach(function (key) {
-            to[key] = from[key];
-        });
-        return to;
-    }
-
-    Syntax = {
-        AssignmentExpression: 'AssignmentExpression',
-        ArrayExpression: 'ArrayExpression',
-        ArrayPattern: 'ArrayPattern',
-        ArrowFunctionExpression: 'ArrowFunctionExpression',
-        AwaitExpression: 'AwaitExpression', // CAUTION: It's deferred to ES7.
-        BlockStatement: 'BlockStatement',
-        BinaryExpression: 'BinaryExpression',
-        BreakStatement: 'BreakStatement',
-        CallExpression: 'CallExpression',
-        CatchClause: 'CatchClause',
-        ClassBody: 'ClassBody',
-        ClassDeclaration: 'ClassDeclaration',
-        ClassExpression: 'ClassExpression',
-        ComprehensionBlock: 'ComprehensionBlock',  // CAUTION: It's deferred to ES7.
-        ComprehensionExpression: 'ComprehensionExpression',  // CAUTION: It's deferred to ES7.
-        ConditionalExpression: 'ConditionalExpression',
-        ContinueStatement: 'ContinueStatement',
-        DebuggerStatement: 'DebuggerStatement',
-        DirectiveStatement: 'DirectiveStatement',
-        DoWhileStatement: 'DoWhileStatement',
-        EmptyStatement: 'EmptyStatement',
-        ExportBatchSpecifier: 'ExportBatchSpecifier',
-        ExportDeclaration: 'ExportDeclaration',
-        ExportSpecifier: 'ExportSpecifier',
-        ExpressionStatement: 'ExpressionStatement',
-        ForStatement: 'ForStatement',
-        ForInStatement: 'ForInStatement',
-        ForOfStatement: 'ForOfStatement',
-        FunctionDeclaration: 'FunctionDeclaration',
-        FunctionExpression: 'FunctionExpression',
-        GeneratorExpression: 'GeneratorExpression',  // CAUTION: It's deferred to ES7.
-        Identifier: 'Identifier',
-        IfStatement: 'IfStatement',
-        ImportDeclaration: 'ImportDeclaration',
-        ImportDefaultSpecifier: 'ImportDefaultSpecifier',
-        ImportNamespaceSpecifier: 'ImportNamespaceSpecifier',
-        ImportSpecifier: 'ImportSpecifier',
-        Literal: 'Literal',
-        LabeledStatement: 'LabeledStatement',
-        LogicalExpression: 'LogicalExpression',
-        MemberExpression: 'MemberExpression',
-        MethodDefinition: 'MethodDefinition',
-        ModuleSpecifier: 'ModuleSpecifier',
-        NewExpression: 'NewExpression',
-        ObjectExpression: 'ObjectExpression',
-        ObjectPattern: 'ObjectPattern',
-        Program: 'Program',
-        Property: 'Property',
-        ReturnStatement: 'ReturnStatement',
-        SequenceExpression: 'SequenceExpression',
-        SpreadElement: 'SpreadElement',
-        SwitchStatement: 'SwitchStatement',
-        SwitchCase: 'SwitchCase',
-        TaggedTemplateExpression: 'TaggedTemplateExpression',
-        TemplateElement: 'TemplateElement',
-        TemplateLiteral: 'TemplateLiteral',
-        ThisExpression: 'ThisExpression',
-        ThrowStatement: 'ThrowStatement',
-        TryStatement: 'TryStatement',
-        UnaryExpression: 'UnaryExpression',
-        UpdateExpression: 'UpdateExpression',
-        VariableDeclaration: 'VariableDeclaration',
-        VariableDeclarator: 'VariableDeclarator',
-        WhileStatement: 'WhileStatement',
-        WithStatement: 'WithStatement',
-        YieldExpression: 'YieldExpression'
-    };
-
-    VisitorKeys = {
-        AssignmentExpression: ['left', 'right'],
-        ArrayExpression: ['elements'],
-        ArrayPattern: ['elements'],
-        ArrowFunctionExpression: ['params', 'defaults', 'rest', 'body'],
-        AwaitExpression: ['argument'], // CAUTION: It's deferred to ES7.
-        BlockStatement: ['body'],
-        BinaryExpression: ['left', 'right'],
-        BreakStatement: ['label'],
-        CallExpression: ['callee', 'arguments'],
-        CatchClause: ['param', 'body'],
-        ClassBody: ['body'],
-        ClassDeclaration: ['id', 'body', 'superClass'],
-        ClassExpression: ['id', 'body', 'superClass'],
-        ComprehensionBlock: ['left', 'right'],  // CAUTION: It's deferred to ES7.
-        ComprehensionExpression: ['blocks', 'filter', 'body'],  // CAUTION: It's deferred to ES7.
-        ConditionalExpression: ['test', 'consequent', 'alternate'],
-        ContinueStatement: ['label'],
-        DebuggerStatement: [],
-        DirectiveStatement: [],
-        DoWhileStatement: ['body', 'test'],
-        EmptyStatement: [],
-        ExportBatchSpecifier: [],
-        ExportDeclaration: ['declaration', 'specifiers', 'source'],
-        ExportSpecifier: ['id', 'name'],
-        ExpressionStatement: ['expression'],
-        ForStatement: ['init', 'test', 'update', 'body'],
-        ForInStatement: ['left', 'right', 'body'],
-        ForOfStatement: ['left', 'right', 'body'],
-        FunctionDeclaration: ['id', 'params', 'defaults', 'rest', 'body'],
-        FunctionExpression: ['id', 'params', 'defaults', 'rest', 'body'],
-        GeneratorExpression: ['blocks', 'filter', 'body'],  // CAUTION: It's deferred to ES7.
-        Identifier: [],
-        IfStatement: ['test', 'consequent', 'alternate'],
-        ImportDeclaration: ['specifiers', 'source'],
-        ImportDefaultSpecifier: ['id'],
-        ImportNamespaceSpecifier: ['id'],
-        ImportSpecifier: ['id', 'name'],
-        Literal: [],
-        LabeledStatement: ['label', 'body'],
-        LogicalExpression: ['left', 'right'],
-        MemberExpression: ['object', 'property'],
-        MethodDefinition: ['key', 'value'],
-        ModuleSpecifier: [],
-        NewExpression: ['callee', 'arguments'],
-        ObjectExpression: ['properties'],
-        ObjectPattern: ['properties'],
-        Program: ['body'],
-        Property: ['key', 'value'],
-        ReturnStatement: ['argument'],
-        SequenceExpression: ['expressions'],
-        SpreadElement: ['argument'],
-        SwitchStatement: ['discriminant', 'cases'],
-        SwitchCase: ['test', 'consequent'],
-        TaggedTemplateExpression: ['tag', 'quasi'],
-        TemplateElement: [],
-        TemplateLiteral: ['quasis', 'expressions'],
-        ThisExpression: [],
-        ThrowStatement: ['argument'],
-        TryStatement: ['block', 'handlers', 'handler', 'guardedHandlers', 'finalizer'],
-        UnaryExpression: ['argument'],
-        UpdateExpression: ['argument'],
-        VariableDeclaration: ['declarations'],
-        VariableDeclarator: ['id', 'init'],
-        WhileStatement: ['test', 'body'],
-        WithStatement: ['object', 'body'],
-        YieldExpression: ['argument']
-    };
-
-    // unique id
-    BREAK = {};
-    SKIP = {};
-    REMOVE = {};
-
-    VisitorOption = {
-        Break: BREAK,
-        Skip: SKIP,
-        Remove: REMOVE
-    };
-
-    function Reference(parent, key) {
-        this.parent = parent;
-        this.key = key;
-    }
-
-    Reference.prototype.replace = function replace(node) {
-        this.parent[this.key] = node;
-    };
-
-    Reference.prototype.remove = function remove() {
-        if (isArray(this.parent)) {
-            this.parent.splice(this.key, 1);
-            return true;
-        } else {
-            this.replace(null);
-            return false;
+    ProcessingDebugger.prototype.onMainDone = function () {
+        var _this = this;
+        var draw = this.context.draw;
+        if (draw !== emptyFunction) {
+            this._repeater = this.scheduler.createRepeater(function () { return _this._createStepper(draw()); }, 1000 / 60);
+            this._repeater.start();
         }
-    };
-
-    function Element(node, path, wrap, ref) {
-        this.node = node;
-        this.path = path;
-        this.wrap = wrap;
-        this.ref = ref;
-    }
-
-    function Controller() { }
-
-    // API:
-    // return property path array from root to current node
-    Controller.prototype.path = function path() {
-        var i, iz, j, jz, result, element;
-
-        function addToPath(result, path) {
-            if (isArray(path)) {
-                for (j = 0, jz = path.length; j < jz; ++j) {
-                    result.push(path[j]);
+        ProcessingDebugger.events.forEach(function (name) {
+            var eventHandler = _this.context[name];
+            if (_isGeneratorFunction(eventHandler)) {
+                if (name === "keyTyped") {
+                    _this.context.keyCode = 0;
                 }
-            } else {
-                result.push(path);
-            }
-        }
-
-        // root node
-        if (!this.__current.path) {
-            return null;
-        }
-
-        // first node is sentinel, second node is root element
-        result = [];
-        for (i = 2, iz = this.__leavelist.length; i < iz; ++i) {
-            element = this.__leavelist[i];
-            addToPath(result, element.path);
-        }
-        addToPath(result, this.__current.path);
-        return result;
-    };
-
-    // API:
-    // return type of current node
-    Controller.prototype.type = function () {
-        var node = this.current();
-        return node.type || this.__current.wrap;
-    };
-
-    // API:
-    // return array of parent elements
-    Controller.prototype.parents = function parents() {
-        var i, iz, result;
-
-        // first node is sentinel
-        result = [];
-        for (i = 1, iz = this.__leavelist.length; i < iz; ++i) {
-            result.push(this.__leavelist[i].node);
-        }
-
-        return result;
-    };
-
-    // API:
-    // return current node
-    Controller.prototype.current = function current() {
-        return this.__current.node;
-    };
-
-    Controller.prototype.__execute = function __execute(callback, element) {
-        var previous, result;
-
-        result = undefined;
-
-        previous  = this.__current;
-        this.__current = element;
-        this.__state = null;
-        if (callback) {
-            result = callback.call(this, element.node, this.__leavelist[this.__leavelist.length - 1].node);
-        }
-        this.__current = previous;
-
-        return result;
-    };
-
-    // API:
-    // notify control skip / break
-    Controller.prototype.notify = function notify(flag) {
-        this.__state = flag;
-    };
-
-    // API:
-    // skip child nodes of current node
-    Controller.prototype.skip = function () {
-        this.notify(SKIP);
-    };
-
-    // API:
-    // break traversals
-    Controller.prototype['break'] = function () {
-        this.notify(BREAK);
-    };
-
-    // API:
-    // remove node
-    Controller.prototype.remove = function () {
-        this.notify(REMOVE);
-    };
-
-    Controller.prototype.__initialize = function(root, visitor) {
-        this.visitor = visitor;
-        this.root = root;
-        this.__worklist = [];
-        this.__leavelist = [];
-        this.__current = null;
-        this.__state = null;
-        this.__fallback = visitor.fallback === 'iteration';
-        this.__keys = VisitorKeys;
-        if (visitor.keys) {
-            this.__keys = extend(objectCreate(this.__keys), visitor.keys);
-        }
-    };
-
-    function isNode(node) {
-        if (node == null) {
-            return false;
-        }
-        return typeof node === 'object' && typeof node.type === 'string';
-    }
-
-    function isProperty(nodeType, key) {
-        return (nodeType === Syntax.ObjectExpression || nodeType === Syntax.ObjectPattern) && 'properties' === key;
-    }
-
-    Controller.prototype.traverse = function traverse(root, visitor) {
-        var worklist,
-            leavelist,
-            element,
-            node,
-            nodeType,
-            ret,
-            key,
-            current,
-            current2,
-            candidates,
-            candidate,
-            sentinel;
-
-        this.__initialize(root, visitor);
-
-        sentinel = {};
-
-        // reference
-        worklist = this.__worklist;
-        leavelist = this.__leavelist;
-
-        // initialize
-        worklist.push(new Element(root, null, null, null));
-        leavelist.push(new Element(null, null, null, null));
-
-        while (worklist.length) {
-            element = worklist.pop();
-
-            if (element === sentinel) {
-                element = leavelist.pop();
-
-                ret = this.__execute(visitor.leave, element);
-
-                if (this.__state === BREAK || ret === BREAK) {
-                    return;
-                }
-                continue;
-            }
-
-            if (element.node) {
-
-                ret = this.__execute(visitor.enter, element);
-
-                if (this.__state === BREAK || ret === BREAK) {
-                    return;
-                }
-
-                worklist.push(sentinel);
-                leavelist.push(element);
-
-                if (this.__state === SKIP || ret === SKIP) {
-                    continue;
-                }
-
-                node = element.node;
-                nodeType = element.wrap || node.type;
-                candidates = this.__keys[nodeType];
-                if (!candidates) {
-                    if (this.__fallback) {
-                        candidates = objectKeys(node);
-                    } else {
-                        throw new Error('Unknown node type ' + nodeType + '.');
-                    }
-                }
-
-                current = candidates.length;
-                while ((current -= 1) >= 0) {
-                    key = candidates[current];
-                    candidate = node[key];
-                    if (!candidate) {
-                        continue;
-                    }
-
-                    if (isArray(candidate)) {
-                        current2 = candidate.length;
-                        while ((current2 -= 1) >= 0) {
-                            if (!candidate[current2]) {
-                                continue;
-                            }
-                            if (isProperty(nodeType, candidates[current])) {
-                                element = new Element(candidate[current2], [key, current2], 'Property', null);
-                            } else if (isNode(candidate[current2])) {
-                                element = new Element(candidate[current2], [key, current2], null, null);
-                            } else {
-                                continue;
-                            }
-                            worklist.push(element);
-                        }
-                    } else if (isNode(candidate)) {
-                        worklist.push(new Element(candidate, key, null, null));
-                    }
-                }
-            }
-        }
-    };
-
-    Controller.prototype.replace = function replace(root, visitor) {
-        function removeElem(element) {
-            var i,
-                key,
-                nextElem,
-                parent;
-
-            if (element.ref.remove()) {
-                // When the reference is an element of an array.
-                key = element.ref.key;
-                parent = element.ref.parent;
-
-                // If removed from array, then decrease following items' keys.
-                i = worklist.length;
-                while (i--) {
-                    nextElem = worklist[i];
-                    if (nextElem.ref && nextElem.ref.parent === parent) {
-                        if  (nextElem.ref.key < key) {
-                            break;
-                        }
-                        --nextElem.ref.key;
-                    }
-                }
-            }
-        }
-
-        var worklist,
-            leavelist,
-            node,
-            nodeType,
-            target,
-            element,
-            current,
-            current2,
-            candidates,
-            candidate,
-            sentinel,
-            outer,
-            key;
-
-        this.__initialize(root, visitor);
-
-        sentinel = {};
-
-        // reference
-        worklist = this.__worklist;
-        leavelist = this.__leavelist;
-
-        // initialize
-        outer = {
-            root: root
-        };
-        element = new Element(root, null, null, new Reference(outer, 'root'));
-        worklist.push(element);
-        leavelist.push(element);
-
-        while (worklist.length) {
-            element = worklist.pop();
-
-            if (element === sentinel) {
-                element = leavelist.pop();
-
-                target = this.__execute(visitor.leave, element);
-
-                // node may be replaced with null,
-                // so distinguish between undefined and null in this place
-                if (target !== undefined && target !== BREAK && target !== SKIP && target !== REMOVE) {
-                    // replace
-                    element.ref.replace(target);
-                }
-
-                if (this.__state === REMOVE || target === REMOVE) {
-                    removeElem(element);
-                }
-
-                if (this.__state === BREAK || target === BREAK) {
-                    return outer.root;
-                }
-                continue;
-            }
-
-            target = this.__execute(visitor.enter, element);
-
-            // node may be replaced with null,
-            // so distinguish between undefined and null in this place
-            if (target !== undefined && target !== BREAK && target !== SKIP && target !== REMOVE) {
-                // replace
-                element.ref.replace(target);
-                element.node = target;
-            }
-
-            if (this.__state === REMOVE || target === REMOVE) {
-                removeElem(element);
-                element.node = null;
-            }
-
-            if (this.__state === BREAK || target === BREAK) {
-                return outer.root;
-            }
-
-            // node may be null
-            node = element.node;
-            if (!node) {
-                continue;
-            }
-
-            worklist.push(sentinel);
-            leavelist.push(element);
-
-            if (this.__state === SKIP || target === SKIP) {
-                continue;
-            }
-
-            nodeType = element.wrap || node.type;
-            candidates = this.__keys[nodeType];
-            if (!candidates) {
-                if (this.__fallback) {
-                    candidates = objectKeys(node);
-                } else {
-                    throw new Error('Unknown node type ' + nodeType + '.');
-                }
-            }
-
-            current = candidates.length;
-            while ((current -= 1) >= 0) {
-                key = candidates[current];
-                candidate = node[key];
-                if (!candidate) {
-                    continue;
-                }
-
-                if (isArray(candidate)) {
-                    current2 = candidate.length;
-                    while ((current2 -= 1) >= 0) {
-                        if (!candidate[current2]) {
-                            continue;
-                        }
-                        if (isProperty(nodeType, candidates[current])) {
-                            element = new Element(candidate[current2], [key, current2], 'Property', new Reference(candidate, current2));
-                        } else if (isNode(candidate[current2])) {
-                            element = new Element(candidate[current2], [key, current2], null, new Reference(candidate, current2));
-                        } else {
-                            continue;
-                        }
-                        worklist.push(element);
-                    }
-                } else if (isNode(candidate)) {
-                    worklist.push(new Element(candidate, key, null, new Reference(node, key)));
-                }
-            }
-        }
-
-        return outer.root;
-    };
-
-    function traverse(root, visitor) {
-        var controller = new Controller();
-        return controller.traverse(root, visitor);
-    }
-
-    function replace(root, visitor) {
-        var controller = new Controller();
-        return controller.replace(root, visitor);
-    }
-
-    function extendCommentRange(comment, tokens) {
-        var target;
-
-        target = upperBound(tokens, function search(token) {
-            return token.range[0] > comment.range[0];
-        });
-
-        comment.extendedRange = [comment.range[0], comment.range[1]];
-
-        if (target !== tokens.length) {
-            comment.extendedRange[1] = tokens[target].range[0];
-        }
-
-        target -= 1;
-        if (target >= 0) {
-            comment.extendedRange[0] = tokens[target].range[1];
-        }
-
-        return comment;
-    }
-
-    function attachComments(tree, providedComments, tokens) {
-        // At first, we should calculate extended comment ranges.
-        var comments = [], comment, len, i, cursor;
-
-        if (!tree.range) {
-            throw new Error('attachComments needs range information');
-        }
-
-        // tokens array is empty, we attach comments to tree as 'leadingComments'
-        if (!tokens.length) {
-            if (providedComments.length) {
-                for (i = 0, len = providedComments.length; i < len; i += 1) {
-                    comment = deepCopy(providedComments[i]);
-                    comment.extendedRange = [0, tree.range[0]];
-                    comments.push(comment);
-                }
-                tree.leadingComments = comments;
-            }
-            return tree;
-        }
-
-        for (i = 0, len = providedComments.length; i < len; i += 1) {
-            comments.push(extendCommentRange(deepCopy(providedComments[i]), tokens));
-        }
-
-        // This is based on John Freeman's implementation.
-        cursor = 0;
-        traverse(tree, {
-            enter: function (node) {
-                var comment;
-
-                while (cursor < comments.length) {
-                    comment = comments[cursor];
-                    if (comment.extendedRange[1] > node.range[0]) {
-                        break;
-                    }
-
-                    if (comment.extendedRange[1] === node.range[0]) {
-                        if (!node.leadingComments) {
-                            node.leadingComments = [];
-                        }
-                        node.leadingComments.push(comment);
-                        comments.splice(cursor, 1);
-                    } else {
-                        cursor += 1;
-                    }
-                }
-
-                // already out of owned node
-                if (cursor === comments.length) {
-                    return VisitorOption.Break;
-                }
-
-                if (comments[cursor].extendedRange[0] > node.range[1]) {
-                    return VisitorOption.Skip;
-                }
+                _this.context[name] = function () {
+                    _this.queueGenerator(eventHandler);
+                };
             }
         });
+    };
+    ProcessingDebugger.events = [
+        "mouseClicked",
+        "mouseDragged",
+        "mousePressed",
+        "mouseMoved",
+        "mouseReleased",
+        "keyPressed",
+        "keyReleased",
+        "keyTyped"
+    ];
+    return ProcessingDebugger;
+})(Debugger);
+function _isGeneratorFunction(value) {
+    return value && Object.getPrototypeOf(value).constructor.name === "GeneratorFunction";
+}
+module.exports = ProcessingDebugger;
 
-        cursor = 0;
-        traverse(tree, {
-            leave: function (node) {
-                var comment;
-
-                while (cursor < comments.length) {
-                    comment = comments[cursor];
-                    if (node.range[1] < comment.extendedRange[0]) {
-                        break;
-                    }
-
-                    if (node.range[1] === comment.extendedRange[0]) {
-                        if (!node.trailingComments) {
-                            node.trailingComments = [];
-                        }
-                        node.trailingComments.push(comment);
-                        comments.splice(cursor, 1);
-                    } else {
-                        cursor += 1;
-                    }
-                }
-
-                // already out of owned node
-                if (cursor === comments.length) {
-                    return VisitorOption.Break;
-                }
-
-                if (comments[cursor].extendedRange[0] > node.range[1]) {
-                    return VisitorOption.Skip;
-                }
-            }
-        });
-
-        return tree;
+},{"./debugger":"/Users/kevin/live-editor/external/stepper/lib/debugger.js"}],"/Users/kevin/live-editor/external/stepper/external/scheduler/lib/scheduler.js":[function(require,module,exports){
+var LinkedList = require("../node_modules/basic-ds/lib/LinkedList");
+var Scheduler = (function () {
+    function Scheduler() {
+        this.queue = new LinkedList();
     }
-
-    exports.version = '1.8.1-dev';
-    exports.Syntax = Syntax;
-    exports.traverse = traverse;
-    exports.replace = replace;
-    exports.attachComments = attachComments;
-    exports.VisitorKeys = VisitorKeys;
-    exports.VisitorOption = VisitorOption;
-    exports.Controller = Controller;
-}));
-/* vim: set sw=4 ts=4 et tw=80 : */
-
-/*
-  Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
-  Copyright (C) 2013 Alex Seville <hi@alexanderseville.com>
-
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
-/*jslint bitwise:true */
-/*global exports:true, define:true, require:true*/
-(function (factory, global) {
-    'use strict';
-
-    function namespace(str, obj) {
-        var i, iz, names, name;
-        names = str.split('.');
-        for (i = 0, iz = names.length; i < iz; ++i) {
-            name = names[i];
-            if (obj.hasOwnProperty(name)) {
-                obj = obj[name];
-            } else {
-                obj = (obj[name] = {});
-            }
-        }
-        return obj;
-    }
-
-    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
-    // and plain browser loading,
-    if (typeof define === 'function' && define.amd) {
-        define('escope', ['exports', 'estraverse'], function (exports, estraverse) {
-            factory(exports, global, estraverse);
-        });
-    } else if (typeof exports !== 'undefined') {
-        factory(exports, global, require('estraverse'));
-    } else {
-        factory(namespace('escope', global), global, global.estraverse);
-    }
-}(function (exports, global, estraverse) {
-    'use strict';
-
-    var Syntax,
-        Map,
-        currentScope,
-        globalScope,
-        scopes,
-        options;
-
-    Syntax = estraverse.Syntax;
-
-    if (typeof global.Map !== 'undefined') {
-        // ES6 Map
-        Map = global.Map;
-    } else {
-        Map = function Map() {
-            this.__data = {};
+    Scheduler.prototype.addTask = function (task) {
+        var _this = this;
+        var done = task.doneCallback;
+        task.doneCallback = function () {
+            _this.removeTask(task);
+            done();
         };
-
-        Map.prototype.get = function MapGet(key) {
-            key = '$' + key;
-            if (this.__data.hasOwnProperty(key)) {
-                return this.__data[key];
+        this.queue.push_front(task);
+        this.tick();
+    };
+    Scheduler.prototype.tick = function () {
+        var _this = this;
+        setTimeout(function () {
+            var currentTask = _this.currentTask();
+            if (currentTask !== null && !currentTask.started) {
+                currentTask.start();
+                _this.tick();
             }
-            return undefined;
-        };
-
-        Map.prototype.has = function MapHas(key) {
-            key = '$' + key;
-            return this.__data.hasOwnProperty(key);
-        };
-
-        Map.prototype.set = function MapSet(key, val) {
-            key = '$' + key;
-            this.__data[key] = val;
-        };
-
-        Map.prototype['delete'] = function MapDelete(key) {
-            key = '$' + key;
-            return delete this.__data[key];
-        };
-    }
-
-    function assert(cond, text) {
-        if (!cond) {
-            throw new Error(text);
-        }
-    }
-
-    function defaultOptions() {
-        return {
-            optimistic: false,
-            directive: false
-        };
-    }
-
-    function updateDeeply(target, override) {
-        var key, val;
-
-        function isHashObject(target) {
-            return typeof target === 'object' && target instanceof Object && !(target instanceof RegExp);
-        }
-
-        for (key in override) {
-            if (override.hasOwnProperty(key)) {
-                val = override[key];
-                if (isHashObject(val)) {
-                    if (isHashObject(target[key])) {
-                        updateDeeply(target[key], val);
-                    } else {
-                        target[key] = updateDeeply({}, val);
-                    }
-                } else {
-                    target[key] = val;
-                }
-            }
-        }
-        return target;
-    }
-
-    function Reference(ident, scope, flag, writeExpr, maybeImplicitGlobal) {
-        this.identifier = ident;
-        this.from = scope;
-        this.tainted = false;
-        this.resolved = null;
-        this.flag = flag;
-        if (this.isWrite()) {
-            this.writeExpr = writeExpr;
-        }
-        this.__maybeImplicitGlobal = maybeImplicitGlobal;
-    }
-
-    Reference.READ = 0x1;
-    Reference.WRITE = 0x2;
-    Reference.RW = 0x3;
-
-    Reference.prototype.isStatic = function isStatic() {
-        return !this.tainted && this.resolved && this.resolved.scope.isStatic();
+        }, 0);
     };
-
-    Reference.prototype.isWrite = function isWrite() {
-        return this.flag & Reference.WRITE;
-    };
-
-    Reference.prototype.isRead = function isRead() {
-        return this.flag & Reference.READ;
-    };
-
-    Reference.prototype.isReadOnly = function isReadOnly() {
-        return this.flag === Reference.READ;
-    };
-
-    Reference.prototype.isWriteOnly = function isWriteOnly() {
-        return this.flag === Reference.WRITE;
-    };
-
-    Reference.prototype.isReadWrite = function isReadWrite() {
-        return this.flag === Reference.RW;
-    };
-
-    function Variable(name, scope) {
-        this.name = name;
-        this.identifiers = [];
-        this.references = [];
-
-        this.defs = [];
-
-        this.tainted = false;
-        this.stack = true;
-        this.scope = scope;
-    }
-
-    Variable.CatchClause = 'CatchClause';
-    Variable.Parameter = 'Parameter';
-    Variable.FunctionName = 'FunctionName';
-    Variable.Variable = 'Variable';
-    Variable.ImplicitGlobalVariable = 'ImplicitGlobalVariable';
-
-    function isStrictScope(scope, block) {
-        var body, i, iz, stmt, expr;
-
-        // When upper scope is exists and strict, inner scope is also strict.
-        if (scope.upper && scope.upper.isStrict) {
-            return true;
-        }
-
-        if (scope.type === 'function') {
-            body = block.body;
-        } else if (scope.type === 'global') {
-            body = block;
-        } else {
-            return false;
-        }
-
-        if (options.directive) {
-            for (i = 0, iz = body.body.length; i < iz; ++i) {
-                stmt = body.body[i];
-                if (stmt.type !== 'DirectiveStatement') {
-                    break;
-                }
-                if (stmt.raw === '"use strict"' || stmt.raw === '\'use strict\'') {
-                    return true;
-                }
-            }
-        } else {
-            for (i = 0, iz = body.body.length; i < iz; ++i) {
-                stmt = body.body[i];
-                if (stmt.type !== Syntax.ExpressionStatement) {
-                    break;
-                }
-                expr = stmt.expression;
-                if (expr.type !== Syntax.Literal || typeof expr.value !== 'string') {
-                    break;
-                }
-                if (expr.raw != null) {
-                    if (expr.raw === '"use strict"' || expr.raw === '\'use strict\'') {
-                        return true;
-                    }
-                } else {
-                    if (expr.value === 'use strict') {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    function Scope(block, opt) {
-        var variable, body;
-
-        this.type =
-            (block.type === Syntax.CatchClause) ? 'catch' :
-            (block.type === Syntax.WithStatement) ? 'with' :
-            (block.type === Syntax.Program) ? 'global' : 'function';
-        this.set = new Map();
-        this.taints = new Map();
-        this.dynamic = this.type === 'global' || this.type === 'with';
-        this.block = block;
-        this.through = [];
-        this.variables = [];
-        this.references = [];
-        this.left = [];
-        this.variableScope =
-            (this.type === 'global' || this.type === 'function') ? this : currentScope.variableScope;
-        this.functionExpressionScope = false;
-        this.directCallToEvalScope = false;
-        this.thisFound = false;
-        body = this.type === 'function' ? block.body : block;
-        if (opt.naming) {
-            this.__define(block.id, {
-                type: Variable.FunctionName,
-                name: block.id,
-                node: block
-            });
-            this.functionExpressionScope = true;
-        } else {
-            if (this.type === 'function') {
-                variable = new Variable('arguments', this);
-                this.taints.set('arguments', true);
-                this.set.set('arguments', variable);
-                this.variables.push(variable);
-            }
-
-            if (block.type === Syntax.FunctionExpression && block.id) {
-                new Scope(block, { naming: true });
-            }
-        }
-
-        this.upper = currentScope;
-        this.isStrict = isStrictScope(this, block);
-
-        this.childScopes = [];
-        if (currentScope) {
-            currentScope.childScopes.push(this);
-        }
-
-
-        // RAII
-        currentScope = this;
-        if (this.type === 'global') {
-            globalScope = this;
-            globalScope.implicit = {
-                set: new Map(),
-                variables: []
-            };
-        }
-        scopes.push(this);
-    }
-
-    Scope.prototype.__close = function __close() {
-        var i, iz, ref, current, node, implicit;
-
-        // Because if this is global environment, upper is null
-        if (!this.dynamic || options.optimistic) {
-            // static resolve
-            for (i = 0, iz = this.left.length; i < iz; ++i) {
-                ref = this.left[i];
-                if (!this.__resolve(ref)) {
-                    this.__delegateToUpperScope(ref);
-                }
-            }
-        } else {
-            // this is "global" / "with" / "function with eval" environment
-            if (this.type === 'with') {
-                for (i = 0, iz = this.left.length; i < iz; ++i) {
-                    ref = this.left[i];
-                    ref.tainted = true;
-                    this.__delegateToUpperScope(ref);
-                }
-            } else {
-                for (i = 0, iz = this.left.length; i < iz; ++i) {
-                    // notify all names are through to global
-                    ref = this.left[i];
-                    current = this;
-                    do {
-                        current.through.push(ref);
-                        current = current.upper;
-                    } while (current);
-                }
-            }
-        }
-
-        if (this.type === 'global') {
-            implicit = [];
-            for (i = 0, iz = this.left.length; i < iz; ++i) {
-                ref = this.left[i];
-                if (ref.__maybeImplicitGlobal && !this.set.has(ref.identifier.name)) {
-                    implicit.push(ref.__maybeImplicitGlobal);
-                }
-            }
-
-            // create an implicit global variable from assignment expression
-            for (i = 0, iz = implicit.length; i < iz; ++i) {
-                node = implicit[i];
-                this.__defineImplicit(node.left, {
-                    type: Variable.ImplicitGlobalVariable,
-                    name: node.left,
-                    node: node
-                });
-            }
-        }
-
-        this.left = null;
-        currentScope = this.upper;
-    };
-
-    Scope.prototype.__resolve = function __resolve(ref) {
-        var variable, name;
-        name = ref.identifier.name;
-        if (this.set.has(name)) {
-            variable = this.set.get(name);
-            variable.references.push(ref);
-            variable.stack = variable.stack && ref.from.variableScope === this.variableScope;
-            if (ref.tainted) {
-                variable.tainted = true;
-                this.taints.set(variable.name, true);
-            }
-            ref.resolved = variable;
-            return true;
-        }
-        return false;
-    };
-
-    Scope.prototype.__delegateToUpperScope = function __delegateToUpperScope(ref) {
-        if (this.upper) {
-            this.upper.left.push(ref);
-        }
-        this.through.push(ref);
-    };
-
-    Scope.prototype.__defineImplicit = function __defineImplicit(node, info) {
-        var name, variable;
-        if (node && node.type === Syntax.Identifier) {
-            name = node.name;
-            if (!this.implicit.set.has(name)) {
-                variable = new Variable(name, this);
-                variable.identifiers.push(node);
-                variable.defs.push(info);
-                this.implicit.set.set(name, variable);
-                this.implicit.variables.push(variable);
-            } else {
-                variable = this.implicit.set.get(name);
-                variable.identifiers.push(node);
-                variable.defs.push(info);
-            }
-        }
-    };
-
-    Scope.prototype.__define = function __define(node, info) {
-        var name, variable;
-        if (node && node.type === Syntax.Identifier) {
-            name = node.name;
-            if (!this.set.has(name)) {
-                variable = new Variable(name, this);
-                variable.identifiers.push(node);
-                variable.defs.push(info);
-                this.set.set(name, variable);
-                this.variables.push(variable);
-            } else {
-                variable = this.set.get(name);
-                variable.identifiers.push(node);
-                variable.defs.push(info);
-            }
-        }
-    };
-
-    Scope.prototype.__referencing = function __referencing(node, assign, writeExpr, maybeImplicitGlobal) {
-        var ref;
-        // because Array element may be null
-        if (node && node.type === Syntax.Identifier) {
-            ref = new Reference(node, this, assign || Reference.READ, writeExpr, maybeImplicitGlobal);
-            this.references.push(ref);
-            this.left.push(ref);
-        }
-    };
-
-    Scope.prototype.__detectEval = function __detectEval() {
-        var current;
-        current = this;
-        this.directCallToEvalScope = true;
-        do {
-            current.dynamic = true;
-            current = current.upper;
-        } while (current);
-    };
-
-    Scope.prototype.__detectThis = function __detectThis() {
-        this.thisFound = true;
-    };
-
-    Scope.prototype.__isClosed = function isClosed() {
-        return this.left === null;
-    };
-
-    // API Scope#resolve(name)
-    // returns resolved reference
-    Scope.prototype.resolve = function resolve(ident) {
-        var ref, i, iz;
-        assert(this.__isClosed(), 'scope should be closed');
-        assert(ident.type === Syntax.Identifier, 'target should be identifier');
-        for (i = 0, iz = this.references.length; i < iz; ++i) {
-            ref = this.references[i];
-            if (ref.identifier === ident) {
-                return ref;
-            }
-        }
-        return null;
-    };
-
-    // API Scope#isStatic
-    // returns this scope is static
-    Scope.prototype.isStatic = function isStatic() {
-        return !this.dynamic;
-    };
-
-    // API Scope#isArgumentsMaterialized
-    // return this scope has materialized arguments
-    Scope.prototype.isArgumentsMaterialized = function isArgumentsMaterialized() {
-        // TODO(Constellation)
-        // We can more aggressive on this condition like this.
-        //
-        // function t() {
-        //     // arguments of t is always hidden.
-        //     function arguments() {
-        //     }
-        // }
-        var variable;
-
-        // This is not function scope
-        if (this.type !== 'function') {
-            return true;
-        }
-
-        if (!this.isStatic()) {
-            return true;
-        }
-
-        variable = this.set.get('arguments');
-        assert(variable, 'always have arguments variable');
-        return variable.tainted || variable.references.length  !== 0;
-    };
-
-    // API Scope#isThisMaterialized
-    // return this scope has materialized `this` reference
-    Scope.prototype.isThisMaterialized = function isThisMaterialized() {
-        // This is not function scope
-        if (this.type !== 'function') {
-            return true;
-        }
-        if (!this.isStatic()) {
-            return true;
-        }
-        return this.thisFound;
-    };
-
-    Scope.mangledName = '__$escope$__';
-
-    Scope.prototype.attach = function attach() {
-        if (!this.functionExpressionScope) {
-            this.block[Scope.mangledName] = this;
-        }
-    };
-
-    Scope.prototype.detach = function detach() {
-        if (!this.functionExpressionScope) {
-            delete this.block[Scope.mangledName];
-        }
-    };
-
-    Scope.prototype.isUsedName = function (name) {
-        if (this.set.has(name)) {
-            return true;
-        }
-        for (var i = 0, iz = this.through.length; i < iz; ++i) {
-            if (this.through[i].identifier.name === name) {
-                return true;
-            }
-        }
-        return false;
-    };
-
-    function ScopeManager(scopes) {
-        this.scopes = scopes;
-        this.attached = false;
-    }
-
-    // Returns appropliate scope for this node
-    ScopeManager.prototype.__get = function __get(node) {
-        var i, iz, scope;
-        if (this.attached) {
-            return node[Scope.mangledName] || null;
-        }
-        if (Scope.isScopeRequired(node)) {
-            for (i = 0, iz = this.scopes.length; i < iz; ++i) {
-                scope = this.scopes[i];
-                if (!scope.functionExpressionScope) {
-                    if (scope.block === node) {
-                        return scope;
-                    }
-                }
-            }
-        }
-        return null;
-    };
-
-    ScopeManager.prototype.acquire = function acquire(node) {
-        return this.__get(node);
-    };
-
-    ScopeManager.prototype.release = function release(node) {
-        var scope = this.__get(node);
-        if (scope) {
-            scope = scope.upper;
-            while (scope) {
-                if (!scope.functionExpressionScope) {
-                    return scope;
-                }
-                scope = scope.upper;
-            }
-        }
-        return null;
-    };
-
-    ScopeManager.prototype.attach = function attach() {
-        var i, iz;
-        for (i = 0, iz = this.scopes.length; i < iz; ++i) {
-            this.scopes[i].attach();
-        }
-        this.attached = true;
-    };
-
-    ScopeManager.prototype.detach = function detach() {
-        var i, iz;
-        for (i = 0, iz = this.scopes.length; i < iz; ++i) {
-            this.scopes[i].detach();
-        }
-        this.attached = false;
-    };
-
-    Scope.isScopeRequired = function isScopeRequired(node) {
-        return Scope.isVariableScopeRequired(node) || node.type === Syntax.WithStatement || node.type === Syntax.CatchClause;
-    };
-
-    Scope.isVariableScopeRequired = function isVariableScopeRequired(node) {
-        return node.type === Syntax.Program || node.type === Syntax.FunctionExpression || node.type === Syntax.FunctionDeclaration;
-    };
-
-    function analyze(tree, providedOptions) {
-        var resultScopes;
-
-        options = updateDeeply(defaultOptions(), providedOptions);
-        resultScopes = scopes = [];
-        currentScope = null;
-        globalScope = null;
-
-        // attach scope and collect / resolve names
-        estraverse.traverse(tree, {
-            enter: function enter(node) {
-                var i, iz, decl;
-                if (Scope.isScopeRequired(node)) {
-                    new Scope(node, {});
-                }
-
-                switch (node.type) {
-                case Syntax.AssignmentExpression:
-                    if (node.operator === '=') {
-                        currentScope.__referencing(node.left, Reference.WRITE, node.right, (!currentScope.isStrict && node.left.name != null) && node);
-                    } else {
-                        currentScope.__referencing(node.left, Reference.RW, node.right);
-                    }
-                    currentScope.__referencing(node.right);
-                    break;
-
-                case Syntax.ArrayExpression:
-                    for (i = 0, iz = node.elements.length; i < iz; ++i) {
-                        currentScope.__referencing(node.elements[i]);
-                    }
-                    break;
-
-                case Syntax.BlockStatement:
-                    break;
-
-                case Syntax.BinaryExpression:
-                    currentScope.__referencing(node.left);
-                    currentScope.__referencing(node.right);
-                    break;
-
-                case Syntax.BreakStatement:
-                    break;
-
-                case Syntax.CallExpression:
-                    currentScope.__referencing(node.callee);
-                    for (i = 0, iz = node['arguments'].length; i < iz; ++i) {
-                        currentScope.__referencing(node['arguments'][i]);
-                    }
-
-                    // check this is direct call to eval
-                    if (!options.ignoreEval && node.callee.type === Syntax.Identifier && node.callee.name === 'eval') {
-                        currentScope.variableScope.__detectEval();
-                    }
-                    break;
-
-                case Syntax.CatchClause:
-                    currentScope.__define(node.param, {
-                        type: Variable.CatchClause,
-                        name: node.param,
-                        node: node
-                    });
-                    break;
-
-                case Syntax.ConditionalExpression:
-                    currentScope.__referencing(node.test);
-                    currentScope.__referencing(node.consequent);
-                    currentScope.__referencing(node.alternate);
-                    break;
-
-                case Syntax.ContinueStatement:
-                    break;
-
-                case Syntax.DirectiveStatement:
-                    break;
-
-                case Syntax.DoWhileStatement:
-                    currentScope.__referencing(node.test);
-                    break;
-
-                case Syntax.DebuggerStatement:
-                    break;
-
-                case Syntax.EmptyStatement:
-                    break;
-
-                case Syntax.ExpressionStatement:
-                    currentScope.__referencing(node.expression);
-                    break;
-
-                case Syntax.ForStatement:
-                    currentScope.__referencing(node.init);
-                    currentScope.__referencing(node.test);
-                    currentScope.__referencing(node.update);
-                    break;
-
-                case Syntax.ForInStatement:
-                    if (node.left.type === Syntax.VariableDeclaration) {
-                        currentScope.__referencing(node.left.declarations[0].id, Reference.WRITE, null, false);
-                    } else {
-                        currentScope.__referencing(node.left, Reference.WRITE, null, (!currentScope.isStrict && node.left.name != null) && node);
-                    }
-                    currentScope.__referencing(node.right);
-                    break;
-
-                case Syntax.FunctionDeclaration:
-                    // FunctionDeclaration name is defined in upper scope
-                    currentScope.upper.__define(node.id, {
-                        type: Variable.FunctionName,
-                        name: node.id,
-                        node: node
-                    });
-                    for (i = 0, iz = node.params.length; i < iz; ++i) {
-                        currentScope.__define(node.params[i], {
-                            type: Variable.Parameter,
-                            name: node.params[i],
-                            node: node,
-                            index: i
-                        });
-                    }
-                    break;
-
-                case Syntax.FunctionExpression:
-                    // id is defined in upper scope
-                    for (i = 0, iz = node.params.length; i < iz; ++i) {
-                        currentScope.__define(node.params[i], {
-                            type: Variable.Parameter,
-                            name: node.params[i],
-                            node: node,
-                            index: i
-                        });
-                    }
-                    break;
-
-                case Syntax.Identifier:
-                    break;
-
-                case Syntax.IfStatement:
-                    currentScope.__referencing(node.test);
-                    break;
-
-                case Syntax.Literal:
-                    break;
-
-                case Syntax.LabeledStatement:
-                    break;
-
-                case Syntax.LogicalExpression:
-                    currentScope.__referencing(node.left);
-                    currentScope.__referencing(node.right);
-                    break;
-
-                case Syntax.MemberExpression:
-                    currentScope.__referencing(node.object);
-                    if (node.computed) {
-                        currentScope.__referencing(node.property);
-                    }
-                    break;
-
-                case Syntax.NewExpression:
-                    currentScope.__referencing(node.callee);
-                    for (i = 0, iz = node['arguments'].length; i < iz; ++i) {
-                        currentScope.__referencing(node['arguments'][i]);
-                    }
-                    break;
-
-                case Syntax.ObjectExpression:
-                    break;
-
-                case Syntax.Program:
-                    break;
-
-                case Syntax.Property:
-                    currentScope.__referencing(node.value);
-                    break;
-
-                case Syntax.ReturnStatement:
-                    currentScope.__referencing(node.argument);
-                    break;
-
-                case Syntax.SequenceExpression:
-                    for (i = 0, iz = node.expressions.length; i < iz; ++i) {
-                        currentScope.__referencing(node.expressions[i]);
-                    }
-                    break;
-
-                case Syntax.SwitchStatement:
-                    currentScope.__referencing(node.discriminant);
-                    break;
-
-                case Syntax.SwitchCase:
-                    currentScope.__referencing(node.test);
-                    break;
-
-                case Syntax.ThisExpression:
-                    currentScope.variableScope.__detectThis();
-                    break;
-
-                case Syntax.ThrowStatement:
-                    currentScope.__referencing(node.argument);
-                    break;
-
-                case Syntax.TryStatement:
-                    break;
-
-                case Syntax.UnaryExpression:
-                    currentScope.__referencing(node.argument);
-                    break;
-
-                case Syntax.UpdateExpression:
-                    currentScope.__referencing(node.argument, Reference.RW, null);
-                    break;
-
-                case Syntax.VariableDeclaration:
-                    for (i = 0, iz = node.declarations.length; i < iz; ++i) {
-                        decl = node.declarations[i];
-                        currentScope.variableScope.__define(decl.id, {
-                            type: Variable.Variable,
-                            name: decl.id,
-                            node: decl,
-                            index: i,
-                            parent: node
-                        });
-                        if (decl.init) {
-                            // initializer is found
-                            currentScope.__referencing(decl.id, Reference.WRITE, decl.init, false);
-                            currentScope.__referencing(decl.init);
-                        }
-                    }
-                    break;
-
-                case Syntax.VariableDeclarator:
-                    break;
-
-                case Syntax.WhileStatement:
-                    currentScope.__referencing(node.test);
-                    break;
-
-                case Syntax.WithStatement:
-                    // WithStatement object is referenced at upper scope
-                    currentScope.upper.__referencing(node.object);
-                    break;
-                }
-            },
-
-            leave: function leave(node) {
-                while (currentScope && node === currentScope.block) {
-                    currentScope.__close();
-                }
-            }
-        });
-
-        assert(currentScope === null);
-        globalScope = null;
-        scopes = null;
-        options = null;
-
-        return new ScopeManager(resultScopes);
-    }
-
-    exports.version = '1.0.0';
-    exports.Reference = Reference;
-    exports.Variable = Variable;
-    exports.Scope = Scope;
-    exports.ScopeManager = ScopeManager;
-    exports.analyze = analyze;
-}, this));
-/* vim: set sw=4 ts=4 et tw=80 : */
-
-!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.iframeOverlay=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var Poster = require("../node_modules/poster/lib/poster");
-var EventSim = require("../node_modules/eventsim/lib/eventsim");
-var basic = require("../node_modules/basic-ds/lib/basic");
-function createOverlay(iframe) {
-    var wrapper = document.createElement("span");
-    wrapper.setAttribute("style", "position:relative;padding:0;margin:0;display:inline-block;");
-    wrapper.setAttribute("class", "wrapper");
-    var overlay = document.createElement("span");
-    overlay.setAttribute("style", "position:absolute;left:0;top:0;width:100%;height:100%;");
-    overlay.setAttribute("class", "overlay");
-    overlay.setAttribute("tabindex", "0");
-    var parent = iframe.parentElement;
-    parent.insertBefore(wrapper, iframe);
-    wrapper.appendChild(iframe);
-    wrapper.appendChild(overlay);
-    var down = false;
-    var paused = false;
-    var queue = new basic.LinkedList();
-    var poster = new Poster(iframe.contentWindow);
-    function postMouseEvent(e) {
-        if (paused) {
-            e["timestamp"] = Date.now();
-            queue.push_front(e);
+    Scheduler.prototype.removeTask = function (task) {
+        if (task === this.currentTask()) {
+            this.queue.pop_back();
+            this.tick();
         }
         else {
-            var bounds = wrapper.getBoundingClientRect();
-            poster.post("mouse", {
-                type: e.type,
-                x: e.pageX - bounds.left,
-                y: e.pageY - bounds.top,
-                shiftKey: e.shiftKey,
-                altKey: e.altKey,
-                ctrlKey: e.ctrlKey,
-                metaKey: e.metaKey
-            });
+            throw "not the current task";
         }
-    }
-    function postKeyboardEvent(e) {
-        if (paused) {
-            e["timestamp"] = Date.now();
-            queue.push_front(e);
-        }
-        else {
-            poster.post("keyboard", {
-                type: e.type,
-                keyCode: e.keyCode,
-                shiftKey: e.shiftKey,
-                altKey: e.altKey,
-                ctrlKey: e.ctrlKey,
-                metaKey: e.metaKey
-            });
-        }
-    }
-    overlay.addEventListener("click", function (e) { return postMouseEvent(e); });
-    overlay.addEventListener("dblclick", function (e) { return postMouseEvent(e); });
-    overlay.addEventListener("mouseover", function (e) { return postMouseEvent(e); });
-    overlay.addEventListener("mouseout", function (e) { return postMouseEvent(e); });
-    overlay.addEventListener("mousedown", function (e) {
-        down = true;
-        postMouseEvent(e);
-    });
-    overlay.addEventListener("mousemove", function (e) {
-        if (!down) {
-            postMouseEvent(e);
-        }
-    });
-    window.addEventListener("mousemove", function (e) {
-        if (down) {
-            postMouseEvent(e);
-        }
-    });
-    window.addEventListener("mouseup", function (e) {
-        if (down) {
-            down = false;
-            postMouseEvent(e);
-        }
-    });
-    overlay.addEventListener("keydown", function (e) { return postKeyboardEvent(e); });
-    overlay.addEventListener("keypress", function (e) { return postKeyboardEvent(e); });
-    overlay.addEventListener("keyup", function (e) { return postKeyboardEvent(e); });
-    var keyEventRegex = /key(up|down|press)/;
-    var mouseEventRegex = /click|dblclick|mouse(up|down|move|over|out)/;
-    return {
-        pause: function () {
-            paused = true;
-        },
-        resume: function () {
-            if (!paused) {
+    };
+    Scheduler.prototype.currentTask = function () {
+        return this.queue.last ? this.queue.last.value : null;
+    };
+    Scheduler.prototype.clear = function () {
+        this.queue.clear();
+    };
+    Scheduler.prototype.createRepeater = function (createFunc, delay) {
+        var _repeat = true;
+        var _scheduler = this;
+        var _delay = delay;
+        function repeatFunc() {
+            if (!_repeat) {
                 return;
             }
-            paused = false;
-            function pop() {
-                if (paused) {
-                    return;
+            var task = createFunc();
+            var done = task.doneCallback;
+            task.doneCallback = function () {
+                if (_repeat) {
+                    setTimeout(repeatFunc, _delay);
                 }
-                var e = queue.pop_back();
-                if (!e) {
-                    return;
-                }
-                if (e instanceof MouseEvent) {
-                    postMouseEvent(e);
-                }
-                else if (e instanceof KeyboardEvent) {
-                    postKeyboardEvent(e);
-                }
-                else if (mouseEventRegex.test(e.type)) {
-                    postMouseEvent(e);
-                }
-                else if (keyEventRegex.test(e.type)) {
-                    postKeyboardEvent(e);
-                }
-                if (queue.last && queue.last.value) {
-                    var next = queue.last.value;
-                    var delay = next["timestamp"] - e["timestamp"];
-                    setTimeout(pop, delay);
-                }
-            }
-            pop();
-        }
-    };
-}
-exports.createOverlay = createOverlay;
-function createRelay(element) {
-    var poster = new Poster(window.parent);
-    poster.listen("mouse", function (e) {
-        EventSim.simulate(element, e.type, {
-            clientX: e.x,
-            clientY: e.y,
-            altKey: e.altKey,
-            shiftKey: e.shiftKey,
-            metaKey: e.metaKey,
-            ctrlKey: e.ctrlKey
-        });
-    });
-    poster.listen("keyboard", function (e) {
-        EventSim.simulate(element, e.type, {
-            keyCode: e.keyCode,
-            altKey: e.altKey,
-            shiftKey: e.shiftKey,
-            metaKey: e.metaKey,
-            ctrlKey: e.ctrlKey
-        });
-    });
-}
-exports.createRelay = createRelay;
-
-},{"../node_modules/basic-ds/lib/basic":2,"../node_modules/eventsim/lib/eventsim":4,"../node_modules/poster/lib/poster":5}],2:[function(require,module,exports){
-var basic;
-(function (basic) {
-    var ListNode = (function () {
-        function ListNode(value) {
-            this.value = value;
-            this.next = null;
-            this.prev = null;
-        }
-        ListNode.prototype.destroy = function () {
-            this.value = null;
-            this.prev = null;
-            this.next = null;
-        };
-        return ListNode;
-    })();
-    basic.ListNode = ListNode;
-    var LinkedList = (function () {
-        function LinkedList() {
-            this.first = null;
-            this.last = null;
-        }
-        LinkedList.prototype.push_back = function (value) {
-            var node = new ListNode(value);
-            if (this.first === null && this.last === null) {
-                this.first = node;
-                this.last = node;
-            }
-            else {
-                node.prev = this.last;
-                this.last.next = node;
-                this.last = node;
-            }
-        };
-        LinkedList.prototype.push_front = function (value) {
-            var node = new ListNode(value);
-            if (this.first === null && this.last === null) {
-                this.first = node;
-                this.last = node;
-            }
-            else {
-                node.next = this.first;
-                this.first.prev = node;
-                this.first = node;
-            }
-        };
-        LinkedList.prototype.pop_back = function () {
-            if (this.last) {
-                var value = this.last.value;
-                if (this.last.prev) {
-                    var last = this.last;
-                    this.last = last.prev;
-                    this.last.next = null;
-                    last.destroy();
-                }
-                else {
-                    this.last = null;
-                    this.first = null;
-                }
-                return value;
-            }
-            else {
-                return null;
-            }
-        };
-        LinkedList.prototype.pop_front = function () {
-            if (this.first) {
-                var value = this.first.value;
-                if (this.first.next) {
-                    var first = this.first;
-                    this.first = first.next;
-                    this.first.prev = null;
-                    first.destroy();
-                }
-                else {
-                    this.first = null;
-                    this.last = null;
-                }
-                return value;
-            }
-            else {
-                return null;
-            }
-        };
-        LinkedList.prototype.clear = function () {
-            this.first = this.last = null;
-        };
-        LinkedList.prototype.insertBeforeNode = function (refNode, value) {
-            if (refNode === this.first) {
-                this.push_front(value);
-            }
-            else {
-                var node = new ListNode(value);
-                node.prev = refNode.prev;
-                node.next = refNode;
-                refNode.prev.next = node;
-                refNode.prev = node;
-            }
-        };
-        LinkedList.prototype.forEachNode = function (callback, _this) {
-            var node = this.first;
-            var index = 0;
-            while (node !== null) {
-                callback.call(_this, node, index);
-                node = node.next;
-                index++;
-            }
-        };
-        LinkedList.prototype.forEach = function (callback, _this) {
-            this.forEachNode(function (node, index) { return callback.call(_this, node.value, index); }, _this);
-        };
-        LinkedList.prototype.nodeAtIndex = function (index) {
-            var i = 0;
-            var node = this.first;
-            while (node !== null) {
-                if (index === i) {
-                    return node;
-                }
-                i++;
-                node = node.next;
-            }
-            return null;
-        };
-        LinkedList.prototype.valueAtIndex = function (index) {
-            var node = this.nodeAtIndex(index);
-            return node ? node.value : undefined;
-        };
-        LinkedList.prototype.toArray = function () {
-            var array = [];
-            var node = this.first;
-            while (node !== null) {
-                array.push(node.value);
-                node = node.next;
-            }
-            return array;
-        };
-        LinkedList.fromArray = function (array) {
-            var list = new LinkedList();
-            array.forEach(function (value) {
-                list.push_back(value);
-            });
-            return list;
-        };
-        return LinkedList;
-    })();
-    basic.LinkedList = LinkedList;
-})(basic || (basic = {}));
-var basic;
-(function (basic) {
-    var Stack = (function () {
-        function Stack() {
-            this.items = [];
-            this.poppedLastItem = function (item) {
+                done();
             };
+            _scheduler.addTask(task);
         }
-        Stack.prototype.push = function (item) {
-            this.items.push(item);
-        };
-        Stack.prototype.pop = function () {
-            var item = this.items.pop();
-            if (this.isEmpty) {
-                this.poppedLastItem(item);
-            }
-            return item;
-        };
-        Stack.prototype.peek = function () {
-            return this.items[this.items.length - 1];
-        };
-        Object.defineProperty(Stack.prototype, "size", {
-            get: function () {
-                return this.items.length;
+        var repeater = {
+            stop: function () {
+                _repeat = false;
             },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Stack.prototype, "isEmpty", {
-            get: function () {
-                return this.items.length === 0;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        return Stack;
-    })();
-    basic.Stack = Stack;
-})(basic || (basic = {}));
-module.exports = basic;
-
-},{}],3:[function(require,module,exports){
-var initKeyboardEvent_variant = (function (event) {
-    try {
-        event.initKeyboardEvent("keyup", false, false, window, "+", 3, true, false, true, false, false);
-        if ((event["keyIdentifier"] || event["key"]) == "+" && (event["keyLocation"] || event["location"]) == 3) {
-            return event.ctrlKey ? (event.altKey ? 1 : 3) : (event.shiftKey ? 2 : 4);
-        }
-        return 9;
-    }
-    catch (e) {
-        return 0;
-    }
-})(document.createEvent("KeyboardEvent"));
-var keyboardEventProperties = {
-    "char": "",
-    "key": "",
-    "location": 0,
-    "ctrlKey": false,
-    "shiftKey": false,
-    "altKey": false,
-    "metaKey": false,
-    "repeat": false,
-    "locale": "",
-    "detail": 0,
-    "bubbles": false,
-    "cancelable": false,
-    "keyCode": 0,
-    "charCode": 0,
-    "which": 0
-};
-function createModifersList(dict) {
-    var modifiers = ["Ctrl", "Shift", "Alt", "Meta", "AltGraph"];
-    return modifiers.filter(function (mod) {
-        return dict.hasOwnProperty([mod.toLowerCase() + "Key"]);
-    }).join(" ");
-}
-function createKeyboardEvent(type, dict) {
-    var event;
-    if (initKeyboardEvent_variant) {
-        event = document.createEvent("KeyboardEvent");
-    }
-    else {
-        event = document.createEvent("Event");
-    }
-    var propName, localDict = {};
-    for (propName in keyboardEventProperties) {
-        if (keyboardEventProperties.hasOwnProperty(propName)) {
-            if (dict && dict.hasOwnProperty(propName)) {
-                localDict[propName] = dict[propName];
+            start: function () {
+                repeatFunc();
             }
-            else {
-                localDict[propName] = keyboardEventProperties[propName];
-            }
-        }
-    }
-    var ctrlKey = localDict["ctrlKey"];
-    var shiftKey = localDict["shiftKey"];
-    var altKey = localDict["altKey"];
-    var metaKey = localDict["metaKey"];
-    var altGraphKey = localDict["altGraphKey"];
-    var key = localDict["key"] + "";
-    var char = localDict["char"] + "";
-    var location = localDict["location"];
-    var keyCode = localDict["keyCode"] || (localDict["keyCode"] = key && key.charCodeAt(0) || 0);
-    var charCode = localDict["charCode"] || (localDict["charCode"] = char && char.charCodeAt(0) || 0);
-    var bubbles = localDict["bubbles"];
-    var cancelable = localDict["cancelable"];
-    var repeat = localDict["repeat"];
-    var local = localDict["locale"];
-    var view = window;
-    localDict["which"] || (localDict["which"] = localDict["keyCode"]);
-    if ("initKeyEvent" in event) {
-        event.initKeyEvent(type, bubbles, cancelable, view, ctrlKey, altKey, shiftKey, metaKey, keyCode, charCode);
-    }
-    else if (initKeyboardEvent_variant && "initKeyboardEvent" in event) {
-        switch (initKeyboardEvent_variant) {
-            case 1:
-                event.initKeyboardEvent(type, bubbles, cancelable, view, key, location, ctrlKey, shiftKey, altKey, metaKey, altGraphKey);
-                break;
-            case 2:
-                event.initKeyboardEvent(type, bubbles, cancelable, view, ctrlKey, altKey, shiftKey, metaKey, keyCode, charCode);
-                break;
-            case 3:
-                event.initKeyboardEvent(type, bubbles, cancelable, view, key, location, ctrlKey, altKey, shiftKey, metaKey, altGraphKey);
-                break;
-            case 4:
-                event.initKeyboardEvent(type, bubbles, cancelable, view, key, location, createModifersList(localDict), repeat, local);
-                break;
-            default:
-                event.initKeyboardEvent(type, bubbles, cancelable, view, char, key, location, createModifersList(localDict), repeat, local);
-        }
-    }
-    else {
-        event.initEvent(type, bubbles, cancelable);
-    }
-    for (propName in keyboardEventProperties) {
-        if (keyboardEventProperties.hasOwnProperty(propName)) {
-            if (event[propName] != localDict[propName]) {
-                try {
-                    delete event[propName];
-                    Object.defineProperty(event, propName, { writable: true, value: localDict[propName] });
-                }
-                catch (e) {
-                }
-            }
-        }
-    }
-    return event;
-}
-module.exports = createKeyboardEvent;
-
-},{}],4:[function(require,module,exports){
-var createKeyboardEvent = require("./createKeyboardEvent");
-var EventSim;
-(function (EventSim) {
-    var mouseRegex = /click|dblclick|(mouse(down|move|up|over|out|enter|leave))/;
-    var pointerRegex = /pointer(down|move|up|over|out|enter|leave)/;
-    var keyboardRegex = /key(up|down|press)/;
-    function simulate(target, name, options) {
-        var event;
-        if (mouseRegex.test(name)) {
-            event = new MouseEvent(name, options);
-        }
-        else if (keyboardRegex.test(name)) {
-            event = createKeyboardEvent(name, options);
-        }
-        else if (pointerRegex.test(name)) {
-            event = new PointerEvent(name, options);
-        }
-        target.dispatchEvent(event);
-    }
-    EventSim.simulate = simulate;
-})(EventSim || (EventSim = {}));
-module.exports = EventSim;
-
-},{"./createKeyboardEvent":3}],5:[function(require,module,exports){
-var posters = [];
-if (self.document) {
-    self.addEventListener("message", function (e) {
-        var channel = e.data.channel;
-        posters.forEach(function (poster) {
-            if (poster.target === e.source) {
-                var listeners = poster.channels[channel];
-                if (listeners) {
-                    listeners.forEach(function (listener) { return listener.apply(null, e.data.args); });
-                }
-            }
-        });
-    });
-}
-else {
-    self.addEventListener("message", function (e) {
-        var channel = e.data.channel;
-        posters.forEach(function (poster) {
-            var listeners = poster.channels[channel];
-            if (listeners) {
-                listeners.forEach(function (listener) { return listener.apply(null, e.data.args); });
-            }
-        });
-    });
-}
-var Poster = (function () {
-    function Poster(target, origin) {
-        var _this = this;
-        if (origin === void 0) { origin = "*"; }
-        this.origin = origin;
-        this.target = target;
-        this.channels = {};
-        if (self.window && this.target instanceof Worker) {
-            this.target.addEventListener("message", function (e) {
-                var channel = e.data.channel;
-                var listeners = _this.channels[channel];
-                if (listeners) {
-                    listeners.forEach(function (listener) { return listener.apply(null, e.data.args); });
-                }
-            });
-        }
-        posters.push(this);
-    }
-    Poster.prototype.post = function (channel) {
-        var args = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            args[_i - 1] = arguments[_i];
-        }
-        var message = {
-            channel: channel,
-            args: args
         };
-        if (self.document && !(this.target instanceof Worker)) {
-            this.target.postMessage(message, this.origin);
+        Object.defineProperty(repeater, "delay", {
+            get: function () {
+                return _delay;
+            },
+            set: function (delay) {
+                _delay = delay;
+            }
+        });
+        return repeater;
+    };
+    return Scheduler;
+})();
+module.exports = Scheduler;
+
+},{"../node_modules/basic-ds/lib/LinkedList":"/Users/kevin/live-editor/external/stepper/external/scheduler/node_modules/basic-ds/lib/LinkedList.js"}],"/Users/kevin/live-editor/external/stepper/external/scheduler/node_modules/basic-ds/lib/LinkedList.js":[function(require,module,exports){
+var ListNode = require("./ListNode");
+var LinkedList = (function () {
+    function LinkedList() {
+        this.first = null;
+        this.last = null;
+    }
+    LinkedList.prototype.push_back = function (value) {
+        var node = new ListNode(value);
+        if (this.first === null && this.last === null) {
+            this.first = node;
+            this.last = node;
         }
         else {
-            this.target.postMessage(message);
+            node.prev = this.last;
+            this.last.next = node;
+            this.last = node;
         }
     };
-    Poster.prototype.emit = function (channel) {
-        var args = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            args[_i - 1] = arguments[_i];
+    LinkedList.prototype.push_front = function (value) {
+        var node = new ListNode(value);
+        if (this.first === null && this.last === null) {
+            this.first = node;
+            this.last = node;
         }
-        args.unshift(channel);
-        this.post.apply(this, args);
-    };
-    Poster.prototype.listen = function (channel, callback) {
-        var listeners = this.channels[channel];
-        if (listeners === undefined) {
-            listeners = this.channels[channel] = [];
+        else {
+            node.next = this.first;
+            this.first.prev = node;
+            this.first = node;
         }
-        listeners.push(callback);
-        return this;
     };
-    Poster.prototype.addListener = function (channel, callback) {
-        return this.listen(channel, callback);
+    LinkedList.prototype.pop_back = function () {
+        if (this.last) {
+            var value = this.last.value;
+            if (this.last.prev) {
+                var last = this.last;
+                this.last = last.prev;
+                this.last.next = null;
+                last.destroy();
+            }
+            else {
+                this.last = null;
+                this.first = null;
+            }
+            return value;
+        }
+        else {
+            return null;
+        }
     };
-    Poster.prototype.on = function (channel, callback) {
-        return this.listen(channel, callback);
+    LinkedList.prototype.pop_front = function () {
+        if (this.first) {
+            var value = this.first.value;
+            if (this.first.next) {
+                var first = this.first;
+                this.first = first.next;
+                this.first.prev = null;
+                first.destroy();
+            }
+            else {
+                this.first = null;
+                this.last = null;
+            }
+            return value;
+        }
+        else {
+            return null;
+        }
     };
-    Poster.prototype.removeListener = function (channel, callback) {
-        var listeners = this.channels[channel];
-        if (listeners) {
-            var index = listeners.indexOf(callback);
-            if (index !== -1) {
-                listeners.splice(index, 1);
+    LinkedList.prototype.clear = function () {
+        this.first = this.last = null;
+    };
+    LinkedList.prototype.insertBeforeNode = function (refNode, value) {
+        if (refNode === this.first) {
+            this.push_front(value);
+        }
+        else {
+            var node = new ListNode(value);
+            node.prev = refNode.prev;
+            node.next = refNode;
+            refNode.prev.next = node;
+            refNode.prev = node;
+        }
+    };
+    LinkedList.prototype.forEachNode = function (callback, _this) {
+        var node = this.first;
+        var index = 0;
+        while (node !== null) {
+            callback.call(_this, node, index);
+            node = node.next;
+            index++;
+        }
+    };
+    LinkedList.prototype.forEach = function (callback, _this) {
+        this.forEachNode(function (node, index) { return callback.call(_this, node.value, index); }, _this);
+    };
+    LinkedList.prototype.nodeAtIndex = function (index) {
+        var i = 0;
+        var node = this.first;
+        while (node !== null) {
+            if (index === i) {
+                return node;
+            }
+            i++;
+            node = node.next;
+        }
+        return null;
+    };
+    LinkedList.prototype.valueAtIndex = function (index) {
+        var node = this.nodeAtIndex(index);
+        return node ? node.value : undefined;
+    };
+    LinkedList.prototype.toArray = function () {
+        var array = [];
+        var node = this.first;
+        while (node !== null) {
+            array.push(node.value);
+            node = node.next;
+        }
+        return array;
+    };
+    LinkedList.fromArray = function (array) {
+        var list = new LinkedList();
+        array.forEach(function (value) {
+            list.push_back(value);
+        });
+        return list;
+    };
+    return LinkedList;
+})();
+module.exports = LinkedList;
+
+},{"./ListNode":"/Users/kevin/live-editor/external/stepper/external/scheduler/node_modules/basic-ds/lib/ListNode.js"}],"/Users/kevin/live-editor/external/stepper/external/scheduler/node_modules/basic-ds/lib/ListNode.js":[function(require,module,exports){
+var ListNode = (function () {
+    function ListNode(value) {
+        this.value = value;
+        this.next = null;
+        this.prev = null;
+    }
+    ListNode.prototype.destroy = function () {
+        this.value = null;
+        this.prev = null;
+        this.next = null;
+    };
+    return ListNode;
+})();
+module.exports = ListNode;
+
+},{}],"/Users/kevin/live-editor/external/stepper/lib/debugger.js":[function(require,module,exports){
+var Stepper = require("./stepper");
+var Scheduler = require("../external/scheduler/lib/scheduler");
+var transform = require("../src/transform");
+var Debugger = (function () {
+    function Debugger(context, onBreakpoint, onFunctionDone) {
+        var _this = this;
+        this.context = context;
+        this.context.__instantiate__ = function (classFn, className) {
+            var obj = Object.create(classFn.prototype);
+            var args = Array.prototype.slice.call(arguments, 2);
+            var gen = classFn.apply(obj, args);
+            _this.onNewObject(classFn, className, obj, args);
+            if (gen) {
+                gen.obj = obj;
+                return gen;
+            }
+            else {
+                return obj;
+            }
+        };
+        this.onBreakpoint = onBreakpoint || function () {
+        };
+        this.onFunctionDone = onFunctionDone || function () {
+        };
+        this.scheduler = new Scheduler();
+        this.breakpoints = {};
+        this.breakpointsEnabled = true;
+        this._paused = false;
+    }
+    Debugger.isBrowserSupported = function () {
+        try {
+            var code = "\n" + "var generator = (function* () {\n" + "  yield* (function* () {\n" + "    yield 5; yield 6;\n" + "  }());\n" + "}());\n" + "\n" + "var item = generator.next();\n" + "var passed = item.value === 5 && item.done === false;\n" + "item = generator.next();\n" + "passed &= item.value === 6 && item.done === false;\n" + "item = generator.next();\n" + "passed &= item.value === undefined && item.done === true;\n" + "return passed;";
+            return Function(code)();
+        }
+        catch (e) {
+            return false;
+        }
+    };
+    Debugger.prototype.load = function (code) {
+        var debugCode = transform(code, this.context);
+        var debugFunction = new Function(debugCode);
+        this.mainGenerator = debugFunction();
+    };
+    Debugger.prototype.start = function (paused) {
+        this.scheduler.clear();
+        this.onMainStart();
+        var stepper = this._createStepper(this.mainGenerator(this.context), true);
+        this.scheduler.addTask(stepper);
+        stepper.start(paused);
+    };
+    Debugger.prototype.queueGenerator = function (gen) {
+        if (!this.done) {
+            var stepper = this._createStepper(gen());
+            this.scheduler.addTask(stepper);
+        }
+    };
+    Debugger.prototype.resume = function () {
+        if (this._paused) {
+            this._paused = false;
+            this._currentStepper.resume();
+        }
+    };
+    Debugger.prototype.stepIn = function () {
+        if (this._paused) {
+            this._currentStepper.stepIn();
+        }
+    };
+    Debugger.prototype.stepOver = function () {
+        if (this._paused) {
+            this._currentStepper.stepOver();
+        }
+    };
+    Debugger.prototype.stepOut = function () {
+        if (this._paused) {
+            this._currentStepper.stepOut();
+        }
+    };
+    Debugger.prototype.stop = function () {
+        this.done = true;
+    };
+    Object.defineProperty(Debugger.prototype, "paused", {
+        get: function () {
+            return this._paused;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Debugger.prototype, "currentStack", {
+        get: function () {
+            var stepper = this._currentStepper;
+            if (stepper !== null) {
+                return stepper.stack.items.map(function (frame) {
+                    return {
+                        name: frame.name,
+                        line: frame.line
+                    };
+                });
+            }
+            else {
+                return [];
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Debugger.prototype, "currentScope", {
+        get: function () {
+            var stepper = this._currentStepper;
+            if (stepper) {
+                var scope = stepper.stack.peek().scope;
+                if (scope) {
+                    return scope;
+                }
+            }
+            return null;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Debugger.prototype, "currentLine", {
+        get: function () {
+            if (this._paused) {
+                return this._currentStepper.line;
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Debugger.prototype, "line", {
+        get: function () {
+            if (this._paused) {
+                return this._currentStepper.line;
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Debugger.prototype.setBreakpoint = function (line) {
+        this.breakpoints[line] = true;
+    };
+    Debugger.prototype.clearBreakpoint = function (line) {
+        delete this.breakpoints[line];
+    };
+    Object.defineProperty(Debugger.prototype, "_currentStepper", {
+        get: function () {
+            return this.scheduler.currentTask();
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Debugger.prototype._createStepper = function (genObj, isMain) {
+        var _this = this;
+        var stepper = new Stepper(genObj, this.breakpoints, function () {
+            _this._paused = true;
+            _this.onBreakpoint();
+        }, function () {
+            _this._paused = false;
+            _this.onFunctionDone();
+            if (isMain) {
+                _this.onMainDone();
+            }
+        });
+        stepper.breakpointsEnabled = this.breakpointsEnabled;
+        return stepper;
+    };
+    Debugger.prototype.onMainStart = function () {
+    };
+    Debugger.prototype.onMainDone = function () {
+    };
+    Debugger.prototype.onNewObject = function (classFn, className, obj, args) {
+    };
+    return Debugger;
+})();
+module.exports = Debugger;
+
+},{"../external/scheduler/lib/scheduler":"/Users/kevin/live-editor/external/stepper/external/scheduler/lib/scheduler.js","../src/transform":"/Users/kevin/live-editor/external/stepper/src/transform.js","./stepper":"/Users/kevin/live-editor/external/stepper/lib/stepper.js"}],"/Users/kevin/live-editor/external/stepper/lib/stepper.js":[function(require,module,exports){
+var Stack = require("../node_modules/basic-ds/lib/Stack");
+var Stepper = (function () {
+    function Stepper(genObj, breakpoints, breakCallback, doneCallback) {
+        var _this = this;
+        this.breakCallback = breakCallback || function () {
+        };
+        this.doneCallback = doneCallback || function () {
+        };
+        this._breakpoints = breakpoints || {};
+        this.breakpointsEnabled = true;
+        this._started = false;
+        this._paused = false;
+        this._stopped = false;
+        this.stack = new Stack();
+        this.stack.push({
+            gen: genObj,
+            line: -1
+        });
+        this.stack.poppedLastItem = function () {
+            _this._stopped = true;
+            _this.doneCallback();
+        };
+        this._retVal = undefined;
+    }
+    Stepper.prototype.stepIn = function () {
+        var result;
+        if (result = this._step()) {
+            if (result.value && result.value.hasOwnProperty('gen')) {
+                if (_isGenerator(result.value.gen)) {
+                    this.stack.push({
+                        gen: result.value.gen,
+                        line: this.line
+                    });
+                    this.stepIn();
+                    return "stepIn";
+                }
+                else {
+                    this._retVal = result.value.gen;
+                    if (result.value.stepAgain) {
+                        result = this._step();
+                    }
+                }
+            }
+            if (result.done) {
+                this._popAndStoreReturnValue(result.value);
+                return "stepOut";
+            }
+            return "stepOver";
+        }
+    };
+    Stepper.prototype.stepOver = function () {
+        var result;
+        if (result = this._step()) {
+            if (result.value && result.value.hasOwnProperty('gen')) {
+                if (_isGenerator(result.value.gen)) {
+                    this._runScope(result.value.gen);
+                    if (result.value.stepAgain) {
+                        this.stepOver();
+                    }
+                    return "stepOver";
+                }
+                else {
+                    this._retVal = result.value.gen;
+                    if (result.value.stepAgain) {
+                        result = this._step();
+                    }
+                }
+            }
+            if (result.done) {
+                this._popAndStoreReturnValue(result.value);
+                return "stepOut";
+            }
+            return "stepOver";
+        }
+    };
+    Stepper.prototype.stepOut = function () {
+        var result;
+        if (result = this._step()) {
+            while (!result.done) {
+                if (result.value.hasOwnProperty('gen')) {
+                    if (_isGenerator(result.value.gen)) {
+                        this._runScope(result.value.gen);
+                    }
+                    else {
+                        this._retVal = result.value.gen;
+                    }
+                }
+                result = this._step();
+            }
+            this._popAndStoreReturnValue(result.value);
+            return "stepOut";
+        }
+    };
+    Stepper.prototype.start = function (paused) {
+        this._started = true;
+        this._paused = !!paused;
+        this._run();
+    };
+    Stepper.prototype.resume = function () {
+        this._paused = false;
+        this._run();
+    };
+    Stepper.prototype._run = function () {
+        var currentLine = this.line;
+        while (true) {
+            if (this.stack.isEmpty) {
+                break;
+            }
+            var action = this.stepIn();
+            if (this.breakpointsEnabled && this._breakpoints[this.line] && action !== "stepOut" && currentLine !== this.line) {
+                this._paused = true;
+            }
+            if (this._paused) {
+                this.breakCallback();
+                break;
+            }
+            currentLine = this.line;
+        }
+    };
+    Stepper.prototype.setBreakpoint = function (line) {
+        this._breakpoints[line] = true;
+    };
+    Stepper.prototype.clearBreakpoint = function (line) {
+        delete this._breakpoints[line];
+    };
+    Object.defineProperty(Stepper.prototype, "started", {
+        get: function () {
+            return this._started;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Stepper.prototype, "stopped", {
+        get: function () {
+            return this._stopped;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Stepper.prototype, "line", {
+        get: function () {
+            if (!this._stopped) {
+                return this.stack.peek().line;
+            }
+            else {
+                return -1;
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Stepper.prototype._step = function () {
+        if (this.stack.isEmpty) {
+            return;
+        }
+        var frame = this.stack.peek();
+        var result = frame.gen.next(this._retVal);
+        this._retVal = undefined;
+        if (result.value) {
+            if (result.value.scope) {
+                this.stack.peek().scope = result.value.scope;
+            }
+            if (result.value.name) {
+                this.stack.peek().name = result.value.name;
+            }
+            if (result.value.line) {
+                frame.line = result.value.line;
             }
         }
+        return result;
     };
-    Poster.prototype.removeAllListeners = function (channel) {
-        this.channels[channel] = [];
+    Stepper.prototype._runScope = function (gen) {
+        this.stack.push({
+            gen: gen,
+            line: this.line
+        });
+        var result = this._step();
+        while (!result.done) {
+            if (result.value.gen) {
+                if (_isGenerator(result.value.gen)) {
+                    this._runScope(result.value.gen);
+                }
+                else {
+                    this._retVal = result.value.gen;
+                }
+            }
+            result = this._step();
+        }
+        this._popAndStoreReturnValue(result.value);
     };
-    Poster.prototype.listeners = function (channel) {
-        var listeners = this.channels[channel];
-        return listeners || [];
+    Stepper.prototype._popAndStoreReturnValue = function (value) {
+        var frame = this.stack.pop();
+        this._retVal = frame.gen["obj"] || value;
     };
-    return Poster;
+    return Stepper;
 })();
-module.exports = Poster;
+var _isGenerator = function (obj) {
+    return obj instanceof Object && obj.toString() === "[object Generator]";
+};
+module.exports = Stepper;
 
-},{}]},{},[1])(1)
+},{"../node_modules/basic-ds/lib/Stack":"/Users/kevin/live-editor/external/stepper/node_modules/basic-ds/lib/Stack.js"}],"/Users/kevin/live-editor/external/stepper/node_modules/basic-ds/lib/LinkedList.js":[function(require,module,exports){
+module.exports=require("/Users/kevin/live-editor/external/stepper/external/scheduler/node_modules/basic-ds/lib/LinkedList.js")
+},{"/Users/kevin/live-editor/external/stepper/external/scheduler/node_modules/basic-ds/lib/LinkedList.js":"/Users/kevin/live-editor/external/stepper/external/scheduler/node_modules/basic-ds/lib/LinkedList.js"}],"/Users/kevin/live-editor/external/stepper/node_modules/basic-ds/lib/ListNode.js":[function(require,module,exports){
+module.exports=require("/Users/kevin/live-editor/external/stepper/external/scheduler/node_modules/basic-ds/lib/ListNode.js")
+},{"/Users/kevin/live-editor/external/stepper/external/scheduler/node_modules/basic-ds/lib/ListNode.js":"/Users/kevin/live-editor/external/stepper/external/scheduler/node_modules/basic-ds/lib/ListNode.js"}],"/Users/kevin/live-editor/external/stepper/node_modules/basic-ds/lib/Stack.js":[function(require,module,exports){
+var Stack = (function () {
+    function Stack() {
+        this.items = [];
+        this.poppedLastItem = function (item) {
+        };
+    }
+    Stack.prototype.push = function (item) {
+        this.items.push(item);
+    };
+    Stack.prototype.pop = function () {
+        var item = this.items.pop();
+        if (this.isEmpty) {
+            this.poppedLastItem(item);
+        }
+        return item;
+    };
+    Stack.prototype.peek = function () {
+        return this.items[this.items.length - 1];
+    };
+    Object.defineProperty(Stack.prototype, "size", {
+        get: function () {
+            return this.items.length;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Stack.prototype, "isEmpty", {
+        get: function () {
+            return this.items.length === 0;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return Stack;
+})();
+module.exports = Stack;
+
+},{}],"/Users/kevin/live-editor/external/stepper/node_modules/basic-ds/lib/basic.js":[function(require,module,exports){
+exports.LinkedList = require("./LinkedList");
+exports.Stack = require("./Stack");
+
+},{"./LinkedList":"/Users/kevin/live-editor/external/stepper/node_modules/basic-ds/lib/LinkedList.js","./Stack":"/Users/kevin/live-editor/external/stepper/node_modules/basic-ds/lib/Stack.js"}],"/Users/kevin/live-editor/external/stepper/src/ast-builder.js":[function(require,module,exports){
+/* build Parser API style AST nodes and trees */
+
+var createExpressionStatement = function (expression) {
+    return {
+        type: "ExpressionStatement",
+        expression: expression
+    };
+};
+
+var createBlockStatement = function (body) {
+    return {
+        type: "BlockStatement",
+        body: body
+    }
+};
+
+var createCallExpression = function (name, arguments) {
+    return {
+        type: "CallExpression",
+        callee: createIdentifier(name),
+        arguments: arguments
+    };
+};
+
+var createYieldExpression = function (argument) {
+    return {
+        type: "YieldExpression",
+        argument: argument
+    };
+};
+
+var createObjectExpression = function (obj) {
+    var properties = Object.keys(obj).map(function (key) {
+        var value = obj[key];
+        return createProperty(key, value);
+    });
+
+    return {
+        type: "ObjectExpression",
+        properties: properties
+    };
+};
+
+var createProperty = function (key, value) {
+    var expression;
+    if (value instanceof Object) {
+        if (value.type === "CallExpression" || value.type === "NewExpression") {
+            expression = value;
+        } else {
+            expression = createObjectExpression(value);
+        }
+    } else if (value === undefined) {
+        expression = createIdentifier("undefined");
+    } else {
+        expression = createLiteral(value);
+    }
+
+    return {
+        type: "Property",
+        key: createIdentifier(key),
+        value: expression,
+        kind: "init"
+    }
+};
+
+var createIdentifier = function (name) {
+    return {
+        type: "Identifier",
+        name: name
+    };
+};
+
+var createLiteral = function (value) {
+    if (value === undefined) {
+        throw "literal value undefined";
+    }
+    return {
+        type: "Literal",
+        value: value
+    }
+};
+
+var createWithStatement = function (obj, body) {
+    return {
+        type: "WithStatement",
+        object: obj,
+        body: body
+    };
+};
+
+var createAssignmentExpression = function (name, value) {
+    return {
+        type: "AssignmentExpression",
+        operator: "=",
+        left: createIdentifier(name),
+        right: value
+    }
+};
+
+var createVariableDeclarator = function (name, value) {
+    return {
+        type: "VariableDeclarator",
+        id: createIdentifier(name),
+        init: value
+    };
+};
+
+// a declaration is a subclass of statement
+var createVariableDeclaration = function (declarations) {
+    return {
+        type: "VariableDeclaration",
+        declarations: declarations,
+        kind: "var"
+    };
+};
+
+var replaceNode = function (parent, name, replacementNode) {
+    if (name.indexOf("arguments") === 0) {
+        var index = name.match(/\[([0-1]+)\]/)[1];
+        parent.arguments[index] = replacementNode;
+    } else {
+        parent[name] = replacementNode;
+    }
+};
+
+exports.createExpressionStatement = createExpressionStatement;
+exports.createBlockStatement = createBlockStatement;
+exports.createCallExpression = createCallExpression;
+exports.createYieldExpression = createYieldExpression;
+exports.createObjectExpression = createObjectExpression;
+exports.createProperty = createProperty;
+exports.createIdentifier = createIdentifier;
+exports.createLiteral = createLiteral;
+exports.createWithStatement = createWithStatement;
+exports.createAssignmentExpression = createAssignmentExpression;
+exports.createVariableDeclaration = createVariableDeclaration;
+exports.createVariableDeclarator = createVariableDeclarator;
+exports.replaceNode = replaceNode;
+
+},{}],"/Users/kevin/live-editor/external/stepper/src/transform.js":[function(require,module,exports){
+/*global recast, esprima, escodegen, injector */
+
+var builder = require("./ast-builder");
+var basic = require("basic-ds");
+
+function getScopeVariables (node, parent, context) {
+    var variables = parent.__$escope$__.variables;
+    return variables.filter(function (variable) {
+        // don't include context variables in the scopes
+        if (node.type === "Program" && context.hasOwnProperty(variable.name)) {
+            return false;
+        }
+        // function declarations like "function Point() {}"
+        // don't work properly when defining methods on the
+        // prototoype so filter those out as well
+        var isFunctionDeclaration = variable.defs.some(function (def) {
+            return def.type      === "FunctionName" &&
+                def.node.type === "FunctionDeclaration";
+        });
+        if (isFunctionDeclaration) {
+            return false;
+        }
+        // filter out "arguments"
+        // TODO: make this optional, advanced users may want to inspect this
+        if (variable.name === "arguments") {
+            return false;
+        }
+        return true;
+    });
+}
+
+// insert yield { line: <line_number> } in between each line
+function insertYields (bodyList) {
+    bodyList.forEachNode(function (node) {
+        var loc = node.value.loc;
+        var yieldExpression = builder.createExpressionStatement(
+            builder.createYieldExpression(
+                builder.createObjectExpression({ line: loc.start.line })
+            )
+        );
+        // add an extra property to differentiate function calls
+        // that are followed by a statment from those that aren't
+        // the former requires taking an extra _step() to get the
+        // next line
+        if (node.value.type === "ExpressionStatement") {
+            if (node.value.expression.type === "YieldExpression") {
+                node.value.expression.argument.properties.push(
+                    builder.createProperty("stepAgain", true)
+                );
+            }
+            if (node.value.expression.type === "AssignmentExpression") {
+                var expr = node.value.expression.right;
+                if (expr.type === "YieldExpression") {
+                    expr.argument.properties.push(
+                        builder.createProperty("stepAgain", true)
+                    );
+                }
+            }
+        }
+        // TODO: add test case for "var x = foo()" stepAgain
+        // TODO: add test case for "var x = foo(), y = foo()" stepAgain on last decl
+        if (node.value.type === "VariableDeclaration") {
+            var lastDecl = node.value.declarations[node.value.declarations.length - 1];
+            if (lastDecl.init && lastDecl.init.type === "YieldExpression") {
+                lastDecl.init.argument.properties.push(
+                    builder.createProperty("stepAgain", true)
+                );
+            }
+        }
+        bodyList.insertBeforeNode(node, yieldExpression);
+    });
+}
+
+function create__scope__ (node, bodyList, scope) {
+    var properties = scope.map(function (variable) {
+        var isParam = variable.defs.some(function (def) {
+            return def.type === "Parameter";
+        });
+        var name = variable.name;
+
+        // if the variable is a parameter initialize its
+        // value with the value of the parameter
+        var value = isParam ? builder.createIdentifier(name) : builder.createIdentifier("undefined");
+        return {
+            type: "Property",
+            key: builder.createIdentifier(name),
+            value: value,
+            kind: "init"
+        }
+    });
+
+    // modify the first yield statement to include the scope
+    // as part of the value
+    var firstStatement = bodyList.first.value;
+    firstStatement.expression.argument.properties.push({
+        type: "Property",
+        key: builder.createIdentifier("scope"),
+        value: builder.createIdentifier("__scope__"),
+        kind: "init"
+    });
+
+    // wrap the body with a yield statement
+    var withStatement = builder.createWithStatement(
+        builder.createIdentifier("__scope__"),
+        builder.createBlockStatement(bodyList.toArray())
+    );
+    var objectExpression = {
+        type: "ObjectExpression",
+        properties: properties
+    };
+
+    // replace the body with "var __scope__ = { ... }; with(__scope___) { body }"
+    node.body = [
+        builder.createVariableDeclaration([
+            builder.createVariableDeclarator("__scope__", objectExpression)
+        ]),
+        withStatement
+    ];
+}
+
+function stringForId(node) {
+    var name = "";
+    if (node.type === "Identifier") {
+        name = node.name;
+    } else if (node.type === "MemberExpression") {
+        name = stringForId(node.object) + "." + node.property.name;
+    } else if (node.type === "ThisExpression") {
+        name = "this";
+    } else {
+        throw "can't call stringForId on nodes of type '" + node.type + "'";
+    }
+    return name;
+}
+
+function getNameForFunctionExpression(node) {
+    var name = "";
+    if (node._parent.type === "Property") {
+        name = node._parent.key.name;
+        if (node._parent._parent.type === "ObjectExpression") {
+            name = getNameForFunctionExpression(node._parent._parent) + "." + name;
+        }
+    } else if (node._parent.type === "AssignmentExpression") {
+        name = stringForId(node._parent.left);
+    } else if (node._parent.type === "VariableDeclarator") {
+        name = stringForId(node._parent.id);
+    } else {
+        name = "<anonymous>"; // TODO: test anonymous callbacks
+    }
+    return name;
+}
+
+function transform(code, context) {
+    var ast = esprima.parse(code, { loc: true });
+    var scopeManager = escope.analyze(ast);
+    scopeManager.attach();
+
+    estraverse.replace(ast, {
+        enter: function(node, parent) {
+            node._parent = parent;
+        },
+        leave: function(node, parent) {
+            if (node.type === "Program" || node.type === "BlockStatement") {
+                if (parent.type === "FunctionExpression" || parent.type === "FunctionDeclaration" || node.type === "Program") {
+                    var scope = getScopeVariables(node, parent, context);
+                }
+
+                var bodyList = basic.LinkedList.fromArray(node.body);
+                insertYields(bodyList);
+
+                if (bodyList.first) {
+                    if (parent.type === "FunctionDeclaration") {
+                        bodyList.first.value.expression.argument.properties.push({
+                            type: "Property",
+                            key: builder.createIdentifier("name"),
+                            value: builder.createLiteral(stringForId(parent.id)),   // NOTE: identifier can be a member expression too!
+                            kind: "init"
+                        });
+                    } else if (parent.type === "FunctionExpression") {
+                        var name = getNameForFunctionExpression(parent);
+                        bodyList.first.value.expression.argument.properties.push({
+                            type: "Property",
+                            key: builder.createIdentifier("name"),
+                            value: builder.createLiteral(name),
+                            kind: "init"
+                        });
+                    } else if (node.type === "Program") {
+                        bodyList.first.value.expression.argument.properties.push({
+                            type: "Property",
+                            key: builder.createIdentifier("name"),
+                            value: builder.createLiteral("<PROGRAM>"),
+                            kind: "init"
+                        });
+                    }
+                }
+
+                // if there are any variables defined in this scope
+                // create a __scope__ dictionary containing their values
+                // and include in the first yield
+                if (scope && scope.length > 0 && bodyList.first) {
+                    // TODO: inject at least one yield statement into an empty bodyList so that we can step into empty functions
+                    create__scope__(node, bodyList, scope);
+                } else {
+                    node.body = bodyList.toArray();
+                }
+            } else if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") {
+                node.generator = true;
+            } else if (node.type === "CallExpression" || node.type === "NewExpression") {
+                if (node.callee.type === "Identifier" || node.callee.type === "MemberExpression" || node.callee.type === "YieldExpression") {
+
+                    var gen = node;
+
+                    // if "new" then build a call to "__instantiate__"
+                    if (node.type === "NewExpression") {
+                        // put the constructor name as the 2nd param
+                        if (node.callee.type === "Identifier") {
+                            node.arguments.unshift(builder.createLiteral(node.callee.name));
+                        } else {
+                            node.arguments.unshift(builder.createLiteral(null));
+                        }
+                        // put the constructor itself as the 1st param
+                        node.arguments.unshift(node.callee);
+                        gen = builder.createCallExpression("__instantiate__", node.arguments);
+                    }
+
+                    // create a yieldExpress to wrap the call
+                    return builder.createYieldExpression(
+                        builder.createObjectExpression({ gen: gen })
+                    );
+                } else {
+                    throw "we don't handle '" + node.callee.type + "' callees";
+                }
+            }
+
+            delete node._parent;
+        }
+    });
+
+    return "return function*(context){\nwith(context){\n" +
+            escodegen.generate(ast) + "\n}\n}";
+}
+
+module.exports = transform;
+
+},{"./ast-builder":"/Users/kevin/live-editor/external/stepper/src/ast-builder.js","basic-ds":"/Users/kevin/live-editor/external/stepper/node_modules/basic-ds/lib/basic.js"}]},{},["./lib/processing-debugger.js"])("./lib/processing-debugger.js")
 });

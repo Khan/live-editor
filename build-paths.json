@@ -76,7 +76,9 @@
         "output_debugger_deps": [
             "external/estraverse/estraverse.js",
             "external/escope/escope.js",
-            "external/iframe-overlay/dist/iframe-overlay.js"
+            "external/iframe-overlay/dist/iframe-overlay.js",
+            "external/escodegen/dist/escodegen.browser.js",
+            "external/stepper/build/processing-debugger.js"
         ],
         "output_pjs": [
             "js/output/pjs/pjs-tester.js",
