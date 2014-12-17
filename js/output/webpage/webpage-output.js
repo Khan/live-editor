@@ -1,3 +1,14 @@
+/**
+ * WebpageOutput
+ *
+ * This class handles testing and displaying code for HTML/CSS
+ * It creates an iframe on the same domain which it document.write()'s
+ * The new code to every time. It also includes a couple of measure to make 
+ * javascript always gets to execute in a fresh workspace, and it 
+ * retrofits the javascript so that it cannot run an infinite loop
+ * Becasue it is usually cross-domain for sandboxing reasons,
+ * it communicates via postMessages with liveEditor.
+ */
 window.WebpageOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
@@ -26,11 +37,11 @@ window.WebpageOutput = Backbone.View.extend({
             .css({width: "100%", height: "100%", border: "0"})
             .appendTo(this.el)
             .show()[0];
-        this.$frameDoc = this.$frame.contentWindow.document;
+        this.frameDoc = this.$frame.contentDocument;
     },
 
     getScreenshot: function(screenshotSize, callback) {
-        html2canvas(this.$frameDoc.body, {
+        html2canvas(this.frameDoc.body, {
             onrendered: function(canvas) {
                 var width = screenshotSize;
                 var height = (screenshotSize / canvas.width) * canvas.height;
@@ -74,7 +85,9 @@ window.WebpageOutput = Backbone.View.extend({
         var results = {};
         try {
             results = Slowparse.HTML(document, userCode, {
-                scriptPreprocessor: this.loopProtector.protect.bind(this.loopProtector) });
+                scriptPreprocessor: this.loopProtector.protect.bind(this.loopProtector),
+                disableTags: ["audio", "video", "iframe", "embed", "object"]
+            });
         } catch (e) {
             if (window.console) {
                 console.warn(e);
@@ -186,7 +199,7 @@ window.WebpageOutput = Backbone.View.extend({
         var errorCount = errors.length;
 
         var testData = {
-            // Append to a div because jQuery doens't work on a document fragmen
+            // Append to a div because jQuery doens't work on a document fragment
             document: $("<div>").append(this.slowparseResults.document),
             cssRules: this.slowparseResults.rules
         };
@@ -212,7 +225,7 @@ window.WebpageOutput = Backbone.View.extend({
 
     postProcessing: function(oldPageTitle) {
         var self = this;
-        $(this.$frameDoc).on("mouseup", "a", function() {
+        $(this.frameDoc).on("mouseup", "a", function() {
             var url = $(this).attr("href");
             if (url[0] !== "#") {
                 self.output.postParent({
@@ -223,7 +236,7 @@ window.WebpageOutput = Backbone.View.extend({
             return false;
         });
 
-        var titleTag = $(this.$frameDoc).find("head > title");
+        var titleTag = $(this.frameDoc).find("head > title");
         var title = titleTag.first().text();
         if (titleTag.length > 0 && this.oldPageTitle !== title) {
             this.oldPageTitle = title;
@@ -237,9 +250,9 @@ window.WebpageOutput = Backbone.View.extend({
     runCode: function(codeObj, callback) {
         this.stateScrubber.clearAll();
         this.KA_INFINITE_LOOP = false;
-        this.$frameDoc.open();
-        this.$frameDoc.write(this.slowparseResults.code);
-        this.$frameDoc.close();
+        this.frameDoc.open();
+        this.frameDoc.write(this.slowparseResults.code);
+        this.frameDoc.close();
 
         this.postProcessing();
 
