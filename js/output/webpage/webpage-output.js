@@ -1,13 +1,14 @@
 /**
  * WebpageOutput
- *
- * This class handles testing and displaying code for HTML/CSS
- * It creates an iframe on the same domain which it document.write()'s
- * The new code to every time. It also includes a couple of measure to make 
- * javascript always gets to execute in a fresh workspace, and it 
- * retrofits the javascript so that it cannot run an infinite loop
- * Becasue it is usually cross-domain for sandboxing reasons,
- * it communicates via postMessages with liveEditor.
+ * It creates an iframe on the same domain, and uses
+ * document.write() to update the HTML each time.
+ * It also includes the StateScrubber that ensures
+ * that the JS in a page always gets executed in a fresh
+ * global context, and it retrofits the JS with parsing/injection
+ * so that it will stop an infinite loop from running in the browser.
+ * Because the host iframe is typically hosted an another domain
+ * so that it can be sandboxed from the main domain,
+ * it communicates via postMessage() with liveEditor.
  */
 window.WebpageOutput = Backbone.View.extend({
     initialize: function(options) {
