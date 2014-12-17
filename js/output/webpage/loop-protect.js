@@ -2,11 +2,12 @@ window.LoopProtector = function(callback) {
 	this.callback = callback || function() {};
 	this.branchStartTime = 0;
 	this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
+    this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
 };
 
 window.LoopProtector.prototype = {
-	// Make sure to attach this function to the global scope/
-	KAInfiniteLoopProtect: function() {
+	// Make sure to attach this function to the global scope
+	_KAInfiniteLoopProtect: function() {
         var now = new Date().getTime();
         if (!this.branchStartTime) {
             this.branchStartTime = now;
@@ -23,7 +24,7 @@ window.LoopProtector.prototype = {
         "DoWhileStatement",
         "WhileStatement",
         "ForStatement",
-        "FunctionStatement",
+        "FunctionExpression",
         "FunctionDeclaration"
     ],
 

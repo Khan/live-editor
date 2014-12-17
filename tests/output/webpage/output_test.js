@@ -117,8 +117,53 @@ describe("Linting", function() {
     );
 
     // Custom additions to Slowparse, to ban JavaScript stuff
+    failingTest("Audio element banned",
+        "<audio></audio>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
 
+    failingTest("Video element banned",
+        "<video></video>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Iframe element banned",
+        "<iframe></iframe>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Embed element banned",
+        "<embed></embed>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Object element banned",
+        "<object></object>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Fatal slowparse error detected",
+        "<li><a href='</li><img src='https://www.kasandbox.org'>", [
+            {row: 0, column: 0, lint: {type: "UNKNOWN_SLOWPARSE_ERROR"}}
+        ]
+    );
+
+    //Scripting
     test("Script element enabled",
         "<script>console.log('Scripting enabled')</script>"
+    );
+
+    failingTest("Infinite loop errors",
+        "<script> while(true){} </script>", [
+            // Infinite loops dont give a location for their error message
+            {row: undefined, column: undefined, text: 
+                '<span class="text">Your javascript is taking too long to run.' +
+                ' Perhaps you have a mistake in your code?</span>'}
+        ]
     );
 });

@@ -532,7 +532,6 @@ window.LiveEditorOutput = Backbone.View.extend({
                 this.output.runCode(userCode, function(errors) {
                     buildDone(errors);
                 }, cursor);
-
             } catch (e) {
                 buildDone([e]);
             }

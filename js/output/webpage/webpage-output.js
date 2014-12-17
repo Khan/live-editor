@@ -27,7 +27,7 @@ window.WebpageOutput = Backbone.View.extend({
 
         // Inject the infinite loop protection function
         this.$frame.contentWindow.KAInfiniteLoopProtect = 
-            this.loopProtector.KAInfiniteLoopProtect.bind(this.loopProtector);
+            this.loopProtector.KAInfiniteLoopProtect;
         this.stateScrubber.globalVariables["KAInfiniteLoopProtect"] = true;
     },
 

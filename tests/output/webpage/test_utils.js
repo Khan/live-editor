@@ -30,31 +30,43 @@ var runTest = function(options) {
         // Run once to make sure that no errors are thrown
         // during execution
         output.runCode(code, function(errors, testResults) {
-            if (options.expected) {
-                expect(errors).to.have.length(0);
-            } else {
-                expect(errors).to.not.equal([]);
-                // In some cases, we actually verify number and line # of errors
-                if (options.errors) {
-                    expect(errors.length).to.be.equal(options.errors.length);
-                    expect(errors[0].row)
-                        .to.be.equal(options.errors[0].row);
-                    expect(errors[0].column)
-                        .to.be.equal(options.errors[0].column);
-                    expect(errors[0].lint.type)
-                        .to.be.equal(options.errors[0].lint.type);
-                }
-            }
-
-            if (options.test) {
-                if (options.test.length === 4) {
-                    options.test(output, errors, testResults, done);
+            // Catch errors and forward them to Mocha
+            // Otherwise output.js sometimes swallows them
+            try {
+                if (options.expected) {
+                    expect(errors).to.have.length(0);
                 } else {
-                    options.test(output, errors, testResults);
-                    done();
+                    expect(errors).to.not.equal([]);
+                    // In some cases, we actually verify number and line # of errors
+                    if (options.errors) {
+                        expect(errors.length).to.be.equal(options.errors.length);
+                        expect(errors[0].row)
+                            .to.be.equal(options.errors[0].row);
+                        expect(errors[0].column)
+                            .to.be.equal(options.errors[0].column);
+                        if (options.errors[0].lint) {
+                            expect(errors[0].lint.type)
+                                .to.be.equal(options.errors[0].lint.type);
+                        }
+                        if (options.errors[0].text) {
+                            expect(errors[0].text)
+                                .to.be.equal(options.errors[0].text);
+                        }
+                    }
                 }
-            } else {
-                done();
+
+                if (options.test) {
+                    if (options.test.length === 4) {
+                        options.test(output, errors, testResults, done);
+                    } else {
+                        options.test(output, errors, testResults);
+                        done();
+                    }
+                } else {
+                    done();
+                }   
+            } catch (e) {
+                done(e);
             }
         });
     });

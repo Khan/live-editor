@@ -1899,7 +1899,7 @@
 
       var scriptPreprocessor = options.scriptPreprocessor || function(x) {return x;}; 
       var domBuilder = new DOMBuilder(html, disallowActiveAttributes, scriptPreprocessor); 
-      var parser = new HTMLParser(stream, domBuilder); 
+      var parser = new HTMLParser(stream, domBuilder, options); 
 
       try {
         var _ = parser.parse();
