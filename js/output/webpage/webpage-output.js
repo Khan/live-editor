@@ -285,7 +285,7 @@ window.WebpageOutput = Backbone.View.extend({
                 $(tag).addClass("ka_active_element");
             }
         } catch (e) {
-            if (console) {
+            if (window.console) {
                 console.error("Error setting cursor: ", e);
             }
         }
