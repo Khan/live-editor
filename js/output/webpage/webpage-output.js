@@ -200,13 +200,14 @@ window.WebpageOutput = Backbone.View.extend({
     test: function(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
-        var testData = {
-            // Append to a div because jQuery doens't work on a document fragment
-            document: $("<div>").append(this.slowparseResults.document),
+        _.extend(this.tester.testContext, {
+            $doc: $(this.frameDoc),
+            // Append to a div because jQuery doesn't work on a document fragment
+            $docSP: $("<div>").append(this.slowparseResults.document),
             cssRules: this.slowparseResults.rules
-        };
+        });
 
-        this.tester.test(testData, tests, errors,
+        this.tester.test(userCode, tests, errors,
             function(errors, testResults) {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact

@@ -917,6 +917,10 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
+        if (data.results) { 
+            //console.log(data.results);
+        }
+
         this.trigger("update", data);
 
         // Hide loading overlay

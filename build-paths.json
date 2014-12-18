@@ -81,7 +81,8 @@
             "external/html2canvas/html2canvas.js",
             "external/slowparse/slowparse.js",
             "js/output/webpage/loop-protect.js",
-            "js/output/webpage/state-scrubber.js"
+            "js/output/webpage/state-scrubber.js",
+            "external/structuredjs/structured.js"
         ],
         "output_sql_deps": [
             "external/html2canvas/html2canvas.js",

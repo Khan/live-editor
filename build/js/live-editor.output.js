@@ -53,6 +53,7 @@ window.OutputTester = function() {};
 
 OutputTester.prototype = {
     initialize: function(options) {
+        this.output = options.output;
         var tester = this;
 
         this.tests = [];
@@ -146,8 +147,8 @@ OutputTester.prototype = {
         this.tests = [];
 
         // This will also fill in tests, as it will end up
-        //  referencing functions like staticTest and that
-        //  function will fill in this.tests
+        // referencing functions like staticTest and that
+        // function will fill in this.tests
         this.exec(validate);
 
         this.curTask = null;
@@ -169,9 +170,9 @@ OutputTester.prototype = {
 
         this.curTest = result;
 
-        if (test.type === "static") {
+        //if (test.type === "static") {
             test.fn.call(this);
-        }
+        //}
 
         this.curTest = null;
 
@@ -481,6 +482,15 @@ window.LiveEditorOutput = Backbone.View.extend({
     runCode: function(userCode, callback, cursor, noLint) {
         this.currentCode = userCode;
 
+        this.results = {
+            code: userCode,
+            errors: [],
+            assertions: []
+        };
+        this.lastSent = undefined;
+        // For legacy reasons
+        this.assertions = this.results.assertions;
+
         var buildDone = function(errors) {
             errors = this.cleanErrors(errors || []);
 
@@ -488,13 +498,10 @@ window.LiveEditorOutput = Backbone.View.extend({
                 this.postParent({ loaded: true });
                 this.loaded = true;
             }
-            this.postParent({
-                results: {
-                    code: userCode,
-                    errors: errors,
-                    assertions: this.assertions
-                }
-            });
+
+            // Update results
+            this.results.errors = errors;
+            this.phoneHome();
 
             this.toggle(!errors.length);
 
@@ -508,16 +515,10 @@ window.LiveEditorOutput = Backbone.View.extend({
             // Normal case
             } else {
                 // This is debounced (async)
-                var oldErrorsLength = errors.length;
                 this.test(userCode, this.validate, errors, function(errors, testResults) {
-                    var results = {
-                        code: userCode,
-                        tests: testResults
-                    };
-                    if (oldErrorsLength === 0 && errors.length > oldErrorsLength) {
-                        results.errors = errors;
-                    }
-                    this.postParent({ results: results });
+                    this.results.errors = errors;
+                    this.results.tests = testResults;
+                    this.phoneHome();
                 }.bind(this));
             }
         }.bind(this);
@@ -532,6 +533,7 @@ window.LiveEditorOutput = Backbone.View.extend({
                 this.output.runCode(userCode, function(errors) {
                     buildDone(errors);
                 }, cursor);
+
             } catch (e) {
                 buildDone([e]);
             }
@@ -546,12 +548,26 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
     },
 
+    phoneHome: function() {
+        if (this.lastSent && this.lastSent.errors && this.lastSent.errors.length) {
+            this.results.errors = this.lastSent.errors;
+        } 
+        this.postParent({
+            results: this.results
+        });
+        this.lastSent = JSON.parse(JSON.stringify(this.results));
+    },
+
 
     test: _.throttle(function() {
         this._test.apply(this, arguments);
     }, 200),
     _test: function(userCode, validate, errors, callback) {
-        this.output.test(userCode, validate, errors, callback);
+        var start = new Date().getTime();
+        this.output.test(userCode, validate, errors, function(){
+            console.log("Tests took",(new Date().getTime() - start),"ms"); 
+            callback.apply(this, arguments);
+        });
     },
 
     lint: function(userCode, callback) {
