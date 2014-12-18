@@ -1,14 +1,20 @@
+/**
+ * WebpageOutput
+ * It creates an iframe on the same domain, and uses
+ * document.write() to update the HTML each time.
+ * It also includes the StateScrubber that ensures
+ * that the JS in a page always gets executed in a fresh
+ * global context, and it retrofits the JS with parsing/injection
+ * so that it will stop an infinite loop from running in the browser.
+ * Because the host iframe is typically hosted an another domain
+ * so that it can be sandboxed from the main domain,
+ * it communicates via postMessage() with liveEditor.
+ */
 window.WebpageOutput = Backbone.View.extend({
-    messageHandlers: {},
-
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
         this.externalsDir = options.externalsDir;
-
-        this.messageHandlers.setCursor = function(data) {
-            this.setCursor(data.setCursor);
-        }.bind(this);
 
         this.tester = new WebpageTester(options);
 
@@ -16,6 +22,15 @@ window.WebpageOutput = Backbone.View.extend({
 
         // Load Webpage config options
         this.config.runCurVersion("webpage", this);
+
+        // Set up infinite loop protection
+        this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this));
+        this.$frame.contentWindow.KAInfiniteLoopProtect = 
+            this.loopProtector.KAInfiniteLoopProtect;
+
+        // Do this at the end so variables I add to the global scope stay
+        // i.e.  KAInfiniteLoopProtect
+        this.stateScrubber = new StateScrubber(this.$frame.contentWindow);
     },
 
     render: function() {
@@ -23,15 +38,12 @@ window.WebpageOutput = Backbone.View.extend({
         this.$frame = $("<iframe>")
             .css({width: "100%", height: "100%", border: "0"})
             .appendTo(this.el)
-            .show();
-    },
-
-    getDocument: function() {
-        return this.$frame[0].contentWindow.document;
+            .show()[0];
+        this.frameDoc = this.$frame.contentDocument;
     },
 
     getScreenshot: function(screenshotSize, callback) {
-        html2canvas(this.getDocument().body, {
+        html2canvas(this.frameDoc.body, {
             onrendered: function(canvas) {
                 var width = screenshotSize;
                 var height = (screenshotSize / canvas.width) * canvas.height;
@@ -50,16 +62,32 @@ window.WebpageOutput = Backbone.View.extend({
         });
     },
 
+    infiniteLoopError: {
+        text: $._("Your javascript is taking too long to run. " +
+                    "Perhaps you have a mistake in your code?"),
+        type: "error",
+        source: "timeout",
+    },
+
+    infiniteLoopCallback:  function() {
+        this.output.postParent({
+            results: {
+                code: this.output.currentCode,
+                errors: [this.infiniteLoopError]
+            }
+        });
+        this.KA_INFINITE_LOOP = true;
+    },
+
     lint: function(userCode, callback) {
-        this.userDOM = null;
+        this.userCode = userCode;
         userCode = userCode || "";
 
         // Lint the user's code, returning any errors in the callback
         var results = {};
         try {
-            results = Slowparse.HTML(this.getDocument(), userCode, {
-                disallowActiveAttributes: true,
-                noScript: true,
+            results = Slowparse.HTML(document, userCode, {
+                scriptPreprocessor: this.loopProtector.protect.bind(this.loopProtector),
                 disableTags: ["audio", "video", "iframe", "embed", "object"]
             });
         } catch (e) {
@@ -70,6 +98,8 @@ window.WebpageOutput = Backbone.View.extend({
                 type: "UNKNOWN_SLOWPARSE_ERROR"
             };
         }
+
+        this.slowparseResults = results;
 
         if (results.error) {
             var pos = results.error.cursor || 0;
@@ -87,9 +117,6 @@ window.WebpageOutput = Backbone.View.extend({
                 priority: 2
             }]);
         }
-
-        this.userDOM = document.createElement("div");
-        this.userDOM.appendChild(results.document);
 
         callback([]);
     },
@@ -152,7 +179,8 @@ window.WebpageOutput = Backbone.View.extend({
             UNTERMINATED_COMMENT: $._("It looks like your comment doesn't end with a \"--&gt;\".", error),
             UNTERMINATED_CSS_COMMENT: $._("It looks like your CSS comment doesn't end with a \"*/\".", error),
             UNTERMINATED_OPEN_TAG: $._("It looks like your opening \"&lt;%(openTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
-            UNKNOWN_SLOWPARSE_ERROR: $._("Something's wrong with the HTML, but we're not sure what.")
+            UNKNOWN_SLOWPARSE_ERROR: $._("Something's wrong with the HTML, but we're not sure what."),
+            JAVASCRIPT_ERROR: $._("Javascript Error:\n\"%(message)s\"", error)
         })[error.type];
     },
 
@@ -164,7 +192,6 @@ window.WebpageOutput = Backbone.View.extend({
         try {
             var code = "with(arguments[0]){\n" + validate + "\n}";
             (new Function(code)).apply({}, this.tester.testContext);
-
         } catch (e) {
             return e;
         }
@@ -173,7 +200,13 @@ window.WebpageOutput = Backbone.View.extend({
     test: function(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
-        this.tester.test(this.userDOM, tests, errors,
+        var testData = {
+            // Append to a div because jQuery doens't work on a document fragment
+            document: $("<div>").append(this.slowparseResults.document),
+            cssRules: this.slowparseResults.rules
+        };
+
+        this.tester.test(testData, tests, errors,
             function(errors, testResults) {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact
@@ -187,155 +220,50 @@ window.WebpageOutput = Backbone.View.extend({
                         $._("A critical problem occurred in your program " +
                             "making it unable to run."));
                 }
+
                 callback(errors, testResults);
             }.bind(this));
     },
 
     postProcessing: function(oldPageTitle) {
-        var doc = this.getDocument();
         var self = this;
-        
-        $(doc).find("a").attr("target", "_blank")
-            .attr("rel", "nofollow").each(function() {
+        $(this.frameDoc).on("mouseup", "a", function() {
             var url = $(this).attr("href");
-            if (url && url[0] === "#") {
-                $(this).attr("href", "javascript:void(0)").click(function() {
-                    var id = url;
-                    $(doc).find("html, body").animate({
-                        scrollTop: $(doc).find(id).offset().top
-                    }, 1000);
-                });
-                return;
-            }
-
-            $(this).off("mouseup").on("mouseup", function() {
+            if (url[0] !== "#") {
                 self.output.postParent({
                     action: "link-click",
                     url: url
                 });
-                return false;
-            });
+            }
+            return false;
         });
 
-        var titleTag = $(doc).find("head > title");
-        if (titleTag.length > 0 && oldPageTitle != titleTag.text()) {
+        var titleTag = $(this.frameDoc).find("head > title");
+        var title = titleTag.first().text();
+        if (titleTag.length > 0 && this.oldPageTitle !== title) {
+            this.oldPageTitle = title;
             self.output.postParent({
                 action: "page-info",
-                title: titleTag.first().text()
+                title: title
             });
         }
     },
 
-    injectStyles: function(code) {
-        var injection = "<style type\"text/css\">"+
-        ".ka_active_element { box-shadow: 0 0 10px 1px #85B2F7; }"+
-        "</style>";
+    runCode: function(codeObj, callback) {
+        this.stateScrubber.clearAll();
+        this.KA_INFINITE_LOOP = false;
+        this.frameDoc.open();
+        this.frameDoc.write(this.slowparseResults.code);
+        this.frameDoc.close();
 
-        var top = "";
-        if(/^[\d\D]*?<head[\d\D]*?>/.test(code)) {
-            top = RegExp.lastMatch;
-        } else if (/^[\d\D]*?<html[\d\D]*?>/.test(code)) {
-            top = RegExp.lastMatch;
-        }
-        code = code.slice(0,top.length)+injection+code.slice(top.length);
-        return code;
-    },
+        this.postProcessing();
 
-    runCode: function(userCode, callback, cursor) {
-        var doc = this.getDocument();
-        var oldPageTitle = $(doc).find("head > title").text();
-        userCode = this.injectStyles(userCode);
-        doc.open();
-        doc.write(userCode);
-        doc.close();
-        this.postProcessing(oldPageTitle);
-        callback([], userCode);
-        // This can be a post processing step no need to block everything else
-        // Especially considering it cannot raise errors (wrapped in try-catch)
-        this.setCursor(cursor);
-    },
-
-    /*
-     * This function will search down the parse tree created by slowparse until it finds where the 
-     * current cursor is. If the cursor is currently in an open tag or we are currently selecting
-     * exactly one element, it will highlight that element.
-     */
-    setCursor: function(cursor) {
-        if (!this.output.lastRunWasSuccess) {
-            return;
-        }
-        if (this.lastCursor === cursor) {
-            return;
+        if (this.KA_INFINITE_LOOP) {
+            callback([this.infiniteLoopError]);
         } else {
-            this.lastCursor = cursor;
+            callback([]);
         }
-
-        // This should be stable, however since one of the HTML strings is parsed by Slowparse and one
-        // is parsed by the browser there is always the possibility of a mismatch leading to an error
-        // In that case its not the user's fault, don't bother them about it.
-        try {
-            cursor = {
-                start: Math.min(cursor.start, cursor.end),
-                end: Math.max(cursor.start, cursor.end)
-            };
-            var tag = this.findTagForCursor(cursor, this.userDOM, this.getDocument());
-
-            $(this.getDocument()).find(".ka_active_element").removeClass("ka_active_element");
-            if (tag && tag.tagName && tag.tagName.toLowerCase() !== "html" && tag.tagName.toLowerCase() !== "body") {
-                $(tag).addClass("ka_active_element");
-            }
-        } catch (e) {
-            if (window.console) {
-                console.error("Error setting cursor: ", e);
-            }
-        }
-    },
-
-    findTagForCursor: function(cursor, annotated, target) {
-        var notTextNode = function(n) {
-            return n.nodeType !== 3;
-        };
-        var isSelection = (cursor.start !== cursor.end);
-        var nodes = _.filter(annotated.childNodes, notTextNode);
-        for (var i=0; i<nodes.length; i++) {
-            node = nodes[i];
-            var openTagStart = (node.parseInfo.openTag ? node.parseInfo.openTag.start : node.parseInfo.start);
-            var openTagEnd = (node.parseInfo.openTag ? node.parseInfo.openTag.end : node.parseInfo.end);
-            var endPos = (node.parseInfo.closeTag ? node.parseInfo.closeTag.end : openTagEnd);
-
-            // If none of the selection is inside the tag then move along
-            if (cursor.start >= endPos) {
-                continue;
-            // If the cursor is anywhere inside the tag
-            } else if (cursor.start > openTagStart) {
-                // If the cursor is inside the start tag select it
-                if (!isSelection && cursor.start < openTagEnd) {
-                    var tagIndex = $(annotated).find(node.tagName).index(node);
-                    return $(target).find(node.tagName)[tagIndex];
-                } 
-                // If the cursor is somewhere between the start and end tags
-                // try searching its children
-                if (node.parseInfo.closeTag && cursor.start >= openTagEnd && cursor.end <= node.parseInfo.closeTag.start) {
-                    var tagIndex = $(annotated).find(node.tagName).index(node);
-                    var targetNode = $(target).find(node.tagName)[tagIndex];
-                    return this.findTagForCursor(cursor, node, targetNode);
-                }
-                break;
-            // If the cursor is a selection and it contains exactly one tag select it
-            } else if (isSelection && cursor.end >= endPos) {
-                if (i < (nodes.length-1)) {
-                    var next = nodes[i+1];
-                    var nextOpenTagStart = (next.parseInfo.openTag ? next.parseInfo.openTag.start
-                                                                    : next.parseInfo.start);
-                    if (cursor.end > nextOpenTagStart) {
-                        break;
-                    }
-                }
-                var tagIndex = $(annotated).find(node.tagName).index(node);
-                return $(target).find(node.tagName)[tagIndex];
-            }
-        }
-        return undefined;
+        
     },
 
     clear: function() {
@@ -348,3 +276,4 @@ window.WebpageOutput = Backbone.View.extend({
 });
 
 LiveEditorOutput.registerOutput("webpage", WebpageOutput);
+

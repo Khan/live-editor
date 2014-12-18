@@ -42,6 +42,33 @@ describe("Challenge Assertions - HTML", function() {
     });
 });
 
+describe("Challenge Assertions - HTML Scripting", function() {
+    var xTest = (function() {
+        staticTest("Set X", function() {
+            var result = pass();
+            if ($("iframe")[0].contentWindow.x !== 4) {
+                result = fail("Did you set x to 4?");
+            }
+            var descrip = "I don't really care";
+            assertMatch(result, descrip);
+        });
+    }).toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
+
+    assertTest({
+        title: "Scripting Works",
+        code: "<div><script>window.x = 4;</script></div>",
+        validate: xTest,
+    }); 
+
+    assertTest({
+        title: "Scripting Test fails",
+        code: "<div></div>",
+        validate: xTest,
+        fromTests: true,
+        reason: "Did you set x to 4?"
+    });
+});
+
 describe("CSS selector matching with wildcards", function() {
     var output;
 

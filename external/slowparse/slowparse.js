@@ -1,3 +1,7 @@
+// This is a version of slowparse modified for KA. It is based off this file:
+// https://github.com/mozilla/slowparse/blob/c0ede5d6d65c50f707b20f5036316b13bf85c80d/slowparse.js
+// If you want to know the KA-specific changes, I recommend you run a diff.
+
 // Slowparse is a token stream parser for HTML and CSS text,
 // recording regions of interest during the parse run and
 // signaling any errors detected accompanied by relevant
@@ -1751,13 +1755,18 @@
   //
   // The DOM builder is given a single document DOM object that will
   // be used to create all necessary DOM nodes.
-  function DOMBuilder(document, disallowActiveAttributes) {
+  function DOMBuilder(sourceCode, disallowActiveAttributes, scriptPreprocessor) { 
+    this.disallowActiveAttributes = disallowActiveAttributes; 
+    this.scriptPreprocessor = scriptPreprocessor; 
     this.document = document;
+    this.sourceCode = sourceCode; 
+    this.code = ""; 
     this.fragment = document.createDocumentFragment();
     this.currentNode = this.fragment;
     this.contexts = [];
+    this.rules = [];
+    this.last = 0; 
     this.pushContext("html", 0);
-    this.disallowActiveAttributes = disallowActiveAttributes;
   }
 
   DOMBuilder.prototype = {
@@ -1804,9 +1813,40 @@
     },
     // This method appends a text node to the currently active element.
     text: function(text, parseInfo) {
+      if (this.currentNode && this.currentNode.attributes) { 
+        var type = this.currentNode.attributes.type || "";
+        type = type.toLowerCase(); 
+        if (this.currentNode.nodeName.toLowerCase() === "script" && (!type || type === "text/javascript")) { 
+          this.javascript(text, parseInfo); 
+          // Don't actually add javascript to the DOM we're building
+          // because it will execute and we don't want that.
+          return;
+        } else if (this.currentNode.nodeName.toLowerCase() === "style") {
+          this.rules.push.apply(this.rules, parseInfo.rules);
+        } 
+      } 
       var textNode = this.document.createTextNode(text);
       textNode.parseInfo = parseInfo;
       this.currentNode.appendChild(textNode);
+    },
+    javascript: function(text, parseInfo) { 
+      try { 
+        text = this.scriptPreprocessor(text); 
+      } catch(err) { 
+        // This is meant to handle esprima errors 
+        if (err.index && err.description && err.message) { 
+          var cursor = this.currentNode.parseInfo.openTag.end + err.index; 
+          throw {parseInfo: {type: "JAVASCRIPT_ERROR", message: err.description, cursor: cursor} }; 
+        } else { 
+          throw err; 
+        } 
+      } 
+      this.code += this.sourceCode.slice(this.last, parseInfo.start); 
+      this.code += text; 
+      this.last = parseInfo.end; 
+    },
+    close: function() {
+      this.code += this.sourceCode.slice(this.last); 
     }
   };
 
@@ -1851,18 +1891,19 @@
     HTML: function(document, html, options) {
       options = options || {};
       var stream = new Stream(html),
-          domBuilder,
           parser,
           warnings = null,
           error = null,
           errorDetectors = options.errorDetectors || [],
           disallowActiveAttributes = (typeof options.disallowActiveAttributes === "undefined") ? false : options.disallowActiveAttributes;
 
-      domBuilder = new DOMBuilder(document, disallowActiveAttributes);
-      parser = new HTMLParser(stream, domBuilder, options);
+      var scriptPreprocessor = options.scriptPreprocessor || function(x) {return x;}; 
+      var domBuilder = new DOMBuilder(html, disallowActiveAttributes, scriptPreprocessor); 
+      var parser = new HTMLParser(stream, domBuilder, options); 
 
       try {
         var _ = parser.parse();
+        domBuilder.close();
         if (_.warnings) {
           warnings = _.warnings;
         }
@@ -1880,7 +1921,8 @@
 
       return {
         document: domBuilder.fragment,
-        contexts: domBuilder.contexts,
+        code: domBuilder.code,
+        rules: domBuilder.rules,
         warnings: warnings,
         error: error
       };

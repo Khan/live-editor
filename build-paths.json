@@ -76,8 +76,12 @@
             "js/output/pjs/pjs-output.js"
         ],
         "output_webpage_deps": [
+            "external/structuredjs/external/esprima.js",
+            "external/structured-blocks/external/escodegen.browser.js",
             "external/html2canvas/html2canvas.js",
-            "external/slowparse/slowparse.js"
+            "external/slowparse/slowparse.js",
+            "js/output/webpage/loop-protect.js",
+            "js/output/webpage/state-scrubber.js"
         ],
         "output_sql_deps": [
             "external/html2canvas/html2canvas.js",

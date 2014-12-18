@@ -236,14 +236,6 @@ OutputTester.prototype = {
                 this.curTest.results.push(item);
             }
 
-            if (this.curTask) {
-                if (state !== "pass") {
-                    this.curTask.state = state;
-                }
-
-                this.curTask.results.push(item);
-            }
-
             return item;
         },
 
@@ -321,12 +313,10 @@ OutputTester.prototype = {
         }
     }
 };
-
 window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
-    lastRunWasSuccess: false,
 
     initialize: function(options) {
         this.render();
@@ -403,7 +393,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         } catch (err) {
             return;
         }
-
         if (!this.output) {
             var outputType = data.outputType || _.keys(this.outputs)[0];
             this.setOutput(outputType);
@@ -494,7 +483,6 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         var buildDone = function(errors) {
             errors = this.cleanErrors(errors || []);
-            this.lastRunWasSuccess = !errors.length;
 
             if (!this.loaded) {
                 this.postParent({ loaded: true });
@@ -520,16 +508,16 @@ window.LiveEditorOutput = Backbone.View.extend({
             // Normal case
             } else {
                 // This is debounced (async)
+                var oldErrorsLength = errors.length;
                 this.test(userCode, this.validate, errors, function(errors, testResults) {
-
-                    this.postParent({
-                        results: {
-                            code: userCode,
-                            errors: errors,
-                            tests: testResults
-
-                        }
-                    });
+                    var results = {
+                        code: userCode,
+                        tests: testResults
+                    };
+                    if (oldErrorsLength === 0 && errors.length > oldErrorsLength) {
+                        results.errors = errors;
+                    }
+                    this.postParent({ results: results });
                 }.bind(this));
             }
         }.bind(this);
@@ -544,10 +532,9 @@ window.LiveEditorOutput = Backbone.View.extend({
                 this.output.runCode(userCode, function(errors) {
                     buildDone(errors);
                 }, cursor);
-
             } catch (e) {
                 buildDone([e]);
-            }        
+            }
         }.bind(this);
 
         // Always lint the first time, so that PJS can populate its list of globals
