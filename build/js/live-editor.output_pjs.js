@@ -1575,6 +1575,17 @@ window.PJSOutput = Backbone.View.extend({
             // Load the image in the background
             var img = document.createElement("img");
             img.onload = loaded;
+            img.onerror = function () {
+                delete this.imageCache[file];
+
+                numLoaded += 1;
+                // increment numLoaded so that the callback will be called eventually
+
+                if (numLoaded === images.length) {
+                    callback();
+                }
+            }.bind(this);
+
             img.src = path;
             this.imageHolder.append(img);
 
