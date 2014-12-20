@@ -111,6 +111,12 @@ describe("Scratchpad Output Exec", function() {
         };
     });
 
+    failingTest("getImage with simple string", function () {
+        var toolbox = getImage("toolbox");
+
+        image(toolbox, 0, 0);
+    });
+
     failingTest("getImage with data: URL", function() {
         var sal = getImage("data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==");
 
