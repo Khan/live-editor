@@ -146,8 +146,8 @@ OutputTester.prototype = {
         this.tests = [];
 
         // This will also fill in tests, as it will end up
-        //  referencing functions like staticTest and that
-        //  function will fill in this.tests
+        // referencing functions like staticTest and that
+        // function will fill in this.tests
         this.exec(validate);
 
         this.curTask = null;
@@ -169,9 +169,7 @@ OutputTester.prototype = {
 
         this.curTest = result;
 
-        if (test.type === "static") {
-            test.fn.call(this);
-        }
+        test.fn.call(this);
 
         this.curTest = null;
 
@@ -322,8 +320,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.render();
 
         this.setPaths(options);
-
-        this.assertions = [];
 
         this.config = new ScratchpadConfig({});
         
@@ -481,6 +477,13 @@ window.LiveEditorOutput = Backbone.View.extend({
     runCode: function(userCode, callback, cursor, noLint) {
         this.currentCode = userCode;
 
+        this.results = {
+            code: userCode,
+            errors: [],
+            assertions: []
+        };
+        this.lastSent = undefined;
+
         var buildDone = function(errors) {
             errors = this.cleanErrors(errors || []);
 
@@ -488,13 +491,10 @@ window.LiveEditorOutput = Backbone.View.extend({
                 this.postParent({ loaded: true });
                 this.loaded = true;
             }
-            this.postParent({
-                results: {
-                    code: userCode,
-                    errors: errors,
-                    assertions: this.assertions
-                }
-            });
+
+            // Update results
+            this.results.errors = errors;
+            this.phoneHome();
 
             this.toggle(!errors.length);
 
@@ -508,16 +508,10 @@ window.LiveEditorOutput = Backbone.View.extend({
             // Normal case
             } else {
                 // This is debounced (async)
-                var oldErrorsLength = errors.length;
                 this.test(userCode, this.validate, errors, function(errors, testResults) {
-                    var results = {
-                        code: userCode,
-                        tests: testResults
-                    };
-                    if (oldErrorsLength === 0 && errors.length > oldErrorsLength) {
-                        results.errors = errors;
-                    }
-                    this.postParent({ results: results });
+                    this.results.errors = errors;
+                    this.results.tests = testResults;
+                    this.phoneHome();
                 }.bind(this));
             }
         }.bind(this);
@@ -532,6 +526,7 @@ window.LiveEditorOutput = Backbone.View.extend({
                 this.output.runCode(userCode, function(errors) {
                     buildDone(errors);
                 }, cursor);
+
             } catch (e) {
                 buildDone([e]);
             }
@@ -544,6 +539,28 @@ window.LiveEditorOutput = Backbone.View.extend({
             this.lint(userCode, lintDone);
             this.firstLint = true;
         }
+    },
+
+    /**
+     * Send the most up to date errors/test results to the parent frame
+     */
+    phoneHome: function() {
+        // Our handling of errors is leaky.
+        // In the old design errors were passed from function to function 
+        // via arguments to callbacks. Recently I have added asynchrynous sources 
+        // of errors such as those from breaking out of an infinite loop.
+        // These two different mechanisms mean that it's possible for errors to 
+        // get lost, but it can't be fixed without rewriting how all of the callbacks
+        // work. As a work around if we ever see an error, never erase it.
+        // Since within a single run an error can never be resolved this makes sure
+        // that errors don't disappear.
+        if (this.lastSent && this.lastSent.errors && this.lastSent.errors.length) {
+            this.results.errors = this.lastSent.errors;
+        } 
+        this.postParent({
+            results: this.results
+        });
+        this.lastSent = JSON.parse(JSON.stringify(this.results));
     },
 
 

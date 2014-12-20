@@ -548,7 +548,7 @@ window.PJSOutput = Backbone.View.extend({
                     lineNum = 0;
                 }
 
-                this.output.assertions.push({
+                this.output.results.assertions.push({
                     row: lineNum, column: 0, text: msg
                 });
             },
@@ -629,7 +629,7 @@ window.PJSOutput = Backbone.View.extend({
         var externalProps = this.props;
 
         this.globals = {};
-        this.output.assertions = [];
+        this.output.results.assertions = [];
 
         if (hintData && hintData.globals) {
             for (var i = 0, l = hintData.globals.length; i < l; i++) {

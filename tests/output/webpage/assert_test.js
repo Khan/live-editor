@@ -69,6 +69,37 @@ describe("Challenge Assertions - HTML Scripting", function() {
     });
 });
 
+describe("scriptTest tests", function() {
+    var xTest = (function() {
+        scriptTest("Set X", function() {
+            var result = match(function(){
+                var x = 4;
+            })
+            var descrip = "I don't really care";
+            assertMatch(result, descrip);
+        });
+    }).toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
+
+    assertTest({
+        title: "scriptTest reports success for matching code",
+        code: "<div><script>var x = 4;</script></div>",
+        validate: xTest,
+    }); 
+
+    assertTest({
+        title: "scriptTest reports failure for not matching code",
+        code: "<div></div>",
+        validate: xTest,
+        fromTests: true
+    });
+
+    assertTest({
+        title: "scriptTest reports failure for not matching code",
+        code: "<div><script>var y = 4;</script></div>",
+        validate: xTest,
+    }); 
+});
+
 describe("CSS selector matching with wildcards", function() {
     var output;
 

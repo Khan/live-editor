@@ -95,8 +95,8 @@ OutputTester.prototype = {
         this.tests = [];
 
         // This will also fill in tests, as it will end up
-        //  referencing functions like staticTest and that
-        //  function will fill in this.tests
+        // referencing functions like staticTest and that
+        // function will fill in this.tests
         this.exec(validate);
 
         this.curTask = null;
@@ -118,9 +118,7 @@ OutputTester.prototype = {
 
         this.curTest = result;
 
-        if (test.type === "static") {
-            test.fn.call(this);
-        }
+        test.fn.call(this);
 
         this.curTest = null;
 

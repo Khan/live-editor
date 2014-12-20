@@ -1,4 +1,4 @@
-var PJSTester = function(options) {
+window.PJSTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
 };

@@ -2,9 +2,43 @@
     window.WebpageTester = function(options) {
         this.initialize(options);
         this.bindTestContext();
+        this.testContext.phoneHome = options.output.phoneHome.bind(options.output);
     };
 
     WebpageTester.prototype = new OutputTester();
+
+    _.extend(WebpageTester.prototype, {
+        test: function(userCode, validate, errors, callback) {
+            var testResults = [];
+            errors = this.errors = errors || [];
+            this.userCode = userCode;
+            this.tests = [];
+
+            // This will also fill in tests, as it will end up
+            //  referencing functions like staticTest and that
+            //  function will fill in this.tests
+            this.exec(validate);
+
+            this.testContext.allScripts = "";
+            _.each(this.testContext.$doc.find("script"), function($script) {
+                this.testContext.allScripts += $script.innerHTML;
+                this.testContext.allScripts += "\n";
+            }.bind(this));
+
+            this.curTask = null;
+            this.curTest = null;
+
+            // Stop async tests which try to respond immediately 
+            // from sending incomplete test results.
+            this.syncTests = true;
+            for (var i = 0; i < this.tests.length; i++) {
+                testResults.push(this.runTest(this.tests[i], i));
+            }
+            this.syncTests = false;
+
+            callback(errors, testResults);
+        },
+    });
 
 
     /*
@@ -19,8 +53,54 @@
             };
         };
     };
+    WebpageTester.prototype.testMethods = _.clone(window.PJSTester.prototype.testMethods);
 
-    WebpageTester.prototype.testMethods = {
+    _.extend(WebpageTester.prototype.testMethods, {
+        scriptTest: function() {
+            this.testContext.staticTest.apply(this, arguments);
+        },
+
+        /**
+         * This looks exactly like an assertion,
+         * but can be updated asynchronously
+         */
+        uiTest: function(name, callback, description, hint, image) {
+            var fn = function() {
+                var test = this.curTest;
+                test.state = "fail";
+                var result = {
+                    type: "assertion",
+                    msg: description,
+                    state: "fail",
+                    expected: "",
+                    meta: {
+                        structure: hint,
+                        image: image
+                    }
+                };
+                test.results = [result];
+
+                callback(function(success, message) { 
+                    var state = success ? "pass" : "fail";
+                    test.state = state;
+                    result.state = state;
+                    delete result.meta.alsoMessage;
+                    delete result.meta.alternateMessage;
+                    if (message) {
+                        result.meta[success ? "alternateMessage" : "alsoMessage"] = message;
+                    }
+
+                    if (!this.syncTests) {
+                        this.testContext.phoneHome();
+                    }
+
+                }.bind(this));
+            }.bind(this);
+            this.testContext.test(name, fn, "ui");
+        },
+        
+        constraintPartial: constraintPartial,
+
         /*
          * Introspect a callback to determine it's parameters and then
          * produces a constraint that contains the appropriate variables and callbacks.
@@ -28,19 +108,23 @@
          * This allows much terser definition of callback functions since you don't have to
          * explicitly state the parameters in a separate list
          */
-        constraint: function(callback) {
-            var paramText = /^function\s*[^\(]*\(([^\)]*)\)/.exec(callback.toString())[1];
-            var params = paramText.match(/[$_a-zA-z0-9]+/g);
+        constraint: function(variables, fn) {
+            if (!fn) {
+                fn = variables;
+                var paramText = /^function\s*[^\(]*\(([^\)]*)\)/.exec(fn.toString())[1];
+                var variables = paramText.match(/[$_a-zA-z0-9]+/g);
 
-            for (var key in params) {
-                if (params[key][0] !== "$") {
-                    console.warn("Invalid parameter in constraint (should begin with a '$'): ", params[key]);
-                    return null;
+                for (var key in variables) {
+                    if (variables[key][0] !== "$") {
+                        console.warn("Invalid variable in constraint (should begin with a '$'): ", variables[key]);
+                        return null;
+                    }
                 }
             }
+
             return {
-                variables: params,
-                fn: callback
+                variables: variables,
+                fn: fn
             };
         },
 
@@ -70,7 +154,7 @@
                 var expected = structure[selector];
                 // TODO(jeresig): Maybe find a way to do this such that we can run
                 // it in a worker thread.
-                var numFound = $(selector, this.userCode.document).length;
+                var numFound = $(selector, this.testContext.$docSP).length;
                 if (expected === 0 && numFound !== 0 || numFound < expected) {
                     return {success: false};
                 }
@@ -97,7 +181,7 @@
         getCssMap: function() {
             // Convert CSS rules from a list of parsed objects into a map.
             var css = {};
-            _.each(this.userCode.cssRules, function(rule) {
+            _.each(this.testContext.cssRules, function(rule) {
                 // Parse all properties for this rule into map
                 var properties = {};
                 _.each(rule.declarations.properties, function(property) {
@@ -353,29 +437,6 @@
             return this.testContext.cssMatch.apply(this, arguments).success;
         },
 
-        /*
-         * Creates a new test result (i.e. new challenge tab)
-         */
-        assertMatch: function(result, description, hint, image) {
-            var alternateMessage;
-            var alsoMessage;
-
-            if (result.success) {
-                alternateMessage = result.message;
-            } else {
-                alsoMessage = result.message;
-            }
-
-            this.testContext.assert(result.success, description, "", {
-                // We can accept string hints here because
-                //  we never match against them anyway
-                structure: hint,
-                alternateMessage: alternateMessage,
-                alsoMessage: alsoMessage,
-                image: image
-            });
-        },
-
         notDefaultColor: constraintPartial(function(color) {
             var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
                           /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
@@ -400,8 +461,74 @@
             // If they're trying to use a color name, it should be at least 
             //  three letters long and not equal to rgb
             return color.length >= 3 && color.indexOf("rgb") === -1;
-        })
-    };
+        }),
+
+        ///////////////////////////////////////////////////////
+        ///////////////// Override PJS functions //////////////
+        ///////////////////////////////////////////////////////
+
+        /**
+         * Diff - Change the way hint text is interpretted
+         */
+        assertMatch: function(result, description, hint, image, syntaxChecks) {
+            if (syntaxChecks) {
+                // If we found any syntax errors or warnings, we'll send it
+                // through the special syntax checks
+                var foundErrors = _.any(this.errors, function(error) {
+                    return error.lint;
+                });
+
+                if (foundErrors) {
+                    _.each(syntaxChecks, function(syntaxCheck) {
+                        // Check if we find the regex anywhere in the code
+                        var foundCheck = this.userCode.search(syntaxCheck.re);
+                        var rowNum = -1, colNum = -1, errorMsg;
+                        if (foundCheck > -1) {
+                            errorMsg = syntaxCheck.msg;
+
+                            // Find line number and character
+                            var lines = this.userCode.split("\n");
+                            var totalChars = 0;
+                            _.each(lines, function(line, num) {
+                                if (rowNum === -1 &&
+                                    foundCheck < totalChars + line.length) {
+                                    rowNum = num;
+                                    colNum = foundCheck - totalChars;
+                                }
+                                totalChars += line.length;
+                            });
+
+                            this.errors.splice(0, 1, {
+                                text: errorMsg,
+                                row: rowNum,
+                                col: colNum,
+                                type: "error"
+                            });
+                        }
+                    }.bind(this));
+                }
+            }
+
+            var alternateMessage;
+            var alsoMessage;
+
+            if (result.success) {
+                alternateMessage = result.message;
+            } else {
+                alsoMessage = result.message;
+            }
+
+            this.testContext.assert(result.success, description, "", {
+                // We can accept string hints here because
+                //  we never match against them anyway
+                structure: hint ? hint.toString() : "",
+                alternateMessage: alternateMessage,
+                alsoMessage: alsoMessage,
+                image: image
+            });
+        }
+
+    });
 })();
 /**
  * WebpageOutput
@@ -605,13 +732,14 @@ window.WebpageOutput = Backbone.View.extend({
     test: function(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
-        var testData = {
-            // Append to a div because jQuery doens't work on a document fragment
-            document: $("<div>").append(this.slowparseResults.document),
+        _.extend(this.tester.testContext, {
+            $doc: $(this.frameDoc),
+            // Append to a div because jQuery doesn't work on a document fragment
+            $docSP: $("<div>").append(this.slowparseResults.document),
             cssRules: this.slowparseResults.rules
-        };
+        });
 
-        this.tester.test(testData, tests, errors,
+        this.tester.test(userCode, tests, errors,
             function(errors, testResults) {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact
