@@ -14,8 +14,14 @@
     <script src="../../build/js/live-editor.output_pjs.js"></script>
     <script src="../../build/js/live-editor.output_debugger_deps.js"></script>
     <script>
+    var useDebugger = false;
+    if (location.search.indexOf("debugger=true") !== -1) {
+        useDebugger = ProcessingDebugger && ProcessingDebugger.isBrowserSupported();
+    }
+    
     new LiveEditorOutput({
-        el: $("#live-editor-output")[0]
+        el: $("#live-editor-output")[0],
+        useDebugger: useDebugger
     });
     </script>
 </body>

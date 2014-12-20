@@ -346,27 +346,27 @@ window.LiveEditorOutput = Backbone.View.extend({
             el: this.$el.find(".output"),
             config: this.config,
             output: this,
-            type: outputType
+            type: outputType,
+            useDebugger: this.options.useDebugger
         });
 
         if (this.output.debugger) {
             var debugr = this.output.debugger;
-            var self = this;
 
-            debugr.onBreakpoint = function () {
-                self.postParent({
+            debugr.onBreakpoint = function() {
+                this.postParent({
                     type: "debugger",
                     action: "step",
                     line: debugr.currentLine
                 });
-            };
+            }.bind(this);
 
-            debugr.onFunctionDone = function () {
-                self.postParent({
+            debugr.onFunctionDone = function() {
+                this.postParent({
                     type: "debugger",
                     action: "done"
                 });
-            };
+            }.bind(this);
         }
     },
 
@@ -403,7 +403,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // let the parent know we're up and running
         this.notifyActive();
 
-        if (typeof(event.data) === "object") {
+        if (typeof event.data === "object") {
             return;
         }
         try {
@@ -474,7 +474,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
     },
 
-    handleDebuggerMessage: function (data) {
+    handleDebuggerMessage: function(data) {
         var debugr = this.output.debugger;
 
         if (data.action === "debug") {

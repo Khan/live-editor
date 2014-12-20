@@ -47,7 +47,8 @@ var runTest = function(options) {
             workersDir: "../../../build/workers/",
             externalsDir: "../../../build/external/",
             imagesDir: "../../../build/images/",
-            jshintFile: "../../../build/external/jshint/jshint.js"
+            jshintFile: "../../../build/external/jshint/jshint.js",
+            useDebugger: useDebugger
         });
 
         // Switch to the Scratchpad's version

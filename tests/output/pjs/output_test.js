@@ -514,7 +514,7 @@ describe("Scratchpad Output Exec", function() {
      * resolved but shouldn't have any immediate impact on users.
      */
     runTest({
-        skip: usingDebugger,
+        skip: useDebugger,
         title: "Make sure prototype function scope is preserved",
         code: function() {
             var x = function() {

@@ -1224,13 +1224,11 @@ window.PJSOutput = Backbone.View.extend({
 
         this.build(this.$canvas[0]);
 
-        if (location.search.indexOf("debugger=true") !== -1 &&
-            ProcessingDebugger.isBrowserSupported()) {
-
+        if (options.useDebugger) {
             this.debugger = new ProcessingDebugger(this.canvas);
             this.debugger.breakpointsEnabled = false;
             this.debugger.onNewObject = PJSOutput.newCallback.bind(PJSOutput);
-            this.canvas.usingDebugger = true;
+            this.canvas.__usingDebugger = true;
         }
 
         this.reseedRandom();

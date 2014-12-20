@@ -17554,7 +17554,7 @@
       p.key = c;
       p.keyCode = code;
       p.keyPressed();
-      if (!p.usingDebugger) {
+      if (!p.__usingDebugger) {
         p.keyCode = 0;
         // When the debugger is in use all callbacks are queued and thus not
         // run synchronously therefore, setting keyCode = 0; immediatedly as 

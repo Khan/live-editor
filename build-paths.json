@@ -77,7 +77,7 @@
             "external/estraverse/estraverse.js",
             "external/escope/escope.js",
             "external/iframe-overlay/dist/iframe-overlay.js",
-            "external/escodegen/dist/escodegen.browser.js",
+            "external/escodegen/escodegen.browser.js",
             "external/stepper/build/processing-debugger.js"
         ],
         "output_pjs": [
@@ -169,11 +169,13 @@
         ],
         "ui": [
             "css/ui/tipbar.css",
-            "css/ui/style.css",
-            "css/ui/debugger.css"
+            "css/ui/style.css"
         ],
         "output": [
             "css/output/style.css"
+        ],
+        "debugger": [
+            "css/ui/debugger.css"
         ]
     },
     "images": [

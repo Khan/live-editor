@@ -4,7 +4,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
     el: ".scratchpad-debugger",
 
-    initialize: function (options) {
+    initialize: function(options) {
         this.editor = options.editor;
         this.liveEditor = options.liveEditor;
 
@@ -14,7 +14,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         }
     },
 
-    isSupported: function () {
+    isSupported: function() {
         // Source:
         // https://github.com/kangax/compat-table/blob/gh-pages/data-es6.js#L1554-L1564
         try {
@@ -33,13 +33,12 @@ window.ScratchpadDebugger = Backbone.View.extend({
                 "passed &= item.value === undefined && item.done === true;\n" +
                 "return passed;";
             return Function(code)();
-        }
-        catch (e) {
+        } catch (e) {
             return false;
         }
     },
 
-    render: function () {
+    render: function() {
         this.$el.html(Handlebars.templates["debugger"]({
             execFile: this.execFile,
             imagesDir: this.imagesDir,
@@ -47,11 +46,11 @@ window.ScratchpadDebugger = Backbone.View.extend({
         }));
     },
 
-    postFrame: function (data) {
+    postFrame: function(data) {
         this.liveEditor.postFrame(data);
     },
 
-    bind: function () {
+    bind: function() {
         var iframe = $("iframe").get(0);
         this.overlay = iframeOverlay.createOverlay(iframe);
 
@@ -61,7 +60,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
         $(window).on("message", this.listenMessages.bind(this));
 
-        $el.on("change", ".debug-mode", function () {
+        $el.on("change", ".debug-mode", function() {
             self.debuggerLevel = $el.find(".debugger-level-select option:selected").val();
 
             if (this.checked) {
@@ -97,13 +96,13 @@ window.ScratchpadDebugger = Backbone.View.extend({
         var scroller = self.liveEditor.$el.find(".ace_scroller").get(0);
         // needs to be on the capture phase to prevent existing event handlers
         // from firing
-        scroller.addEventListener("mousedown", function (e) {
+        scroller.addEventListener("mousedown", function(e) {
             if (self.get("enabled")) {
                 e.stopImmediatePropagation();
             }
         }, true);
 
-        $el.on("change", ".debugger-level-select", function () {
+        $el.on("change", ".debugger-level-select", function() {
             self.debuggerLevel = $(this).find("option:selected").val();
 
             if (self.debuggerLevel === "beginner") {
@@ -115,7 +114,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
             }
         });
 
-        $el.on("click", ".debug-begin", function () {
+        $el.on("click", ".debug-begin", function() {
             self.postFrame({
                 type: "debugger",
                 action: "start",
@@ -126,7 +125,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
             self.enableButtons();
         });
 
-        $el.on("click", ".debug-end", function () {
+        $el.on("click", ".debug-end", function() {
             self.postFrame({
                 type: "debugger",
                 action: "resume",
@@ -134,7 +133,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
             });
         });
 
-        $el.on("click", ".debug-restart", function () {
+        $el.on("click", ".debug-restart", function() {
             self.postFrame({
                 type: "debugger",
                 action: "start",
@@ -142,28 +141,28 @@ window.ScratchpadDebugger = Backbone.View.extend({
             });
         });
 
-        $el.on("click", ".debug-continue", function () {
+        $el.on("click", ".debug-continue", function() {
             self.postFrame({
                 type: "debugger",
                 action: "resume"
             });
         });
 
-        $el.on("click", ".step-over", function () {
+        $el.on("click", ".step-over", function() {
             self.postFrame({
                 type: "debugger",
                 action: "stepOver"
             });
         });
 
-        $el.on("click", ".step-in", function () {
+        $el.on("click", ".step-in", function() {
             self.postFrame({
                 type: "debugger",
                 action: "stepIn"
             });
         });
 
-        $el.on("click", ".step-out", function () {
+        $el.on("click", ".step-out", function() {
             self.postFrame({
                 type: "debugger",
                 action: "stepOut"
@@ -242,15 +241,15 @@ window.ScratchpadDebugger = Backbone.View.extend({
         });
     },
 
-    getBreakpoints: function () {
+    getBreakpoints: function() {
         var breakpoints = {};
-        this.editor.session.getBreakpoints().forEach(function (value, index) {
+        this.editor.session.getBreakpoints().forEach(function(value, index) {
             breakpoints[index + 1] = true;
         });
         return breakpoints;
     },
 
-    listenMessages: function (e) {
+    listenMessages: function(e) {
         var event = e.originalEvent;
         var data;
 
@@ -291,7 +290,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         }
     },
 
-    enableButtons: function () {
+    enableButtons: function() {
         this.$el.find(".step-over").removeAttr("disabled");
         this.$el.find(".step-in").removeAttr("disabled");
         this.$el.find(".step-out").removeAttr("disabled");
@@ -299,7 +298,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.$el.find(".debug-continue").removeAttr("disabled");
     },
 
-    disableButtons: function () {
+    disableButtons: function() {
         this.$el.find(".step-over").attr("disabled", "");
         this.$el.find(".step-in").attr("disabled", "");
         this.$el.find(".step-out").attr("disabled", "");
