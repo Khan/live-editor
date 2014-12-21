@@ -493,7 +493,65 @@
                 alsoMessage: alsoMessage,
                 image: image
             });
-        }
+        },
+        
+        
+
+        /*
+         * The difference here is that it tests against allScripts instead of userCode
+         */
+        match: function(structure) {
+            // If there were syntax errors, don't even try to match it
+            if (this.errors.length) {
+                return {
+                    success: false,
+                    message: $._("Syntax error!")
+                };
+            }
+    
+            // At the top, we take care of some "alternative" uses of this
+            // function. For ease of challenge developing, we return a
+            // failure() instead of disallowing these uses altogether
+    
+            // If we don't see a pattern property, they probably passed in
+            // a pattern itself, so we'll turn it into a structure
+            if (structure && _.isUndefined(structure.pattern)) {
+                structure = {pattern: structure};
+            }
+    
+            // If nothing is passed in or the pattern is non-existent, return
+            // failure
+            if (!structure || ! structure.pattern) {
+                return {
+                    success: false,
+                    message: ""
+                };
+            }
+    
+            try {
+                var callbacks = structure.constraint;
+                var success = Structured.match(this.testContext.allScripts,
+                    structure.pattern, {
+                        varCallbacks: callbacks
+                    });
+    
+                return {
+                    success: success,
+                    message: callbacks && callbacks.failure
+                };
+            } catch (e) {
+                if (window.console) {
+                    console.warn(e);
+                }
+                return {
+                    success: true,
+                    message: $._("Hm, we're having some trouble " +
+                        "verifying your answer for this step, so we'll give " +
+                        "you the benefit of the doubt as we work to fix it. " +
+                        "Please click \"Report a problem\" to notify us.")
+                };
+            }
+        },
 
     });
 })();
