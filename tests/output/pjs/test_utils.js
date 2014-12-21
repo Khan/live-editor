@@ -113,13 +113,13 @@ var runTest = function(options) {
             }
 
             checkErrors(options.errors, errors);
-            checkAssertions(options.assertions, output.assertions);
+            checkAssertions(options.assertions, output.results.assertions);
             options.simulateClick && simulateClick();
 
             if (code2) {
                 output.runCode(code2, function(errors) {
                     checkErrors(options.errors2, errors);
-                    checkAssertions(options.assertions2, output.assertions);
+                    checkAssertions(options.assertions2, output.results.assertions);
                     options.simulateClick && simulateClick();
                     done();
                 });

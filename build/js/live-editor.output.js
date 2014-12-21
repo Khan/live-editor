@@ -320,7 +320,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.render();
 
         this.setPaths(options);
-        this.assertions = [];
 
         this.config = new ScratchpadConfig({
             useDebugger: options.useDebugger
