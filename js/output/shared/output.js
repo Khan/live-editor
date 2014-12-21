@@ -7,8 +7,11 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.render();
 
         this.setPaths(options);
+        this.assertions = [];
 
-        this.config = new ScratchpadConfig({});
+        this.config = new ScratchpadConfig({
+            useDebugger: options.useDebugger
+        });
 
         if (options.outputType) {
             this.setOutput(options.outputType);
@@ -33,28 +36,8 @@ window.LiveEditorOutput = Backbone.View.extend({
             el: this.$el.find(".output"),
             config: this.config,
             output: this,
-            type: outputType,
-            useDebugger: this.options.useDebugger
+            type: outputType
         });
-
-        if (this.output.debugger) {
-            var debugr = this.output.debugger;
-
-            debugr.onBreakpoint = function() {
-                this.postParent({
-                    type: "debugger",
-                    action: "step",
-                    line: debugr.currentLine
-                });
-            }.bind(this);
-
-            debugr.onFunctionDone = function() {
-                this.postParent({
-                    type: "debugger",
-                    action: "done"
-                });
-            }.bind(this);
-        }
     },
 
     setPaths: function(data) {
@@ -104,7 +87,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
 
         if (data.type === "debugger") {
-            this.handleDebuggerMessage(data);
             return;
         }
 
@@ -158,65 +140,6 @@ window.LiveEditorOutput = Backbone.View.extend({
                     this.output.messageHandlers[prop].call(this.output, data);
                 }
             }
-        }
-    },
-
-    handleDebuggerMessage: function(data) {
-        var debugr = this.output.debugger;
-
-        if (data.action === "debug") {
-            if (data.state === "on") {
-                this.output.debugger.breakpointsEnabled = true;
-            } else if (data.state === "off") {
-                this.output.debugger.breakpointsEnabled = false;
-                debugr.resume();
-                this.output.restart();
-            }
-        }
-
-        if (data.action === "start") {
-            this.output.clear();
-            debugr.breakpoints = data.breakpoints;
-            debugr.start(data.paused);
-        }
-
-        if (data.action === "resume") {
-            debugr.resume();
-        }
-
-        if (data.action === "stepIn") {
-            debugr.stepIn();
-            this.postParent({
-                type: "debugger",
-                action: "step",
-                line: debugr.currentLine
-            });
-        }
-
-        if (data.action === "stepOver") {
-            debugr.stepOver();
-            this.postParent({
-                type: "debugger",
-                action: "step",
-                line: debugr.currentLine
-            });
-        }
-
-        if (data.action === "stepOut") {
-            debugr.stepOut();
-            this.postParent({
-                type: "debugger",
-                action: "step",
-                line: debugr.currentLine
-            });
-        }
-
-        if (data.action === "setBreakpoint") {
-            debugr.setBreakpoint(data.line);
-        }
-
-        if (data.action === "clearBreakpoint") {
-            debugr.clearBreakpoint(data.line);
         }
     },
 

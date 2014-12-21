@@ -78,7 +78,8 @@
             "external/escope/escope.js",
             "external/iframe-overlay/dist/iframe-overlay.js",
             "external/escodegen/escodegen.browser.js",
-            "external/stepper/build/processing-debugger.js"
+            "external/stepper/build/processing-debugger.js",
+            "js/output/pjs/pjs-debugger.js"
         ],
         "output_pjs": [
             "js/output/pjs/pjs-tester.js",

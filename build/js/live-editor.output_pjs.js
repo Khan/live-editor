@@ -1224,11 +1224,11 @@ window.PJSOutput = Backbone.View.extend({
 
         this.build(this.$canvas[0]);
 
-        if (options.useDebugger) {
-            this.debugger = new ProcessingDebugger(this.canvas);
-            this.debugger.breakpointsEnabled = false;
-            this.debugger.onNewObject = PJSOutput.newCallback.bind(PJSOutput);
-            this.canvas.__usingDebugger = true;
+        if (this.config.useDebugger && PJSDebugger) {
+            this.debugger = new PJSDebugger({
+                context: this.canvas,
+                output: this
+            });
         }
 
         this.reseedRandom();
@@ -2530,8 +2530,7 @@ window.PJSOutput = Backbone.View.extend({
         try {
 
             if (this.debugger) {
-                this.debugger.load(originalCode);
-                this.debugger.start();
+                this.debugger.exec(originalCode);
             } else {
                 (new Function(code)).apply(this.canvas, contexts);
             }
