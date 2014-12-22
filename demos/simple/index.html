@@ -33,6 +33,12 @@
     <script src="../../build/js/live-editor.editor_ace.js"></script>
 
     <script>
+    	$(function() {
+    		$(".tipbar").draggable({containment: 'parent'});
+    	});
+    </script>
+
+    <script>
     window.liveEditor = new LiveEditor({
         el: $("#sample-live-editor"),
         code: window.localStorage["test-code"] || "rect(10, 10, 100, 100);",
