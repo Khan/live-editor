@@ -125,6 +125,11 @@ window.AceEditor = Backbone.View.extend({
         this.config.editor = this;
 
         this.reset();
+
+        // Make Oh Noes draggable
+        $(function() {
+            $(".tipbar").draggable({containment: 'parent'});
+        });
     },
 
     remove: function() {
