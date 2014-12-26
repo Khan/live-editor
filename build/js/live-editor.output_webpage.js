@@ -796,7 +796,6 @@ window.WebpageOutput = Backbone.View.extend({
         } else {
             callback([]);
         }
-        
     },
 
     clear: function() {

@@ -7,7 +7,10 @@
  * 
  */
 (function ($) {
-	var isTouch = 'ontouchend' in document;
+	// We only use the more responsive touch events on iPad/iPhone
+	//  because otherwise we also use touch on touch-enabled ChromeBooks,
+	//  and students can no longer use their mouse.
+	var isITouch = /(iPhone|iPod|iPad).*AppleWebKit/i.test(navigator.userAgent);
 
 	var ColorPicker = function () {
 		var
@@ -28,9 +31,9 @@
 				flat: false
 			},
 			events = {
-				start: isTouch ? "touchstart": "mousedown",
-				end: isTouch ? "touchend" : "mouseup",
-				move: isTouch ? "touchmove" : "mousemove"
+				start: isITouch ? "touchstart": "mousedown",
+				end: isITouch ? "touchend" : "mouseup",
+				move: isITouch ? "touchmove" : "mousemove"
 			},
 			fillRGBFields = function  (hsb, cal) {
 				var rgb = HSBToRGB(hsb);
