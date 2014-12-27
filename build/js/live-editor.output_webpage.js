@@ -28,8 +28,11 @@
             this.curTask = null;
             this.curTest = null;
 
-            // Stop async tests which try to respond immediately 
-            // from sending incomplete test results.
+            // uiTests will try to postMessage the parent immediately
+            // because they are usually running asynchronously.
+            // Set this flag so that they know we are actually running
+            // the original pass, and we will handle reporting everything
+            // caught here for them.
             this.syncTests = true;
             for (var i = 0; i < this.tests.length; i++) {
                 testResults.push(this.runTest(this.tests[i], i));
@@ -468,47 +471,11 @@
         ///////////////////////////////////////////////////////
 
         /**
-         * Diff - Change the way hint text is interpretted
+         * The differences are that this assertMatch doesn't support syntaxChecks
+         * (deemed unnecessary for webpage JS testing, and that the hint text is 
+         * interpreted differently. 
          */
-        assertMatch: function(result, description, hint, image, syntaxChecks) {
-            if (syntaxChecks) {
-                // If we found any syntax errors or warnings, we'll send it
-                // through the special syntax checks
-                var foundErrors = _.any(this.errors, function(error) {
-                    return error.lint;
-                });
-
-                if (foundErrors) {
-                    _.each(syntaxChecks, function(syntaxCheck) {
-                        // Check if we find the regex anywhere in the code
-                        var foundCheck = this.userCode.search(syntaxCheck.re);
-                        var rowNum = -1, colNum = -1, errorMsg;
-                        if (foundCheck > -1) {
-                            errorMsg = syntaxCheck.msg;
-
-                            // Find line number and character
-                            var lines = this.userCode.split("\n");
-                            var totalChars = 0;
-                            _.each(lines, function(line, num) {
-                                if (rowNum === -1 &&
-                                    foundCheck < totalChars + line.length) {
-                                    rowNum = num;
-                                    colNum = foundCheck - totalChars;
-                                }
-                                totalChars += line.length;
-                            });
-
-                            this.errors.splice(0, 1, {
-                                text: errorMsg,
-                                row: rowNum,
-                                col: colNum,
-                                type: "error"
-                            });
-                        }
-                    }.bind(this));
-                }
-            }
-
+        assertMatch: function(result, description, hint, image) {
             var alternateMessage;
             var alsoMessage;
 
@@ -526,10 +493,69 @@
                 alsoMessage: alsoMessage,
                 image: image
             });
-        }
+        },
+        
+        
+
+        /*
+         * The difference here is that it tests against allScripts instead of userCode
+         */
+        match: function(structure) {
+            // If there were syntax errors, don't even try to match it
+            if (this.errors.length) {
+                return {
+                    success: false,
+                    message: $._("Syntax error!")
+                };
+            }
+    
+            // At the top, we take care of some "alternative" uses of this
+            // function. For ease of challenge developing, we return a
+            // failure() instead of disallowing these uses altogether
+    
+            // If we don't see a pattern property, they probably passed in
+            // a pattern itself, so we'll turn it into a structure
+            if (structure && _.isUndefined(structure.pattern)) {
+                structure = {pattern: structure};
+            }
+    
+            // If nothing is passed in or the pattern is non-existent, return
+            // failure
+            if (!structure || ! structure.pattern) {
+                return {
+                    success: false,
+                    message: ""
+                };
+            }
+    
+            try {
+                var callbacks = structure.constraint;
+                var success = Structured.match(this.testContext.allScripts,
+                    structure.pattern, {
+                        varCallbacks: callbacks
+                    });
+    
+                return {
+                    success: success,
+                    message: callbacks && callbacks.failure
+                };
+            } catch (e) {
+                if (window.console) {
+                    console.warn(e);
+                }
+                return {
+                    success: true,
+                    message: $._("Hm, we're having some trouble " +
+                        "verifying your answer for this step, so we'll give " +
+                        "you the benefit of the doubt as we work to fix it. " +
+                        "Please click \"Report a problem\" to notify us.")
+                };
+            }
+        },
 
     });
 })();
+
 /**
  * WebpageOutput
  * It creates an iframe on the same domain, and uses
@@ -760,7 +786,8 @@ window.WebpageOutput = Backbone.View.extend({
 
     postProcessing: function(oldPageTitle) {
         var self = this;
-        $(this.frameDoc).on("mouseup", "a", function() {
+        
+        $(this.frameDoc).find("a").on("mouseup", function() {
             var url = $(this).attr("href");
             if (url[0] !== "#") {
                 self.output.postParent({
@@ -796,6 +823,7 @@ window.WebpageOutput = Backbone.View.extend({
         } else {
             callback([]);
         }
+        
     },
 
     clear: function() {

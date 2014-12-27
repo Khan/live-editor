@@ -228,7 +228,8 @@ window.WebpageOutput = Backbone.View.extend({
 
     postProcessing: function(oldPageTitle) {
         var self = this;
-        $(this.frameDoc).on("mouseup", "a", function() {
+        
+        $(this.frameDoc).find("a").on("mouseup", function() {
             var url = $(this).attr("href");
             if (url[0] !== "#") {
                 self.output.postParent({
