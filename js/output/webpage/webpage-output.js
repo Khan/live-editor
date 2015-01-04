@@ -231,12 +231,20 @@ window.WebpageOutput = Backbone.View.extend({
         
         $(this.frameDoc).find("a").on("mouseup", function() {
             var url = $(this).attr("href");
-            if (url[0] !== "#") {
-                self.output.postParent({
-                    action: "link-click",
-                    url: url
-                });
+            if (url && url[0] === "#") {
+                var id = url;
+                console.log(id);
+                console.log($(self.frameDoc));
+                $(self.frameDoc).find("html, body").animate({
+                        scrollTop: $(self.frameDoc).find(id).offset().top
+                    }, 1000);
+                return;
             }
+
+            self.output.postParent({
+                action: "link-click",
+                url: url
+            });
             return false;
         });
 
