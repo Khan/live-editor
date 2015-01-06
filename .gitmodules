@@ -21,4 +21,4 @@
 	url = https://github.com/kevinb7/processing-js
 [submodule "external/escodegen"]
 	path = external/escodegen
-	url = https://github.com/kevinb7/escodegen
+	url = https://github.com/Khan/escodegen
