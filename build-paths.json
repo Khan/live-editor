@@ -52,8 +52,8 @@
             "js/ui/tooltip-engine.js",
             "js/ui/tooltips/*.js",
             "build/tmpl/image-picker.js",
-            "build/tmpl/image-modal.js",
-            "build/tmpl/image-modal-preview.js",
+            "build/tmpl/mediapicker-preview.js",
+            "build/tmpl/mediapicker-modal.js",
             "js/ui/structured-blocks-tooltips.js"
         ],
         "debugger": [

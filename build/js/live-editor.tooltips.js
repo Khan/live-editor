@@ -2218,6 +2218,14 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }
 });
+/* This file contains both the imageModal and soundModal tooltip, which share
+ the same Modal() View, but have fairly different ways that they hook into
+ the editor and replace the code.
+ The imageModal is currently used only by webpages,
+ and the soundModal is currently used only by programs.
+ In the future, the imageModal might also be used by programs,
+ as students seem to prefer that UI to the imagePicker UI.
+ */
 (function() {
     var Modal = Backbone.View.extend({
         initialize: function(options) {
@@ -2226,7 +2234,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             this.render();
             this.bind();
             TooltipUtils.setupScrollSpy(
-                this.$(".imagemodal-content"),
+                this.$(".mediapicker-modal-content"),
                 function(content) { // This function finds the associated pills for a scrollable div.
                     return $(content).closest(".tab-pane").find(".nav-pills");
                 }
@@ -2237,7 +2245,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         // These are here because scroll events cannot be delegated
         bind: function() {
             // Handle the shadow which appears on scroll
-            this.$(".imagemodal-content").scroll(
+            this.$(".mediapicker-modal-content").scroll(
                 _.throttle(function(e) {
                     var $target = $(e.currentTarget);
                     if ($target.scrollTop() > 0) {
@@ -2249,21 +2257,22 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             );
 
             // Lazy load on scroll
-            this.$(".imagemodal-content").scroll(
+            this.$(".mediapicker-modal-content").scroll(
                 _.throttle(function(e) {
                     TooltipUtils.lazyLoadImgs(e.currentTarget);
                 }, 200)
             );
+
+            // Treat playing an audio file like a selection
+            // The play event can't be delegated, so we do it here.
+            this.$(".mediapicker-modal-file audio").on("play", function(e) {
+                this.handleFileSelect(e);
+            }.bind(this));
         },
 
         events: {
-            // Highlight image when it is clicked
-            "click .imagemodal-content .image": function(e) {
-                this.$(".image.active").removeClass("active");
-                $(e.currentTarget).addClass("active");
-                var imgDataPath = $(e.currentTarget).closest(".image").attr("data-path");
-                this.options.record.log("imagemodal.selectImg", imgDataPath);
-            },
+            // Highlight file when it is clicked
+            "click .mediapicker-modal-file": "handleFileSelect",
 
             "click .nav-tabs a": function(e) {
                 $(e.currentTarget).tab("show");
@@ -2272,24 +2281,26 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
 
             // Modal or tab
             "shown": function() {
-                TooltipUtils.lazyLoadImgs(this.$(".tab-pane.active .imagemodal-content"));
+                TooltipUtils.lazyLoadImgs(
+                    this.$(".tab-pane.active .mediapicker-modal-content"));
             },
 
             "hide.bs.modal": function() {
                 this.scrollStart = undefined;
                 $("body").css("overflow", "auto");
-                this.options.record.log("imagemodal.hide");
+                this.logForRecording("hide");
             },
 
             // Update the url in ACE if someone clicks ok
-            "click .imagemodal-submit": function(e) {
-                var $active = this.$(".image.active");
+            "click .mediapicker-modal-submit": function(e) {
+                var $active = this.$(".mediapicker-modal-file.active");
                 if ($active.length !== 1) {
                     return;
                 }
-                var path = this.options.imagesDir + $active.attr("data-path") + ".png";
-                this.parent.updateText(path);
-                this.parent.updateTooltip(path);
+                // The update and preview path are same for images,
+                //  but differ for sound by the addition of quotation marks
+                this.parent.updateText($active.attr("data-update-path"));
+                this.parent.updateTooltip($active.attr("data-preview-path"));
             }
         },
 
@@ -2299,18 +2310,36 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         show: function() {
             this.$el.modal();
             $("body").css("overflow", "hidden");
-            this.$(".image.active").removeClass("active");
-            this.options.record.log("imagemodal.show");
+            this.$(".mediapicker-modal-file.active").removeClass("active");
+            this.logForRecording("show");
+        },
+
+        handleFileSelect: function(e) {
+            this.$(".mediapicker-modal-file.active").removeClass("active");
+            var $file = $(e.currentTarget).closest(".mediapicker-modal-file");
+            $file.addClass("active");
+            this.logForRecording("selectImg", $file.attr("data-path"));
+        },
+
+        selectFile: function(dataPath) {
+            var $file = this.$(".mediapicker-modal-file[data-path='"+dataPath+"']");
+            var $pane = $file.closest(".tab-pane");
+            var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
+            $tab.tab("show");
+            $pane.find(".mediapicker-modal-content").scrollTop(
+                $file.position().top - 100);
+            return $file;
         },
 
         selectImg: function(dataPath) {
-            var $image = this.$(".image[data-path='"+dataPath+"']");
-            var $pane = $image.closest(".tab-pane");
-            var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
-            $tab.tab("show");
-            $pane.find(".imagemodal-content").scrollTop(
-                $image.position().top - 100);
-            $image.find("img").click();
+            var $file = this.selectFile(dataPath);
+            $file.find("img").click();
+        },
+
+        logForRecording: function(action, value) {
+            var logPrefix = this.options.logPrefix || "mediamodal";
+            var logAction = logPrefix + "." + action;
+            this.options.record.log(logAction, value);
         },
 
         render: function() {
@@ -2320,9 +2349,10 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 this.slugify);
             Handlebars.registerHelper("patchedEach",
                 this.handlebarsPatchedEach);
-            this.$el = $(Handlebars.templates["image-modal"]({
+            this.$el = $(Handlebars.templates["mediapicker-modal"]({
                 imagesDir: this.options.imagesDir,
-                classes: ExtendedOutputImages
+                soundsDir: this.options.soundsDir,
+                classes: this.options.files
             }));
             this.$el.appendTo("body").hide();
         },
@@ -2357,6 +2387,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
     TooltipEngine.classes.imageModal = TooltipBase.extend({
         initialize: function(options) {
             this.options = options;
+            this.options.files = ExtendedOutputImages;
             this.parent = options.parent;
             this.render();
             this.bindToRequestTooltip();
@@ -2421,7 +2452,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
 
         render: function() {
             var self = this;
-            this.$el = $(Handlebars.templates["image-modal-preview"]())
+            this.$el = $(Handlebars.templates["mediapicker-preview"](
+                            {isAudio: false}))
                             .appendTo("body").hide();
 
             this.$(".thumb")
@@ -2439,6 +2471,110 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                     $(this).hide();
                     self.$(".thumb-throbber").hide();
                 });
+
+            this.$("button").on("click", function() {
+                self.modal.show();
+            });
+
+            this.modal = new Modal(_.defaults({
+                parent: this,
+                logPrefix: "imagemodal"
+            }, this.options));
+        },
+
+        remove: function() {
+            this.$el.remove();
+            this.modal.remove();
+            this.unbindFromRequestTooltip();
+        }
+    });
+
+    TooltipEngine.classes.soundModal = TooltipBase.extend({
+        defaultFile: "\"rpg/metal-clink\"",
+        initialize: function(options) {
+            this.options = options;
+            this.options.files = [{
+                className: "Sound effects",
+                groups: [{
+                    groupName: "rpg",
+                    sounds: "battle-magic battle-spell battle-swing coin-jingle door-open giant-hyah giant-no giant-yah hit-clop hit-splat hit-thud hit-whack metal-chime metal-clink step-heavy water-bubble water-slosh".split(" "),
+                    cite: $._("'RPG Sound Effects' art by artisticdude"),
+                    citeLink: "http://opengameart.org/content/rpg-sound-pack"
+                }]
+            }];
+            this.parent = options.parent;
+            this.render();
+            this.bindToRequestTooltip();
+        },
+
+        detector: function(event) {
+            if (!/(\bgetSound\s*\()[^\)]*$/.test(event.pre)) {
+                return;
+            }
+            // This is quite similar to code in image-picker.js,
+            //  but my attempts to abstract it were thwarted by 
+            //  PhantomJS's inability to pass around RegEx objects in tests.
+            //  That should be fixed in PhantomJS2.0, so we are eagerly
+            //  awaiting the upgrade of gulp-mocha-phantomjs to that.
+            var functionStart = event.col - RegExp.lastMatch.length;
+            var paramsStart = functionStart + RegExp.$1.length;
+            
+            var pieces = /^(\s*)(["']?[^\)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
+            var leading = pieces[1];
+            var pathStart = paramsStart + leading.length;
+            var path = pieces[2];
+            var closing = pieces[3];
+
+            if (leading.length === 0 &&
+                path.length === 0 &&
+                closing.length === 0 &&
+                event.source &&
+                event.source.action === "insertText" &&
+                event.source.text.length === 1) {
+                closing = ")" + (this.isInParenthesis(
+                    event.pre.slice(0, functionStart)) ? "" : ";");
+                this.insert({
+                    row: event.row,
+                    column: pathStart
+                }, closing);
+
+                path = this.defaultFile;
+                this.updateText(path);
+            }
+
+            this.aceLocation = {
+                start: pathStart,
+                length: path.length,
+                row: event.row
+            };
+            this.aceLocation.tooltipCursor = this.aceLocation.start +
+                this.aceLocation.length + closing.length;
+            
+            this.updateTooltip(path);
+            this.placeOnScreen();
+            event.stopPropagation();
+            ScratchpadAutosuggest.enableLiveCompletion(false);
+        },
+        
+        updateTooltip: function(partialPath) {
+            if (partialPath !== this.currentUrl) {
+                partialPath = partialPath.replace(/\"/g, "");
+                this.currentUrl = this.options.soundsDir + partialPath + ".mp3";
+                if (partialPath === "") {
+                    this.$(".thumb-error").text($._("Invalid sound file.")).show();
+                    return;
+                } else {
+                    this.$(".thumb-error").hide();
+                }
+            }
+            this.$(".mediapicker-preview-file").attr("src", this.currentUrl);
+        },
+
+        render: function() {
+            var self = this;
+            this.$el = $(Handlebars.templates["mediapicker-preview"](
+                            {isAudio: true}))
+                            .appendTo("body").hide();
 
             this.$("button").on("click", function() {
                 self.modal.show();
@@ -2517,7 +2653,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
             })
         });
 
-        this.$el = $("<div class='tooltip imagepicker'>" + results +
+        this.$el = $("<div class='tooltip mediapicker'>" + results +
             "<div class='arrow'></div></div>")
             .appendTo("body").hide();
 
@@ -2528,7 +2664,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
     bind: function() {
         var self = this;
 
-        this.$(".image-groups").scroll(_.throttle(function() {
+        this.$(".media-groups").scroll(_.throttle(function() {
             TooltipUtils.lazyLoadImgs(this);
         }, 200, {leading: false}));
 
@@ -2537,7 +2673,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
                 TooltipUtils.lazyLoadImgs($(this));
             })
             .on("click", ".image", function() {
-                $(this).parents(".imagepicker").find(".active").removeClass("active");
+                $(this).parents(".mediapicker").find(".active").removeClass("active");
                 $(this).addClass("active");
                 self.updateText($(this).attr("data-path"));
             })
@@ -2570,7 +2706,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         });
 
         var fullPath = this.parent.options.imagesDir + foundPath + ".png";
-        this.$el.find(".current-image img")
+        this.$el.find(".current-media img")
             .attr("src", fullPath);
 
         this.value = path;
@@ -2946,7 +3082,7 @@ this["Handlebars"]["templates"]["image-picker"] = Handlebars.template(function (
 function program1(depth0,data) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n        <div class=\"image-group\">\n            <h3 class=\"image-group\">";
+  buffer += "\n        <div class=\"media-group\">\n            <h3>";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth0.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -3022,12 +3158,12 @@ function program4(depth0,data,depth1) {
   buffer += escapeExpression(stack1) + "</span>\n            </div>\n            ";
   return buffer;}
 
-  buffer += "<div class=\"current-image\"><img src=\"";
+  buffer += "<div class=\"current-media\"><img src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "cute/Blank.png\"/></div>\n<div class=\"image-groups\">\n    <div style=\"position: relative;\">\n    ";
+  buffer += escapeExpression(stack1) + "cute/Blank.png\"/></div>\n<div class=\"media-groups\">\n    <div style=\"position: relative;\">\n    ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   stack2 = helpers.each;
@@ -3041,7 +3177,70 @@ function program4(depth0,data,depth1) {
   return buffer;});;
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["image-modal"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+this["Handlebars"]["templates"]["mediapicker-preview"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  helpers = helpers || Handlebars.helpers;
+  var buffer = "", stack1, stack2, foundHelper, tmp1, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
+
+function program1(depth0,data) {
+  
+  
+  return "mediapicker__sound";}
+
+function program3(depth0,data) {
+  
+  
+  return "mediapicker__image";}
+
+function program5(depth0,data) {
+  
+  
+  return "\n		<audio controls class=\"mediapicker-preview-file\"></audio>\n		<div class=\"thumb-error\"></div>\n		";}
+
+function program7(depth0,data) {
+  
+  
+  return "\n		<img src=\"/images/throbber.gif\" class=\"thumb-throbber\" />\n		<div class=\"thumb-shell\">\n			<img class=\"thumb\" />\n			<div class=\"thumb-error\"></div>\n		</div> \n		";}
+
+function program9(depth0,data) {
+  
+  
+  return "Pick file:";}
+
+  buffer += "<div class=\"tooltip mediapicker-preview ";
+  foundHelper = helpers.isAudio;
+  stack1 = foundHelper || depth0.isAudio;
+  stack2 = helpers['if'];
+  tmp1 = self.program(1, program1, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.program(3, program3, data);
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\">\n	<div class=\"mediapicker-preview-content\">\n		\n		";
+  foundHelper = helpers.isAudio;
+  stack1 = foundHelper || depth0.isAudio;
+  stack2 = helpers['if'];
+  tmp1 = self.program(5, program5, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.program(7, program7, data);
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n\n		<button class=\"kui-button kui-button-submit kui-button-primary\" style=\"padding: 5px; width: 100%; margin: 0 auto;\" >\n			";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(9, program9, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n		</button> \n	</div>\n	<div class=\"arrow\"></div>\n</div>";
+  return buffer;});;
+this["Handlebars"] = this["Handlebars"] || {};
+this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
+this["Handlebars"]["templates"]["mediapicker-modal"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   helpers = helpers || Handlebars.helpers;
   var buffer = "", stack1, stack2, foundHelper, tmp1, self=this, functionType="function", helperMissing=helpers.helperMissing, undef=void 0, escapeExpression=this.escapeExpression, blockHelperMissing=helpers.blockHelperMissing;
 
@@ -3099,7 +3298,7 @@ function program4(depth0,data,depth1) {
   if(typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, { hash: {} }); }
   else if(stack2=== undef) { stack1 = helperMissing.call(depth0, "slugify", stack1, { hash: {} }); }
   else { stack1 = stack2; }
-  buffer += escapeExpression(stack1) + "\">\n        <div class=\"imagemodal-content\">\n        <div style=\"position: relative;\">\n        ";
+  buffer += escapeExpression(stack1) + "\">\n        <div class=\"mediapicker-modal-content\">\n        <div style=\"position: relative;\">\n        ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   stack2 = helpers.each;
@@ -3114,7 +3313,7 @@ function program4(depth0,data,depth1) {
   stack1 = foundHelper || depth0.groups;
   foundHelper = helpers.hasMultipleItems;
   stack2 = foundHelper || depth0.hasMultipleItems;
-  tmp1 = self.program(14, program14, data);
+  tmp1 = self.program(16, program16, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -3131,7 +3330,7 @@ function program5(depth0,data) {
 function program7(depth0,data,depth1,depth2) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n            <div class=\"image-group\">\n                ";
+  buffer += "\n            <div class=\"mediapicker-modal-group\">\n                ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth1.groups;
   foundHelper = helpers.hasMultipleItems;
@@ -3163,12 +3362,22 @@ function program7(depth0,data,depth1,depth2) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n                ";
+  foundHelper = helpers.sounds;
+  stack1 = foundHelper || depth0.sounds;
+  stack2 = helpers.each;
+  tmp1 = self.programWithDepth(program14, data, depth0, depth2);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  stack1 = stack2.call(depth0, stack1, tmp1);
+  if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n            </div>\n        ";
   return buffer;}
 function program8(depth0,data) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n                <h3 class=\"image-group\" id=\"im-group-";
+  buffer += "\n                <h3 id=\"im-group-";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth0.groupName;
   foundHelper = helpers.slugify;
@@ -3203,7 +3412,45 @@ function program10(depth0,data) {
 function program12(depth0,data,depth1,depth3) {
   
   var buffer = "", stack1;
-  buffer += "\n                <div class=\"image\" data-path=\"";
+  buffer += "\n                <div class=\"image mediapicker-modal-file\"\n                    data-update-path=\"";
+  foundHelper = helpers.imagesDir;
+  stack1 = foundHelper || depth3.imagesDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, ".........imagesDir", { hash: {} }); }
+  buffer += escapeExpression(stack1);
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth1.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1);
+  foundHelper = helpers.thumbsDir;
+  stack1 = foundHelper || depth1.thumbsDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...thumbsDir", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + ".png\"\n                    data-preview-path=\"";
+  foundHelper = helpers.imagesDir;
+  stack1 = foundHelper || depth3.imagesDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, ".........imagesDir", { hash: {} }); }
+  buffer += escapeExpression(stack1);
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth1.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1);
+  foundHelper = helpers.thumbsDir;
+  stack1 = foundHelper || depth1.thumbsDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...thumbsDir", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + ".png\"\n                    data-path=\"";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth1.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -3231,14 +3478,65 @@ function program12(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + ".png\"/></div>\n                    <span class=\"name\">";
+  buffer += escapeExpression(stack1) + ".png\"/></div>\n                    <span>";
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
   buffer += escapeExpression(stack1) + "</span>\n                </div>\n                ";
   return buffer;}
 
-function program14(depth0,data) {
+function program14(depth0,data,depth1,depth3) {
+  
+  var buffer = "", stack1;
+  buffer += "\n                <div class=\"sound mediapicker-modal-file\"\n                    data-update-path='\"";
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth1.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "\"'\n                    data-preview-path=\"";
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth1.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "\"\n                    data-path=\"";
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth1.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "\">\n                    <audio src=\"";
+  foundHelper = helpers.soundsDir;
+  stack1 = foundHelper || depth3.soundsDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, ".........soundsDir", { hash: {} }); }
+  buffer += escapeExpression(stack1);
+  foundHelper = helpers.groupName;
+  stack1 = foundHelper || depth1.groupName;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + ".mp3\" controls/>\n                    <span>";
+  stack1 = depth0;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "</span>\n                </div>\n                ";
+  return buffer;}
+
+function program16(depth0,data) {
   
   var buffer = "", stack1, stack2;
   buffer += "\n        <ul class=\"nav nav-pills nav-stackable\">\n        ";
@@ -3246,7 +3544,7 @@ function program14(depth0,data) {
   stack1 = foundHelper || depth0.groups;
   foundHelper = helpers.patchedEach;
   stack2 = foundHelper || depth0.patchedEach;
-  tmp1 = self.program(15, program15, data);
+  tmp1 = self.program(17, program17, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -3255,14 +3553,14 @@ function program14(depth0,data) {
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n        </ul>\n        ";
   return buffer;}
-function program15(depth0,data) {
+function program17(depth0,data) {
   
   var buffer = "", stack1, stack2;
   buffer += "\n            <li ";
   foundHelper = helpers.$first;
   stack1 = foundHelper || depth0.$first;
   stack2 = helpers['if'];
-  tmp1 = self.program(16, program16, data);
+  tmp1 = self.program(18, program18, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -3283,22 +3581,22 @@ function program15(depth0,data) {
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
   buffer += escapeExpression(stack1) + "</a></li>\n        ";
   return buffer;}
-function program16(depth0,data) {
+function program18(depth0,data) {
   
   
   return "class=\"active\"";}
 
-function program18(depth0,data) {
+function program20(depth0,data) {
   
   
   return "Close";}
 
-function program20(depth0,data) {
+function program22(depth0,data) {
   
   
   return "Ok";}
 
-  buffer += "<div class=\"modal imagemodal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n    ";
+  buffer += "<div class=\"modal mediapicker-modal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n    ";
   foundHelper = helpers.classes;
   stack1 = foundHelper || depth0.classes;
   foundHelper = helpers.patchedEach;
@@ -3322,17 +3620,7 @@ function program20(depth0,data) {
   if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n    </div>\n\n    <div class=\"imagemodal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">";
-  foundHelper = helpers['_'];
-  stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(18, program18, data);
-  tmp1.hash = {};
-  tmp1.fn = tmp1;
-  tmp1.inverse = self.noop;
-  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
-  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
-  if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</button>\n      <button type=\"button\" class=\"simple-button green imagemodal-submit\" data-dismiss=\"modal\">";
+  buffer += "\n    </div>\n\n    <div class=\"mediapicker-modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(20, program20, data);
@@ -3342,30 +3630,17 @@ function program20(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</button>\n    </div>\n</div>";
-  return buffer;});;
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["image-modal-preview"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
-  helpers = helpers || Handlebars.helpers;
-  var buffer = "", stack1, foundHelper, tmp1, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
-
-function program1(depth0,data) {
-  
-  
-  return "Pick Image:";}
-
-  buffer += "<div class=\"tooltip imagemodal-preview\">\n	<div class=\"content\">\n		<img src=\"/images/throbber.gif\" class=\"thumb-throbber\" />\n		<div class=\"thumb-shell\"><img class=\"thumb\" /><div class=\"thumb-error\"></div></div> \n		<button class=\"kui-button kui-button-submit kui-button-primary\" style=\"padding: 5px; width: 100%; margin: 0 auto;\" >\n			";
+  buffer += "</button>\n      <button type=\"button\" class=\"simple-button green mediapicker-modal-submit\" data-dismiss=\"modal\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(1, program1, data);
+  tmp1 = self.program(22, program22, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n		</button> \n	</div>\n	<div class=\"arrow\"></div>\n</div>";
+  buffer += "</button>\n    </div>\n</div>";
   return buffer;});;
 (function() {
     var ESC = 27;

@@ -12151,6 +12151,14 @@ window.StateScrubber.prototype = {
             console.error("toFind should never be an array.");
             console.error(toFind);
         }
+        if (currTree == undefined) {
+            if (toFind == undefined) {
+                matchResults._.push(currTree);
+                return matchResults;
+            } else {
+                return false;
+            }
+        }
         if (exactMatchNode(currTree, toFind, peersToFind, wVars, matchResults, options)) {
             return matchResults;
         }
@@ -12334,7 +12342,7 @@ window.StateScrubber.prototype = {
             var subCurr = currNode[key];
             // Undefined properties can be anything, but they must exist.
             if (subFind === undefined) {
-                if (subCurr === null || subCurr === undefined) {
+                if (subCurr == undefined) {
                     return false;
                 } else {
                     matchResults._.push(subCurr);
@@ -12342,7 +12350,7 @@ window.StateScrubber.prototype = {
                 }
             }
             // currNode does not have the key, but toFind does
-            if (subCurr === undefined || subCurr === null) {
+            if (subCurr == null) {
                 if (key === "wildcardVar") {
                     if (wVars.leftToSkip && wVars.leftToSkip[subFind] > 0) {
                         wVars.leftToSkip[subFind] -= 1;
@@ -12387,16 +12395,11 @@ window.StateScrubber.prototype = {
                 if (!checkMatchTree(subCurr, subFind, peersToFind, wVars, matchResults, options)) {
                     return false;
                 }
-            } else if (!_.isObject(subCurr)) {
+            } else {
                 // Check that the non-object (number/string) values match
                 if (subCurr !== subFind) {
                     return false;
                 }
-            } else { // Logically impossible, but as a robustness catch.
-                console.error("Some weird never-before-seen situation!");
-                console.error(currNode);
-                console.error(subCurr);
-                throw "Error: logic inside of structure analysis code broke.";
             }
         }
         if (toFind === undefined) {

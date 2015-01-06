@@ -125,53 +125,53 @@ html.playing .tooltip.hide-while-playing {
     width: 15px;
 }
 
-.tooltip.imagepicker {
+.tooltip.mediapicker {
     margin-left: 10px;
     margin-top: -22px;
     opacity: 1;
     width: auto;
 }
 
-.tooltip.imagepicker:hover {
+.tooltip.mediapicker:hover {
     max-height: 300px;
     width: 343px;
 }
 
-.tooltip.imagepicker:hover div.current-image {
+.tooltip.mediapicker:hover div.current-media {
     display: none;
 }
 
-.tooltip.imagepicker:hover div.image-groups {
+.tooltip.mediapicker:hover div.media-groups {
     display: block;
 }
 
-.tooltip.imagepicker:hover div.image-groups p {
+.tooltip.mediapicker:hover div.media-groups p {
     font-size: 12px;
     margin: 5px;
 }
 
-.tooltip.imagepicker div.current-image {
+.tooltip.mediapicker div.current-media {
     background: #FFF;
     padding: 2px;
 }
 
-.tooltip.imagepicker div.current-image img {
+.tooltip.mediapicker div.current-media img {
     max-width: 50px;
     max-height: 50px;
 }
 
-.tooltip.imagepicker div.image-groups {
+.tooltip.mediapicker div.media-groups {
     background: white;
     display: none;
     max-height: 300px;
     overflow-y: scroll;
 }
 
-.tooltip.imagepicker div.image-group {
+.tooltip.mediapicker div.media-group {
     overflow: auto;
 }
 
-.tooltip.imagepicker div.image-group .image {
+.tooltip.mediapicker div.media-group .image {
     background: white;
     border: 2px solid #EEE;
     cursor: pointer;
@@ -184,22 +184,26 @@ html.playing .tooltip.hide-while-playing {
     width: 140px;
 }
 
-.tooltip.imagepicker div.image-group .image.active {
+.tooltip.mediapicker .media-group .image.active {
     border-color: #000;
 }
 
-.tooltip.imagepicker div.image-group .image img {
+.tooltip.mediapicker .media-group .image img {
     max-height: 50px;
     max-width: 50px;
     margin-right: 5px;
     vertical-align: middle;
 }
 
-.tooltip.imagepicker h3.image-group {
+.tooltip.mediapicker .media-group .sound audio {
+    max-width: 80px;
+}
+
+.tooltip.mediapicker .media-group h3 {
     margin: 5px;
 }
 
-.tooltip.imagepicker .arrow, .tooltip.imagemodal-preview .arrow {
+.tooltip.mediapicker .arrow, .tooltip.mediapicker-preview .arrow {
     border-bottom: 8px solid transparent;
     border-left: none;
     border-right: 8px solid black;
@@ -208,24 +212,41 @@ html.playing .tooltip.hide-while-playing {
     left: -7px;
     top: 27px;
 }
-.tooltip.imagemodal-preview .arrow {
-    top: 40px;
-}
 
-.tooltip.imagemodal-preview {
+
+/** For the media picker preview tool **/
+
+.tooltip.mediapicker-preview {
     margin-left: 10px;
     margin-top: -40px;
     width: auto;
     opacity: 1;
 }
 
-.tooltip.imagemodal-preview .content {
+.tooltip.mediapicker-preview .arrow {
+    top: 40px;
+}
+
+.tooltip.mediapicker-preview .mediapicker-preview-content {
     background-color: #FFF;
-    height: 135px;
-    width: 100px;
     padding: 5px;
     margin-right: 0;
 }
+
+.tooltip.mediapicker-preview.mediapicker__image .mediapicker-preview-content {
+    height: 135px;
+    width: 100px;
+}
+
+.tooltip.mediapicker-preview.mediapicker__sound .mediapicker-preview-content {
+    width: 100px;
+}
+
+.tooltip.mediapicker-preview audio {
+    max-width: 100%;
+}
+
+/** Used in both the modal and the picker **/
 
 .thumb-shell {
     height: 100px;
@@ -234,19 +255,13 @@ html.playing .tooltip.hide-while-playing {
     text-align: center;
 }
 
-.thumb-shell:before{ 
-    height: 100%;
-    vertical-align: middle;
-    display: inline-block;
-    content: "";
-}
-
 .thumb-shell > .thumb-error {
     display: inline-block;
     vertical-align: middle;
     text-align: center;
     color: red;
     font-weight: bold;
+    padding-top: 30%;
 }
 
 .thumb-shell img {
@@ -256,7 +271,7 @@ html.playing .tooltip.hide-while-playing {
     vertical-align: middle;
 }
 
-.tooltip.imagemodal-preview .thumb-throbber{
+.tooltip.mediapicker-preview .thumb-throbber{
     position: absolute;
     top: 14px;
     left: 50%;
@@ -271,7 +286,8 @@ html.playing .tooltip.hide-while-playing {
     display: none;
 }
 
-.imagemodal {
+/** Media picker CSS: Used for both an image and audio picker **/
+.mediapicker-modal {
     width: 520px;
     margin-left: -250px;
     padding: 0;
@@ -279,12 +295,12 @@ html.playing .tooltip.hide-while-playing {
     margin-top: -225px;
 }
 
-.imagemodal h3 {
+.mediapicker-modal h3 {
     font-size: 20px;
     margin-bottom: 0;
 }
 
-.imagemodal .imagemodal-content {
+.mediapicker-modal .mediapicker-modal-content {
     width: 520px;
     height: 320px;
     overflow-y: auto;
@@ -294,48 +310,69 @@ html.playing .tooltip.hide-while-playing {
     padding: 0 120px 0 20px;
 }
 
-.imagemodal .tab-pane {
+.mediapicker-modal .tab-pane {
     position: relative;
 }
 
-.imagemodal .image {
+.mediapicker-modal .mediapicker-modal-file {
+    cursor: pointer;
+}
+
+.mediapicker-modal .image {
     display: inline-block;
     width: 100px;
     margin-right: 20px;
     margin-bottom: 20px;
-    cursor: pointer;
 }
 
-.imagemodal img {
+.mediapicker-modal .image img {
     max-width: 100%;
     max-height: 100%;
     display: inline-block;
     vertical-align: middle;
 }
 
-.imagemodal .image.active img {
+.mediapicker-modal .sound {
+    border-radius: 6px;
+    margin-bottom: 6px;
+    padding: 4px 2px 2px 4px;
+}
+
+.mediapicker-modal .sound audio {
+    width: 250px;
+    background: black;
+}
+
+.mediapicker-modal .sound span {
+    font-style: italic;
+    vertical-align: top;
+    padding-top: 5px;
+    display: inline-block;
+}
+
+.mediapicker-modal .image.active img, .mediapicker-modal .sound.active audio {
     box-shadow: 0 0 10px 1px #699c52;
 }
 
-.imagemodal .image .name {
+.mediapicker-modal .image span {
     width: 100%;
     display: inline-block;
     text-align: center;
     font-style: italic;
 }
 
-.imagemodal .top-shadow {
+.mediapicker-modal .top-shadow {
     box-shadow: 0px 5px 7px -6px #888888 inset
 }
 
-.imagemodal .right {
+.mediapicker-modal .right {
     width: 100px;
     position: absolute;
     top: 10px;
     right: 20px;
 }
 
-.imagemodal-footer {
+.mediapicker-modal-footer {
     clear: both;
     background-color: white;
     padding: 15px;
@@ -343,11 +380,11 @@ html.playing .tooltip.hide-while-playing {
     border-top: 1px solid #e5e5e5;
 }
 
-.imagemodal-footer button{
+.mediapicker-modal-footer button{
     margin-left: 10px;
 }
 
-.imagemodal .nav-tabs {
+.mediapicker-modal .nav-tabs {
     margin: 18px 0 0;
     padding-left: 20px;
 }

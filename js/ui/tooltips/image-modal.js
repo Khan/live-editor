@@ -1,3 +1,11 @@
+/* This file contains both the imageModal and soundModal tooltip, which share
+ the same Modal() View, but have fairly different ways that they hook into
+ the editor and replace the code.
+ The imageModal is currently used only by webpages,
+ and the soundModal is currently used only by programs.
+ In the future, the imageModal might also be used by programs,
+ as students seem to prefer that UI to the imagePicker UI.
+ */
 (function() {
     var Modal = Backbone.View.extend({
         initialize: function(options) {
@@ -6,7 +14,7 @@
             this.render();
             this.bind();
             TooltipUtils.setupScrollSpy(
-                this.$(".imagemodal-content"),
+                this.$(".mediapicker-modal-content"),
                 function(content) { // This function finds the associated pills for a scrollable div.
                     return $(content).closest(".tab-pane").find(".nav-pills");
                 }
@@ -17,7 +25,7 @@
         // These are here because scroll events cannot be delegated
         bind: function() {
             // Handle the shadow which appears on scroll
-            this.$(".imagemodal-content").scroll(
+            this.$(".mediapicker-modal-content").scroll(
                 _.throttle(function(e) {
                     var $target = $(e.currentTarget);
                     if ($target.scrollTop() > 0) {
@@ -29,21 +37,22 @@
             );
 
             // Lazy load on scroll
-            this.$(".imagemodal-content").scroll(
+            this.$(".mediapicker-modal-content").scroll(
                 _.throttle(function(e) {
                     TooltipUtils.lazyLoadImgs(e.currentTarget);
                 }, 200)
             );
+
+            // Treat playing an audio file like a selection
+            // The play event can't be delegated, so we do it here.
+            this.$(".mediapicker-modal-file audio").on("play", function(e) {
+                this.handleFileSelect(e);
+            }.bind(this));
         },
 
         events: {
-            // Highlight image when it is clicked
-            "click .imagemodal-content .image": function(e) {
-                this.$(".image.active").removeClass("active");
-                $(e.currentTarget).addClass("active");
-                var imgDataPath = $(e.currentTarget).closest(".image").attr("data-path");
-                this.options.record.log("imagemodal.selectImg", imgDataPath);
-            },
+            // Highlight file when it is clicked
+            "click .mediapicker-modal-file": "handleFileSelect",
 
             "click .nav-tabs a": function(e) {
                 $(e.currentTarget).tab("show");
@@ -52,24 +61,26 @@
 
             // Modal or tab
             "shown": function() {
-                TooltipUtils.lazyLoadImgs(this.$(".tab-pane.active .imagemodal-content"));
+                TooltipUtils.lazyLoadImgs(
+                    this.$(".tab-pane.active .mediapicker-modal-content"));
             },
 
             "hide.bs.modal": function() {
                 this.scrollStart = undefined;
                 $("body").css("overflow", "auto");
-                this.options.record.log("imagemodal.hide");
+                this.logForRecording("hide");
             },
 
             // Update the url in ACE if someone clicks ok
-            "click .imagemodal-submit": function(e) {
-                var $active = this.$(".image.active");
+            "click .mediapicker-modal-submit": function(e) {
+                var $active = this.$(".mediapicker-modal-file.active");
                 if ($active.length !== 1) {
                     return;
                 }
-                var path = this.options.imagesDir + $active.attr("data-path") + ".png";
-                this.parent.updateText(path);
-                this.parent.updateTooltip(path);
+                // The update and preview path are same for images,
+                //  but differ for sound by the addition of quotation marks
+                this.parent.updateText($active.attr("data-update-path"));
+                this.parent.updateTooltip($active.attr("data-preview-path"));
             }
         },
 
@@ -79,18 +90,36 @@
         show: function() {
             this.$el.modal();
             $("body").css("overflow", "hidden");
-            this.$(".image.active").removeClass("active");
-            this.options.record.log("imagemodal.show");
+            this.$(".mediapicker-modal-file.active").removeClass("active");
+            this.logForRecording("show");
+        },
+
+        handleFileSelect: function(e) {
+            this.$(".mediapicker-modal-file.active").removeClass("active");
+            var $file = $(e.currentTarget).closest(".mediapicker-modal-file");
+            $file.addClass("active");
+            this.logForRecording("selectImg", $file.attr("data-path"));
+        },
+
+        selectFile: function(dataPath) {
+            var $file = this.$(".mediapicker-modal-file[data-path='"+dataPath+"']");
+            var $pane = $file.closest(".tab-pane");
+            var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
+            $tab.tab("show");
+            $pane.find(".mediapicker-modal-content").scrollTop(
+                $file.position().top - 100);
+            return $file;
         },
 
         selectImg: function(dataPath) {
-            var $image = this.$(".image[data-path='"+dataPath+"']");
-            var $pane = $image.closest(".tab-pane");
-            var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
-            $tab.tab("show");
-            $pane.find(".imagemodal-content").scrollTop(
-                $image.position().top - 100);
-            $image.find("img").click();
+            var $file = this.selectFile(dataPath);
+            $file.find("img").click();
+        },
+
+        logForRecording: function(action, value) {
+            var logPrefix = this.options.logPrefix || "mediamodal";
+            var logAction = logPrefix + "." + action;
+            this.options.record.log(logAction, value);
         },
 
         render: function() {
@@ -100,9 +129,10 @@
                 this.slugify);
             Handlebars.registerHelper("patchedEach",
                 this.handlebarsPatchedEach);
-            this.$el = $(Handlebars.templates["image-modal"]({
+            this.$el = $(Handlebars.templates["mediapicker-modal"]({
                 imagesDir: this.options.imagesDir,
-                classes: ExtendedOutputImages
+                soundsDir: this.options.soundsDir,
+                classes: this.options.files
             }));
             this.$el.appendTo("body").hide();
         },
@@ -137,6 +167,7 @@
     TooltipEngine.classes.imageModal = TooltipBase.extend({
         initialize: function(options) {
             this.options = options;
+            this.options.files = ExtendedOutputImages;
             this.parent = options.parent;
             this.render();
             this.bindToRequestTooltip();
@@ -201,7 +232,8 @@
 
         render: function() {
             var self = this;
-            this.$el = $(Handlebars.templates["image-modal-preview"]())
+            this.$el = $(Handlebars.templates["mediapicker-preview"](
+                            {isAudio: false}))
                             .appendTo("body").hide();
 
             this.$(".thumb")
@@ -219,6 +251,110 @@
                     $(this).hide();
                     self.$(".thumb-throbber").hide();
                 });
+
+            this.$("button").on("click", function() {
+                self.modal.show();
+            });
+
+            this.modal = new Modal(_.defaults({
+                parent: this,
+                logPrefix: "imagemodal"
+            }, this.options));
+        },
+
+        remove: function() {
+            this.$el.remove();
+            this.modal.remove();
+            this.unbindFromRequestTooltip();
+        }
+    });
+
+    TooltipEngine.classes.soundModal = TooltipBase.extend({
+        defaultFile: "\"rpg/metal-clink\"",
+        initialize: function(options) {
+            this.options = options;
+            this.options.files = [{
+                className: "Sound effects",
+                groups: [{
+                    groupName: "rpg",
+                    sounds: "battle-magic battle-spell battle-swing coin-jingle door-open giant-hyah giant-no giant-yah hit-clop hit-splat hit-thud hit-whack metal-chime metal-clink step-heavy water-bubble water-slosh".split(" "),
+                    cite: $._("'RPG Sound Effects' art by artisticdude"),
+                    citeLink: "http://opengameart.org/content/rpg-sound-pack"
+                }]
+            }];
+            this.parent = options.parent;
+            this.render();
+            this.bindToRequestTooltip();
+        },
+
+        detector: function(event) {
+            if (!/(\bgetSound\s*\()[^\)]*$/.test(event.pre)) {
+                return;
+            }
+            // This is quite similar to code in image-picker.js,
+            //  but my attempts to abstract it were thwarted by 
+            //  PhantomJS's inability to pass around RegEx objects in tests.
+            //  That should be fixed in PhantomJS2.0, so we are eagerly
+            //  awaiting the upgrade of gulp-mocha-phantomjs to that.
+            var functionStart = event.col - RegExp.lastMatch.length;
+            var paramsStart = functionStart + RegExp.$1.length;
+            
+            var pieces = /^(\s*)(["']?[^\)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
+            var leading = pieces[1];
+            var pathStart = paramsStart + leading.length;
+            var path = pieces[2];
+            var closing = pieces[3];
+
+            if (leading.length === 0 &&
+                path.length === 0 &&
+                closing.length === 0 &&
+                event.source &&
+                event.source.action === "insertText" &&
+                event.source.text.length === 1) {
+                closing = ")" + (this.isInParenthesis(
+                    event.pre.slice(0, functionStart)) ? "" : ";");
+                this.insert({
+                    row: event.row,
+                    column: pathStart
+                }, closing);
+
+                path = this.defaultFile;
+                this.updateText(path);
+            }
+
+            this.aceLocation = {
+                start: pathStart,
+                length: path.length,
+                row: event.row
+            };
+            this.aceLocation.tooltipCursor = this.aceLocation.start +
+                this.aceLocation.length + closing.length;
+            
+            this.updateTooltip(path);
+            this.placeOnScreen();
+            event.stopPropagation();
+            ScratchpadAutosuggest.enableLiveCompletion(false);
+        },
+        
+        updateTooltip: function(partialPath) {
+            if (partialPath !== this.currentUrl) {
+                partialPath = partialPath.replace(/\"/g, "");
+                this.currentUrl = this.options.soundsDir + partialPath + ".mp3";
+                if (partialPath === "") {
+                    this.$(".thumb-error").text($._("Invalid sound file.")).show();
+                    return;
+                } else {
+                    this.$(".thumb-error").hide();
+                }
+            }
+            this.$(".mediapicker-preview-file").attr("src", this.currentUrl);
+        },
+
+        render: function() {
+            var self = this;
+            this.$el = $(Handlebars.templates["mediapicker-preview"](
+                            {isAudio: true}))
+                            .appendTo("body").hide();
 
             this.$("button").on("click", function() {
                 self.modal.show();

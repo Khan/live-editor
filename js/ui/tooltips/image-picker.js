@@ -58,7 +58,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
             })
         });
 
-        this.$el = $("<div class='tooltip imagepicker'>" + results +
+        this.$el = $("<div class='tooltip mediapicker'>" + results +
             "<div class='arrow'></div></div>")
             .appendTo("body").hide();
 
@@ -69,7 +69,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
     bind: function() {
         var self = this;
 
-        this.$(".image-groups").scroll(_.throttle(function() {
+        this.$(".media-groups").scroll(_.throttle(function() {
             TooltipUtils.lazyLoadImgs(this);
         }, 200, {leading: false}));
 
@@ -78,7 +78,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
                 TooltipUtils.lazyLoadImgs($(this));
             })
             .on("click", ".image", function() {
-                $(this).parents(".imagepicker").find(".active").removeClass("active");
+                $(this).parents(".mediapicker").find(".active").removeClass("active");
                 $(this).addClass("active");
                 self.updateText($(this).attr("data-path"));
             })
@@ -111,7 +111,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         });
 
         var fullPath = this.parent.options.imagesDir + foundPath + ".png";
-        this.$el.find(".current-image img")
+        this.$el.find(".current-media img")
             .attr("src", fullPath);
 
         this.value = path;

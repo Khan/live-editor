@@ -27,6 +27,11 @@ describe("Scratchpad Output Exec", function() {
         getImage("avatars/leaf-green");
     });
 
+    test("getSound with single quotes or double quotes", function() {
+        getSound('rpg/giant-no');
+        getSound("rpg/giant-no");
+    });
+
     // Check the actual contents of error message
     failingTest("Use object as function", function() {
         var SmileyFace = function() {};
@@ -151,6 +156,12 @@ describe("Scratchpad Output Exec", function() {
         var rock = getImage("http://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Rock-paper-scissors_%28rock%29.png/100px-Rock-paper-scissors_%28rock%29.png");
 
         image(rock, 0, 0);
+    });
+
+    failingTest("getSound with no string", function () {
+        var s = getSound("");
+
+        playSound(s);
     });
 
     failingTest("link method disabled", function() {
@@ -435,6 +446,29 @@ describe("Scratchpad Output Exec", function() {
         var draw = function() {
             myObj.x += 2;
             image(myObj.img, myObj.x, 0); // <-- Remove this semicolon and add it back!
+        };
+
+    });
+
+    test("Make sure object with getSound works in injection", function() {
+        var myObj = {
+            x: 5,
+            sound: getSound("rpg/giant-no")
+        };
+        var mousePressed = function() {
+            myObj.x += 2;
+            playSound(myObj.sound);
+        };
+
+    },
+    function() {
+        var myObj = {
+            x: 5,
+            sound: getSound("rpg/giant-no")
+        };
+        var mousePressed = function() {
+            myObj.x += 2;
+            playSound(myObj.sound);
         };
 
     });

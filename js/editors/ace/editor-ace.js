@@ -10,6 +10,7 @@ window.AceEditor = Backbone.View.extend({
         // the higher priority it gets.
         ace_pjs: [
             "imagePicker",
+            "soundModal",
             "colorPicker",
             "numberScrubberClick",
             "autoSuggest",
@@ -50,6 +51,7 @@ window.AceEditor = Backbone.View.extend({
             tooltips: this.tooltips[this.type],
             type: this.type,
             imagesDir: options.imagesDir,
+            soundsDir: options.soundsDir,
             editor: this.editor,
             record: this.record
         });

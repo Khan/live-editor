@@ -7,7 +7,7 @@ this["Handlebars"]["templates"]["image-picker"] = Handlebars.template(function (
 function program1(depth0,data) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n        <div class=\"image-group\">\n            <h3 class=\"image-group\">";
+  buffer += "\n        <div class=\"media-group\">\n            <h3>";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth0.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -83,12 +83,12 @@ function program4(depth0,data,depth1) {
   buffer += escapeExpression(stack1) + "</span>\n            </div>\n            ";
   return buffer;}
 
-  buffer += "<div class=\"current-image\"><img src=\"";
+  buffer += "<div class=\"current-media\"><img src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "cute/Blank.png\"/></div>\n<div class=\"image-groups\">\n    <div style=\"position: relative;\">\n    ";
+  buffer += escapeExpression(stack1) + "cute/Blank.png\"/></div>\n<div class=\"media-groups\">\n    <div style=\"position: relative;\">\n    ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   stack2 = helpers.each;

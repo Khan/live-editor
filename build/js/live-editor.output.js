@@ -364,6 +364,9 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (data.imagesDir) {
             this.imagesDir = this._qualifyURL(data.imagesDir);
         }
+        if (data.soundsDir) {
+            this.soundsDir = this._qualifyURL(data.soundsDir);
+        }
         if (data.jshintFile) {
             this.jshintFile = this._qualifyURL(data.jshintFile);
             PooledWorker.prototype.jshintFile = this.jshintFile;
@@ -515,7 +518,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
             // A callback for working with a test suite
             if (callback) {
-                //This is synchrynous
+                //This is synchronous
                 this._test(userCode, this.validate, errors, function(errors, testResults) {
                     callback(errors, testResults);
                     return;

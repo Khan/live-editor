@@ -1599,6 +1599,9 @@ window.PJSOutput = Backbone.View.extend({
         }.bind(this));
     },
 
+
+    soundCache: {},
+
     // New methods and properties to add to the Processing instance
     processing: {
         // Global objects that we want to expose, by default
@@ -1642,6 +1645,32 @@ window.PJSOutput = Backbone.View.extend({
         // Disable link method
         link: function() {
             throw {message: $._("link() method is disabled.")};
+        },
+
+        getSound: function(filename) {
+            var sound = this.soundCache[filename];
+
+            if (!sound) {
+                var audio = document.createElement("audio");
+                audio.preload = "auto";
+                audio.src = this.output.soundsDir + filename + ".mp3";
+                sound = {audio: audio};
+                this.soundCache[filename] = sound;
+            }
+
+            sound.__id = function() {
+                return "getSound('" + filename + "')";
+            };
+            return sound;
+        },
+
+        playSound: function(sound) {
+            if (sound && sound.audio && sound.audio.play) {
+                sound.audio.currentTime = 0;
+                sound.audio.play();
+            } else {
+                throw {message: $._("No sound file provided.")};
+            }
         },
 
         // Basic console logging
