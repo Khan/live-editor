@@ -1,151 +1,196 @@
-!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.iframeOverlay=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"./lib/iframe-overlay.js":[function(require,module,exports){
-var Poster = require("../node_modules/poster/lib/poster");
-var EventSim = require("../node_modules/eventsim/lib/eventsim");
-var basic = require("../node_modules/basic-ds/lib/basic");
+!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.iframeOverlay=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+"use strict";
+
+/**
+ * Creates an overlay on top of an iframe that intercepts and retriggers mouse
+ * events.  The purpose of this is two-fold:
+ * - provide better user experience when a drag operation leaves iframe's bounds
+ * - allow events to be filtered to toggle interactivity without having to modify
+ *   the code runing inside the iframe
+ */
+
+var Poster = require("poster");
+var EventSim = require("eventsim");
+var LinkedList = require("basic-ds").LinkedList;
+
 function createOverlay(iframe) {
-    var wrapper = document.createElement("span");
-    wrapper.setAttribute("style", "position:relative;padding:0;margin:0;display:inline-block;");
-    wrapper.setAttribute("class", "wrapper");
-    var overlay = document.createElement("span");
-    overlay.setAttribute("style", "position:absolute;left:0;top:0;width:100%;height:100%;");
-    overlay.setAttribute("class", "overlay");
-    overlay.setAttribute("tabindex", "0");
-    var parent = iframe.parentElement;
-    parent.insertBefore(wrapper, iframe);
-    wrapper.appendChild(iframe);
-    wrapper.appendChild(overlay);
-    var down = false;
-    var paused = false;
-    var queue = new basic.LinkedList();
-    var poster = new Poster(iframe.contentWindow);
-    function postMouseEvent(e) {
-        if (paused) {
-            e["timestamp"] = Date.now();
-            queue.push_front(e);
-        }
-        else {
-            var bounds = wrapper.getBoundingClientRect();
-            poster.post("mouse", {
-                type: e.type,
-                x: e.pageX - bounds.left,
-                y: e.pageY - bounds.top,
-                shiftKey: e.shiftKey,
-                altKey: e.altKey,
-                ctrlKey: e.ctrlKey,
-                metaKey: e.metaKey
-            });
-        }
+  var wrapper = document.createElement("span");
+  wrapper.setAttribute("style", "position:relative;padding:0;margin:0;display:inline-block;");
+  wrapper.setAttribute("class", "wrapper");
+
+  var overlay = document.createElement("span");
+  overlay.setAttribute("style", "position:absolute;left:0;top:0;width:100%;height:100%;");
+  overlay.setAttribute("class", "overlay");
+  overlay.setAttribute("tabindex", "0"); // allwos the span to have focus
+
+  var parent = iframe.parentElement;
+  parent.insertBefore(wrapper, iframe);
+  wrapper.appendChild(iframe);
+  wrapper.appendChild(overlay);
+
+  var down = false;
+  var paused = false;
+  var queue = new LinkedList();
+
+  var poster = new Poster(iframe.contentWindow);
+
+  function postMouseEvent(e) {
+    if (paused) {
+      e.timestamp = Date.now(); // Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=238041
+      queue.push_front(e);
+    } else {
+      var bounds = wrapper.getBoundingClientRect();
+      poster.post("mouse", {
+        type: e.type,
+        x: e.pageX - bounds.left,
+        y: e.pageY - bounds.top,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey
+      });
     }
-    function postKeyboardEvent(e) {
-        if (paused) {
-            e["timestamp"] = Date.now();
-            queue.push_front(e);
-        }
-        else {
-            poster.post("keyboard", {
-                type: e.type,
-                keyCode: e.keyCode,
-                shiftKey: e.shiftKey,
-                altKey: e.altKey,
-                ctrlKey: e.ctrlKey,
-                metaKey: e.metaKey
-            });
-        }
+  }
+
+  function postKeyboardEvent(e) {
+    if (paused) {
+      e.timestamp = Date.now(); // Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=238041
+      queue.push_front(e);
+    } else {
+      poster.post("keyboard", {
+        type: e.type,
+        keyCode: e.keyCode,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey
+      });
     }
-    overlay.addEventListener("click", function (e) { return postMouseEvent(e); });
-    overlay.addEventListener("dblclick", function (e) { return postMouseEvent(e); });
-    overlay.addEventListener("mouseover", function (e) { return postMouseEvent(e); });
-    overlay.addEventListener("mouseout", function (e) { return postMouseEvent(e); });
-    overlay.addEventListener("mousedown", function (e) {
-        down = true;
-        postMouseEvent(e);
-    });
-    overlay.addEventListener("mousemove", function (e) {
-        if (!down) {
-            postMouseEvent(e);
+  }
+
+  overlay.addEventListener("click", function (e) {
+    return postMouseEvent(e);
+  });
+  overlay.addEventListener("dblclick", function (e) {
+    return postMouseEvent(e);
+  });
+  overlay.addEventListener("mouseover", function (e) {
+    return postMouseEvent(e);
+  });
+  overlay.addEventListener("mouseout", function (e) {
+    return postMouseEvent(e);
+  });
+
+  overlay.addEventListener("mousedown", function (e) {
+    down = true;
+    postMouseEvent(e);
+  });
+
+  overlay.addEventListener("mousemove", function (e) {
+    if (!down) {
+      postMouseEvent(e);
+    }
+  });
+
+  window.addEventListener("mousemove", function (e) {
+    if (down) {
+      e.preventDefault();
+      postMouseEvent(e);
+    }
+  });
+
+  window.addEventListener("mouseup", function (e) {
+    if (down) {
+      down = false;
+      postMouseEvent(e);
+    }
+  });
+
+  overlay.addEventListener("keydown", function (e) {
+    return postKeyboardEvent(e);
+  });
+  overlay.addEventListener("keypress", function (e) {
+    return postKeyboardEvent(e);
+  });
+  overlay.addEventListener("keyup", function (e) {
+    return postKeyboardEvent(e);
+  });
+
+  var keyEventRegex = /key(up|down|press)/;
+  var mouseEventRegex = /click|dblclick|mouse(up|down|move|over|out)/;
+
+  return {
+    pause: function pause() {
+      paused = true;
+    },
+    resume: function resume() {
+      if (!paused) {
+        // guard against multiple calls to resume()
+        return;
+      }
+      paused = false;
+
+      function pop() {
+        if (paused) {
+          return; // if something has paused use since we posted the last event return
         }
-    });
-    window.addEventListener("mousemove", function (e) {
-        if (down) {
-            postMouseEvent(e);
+
+        var e = queue.pop_back();
+        if (!e) {
+          return;
         }
-    });
-    window.addEventListener("mouseup", function (e) {
-        if (down) {
-            down = false;
-            postMouseEvent(e);
+
+        if (e instanceof MouseEvent) {
+          postMouseEvent(e);
+        } else if (e instanceof KeyboardEvent) {
+          postKeyboardEvent(e);
+        } else if (mouseEventRegex.test(e.type)) {
+          postMouseEvent(e);
+        } else if (keyEventRegex.test(e.type)) {
+          postKeyboardEvent(e);
         }
-    });
-    overlay.addEventListener("keydown", function (e) { return postKeyboardEvent(e); });
-    overlay.addEventListener("keypress", function (e) { return postKeyboardEvent(e); });
-    overlay.addEventListener("keyup", function (e) { return postKeyboardEvent(e); });
-    var keyEventRegex = /key(up|down|press)/;
-    var mouseEventRegex = /click|dblclick|mouse(up|down|move|over|out)/;
-    return {
-        pause: function () {
-            paused = true;
-        },
-        resume: function () {
-            if (!paused) {
-                return;
-            }
-            paused = false;
-            function pop() {
-                if (paused) {
-                    return;
-                }
-                var e = queue.pop_back();
-                if (!e) {
-                    return;
-                }
-                if (e instanceof MouseEvent) {
-                    postMouseEvent(e);
-                }
-                else if (e instanceof KeyboardEvent) {
-                    postKeyboardEvent(e);
-                }
-                else if (mouseEventRegex.test(e.type)) {
-                    postMouseEvent(e);
-                }
-                else if (keyEventRegex.test(e.type)) {
-                    postKeyboardEvent(e);
-                }
-                if (queue.last && queue.last.value) {
-                    var next = queue.last.value;
-                    var delay = next["timestamp"] - e["timestamp"];
-                    setTimeout(pop, delay);
-                }
-            }
-            pop();
+
+        if (queue.last && queue.last.value) {
+          var next = queue.last.value; // TODO: change last to lastNode
+          var delay = next.timestamp - e.timestamp; // Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=238041
+          setTimeout(pop, delay);
         }
-    };
+      }
+      pop();
+    }
+  };
 }
-exports.createOverlay = createOverlay;
+
 function createRelay(element) {
-    var poster = new Poster(window.parent);
-    poster.listen("mouse", function (e) {
-        EventSim.simulate(element, e.type, {
-            clientX: e.x,
-            clientY: e.y,
-            altKey: e.altKey,
-            shiftKey: e.shiftKey,
-            metaKey: e.metaKey,
-            ctrlKey: e.ctrlKey
-        });
+  var poster = new Poster(window.parent);
+
+  poster.listen("mouse", function (e) {
+    EventSim.simulate(element, e.type, {
+      clientX: e.x,
+      clientY: e.y,
+      altKey: e.altKey,
+      shiftKey: e.shiftKey,
+      metaKey: e.metaKey,
+      ctrlKey: e.ctrlKey
     });
-    poster.listen("keyboard", function (e) {
-        EventSim.simulate(element, e.type, {
-            keyCode: e.keyCode,
-            altKey: e.altKey,
-            shiftKey: e.shiftKey,
-            metaKey: e.metaKey,
-            ctrlKey: e.ctrlKey
-        });
+  });
+
+  poster.listen("keyboard", function (e) {
+    EventSim.simulate(element, e.type, {
+      keyCode: e.keyCode,
+      altKey: e.altKey,
+      shiftKey: e.shiftKey,
+      metaKey: e.metaKey,
+      ctrlKey: e.ctrlKey
     });
+  });
 }
+
+
+exports.createOverlay = createOverlay;
 exports.createRelay = createRelay;
 
-},{"../node_modules/basic-ds/lib/basic":"/Users/kevin/iframe-overlay/node_modules/basic-ds/lib/basic.js","../node_modules/eventsim/lib/eventsim":"/Users/kevin/iframe-overlay/node_modules/eventsim/lib/eventsim.js","../node_modules/poster/lib/poster":"/Users/kevin/iframe-overlay/node_modules/poster/lib/poster.js"}],"/Users/kevin/iframe-overlay/node_modules/basic-ds/lib/LinkedList.js":[function(require,module,exports){
+},{"basic-ds":5,"eventsim":7,"poster":8}],2:[function(require,module,exports){
 var ListNode = require("./ListNode");
 var LinkedList = (function () {
     function LinkedList() {
@@ -277,7 +322,7 @@ var LinkedList = (function () {
 })();
 module.exports = LinkedList;
 
-},{"./ListNode":"/Users/kevin/iframe-overlay/node_modules/basic-ds/lib/ListNode.js"}],"/Users/kevin/iframe-overlay/node_modules/basic-ds/lib/ListNode.js":[function(require,module,exports){
+},{"./ListNode":3}],3:[function(require,module,exports){
 var ListNode = (function () {
     function ListNode(value) {
         this.value = value;
@@ -293,7 +338,7 @@ var ListNode = (function () {
 })();
 module.exports = ListNode;
 
-},{}],"/Users/kevin/iframe-overlay/node_modules/basic-ds/lib/Stack.js":[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var Stack = (function () {
     function Stack() {
         this.items = [];
@@ -334,11 +379,11 @@ var Stack = (function () {
 })();
 module.exports = Stack;
 
-},{}],"/Users/kevin/iframe-overlay/node_modules/basic-ds/lib/basic.js":[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 exports.LinkedList = require("./LinkedList");
 exports.Stack = require("./Stack");
 
-},{"./LinkedList":"/Users/kevin/iframe-overlay/node_modules/basic-ds/lib/LinkedList.js","./Stack":"/Users/kevin/iframe-overlay/node_modules/basic-ds/lib/Stack.js"}],"/Users/kevin/iframe-overlay/node_modules/eventsim/lib/createKeyboardEvent.js":[function(require,module,exports){
+},{"./LinkedList":2,"./Stack":4}],6:[function(require,module,exports){
 var initKeyboardEvent_variant = (function (event) {
     try {
         event.initKeyboardEvent("keyup", false, false, window, "+", 3, true, false, true, false, false);
@@ -449,7 +494,7 @@ function createKeyboardEvent(type, dict) {
 }
 module.exports = createKeyboardEvent;
 
-},{}],"/Users/kevin/iframe-overlay/node_modules/eventsim/lib/eventsim.js":[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var createKeyboardEvent = require("./createKeyboardEvent");
 var EventSim;
 (function (EventSim) {
@@ -473,7 +518,7 @@ var EventSim;
 })(EventSim || (EventSim = {}));
 module.exports = EventSim;
 
-},{"./createKeyboardEvent":"/Users/kevin/iframe-overlay/node_modules/eventsim/lib/createKeyboardEvent.js"}],"/Users/kevin/iframe-overlay/node_modules/poster/lib/poster.js":[function(require,module,exports){
+},{"./createKeyboardEvent":6}],8:[function(require,module,exports){
 var posters = [];
 if (self.document) {
     self.addEventListener("message", function (e) {
@@ -578,7 +623,7 @@ var Poster = (function () {
 })();
 module.exports = Poster;
 
-},{}]},{},["./lib/iframe-overlay.js"])("./lib/iframe-overlay.js")
+},{}]},{},[1])(1)
 });
 /* Provides debugging support for live-editor */
 
@@ -590,34 +635,8 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.editor = options.editor;
         this.liveEditor = options.liveEditor;
 
-        if (this.isSupported()) {
-            this.render();
-            this.bind();
-        }
-    },
-
-    isSupported: function() {
-        // Source:
-        // https://github.com/kangax/compat-table/blob/gh-pages/data-es6.js#L1554-L1564
-        try {
-            var code = "\n" +
-                "var generator = (function* () {\n" +
-                "  yield* (function* () {\n" +
-                "    yield 5; yield 6;\n" +
-                "  }());\n" +
-                "}());\n" +
-                "\n" +
-                "var item = generator.next();\n" +
-                "var passed = item.value === 5 && item.done === false;\n" +
-                "item = generator.next();\n" +
-                "passed &= item.value === 6 && item.done === false;\n" +
-                "item = generator.next();\n" +
-                "passed &= item.value === undefined && item.done === true;\n" +
-                "return passed;";
-            return Function(code)();
-        } catch (e) {
-            return false;
-        }
+        this.render();
+        this.bind();
     },
 
     render: function() {
@@ -633,6 +652,9 @@ window.ScratchpadDebugger = Backbone.View.extend({
     },
 
     bind: function() {
+        // create the overlay first before binding any event handlers because
+        // createOverlay moves the iframe's position in the DOM tree which 
+        // unbinds existing event handlers
         var iframe = $("iframe").get(0);
         this.overlay = iframeOverlay.createOverlay(iframe);
 

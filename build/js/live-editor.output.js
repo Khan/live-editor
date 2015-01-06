@@ -547,7 +547,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
             } catch (e) {
                 buildDone([e]);
-            }        
+            }
         }.bind(this);
 
         // Always lint the first time, so that PJS can populate its list of globals

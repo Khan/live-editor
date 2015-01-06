@@ -8,34 +8,8 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.editor = options.editor;
         this.liveEditor = options.liveEditor;
 
-        if (this.isSupported()) {
-            this.render();
-            this.bind();
-        }
-    },
-
-    isSupported: function() {
-        // Source:
-        // https://github.com/kangax/compat-table/blob/gh-pages/data-es6.js#L1554-L1564
-        try {
-            var code = "\n" +
-                "var generator = (function* () {\n" +
-                "  yield* (function* () {\n" +
-                "    yield 5; yield 6;\n" +
-                "  }());\n" +
-                "}());\n" +
-                "\n" +
-                "var item = generator.next();\n" +
-                "var passed = item.value === 5 && item.done === false;\n" +
-                "item = generator.next();\n" +
-                "passed &= item.value === 6 && item.done === false;\n" +
-                "item = generator.next();\n" +
-                "passed &= item.value === undefined && item.done === true;\n" +
-                "return passed;";
-            return Function(code)();
-        } catch (e) {
-            return false;
-        }
+        this.render();
+        this.bind();
     },
 
     render: function() {
@@ -51,6 +25,9 @@ window.ScratchpadDebugger = Backbone.View.extend({
     },
 
     bind: function() {
+        // create the overlay first before binding any event handlers because
+        // createOverlay moves the iframe's position in the DOM tree which 
+        // unbinds existing event handlers
         var iframe = $("iframe").get(0);
         this.overlay = iframeOverlay.createOverlay(iframe);
 

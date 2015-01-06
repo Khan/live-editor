@@ -16,7 +16,7 @@
     <script>
     var useDebugger = false;
     if (location.search.indexOf("debugger=true") !== -1) {
-        useDebugger = ProcessingDebugger && ProcessingDebugger.isBrowserSupported();
+        useDebugger = typeof ProcessingDebugger === "function";
     }
     
     new LiveEditorOutput({
