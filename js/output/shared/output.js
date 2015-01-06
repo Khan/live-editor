@@ -8,12 +8,14 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         this.setPaths(options);
 
-        this.config = new ScratchpadConfig({});
-        
+        this.config = new ScratchpadConfig({
+            useDebugger: options.useDebugger
+        });
+
         if (options.outputType) {
             this.setOutput(options.outputType);
         }
-
+        
         this.bind();
     },
 
@@ -70,15 +72,28 @@ window.LiveEditorOutput = Backbone.View.extend({
         // let the parent know we're up and running
         this.notifyActive();
 
+        // filter out events that are objects
+        // currently the only messages that contain objects are messages
+        // being sent by Poster instances being used by the iframeOverlay
+        // in pjs-output.js and ui/debugger.js 
+        if (typeof event.data === "object") {
+            return;
+        }
+
         try {
             data = JSON.parse(event.data);
-
         } catch (err) {
             return;
         }
         if (!this.output) {
             var outputType = data.outputType || _.keys(this.outputs)[0];
             this.setOutput(outputType);
+        }
+
+        // filter out debugger events
+        // handled by pjs-debugger.js::handleMessage
+        if (data.type === "debugger") {
+            return;
         }
 
         // Set the paths from the incoming data, if they exist
@@ -216,7 +231,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
             } catch (e) {
                 buildDone([e]);
-            }
+            }        
         }.bind(this);
 
         // Always lint the first time, so that PJS can populate its list of globals

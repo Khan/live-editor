@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
     <link rel="stylesheet" href="../../build/css/live-editor.tooltips.css"/>
     <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.debugger.css"/>
     <style>
         body {
             padding: 20px;
@@ -31,8 +32,16 @@
     <script src="../../build/js/live-editor.tooltips.js"></script>
     <script src="../../build/js/live-editor.ui.js"></script>
     <script src="../../build/js/live-editor.editor_ace.js"></script>
+    <script src="../../build/js/live-editor.debugger.js"></script>
 
     <script>
+    var outputUrl = "output.html";
+    var useDebugger = false;
+    if (location.search.indexOf("debugger=true") !== -1) {
+        outputUrl += "?debugger=true";
+        useDebugger = true;
+    }
+
     window.liveEditor = new LiveEditor({
         el: $("#sample-live-editor"),
         code: window.localStorage["test-code"] || "rect(10, 10, 100, 100);",
@@ -43,8 +52,9 @@
         workersDir: "../../build/workers/",
         externalsDir: "../../build/external/",
         imagesDir: "../../build/images/",
-        execFile: "output.html",
-        jshintFile: "../../build/external/jshint/jshint.js"
+        execFile: outputUrl,
+        jshintFile: "../../build/external/jshint/jshint.js",
+        useDebugger: useDebugger
     });
     liveEditor.editor.on("change", function() {
         window.localStorage["test-code"] = liveEditor.editor.text();

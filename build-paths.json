@@ -47,8 +47,6 @@
         ],
         "tooltips": [
             "external/colorpicker/colorpicker.js",
-            "js/ui/custom-lazy-load.js",
-            "js/ui/custom-scroll-spy.js",
             "js/ui/autosuggest.js",
             "js/ui/autosuggest-data.js",
             "js/ui/tooltip-engine.js",
@@ -57,6 +55,11 @@
             "build/tmpl/image-modal.js",
             "build/tmpl/image-modal-preview.js",
             "js/ui/structured-blocks-tooltips.js"
+        ],
+        "debugger": [
+            "external/iframe-overlay/dist/iframe-overlay.js",
+            "js/ui/debugger.js",
+            "build/tmpl/debugger.js"
         ],
         "shared": [
             "js/shared/images.js",
@@ -69,6 +72,14 @@
             "external/structuredjs/external/esprima.js",
             "external/structuredjs/structured.js",
             "external/TraceKit/tracekit.js"
+        ],
+        "output_debugger_deps": [
+            "external/estraverse/estraverse.js",
+            "external/escope/escope.js",
+            "external/iframe-overlay/dist/iframe-overlay.js",
+            "external/escodegen/escodegen.browser.js",
+            "external/stepper/build/processing-debugger.js",
+            "js/output/pjs/pjs-debugger.js"
         ],
         "output_pjs": [
             "js/output/pjs/pjs-tester.js",
@@ -138,7 +149,7 @@
     ],
     "styles": {
         "core_deps": [
-            "bower_components/jquery-ui/themes/ui-lightness/jquery-ui.css" 
+            "bower_components/jquery-ui/themes/ui-lightness/jquery-ui.css"
         ],
         "editor_structured_blocks": [
             "external/structured-blocks/css/style.css",
@@ -163,6 +174,9 @@
         ],
         "output": [
             "css/output/style.css"
+        ],
+        "debugger": [
+            "css/ui/debugger.css"
         ]
     },
     "images": [

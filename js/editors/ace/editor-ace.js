@@ -76,7 +76,7 @@ window.AceEditor = Backbone.View.extend({
             width: "100%",
             height: 0,
             position: "absolute",
-            visibility: "none"
+            visibility: "hidden"
         }).appendTo(this.el);
 
         $($sensorFrame[0].contentWindow.window).on("resize", function() {

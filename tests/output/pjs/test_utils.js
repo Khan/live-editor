@@ -5,8 +5,9 @@
  *  assertions: Array of assertions caused by assertEqual() function
  *  assertions2: Second array (after code2 is run)
  *  errors: Array of errors caused by JSHint/BabyHint (see output_test.js),
-*     or a boolean indicating that errors are expected.
+ *          or a boolean indicating that errors are expected.
  *  test: A callback function to run with all the results
+ *  skip: skip the test
  */
 var runTest = function(options) {
     if ((!options.errors || !options.errors.length) && !options.noLint) {
@@ -34,18 +35,20 @@ var runTest = function(options) {
         }
         return code;
     };
-    
+
     var code1 = getCodeFromOptions(options.code);
     var code2 = getCodeFromOptions(options.code2);
 
     // Start an asynchronous test
-    it(displayTitle, function(done) {
+    var itFunc = options.skip ? it.skip : it;
+    itFunc(displayTitle, function(done) {
         var output = new LiveEditorOutput({
             outputType: "pjs",
             workersDir: "../../../build/workers/",
             externalsDir: "../../../build/external/",
             imagesDir: "../../../build/images/",
-            jshintFile: "../../../build/external/jshint/jshint.js"
+            jshintFile: "../../../build/external/jshint/jshint.js",
+            useDebugger: useDebugger
         });
 
         // Switch to the Scratchpad's version
@@ -110,13 +113,13 @@ var runTest = function(options) {
             }
 
             checkErrors(options.errors, errors);
-            checkAssertions(options.assertions, output.assertions);
+            checkAssertions(options.assertions, output.results.assertions);
             options.simulateClick && simulateClick();
 
             if (code2) {
                 output.runCode(code2, function(errors) {
                     checkErrors(options.errors2, errors);
-                    checkAssertions(options.assertions2, output.assertions);
+                    checkAssertions(options.assertions2, output.results.assertions);
                     options.simulateClick && simulateClick();
                     done();
                 });
@@ -168,7 +171,7 @@ var failingTest = function(title, code, code2, errors) {
     runTest({
         title: title,
         code: code,
-        code2: code2, 
+        code2: code2,
         errors: errors || true
     });
 };

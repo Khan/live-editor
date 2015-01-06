@@ -91,7 +91,7 @@ var failingTest = function(title, code, errors) {
     runTest({
         title: title,
         code: code,
-        expected: false, 
+        expected: false,
         errors: errors
     });
 };

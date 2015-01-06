@@ -280,7 +280,7 @@ function program15(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n                </div>\n            </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar scratchpad-dev-record-row\" style=\"display:none;\"></div>\n    </div>\n</div>";
+  buffer += "\n                </div>\n            </div>\n            <div class=\"scratchpad-debugger\"></div>\n        </div>\n\n        <div class=\"scratchpad-toolbar scratchpad-dev-record-row\" style=\"display:none;\"></div>\n    </div>\n</div>";
   return buffer;});;
 window.ScratchpadDrawCanvas = Backbone.View.extend({
     initialize: function(options) {
@@ -824,7 +824,8 @@ window.LiveEditor = Backbone.View.extend({
         PLAYBAR_UI: ".scratchpad-playbar-play, .scratchpad-playbar-progress",
         OUTPUT_FRAME: "#output-frame",
         OUTPUT_DIV: "#output",
-        ALL_OUTPUT: "#output, #output-frame"
+        ALL_OUTPUT: "#output, #output-frame",
+        RESTART_BUTTON: "#restart-code"
     },
 
     mouseCommands: ["move", "over", "out", "down", "up"],
@@ -920,6 +921,21 @@ window.LiveEditor = Backbone.View.extend({
             liveEditor: this
         });
 
+        // Set up the debugger;
+        if (options.useDebugger) {
+            this.debugger = new ScratchpadDebugger({
+                liveEditor: this,
+                editor: this.editor.editor
+            });
+            this.debugger.on("enabled", function (enabled) {
+                if (enabled) {
+                    this.$el.find(this.dom.RESTART_BUTTON).attr("disabled", "");
+                } else {
+                    this.$el.find(this.dom.RESTART_BUTTON).removeAttr("disabled");
+                }
+            }, this);
+        }
+
         var code = options.code;
 
         // Load the text into the editor
@@ -978,7 +994,7 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // Handle the restart button
-        $el.delegate("#restart-code", "click",
+        $el.delegate(this.dom.RESTART_BUTTON, "click",
             this.restartCode.bind(this));
 
         this.handleMessagesBound = this.handleMessages.bind(this);
@@ -1162,7 +1178,7 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // Handle the restart button
-        $el.on("click", "#restart-code", function() {
+        $el.on("click", this.dom.RESTART_BUTTON, function() {
             self.record.log("restart");
         });
 
@@ -1410,7 +1426,7 @@ window.LiveEditor = Backbone.View.extend({
                 }
 
                 // During playback disable the restart button
-                self.$el.find("#restart-code").addClass("disabled");
+                self.$el.find(this.dom.RESTART_BUTTON).addClass("disabled");
 
                 if (!record.recording) {
                     // Turn on playback-related styling
@@ -1446,7 +1462,7 @@ window.LiveEditor = Backbone.View.extend({
                 self.$el.find(".disable-overlay").hide();
 
                 // Allow the user to restart the code again
-                self.$el.find("#restart-code").removeClass("disabled");
+                self.$el.find(this.dom.RESTART_BUTTON).removeClass("disabled");
 
                 // Re-enable the record button after playback
                 self.$el.find("#record").removeClass("disabled");
@@ -1552,7 +1568,7 @@ window.LiveEditor = Backbone.View.extend({
 
         // When a restart occurs during playback, restart the output
         record.handlers.restart = function() {
-            var $restart = self.$el.find("#restart-code");
+            var $restart = self.$el.find(this.dom.RESTART_BUTTON);
 
             if (!$restart.hasClass("hilite")) {
                 $restart.addClass("hilite green");
@@ -1721,6 +1737,11 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         if (!data) {
+            return;
+        }
+
+        if (data.type === "debugger") {
+            // these messages are handled by ui/debugger.js:listenMessages
             return;
         }
 

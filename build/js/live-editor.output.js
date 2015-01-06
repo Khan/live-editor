@@ -321,12 +321,14 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         this.setPaths(options);
 
-        this.config = new ScratchpadConfig({});
-        
+        this.config = new ScratchpadConfig({
+            useDebugger: options.useDebugger
+        });
+
         if (options.outputType) {
             this.setOutput(options.outputType);
         }
-
+        
         this.bind();
     },
 
@@ -383,15 +385,28 @@ window.LiveEditorOutput = Backbone.View.extend({
         // let the parent know we're up and running
         this.notifyActive();
 
+        // filter out events that are objects
+        // currently the only messages that contain objects are messages
+        // being sent by Poster instances being used by the iframeOverlay
+        // in pjs-output.js and ui/debugger.js 
+        if (typeof event.data === "object") {
+            return;
+        }
+
         try {
             data = JSON.parse(event.data);
-
         } catch (err) {
             return;
         }
         if (!this.output) {
             var outputType = data.outputType || _.keys(this.outputs)[0];
             this.setOutput(outputType);
+        }
+
+        // filter out debugger events
+        // handled by pjs-debugger.js::handleMessage
+        if (data.type === "debugger") {
+            return;
         }
 
         // Set the paths from the incoming data, if they exist
@@ -529,7 +544,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
             } catch (e) {
                 buildDone([e]);
-            }
+            }        
         }.bind(this);
 
         // Always lint the first time, so that PJS can populate its list of globals
@@ -547,13 +562,15 @@ window.LiveEditorOutput = Backbone.View.extend({
     phoneHome: function() {
         // Our handling of errors is leaky.
         // In the old design errors were passed from function to function 
-        // via arguments to callbacks. Recently I have added asynchrynous sources 
+        // via arguments to callbacks. Recently I have added asynchronous sources 
         // of errors such as those from breaking out of an infinite loop.
         // These two different mechanisms mean that it's possible for errors to 
         // get lost, but it can't be fixed without rewriting how all of the callbacks
         // work. As a work around if we ever see an error, never erase it.
-        // Since within a single run an error can never be resolved this makes sure
-        // that errors don't disappear.
+        // I made the judgement that rather than trying to merge the two it's ok if 
+        // earlier errors cover newer ones, since once the user fixes the earlier errors 
+        // the new ones will appear, meaning we never leave the user stuck wondering what to do. 
+        // I expect that to be good enough compromise.
         if (this.lastSent && this.lastSent.errors && this.lastSent.errors.length) {
             this.results.errors = this.lastSent.errors;
         } 

@@ -6,6 +6,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Mocha Test Runner</title>
         <link rel="stylesheet" href="../../../node_modules/mocha/mocha.css">
+        <script>
+            // run tests with debugger on
+            if (location.search.indexOf("debugger=true") === -1) {
+                if (location.search.indexOf("?") === -1) {
+                    location.search = "debugger=true";
+                } else {
+                    location.search += "&debugger=true";
+                }
+            }
+        </script>
     </head>
     <body>
         <div id="mocha"></div>
@@ -24,18 +34,21 @@
                 return oldSplice.apply(this, arguments);
             };
         })();
+
+        // used to skip some of the tests that aren't applicable
+        var useDebugger = location.search.indexOf("debugger=true") !== -1;
         </script>
         <script src="../../../build/js/live-editor.shared.js"></script>
         <script src="../../../build/js/live-editor.output.js"></script>
-        <script src="../../../build/js/live-editor.output_webpage_deps.js"></script>
-        <script src="../../../build/js/live-editor.output_webpage.js"></script>
+        <script src="../../../build/js/live-editor.output_pjs_deps.js"></script>
+        <script src="../../../build/js/live-editor.output_pjs.js"></script>
+        <script src="../../../build/js/live-editor.output_debugger_deps.js"></script>
         <script src="../../../node_modules/mocha/mocha.js"></script>
         <script src="../../../node_modules/expect.js/index.js"></script>
         <script>mocha.setup("bdd");</script>
-        <script src="test_utils.js"></script>
-        <script src="output_test.js"></script>
-        <script src="assert_test.js"></script>
-        <script src="transform_test.js"></script>
+        <script src="../pjs/test_utils.js"></script>
+        <script src="../pjs/output_test.js"></script>
+        <script src="../pjs/assert_test.js"></script>
         <script>
             onload = function(){
                 if (window.mochaPhantomJS) {

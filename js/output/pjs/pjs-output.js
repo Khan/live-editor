@@ -66,7 +66,16 @@ window.PJSOutput = Backbone.View.extend({
         this.render();
         this.bind();
 
+        iframeOverlay.createRelay(this.$canvas[0]);
+
         this.build(this.$canvas[0]);
+
+        if (this.config.useDebugger && PJSDebugger) {
+            this.debugger = new PJSDebugger({
+                context: this.canvas,
+                output: this
+            });
+        }
 
         this.reseedRandom();
         this.lastGrab = null;
@@ -322,7 +331,7 @@ window.PJSOutput = Backbone.View.extend({
         var width = $window.width();
         var height = $window.height();
 
-        if (this.canvas && 
+        if (this.canvas &&
             (width !== this.canvas.width ||
             height !== this.canvas.height)) {
             // Set the canvas element to be the right size
@@ -929,9 +938,14 @@ window.PJSOutput = Backbone.View.extend({
         // Replace all calls to 'new Something' with
         // this.newInstance(Something)()
         // Used for keeping track of unique instances
-        userCode = userCode && userCode.replace(
-            /\bnew[\s\n]+([A-Z]{1,2}[a-z0-9_]+)([\s\n]*\()/g,
-            "PJSOutput.applyInstance($1,'$1')$2");
+        if (!this.debugger) {
+            userCode = userCode && userCode.replace(
+                /\bnew[\s\n]+([A-Z]{1,2}[a-z0-9_]+)([\s\n]*\()/g,
+                "PJSOutput.applyInstance($1,'$1')$2");
+        } else {
+            // we'll use the debugger's newCallback delegate method to
+            // keep track of object instances
+        }
 
         // If we have a draw function then we need to do injection
         // If we had a draw function then we still need to do injection
@@ -1331,6 +1345,7 @@ window.PJSOutput = Backbone.View.extend({
         }
 
         var contexts = Array.prototype.slice.call(arguments, 1);
+        var originalCode = code;
 
         // this is kind of sort of supposed to fake a gensym that the user
         // can't access but since we're limited to string manipulation, we
@@ -1359,7 +1374,12 @@ window.PJSOutput = Backbone.View.extend({
             "\n}).apply(" + topLevelThis + ");";
 
         try {
-            (new Function(code)).apply(this.canvas, contexts);
+
+            if (this.debugger) {
+                this.debugger.exec(originalCode);
+            } else {
+                (new Function(code)).apply(this.canvas, contexts);
+            }
 
         } catch (e) {
             return e;
@@ -1533,12 +1553,6 @@ _.extend(PJSOutput, {
             }
         } catch(e) {}
 
-        // Make sure a name is set for the class if one has not been
-        // set already
-        if (!classFn.__name && className) {
-            classFn.__name = className;
-        }
-
         // Return a function for later execution.
         return function() {
             var args = arguments;
@@ -1554,23 +1568,37 @@ _.extend(PJSOutput, {
             // Instantiate the dummy function
             var obj = new Class();
 
-            // Point back to the original function
-            obj.constructor = classFn;
-
-            // Generate a semi-unique ID for the instance
-            obj.__id = function() {
-                return "new " + classFn.__name + "(" +
-                    this.stringifyArray(args) + ")";
-            }.bind(this);
-
-            // Keep track of the instances that have been instantiated
-            if (this.instances) {
-                this.instances.push(obj);
-            }
+            this.newCallback(classFn, className, obj, args);
 
             // Return the new instance
             return obj;
         }.bind(this);
+    },
+
+    // called whenever a user defined class is called to instantiate an object.
+    // adds metadata to the class and the object to keep track of it and to
+    // serialize it.
+    // Called in PJSOutput.applyInstance and the Debugger's context.__instantiate__
+    newCallback: function (classFn, className, obj, args) {
+        // Make sure a name is set for the class if one has not been
+        // set already
+        if (!classFn.__name && className) {
+            classFn.__name = className;
+        }
+
+        // Point back to the original function
+        obj.constructor = classFn;
+
+        // Generate a semi-unique ID for the instance
+        obj.__id = function() {
+            return "new " + classFn.__name + "(" +
+                this.stringifyArray(args) + ")";
+        }.bind(this);
+
+        // Keep track of the instances that have been instantiated
+        if (this.instances) {
+            this.instances.push(obj);
+        }
     }
 });
 

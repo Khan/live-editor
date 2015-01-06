@@ -12,6 +12,9 @@ self.onmessage = function(event) {
 
         importScripts(event.data.jshintFile +
             "?cachebust=" + (new Date()).toDateString());
+
+        importScripts(event.data.externalsDir +
+            "underscore/underscore.js?cachebust=" + (new Date()).toDateString());
     }
 
     // Evaluate the code using JSHint
@@ -21,9 +24,8 @@ self.onmessage = function(event) {
     self.postMessage({
          type: "jshint",
          message: {
-            // JSHint passes back a non-JSON object so we need to convert it
-            hintData: JSON.parse(JSON.stringify(JSHINT.data())),
-            hintErrors: JSHINT.errors
+             hintData: JSON.parse(JSON.stringify(JSHINT.data())),
+             hintErrors: JSHINT.errors
         }
     });
 };

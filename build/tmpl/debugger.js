@@ -1,0 +1,8 @@
+this["Handlebars"] = this["Handlebars"] || {};
+this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
+this["Handlebars"]["templates"]["debugger"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  helpers = helpers || Handlebars.helpers;
+  var foundHelper, self=this;
+
+
+  return "<div class=\"scratchpad-debugger\">\n    Debug Mode\n    <input type=\"checkbox\" class=\"debug-mode\">\n    <span class=\"debugger-level\" style=\"display:none;margin-left:20px;\">\n        Level\n        <select class=\"debugger-level-select\">\n            <option value=\"beginner\" selected>Beginner</option>\n            <option value=\"advanced\">Advanced</option>\n        </select>\n    </span>\n\n    <div class=\"debugger-simple\" style=\"display:none;margin-top:5px;\">\n        <button class=\"debug-begin\" style=\"margin-right:20px;\">Begin</button>\n        <button class=\"step-in\" disabled>Step</button>\n        <button class=\"debug-end\" disabled style=\"margin-left:20px;\">End\n        </button>\n    </div>\n    <div class=\"debugger-complex\" style=\"display:none;margin-top:5px;\">\n        <button class=\"debug-restart\" style=\"margin-right:10px;\">Restart\n        </button>\n        <!-- start/restart -->\n        <button class=\"step-over\" disabled>Step Over</button>\n        <button class=\"step-in\" disabled>Step In</button>\n        <button class=\"step-out\" disabled>Step Out</button>\n        <button class=\"debug-continue\" disabled style=\"margin-left:10px;\">\n            Continue\n        </button>\n    </div>\n</div>\n";});;

@@ -24,11 +24,16 @@
                 return oldSplice.apply(this, arguments);
             };
         })();
+
+        // used to skip some of the tests that aren't applicable
+        // should be false
+        var useDebugger = location.search.indexOf("debugger=true") !== -1;
         </script>
         <script src="../../../build/js/live-editor.shared.js"></script>
         <script src="../../../build/js/live-editor.output.js"></script>
         <script src="../../../build/js/live-editor.output_pjs_deps.js"></script>
         <script src="../../../build/js/live-editor.output_pjs.js"></script>
+        <script src="../../../build/js/live-editor.output_debugger_deps.js"></script>
         <script src="../../../node_modules/mocha/mocha.js"></script>
         <script src="../../../node_modules/expect.js/index.js"></script>
         <script>mocha.setup("bdd");</script>
@@ -36,11 +41,13 @@
         <script src="output_test.js"></script>
         <script src="assert_test.js"></script>
         <script>
-            if (window.mochaPhantomJS) {
-                mochaPhantomJS.run();
-            } else {
-                mocha.run();
-            }
+            onload = function(){
+                if (window.mochaPhantomJS) {
+                    mochaPhantomJS.run();
+                } else {
+                    mocha.run();
+                }
+            };
         </script>
     </body>
 </html>
