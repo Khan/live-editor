@@ -1219,12 +1219,12 @@ window.PJSOutput = Backbone.View.extend({
 
         this.render();
         this.bind();
-
-        iframeOverlay.createRelay(this.$canvas[0]);
-
+ 
         this.build(this.$canvas[0]);
 
         if (this.config.useDebugger && PJSDebugger) {
+            iframeOverlay.createRelay(this.$canvas[0]);
+
             this.debugger = new PJSDebugger({
                 context: this.canvas,
                 output: this
