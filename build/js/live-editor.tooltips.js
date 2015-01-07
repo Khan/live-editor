@@ -2259,7 +2259,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             // Lazy load on scroll
             this.$(".mediapicker-modal-content").scroll(
                 _.throttle(function(e) {
-                    TooltipUtils.lazyLoadImgs(e.currentTarget);
+                    TooltipUtils.lazyLoadMedia(e.currentTarget);
                 }, 200)
             );
 
@@ -2281,7 +2281,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
 
             // Modal or tab
             "shown": function() {
-                TooltipUtils.lazyLoadImgs(
+                TooltipUtils.lazyLoadMedia(
                     this.$(".tab-pane.active .mediapicker-modal-content"));
             },
 
@@ -2665,12 +2665,12 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         var self = this;
 
         this.$(".media-groups").scroll(_.throttle(function() {
-            TooltipUtils.lazyLoadImgs(this);
+            TooltipUtils.lazyLoadMedia(this);
         }, 200, {leading: false}));
 
         this.$el
             .on("mouseenter", function() {
-                TooltipUtils.lazyLoadImgs($(this));
+                TooltipUtils.lazyLoadMedia($(this));
             })
             .on("click", ".image", function() {
                 $(this).parents(".mediapicker").find(".active").removeClass("active");
@@ -2965,7 +2965,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
 window.TooltipUtils = {
     /**
      * This is a KA specific implementation of lazy loading:
-     * It is targetted specifically at the modal in the imageModal tooltip
+     * It is targetted specifically at the modal in soundModal/imageModal
      * (although it is generally applicable to some degree)
      * It loads images as they are scrolled into view.
      * It makes the following assumptions
@@ -2977,7 +2977,7 @@ window.TooltipUtils = {
      *     then A is at least as high as B on the page.
      *
      */
-    lazyLoadImgs: function(container, tolerance) {
+    lazyLoadMedia: function(container, tolerance) {
         tolerance = tolerance || 250;
         var self = this;
         $(container).each(function(i, elem) {
@@ -2985,12 +2985,12 @@ window.TooltipUtils = {
             var bottom = top + $(elem).height();
             top -= tolerance;
             bottom += tolerance;
-            $(elem).find("img[data-lazy-src]").each(function(j, img) {
-                var height = $(img).position().top;
+            $(elem).find("[data-lazy-src]").each(function(j, elem) {
+                var height = $(elem).position().top;
                 if (height < top) {
                     return true; // continue;
                 } else if (height < bottom) {
-                    self.loadNow(img);
+                    self.loadNow(elem);
                 } else {
                     return false; // break;
                 }
@@ -2998,8 +2998,8 @@ window.TooltipUtils = {
         });
     },
 
-    loadNow: function(img) {
-        $.each($(img), function(i, elem) {
+    loadNow: function(elem) {
+        $.each($(elem), function(i, elem) {
             $(elem).attr("src", $(elem).attr("data-lazy-src"));
             $(elem).removeAttr("data-lazy-src");
         });
@@ -3515,7 +3515,7 @@ function program14(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                    <audio src=\"";
+  buffer += escapeExpression(stack1) + "\">\n                    <audio data-lazy-src=\"";
   foundHelper = helpers.soundsDir;
   stack1 = foundHelper || depth3.soundsDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }

@@ -32,7 +32,7 @@
                     data-update-path='"{{../groupName}}/{{this}}"'
                     data-preview-path="{{../groupName}}/{{this}}"
                     data-path="{{../groupName}}/{{this}}">
-                    <audio src="{{../../../soundsDir}}{{../groupName}}/{{this}}.mp3" controls/>
+                    <audio data-lazy-src="{{../../../soundsDir}}{{../groupName}}/{{this}}.mp3" controls/>
                     <span>{{this}}</span>
                 </div>
                 {{/each}}
