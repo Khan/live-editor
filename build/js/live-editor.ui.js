@@ -1428,7 +1428,7 @@ window.LiveEditor = Backbone.View.extend({
                 }
 
                 // During playback disable the restart button
-                self.$el.find(this.dom.RESTART_BUTTON).addClass("disabled");
+                self.$el.find(self.dom.RESTART_BUTTON).addClass("disabled");
 
                 if (!record.recording) {
                     // Turn on playback-related styling
@@ -1464,7 +1464,7 @@ window.LiveEditor = Backbone.View.extend({
                 self.$el.find(".disable-overlay").hide();
 
                 // Allow the user to restart the code again
-                self.$el.find(this.dom.RESTART_BUTTON).removeClass("disabled");
+                self.$el.find(self.dom.RESTART_BUTTON).removeClass("disabled");
 
                 // Re-enable the record button after playback
                 self.$el.find("#record").removeClass("disabled");
@@ -1570,7 +1570,7 @@ window.LiveEditor = Backbone.View.extend({
 
         // When a restart occurs during playback, restart the output
         record.handlers.restart = function() {
-            var $restart = self.$el.find(this.dom.RESTART_BUTTON);
+            var $restart = self.$el.find(self.dom.RESTART_BUTTON);
 
             if (!$restart.hasClass("hilite")) {
                 $restart.addClass("hilite green");

@@ -275,7 +275,7 @@ function program14(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                    <audio src=\"";
+  buffer += escapeExpression(stack1) + "\">\n                    <audio data-lazy-src=\"";
   foundHelper = helpers.soundsDir;
   stack1 = foundHelper || depth3.soundsDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }

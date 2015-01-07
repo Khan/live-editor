@@ -70,12 +70,12 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         var self = this;
 
         this.$(".media-groups").scroll(_.throttle(function() {
-            TooltipUtils.lazyLoadImgs(this);
+            TooltipUtils.lazyLoadMedia(this);
         }, 200, {leading: false}));
 
         this.$el
             .on("mouseenter", function() {
-                TooltipUtils.lazyLoadImgs($(this));
+                TooltipUtils.lazyLoadMedia($(this));
             })
             .on("click", ".image", function() {
                 $(this).parents(".mediapicker").find(".active").removeClass("active");

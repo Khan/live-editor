@@ -39,7 +39,7 @@
             // Lazy load on scroll
             this.$(".mediapicker-modal-content").scroll(
                 _.throttle(function(e) {
-                    TooltipUtils.lazyLoadImgs(e.currentTarget);
+                    TooltipUtils.lazyLoadMedia(e.currentTarget);
                 }, 200)
             );
 
@@ -61,7 +61,7 @@
 
             // Modal or tab
             "shown": function() {
-                TooltipUtils.lazyLoadImgs(
+                TooltipUtils.lazyLoadMedia(
                     this.$(".tab-pane.active .mediapicker-modal-content"));
             },
 

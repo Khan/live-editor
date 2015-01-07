@@ -1,7 +1,7 @@
 window.TooltipUtils = {
     /**
      * This is a KA specific implementation of lazy loading:
-     * It is targetted specifically at the modal in the imageModal tooltip
+     * It is targetted specifically at the modal in soundModal/imageModal
      * (although it is generally applicable to some degree)
      * It loads images as they are scrolled into view.
      * It makes the following assumptions
@@ -13,7 +13,7 @@ window.TooltipUtils = {
      *     then A is at least as high as B on the page.
      *
      */
-    lazyLoadImgs: function(container, tolerance) {
+    lazyLoadMedia: function(container, tolerance) {
         tolerance = tolerance || 250;
         var self = this;
         $(container).each(function(i, elem) {
@@ -21,12 +21,12 @@ window.TooltipUtils = {
             var bottom = top + $(elem).height();
             top -= tolerance;
             bottom += tolerance;
-            $(elem).find("img[data-lazy-src]").each(function(j, img) {
-                var height = $(img).position().top;
+            $(elem).find("[data-lazy-src]").each(function(j, elem) {
+                var height = $(elem).position().top;
                 if (height < top) {
                     return true; // continue;
                 } else if (height < bottom) {
-                    self.loadNow(img);
+                    self.loadNow(elem);
                 } else {
                     return false; // break;
                 }
@@ -34,8 +34,8 @@ window.TooltipUtils = {
         });
     },
 
-    loadNow: function(img) {
-        $.each($(img), function(i, elem) {
+    loadNow: function(elem) {
+        $.each($(elem), function(i, elem) {
             $(elem).attr("src", $(elem).attr("data-lazy-src"));
             $(elem).removeAttr("data-lazy-src");
         });

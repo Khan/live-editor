@@ -789,12 +789,17 @@ window.WebpageOutput = Backbone.View.extend({
         
         $(this.frameDoc).find("a").on("mouseup", function() {
             var url = $(this).attr("href");
-            if (url[0] !== "#") {
-                self.output.postParent({
-                    action: "link-click",
-                    url: url
-                });
+            if (url && url[0] === "#") {
+                $(self.frameDoc).find("html, body").animate({
+                    scrollTop: $(self.frameDoc).find(url).offset().top
+                }, 1000);
+                return;
             }
+
+            self.output.postParent({
+                action: "link-click",
+                url: url
+            });
             return false;
         });
 
