@@ -86,6 +86,11 @@ describe("Linting", function() {
     test("parsing of attr content w/ HTML entities",
         '<p class="1 &lt; 2 &LT; 3"></p>');
 
+    test("parsing of form elements", [
+        '<button type="button">Submit</button>',
+        '<button type="submit">Submit</button>'
+    ]);
+
     failingTest("INVALID_TAG_NAME raised by < at EOF",
         '<', [
             {row: 0, column: 0, lint: {type: "INVALID_TAG_NAME"}}

@@ -1815,7 +1815,11 @@
     text: function(text, parseInfo) {
       if (this.currentNode && this.currentNode.attributes) { 
         var type = this.currentNode.attributes.type || "";
-        type = type.toLowerCase(); 
+        if (type.toLowerCase) {
+            type = type.toLowerCase();
+        } else if (type.nodeValue) { // button type="submit"
+            type = type.nodeValue;
+        }
         if (this.currentNode.nodeName.toLowerCase() === "script" && (!type || type === "text/javascript")) { 
           this.javascript(text, parseInfo); 
           // Don't actually add javascript to the DOM we're building
