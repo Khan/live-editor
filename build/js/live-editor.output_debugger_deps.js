@@ -14,182 +14,181 @@ var EventSim = require("eventsim");
 var LinkedList = require("basic-ds").LinkedList;
 
 function createOverlay(iframe) {
-  var wrapper = document.createElement("span");
-  wrapper.setAttribute("style", "position:relative;padding:0;margin:0;display:inline-block;");
-  wrapper.setAttribute("class", "wrapper");
+    var wrapper = document.createElement("span");
+    wrapper.setAttribute("style", "position:relative;padding:0;margin:0;display:inline-block;");
+    wrapper.setAttribute("class", "wrapper");
 
-  var overlay = document.createElement("span");
-  overlay.setAttribute("style", "position:absolute;left:0;top:0;width:100%;height:100%;");
-  overlay.setAttribute("class", "overlay");
-  overlay.setAttribute("tabindex", "0"); // allwos the span to have focus
+    var overlay = document.createElement("span");
+    overlay.setAttribute("style", "position:absolute;left:0;top:0;width:100%;height:100%;");
+    overlay.setAttribute("class", "overlay");
+    overlay.setAttribute("tabindex", "0"); // allwos the span to have focus
 
-  var parent = iframe.parentElement;
-  parent.insertBefore(wrapper, iframe);
-  wrapper.appendChild(iframe);
-  wrapper.appendChild(overlay);
+    var parent = iframe.parentElement;
+    parent.insertBefore(wrapper, iframe);
+    wrapper.appendChild(iframe);
+    wrapper.appendChild(overlay);
 
-  var down = false;
-  var paused = false;
-  var queue = new LinkedList();
+    var down = false;
+    var paused = false;
+    var queue = new LinkedList();
 
-  var poster = new Poster(iframe.contentWindow);
+    var poster = new Poster(iframe.contentWindow);
 
-  function postMouseEvent(e) {
-    if (paused) {
-      e.timestamp = Date.now(); // Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=238041
-      queue.push_front(e);
-    } else {
-      var bounds = wrapper.getBoundingClientRect();
-      poster.post("mouse", {
-        type: e.type,
-        x: e.pageX - bounds.left,
-        y: e.pageY - bounds.top,
-        shiftKey: e.shiftKey,
-        altKey: e.altKey,
-        ctrlKey: e.ctrlKey,
-        metaKey: e.metaKey
-      });
-    }
-  }
-
-  function postKeyboardEvent(e) {
-    if (paused) {
-      e.timestamp = Date.now(); // Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=238041
-      queue.push_front(e);
-    } else {
-      poster.post("keyboard", {
-        type: e.type,
-        keyCode: e.keyCode,
-        shiftKey: e.shiftKey,
-        altKey: e.altKey,
-        ctrlKey: e.ctrlKey,
-        metaKey: e.metaKey
-      });
-    }
-  }
-
-  overlay.addEventListener("click", function (e) {
-    return postMouseEvent(e);
-  });
-  overlay.addEventListener("dblclick", function (e) {
-    return postMouseEvent(e);
-  });
-  overlay.addEventListener("mouseover", function (e) {
-    return postMouseEvent(e);
-  });
-  overlay.addEventListener("mouseout", function (e) {
-    return postMouseEvent(e);
-  });
-
-  overlay.addEventListener("mousedown", function (e) {
-    down = true;
-    postMouseEvent(e);
-  });
-
-  overlay.addEventListener("mousemove", function (e) {
-    if (!down) {
-      postMouseEvent(e);
-    }
-  });
-
-  window.addEventListener("mousemove", function (e) {
-    if (down) {
-      e.preventDefault();
-      postMouseEvent(e);
-    }
-  });
-
-  window.addEventListener("mouseup", function (e) {
-    if (down) {
-      down = false;
-      postMouseEvent(e);
-    }
-  });
-
-  overlay.addEventListener("keydown", function (e) {
-    return postKeyboardEvent(e);
-  });
-  overlay.addEventListener("keypress", function (e) {
-    return postKeyboardEvent(e);
-  });
-  overlay.addEventListener("keyup", function (e) {
-    return postKeyboardEvent(e);
-  });
-
-  var keyEventRegex = /key(up|down|press)/;
-  var mouseEventRegex = /click|dblclick|mouse(up|down|move|over|out)/;
-
-  return {
-    pause: function pause() {
-      paused = true;
-    },
-    resume: function resume() {
-      if (!paused) {
-        // guard against multiple calls to resume()
-        return;
-      }
-      paused = false;
-
-      function pop() {
+    function postMouseEvent(e) {
         if (paused) {
-          return; // if something has paused use since we posted the last event return
+            e.timestamp = Date.now(); // Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=238041
+            queue.push_front(e);
+        } else {
+            var bounds = wrapper.getBoundingClientRect();
+            poster.post("mouse", {
+                type: e.type,
+                x: e.pageX - bounds.left,
+                y: e.pageY - bounds.top,
+                shiftKey: e.shiftKey,
+                altKey: e.altKey,
+                ctrlKey: e.ctrlKey,
+                metaKey: e.metaKey
+            });
         }
-
-        var e = queue.pop_back();
-        if (!e) {
-          return;
-        }
-
-        if (e instanceof MouseEvent) {
-          postMouseEvent(e);
-        } else if (e instanceof KeyboardEvent) {
-          postKeyboardEvent(e);
-        } else if (mouseEventRegex.test(e.type)) {
-          postMouseEvent(e);
-        } else if (keyEventRegex.test(e.type)) {
-          postKeyboardEvent(e);
-        }
-
-        if (queue.last && queue.last.value) {
-          var next = queue.last.value; // TODO: change last to lastNode
-          var delay = next.timestamp - e.timestamp; // Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=238041
-          setTimeout(pop, delay);
-        }
-      }
-      pop();
     }
-  };
+
+    function postKeyboardEvent(e) {
+        if (paused) {
+            e.timestamp = Date.now(); // Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=238041
+            queue.push_front(e);
+        } else {
+            poster.post("keyboard", {
+                type: e.type,
+                keyCode: e.keyCode,
+                shiftKey: e.shiftKey,
+                altKey: e.altKey,
+                ctrlKey: e.ctrlKey,
+                metaKey: e.metaKey
+            });
+        }
+    }
+
+    overlay.addEventListener("click", function (e) {
+        return postMouseEvent(e);
+    });
+    overlay.addEventListener("dblclick", function (e) {
+        return postMouseEvent(e);
+    });
+    overlay.addEventListener("mouseover", function (e) {
+        return postMouseEvent(e);
+    });
+    overlay.addEventListener("mouseout", function (e) {
+        return postMouseEvent(e);
+    });
+
+    overlay.addEventListener("mousedown", function (e) {
+        down = true;
+        postMouseEvent(e);
+    });
+
+    overlay.addEventListener("mousemove", function (e) {
+        if (!down) {
+            postMouseEvent(e);
+        }
+    });
+
+    window.addEventListener("mousemove", function (e) {
+        if (down) {
+            e.preventDefault();
+            postMouseEvent(e);
+        }
+    });
+
+    window.addEventListener("mouseup", function (e) {
+        if (down) {
+            down = false;
+            postMouseEvent(e);
+        }
+    });
+
+    overlay.addEventListener("keydown", function (e) {
+        return postKeyboardEvent(e);
+    });
+    overlay.addEventListener("keypress", function (e) {
+        return postKeyboardEvent(e);
+    });
+    overlay.addEventListener("keyup", function (e) {
+        return postKeyboardEvent(e);
+    });
+
+    var keyEventRegex = /key(up|down|press)/;
+    var mouseEventRegex = /click|dblclick|mouse(up|down|move|over|out)/;
+
+    return {
+        pause: function pause() {
+            paused = true;
+        },
+        resume: function resume() {
+            if (!paused) {
+                // guard against multiple calls to resume()
+                return;
+            }
+            paused = false;
+
+            function pop() {
+                if (paused) {
+                    return; // if something has paused use since we posted the last event return
+                }
+
+                var e = queue.pop_back();
+                if (!e) {
+                    return;
+                }
+
+                if (e instanceof MouseEvent) {
+                    postMouseEvent(e);
+                } else if (e instanceof KeyboardEvent) {
+                    postKeyboardEvent(e);
+                } else if (mouseEventRegex.test(e.type)) {
+                    postMouseEvent(e);
+                } else if (keyEventRegex.test(e.type)) {
+                    postKeyboardEvent(e);
+                }
+
+                if (queue.last && queue.last.value) {
+                    var next = queue.last.value; // TODO: change last to lastNode
+                    var delay = next.timestamp - e.timestamp; // Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=238041
+                    setTimeout(pop, delay);
+                }
+            }
+            pop();
+        }
+    };
 }
 
 function createRelay(element) {
-  var poster = new Poster(window.parent);
+    var poster = new Poster(window.parent);
 
-  poster.listen("mouse", function (e) {
-    EventSim.simulate(element, e.type, {
-      clientX: e.x,
-      clientY: e.y,
-      altKey: e.altKey,
-      shiftKey: e.shiftKey,
-      metaKey: e.metaKey,
-      ctrlKey: e.ctrlKey
+    poster.listen("mouse", function (e) {
+        EventSim.simulate(element, e.type, {
+            clientX: e.x,
+            clientY: e.y,
+            altKey: e.altKey,
+            shiftKey: e.shiftKey,
+            metaKey: e.metaKey,
+            ctrlKey: e.ctrlKey
+        });
     });
-  });
 
-  poster.listen("keyboard", function (e) {
-    EventSim.simulate(element, e.type, {
-      keyCode: e.keyCode,
-      altKey: e.altKey,
-      shiftKey: e.shiftKey,
-      metaKey: e.metaKey,
-      ctrlKey: e.ctrlKey
+    poster.listen("keyboard", function (e) {
+        EventSim.simulate(element, e.type, {
+            keyCode: e.keyCode,
+            altKey: e.altKey,
+            shiftKey: e.shiftKey,
+            metaKey: e.metaKey,
+            ctrlKey: e.ctrlKey
+        });
     });
-  });
 }
 
 
 exports.createOverlay = createOverlay;
 exports.createRelay = createRelay;
-
 },{"basic-ds":5,"eventsim":7,"poster":8}],2:[function(require,module,exports){
 var ListNode = require("./ListNode");
 var LinkedList = (function () {
@@ -1136,7 +1135,7 @@ require("./runtime/runtime");
 
 var canUseNativeGenerators = function () {
   try {
-    var code = "\n" + "var generator = (function* () {\n" + "  yield* (function* () {\n" + "    yield 5; yield 6;\n" + "  }());\n" + "}());\n" + "\n" + "var item = generator.next();\n" + "var passed = item.value === 5 && item.done === false;\n" + "item = generator.next();\n" + "passed &= item.value === 6 && item.done === false;\n" + "item = generator.next();\n" + "passed &= item.value === undefined && item.done === true;\n" + "return passed;";
+    var code = "var generator = (function* () {\n                        yield* (function* () {\n                            yield 5; yield 6;\n                        }());\n                    }());\n                    \n                    var item = generator.next();\n                    var passed = item.value === 5 && item.done === false;\n                    item = generator.next();\n                    passed &= item.value === 6 && item.done === false;\n                    item = generator.next();\n                    passed &= item.value === undefined && item.done === true;\n                    return passed;";
     return Function(code)();
   } catch (e) {
     return false;
@@ -1146,7 +1145,18 @@ var canUseNativeGenerators = function () {
 var Debugger = (function () {
   var Debugger =
 
-  // TODO: add debug messages flag
+  /**
+   * Create a new Debugger instance.
+   *
+   * @param {object} options
+   * 
+   * The options parameter can include the following keys:
+   * - context: dictionary containing variables to appear as globals
+   * - onBreakpoint: callback triggered when a breakpoint is hit
+   * - onFunctionDone: callback triggered when the last function in the call
+   *   stack is done executing.  Used by the debugger UI to disable step in,
+   *   out, over controls.
+   */
   function Debugger(options) {
     this.context = options.context || {};
     this.debug = options.debug;
@@ -1163,12 +1173,7 @@ var Debugger = (function () {
   };
 
   Debugger.isBrowserSupported = function () {
-    try {
-      var code = "\n" + "var generator = (function* () {\n" + "  yield* (function* () {\n" + "    yield 5; yield 6;\n" + "  }());\n" + "}());\n" + "\n" + "var item = generator.next();\n" + "var passed = item.value === 5 && item.done === false;\n" + "item = generator.next();\n" + "passed &= item.value === 6 && item.done === false;\n" + "item = generator.next();\n" + "passed &= item.value === undefined && item.done === true;\n" + "return passed;";
-      return Function(code)();
-    } catch (e) {
-      return false;
-    }
+    return true;
   };
 
   Debugger.prototype.load = function (code) {
@@ -1300,6 +1305,7 @@ var Debugger = (function () {
       }
     },
     currentStack: {
+      // TODO: rename to callstack
       get: function () {
         var stepper = this._currentStepper;
         if (stepper !== null) {
@@ -1315,6 +1321,7 @@ var Debugger = (function () {
       }
     },
     currentScope: {
+      // TODO: rename to scope
       get: function () {
         var stepper = this._currentStepper;
         if (stepper) {
@@ -1327,6 +1334,10 @@ var Debugger = (function () {
       }
     },
     currentLine: {
+      /**
+       * @deprecated
+       * @returns {number}
+       */
       get: function () {
         if (this._paused) {
           return this._currentStepper.line;
@@ -1352,7 +1363,7 @@ var Debugger = (function () {
 
 module.exports = Debugger;
 
-},{"../external/scheduler/lib/scheduler":2,"./runtime/runtime":128,"./stepper":129,"./transform":130}],2:[function(require,module,exports){
+},{"../external/scheduler/lib/scheduler":2,"./runtime/runtime":127,"./stepper":128,"./transform":129}],2:[function(require,module,exports){
 "use strict";
 
 var LinkedList = require("../node_modules/basic-ds/lib/LinkedList");
@@ -2817,7 +2828,7 @@ function objectsAreEquivalent(a, b, problemPath) {
 
 module.exports = astNodesAreEquivalent;
 
-},{"../main":19,"assert":25}],13:[function(require,module,exports){
+},{"../main":19,"assert":24}],13:[function(require,module,exports){
 var assert = require("assert");
 var types = require("./types");
 var n = types.namedTypes;
@@ -3268,7 +3279,7 @@ function cleanUpIfStatementAfterPrune(ifStatement) {
 
 module.exports = NodePath;
 
-},{"./path":15,"./scope":16,"./types":18,"assert":25,"util":49}],14:[function(require,module,exports){
+},{"./path":15,"./scope":16,"./types":18,"assert":24,"util":48}],14:[function(require,module,exports){
 var assert = require("assert");
 var types = require("./types");
 var NodePath = require("./node-path");
@@ -3582,7 +3593,7 @@ sharedContextProtoMethods.reportChanged = function reportChanged() {
 
 module.exports = PathVisitor;
 
-},{"./node-path":13,"./types":18,"assert":25}],15:[function(require,module,exports){
+},{"./node-path":13,"./types":18,"assert":24}],15:[function(require,module,exports){
 var assert = require("assert");
 var Op = Object.prototype;
 var hasOwn = Op.hasOwnProperty;
@@ -3932,7 +3943,7 @@ Pp.replace = function replace(replacement) {
 
 module.exports = Path;
 
-},{"./types":18,"assert":25}],16:[function(require,module,exports){
+},{"./types":18,"assert":24}],16:[function(require,module,exports){
 var assert = require("assert");
 var types = require("./types");
 var Type = types.Type;
@@ -4183,7 +4194,7 @@ Sp.getGlobalScope = function() {
 
 module.exports = Scope;
 
-},{"./node-path":13,"./types":18,"assert":25}],17:[function(require,module,exports){
+},{"./node-path":13,"./types":18,"assert":24}],17:[function(require,module,exports){
 var types = require("../lib/types");
 var Type = types.Type;
 var builtin = types.builtInTypes;
@@ -4958,7 +4969,7 @@ exports.finalize = function() {
     });
 };
 
-},{"assert":25}],19:[function(require,module,exports){
+},{"assert":24}],19:[function(require,module,exports){
 var types = require("./lib/types");
 
 // This core module of AST types captures ES5 as it is parsed today by
@@ -4992,221 +5003,268 @@ exports.PathVisitor = require("./lib/path-visitor");
 exports.visit = exports.PathVisitor.visit;
 
 },{"./def/core":6,"./def/e4x":7,"./def/es6":8,"./def/es7":9,"./def/fb-harmony":10,"./def/mozilla":11,"./lib/equiv":12,"./lib/node-path":13,"./lib/path-visitor":14,"./lib/types":18}],20:[function(require,module,exports){
-var ListNode = require("./ListNode");
-var LinkedList = (function () {
-    function LinkedList() {
-        this.first = null;
-        this.last = null;
-    }
-    LinkedList.prototype.push_back = function (value) {
-        var node = new ListNode(value);
-        if (this.first === null && this.last === null) {
-            this.first = node;
-            this.last = node;
-        }
-        else {
-            node.prev = this.last;
-            this.last.next = node;
-            this.last = node;
-        }
-    };
-    LinkedList.prototype.push_front = function (value) {
-        var node = new ListNode(value);
-        if (this.first === null && this.last === null) {
-            this.first = node;
-            this.last = node;
-        }
-        else {
-            node.next = this.first;
-            this.first.prev = node;
-            this.first = node;
-        }
-    };
-    LinkedList.prototype.pop_back = function () {
-        if (this.last) {
-            var value = this.last.value;
-            if (this.last.prev) {
-                var last = this.last;
-                this.last = last.prev;
-                this.last.next = null;
-                last.destroy();
-            }
-            else {
-                this.last = null;
-                this.first = null;
-            }
-            return value;
-        }
-        else {
-            return null;
-        }
-    };
-    LinkedList.prototype.pop_front = function () {
-        if (this.first) {
-            var value = this.first.value;
-            if (this.first.next) {
-                var first = this.first;
-                this.first = first.next;
-                this.first.prev = null;
-                first.destroy();
-            }
-            else {
-                this.first = null;
-                this.last = null;
-            }
-            return value;
-        }
-        else {
-            return null;
-        }
-    };
-    LinkedList.prototype.clear = function () {
-        this.first = this.last = null;
-    };
-    LinkedList.prototype.insertBeforeNode = function (refNode, value) {
-        if (refNode === this.first) {
-            this.push_front(value);
-        }
-        else {
-            var node = new ListNode(value);
-            node.prev = refNode.prev;
-            node.next = refNode;
-            refNode.prev.next = node;
-            refNode.prev = node;
-        }
-    };
-    LinkedList.prototype.forEachNode = function (callback, _this) {
-        var node = this.first;
-        var index = 0;
-        while (node !== null) {
-            callback.call(_this, node, index);
-            node = node.next;
-            index++;
-        }
-    };
-    LinkedList.prototype.forEach = function (callback, _this) {
-        this.forEachNode(function (node, index) { return callback.call(_this, node.value, index); }, _this);
-    };
-    LinkedList.prototype.nodeAtIndex = function (index) {
-        var i = 0;
-        var node = this.first;
-        while (node !== null) {
-            if (index === i) {
-                return node;
-            }
-            i++;
-            node = node.next;
-        }
-        return null;
-    };
-    LinkedList.prototype.replaceNodeWithValues = function (node, values) {
-        if (values.length > 0) {
-            var list = LinkedList.fromArray(values);
-            list.first.prev = node.prev;
-            list.last.next = node.next;
-            if (node.prev !== null) {
-                node.prev.next = list.first;
-            }
-            else {
-                this.first = list.first;
-            }
-            if (node.next !== null) {
-                node.next.prev = list.last;
-            }
-            else {
-                this.last = list.last;
-            }
-        }
-        else {
-            if (node.prev !== null) {
-                node.prev.next = node.next;
-            }
-            else {
-                this.first = node.next;
-            }
-            if (node.next !== null) {
-                node.next.prev = node.prev;
-            }
-            else {
-                this.last = node.prev;
-            }
-        }
-        node.prev = node.next = null;
-    };
-    LinkedList.prototype.valueAtIndex = function (index) {
-        var node = this.nodeAtIndex(index);
-        return node ? node.value : undefined;
-    };
-    LinkedList.prototype.toArray = function () {
-        var array = [];
-        var node = this.first;
-        while (node !== null) {
-            array.push(node.value);
-            node = node.next;
-        }
-        return array;
-    };
-    LinkedList.fromArray = function (array) {
-        var list = new LinkedList();
-        array.forEach(function (value) {
-            list.push_back(value);
-        });
-        return list;
-    };
-    return LinkedList;
-})();
-module.exports = LinkedList;
+"use strict";
 
-},{"./ListNode":21}],21:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],22:[function(require,module,exports){
-var Stack = (function () {
-    function Stack() {
-        this.items = [];
-        this.poppedLastItem = function (item) {
-        };
+var ListNode = function ListNode(value) {
+    this.value = value;
+    this.next = null;
+    this.prev = null;
+};
+
+ListNode.prototype.destroy = function () {
+    this.value = null;
+    this.prev = null;
+    this.next = null;
+};
+
+
+
+
+// TODO: add a .size/.empty getters to LinkedList
+var LinkedList = function LinkedList() {
+    this.first = null;
+    this.last = null;
+};
+
+LinkedList.prototype.push_back = function (value) {
+    var node = new ListNode(value);
+    if (this.first === null && this.last === null) {
+        this.first = node;
+        this.last = node;
+    } else {
+        node.prev = this.last;
+        this.last.next = node;
+        this.last = node;
     }
-    Stack.prototype.push = function (item) {
-        this.items.push(item);
-    };
-    Stack.prototype.pop = function () {
-        var item = this.items.pop();
-        if (this.isEmpty) {
-            this.poppedLastItem(item);
+};
+
+LinkedList.prototype.push_front = function (value) {
+    var node = new ListNode(value);
+    if (this.first === null && this.last === null) {
+        this.first = node;
+        this.last = node;
+    } else {
+        node.next = this.first;
+        this.first.prev = node;
+        this.first = node;
+    }
+};
+
+LinkedList.prototype.pop_back = function () {
+    if (this.last) {
+        var value = this.last.value;
+        if (this.last.prev) {
+            var last = this.last;
+            this.last = last.prev;
+            this.last.next = null;
+            last.destroy();
+        } else {
+            this.last = null;
+            this.first = null;
         }
+        return value;
+    } else {
+        return null;
+    }
+};
+
+LinkedList.prototype.pop_front = function () {
+    if (this.first) {
+        var value = this.first.value;
+        if (this.first.next) {
+            var first = this.first;
+            this.first = first.next;
+            this.first.prev = null;
+            first.destroy();
+        } else {
+            this.first = null;
+            this.last = null;
+        }
+        return value;
+    } else {
+        return null;
+    }
+};
+
+/**
+ * Clears the list by resetting it to its
+ * initial state.
+ */
+LinkedList.prototype.clear = function () {
+    this.first = this.last = null;
+};
+
+/**
+ * Inserts the value before refNode.
+ * Assumes that refNode is in the list.
+ * @param refNode
+ * @param value
+ */
+LinkedList.prototype.insertBeforeNode = function (refNode, value) {
+    if (refNode === this.first) {
+        this.push_front(value);
+    } else {
+        var node = new ListNode(value);
+        node.prev = refNode.prev;
+        node.next = refNode;
+        refNode.prev.next = node;
+        refNode.prev = node;
+    }
+};
+
+// TODO: finish this
+//    inserAfterNode(refNode: ListNode<T>, value: T) {
+//        if (refNode === this.last) {
+//            this.push_back(value);
+//        } else {
+//            var node = new Node(value);
+//        }
+//    };
+
+LinkedList.prototype.forEachNode = function (callback, _this) {
+    var node = this.first;
+    var index = 0;
+    while (node !== null) {
+        callback.call(_this, node, index);
+        node = node.next;
+        index++;
+    }
+};
+
+LinkedList.prototype.forEach = function (callback, _this) {
+    this.forEachNode(function (node, index) {
+        return callback.call(_this, node.value, index);
+    }, _this);
+};
+
+LinkedList.prototype.nodeAtIndex = function (index) {
+    var i = 0;
+    var node = this.first;
+    while (node !== null) {
+        if (index === i) {
+            return node;
+        }
+        i++;
+        node = node.next;
+    }
+    return null;
+};
+
+LinkedList.prototype.replaceNodeWithValues = function (node, values) {
+    if (values.length > 0) {
+        var list = LinkedList.fromArray(values);
+        list.first.prev = node.prev;
+        list.last.next = node.next;
+        if (node.prev !== null) {
+            node.prev.next = list.first;
+        } else {
+            this.first = list.first;
+        }
+        if (node.next !== null) {
+            node.next.prev = list.last;
+        } else {
+            this.last = list.last;
+        }
+    } else {
+        // remove the node
+        if (node.prev !== null) {
+            node.prev.next = node.next;
+        } else {
+            this.first = node.next;
+        }
+        if (node.next !== null) {
+            node.next.prev = node.prev;
+        } else {
+            this.last = node.prev;
+        }
+    }
+
+    node.prev = node.next = null; // clear refs so the node can be gc'd
+};
+
+LinkedList.prototype.valueAtIndex = function (index) {
+    var node = this.nodeAtIndex(index);
+    return node ? node.value : undefined;
+};
+
+LinkedList.prototype.toArray = function () {
+    var array = [];
+    var node = this.first;
+    while (node !== null) {
+        array.push(node.value);
+        node = node.next;
+    }
+    return array;
+};
+
+LinkedList.fromArray = function (array) {
+    var list = new LinkedList();
+    array.forEach(function (value) {
+        list.push_back(value);
+    });
+    return list;
+};
+
+module.exports = LinkedList;
+},{}],21:[function(require,module,exports){
+"use strict";
+
+var _prototypeProperties = function (child, staticProps, instanceProps) {
+    if (staticProps) Object.defineProperties(child, staticProps);
+    if (instanceProps) Object.defineProperties(child.prototype, instanceProps);
+};
+
+var Stack = function Stack() {
+    this.items = [];
+    this.poppedLastItem = function (item) {};
+};
+
+Stack.prototype.push = function (item) {
+    this.items.push(item);
+};
+
+Stack.prototype.pop = function () {
+    var item = this.items.pop();
+    if (this.isEmpty) {
+        this.poppedLastItem(item);
+    }
+    return item;
+};
+
+Stack.prototype.peek = function () {
+    return this.items[this.items.length - 1];
+};
+
+Stack.prototype.toArray = function () {
+    return this.items.map(function (item) {
         return item;
-    };
-    Stack.prototype.peek = function () {
-        return this.items[this.items.length - 1];
-    };
-    Stack.prototype.toArray = function () {
-        return this.items.map(function (item) { return item; });
-    };
-    Object.defineProperty(Stack.prototype, "size", {
+    });
+};
+
+_prototypeProperties(Stack, null, {
+    size: {
         get: function () {
             return this.items.length;
         },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Stack.prototype, "isEmpty", {
+        enumerable: true
+    },
+    isEmpty: {
         get: function () {
             return this.items.length === 0;
         },
-        enumerable: true,
-        configurable: true
-    });
-    return Stack;
-})();
-module.exports = Stack;
+        enumerable: true
+    }
+});
 
-},{}],23:[function(require,module,exports){
+module.exports = Stack;
+},{}],22:[function(require,module,exports){
+"use strict";
+
 exports.LinkedList = require("./LinkedList");
 exports.Stack = require("./Stack");
+},{"./LinkedList":20,"./Stack":21}],23:[function(require,module,exports){
 
-},{"./LinkedList":20,"./Stack":22}],24:[function(require,module,exports){
-
-},{}],25:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -5568,7 +5626,7 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":49}],26:[function(require,module,exports){
+},{"util/":48}],25:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -6888,7 +6946,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":27,"ieee754":28,"is-array":29}],27:[function(require,module,exports){
+},{"base64-js":26,"ieee754":27,"is-array":28}],26:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -7010,7 +7068,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],28:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -7096,7 +7154,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 
 /**
  * isArray
@@ -7131,7 +7189,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],30:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7434,7 +7492,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],31:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -7459,12 +7517,12 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],32:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -7692,7 +7750,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":34}],34:[function(require,module,exports){
+},{"_process":33}],33:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -7780,10 +7838,10 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],35:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":36}],36:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":35}],35:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -7876,7 +7934,7 @@ function forEach (xs, f) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_readable":38,"./_stream_writable":40,"_process":34,"core-util-is":41,"inherits":31}],37:[function(require,module,exports){
+},{"./_stream_readable":37,"./_stream_writable":39,"_process":33,"core-util-is":40,"inherits":30}],36:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7924,7 +7982,7 @@ PassThrough.prototype._transform = function(chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-},{"./_stream_transform":39,"core-util-is":41,"inherits":31}],38:[function(require,module,exports){
+},{"./_stream_transform":38,"core-util-is":40,"inherits":30}],37:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -8910,7 +8968,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require('_process'))
-},{"_process":34,"buffer":26,"core-util-is":41,"events":30,"inherits":31,"isarray":32,"stream":46,"string_decoder/":47}],39:[function(require,module,exports){
+},{"_process":33,"buffer":25,"core-util-is":40,"events":29,"inherits":30,"isarray":31,"stream":45,"string_decoder/":46}],38:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -9122,7 +9180,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":36,"core-util-is":41,"inherits":31}],40:[function(require,module,exports){
+},{"./_stream_duplex":35,"core-util-is":40,"inherits":30}],39:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -9512,7 +9570,7 @@ function endWritable(stream, state, cb) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":36,"_process":34,"buffer":26,"core-util-is":41,"inherits":31,"stream":46}],41:[function(require,module,exports){
+},{"./_stream_duplex":35,"_process":33,"buffer":25,"core-util-is":40,"inherits":30,"stream":45}],40:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -9622,10 +9680,10 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 }).call(this,require("buffer").Buffer)
-},{"buffer":26}],42:[function(require,module,exports){
+},{"buffer":25}],41:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":37}],43:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":36}],42:[function(require,module,exports){
 var Stream = require('stream'); // hack to fix a circular dependency issue when used with browserify
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = Stream;
@@ -9635,13 +9693,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":36,"./lib/_stream_passthrough.js":37,"./lib/_stream_readable.js":38,"./lib/_stream_transform.js":39,"./lib/_stream_writable.js":40,"stream":46}],44:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":35,"./lib/_stream_passthrough.js":36,"./lib/_stream_readable.js":37,"./lib/_stream_transform.js":38,"./lib/_stream_writable.js":39,"stream":45}],43:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":39}],45:[function(require,module,exports){
+},{"./lib/_stream_transform.js":38}],44:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":40}],46:[function(require,module,exports){
+},{"./lib/_stream_writable.js":39}],45:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -9770,7 +9828,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":30,"inherits":31,"readable-stream/duplex.js":35,"readable-stream/passthrough.js":42,"readable-stream/readable.js":43,"readable-stream/transform.js":44,"readable-stream/writable.js":45}],47:[function(require,module,exports){
+},{"events":29,"inherits":30,"readable-stream/duplex.js":34,"readable-stream/passthrough.js":41,"readable-stream/readable.js":42,"readable-stream/transform.js":43,"readable-stream/writable.js":44}],46:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -9993,14 +10051,14 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":26}],48:[function(require,module,exports){
+},{"buffer":25}],47:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -10590,7 +10648,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":48,"_process":34,"inherits":31}],50:[function(require,module,exports){
+},{"./support/isBuffer":47,"_process":33,"inherits":30}],49:[function(require,module,exports){
 (function (global){
 /*
   Copyright (C) 2012-2014 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -12983,7 +13041,7 @@ function hasOwnProperty(obj, prop) {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./package.json":65,"estraverse":68,"esutils":54,"source-map":55}],51:[function(require,module,exports){
+},{"./package.json":64,"estraverse":67,"esutils":53,"source-map":54}],50:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -13129,7 +13187,7 @@ function hasOwnProperty(obj, prop) {
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],52:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 /*
   Copyright (C) 2013-2014 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2014 Ivan Nikulin <ifaaan@gmail.com>
@@ -13232,7 +13290,7 @@ function hasOwnProperty(obj, prop) {
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],53:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -13371,7 +13429,7 @@ function hasOwnProperty(obj, prop) {
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./code":52}],54:[function(require,module,exports){
+},{"./code":51}],53:[function(require,module,exports){
 /*
   Copyright (C) 2013 Yusuke Suzuki <utatane.tea@gmail.com>
 
@@ -13406,7 +13464,7 @@ function hasOwnProperty(obj, prop) {
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./ast":51,"./code":52,"./keyword":53}],55:[function(require,module,exports){
+},{"./ast":50,"./code":51,"./keyword":52}],54:[function(require,module,exports){
 /*
  * Copyright 2009-2011 Mozilla Foundation and contributors
  * Licensed under the New BSD license. See LICENSE.txt or:
@@ -13416,7 +13474,7 @@ exports.SourceMapGenerator = require('./source-map/source-map-generator').Source
 exports.SourceMapConsumer = require('./source-map/source-map-consumer').SourceMapConsumer;
 exports.SourceNode = require('./source-map/source-node').SourceNode;
 
-},{"./source-map/source-map-consumer":60,"./source-map/source-map-generator":61,"./source-map/source-node":62}],56:[function(require,module,exports){
+},{"./source-map/source-map-consumer":59,"./source-map/source-map-generator":60,"./source-map/source-node":61}],55:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13515,7 +13573,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./util":63,"amdefine":64}],57:[function(require,module,exports){
+},{"./util":62,"amdefine":63}],56:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13659,7 +13717,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":58,"amdefine":64}],58:[function(require,module,exports){
+},{"./base64":57,"amdefine":63}],57:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13703,7 +13761,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":64}],59:[function(require,module,exports){
+},{"amdefine":63}],58:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -13785,7 +13843,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":64}],60:[function(require,module,exports){
+},{"amdefine":63}],59:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -14363,7 +14421,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":56,"./base64-vlq":57,"./binary-search":59,"./util":63,"amdefine":64}],61:[function(require,module,exports){
+},{"./array-set":55,"./base64-vlq":56,"./binary-search":58,"./util":62,"amdefine":63}],60:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -14766,7 +14824,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./array-set":56,"./base64-vlq":57,"./util":63,"amdefine":64}],62:[function(require,module,exports){
+},{"./array-set":55,"./base64-vlq":56,"./util":62,"amdefine":63}],61:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -15182,7 +15240,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":61,"./util":63,"amdefine":64}],63:[function(require,module,exports){
+},{"./source-map-generator":60,"./util":62,"amdefine":63}],62:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -15503,7 +15561,7 @@ define(function (require, exports, module) {
 
 });
 
-},{"amdefine":64}],64:[function(require,module,exports){
+},{"amdefine":63}],63:[function(require,module,exports){
 (function (process,__filename){
 /** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
@@ -15806,7 +15864,7 @@ function amdefine(module, requireFn) {
 module.exports = amdefine;
 
 }).call(this,require('_process'),"/node_modules/escodegen/node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"_process":34,"path":33}],65:[function(require,module,exports){
+},{"_process":33,"path":32}],64:[function(require,module,exports){
 module.exports={
   "name": "escodegen",
   "description": "ECMAScript code generator",
@@ -15881,12 +15939,12 @@ module.exports={
     "url": "https://github.com/estools/escodegen/issues"
   },
   "_id": "escodegen@1.4.4-dev",
-  "_shasum": "e3d95200511b8f02c6f8b45bd897a52186ae39bb",
-  "_from": "../../../var/folders/b9/bw58nn4x1n7c0p6cffqvfb_80000gn/T/npm-5697-dad1bab6/1420395223756-0.4521849087905139/0c6d8a6d8dfca8bae751fe1fc843d0e6363d9929",
+  "_shasum": "8b00fa440994a9021aeb7de6521eb355715718fe",
+  "_from": "../../../var/folders/b9/bw58nn4x1n7c0p6cffqvfb_80000gn/T/npm-18790-ece49fd0/1420673827526-0.6526587305124849/0c6d8a6d8dfca8bae751fe1fc843d0e6363d9929",
   "_resolved": "git://github.com/kevinb7/escodegen.git#0c6d8a6d8dfca8bae751fe1fc843d0e6363d9929"
 }
 
-},{}],66:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2013 Alex Seville <hi@alexanderseville.com>
@@ -17005,7 +17063,7 @@ module.exports={
 }, this));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"estraverse":68}],67:[function(require,module,exports){
+},{"estraverse":67}],66:[function(require,module,exports){
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -24623,7 +24681,7 @@ parseYieldExpression: true, parseAwaitExpression: true
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],68:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 /*
   Copyright (C) 2012-2013 Yusuke Suzuki <utatane.tea@gmail.com>
   Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
@@ -25465,7 +25523,7 @@ parseYieldExpression: true, parseAwaitExpression: true
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{}],69:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -26626,7 +26684,7 @@ Ep.explodeExpression = function(path, ignoreResult) {
   }
 };
 
-},{"./leap":71,"./meta":72,"./util":73,"assert":25,"recast":100}],70:[function(require,module,exports){
+},{"./leap":70,"./meta":71,"./util":72,"assert":24,"recast":99}],69:[function(require,module,exports){
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -26781,7 +26839,7 @@ exports.hoist = function(funPath) {
   return b.variableDeclaration("var", declarations);
 };
 
-},{"assert":25,"recast":100}],71:[function(require,module,exports){
+},{"assert":24,"recast":99}],70:[function(require,module,exports){
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -26964,7 +27022,7 @@ LMp.getContinueLoc = function(label) {
   return this._findLeapLocation("continueLoc", label);
 };
 
-},{"./emit":69,"assert":25,"recast":100,"util":49}],72:[function(require,module,exports){
+},{"./emit":68,"assert":24,"recast":99,"util":48}],71:[function(require,module,exports){
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -27066,7 +27124,7 @@ for (var type in leapTypes) {
 exports.hasSideEffects = makePredicate("hasSideEffects", sideEffectTypes);
 exports.containsLeap = makePredicate("containsLeap", leapTypes);
 
-},{"assert":25,"private":90,"recast":100}],73:[function(require,module,exports){
+},{"assert":24,"private":89,"recast":99}],72:[function(require,module,exports){
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -27168,7 +27226,7 @@ exports.isReference = function(path, name) {
   }
 };
 
-},{"assert":25,"recast":100}],74:[function(require,module,exports){
+},{"assert":24,"recast":99}],73:[function(require,module,exports){
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -27553,7 +27611,7 @@ var awaitVisitor = types.PathVisitor.fromMethodsObject({
   }
 });
 
-},{"..":75,"./emit":69,"./hoist":70,"./util":73,"assert":25,"fs":24,"recast":100}],75:[function(require,module,exports){
+},{"..":74,"./emit":68,"./hoist":69,"./util":72,"assert":24,"fs":23,"recast":99}],74:[function(require,module,exports){
 (function (__dirname){
 /**
  * Copyright (c) 2014, Facebook, Inc.
@@ -27714,7 +27772,7 @@ exports.compile = compile;
 exports.transform = transform;
 
 }).call(this,"/node_modules/regenerator")
-},{"./lib/util":73,"./lib/visit":74,"./runtime":126,"assert":25,"defs":76,"esprima-fb":67,"fs":24,"path":33,"recast":100,"through":125}],76:[function(require,module,exports){
+},{"./lib/util":72,"./lib/visit":73,"./runtime":125,"assert":24,"defs":75,"esprima-fb":66,"fs":23,"path":32,"recast":99,"through":124}],75:[function(require,module,exports){
 "use strict";
 
 var assert = require("assert");
@@ -28396,7 +28454,7 @@ function run(src, config) {
 
 module.exports = run;
 
-},{"./error":77,"./jshint_globals/vars.js":78,"./options":79,"./scope":80,"./stats":81,"alter":82,"assert":25,"ast-traverse":84,"breakable":85,"simple-fmt":86,"simple-is":87,"stringmap":88,"stringset":89}],77:[function(require,module,exports){
+},{"./error":76,"./jshint_globals/vars.js":77,"./options":78,"./scope":79,"./stats":80,"alter":81,"assert":24,"ast-traverse":83,"breakable":84,"simple-fmt":85,"simple-is":86,"stringmap":87,"stringset":88}],76:[function(require,module,exports){
 "use strict";
 
 var fmt = require("simple-fmt");
@@ -28426,7 +28484,7 @@ error.reset();
 
 module.exports = error;
 
-},{"assert":25,"simple-fmt":86}],78:[function(require,module,exports){
+},{"assert":24,"simple-fmt":85}],77:[function(require,module,exports){
 // jshint -W001
 
 "use strict";
@@ -28823,7 +28881,7 @@ exports.yui = {
 };
 
 
-},{}],79:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 // default configuration
 
 module.exports = {
@@ -28833,7 +28891,7 @@ module.exports = {
     parse: require("esprima-fb").parse,
 };
 
-},{"esprima-fb":67}],80:[function(require,module,exports){
+},{"esprima-fb":66}],79:[function(require,module,exports){
 "use strict";
 
 var assert = require("assert");
@@ -29059,7 +29117,7 @@ Scope.prototype.traverse = function(options) {
 
 module.exports = Scope;
 
-},{"./error":77,"./options":79,"assert":25,"simple-fmt":86,"simple-is":87,"stringmap":88,"stringset":89}],81:[function(require,module,exports){
+},{"./error":76,"./options":78,"assert":24,"simple-fmt":85,"simple-is":86,"stringmap":87,"stringset":88}],80:[function(require,module,exports){
 var fmt = require("simple-fmt");
 var is = require("simple-is");
 var assert = require("assert");
@@ -29111,7 +29169,7 @@ Stats.prototype.toString = function() {
 
 module.exports = Stats;
 
-},{"assert":25,"simple-fmt":86,"simple-is":87}],82:[function(require,module,exports){
+},{"assert":24,"simple-fmt":85,"simple-is":86}],81:[function(require,module,exports){
 // alter.js
 // MIT licensed, see LICENSE file
 // Copyright (c) 2013 Olov Lassus <olov.lassus@gmail.com>
@@ -29158,7 +29216,7 @@ if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
     module.exports = alter;
 }
 
-},{"assert":25,"stable":83}],83:[function(require,module,exports){
+},{"assert":24,"stable":82}],82:[function(require,module,exports){
 //! stable.js 0.1.5, https://github.com/Two-Screen/stable
 //! © 2014 Angry Bytes and contributors. MIT licensed.
 
@@ -29271,7 +29329,7 @@ else {
 
 })();
 
-},{}],84:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 function traverse(root, options) {
     "use strict";
 
@@ -29320,7 +29378,7 @@ if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
     module.exports = traverse;
 }
 
-},{}],85:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 // breakable.js
 // MIT licensed, see LICENSE file
 // Copyright (c) 2013-2014 Olov Lassus <olov.lassus@gmail.com>
@@ -29358,7 +29416,7 @@ if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
     module.exports = breakable;
 }
 
-},{}],86:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 // simple-fmt.js
 // MIT licensed, see LICENSE file
 // Copyright (c) 2013 Olov Lassus <olov.lassus@gmail.com>
@@ -29393,7 +29451,7 @@ if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
     module.exports = fmt;
 }
 
-},{}],87:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 // simple-is.js
 // MIT licensed, see LICENSE file
 // Copyright (c) 2013 Olov Lassus <olov.lassus@gmail.com>
@@ -29451,7 +29509,7 @@ if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
     module.exports = is;
 }
 
-},{}],88:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 // stringmap.js
 // MIT licensed, see LICENSE file
 // Copyright (c) 2013 Olov Lassus <olov.lassus@gmail.com>
@@ -29697,7 +29755,7 @@ if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
     module.exports = StringMap;
 }
 
-},{}],89:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 // stringset.js
 // MIT licensed, see LICENSE file
 // Copyright (c) 2013 Olov Lassus <olov.lassus@gmail.com>
@@ -29880,7 +29938,7 @@ if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
     module.exports = StringSet;
 }
 
-},{}],90:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 "use strict";
 
 var originalObject = Object;
@@ -30011,7 +30069,7 @@ function makeAccessor(secretCreatorFn) {
 
 defProp(exports, "makeAccessor", makeAccessor);
 
-},{}],91:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 var assert = require("assert");
 var types = require("./types");
 var n = types.namedTypes;
@@ -30381,7 +30439,7 @@ exports.printComments = function(comments, innerLines, options) {
     return concat(parts);
 };
 
-},{"./lines":92,"./types":98,"./util":99,"assert":25,"private":90}],92:[function(require,module,exports){
+},{"./lines":91,"./types":97,"./util":98,"assert":24,"private":89}],91:[function(require,module,exports){
 var assert = require("assert");
 var sourceMap = require("source-map");
 var normalizeOptions = require("./options").normalize;
@@ -31225,7 +31283,7 @@ Lp.concat = function(other) {
 // Lines.prototype will be fully populated.
 var emptyLines = fromString("");
 
-},{"./mapping":93,"./options":94,"./types":98,"./util":99,"assert":25,"private":90,"source-map":115}],93:[function(require,module,exports){
+},{"./mapping":92,"./options":93,"./types":97,"./util":98,"assert":24,"private":89,"source-map":114}],92:[function(require,module,exports){
 var assert = require("assert");
 var types = require("./types");
 var isString = types.builtInTypes.string;
@@ -31504,7 +31562,7 @@ function skipChars(
     return sourceCursor;
 }
 
-},{"./lines":92,"./types":98,"./util":99,"assert":25}],94:[function(require,module,exports){
+},{"./lines":91,"./types":97,"./util":98,"assert":24}],93:[function(require,module,exports){
 var defaults = {
     // If you want to use a different branch of esprima, or any other
     // module that supports a .parse function, pass that module object to
@@ -31584,7 +31642,7 @@ exports.normalize = function(options) {
     };
 };
 
-},{"esprima-fb":67}],95:[function(require,module,exports){
+},{"esprima-fb":66}],94:[function(require,module,exports){
 var assert = require("assert");
 var types = require("./types");
 var n = types.namedTypes;
@@ -31727,7 +31785,7 @@ TCp.copy = function(node) {
     return copy;
 };
 
-},{"./comments":91,"./lines":92,"./options":94,"./patcher":96,"./types":98,"assert":25}],96:[function(require,module,exports){
+},{"./comments":90,"./lines":91,"./options":93,"./patcher":95,"./types":97,"assert":24}],95:[function(require,module,exports){
 var assert = require("assert");
 var linesModule = require("./lines");
 var types = require("./types");
@@ -32077,7 +32135,7 @@ function findChildReprints(newPath, oldPath, reprints) {
     return true;
 }
 
-},{"./lines":92,"./types":98,"./util":99,"assert":25}],97:[function(require,module,exports){
+},{"./lines":91,"./types":97,"./util":98,"assert":24}],96:[function(require,module,exports){
 var assert = require("assert");
 var sourceMap = require("source-map");
 var printComments = require("./comments").printComments;
@@ -33376,7 +33434,7 @@ function maybeAddSemicolon(lines) {
     return lines;
 }
 
-},{"./comments":91,"./lines":92,"./options":94,"./patcher":96,"./types":98,"./util":99,"assert":25,"source-map":115}],98:[function(require,module,exports){
+},{"./comments":90,"./lines":91,"./options":93,"./patcher":95,"./types":97,"./util":98,"assert":24,"source-map":114}],97:[function(require,module,exports){
 var types = require("ast-types");
 var def = types.Type.def;
 
@@ -33389,7 +33447,7 @@ types.finalize();
 
 module.exports = types;
 
-},{"ast-types":114}],99:[function(require,module,exports){
+},{"ast-types":113}],98:[function(require,module,exports){
 var assert = require("assert");
 var getFieldValue = require("./types").getFieldValue;
 var sourceMap = require("source-map");
@@ -33468,7 +33526,7 @@ exports.composeSourceMaps = function(formerMap, latterMap) {
     return smg.toJSON();
 };
 
-},{"./types":98,"assert":25,"source-map":115}],100:[function(require,module,exports){
+},{"./types":97,"assert":24,"source-map":114}],99:[function(require,module,exports){
 (function (process){
 var types = require("./lib/types");
 var parse = require("./lib/parser").parse;
@@ -33571,39 +33629,39 @@ Object.defineProperties(exports, {
 });
 
 }).call(this,require('_process'))
-},{"./lib/parser":95,"./lib/printer":97,"./lib/types":98,"_process":34,"fs":24}],101:[function(require,module,exports){
+},{"./lib/parser":94,"./lib/printer":96,"./lib/types":97,"_process":33,"fs":23}],100:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
-},{"../lib/shared":112,"../lib/types":113,"dup":6}],102:[function(require,module,exports){
+},{"../lib/shared":111,"../lib/types":112,"dup":6}],101:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
-},{"../lib/types":113,"./core":101,"dup":7}],103:[function(require,module,exports){
+},{"../lib/types":112,"./core":100,"dup":7}],102:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"../lib/shared":112,"../lib/types":113,"./core":101,"dup":8}],104:[function(require,module,exports){
+},{"../lib/shared":111,"../lib/types":112,"./core":100,"dup":8}],103:[function(require,module,exports){
 arguments[4][9][0].apply(exports,arguments)
-},{"../lib/shared":112,"../lib/types":113,"./core":101,"dup":9}],105:[function(require,module,exports){
+},{"../lib/shared":111,"../lib/types":112,"./core":100,"dup":9}],104:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"../lib/shared":112,"../lib/types":113,"./core":101,"dup":10}],106:[function(require,module,exports){
+},{"../lib/shared":111,"../lib/types":112,"./core":100,"dup":10}],105:[function(require,module,exports){
 arguments[4][11][0].apply(exports,arguments)
-},{"../lib/shared":112,"../lib/types":113,"./core":101,"dup":11}],107:[function(require,module,exports){
+},{"../lib/shared":111,"../lib/types":112,"./core":100,"dup":11}],106:[function(require,module,exports){
 arguments[4][12][0].apply(exports,arguments)
-},{"../main":114,"assert":25,"dup":12}],108:[function(require,module,exports){
+},{"../main":113,"assert":24,"dup":12}],107:[function(require,module,exports){
 arguments[4][13][0].apply(exports,arguments)
-},{"./path":110,"./scope":111,"./types":113,"assert":25,"dup":13,"util":49}],109:[function(require,module,exports){
+},{"./path":109,"./scope":110,"./types":112,"assert":24,"dup":13,"util":48}],108:[function(require,module,exports){
 arguments[4][14][0].apply(exports,arguments)
-},{"./node-path":108,"./types":113,"assert":25,"dup":14}],110:[function(require,module,exports){
+},{"./node-path":107,"./types":112,"assert":24,"dup":14}],109:[function(require,module,exports){
 arguments[4][15][0].apply(exports,arguments)
-},{"./types":113,"assert":25,"dup":15}],111:[function(require,module,exports){
+},{"./types":112,"assert":24,"dup":15}],110:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"./node-path":108,"./types":113,"assert":25,"dup":16}],112:[function(require,module,exports){
+},{"./node-path":107,"./types":112,"assert":24,"dup":16}],111:[function(require,module,exports){
 arguments[4][17][0].apply(exports,arguments)
-},{"../lib/types":113,"dup":17}],113:[function(require,module,exports){
+},{"../lib/types":112,"dup":17}],112:[function(require,module,exports){
 arguments[4][18][0].apply(exports,arguments)
-},{"assert":25,"dup":18}],114:[function(require,module,exports){
+},{"assert":24,"dup":18}],113:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
-},{"./def/core":101,"./def/e4x":102,"./def/es6":103,"./def/es7":104,"./def/fb-harmony":105,"./def/mozilla":106,"./lib/equiv":107,"./lib/node-path":108,"./lib/path-visitor":109,"./lib/types":113,"dup":19}],115:[function(require,module,exports){
+},{"./def/core":100,"./def/e4x":101,"./def/es6":102,"./def/es7":103,"./def/fb-harmony":104,"./def/mozilla":105,"./lib/equiv":106,"./lib/node-path":107,"./lib/path-visitor":108,"./lib/types":112,"dup":19}],114:[function(require,module,exports){
+arguments[4][54][0].apply(exports,arguments)
+},{"./source-map/source-map-consumer":119,"./source-map/source-map-generator":120,"./source-map/source-node":121,"dup":54}],115:[function(require,module,exports){
 arguments[4][55][0].apply(exports,arguments)
-},{"./source-map/source-map-consumer":120,"./source-map/source-map-generator":121,"./source-map/source-node":122,"dup":55}],116:[function(require,module,exports){
-arguments[4][56][0].apply(exports,arguments)
-},{"./util":123,"amdefine":124,"dup":56}],117:[function(require,module,exports){
+},{"./util":122,"amdefine":123,"dup":55}],116:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -33747,15 +33805,15 @@ define(function (require, exports, module) {
 
 });
 
-},{"./base64":118,"amdefine":124}],118:[function(require,module,exports){
+},{"./base64":117,"amdefine":123}],117:[function(require,module,exports){
+arguments[4][57][0].apply(exports,arguments)
+},{"amdefine":123,"dup":57}],118:[function(require,module,exports){
 arguments[4][58][0].apply(exports,arguments)
-},{"amdefine":124,"dup":58}],119:[function(require,module,exports){
+},{"amdefine":123,"dup":58}],119:[function(require,module,exports){
 arguments[4][59][0].apply(exports,arguments)
-},{"amdefine":124,"dup":59}],120:[function(require,module,exports){
+},{"./array-set":115,"./base64-vlq":116,"./binary-search":118,"./util":122,"amdefine":123,"dup":59}],120:[function(require,module,exports){
 arguments[4][60][0].apply(exports,arguments)
-},{"./array-set":116,"./base64-vlq":117,"./binary-search":119,"./util":123,"amdefine":124,"dup":60}],121:[function(require,module,exports){
-arguments[4][61][0].apply(exports,arguments)
-},{"./array-set":116,"./base64-vlq":117,"./util":123,"amdefine":124,"dup":61}],122:[function(require,module,exports){
+},{"./array-set":115,"./base64-vlq":116,"./util":122,"amdefine":123,"dup":60}],121:[function(require,module,exports){
 /* -*- Mode: js; js-indent-level: 2; -*- */
 /*
  * Copyright 2011 Mozilla Foundation and contributors
@@ -34165,9 +34223,9 @@ define(function (require, exports, module) {
 
 });
 
-},{"./source-map-generator":121,"./util":123,"amdefine":124}],123:[function(require,module,exports){
-arguments[4][63][0].apply(exports,arguments)
-},{"amdefine":124,"dup":63}],124:[function(require,module,exports){
+},{"./source-map-generator":120,"./util":122,"amdefine":123}],122:[function(require,module,exports){
+arguments[4][62][0].apply(exports,arguments)
+},{"amdefine":123,"dup":62}],123:[function(require,module,exports){
 (function (process,__filename){
 /** vim: et:ts=4:sw=4:sts=4
  * @license amdefine 0.1.0 Copyright (c) 2011, The Dojo Foundation All Rights Reserved.
@@ -34470,7 +34528,7 @@ function amdefine(module, requireFn) {
 module.exports = amdefine;
 
 }).call(this,require('_process'),"/node_modules/regenerator/node_modules/recast/node_modules/source-map/node_modules/amdefine/amdefine.js")
-},{"_process":34,"path":33}],125:[function(require,module,exports){
+},{"_process":33,"path":32}],124:[function(require,module,exports){
 (function (process){
 var Stream = require('stream')
 
@@ -34582,7 +34640,7 @@ function through (write, end, opts) {
 
 
 }).call(this,require('_process'))
-},{"_process":34,"stream":46}],126:[function(require,module,exports){
+},{"_process":33,"stream":45}],125:[function(require,module,exports){
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.
@@ -35071,7 +35129,7 @@ function through (write, end, opts) {
   };
 })();
 
-},{}],127:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 "use strict";
 
 /**
@@ -35317,7 +35375,7 @@ exports.forEach = forEach;
 exports.every = every;
 exports.some = some;
 
-},{}],128:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 "use strict";
 
 var array = require("./array");
@@ -35360,7 +35418,7 @@ window.setInterval = function (callback, delay) {
   }
 };
 
-},{"./array":127}],129:[function(require,module,exports){
+},{"./array":126}],128:[function(require,module,exports){
 "use strict";
 
 var _classProps = function (child, staticProps, instanceProps) {
@@ -35640,7 +35698,7 @@ var Stepper = (function () {
 
 module.exports = Stepper;
 
-},{"../external/scheduler/lib/task":3,"../node_modules/basic-ds/lib/Stack":22}],130:[function(require,module,exports){
+},{"../external/scheduler/lib/task":3,"../node_modules/basic-ds/lib/Stack":21}],129:[function(require,module,exports){
 "use strict";
 
 var LinkedList = require("basic-ds").LinkedList;
@@ -35734,7 +35792,7 @@ var stringForId = function (node) {
   } else if (node.type === "ThisExpression") {
     name = "this";
   } else {
-    throw "can't call stringForId on nodes of type '" + node.type + "'";
+    throw "can't call stringForId on nodes of type '${node.type}'";
   }
   return name;
 };
@@ -35825,12 +35883,8 @@ var memberExpression = function (objName, propName) {
 
 var objectExpression = function (obj) {
   return b.objectExpression(Object.keys(obj).map(function (key) {
-    var val = obj[key];
-    if (typeof val === "object") {
-      return b.property("init", b.identifier(key), val);
-    } else {
-      return b.property("init", b.identifier(key), b.literal(obj[key]));
-    }
+    var val = typeof obj[key] === "object" ? obj[key] : b.literal(obj[key]);
+    return b.property("init", b.identifier(key), val);
   }));
 };
 
@@ -35875,8 +35929,7 @@ var addScopeDict = function (bodyList) {
   bodyList.first.value.expression.argument.properties.push(b.property("init", b.identifier("scope"), b.identifier(scopeName)));
 
   var scopeDict = b.objectExpression(Object.keys(scope).map(function (name) {
-    var type = scope[name].type;
-    var value = type === "Parameter" ? name : "undefined";
+    var value = scope[name].type === "Parameter" ? name : "undefined";
     return b.property("init", b.identifier(name), b.identifier(value));
   }));
 
@@ -35899,7 +35952,7 @@ var compile = function (ast, options) {
   var debugCode, generator;
 
   if (options.nativeGenerators) {
-    debugCode = "return function*(" + contextName + "){\n" + escodegen.generate(ast) + "\n}";
+    debugCode = "return function*(" + contextName + ") {\n            " + escodegen.generate(ast) + "\n        }";
 
     generator = new Function(debugCode);
   } else {
@@ -35928,10 +35981,8 @@ var scopeStack;
 
 
 var transform = function (code, _context, options) {
-  var ast, scopeManager;
-
-  ast = esprima.parse(code, { loc: true });
-  scopeManager = escope.analyze(ast);
+  var ast = esprima.parse(code, { loc: true });
+  var scopeManager = escope.analyze(ast);
   scopeManager.attach();
 
   scopeStack = new Stack();
@@ -35941,23 +35992,25 @@ var transform = function (code, _context, options) {
   estraverse.replace(ast, {
     enter: function (node, parent) {
       if (node.__$escope$__) {
-        var scope = {};
-        var isRoot = scopeStack.size === 0;
+        (function () {
+          var scope = {};
+          var isRoot = scopeStack.size === 0;
 
-        node.__$escope$__.variables.forEach(function (variable) {
-          // don't include variables from the context in the root scope
-          if (isRoot && contextHasProperty(variable.name)) {
-            return;
-          }
+          node.__$escope$__.variables.forEach(function (variable) {
+            // don't include variables from the context in the root scope
+            if (isRoot && contextHasProperty(variable.name)) {
+              return;
+            }
 
-          if (variable.defs.length > 0) {
-            scope[variable.name] = {
-              type: variable.defs[0].type
-            };
-          }
-        });
+            if (variable.defs.length > 0) {
+              scope[variable.name] = {
+                type: variable.defs[0].type
+              };
+            }
+          });
 
-        scopeStack.push(scope);
+          scopeStack.push(scope);
+        })();
       }
 
       if (node.type === "Program" || node.type === "BlockStatement") {
@@ -35969,14 +36022,12 @@ var transform = function (code, _context, options) {
       node._parent = parent;
     },
     leave: function (node, parent) {
-      var obj, replacements;
-
       if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") {
         // convert all user defined functions to generators
         node.generator = true;
 
         if (node.type === "FunctionDeclaration") {
-          scopeName = "$scope$" + (scopeStack.size - 1);
+          var scopeName = "$scope$" + (scopeStack.size - 1);
           return assignmentStatement(memberExpression(scopeName, node.id.name), b.functionExpression(null, node.params, node.body, true, false), node.loc);
         }
       } else if (node.type === "Program" || node.type === "BlockStatement") {
@@ -36004,7 +36055,7 @@ var transform = function (code, _context, options) {
 
         node.body = bodyList.toArray();
       } else if (node.type === "CallExpression" || node.type === "NewExpression") {
-        obj = {
+        var obj = {
           value: node.type === "NewExpression" ? callInstantiate(node) : node,
           stepAgain: true
         };
@@ -36054,23 +36105,33 @@ var transform = function (code, _context, options) {
           node.test = wrapExpression(node.test);
         }
       } else if (node.type === "VariableDeclaration" && parent.type === "ForStatement") {
-        replacements = [];
-        node.declarations.forEach(function (decl) {
-          if (decl.init !== null) {
-            var scopeName = scopeNameForName(decl.id.name);
-            if (scopeName) {
-              replacements.push(assignmentForDeclarator(scopeName, decl));
+        var _ret2 = (function () {
+          var replacements = [];
+          node.declarations.forEach(function (decl) {
+            if (decl.init !== null) {
+              var scopeName = scopeNameForName(decl.id.name);
+              if (scopeName) {
+                replacements.push(assignmentForDeclarator(scopeName, decl));
+              }
             }
-          }
-        });
+          });
 
-        if (replacements.length === 1) {
-          return replacements[0];
-        } else if (replacements.length > 1) {
-          return b.sequenceExpression(replacements);
-        } else {
-          return null;
-        }
+          if (replacements.length === 1) {
+            return {
+              v: replacements[0]
+            };
+          } else if (replacements.length > 1) {
+            return {
+              v: b.sequenceExpression(replacements)
+            };
+          } else {
+            return {
+              v: null
+            };
+          }
+        })();
+
+        if (typeof _ret2 === "object") return _ret2.v;
       }
 
       // clean up
@@ -36084,7 +36145,7 @@ var transform = function (code, _context, options) {
 
 module.exports = transform;
 
-},{"ast-types":19,"basic-ds":23,"escodegen":50,"escope":66,"esprima-fb":67,"estraverse":68,"regenerator":75}]},{},[1])(1)
+},{"ast-types":19,"basic-ds":22,"escodegen":49,"escope":65,"esprima-fb":66,"estraverse":67,"regenerator":74}]},{},[1])(1)
 });
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.ProcessingDebugger=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
