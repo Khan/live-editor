@@ -74,10 +74,8 @@
             "external/TraceKit/tracekit.js"
         ],
         "output_debugger_deps": [
-            "external/estraverse/estraverse.js",
-            "external/escope/escope.js",
             "external/iframe-overlay/dist/iframe-overlay.js",
-            "external/escodegen/escodegen.browser.js",
+            "external/stepper/build/debugger.js",
             "external/stepper/build/processing-debugger.js",
             "js/output/pjs/pjs-debugger.js"
         ],

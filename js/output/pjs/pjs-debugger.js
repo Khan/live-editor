@@ -3,8 +3,9 @@ window.PJSDebugger = Backbone.View.extend({
     initialize: function(options) {
         this.output = options.output;
         
-        this.debugger = new ProcessingDebugger();
-        this.debugger.context = options.context;
+        this.debugger = new ProcessingDebugger({ 
+            context: options.context 
+        });
         this.debugger.breakpointsEnabled = false;
         
         this.bind();
@@ -18,7 +19,7 @@ window.PJSDebugger = Backbone.View.extend({
     bind: function() {
         window.addEventListener("message", this.handleMessage.bind(this), false);
 
-        this.debugger.onNewObject = PJSOutput.newCallback.bind(PJSOutput);
+        this.debugger.onNewObject = window.PJSOutput.newCallback.bind(PJSOutput);
 
         this.debugger.onBreakpoint = function() {
             this.postParent({
