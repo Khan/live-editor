@@ -963,6 +963,14 @@ window.ScratchpadAutosuggestData = {
                 ]
             },
             {
+                name: "playSound(sound)",
+                exampleURL: "/cs/playsoundsound/6655307787534336",
+                description: $._("Plays a short sound. The only allowed sounds are those that popup in the picker when you use the getSound() method."),
+                params: [
+                    $._("sound: a sound returned by getSound()")
+                ]
+            },
+            {
                 name: "rectMode(MODE)",
                 exampleURL: "/cs/rectmodemode/4556457341091840",
                 description: $._("Modifies the location from which rectangles draw."),
