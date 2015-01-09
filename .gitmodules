@@ -13,12 +13,12 @@
 [submodule "external/structuredjs"]
 	path = external/structuredjs
 	url = https://github.com/Khan/structuredjs
-[submodule "external/stepper"]
-	path = external/stepper
-	url = https://github.com/kevinb7/stepper
 [submodule "external/processing-js"]
 	path = external/processing-js
 	url = https://github.com/kevinb7/processing-js
 [submodule "external/escodegen"]
 	path = external/escodegen
 	url = https://github.com/Khan/escodegen
+[submodule "external/debugger"]
+	path = external/debugger
+	url = https://github.com/kevinb7/debugger

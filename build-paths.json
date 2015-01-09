@@ -75,8 +75,8 @@
         ],
         "output_debugger_deps": [
             "external/iframe-overlay/dist/iframe-overlay.js",
-            "external/stepper/build/debugger.js",
-            "external/stepper/build/processing-debugger.js",
+            "external/debugger/build/debugger.js",
+            "external/debugger/build/processing-debugger.js",
             "js/output/pjs/pjs-debugger.js"
         ],
         "output_pjs": [
