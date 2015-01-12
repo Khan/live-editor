@@ -810,7 +810,7 @@ window.WebpageOutput = Backbone.View.extend({
 
         var titleTag = $(this.frameDoc).find("head > title");
         var title = titleTag.first().text();
-        if (titleTag.length > 0 && this.oldPageTitle !== title) {
+        if (titleTag.length >= 0 && this.oldPageTitle !== title) {
             this.oldPageTitle = title;
             self.output.postParent({
                 action: "page-info",
