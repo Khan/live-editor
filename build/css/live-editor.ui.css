@@ -24,6 +24,7 @@
 }
 .tipbar .error-buddy {
     background: url(../images/scratchpads/error-buddy.png);
+    cursor: move;
     height: 116px;
     left: -140px;
     opacity: 0.75;
@@ -388,37 +389,4 @@ button {
 
 button.hilite {
     box-shadow: 0 0 20px green;
-}
-
-/*
- * Contains styles for breakpoints and modifies the editor's appearance
- * when debugging.
- */
-
-/* ace_cursor */
-
-.debugging .ace_cursor {
-    display: none;
-}
-
-.debugging .ace_content {
-    background-color: rgb(255,255,192);
-    cursor: default;
-}
-
-.ace_breakpoint {
-    background: rgb(179, 217, 255);
-}
-
-.debugging .ace_breakpoint {
-    background: rgb(0,128,255);
-    color: white;
-}
-
-.debugging .ace_active-line {
-    background-color: rgb(179, 217, 255) !important;
-}
-
-.debugging .ace_gutter-active-line {
-    display: none;
 }

@@ -24,6 +24,7 @@
 }
 .tipbar .error-buddy {
     background: url(../images/scratchpads/error-buddy.png);
+    cursor: move;
     height: 116px;
     left: -140px;
     opacity: 0.75;
