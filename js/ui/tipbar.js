@@ -22,6 +22,15 @@ window.TipBar = Backbone.View.extend({
     bind: function() {
         var self = this;
 
+        // Make the error dialog draggable
+        if ($.fn.draggable) {
+            this.$el.find(".tipbar").draggable({
+                containment: "parent",
+                handle: ".error-buddy",
+                axis: "y"
+            });
+        }
+
         this.$el.on("click", ".tipbar .tipnav a", function(e) {
             if (!$(this).hasClass("ui-state-disabled")) {
                 self.pos += $(this).hasClass("next") ? 1 : -1;
