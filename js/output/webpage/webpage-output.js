@@ -14,7 +14,6 @@ window.WebpageOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
-        this.externalsDir = options.externalsDir;
 
         this.tester = new WebpageTester(options);
 
@@ -231,25 +230,45 @@ window.WebpageOutput = Backbone.View.extend({
             }.bind(this));
     },
 
+    // Prefixes a URL with the URL of a redirecting proxy,
+    //  if one has been specified.
+    transformUrl: function(url) {
+        if (url.match(/^https?:\/\/([\w\d]+\.)?khanacademy\.org/)) {
+            return url;
+        }
+        var redirectUrl = this.output.redirectUrl;
+        if (redirectUrl && url.indexOf(redirectUrl) !== 0) {
+            return redirectUrl + "?url=" + encodeURIComponent(url);
+        }
+        return url;
+    },
+
     postProcessing: function(oldPageTitle) {
         var self = this;
-        
-        $(this.frameDoc).find("a").on("mouseup", function() {
+
+        // Change external links to a redirecting proxy
+        $(this.frameDoc).find("a").each(function(ind, a) {
+            var url = $(a).attr("href");
+            if (url && url[0] !== "#") {
+                $(a).attr("target", "_blank");
+                $(a).attr("href", this.transformUrl(url));
+            }
+        }.bind(this));
+
+        // Animate internal links (as otherwise, they don't work in FF)
+        $(this.frameDoc).find("a[href^='#']").on("mouseup", function() {
             var url = $(this).attr("href");
-            if (url && url[0] === "#") {
+            var target = $(self.frameDoc).find(url);
+            // Scroll only if the target exists
+            if (target.length) {
                 $(self.frameDoc).find("html, body").animate({
                     scrollTop: $(self.frameDoc).find(url).offset().top
                 }, 1000);
-                return;
             }
-
-            self.output.postParent({
-                action: "link-click",
-                url: url
-            });
-            return false;
+            return;
         });
 
+        // Monitor changes to the title tag
         var titleTag = $(this.frameDoc).find("head > title");
         var title = titleTag.first().text();
         if (titleTag.length >= 0 && this.oldPageTitle !== title) {

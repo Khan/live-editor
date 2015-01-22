@@ -17,7 +17,8 @@ var runTest = function(options) {
             workersDir: "../../../build/workers/",
             externalsDir: "../../../build/external/",
             imagesDir: "../../../build/images/",
-            jshintFile: "../../../build/external/jshint/jshint.js"
+            jshintFile: "../../../build/external/jshint/jshint.js",
+            redirectUrl: "http://ka.org/r"
         });
 
         // Switch to the Scratchpad's version

@@ -10,6 +10,33 @@ describe("Output Methods", function() {
             });
         }
     });
+
+    runTest({
+        title: "transformUrl",
+        code: "<!DOCTYPE html><html><body></body></html>",
+        test: function(output, errors, testResults) {
+            expect(output.output.transformUrl("http://www.g.com"))
+                .to.be.equal("http://ka.org/r?url=http%3A%2F%2Fwww.g.com");
+        }
+    });
+
+    runTest({
+        title: "transformUrl",
+        code: "<!DOCTYPE html><html><body></body></html>",
+        test: function(output, errors, testResults) {
+            expect(output.output.transformUrl("http://www.khanacademy.org/m"))
+                .to.be.equal("http://www.khanacademy.org/m");
+        }
+    });
+
+    runTest({
+        title: "postProcessing",
+        code: "<!DOCTYPE html><html><body><a href='http://www.g.com'>G</a></body></html>",
+        test: function(output, errors, testResults) {
+            expect(output.output.frameDoc.body.innerHTML).to.contain(
+                "<a href=\"http://ka.org/r?url=http%3A%2F%2Fwww.g.com\" target=\"_blank\">G</a>");
+        }
+    });
 });
 
 describe("Linting", function() {

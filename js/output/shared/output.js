@@ -54,6 +54,9 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (data.soundsDir) {
             this.soundsDir = this._qualifyURL(data.soundsDir);
         }
+        if (data.redirectUrl) {
+            this.redirectUrl = data.redirectUrl;
+        }
         if (data.jshintFile) {
             this.jshintFile = this._qualifyURL(data.jshintFile);
             PooledWorker.prototype.jshintFile = this.jshintFile;
