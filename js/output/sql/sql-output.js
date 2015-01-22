@@ -35,6 +35,7 @@ window.SQLOutput = Backbone.View.extend({
 
     getScreenshot: function(screenshotSize, callback) {
         html2canvas(this.getDocument().body, {
+            imagesDir: this.output.imagesDir,
             onrendered: function(canvas) {
                 var width = screenshotSize;
                 var height = (screenshotSize / canvas.width) * canvas.height;

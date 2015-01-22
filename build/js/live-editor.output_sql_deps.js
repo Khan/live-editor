@@ -421,7 +421,7 @@
 
         var fontData = {};
 
-        return function(font, fontSize, doc) {
+        return function(font, fontSize, doc, options) {
             if (fontData[font + "-" + fontSize] !== undefined) {
                 return fontData[font + "-" + fontSize];
             }
@@ -441,9 +441,7 @@
             container.style.padding = 0;
 
             doc.body.appendChild(container);
-
-            // http://probablyprogramming.com/2009/03/15/the-tiniest-gif-ever (handtinywhite.gif)
-            img.src = "data:image/gif;base64,R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=";
+            img.src = options.imagesDir + "spacer.gif";
             img.width = 1;
             img.height = 1;
 
@@ -1139,7 +1137,7 @@
             }
 
             if (text_decoration !== "none"){
-                return Util.Font(family, size, doc);
+                return Util.Font(family, size, doc, options);
             }
         }
 
@@ -2684,7 +2682,8 @@
                 width: null,
                 height: null,
                 taintTest: true, // do a taint test with all images before applying to canvas
-                renderer: "Canvas"
+                renderer: "Canvas",
+                imagesDir: "" // base URL for images used here
             };
 
         options = _html2canvas.Util.Extend(opts, options);
