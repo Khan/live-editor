@@ -145,7 +145,10 @@ window.LiveEditor = Backbone.View.extend({
         // don't set up the toolbar if we don't need to
         // this.setupToolbar();
 
-        // don't set up audio if we don't need to
+        // this should only be loaded at startup if we know that the program
+        // being loaded has a sound in it
+        // if not, we should be able to load this on demand when a person
+        // types "getSound"
         this.setupAudio();
     },
 
@@ -175,9 +178,11 @@ window.LiveEditor = Backbone.View.extend({
         this.handleMessagesBound = this.handleMessages.bind(this);
         $(window).on("message", this.handleMessagesBound);
 
+        // the output frame is getting the code from the server and it knows
+        // whether it's good to run or not
         $el.find("#output-frame").on("load", function() {
             this.outputState = "clean";
-            this.markDirty();
+            //this.markDirty();
         }.bind(this));
 
         // Whenever the user changes code, execute the code
