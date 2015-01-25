@@ -6,7 +6,10 @@
         "core_deps": [
             "bower_components/es5-shim/es5-shim.js",
             "bower_components/jquery/dist/jquery.js",
-            "bower_components/jquery-ui/ui/jquery-ui.custom.js",
+            "bower_components/jquery-ui/ui/jquery.ui.core.js",
+            "bower_components/jquery-ui/ui/jquery.ui.widget.js",
+            "bower_components/jquery-ui/ui/jquery.ui.mouse.js",
+            "bower_components/jquery-ui/ui/jquery.ui.draggable.js",
             "external/handlebars/handlebars.runtime.js",
             "bower_components/underscore/underscore.js",
             "bower_components/backbone/backbone.js",

@@ -1,4 +1,6 @@
 window.LiveEditor = Backbone.View.extend({
+    el: '#sample-live-editor',
+    
     dom: {
         DRAW_CANVAS: ".scratchpad-draw-canvas",
         DRAW_COLOR_BUTTONS: "#draw-widgets a.draw-color-button",
@@ -65,37 +67,8 @@ window.LiveEditor = Backbone.View.extend({
         this.record = new ScratchpadRecord();
 
         // Set up the Canvas drawing area
-        this.drawCanvas = new ScratchpadDrawCanvas({
-            el: this.dom.DRAW_CANVAS,
-            record: this.record
-        });
-
-        this.drawCanvas.on({
-            // Drawing has started
-            drawStarted: function() {
-                // Activate the canvas
-                this.$el.find(this.dom.DRAW_CANVAS).show();
-            }.bind(this),
-
-            // Drawing has ended
-            drawEnded: function() {
-                // Hide the canvas
-                this.$el.find(this.dom.DRAW_CANVAS).hide();
-            }.bind(this),
-
-            // A color has been chosen
-            colorSet: function(color) {
-                // Deactivate all the color buttons
-                this.$el.find(this.dom.DRAW_COLOR_BUTTONS)
-                    .removeClass("ui-state-active");
-
-                // If a new color has actually been chosen
-                if (color !== null) {
-                    // Select that color and activate the button
-                    this.$el.find("#" + color).addClass("ui-state-active");
-                }
-            }.bind(this)
-        });
+        // should only do this if there's a flag set
+        //this.setupDrawCanvas();
 
         // Set up the editor
         this.editor = new this.editors[this.editorType]({
@@ -166,15 +139,22 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         this.bind();
+
+        // jquery.ui.slider.js is require for the toolbar and audio to work
+        
+        // don't set up the toolbar if we don't need to
+        // this.setupToolbar();
+
+        // don't set up audio if we don't need to
         this.setupAudio();
     },
 
     render: function() {
-        this.$el.html(Handlebars.templates["live-editor"]({
-            execFile: this.execFile,
-            imagesDir: this.imagesDir,
-            colors: this.colors
-        }));
+        //this.$el.html(Handlebars.templates["live-editor"]({
+        //    execFile: this.execFile,
+        //    imagesDir: this.imagesDir,
+        //    colors: this.colors
+        //}));
     },
 
     bind: function() {
@@ -236,6 +216,47 @@ window.LiveEditor = Backbone.View.extend({
             this.config.runVersion(version, "jshint");
         }.bind(this));
 
+    },
+    
+    setupDrawCanvas: function() {
+        this.drawCanvas = new ScratchpadDrawCanvas({
+            el: this.dom.DRAW_CANVAS,
+            record: this.record
+        });
+
+        this.drawCanvas.on({
+            // Drawing has started
+            drawStarted: function() {
+                // Activate the canvas
+                this.$el.find(this.dom.DRAW_CANVAS).show();
+            }.bind(this),
+
+            // Drawing has ended
+            drawEnded: function() {
+                // Hide the canvas
+                this.$el.find(this.dom.DRAW_CANVAS).hide();
+            }.bind(this),
+
+            // A color has been chosen
+            colorSet: function(color) {
+                // Deactivate all the color buttons
+                this.$el.find(this.dom.DRAW_COLOR_BUTTONS)
+                    .removeClass("ui-state-active");
+
+                // If a new color has actually been chosen
+                if (color !== null) {
+                    // Select that color and activate the button
+                    this.$el.find("#" + color).addClass("ui-state-active");
+                }
+            }.bind(this)
+        });  
+    },
+    
+    setupToolbar: function() {
+        var self = this;
+        var $el = this.$el;
+        var dom = this.dom;
+        
         if (this.hasAudio()) {
             $el.find(".overlay").show();
             $el.find(dom.BIG_PLAY_LOADING).show();
@@ -342,9 +363,9 @@ window.LiveEditor = Backbone.View.extend({
             $el.find(dom.BIG_PLAY_BUTTON)
                 .off("click.big-play-button")
                 .on("click.big-play-button", function() {
-                $el.find(dom.BIG_PLAY_BUTTON).hide();
-                handlePlayClick();
-            });
+                    $el.find(dom.BIG_PLAY_BUTTON).hide();
+                    handlePlayClick();
+                });
 
             $el.find(dom.PLAYBAR_PLAY).on("click", function() {
                 $el.find(dom.BIG_PLAY_BUTTON).hide();

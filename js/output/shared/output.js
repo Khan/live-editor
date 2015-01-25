@@ -14,8 +14,15 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         if (options.outputType) {
             this.setOutput(options.outputType);
+            console.log("set output");
         }
-        
+
+        this.output.globals = {};
+        //this.output.runCode(options.code, function(errors) {
+        this.output.injectCode(options.code, function(errors) {
+            console.log(errors);
+        });
+
         this.bind();
     },
 
