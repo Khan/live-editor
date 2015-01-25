@@ -414,6 +414,7 @@ window.PJSOutput = Backbone.View.extend({
             }
         };
 
+        var imageFiles = [];
         // Go through all the images and begin loading them
         _.each(images, function(file) {
             // Get the actual file name
@@ -426,26 +427,23 @@ window.PJSOutput = Backbone.View.extend({
             }
 
             file = fileMatch[1];
+            imageFiles.push(file);
 
             // We only allow images from within a certain path
             var path = this.output.imagesDir + file + ".png";
-
-            // Load the image in the background
-            var img = document.createElement("img");
-            img.onload = loaded;
-            img.onerror = function() {
-                delete this.imageCache[file];
+            
+            // TODO(kevinb7) fix loadImage so that it a failure callback
+            // TODO(kevinb7) update to use promises
+            this.canvas.loadImage(path, function (pImg) {
+                this.imageCache[file] = pImg;
+                console.log("image loaded: " + path);
                 loaded();
-            }.bind(this);
-
-            img.src = path;
-            this.imageHolder.append(img);
-
-            // Cache the img element
-            // TODO(jeresig): It might be good to cache the PImage here
-            // but PImage may be mutable, so that might not work.
-            this.imageCache[file] = img;
+            }.bind(this));
+            
         }.bind(this));
+        
+        console.log(imageFiles);
+        window.localStorage.imageFiles = imageFiles;
     },
 
 
@@ -465,26 +463,14 @@ window.PJSOutput = Backbone.View.extend({
         // an error message if a file wasn't found.
         // NOTE: Need to make sure that this will be a 'safeCall'
         getImage: function(file) {
-            var cachedFile = this.imageCache[file];
-
-            // Display an error message as the file wasn't located.
-            if (!cachedFile) {
-                throw {message:
-                      $._("Image '%(file)s' was not found.", {file: file})};
-            }
-
-            // Give the image a representative ID
-            var img = new this.canvas.PImage(cachedFile);
-            img.__id = function() {
-                return "getImage('" + file + "')";
-            };
-            return img;
+            return this.imageCache[file];
         },
 
         // Make sure that loadImage is disabled in favor of getImage
-        loadImage: function(file) {
-            throw {message: "Use getImage instead of loadImage."};
-        },
+        // TODO(kevinb7) how to prevent users from using loadImage while still calling it ourselves in cacheImages
+        //loadImage: function(file) {
+        //    throw {message: "Use getImage instead of loadImage."};
+        //},
 
         // Make sure that requestImage is disabled in favor of getImage
         requestImage: function(file) {
@@ -673,6 +659,7 @@ window.PJSOutput = Backbone.View.extend({
         this.output.results.assertions = [];
 
         if (hintData && hintData.globals) {
+            console.log("globals: %o", hintData.globals);
             for (var i = 0, l = hintData.globals.length; i < l; i++) {
                 var global = hintData.globals[i];
 

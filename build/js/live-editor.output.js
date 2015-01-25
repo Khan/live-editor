@@ -612,7 +612,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
     },
 
-    // TODO(kevinb7) fix restart button
     restart: function() {
         // This is called on load and it's possible that the output
         // hasn't been set yet.
