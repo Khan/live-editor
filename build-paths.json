@@ -70,7 +70,7 @@
             "js/shared/config.js"
         ],
         "output_pjs_deps": [
-            "external/processing-js/processing.js",
+            "external/p5/lib/p5.js",
             "external/jshint/jshint.js",
             "external/structuredjs/external/esprima.js",
             "external/structuredjs/structured.js",

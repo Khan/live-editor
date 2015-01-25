@@ -1219,8 +1219,7 @@ window.PJSOutput = Backbone.View.extend({
 
         this.render();
         this.bind();
- 
-        this.build(this.$canvas[0]);
+        this.build();
 
         if (this.config.useDebugger && PJSDebugger) {
             iframeOverlay.createRelay(this.$canvas[0]);
@@ -1324,10 +1323,17 @@ window.PJSOutput = Backbone.View.extend({
 
     render: function() {
         this.$el.empty();
-        this.$canvas = $("<canvas>")
-            .attr("id", "output-canvas")
-            .appendTo(this.el)
-            .show();
+
+        // TODO(kevinb7) change this.canvas to something like this.p5
+        this.canvas = new p5(function (instance) {
+            instance.draw = this.DUMMY;
+            instance.setup = this.DUMMY;
+        }.bind(this), this.$el[0], true);   // true = async
+        
+        // monkey patch size so that it doesn't throw 'size() not implemented...'
+        this.canvas.size = this.canvas.resizeCanvas;
+
+        this.$canvas = $(this.canvas.canvas).attr("id", "output-canvas");
     },
 
     bind: function() {
@@ -1446,11 +1452,8 @@ window.PJSOutput = Backbone.View.extend({
         $(window).on("resize", this.setDimensions);
     },
 
-    build: function(canvas) {
-        this.canvas = new Processing(canvas, function(instance) {
-            instance.draw = this.DUMMY;
-        }.bind(this));
-
+    // TODO(kevinb7) figure out a better name or roll this into one of the other setup functions
+    build: function() {
         this.bindProcessing(this.processing, this.canvas);
 
         this.config.runCurVersion("processing", this.canvas);
@@ -2369,7 +2372,7 @@ window.PJSOutput = Backbone.View.extend({
             this.clear();
 
             // Clear Processing logs
-            this.canvas._clearLogs();
+            //this.canvas._clearLogs();
 
             // Force a call to the draw function to force checks for instances
             // and to make sure that errors in the draw loop are caught.
@@ -2482,7 +2485,7 @@ window.PJSOutput = Backbone.View.extend({
         this.canvas.frameCount = 0;
 
         // Clear Processing logs
-        this.canvas._clearLogs();
+        //this.canvas._clearLogs();
     },
 
     toggle: function(doToggle) {

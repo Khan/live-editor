@@ -7,7 +7,8 @@
 <body>
     <div id="live-editor-output"></div>
 
-    <script src="../../build/js/live-editor.core_deps.js"></script>
+    <!-- TODO(kevinb7) use JSON dependency loading system for core_deps.js and shared.js -->
+    <script src="../../build/js/live-editor.core_deps.js?cachebust=1"></script>
     <script src="../../build/js/live-editor.shared.js"></script>
     <script src="../../build/js/live-editor.output_pjs_deps.js"></script>
     <script src="../../build/js/live-editor.output.js"></script>
