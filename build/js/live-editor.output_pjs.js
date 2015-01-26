@@ -1207,15 +1207,13 @@ window.PJSOutput = Backbone.View.extend({
      */
     idempotentCalls: [ "createFont" ],
     initialize: function(options) {
+        this.initializeWorkers(options);
+        
         // Handle recording playback
         this.handlers = {};
 
         this.config = options.config;
         this.output = options.output;
-
-        this.tester = new PJSTester(_.extend(options, {
-            workerFile: "pjs/test-worker.js"
-        }));
 
         this.render();
         this.bind();
@@ -1319,6 +1317,135 @@ window.PJSOutput = Backbone.View.extend({
         });
 
         return this;
+    },
+
+    initializeWorkers: function(options) {
+        // TODO(kevinb7) start this request in output_opt.html
+        // then pass the promise in so that this class that pass
+        // those dependencies to workers when it resolves
+        $.get(options.workersDir + "deps.json", function(data) {
+            // TODO(kevinb7) investigate passing several strings separately
+            var jshintDeps = JSON.stringify({
+                "es5-shim.js": data["es5-shim.js"],
+                "jshint.js": data["jshint.js"],
+                "underscore.js": data["underscore.js"]
+            });
+
+            this.hintWorker = new PooledWorker(
+                "pjs/jshint-worker.js",
+                function(hintCode, callback) {
+                    // Fallback in case of no worker support
+                    if (!window.Worker) {
+                        JSHINT(hintCode);
+                        callback(JSHINT.data(), JSHINT.errors);
+                        return;
+                    }
+
+                    var worker = this.getWorkerFromPool();
+
+                    worker.onmessage = function(event) {
+                        if (event.data.type === "jshint") {
+                            // If a new request has come in since the worker started
+                            // then we just ignore the results and don't fire the callback
+                            if (this.isCurrentWorker(worker)) {
+                                var data = event.data.message;
+                                callback(data.hintData, data.hintErrors);
+                            }
+                            this.addWorkerToPool(worker);
+                        }
+                    }.bind(this);
+
+                    worker.postMessage({
+                        deps: jshintDeps,
+                        code: hintCode,
+                        externalsDir: options.externalsDir,
+                        jshintFile: options.jshintFile
+                    });
+                }
+            );
+            
+            var workerDeps = JSON.stringify({
+                "processing-stubs.js": data["processing-stubs.js"],
+                "program-stubs.js": data["program-stubs.js"]
+            });
+            
+            this.worker = new PooledWorker(
+                "pjs/worker.js",
+                function(userCode, context, callback) {
+                    var timeout;
+                    var worker = this.getWorkerFromPool();
+
+                    var done = function(e) {
+                        if (timeout) {
+                            clearTimeout(timeout);
+                        }
+
+                        if (worker) {
+                            this.addWorkerToPool(worker);
+                        }
+
+                        if (e) {
+                            // Make sure that the caller knows that we're done
+                            callback([e]);
+                        } else {
+                            callback([], userCode);
+                        }
+                    }.bind(this);
+
+                    worker.onmessage = function(event) {
+                        // Execution of the worker has begun so we wait for it...
+                        if (event.data.execStarted) {
+                            // If the thread doesn't finish executing quickly, kill it
+                            // and don't execute the code
+                            timeout = window.setTimeout(function() {
+                                worker.terminate();
+                                worker = null;
+                                done({message:
+                                    $._("The program is taking too long to run. " +
+                                    "Perhaps you have a mistake in your code?")});
+                            }, 500);
+
+                        } else if (event.data.type === "end") {
+                            done();
+
+                        } else if (event.data.type === "error") {
+                            done({message: event.data.message});
+                        }
+                    };
+
+                    worker.onerror = function(event) {
+                        event.preventDefault();
+                        done(event);
+                    };
+
+                    try {
+                        worker.postMessage({
+                            deps: workerDeps,
+                            code: userCode,
+                            context: context
+                        });
+                    } catch (e) {
+                        // TODO: Object is too complex to serialize, try to find
+                        // an alternative workaround
+                        done();
+                    }
+                }
+            );
+
+            var testerDeps = JSON.stringify({
+                "es5-shim.js": data["es5-shim.js"],
+                "esprima.js": data["esprima.js"],
+                "underscore.js": data["underscore.js"],
+                "structured.js": data["structured.js"],
+                "output-tester.js": data["output-tester.js"],
+                "pjs-tester.js": data["pjs-tester.js"]
+            });
+            
+            this.tester = new PJSTester(_.extend(options, {
+                workerFile: "pjs/test-worker.js",
+                deps: testerDeps
+            }));
+        }.bind(this));
     },
 
     render: function() {
@@ -1553,14 +1680,20 @@ window.PJSOutput = Backbone.View.extend({
             // We only allow images from within a certain path
             var path = this.output.imagesDir + file + ".png";
 
-            // TODO(kevinb7) fix loadImage so that it a failure callback
             // TODO(kevinb7) update to use promises
             // use the original loadImage method
-            this.canvas.__loadImage(path, function (pImg) {
-                this.imageCache[file] = pImg;
-                console.log("image loaded: " + path);
-                loaded();
-            }.bind(this));
+            this.canvas.__loadImage(
+                path, 
+                function (pImg) {
+                    this.imageCache[file] = pImg;
+                    loaded();
+                }.bind(this),
+                function () {
+                    // couldn't load the image
+                    // call loaded anyways so that callback() will
+                    // eventually get called
+                    loaded();
+                });
         }, this);
     },
 

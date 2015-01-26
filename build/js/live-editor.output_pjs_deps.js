@@ -2274,15 +2274,20 @@ amdclean['imageloading_displaying'] = function (require, core, filters, canvas, 
   var Filters = filters;
   var canvas = canvas;
   var constants = constants;
-  p5.prototype.loadImage = function (path, callback) {
+  p5.prototype.loadImage = function (path, successCallback, failureCallback) {
     var img = new Image();
     var pImg = new p5.Image(1, 1, this);
     img.onload = function () {
       pImg.width = pImg.canvas.width = img.width;
       pImg.height = pImg.canvas.height = img.height;
       pImg.canvas.getContext('2d').drawImage(img, 0, 0);
-      if (typeof callback !== 'undefined') {
-        callback(pImg);
+      if (typeof successCallback === 'function') {
+        successCallback(pImg);
+      }
+    };
+    img.onerror = function (e) {
+      if (typeof failureCallback === 'function') {
+        failureCallback(e);
       }
     };
     if (path.indexOf('data:image/') !== 0) {
@@ -4991,6 +4996,7 @@ amdclean['typographyattributes'] = function (require, core, constants) {
   };
   p5.prototype.textSize = function (s) {
     this._setProperty('_textSize', s);
+    this._setProperty('_textLeading', s*1.5);
     this._applyTextProperties();
   };
   p5.prototype.textStyle = function (s) {
