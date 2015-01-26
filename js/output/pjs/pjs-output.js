@@ -177,6 +177,7 @@ window.PJSOutput = Backbone.View.extend({
         }.bind(this), this.$el[0], true);   // true = async
         
         // monkey patch size so that it doesn't throw 'size() not implemented...'
+        this.canvas.__loadImage = this.canvas.loadImage;
         this.canvas.size = this.canvas.resizeCanvas;
 
         this.$canvas = $(this.canvas.canvas).attr("id", "output-canvas");
@@ -400,7 +401,8 @@ window.PJSOutput = Backbone.View.extend({
 
             // TODO(kevinb7) fix loadImage so that it a failure callback
             // TODO(kevinb7) update to use promises
-            this.canvas.loadImage(path, function (pImg) {
+            // use the original loadImage method
+            this.canvas.__loadImage(path, function (pImg) {
                 this.imageCache[file] = pImg;
                 console.log("image loaded: " + path);
                 loaded();
@@ -440,10 +442,9 @@ window.PJSOutput = Backbone.View.extend({
         },
 
         // Make sure that loadImage is disabled in favor of getImage
-        // TODO(kevinb7) how to prevent users from using loadImage while still calling it ourselves in cacheImages
-        //loadImage: function(file) {
-        //    throw {message: "Use getImage instead of loadImage."};
-        //},
+        loadImage: function(file) {
+            throw {message: "Use getImage instead of loadImage."};
+        },
 
         // Make sure that requestImage is disabled in favor of getImage
         requestImage: function(file) {
@@ -749,44 +750,6 @@ window.PJSOutput = Backbone.View.extend({
 
             var context = {};
 
-
-            // We can send object literals over, but not
-            //  objects created with a constructor.
-            // jQuery thinks PImage is a plain object,
-            //  so we must specially check for it,
-            //  otherwise we'll give web workers an object that
-            //  they can't serialize.
-            var PImage = this.canvas.PImage;
-            var isStubbableObject = function(value) {
-                return $.isPlainObject(value) && 
-                    !(value instanceof PImage);
-            };
-
-            // Recursively replaces functions with stubs
-            var stubFunctionsInObject = function(object) {
-                // For null and such
-                if (!object) {
-                    return object;
-                }
-
-                var newObj = {};
-                if (_.isArray(object)) {
-                    newObj = [];
-                }
-                _.each(object, function(val, key) {
-                    if (typeof val === "function") {
-                        newObj[key] = "__STUBBED_FUNCTION__";
-                    } else if (typeof val !== "object") {
-                        newObj[key] = val;
-                    } else if (isStubbableObject(val)) {
-                        newObj[key] = stubFunctionsInObject(val);
-                    } else {
-                        newObj[key] = {};
-                    }
-                });
-                return newObj;
-            };
-
             _.each(this.globals, function(val, global) {
                 var value = this.canvas[global];
                 var contextVal;
@@ -794,8 +757,6 @@ window.PJSOutput = Backbone.View.extend({
                     contextVal = "__STUBBED_FUNCTION__";
                 } else if (typeof value !== "object") {
                     contextVal = value;
-                } else if (isStubbableObject(value)) {
-                    contextVal = stubFunctionsInObject(value);
                 } else {
                     contextVal = {};
                 }
