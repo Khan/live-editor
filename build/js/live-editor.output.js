@@ -331,10 +331,23 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
 
         this.output.globals = {};
-        //this.output.runCode(options.code, function(errors) {
-        this.output.injectCode(options.code, function(errors) {
-            console.log(errors);
-        });
+
+        // see if there are any images we should load
+        // right now we're keeping this list in localStorage,
+        // but really it should be injected into output.html
+        // along with the code when output.html is loaded
+        if (window.localStorage.imageFilenames) {
+            var imageFilenames = JSON.parse(window.localStorage.imageFilenames);
+            this.output.cacheImages(imageFilenames, function () {
+                this.output.injectCode(options.code, function(errors) {
+                    console.log(errors);
+                });
+            }.bind(this));
+        } else {
+            this.output.injectCode(options.code, function (errors) {
+                console.log(errors);
+            });
+        }
 
         this.bind();
     },

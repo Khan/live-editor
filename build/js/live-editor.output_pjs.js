@@ -1528,9 +1528,6 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     imageCache: {},
-    imagesCached: false,
-    imageCacheStarted: false,
-    imageHolder: null,
 
     // Load and cache all images that could be used in the environment
     // Right now all images are loaded as we don't have more details on
@@ -1538,54 +1535,23 @@ window.PJSOutput = Backbone.View.extend({
     // Execution is delayed once a getImage appears in the source code
     // and none of the images are cached. Execution begins once all the
     // images have loaded.
-    cacheImages: function(userCode, callback) {
-        // Grab all the image calls from the source code
-        var images = userCode.match(/getImage\s*\(.*?\)/g);
-
+    cacheImages: function(filenames, callback) {
         // Keep track of how many images have loaded
         var numLoaded = 0;
-
-        // Insert the images into a hidden div to cause them to load
-        // but not be visible to the user
-        if (!this.imageHolder) {
-            this.imageHolder = $("<div>")
-                .css({
-                    height: 0,
-                    width: 0,
-                    overflow: "hidden",
-                    position: "absolute"
-                })
-                .appendTo("body");
-        }
-
         // Keep track of when image files are loaded
         var loaded = function() {
             numLoaded += 1;
 
             // All the images have loaded so now execution can begin
-            if (numLoaded === images.length) {
+            if (numLoaded === filenames.length) {
                 callback();
             }
         };
 
-        var imageFiles = [];
-        // Go through all the images and begin loading them
-        _.each(images, function(file) {
-            // Get the actual file name
-            var fileMatch = /["']([A-Za-z0-9_\/-]*?)["']/.exec(file);
-
-            // Skip if the image has already been cached
-            // Or if the getImage call is malformed somehow
-            if (this.imageCache[file] || !fileMatch) {
-                return loaded();
-            }
-
-            file = fileMatch[1];
-            imageFiles.push(file);
-
+        filenames.forEach(function (file) {
             // We only allow images from within a certain path
             var path = this.output.imagesDir + file + ".png";
-            
+
             // TODO(kevinb7) fix loadImage so that it a failure callback
             // TODO(kevinb7) update to use promises
             this.canvas.loadImage(path, function (pImg) {
@@ -1593,13 +1559,20 @@ window.PJSOutput = Backbone.View.extend({
                 console.log("image loaded: " + path);
                 loaded();
             }.bind(this));
-            
-        }.bind(this));
-        
-        console.log(imageFiles);
-        window.localStorage.imageFiles = imageFiles;
+        }, this);
     },
 
+    getImageFilenames: function(userCode) {
+        var filenames = [];
+        var imageRegex = /getImage\s*\(['"](.*?)['"]\)/g;
+        var match = imageRegex.exec(userCode);
+        while (match) {
+            filenames.push(match[1]);
+            match = imageRegex.exec(userCode);
+        }
+        window.localStorage.imageFilenames = JSON.stringify(filenames);
+        return filenames;
+    },
 
     soundCache: {},
 
@@ -1997,8 +1970,8 @@ window.PJSOutput = Backbone.View.extend({
         }.bind(this);
 
         if (this.globals.getImage) {
-            this.cacheImages(userCode, runCode);
-
+            var filenames = this.getImageFilenames(userCode);
+            this.cacheImages(filenames, runCode);
         } else {
             runCode();
         }
