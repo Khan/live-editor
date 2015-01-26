@@ -19,6 +19,7 @@ PooledWorker.prototype.getWorkerFromPool = function() {
     // seems to freak out, use lots of memory, and sometimes crash.)
     var worker = this.pool.shift();
     if (!worker) {
+        console.log("creating a new worker");
         worker = new window.Worker(this.getURL());
     }
     // Keep track of what number worker we're running so that we know

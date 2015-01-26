@@ -27,6 +27,7 @@ PooledWorker.prototype.getWorkerFromPool = function() {
     // seems to freak out, use lots of memory, and sometimes crash.)
     var worker = this.pool.shift();
     if (!worker) {
+        console.log("creating a new worker");
         worker = new window.Worker(this.getURL());
     }
     // Keep track of what number worker we're running so that we know
@@ -317,6 +318,117 @@ window.LiveEditorOutput = Backbone.View.extend({
     outputs: {},
 
     initialize: function(options) {
+        $.get(options.workersDir + "deps.json", function(data) {
+            var jshintDeps = JSON.stringify({
+                "es5-shim.js": data["es5-shim.js"],
+                "jshint.js": data["jshint.js"],
+                "underscore.js": data["underscore.js"]
+            });
+
+            var workerDeps = JSON.stringify({
+                "processing-stubs.js": data["processing-stubs.js"],
+                "program-stubs.js": data["program-stubs.js"]
+            });
+            
+            this.output.deps = data;
+
+            this.output.hintWorker = new PooledWorker(
+                "pjs/jshint-worker.js",
+                function(hintCode, callback) {
+                    // Fallback in case of no worker support
+                    if (!window.Worker) {
+                        JSHINT(hintCode);
+                        callback(JSHINT.data(), JSHINT.errors);
+                        return;
+                    }
+
+                    var worker = this.getWorkerFromPool();
+
+                    worker.onmessage = function(event) {
+                        if (event.data.type === "jshint") {
+                            // If a new request has come in since the worker started
+                            // then we just ignore the results and don't fire the callback
+                            if (this.isCurrentWorker(worker)) {
+                                var data = event.data.message;
+                                callback(data.hintData, data.hintErrors);
+                            }
+                            this.addWorkerToPool(worker);
+                        }
+                    }.bind(this);
+
+                    worker.postMessage({
+                        deps: jshintDeps,
+                        code: hintCode,
+                        externalsDir: this.externalsDir,
+                        jshintFile: this.jshintFile
+                    });
+                }
+            );
+
+            this.output.worker = new PooledWorker(
+                "pjs/worker.js",
+                function(userCode, context, callback) {
+                    var timeout;
+                    var worker = this.getWorkerFromPool();
+
+                    var done = function(e) {
+                        if (timeout) {
+                            clearTimeout(timeout);
+                        }
+
+                        if (worker) {
+                            this.addWorkerToPool(worker);
+                        }
+
+                        if (e) {
+                            // Make sure that the caller knows that we're done
+                            callback([e]);
+                        } else {
+                            callback([], userCode);
+                        }
+                    }.bind(this);
+
+                    worker.onmessage = function(event) {
+                        // Execution of the worker has begun so we wait for it...
+                        if (event.data.execStarted) {
+                            // If the thread doesn't finish executing quickly, kill it
+                            // and don't execute the code
+                            timeout = window.setTimeout(function() {
+                                worker.terminate();
+                                worker = null;
+                                done({message:
+                                    $._("The program is taking too long to run. " +
+                                    "Perhaps you have a mistake in your code?")});
+                            }, 500);
+
+                        } else if (event.data.type === "end") {
+                            done();
+
+                        } else if (event.data.type === "error") {
+                            done({message: event.data.message});
+                        }
+                    };
+
+                    worker.onerror = function(event) {
+                        event.preventDefault();
+                        done(event);
+                    };
+
+                    try {
+                        worker.postMessage({
+                            deps: workerDeps,
+                            code: userCode,
+                            context: context
+                        });
+                    } catch (e) {
+                        // TODO: Object is too complex to serialize, try to find
+                        // an alternative workaround
+                        done();
+                    }
+                }
+            )
+        }.bind(this));
+
         this.render();
 
         this.setPaths(options);

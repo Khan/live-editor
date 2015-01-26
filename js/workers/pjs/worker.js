@@ -1,9 +1,20 @@
 /* global initProcessingStubs */
 
-importScripts("processing-stubs.js?cachebust=B" + (new Date()).toDateString());
-importScripts("program-stubs.js?cachebust=" + (new Date()).toDateString());
+var init = false;
 
 self.onmessage = function(event) {
+    
+    if (!init) {
+        init = true;
+        var deps = JSON.parse(event.data.deps);
+
+        eval(deps["processing-stubs.js"]);
+        eval(deps["program-stubs.js"]);
+        
+        self.initProcessingStubs = initProcessingStubs;
+        self.initProgramStubs = initProgramStubs;
+    }
+    
     var data = event.data,
         context = data.context,
         code = "with(arguments[0]){\n" +
