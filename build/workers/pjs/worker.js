@@ -3,10 +3,11 @@
 var init = false;
 
 self.onmessage = function(event) {
+    var data = JSON.parse(event.data);
     
     if (!init) {
         init = true;
-        var deps = JSON.parse(event.data.deps);
+        var deps = data.deps;
 
         eval(deps["processing-stubs.js"]);
         eval(deps["program-stubs.js"]);
@@ -15,8 +16,7 @@ self.onmessage = function(event) {
         self.initProgramStubs = initProgramStubs;
     }
     
-    var data = event.data,
-        context = data.context,
+    var context = data.context,
         code = "with(arguments[0]){\n" +
             data.code +
             "\nif (typeof draw !== 'undefined' && draw){draw();}}",

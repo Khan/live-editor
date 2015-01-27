@@ -1320,16 +1320,19 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     initializeWorkers: function(options) {
+        // Note: all messages are stringified using JSON.stringify before
+        // being passed to the workers via postMessage because it's faster
+        // http://jsperf.com/web-worker-json-vs-string/13
+        
         // TODO(kevinb7) start this request in output_opt.html
         // then pass the promise in so that this class that pass
         // those dependencies to workers when it resolves
         $.get(options.workersDir + "deps.json").then(function(data) {
-            // TODO(kevinb7) investigate passing several strings separately
-            var jshintDeps = JSON.stringify({
+            var jshintDeps = {
                 "es5-shim.js": data["es5-shim.js"],
                 "jshint.js": data["jshint.js"],
                 "underscore.js": data["underscore.js"]
-            });
+            };
 
             // TODO(kevinb7) polyfill vendor prefixed version to this
             // TODO(kevinb7) fallback to data URI on IE9 (or just use a real URL)
@@ -1358,19 +1361,19 @@ window.PJSOutput = Backbone.View.extend({
                         }
                     }.bind(this);
 
-                    worker.postMessage({
+                    worker.postMessage(JSON.stringify({
                         deps: jshintDeps,
                         code: hintCode,
                         externalsDir: options.externalsDir,
                         jshintFile: options.jshintFile
-                    });
+                    }));
                 }
             );
             
-            var workerDeps = JSON.stringify({
+            var workerDeps = {
                 "processing-stubs.js": data["processing-stubs.js"],
                 "program-stubs.js": data["program-stubs.js"]
-            });
+            };
 
             var workerBlob = new Blob([data["worker.js"]], { type: 'application/javascript' });
             this.worker = new PooledWorker(
@@ -1423,11 +1426,11 @@ window.PJSOutput = Backbone.View.extend({
                     };
 
                     try {
-                        worker.postMessage({
+                        worker.postMessage(JSON.stringify({
                             deps: workerDeps,
                             code: userCode,
                             context: context
-                        });
+                        }));
                     } catch (e) {
                         // TODO: Object is too complex to serialize, try to find
                         // an alternative workaround
@@ -2628,104 +2631,7 @@ window.PJSOutput = Backbone.View.extend({
         } catch (e) {
             return e;
         }
-    },
-
-    /*
-     * The worker that analyzes the user's code.
-     */
-    //hintWorker: new PooledWorker(
-    //    "pjs/jshint-worker.js",
-    //    function(hintCode, callback) {
-    //        // Fallback in case of no worker support
-    //        if (!window.Worker) {
-    //            JSHINT(hintCode);
-    //            callback(JSHINT.data(), JSHINT.errors);
-    //            return;
-    //        }
-    //
-    //        var worker = this.getWorkerFromPool();
-    //
-    //        worker.onmessage = function(event) {
-    //            if (event.data.type === "jshint") {
-    //                // If a new request has come in since the worker started
-    //                // then we just ignore the results and don't fire the callback
-    //                if (this.isCurrentWorker(worker)) {
-    //                    var data = event.data.message;
-    //                    callback(data.hintData, data.hintErrors);
-    //                }
-    //                this.addWorkerToPool(worker);
-    //            }
-    //        }.bind(this);
-    //
-    //        worker.postMessage({
-    //            code: hintCode,
-    //            externalsDir: this.externalsDir,
-    //            jshintFile: this.jshintFile
-    //        });
-    //    }
-    //),
-
-    //worker: new PooledWorker(
-    //    "pjs/worker.js",
-    //    function(userCode, context, callback) {
-    //        var timeout;
-    //        var worker = this.getWorkerFromPool();
-    //
-    //        var done = function(e) {
-    //            if (timeout) {
-    //                clearTimeout(timeout);
-    //            }
-    //
-    //            if (worker) {
-    //                this.addWorkerToPool(worker);
-    //            }
-    //
-    //            if (e) {
-    //                // Make sure that the caller knows that we're done
-    //                callback([e]);
-    //            } else {
-    //                callback([], userCode);
-    //            }
-    //        }.bind(this);
-    //
-    //        worker.onmessage = function(event) {
-    //            // Execution of the worker has begun so we wait for it...
-    //            if (event.data.execStarted) {
-    //                // If the thread doesn't finish executing quickly, kill it
-    //                // and don't execute the code
-    //                timeout = window.setTimeout(function() {
-    //                    worker.terminate();
-    //                    worker = null;
-    //                    done({message:
-    //                        $._("The program is taking too long to run. " +
-    //                            "Perhaps you have a mistake in your code?")});
-    //                }, 500);
-    //
-    //            } else if (event.data.type === "end") {
-    //                done();
-    //
-    //            } else if (event.data.type === "error") {
-    //                done({message: event.data.message});
-    //            }
-    //        };
-    //
-    //        worker.onerror = function(event) {
-    //            event.preventDefault();
-    //            done(event);
-    //        };
-    //
-    //        try {
-    //            worker.postMessage({
-    //                code: userCode,
-    //                context: context
-    //            });
-    //        } catch (e) {
-    //            // TODO: Object is too complex to serialize, try to find
-    //            // an alternative workaround
-    //            done();
-    //        }
-    //    }
-    //)
+    }
 });
 
 // Add in some static helper methods
