@@ -1323,7 +1323,7 @@ window.PJSOutput = Backbone.View.extend({
         // TODO(kevinb7) start this request in output_opt.html
         // then pass the promise in so that this class that pass
         // those dependencies to workers when it resolves
-        $.get(options.workersDir + "deps.json", function(data) {
+        $.get(options.workersDir + "deps.json").then(function(data) {
             // TODO(kevinb7) investigate passing several strings separately
             var jshintDeps = JSON.stringify({
                 "es5-shim.js": data["es5-shim.js"],
@@ -1331,8 +1331,11 @@ window.PJSOutput = Backbone.View.extend({
                 "underscore.js": data["underscore.js"]
             });
 
+            // TODO(kevinb7) polyfill vendor prefixed version to this
+            // TODO(kevinb7) fallback to data URI on IE9 (or just use a real URL)
+            var jshintBlob = new Blob([data["jshint-worker.js"]], { type: 'application/javascript' });
             this.hintWorker = new PooledWorker(
-                "pjs/jshint-worker.js",
+                URL.createObjectURL(jshintBlob),
                 function(hintCode, callback) {
                     // Fallback in case of no worker support
                     if (!window.Worker) {
@@ -1368,9 +1371,10 @@ window.PJSOutput = Backbone.View.extend({
                 "processing-stubs.js": data["processing-stubs.js"],
                 "program-stubs.js": data["program-stubs.js"]
             });
-            
+
+            var workerBlob = new Blob([data["worker.js"]], { type: 'application/javascript' });
             this.worker = new PooledWorker(
-                "pjs/worker.js",
+                URL.createObjectURL(workerBlob),
                 function(userCode, context, callback) {
                     var timeout;
                     var worker = this.getWorkerFromPool();
@@ -1441,8 +1445,9 @@ window.PJSOutput = Backbone.View.extend({
                 "pjs-tester.js": data["pjs-tester.js"]
             });
             
+            var testerBlob = new Blob([data["test-worker.js"]], { type: 'application/javascript' });
             this.tester = new PJSTester(_.extend(options, {
-                workerFile: "pjs/test-worker.js",
+                url: URL.createObjectURL(testerBlob),
                 deps: testerDeps
             }));
         }.bind(this));
@@ -1920,7 +1925,6 @@ window.PJSOutput = Backbone.View.extend({
         this.output.results.assertions = [];
 
         if (hintData && hintData.globals) {
-            console.log("globals: %o", hintData.globals);
             for (var i = 0, l = hintData.globals.length; i < l; i++) {
                 var global = hintData.globals[i];
 

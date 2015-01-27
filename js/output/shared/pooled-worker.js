@@ -1,7 +1,7 @@
-var PooledWorker = function(filename, onExec) {
+var PooledWorker = function(url, onExec) {
     this.pool = [];
     this.curID = 0;
-    this.filename = filename;
+    this.url = url;
     this.onExec = onExec || function() {};
 };
 
@@ -20,7 +20,7 @@ PooledWorker.prototype.getWorkerFromPool = function() {
     var worker = this.pool.shift();
     if (!worker) {
         console.log("creating a new worker");
-        worker = new window.Worker(this.getURL());
+        worker = new window.Worker(this.url);
     }
     // Keep track of what number worker we're running so that we know
     // if any new hint workers have been started after this one

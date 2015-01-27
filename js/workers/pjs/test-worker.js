@@ -19,16 +19,14 @@ self.onmessage = function(event) {
         init = true;
 
         if (event.data.deps) {
-            var deps = event.data.deps;
-            
+            var deps = JSON.parse(event.data.deps);
+
             eval(deps["es5-shim.js"]);
             eval(deps["esprima.js"]);
             eval(deps["underscore.js"]);
             eval(deps["structured.js"]);
             eval(deps["output-tester.js"]);
             eval(deps["pjs-tester.js"]);
-            
-            self.PJSTester = PJSTester;
         } else {
             importScripts(event.data.externalsDir +
             "es5-shim/es5-shim.js?cachebust=" + date);

@@ -28,7 +28,7 @@ OutputTester.prototype = {
          * The worker that runs the tests in the background, if possible.
          */
         this.testWorker = new PooledWorker(
-            options.workerFile,
+            options.url,
             function(code, validate, errors, callback) {
                 var self = this;
 

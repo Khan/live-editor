@@ -7,16 +7,16 @@ var mkdirp = require("mkdirp");
 // for getting the order right
 
 var deps = {
-    // jshint-worker.js
+    "jshint-worker.js": "build/workers/pjs/jshint-worker.js",
     "es5-shim.js": "bower_components/es5-shim/es5-shim.js",
     "jshint.js": "external/jshint/jshint.js",
     "underscore.js": "bower_components/underscore/underscore.js",
     
-    // worker.js
+    "worker.js": "build/workers/pjs/worker.js",
     "processing-stubs.js": "js/workers/pjs/processing-stubs.js",
     "program-stubs.js": "js/workers/pjs/program-stubs.js",
     
-    // test-worker.js
+    "test-worker.js": "build/workers/pjs/test-worker.js",
     // also uses es5-shim and underscore
     "esprima.js": "external/structuredjs/external/esprima.js",
     "structured.js": "external/structuredjs/structured.js",
