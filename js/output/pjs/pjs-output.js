@@ -62,8 +62,28 @@ window.PJSOutput = Backbone.View.extend({
         this.output = options.output;
 
         this.render();
-        this.bind();
         this.build();
+
+        this.globals = {};
+
+        // see if there are any images we should load
+        // right now we're keeping this list in localStorage,
+        // but really it should be injected into output.html
+        // along with the code when output.html is loaded
+        if (window.localStorage.imageFilenames) {
+            var imageFilenames = JSON.parse(window.localStorage.imageFilenames);
+            this.cacheImages(imageFilenames, function () {
+                this.injectCode(options.code, function(errors) {
+                    console.log(errors);
+                });
+            }.bind(this));
+        } else {
+            this.injectCode(options.code, function (errors) {
+                console.log(errors);
+            });
+        }
+        
+        this.bind();
 
         if (this.config.useDebugger && PJSDebugger) {
             iframeOverlay.createRelay(this.$canvas[0]);
@@ -582,13 +602,19 @@ window.PJSOutput = Backbone.View.extend({
         Math: window.Math,
         Array: window.Array,
         String: window.String,
+        parseInt: parseInt,
+        parseFloat: parseFloat,
 
         // getImage: Retrieve a file and return a PImage holding it
         // Only allow access to certain approved files and display
         // an error message if a file wasn't found.
         // NOTE: Need to make sure that this will be a 'safeCall'
-        getImage: function(file) {
-            return this.imageCache[file];
+        getImage: function(filename) {
+            var image = this.imageCache[filename];
+            image.__id = function() {
+                return "getImage('" + filename + "')";
+            };
+            return image;
         },
 
         // Make sure that loadImage is disabled in favor of getImage
@@ -606,6 +632,7 @@ window.PJSOutput = Backbone.View.extend({
             throw {message: $._("link() method is disabled.")};
         },
 
+        // TODO(kevinb7) preload audio just like with images
         getSound: function(filename) {
             var sound = this.soundCache[filename];
 
@@ -1489,6 +1516,7 @@ window.PJSOutput = Backbone.View.extend({
                 (new Function(code)).apply(this.canvas, contexts);
             }
 
+            console.log("finished running: " + performance.now());
         } catch (e) {
             return e;
         }
