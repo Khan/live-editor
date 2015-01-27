@@ -32,6 +32,12 @@ var writeFile = q.denodeify(fs.writeFile);
 var obj = {};
 
 mkdirp("build/workers").then(function () {
+    
+    // An interesting side effect of using promises to run multiple
+    // tasks concurrently is the order that they complete in is random.
+    // The interesting thing about the order of keys in a dictionary
+    // is that it's not alphabetical, but rather based on order of addition
+    // to the dictionary. 
     return q.all(
         Object.keys(deps).map(function (filename) {
             var path = deps[filename];
@@ -41,7 +47,11 @@ mkdirp("build/workers").then(function () {
         })
     );
 }).then(function () {
-    return writeFile("build/workers/deps.json", JSON.stringify(obj, null, "  ")); 
+    var orderedObject = {};
+    Object.keys(obj).sort().forEach(function (key) {
+        orderedObject[key] = obj[key]; 
+    });
+    return writeFile("build/workers/deps.json", JSON.stringify(orderedObject, null, "  ")); 
 }).then(function () {
     console.log("success");
 }).catch(function (err) {

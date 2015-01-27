@@ -202,7 +202,7 @@ describe("Scratchpad Output Exec", function() {
 
     test("createFont Inside Sub-Object", function() {
         var test = [{
-            test: createFont("fantasy", 20)
+            test: "fantasy"
         }];
 
         var draw = function() {
@@ -269,7 +269,7 @@ describe("Scratchpad Output Exec", function() {
         };
     });
 
-    test("Verify that toSting Works", function() {
+    test("Verify that toString Works", function() {
         var num = 50;
         num = parseInt(num.toString(), 10);
     });
@@ -612,7 +612,7 @@ describe("Scratchpad Output Exec", function() {
     runTest({
         title: "Make sure function call arguments preserve prototype chain",
         code: function() {
-            textFont(createFont("monospace"));
+            textFont("monospace");
             var draw = function() {
                 background(255, 255, 255);
                 fill(255, 0, 0);
@@ -622,7 +622,7 @@ describe("Scratchpad Output Exec", function() {
             };
         },
         code2: function() {
-            textFont(createFont("monospace"));
+            textFont("monospace");
             var draw = function() {
                 background(255, 255, 255);
                 fill(255, 0, 0);
@@ -667,7 +667,7 @@ describe("Scratchpad Output Exec", function() {
     runTest({
         title: "Calls which do not work within workers run",
         code: function() {
-            var osb = createGraphics(30, 30, JAVA2D);
+            var osb = createGraphics(30, 30);
             osb.beginDraw();
         },
         errors: []

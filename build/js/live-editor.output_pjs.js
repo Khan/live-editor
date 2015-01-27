@@ -1327,7 +1327,7 @@ window.PJSOutput = Backbone.View.extend({
         // TODO(kevinb7) start this request in output_opt.html
         // then pass the promise in so that this class that pass
         // those dependencies to workers when it resolves
-        $.get(options.workersDir + "deps.json").then(function(data) {
+        this.workersPromise = $.get(options.workersDir + "deps.json").then(function(data) {
             var jshintDeps = {
                 "es5-shim.js": data["es5-shim.js"],
                 "jshint.js": data["jshint.js"],
@@ -1468,6 +1468,15 @@ window.PJSOutput = Backbone.View.extend({
         // monkey patch size so that it doesn't throw 'size() not implemented...'
         this.canvas.__loadImage = this.canvas.loadImage;
         this.canvas.size = this.canvas.resizeCanvas;
+        
+        this.canvas.parseInt = parseInt;
+        this.canvas.parseFloat = parseFloat;
+        
+        // TODO(kevinb7) both map to console.log, need to create virtual console
+        // Note: needed to wrap it here because tests check function.length
+        this.canvas.println = function(msg) {
+            console.log(msg);
+        };
 
         this.$canvas = $(this.canvas.canvas).attr("id", "output-canvas");
     },
@@ -1917,7 +1926,13 @@ window.PJSOutput = Backbone.View.extend({
         if (!userCode) {
             done(null, []);
         } else {
-            this.hintWorker.exec(hintCode, done);
+            if (this.hintWorker) {
+                this.hintWorker.exec(hintCode, done);
+            } else {
+                this.workersPromise.then(function () {
+                    this.hintWorker.exec(hintCode, done);
+                }.bind(this));
+            }
         }
     },
 
