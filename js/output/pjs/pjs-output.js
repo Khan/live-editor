@@ -53,8 +53,6 @@ window.PJSOutput = Backbone.View.extend({
      */
     idempotentCalls: [ "createFont" ],
     initialize: function(options) {
-        this.initializeWorkers(options);
-        
         // Handle recording playback
         this.handlers = {};
 
@@ -84,6 +82,7 @@ window.PJSOutput = Backbone.View.extend({
         }
         
         this.bind();
+        this.initializeWorkers(options);
 
         if (this.config.useDebugger && PJSDebugger) {
             iframeOverlay.createRelay(this.$canvas[0]);

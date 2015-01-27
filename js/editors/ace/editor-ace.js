@@ -47,19 +47,25 @@ window.AceEditor = Backbone.View.extend({
         }
 
         // Attach the picker tooltips to the editor
-        this.tooltipEngine = new TooltipEngine({
-            tooltips: this.tooltips[this.type],
-            type: this.type,
-            imagesDir: options.imagesDir,
-            soundsDir: options.soundsDir,
-            editor: this.editor,
-            record: this.record
-        });
+        // defer this until after the first run of output
+        // if the first run takes longer than 500ms then 
+        // start the tooltip engine anyways
+        // this saves about 100 ms during start
+        setTimeout(function () {
+            this.tooltipEngine = new TooltipEngine({
+                tooltips: this.tooltips[this.type],
+                type: this.type,
+                imagesDir: options.imagesDir,
+                soundsDir: options.soundsDir,
+                editor: this.editor,
+                record: this.record
+            });
 
-        // TODO(bbondy): Support multiple content types for autosuggest.
-        if (this.tooltips[this.type].indexOf("autoSuggest") !== -1) {
-            ScratchpadAutosuggest.init(this.editor);
-        }
+            // TODO(bbondy): Support multiple content types for autosuggest.
+            if (this.tooltips[this.type].indexOf("autoSuggest") !== -1) {
+                ScratchpadAutosuggest.init(this.editor);
+            }
+        }.bind(this), 500);
 
         // Make the editor vertically resizable
         if (this.$el.resizable) {
