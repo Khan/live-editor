@@ -66,13 +66,21 @@ OutputTester.prototype = {
                     }
                 };
 
-                worker.postMessage({
-                    code: code,
-                    validate: validate,
-                    errors: errors,
-                    externalsDir: this.externalsDir,
-                    deps: options.deps
-                });
+                if (worker.initialized) {
+                    worker.postMessage({
+                        code: code,
+                        validate: validate,
+                        errors: errors,
+                    });                    
+                } else {
+                    worker.postMessage({
+                        code: code,
+                        validate: validate,
+                        errors: errors,
+                        deps: options.deps
+                    });
+                    worker.initialized = true;
+                }
             }
         );
     },

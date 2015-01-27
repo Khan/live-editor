@@ -27,7 +27,8 @@
     "jed": "0.5.0",
     "escope": "~1.0.0",
     "iframe-overlay": "0.1.4",
-    "poster": "0.1.0"
+    "poster": "0.1.0",
+    "dialog-polyfill": "~0.2.0"
   },
   "resolutions": {
     "jquery": "~2.1.1"

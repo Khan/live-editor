@@ -129,7 +129,9 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code, undefined, data.cursor, data.noLint);
+            //this.runCode(data.code, undefined, data.cursor, data.noLint);
+            // TODO: set noLint to true when update comes from slider or picker
+            this.runCode(data.code, undefined, data.cursor, true);
         }
 
         if (data.onlyRunTests != null) {

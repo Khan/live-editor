@@ -23,12 +23,15 @@ self.onmessage = function(event) {
 
     // Evaluate the code using JSHint
     JSHINT(data.code);
+    
+    var hintData = JSHINT.data();
+    var globals = hintData.globals || [];
 
     // Return the JSHint results to the main code
     self.postMessage({
          type: "jshint",
          message: {
-             hintData: JSON.parse(JSON.stringify(JSHINT.data())),
+             hintData: { globals: globals },
              hintErrors: JSHINT.errors
         }
     });

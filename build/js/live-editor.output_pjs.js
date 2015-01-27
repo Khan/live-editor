@@ -1379,13 +1379,18 @@ window.PJSOutput = Backbone.View.extend({
                             this.addWorkerToPool(worker);
                         }
                     }.bind(this);
-
-                    worker.postMessage(JSON.stringify({
-                        deps: jshintDeps,
-                        code: hintCode,
-                        externalsDir: options.externalsDir,
-                        jshintFile: options.jshintFile
-                    }));
+                    
+                    if (worker.initialized) {
+                        worker.postMessage(JSON.stringify({
+                            code: hintCode
+                        }));
+                    } else {
+                        worker.postMessage(JSON.stringify({
+                            deps: jshintDeps,
+                            code: hintCode
+                        }));
+                        worker.initialized = true;
+                    }   
                 }
             );
             
@@ -1445,11 +1450,19 @@ window.PJSOutput = Backbone.View.extend({
                     };
 
                     try {
-                        worker.postMessage(JSON.stringify({
-                            deps: workerDeps,
-                            code: userCode,
-                            context: context
-                        }));
+                        if (worker.initialized) {
+                            worker.postMessage(JSON.stringify({
+                                code: userCode,
+                                context: context
+                            }));
+                        } else {
+                            worker.postMessage(JSON.stringify({
+                                deps: workerDeps,
+                                code: userCode,
+                                context: context
+                            }));
+                            worker.initialized = true;
+                        }
                     } catch (e) {
                         // TODO: Object is too complex to serialize, try to find
                         // an alternative workaround
