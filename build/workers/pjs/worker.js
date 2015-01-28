@@ -59,7 +59,11 @@ self.onmessage = function(event) {
                         stubbedContext[prop] :
                         drawCounter(prop);
                 } else if (typeof object[prop] === "object") {
-                    unstubFunctionsInObject(object[prop]);
+                    if (prop === "Program" && prop in stubbedContext) {
+                        object[prop] = stubbedContext[prop];
+                    } else {
+                        unstubFunctionsInObject(object[prop]);
+                    }
                 }
             }
         }
