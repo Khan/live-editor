@@ -350,9 +350,10 @@ window.PJSOutput = Backbone.View.extend({
         this.canvas.__loadImage = this.canvas.loadImage;
         this.canvas.size = this.canvas.resizeCanvas;
         
-        this.canvas.parseInt = parseInt;
-        this.canvas.parseFloat = parseFloat;
-        
+        // using bindProcessing doesn't work because it binds the "this" value 
+        // in functions which we don't want to because p5.Vector is a constructor
+        this.canvas.PVector = p5.Vector;
+
         // TODO(kevinb7) both map to console.log, need to create virtual console
         // Note: needed to wrap it here because tests check function.length
         this.canvas.println = function(msg) {
