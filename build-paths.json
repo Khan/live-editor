@@ -72,7 +72,6 @@
         ],
         "output_pjs_deps": [
             "external/p5/lib/p5.js",
-            "external/jshint/jshint.js",
             "external/structuredjs/external/esprima.js",
             "external/structuredjs/structured.js",
             "external/TraceKit/tracekit.js"
