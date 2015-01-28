@@ -860,6 +860,7 @@ html.playing .tooltip.hide-while-playing {
     width: 520px;
     padding: 0;
     margin-top: -225px;
+    border: solid 1px gray;
 }
 
 .mediapicker-modal h3 {

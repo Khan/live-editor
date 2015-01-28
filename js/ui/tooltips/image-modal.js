@@ -83,6 +83,11 @@
                 //  but differ for sound by the addition of quotation marks
                 this.parent.updateText($active.attr("data-update-path"));
                 this.parent.updateTooltip($active.attr("data-preview-path"));
+            },
+            
+            "click .mediapicker-modal-dimiss": function(e) {
+                var dialog = this.$el[0];
+                dialog.close();
             }
         },
 
