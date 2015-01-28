@@ -139,6 +139,12 @@
         outputUrl += "?debugger=true";
         useDebugger = true;
     }
+    
+    var noLint = true;
+    // TODO(kevinb7) make URL param parsing more accurate
+    if (location.search.indexOf("noLint=false") !== -1) {
+        noLint = false;
+    }
 
     window.liveEditor = new LiveEditor({
         el: $("#sample-live-editor"),
@@ -153,7 +159,8 @@
         soundsDir: "../../sounds/",
         execFile: outputUrl,
         jshintFile: "../../build/external/jshint/jshint.js",
-        useDebugger: useDebugger
+        useDebugger: useDebugger,
+        noLint: noLint
     });
     liveEditor.editor.on("change", function() {
         window.localStorage["test-code"] = liveEditor.editor.text();

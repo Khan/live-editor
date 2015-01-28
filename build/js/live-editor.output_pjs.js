@@ -1197,6 +1197,8 @@ window.PJSOutput = Backbone.View.extend({
         textSize: [12]
     },
 
+    profiling: false,
+
     /**
      * PJS calls which are known to produce no side effects when
      * called multiple times.
@@ -2683,6 +2685,9 @@ window.PJSOutput = Backbone.View.extend({
                 (new Function(code)).apply(this.canvas, contexts);
             }
 
+            if (this.profiling) {
+                this.times.push(performance.now());
+            }
             if (!this.firstRun) {
                 console.log("finished running: " + performance.now());
                 this.firstRun = true;
@@ -2690,6 +2695,23 @@ window.PJSOutput = Backbone.View.extend({
         } catch (e) {
             return e;
         }
+    },
+    
+    startProfiling: function() {
+        this.profiling = true;
+        this.times = [];
+    },
+    
+    stopProfiling: function() {
+        this.profiling = false;
+        var diffs = [];
+        for (var i = 0; i < this.times.length - 1; i++) {
+            diffs.push(this.times[i + 1] - this.times[i]);
+        }
+        var average = diffs.reduce(function (accum, value) {
+            return accum + value;
+        }, 0) / diffs.length;
+        console.log("average frame rate: " + (1000 / average));
     }
 });
 

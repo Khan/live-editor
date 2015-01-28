@@ -2865,7 +2865,13 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     setTimeout(function () {
                         self.dragged = false;
                     }, 0);
+
                     self.parent.editor.scrubberActive = false;
+                    
+                    // updateText so that live-editor.js:runCode can signal pjs-output.js to stop profiling
+                    self.intermediateValue += Math.pow(10,-self.decimals);
+                    self.updateText(self.intermediateValue.toFixed(self.decimals));
+                    self.dragged = true;
                 }
             });
         } else {

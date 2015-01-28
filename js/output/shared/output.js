@@ -164,6 +164,12 @@ window.LiveEditorOutput = Backbone.View.extend({
                 }
             }
         }
+        
+        if (data.profileAction === "start") {
+            this.output.startProfiling();
+        } else if (data.profileAction === "stop") {
+            this.output.stopProfiling();
+        }
     },
 
     // Send a message back to the parent frame

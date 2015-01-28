@@ -32,6 +32,8 @@ window.LiveEditor = Backbone.View.extend({
     editors: {},
 
     initialize: function(options) {
+        this.noLint = options.noLint;
+        
         this.workersDir = this._qualifyURL(options.workersDir);
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
@@ -1074,11 +1076,19 @@ window.LiveEditor = Backbone.View.extend({
      */
     runCode: _.throttle(function(code) {
         var noLint = !!this.editor.editor.scrubberActive;
+        var profileAction = "";
+        if (noLint && !this.scrubbing) {
+            profileAction = "start";
+        }
+        if (!noLint && this.scrubbing) {
+            profileAction = "stop";
+        }
+        this.scrubbing = noLint;
         var options = {
             code: arguments.length === 0 ? this.editor.text() : code,
             cursor: this.editor.getSelectionIndices ? this.editor.getSelectionIndices() : -1,
             validate: this.validation || "",
-            noLint: noLint,
+            noLint: noLint && this.noLint,
             version: this.config.curVersion(),
             settings: this.settings || {},
             workersDir: this.workersDir,
@@ -1086,7 +1096,8 @@ window.LiveEditor = Backbone.View.extend({
             imagesDir: this.imagesDir,
             soundsDir: this.soundsDir,
             jshintFile: this.jshintFile,
-            outputType: this.outputType
+            outputType: this.outputType,
+            profileAction: profileAction
         };
 
         this.trigger("runCode", options);
