@@ -129,9 +129,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            //this.runCode(data.code, undefined, data.cursor, data.noLint);
-            // TODO: set noLint to true when update comes from slider or picker
-            this.runCode(data.code, undefined, data.cursor, true);
+            this.runCode(data.code, undefined, data.cursor, data.noLint);
         }
 
         if (data.onlyRunTests != null) {
@@ -254,6 +252,8 @@ window.LiveEditorOutput = Backbone.View.extend({
         }.bind(this);
 
         // Always lint the first time, so that PJS can populate its list of globals
+        // TODO(kevinb7) run firstLint outside of a request from the editor to run the code
+        // this will make things more responsive when the use first starts scrubbing
         if (noLint && this.firstLint) {
             lintDone([]);
         } else {

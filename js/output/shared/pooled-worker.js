@@ -3,6 +3,14 @@ var PooledWorker = function(url, onExec) {
     this.curID = 0;
     this.url = url;
     this.onExec = onExec || function() {};
+
+    // Populate the pool with a couple of workers to avoid any initial
+    // lag when scrubbing.  Even when scrubbing quite quickly this number
+    // of workers seems sufficient.
+    var worker1 = this.getWorkerFromPool();
+    var worker2 = this.getWorkerFromPool();
+    this.addWorkerToPool(worker1);
+    this.addWorkerToPool(worker2);
 };
 
 PooledWorker.prototype.getURL = function() {

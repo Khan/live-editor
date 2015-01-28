@@ -2134,6 +2134,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 var $picker = $(this);
                 $picker.addClass("active");
                 down = true;
+                self.options.editor.scrubberActive = true;
 
                 $(document).one("mouseup", function() {
                     $picker.removeClass("active");
@@ -2141,6 +2142,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                     if (!over) {
                         self.placeOnScreen();
                     }
+                    self.options.editor.scrubberActive = true;
                 });
             });
         this.bindToRequestTooltip();
@@ -2825,6 +2827,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     return $(this).clone().css($(this).offset());
                 },
                 start: function(e, ui) {
+                    self.parent.editor.scrubberActive = true;
                     self.$el.addClass("dragging");
                     $(this).css("visibility", "hidden");
                 },
@@ -2852,6 +2855,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     setTimeout(function () {
                         self.dragged = false;
                     }, 0);
+                    self.parent.editor.scrubberActive = false;
                 }
             });
         } else {

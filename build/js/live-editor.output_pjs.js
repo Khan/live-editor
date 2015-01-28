@@ -1343,9 +1343,10 @@ window.PJSOutput = Backbone.View.extend({
         // being passed to the workers via postMessage because it's faster
         // http://jsperf.com/web-worker-json-vs-string/13
         
-        // TODO(kevinb7) start this request in output_opt.html
         // then pass the promise in so that this class that pass
         // those dependencies to workers when it resolves
+        // TODO(kevinb7) instantiate one of each worker before it's needed 
+        // this will avoid the initial lag seen when manipulating variables with the slider
         this.workersPromise = $.get(options.workersDir + "deps.json").then(function(data) {
             var jshintDeps = {
                 "es5-shim.js": data["es5-shim.js"],
@@ -1379,7 +1380,7 @@ window.PJSOutput = Backbone.View.extend({
                             this.addWorkerToPool(worker);
                         }
                     }.bind(this);
-                    
+
                     if (worker.initialized) {
                         worker.postMessage(JSON.stringify({
                             code: hintCode
@@ -1390,10 +1391,10 @@ window.PJSOutput = Backbone.View.extend({
                             code: hintCode
                         }));
                         worker.initialized = true;
-                    }   
+                    }
                 }
             );
-            
+
             var workerDeps = {
                 "processing-stubs.js": data["processing-stubs.js"],
                 "program-stubs.js": data["program-stubs.js"]
@@ -1479,7 +1480,7 @@ window.PJSOutput = Backbone.View.extend({
                 "output-tester.js": data["output-tester.js"],
                 "pjs-tester.js": data["pjs-tester.js"]
             });
-            
+
             var testerBlob = new Blob([data["test-worker.js"]], { type: 'application/javascript' });
             this.tester = new PJSTester(_.extend(options, {
                 url: URL.createObjectURL(testerBlob),
@@ -2682,7 +2683,10 @@ window.PJSOutput = Backbone.View.extend({
                 (new Function(code)).apply(this.canvas, contexts);
             }
 
-            console.log("finished running: " + performance.now());
+            if (!this.firstRun) {
+                console.log("finished running: " + performance.now());
+                this.firstRun = true;
+            }
         } catch (e) {
             return e;
         }

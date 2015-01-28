@@ -11,6 +11,14 @@ var PooledWorker = function(url, onExec) {
     this.curID = 0;
     this.url = url;
     this.onExec = onExec || function() {};
+
+    // Populate the pool with a couple of workers to avoid any initial
+    // lag when scrubbing.  Even when scrubbing quite quickly this number
+    // of workers seems sufficient.
+    var worker1 = this.getWorkerFromPool();
+    var worker2 = this.getWorkerFromPool();
+    this.addWorkerToPool(worker1);
+    this.addWorkerToPool(worker2);
 };
 
 PooledWorker.prototype.getURL = function() {
@@ -451,9 +459,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            //this.runCode(data.code, undefined, data.cursor, data.noLint);
-            // TODO: set noLint to true when update comes from slider or picker
-            this.runCode(data.code, undefined, data.cursor, true);
+            this.runCode(data.code, undefined, data.cursor, data.noLint);
         }
 
         if (data.onlyRunTests != null) {
@@ -576,6 +582,8 @@ window.LiveEditorOutput = Backbone.View.extend({
         }.bind(this);
 
         // Always lint the first time, so that PJS can populate its list of globals
+        // TODO(kevinb7) run firstLint outside of a request from the editor to run the code
+        // this will make things more responsive when the use first starts scrubbing
         if (noLint && this.firstLint) {
             lintDone([]);
         } else {

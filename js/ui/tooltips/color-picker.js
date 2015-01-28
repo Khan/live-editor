@@ -44,6 +44,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 var $picker = $(this);
                 $picker.addClass("active");
                 down = true;
+                self.options.editor.scrubberActive = true;
 
                 $(document).one("mouseup", function() {
                     $picker.removeClass("active");
@@ -51,6 +52,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                     if (!over) {
                         self.placeOnScreen();
                     }
+                    self.options.editor.scrubberActive = true;
                 });
             });
         this.bindToRequestTooltip();

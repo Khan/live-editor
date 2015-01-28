@@ -1880,11 +1880,12 @@ window.LiveEditor = Backbone.View.extend({
      * throttling requests properly.
      */
     runCode: _.throttle(function(code) {
+        var noLint = !!this.editor.editor.scrubberActive;
         var options = {
             code: arguments.length === 0 ? this.editor.text() : code,
             cursor: this.editor.getSelectionIndices ? this.editor.getSelectionIndices() : -1,
             validate: this.validation || "",
-            noLint: false,
+            noLint: noLint,
             version: this.config.curVersion(),
             settings: this.settings || {},
             workersDir: this.workersDir,

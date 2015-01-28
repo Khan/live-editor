@@ -76,6 +76,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     return $(this).clone().css($(this).offset());
                 },
                 start: function(e, ui) {
+                    self.parent.editor.scrubberActive = true;
                     self.$el.addClass("dragging");
                     $(this).css("visibility", "hidden");
                 },
@@ -103,6 +104,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     setTimeout(function () {
                         self.dragged = false;
                     }, 0);
+                    self.parent.editor.scrubberActive = false;
                 }
             });
         } else {
