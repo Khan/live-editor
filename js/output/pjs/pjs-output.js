@@ -70,18 +70,17 @@ window.PJSOutput = Backbone.View.extend({
         // right now we're keeping this list in localStorage,
         // but really it should be injected into output.html
         // along with the code when output.html is loaded
+        var imageFilenames;
         if (window.localStorage.imageFilenames) {
-            var imageFilenames = JSON.parse(window.localStorage.imageFilenames);
-            this.cacheImages(imageFilenames, function () {
-                this.injectCode(options.code, function(errors) {
-                    console.log(errors);
-                });
-            }.bind(this));
+            imageFilenames = JSON.parse(window.localStorage.imageFilenames);
         } else {
-            this.injectCode(options.code, function (errors) {
+            imageFilenames = this.getImageFilenames(options.code);
+        }
+        this.cacheImages(imageFilenames, function () {
+            this.injectCode(options.code, function(errors) {
                 console.log(errors);
             });
-        }
+        }.bind(this));
         
         this.bind();
         this.initializeWorkers(options);
