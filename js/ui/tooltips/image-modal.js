@@ -73,6 +73,8 @@
 
             // Update the url in ACE if someone clicks ok
             "click .mediapicker-modal-submit": function(e) {
+                var dialog = this.$el[0];
+                dialog.close();
                 var $active = this.$(".mediapicker-modal-file.active");
                 if ($active.length !== 1) {
                     return;
@@ -134,7 +136,7 @@
                 soundsDir: this.options.soundsDir,
                 classes: this.options.files
             }));
-            this.$el.appendTo("body").hide();
+            this.$el.appendTo("body");
         },
 
         hasMultipleItems: function(arr, options) {
@@ -269,6 +271,8 @@
         }
     });
 
+    // TODO: rename this file because it contains the sound modal too
+    // or break it up into several files
     TooltipEngine.classes.soundModal = TooltipBase.extend({
         defaultFile: "\"rpg/metal-clink\"",
         initialize: function(options) {
@@ -357,7 +361,8 @@
                             .appendTo("body").hide();
 
             this.$("button").on("click", function() {
-                self.modal.show();
+                var dialog = self.modal.$el[0];
+                dialog.showModal();
             });
 
             this.modal = new Modal(_.defaults({

@@ -390,35 +390,35 @@ button.hilite {
     box-shadow: 0 0 20px green;
 }
 
-/*
- * Contains styles for breakpoints and modifies the editor's appearance
- * when debugging.
- */
+dialog {
+  position: absolute;
+  left: 0; right: 0;
+  margin: auto;
+  border: solid;
+  padding: 1em;
+  background: white;
+  color: black;
 
-/* ace_cursor */
+  width: -moz-fit-content;
+  width: -webkit-fit-content;
+  width: fit-content;
 
-.debugging .ace_cursor {
-    display: none;
+  height: -moz-fit-content;
+  height: -webkit-fit-content;
+  height: fit-content;
+
+  display: none;
 }
 
-.debugging .ace_content {
-    background-color: rgb(255,255,192);
-    cursor: default;
+dialog[open] {
+  display: block;
 }
 
-.ace_breakpoint {
-    background: rgb(179, 217, 255);
-}
-
-.debugging .ace_breakpoint {
-    background: rgb(0,128,255);
-    color: white;
-}
-
-.debugging .ace_active-line {
-    background-color: rgb(179, 217, 255) !important;
-}
-
-.debugging .ace_gutter-active-line {
-    display: none;
+.backdrop {
+  position: fixed;
+  background: rgba(0,0,0,0.1);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }

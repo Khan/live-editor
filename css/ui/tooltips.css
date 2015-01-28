@@ -289,9 +289,7 @@ html.playing .tooltip.hide-while-playing {
 /** Media picker CSS: Used for both an image and audio picker **/
 .mediapicker-modal {
     width: 520px;
-    margin-left: -250px;
     padding: 0;
-    top: 50%;
     margin-top: -225px;
 }
 

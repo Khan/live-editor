@@ -2303,6 +2303,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
 
             // Update the url in ACE if someone clicks ok
             "click .mediapicker-modal-submit": function(e) {
+                var dialog = this.$el[0];
+                dialog.close();
                 var $active = this.$(".mediapicker-modal-file.active");
                 if ($active.length !== 1) {
                     return;
@@ -2364,7 +2366,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 soundsDir: this.options.soundsDir,
                 classes: this.options.files
             }));
-            this.$el.appendTo("body").hide();
+            this.$el.appendTo("body");
         },
 
         hasMultipleItems: function(arr, options) {
@@ -2499,6 +2501,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         }
     });
 
+    // TODO: rename this file because it contains the sound modal too
+    // or break it up into several files
     TooltipEngine.classes.soundModal = TooltipBase.extend({
         defaultFile: "\"rpg/metal-clink\"",
         initialize: function(options) {
@@ -2587,7 +2591,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                             .appendTo("body").hide();
 
             this.$("button").on("click", function() {
-                self.modal.show();
+                var dialog = self.modal.$el[0];
+                dialog.showModal();
             });
 
             this.modal = new Modal(_.defaults({
@@ -3613,7 +3618,7 @@ function program22(depth0,data) {
   
   return "Ok";}
 
-  buffer += "<div class=\"modal mediapicker-modal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n    ";
+  buffer += "<dialog class=\"modal mediapicker-modal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n    ";
   foundHelper = helpers.classes;
   stack1 = foundHelper || depth0.classes;
   foundHelper = helpers.patchedEach;
@@ -3657,7 +3662,7 @@ function program22(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</button>\n    </div>\n</div>";
+  buffer += "</button>\n    </div>\n</dialog>";
   return buffer;});;
 (function() {
     var ESC = 27;

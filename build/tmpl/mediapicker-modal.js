@@ -356,7 +356,7 @@ function program22(depth0,data) {
   
   return "Ok";}
 
-  buffer += "<div class=\"modal mediapicker-modal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n    ";
+  buffer += "<dialog class=\"modal mediapicker-modal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n    ";
   foundHelper = helpers.classes;
   stack1 = foundHelper || depth0.classes;
   foundHelper = helpers.patchedEach;
@@ -400,5 +400,5 @@ function program22(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</button>\n    </div>\n</div>";
+  buffer += "</button>\n    </div>\n</dialog>";
   return buffer;});;

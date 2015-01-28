@@ -15,7 +15,8 @@
             "bower_components/backbone/backbone.js",
             "bower_components/jed/jed.js",
             "bower_components/bootstrap/js/bootstrap-tab.js",
-            "js/shared/i18n.js"
+            "js/shared/i18n.js",
+            "bower_components/dialog-polyfill.js"
         ],
         "editor_ace_deps": [
             "bower_components/ace-builds/src-noconflict/ace.js",
@@ -171,7 +172,8 @@
         ],
         "ui": [
             "css/ui/tipbar.css",
-            "css/ui/style.css"
+            "css/ui/style.css",
+            "bower_components/dialog-polyfill/dialog-polyfill.css"
         ],
         "output": [
             "css/output/style.css"

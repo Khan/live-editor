@@ -1,4 +1,4 @@
-<div class="modal mediapicker-modal">
+<dialog class="modal mediapicker-modal">
     <ul class="nav nav-tabs" role="tablist">
     {{#patchedEach classes}}
       <li {{#if $first}}class="active"{{/if}}><a href="#im-class-{{slugify className}}">{{className}}</a></li>
@@ -60,4 +60,4 @@
       <button type="button" class="simple-button" data-dismiss="modal">{{#_}}Close{{/_}}</button>
       <button type="button" class="simple-button green mediapicker-modal-submit" data-dismiss="modal">{{#_}}Ok{{/_}}</button>
     </div>
-</div>
+</dialog>
