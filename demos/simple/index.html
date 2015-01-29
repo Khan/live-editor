@@ -40,6 +40,7 @@
                     </div>
 
                     <div class="scratchpad-canvas-loading">
+                        <!-- TODO(kevinb7) move loading animation to ouput.html -->
                         <!--<img src="../../images/throbber-full.gif">-->
                         <!--<span class="hide-text">{{#_}}Loading...{{/_}}</span>-->
                     </div>
@@ -54,19 +55,19 @@
 
                     <!-- Widgets for selecting colors to doodle on the canvas during
                         recordings -->
-                    <!--<div id="draw-widgets" style="display:none;">-->
-                        <!--<a href="" id="draw-clear-button" class="ui-button">-->
-                            <!--<span class="ui-icon-cancel"></span>-->
-                        <!--</a>-->
-                        <!--{{#each colors}}-->
-                        <!--<a href="" class="draw-color-button" id="{{this}}">-->
-                            <!--<span></span>-->
-                        <!--</a>-->
-                        <!--{{/each}}-->
-                    <!--</div>-->
+                    <div id="draw-widgets" style="display:none;">
+                        <a href="" id="draw-clear-button" class="ui-button">
+                            <span class="ui-icon-cancel"></span>
+                        </a>
+                        {{#each colors}}
+                        <a href="" class="draw-color-button" id="{{this}}">
+                            <span></span>
+                        </a>
+                        {{/each}}
+                    </div>
 
                     <!-- Record button -->
-                    <!--<button id="record" class="simple-button pull-left" style="display:none;">{{#_}}Record{{/_}}</button>-->
+                    <button id="record" class="simple-button pull-left" style="display:none;">{{#_}}Record{{/_}}</button>
                 </div>
             </div>
 
@@ -96,26 +97,26 @@
                     </div>
                 </div>
 
-                <!--<div class="scratchpad-toolbar">-->
-                    <!--&lt;!&ndash; Row for playback controls &ndash;&gt;-->
-                    <!--<div class="scratchpad-playbar" style="display:none;">-->
-                        <!--<div class="scratchpad-playbar-area" style="display:none;">-->
-                            <!--<button-->
-                                    <!--class="simple-button primary scratchpad-playbar-play"-->
-                                    <!--type="button">-->
-                                <!--<span class="icon-play"></span>-->
-                            <!--</button>-->
+                <div class="scratchpad-toolbar">
+                    <!-- Row for playback controls -->
+                    <div class="scratchpad-playbar" style="display:none;">
+                        <div class="scratchpad-playbar-area" style="display:none;">
+                            <button
+                                    class="simple-button primary scratchpad-playbar-play"
+                                    type="button">
+                                <span class="icon-play"></span>
+                            </button>
 
-                            <!--<div class="scratchpad-playbar-progress"></div>-->
+                            <div class="scratchpad-playbar-progress"></div>
 
-                            <!--<span class="scratchpad-playbar-timeleft"></span>-->
-                        <!--</div>-->
-                        <!--<div class="loading-msg">-->
-                            <!--{{#_}}Loading audio...{{/_}}-->
-                        <!--</div>-->
-                    <!--</div>-->
-                    <!--<div class="scratchpad-debugger"></div>-->
-                <!--</div>-->
+                            <span class="scratchpad-playbar-timeleft"></span>
+                        </div>
+                        <div class="loading-msg">
+                            {{#_}}Loading audio...{{/_}}
+                        </div>
+                    </div>
+                    <div class="scratchpad-debugger"></div>
+                </div>
 
                 <div class="scratchpad-toolbar scratchpad-dev-record-row" style="display:none;"></div>
             </div>
@@ -129,21 +130,39 @@
     <script src="../../build/js/live-editor.tooltips.js"></script>
     <script src="../../build/js/live-editor.ui.js"></script>
     <script src="../../build/js/live-editor.editor_ace.js"></script>
-    <!--<script src="../../build/js/live-editor.debugger.js"></script>-->
 
     <script>
-    // TODO(kevinb7) figure out how to pass the debugger=true flag ot output.html
-    var outputUrl = "output.html";
     var useDebugger = false;
-    if (location.search.indexOf("debugger=true") !== -1) {
-        outputUrl += "?debugger=true";
+    var urlParams = {};
+    location.search.substring(1).split("&").map(function (param) {
+        var strings = param.split("=");
+        var value = strings[1];
+        if (value === "true") {
+            value = true;
+        } else if (value === "false") {
+            value = false;
+        }
+        urlParams[strings[0]] = value;
+    });
+
+    if (urlParams.debugger) {
+        var script = $("<script>").attr({
+            src: "../../build/js/live-editor.debugger.js"
+        });
+        $(document.head).append(script);
+
+        var link = $("<link>").attr({
+            rel: "stylesheet",
+            href: "../../build/css/live-editor.debugger.css"
+        });
+        $(document.head).append(link);
+
         useDebugger = true;
     }
     
     var noLint = true;
-    // TODO(kevinb7) make URL param parsing more accurate
-    if (location.search.indexOf("noLint=false") !== -1) {
-        noLint = false;
+    if ("noLint" in urlParams) {
+        noLint = urlParams.noLint;
     }
 
     window.liveEditor = new LiveEditor({
@@ -157,8 +176,6 @@
         externalsDir: "../../build/external/",
         imagesDir: "../../build/images/",
         soundsDir: "../../sounds/",
-        execFile: outputUrl,
-        jshintFile: "../../build/external/jshint/jshint.js",
         useDebugger: useDebugger,
         noLint: noLint
     });

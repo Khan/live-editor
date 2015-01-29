@@ -8,20 +8,25 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         this.setPaths(options);
 
+        // directly accessing properties on the parent frame is the most robust
+        // solution, but it will do for now
         this.config = new ScratchpadConfig({
-            useDebugger: options.useDebugger
+            useDebugger: parent.useDebugger
         });
+        
+        if (parent.useDebugger) {
+            var script = $("<script>").attr("src", "../../build/js/live-editor.output_debugger_deps.js");
+            $(document.head).append(script);
+        }
 
         this.workersDir = options.workersDir;
         this.externalsDir = options.externalsDir;
         this.imagesDir = options.imagesDir; 
         this.soundsDir = options.soundsDir; 
-        this.jshintFile = options.jshintFile;
         this.code = options.code;
 
         if (options.outputType) {
             this.setOutput(options.outputType);
-            console.log("set output");
         }
 
         this.bind();
@@ -48,7 +53,6 @@ window.LiveEditorOutput = Backbone.View.extend({
             externalsDir: this.externalsDir, 
             imagesDir: this.imagesDir, 
             soundsDir: this.soundsDir, 
-            jshintFile: this.jshintFile,
             code: this.code
         });
     },
@@ -67,10 +71,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
         if (data.soundsDir) {
             this.soundsDir = this._qualifyURL(data.soundsDir);
-        }
-        if (data.jshintFile) {
-            this.jshintFile = this._qualifyURL(data.jshintFile);
-            PooledWorker.prototype.jshintFile = this.jshintFile;
         }
     },
 

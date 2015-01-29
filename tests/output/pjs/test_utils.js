@@ -122,9 +122,11 @@ var runTest = function(options) {
                     checkAssertions(options.assertions2,
                         output.results.assertions);
                     options.simulateClick && simulateClick();
+                    output.output.kill();
                     done();
                 });
             } else {
+                output.output.kill();
                 done();
             }
         });

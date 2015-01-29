@@ -17,6 +17,7 @@ var staticServe = require("node-static");
 var request = require("request");
 
 var paths = require("./build-paths.json");
+var bundle_deps = require("./bundle_deps");
 
 gulp.task("templates", function() {
     gulp.src(paths.templates)
@@ -64,8 +65,8 @@ gulp.task("workers", function() {
     gulp.src(paths.workers_webpage)
         .pipe(gulp.dest("build/workers/webpage"));
 
-    gulp.src(paths.workers_pjs)
-        .pipe(gulp.dest("build/workers/pjs"));
+    // TODO(kevinb7) make this more gulp-y
+    bundle_deps.bundle_deps(bundle_deps.deps);
 
     gulp.src(paths.workers_shared)
         .pipe(gulp.dest("build/workers/shared"));

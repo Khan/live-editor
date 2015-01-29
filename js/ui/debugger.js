@@ -14,7 +14,6 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
     render: function() {
         this.$el.html(Handlebars.templates["debugger"]({
-            execFile: this.execFile,
             imagesDir: this.imagesDir,
             colors: this.colors
         }));

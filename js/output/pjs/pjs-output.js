@@ -66,20 +66,18 @@ window.PJSOutput = Backbone.View.extend({
 
         this.globals = {};
 
-        // see if there are any images we should load
-        // right now we're keeping this list in localStorage,
-        // but really it should be injected into output.html
-        // along with the code when output.html is loaded
-        var imageFilenames;
-        if (window.localStorage.imageFilenames) {
-            imageFilenames = JSON.parse(window.localStorage.imageFilenames);
-        } else {
-            imageFilenames = this.getImageFilenames(options.code);
-        }
+        // grab image filenames from the code
+        // ideally the server would have a list of these so that we could
+        // start the loading process sooner
+        // TODO(kevinb7) start this in output.html and pass in a promise
+        var imageFilenames = this.getImageFilenames(options.code);
         this.cacheImages(imageFilenames, function () {
             this.injectCode(options.code, function(errors) {
-                console.log(errors);
-            });
+                output.notifyActive();
+                if (errors.length > 0) {
+                    console.log(errors);
+                }
+            }.bind(this));
         }.bind(this));
         
         this.bind();
@@ -1486,8 +1484,8 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     kill: function() {
-        this.canvas.exit();
-        this.canvas.hide();
+        this.canvas.noLoop();
+        this.canvas.remove();
     },
 
     initTests: function(validate) {
@@ -1537,10 +1535,14 @@ window.PJSOutput = Backbone.View.extend({
             }
 
             if (this.profiling) {
-                this.times.push(performance.now());
+                if (window.performance) {
+                    this.times.push(performance.now());
+                }
             }
             if (!this.firstRun) {
-                console.log("finished running: " + performance.now());
+                if (window.performance) {
+                    console.log("finished running: " + performance.now());
+                }
                 this.firstRun = true;
             }
         } catch (e) {

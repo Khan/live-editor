@@ -38,9 +38,6 @@ window.LiveEditor = Backbone.View.extend({
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
         this.soundsDir = options.soundsDir;
-        this.execFile = this._qualifyURL(options.execFile);
-        this.jshintFile = this._qualifyURL(options.jshintFile ||
-            this.externalsDir + "jshint/jshint.js");
 
         this.outputType = options.outputType || "";
         this.editorType = options.editorType || _.keys(this.editors)[0];
@@ -1095,7 +1092,6 @@ window.LiveEditor = Backbone.View.extend({
             externalsDir: this.externalsDir,
             imagesDir: this.imagesDir,
             soundsDir: this.soundsDir,
-            jshintFile: this.jshintFile,
             outputType: this.outputType,
             profileAction: profileAction
         };
