@@ -182,11 +182,6 @@ function program12(depth0,data,depth1,depth3) {
   stack1 = foundHelper || depth1.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...groupName", { hash: {} }); }
-  buffer += escapeExpression(stack1);
-  foundHelper = helpers.thumbsDir;
-  stack1 = foundHelper || depth1.thumbsDir;
-  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
-  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...thumbsDir", { hash: {} }); }
   buffer += escapeExpression(stack1) + "/";
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
