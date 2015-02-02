@@ -849,7 +849,7 @@ window.LiveEditor = Backbone.View.extend({
         this.recordView.initializeRecordingAudio();
     },
 
-    saveRecording: function(callback) {
+    saveRecording: function(callback, steps) {
         // If no command or audio recording was made, just save the results
         if (!this.record.recorded || !this.record.recordingAudio) {
             return callback();
@@ -858,6 +858,7 @@ window.LiveEditor = Backbone.View.extend({
         var transloadit = new TransloaditXhr({
             authKey: this.transloaditAuthKey,
             templateId: this.transloaditTemplate,
+            steps: steps,
             successCb: function(results) {
                 this.recordingMP3 =
                     results.mp3[0].url.replace(/^http:/, "https:");
