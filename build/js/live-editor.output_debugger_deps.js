@@ -35370,7 +35370,7 @@ window.setInterval = function (callback, delay) {
       __schedule__(callback);
     }, delay);
   } else {
-    return originalSetTimeout(callback, delay);
+    return originalSetInterval(callback, delay);
   }
 };
 

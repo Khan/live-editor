@@ -32,15 +32,16 @@
     <script src="../../build/js/live-editor.tooltips.js"></script>
     <script src="../../build/js/live-editor.ui.js"></script>
     <script src="../../build/js/live-editor.editor_ace.js"></script>
-    <script src="../../build/js/live-editor.debugger.js"></script>
+    <!--<script src="../../build/js/live-editor.debugger.js"></script>-->
 
     <script>
     var outputUrl = "output.html";
     var useDebugger = false;
-    if (location.search.indexOf("debugger=true") !== -1) {
-        outputUrl += "?debugger=true";
-        useDebugger = true;
-    }
+    // TODO(kevinb7) conditionally load live-editor.debugger.js
+//    if (location.search.indexOf("debugger=true") !== -1) {
+//        outputUrl += "?debugger=true";
+//        useDebugger = true;
+//    }
 
     window.liveEditor = new LiveEditor({
         el: $("#sample-live-editor"),
