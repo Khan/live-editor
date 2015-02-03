@@ -148,6 +148,11 @@ window.PJSOutput = Backbone.View.extend({
 
             // PVector is actually safe, there are no obvious side effects
             safeCalls.PVector = true;
+            // The same is true for the color function.  The reason why color
+            // fails the test above is because processing-js defines a toString
+            // method on it which returns "rgba(0,0,0,0)" which doesn't doesn't
+            // contain the string "return" so it fails.
+            safeCalls.color = true;
 
             // The one exception to the rule above is the draw function
             // (which is defined on init but CAN be overridden).
@@ -1361,7 +1366,6 @@ window.PJSOutput = Backbone.View.extend({
 
     kill: function() {
         this.canvas.exit();
-        this.canvas.hide();
     },
 
     initTests: function(validate) {

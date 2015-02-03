@@ -8,6 +8,10 @@
  *          or a boolean indicating that errors are expected.
  *  test: A callback function to run with all the results
  *  skip: skip the test
+ *  only: only run this test
+ *  setup: custom setup callback, takes a single argument: output
+ *  teardown: custom teardown callback, takes a single argument: output
+ *  wait: time to wait after first code run, this allows "draw" to be called
  */
 var runTest = function(options) {
     if ((!options.errors || !options.errors.length) && !options.noLint) {
@@ -40,7 +44,16 @@ var runTest = function(options) {
     var code2 = getCodeFromOptions(options.code2);
 
     // Start an asynchronous test
-    var itFunc = options.skip ? it.skip : it;
+    var itFunc = it;
+    if (options.skip) {
+        itFunc = it.skip;
+    } else if (options.only) {
+        itFunc = it.only;
+    }
+    
+    var teardown = options.teardown;
+    var wait = options.wait;
+ 
     itFunc(displayTitle, function(done) {
         var output = new LiveEditorOutput({
             outputType: "pjs",
@@ -56,6 +69,10 @@ var runTest = function(options) {
 
         if (options.validate) {
             output.initTests(options.validate);
+        }
+
+        if (options.setup) {
+            options.setup(output);
         }
 
         // Used to check assertions (caused by Program.assertEqual())
@@ -122,13 +139,33 @@ var runTest = function(options) {
                     checkAssertions(options.assertions2,
                         output.results.assertions);
                     options.simulateClick && simulateClick();
-                    done();
+
+                    finishTest(done, output, options);
                 });
             } else {
-                done();
+                finishTest(done, output, options);
             }
         });
     });
+};
+
+
+var finishTest = function(done, output, options) {
+    if (options.wait) {
+        setTimeout(function () {
+            if (options.teardown) {
+                options.teardown(output);
+            }
+            output.output.kill();
+            done();
+        }, options.wait);
+    } else {
+        if (options.teardown) {
+            options.teardown(output);
+        }
+        output.output.kill();
+        done();
+    }
 };
 
 
