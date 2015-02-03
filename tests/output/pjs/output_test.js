@@ -673,7 +673,82 @@ describe("Scratchpad Output Exec", function() {
         errors: []
     });
 
+    runTest({
+        title: "Modifying globals updates the draw loop",
+        code: function() {
+            var r = 100;
+            var c = color(255,0,0);
+            var draw = function() {
+                background(255);
+                fill(c);
+                ellipse(200, 200, r, r);
+            };
+        },
+        code2: function () {
+            var r = 200;
+            var c = color(255,255,0);
+            var draw = function() {
+                background(255);
+                fill(c);
+                ellipse(200, 200, r, r);
+            };
+        },
+        setup: function(output) {
+            var p = output.output.canvas;
+            sinon.stub(p, "fill");
+            sinon.stub(p, "ellipse");
+        },
+        teardown: function(output) {
+            var p = output.output.canvas;
+            var red = p.color(255,0,0);
+            var yellow = p.color(255,255,0);
+            expect(p.fill.calledWith(red)).to.be(true);
+            expect(p.fill.calledWith(yellow)).to.be(true);
+            expect(p.fill.calledWith(0)).to.be(false);
+            expect(p.ellipse.calledWith(200,200,100,100)).to.be(true);
+            expect(p.ellipse.calledWith(200,200,200,200)).to.be(true);
+            p.fill.restore();
+            p.ellipse.restore();
+        },
+        wait: 500
+    });
 
+    runTest({
+        // https://github.com/Khan/live-editor/issues/235
+        title: "Modifying properties of globals doesn't clobber color properties",
+        code: function() {
+            var foo = { c:color(255, 0, 0), r:100 };
+            var draw = function() {
+                background(255);
+                fill(foo.c);
+                ellipse(200, 200, foo.r, foo.r);
+            };
+        },
+        code2: function () {
+            var foo = { c:color(255, 0, 0), r:200 };
+            var draw = function() {
+                background(255);
+                fill(foo.c);
+                ellipse(200, 200, foo.r, foo.r);
+            };
+        },
+        setup: function(output) {
+            var p = output.output.canvas;
+            sinon.stub(p, "fill");
+            sinon.stub(p, "ellipse");
+        },
+        teardown: function(output) {
+            var p = output.output.canvas;
+            var red = p.color(255,0,0);
+            expect(p.fill.calledWith(red)).to.be(true);
+            expect(p.fill.calledWith(0)).to.be(false);
+            expect(p.ellipse.calledWith(200,200,100,100)).to.be(true);
+            expect(p.ellipse.calledWith(200,200,200,200)).to.be(true);
+            p.fill.restore();
+            p.ellipse.restore();
+        },
+        wait: 100
+    });
 });
 
 describe("Output Methods", function() {

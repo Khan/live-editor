@@ -1366,7 +1366,6 @@ window.PJSOutput = Backbone.View.extend({
 
     kill: function() {
         this.canvas.exit();
-        this.canvas.hide();
     },
 
     initTests: function(validate) {
