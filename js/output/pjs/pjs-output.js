@@ -376,8 +376,7 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     imageCache: {},
-    imagesCached: false,
-    imageCacheStarted: false,
+    soundCache: {},
     imageHolder: null,
 
     // Load and cache all images that could be used in the environment
@@ -386,9 +385,10 @@ window.PJSOutput = Backbone.View.extend({
     // Execution is delayed once a getImage appears in the source code
     // and none of the images are cached. Execution begins once all the
     // images have loaded.
-    cacheImages: function(userCode, callback) {
+    cacheResources: function(userCode, callback) {
         // Grab all the image calls from the source code
         var images = userCode.match(/getImage\s*\(.*?\)/g);
+        var sounds = userCode.match(/getSound\s*\(.*?\)/g);
 
         // Keep track of how many images have loaded
         var numLoaded = 0;
@@ -405,13 +405,21 @@ window.PJSOutput = Backbone.View.extend({
                 })
                 .appendTo("body");
         }
+        
+        var resourceCount = 0;
+        if (images !== null) {
+            resourceCount += images.length;
+        }
+        if (sounds !== null) {
+            resourceCount += sounds.length;
+        }
 
         // Keep track of when image files are loaded
         var loaded = function() {
             numLoaded += 1;
 
             // All the images have loaded so now execution can begin
-            if (numLoaded === images.length) {
+            if (numLoaded === resourceCount) {
                 callback();
             }
         };
@@ -423,12 +431,16 @@ window.PJSOutput = Backbone.View.extend({
 
             // Skip if the image has already been cached
             // Or if the getImage call is malformed somehow
-            if (this.imageCache[file] || !fileMatch) {
+            if (!fileMatch) {
                 return loaded();
             }
-
+            
             file = fileMatch[1];
-
+            
+            if (this.imageCache[file]) {
+                return loaded();
+            }
+            
             // We only allow images from within a certain path
             var path = this.output.imagesDir + file + ".png";
 
@@ -448,10 +460,38 @@ window.PJSOutput = Backbone.View.extend({
             // but PImage may be mutable, so that might not work.
             this.imageCache[file] = img;
         }.bind(this));
+        
+        _.each(sounds, function(file) {
+            var fileMatch = /["']([A-Za-z0-9_\/-]*?)["']/.exec(file);
+
+            if (!fileMatch) {
+                return loaded();
+            }
+
+            file = fileMatch[1];
+            
+            if (this.soundCache[file]) {
+                return loaded();
+            }
+            
+            var audio = document.createElement("audio");
+            
+            audio.preload = "auto";
+            audio.oncanplaythrough = loaded;
+            audio.onerror = function() {
+                delete this.soundCache[file];
+                loaded();
+            }.bind(this);
+            audio.src = this.output.soundsDir + file + ".mp3";
+            
+            this.soundCache[file] = {
+                audio: audio,
+                __id: function () {
+                    return "getSound('" + file + "')";
+                }
+            };
+        }.bind(this));
     },
-
-
-    soundCache: {},
 
     // New methods and properties to add to the Processing instance
     processing: {
@@ -502,16 +542,10 @@ window.PJSOutput = Backbone.View.extend({
             var sound = this.soundCache[filename];
 
             if (!sound) {
-                var audio = document.createElement("audio");
-                audio.preload = "auto";
-                audio.src = this.output.soundsDir + filename + ".mp3";
-                sound = {audio: audio};
-                this.soundCache[filename] = sound;
+                throw {message:
+                    $._("Sound '%(file)s' was not found.", {file: filename})};
             }
-
-            sound.__id = function() {
-                return "getSound('" + filename + "')";
-            };
+            
             return sound;
         },
 
@@ -857,9 +891,8 @@ window.PJSOutput = Backbone.View.extend({
             }.bind(this));
         }.bind(this);
 
-        if (this.globals.getImage) {
-            this.cacheImages(userCode, runCode);
-
+        if (this.globals.getImage || this.globals.getSound) {
+            this.cacheResources(userCode, runCode);
         } else {
             runCode();
         }

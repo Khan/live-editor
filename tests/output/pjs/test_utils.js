@@ -60,6 +60,7 @@ var runTest = function(options) {
             workersDir: "../../../build/workers/",
             externalsDir: "../../../build/external/",
             imagesDir: "../../../build/images/",
+            soundsDir: "../../../sounds/",
             jshintFile: "../../../build/external/jshint/jshint.js",
             useDebugger: useDebugger
         });
