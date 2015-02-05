@@ -1750,6 +1750,12 @@ window.TooltipEngine = Backbone.View.extend({
 
         _.each(options.tooltips, function(name) {
             this.tooltips[name] = new TooltipEngine.classes[name](childOptions);
+            this.tooltips[name].on("scrubbingStarted", function() {
+                this.trigger("scrubbingStarted", name);
+            }.bind(this));
+            this.tooltips[name].on("scrubbingEnded", function() {
+                this.trigger("scrubbingEnded", name);
+            }.bind(this));
         }.bind(this));
 
         if (record && !record.handlers.hot) {
@@ -2134,6 +2140,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 var $picker = $(this);
                 $picker.addClass("active");
                 down = true;
+                self.trigger("scrubbingStarted");
 
                 $(document).one("mouseup", function() {
                     $picker.removeClass("active");
@@ -2141,6 +2148,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                     if (!over) {
                         self.placeOnScreen();
                     }
+                    self.trigger("scrubbingEnded");
                 });
             });
         this.bindToRequestTooltip();
@@ -2833,6 +2841,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                 start: function(e, ui) {
                     self.$el.addClass("dragging");
                     $(this).css("visibility", "hidden");
+                    self.trigger("scrubbingStarted");
                 },
                 drag: function(evt, ui) {
                     var thisOffset = ui.helper.offset();
@@ -2852,6 +2861,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     var exp = getExponent(evt);
                     self.decimals = Math.max(0,-exp);
                     self.updateTooltip(self.intermediateValue, self.decimals);
+                    self.trigger("scrubbingEnded");
 
                     // use a timeout because $leftButton.click and $rightButton.click
                     // are called after stop

@@ -78,6 +78,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                 start: function(e, ui) {
                     self.$el.addClass("dragging");
                     $(this).css("visibility", "hidden");
+                    self.trigger("scrubbingStarted");
                 },
                 drag: function(evt, ui) {
                     var thisOffset = ui.helper.offset();
@@ -97,6 +98,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     var exp = getExponent(evt);
                     self.decimals = Math.max(0,-exp);
                     self.updateTooltip(self.intermediateValue, self.decimals);
+                    self.trigger("scrubbingEnded");
 
                     // use a timeout because $leftButton.click and $rightButton.click
                     // are called after stop
