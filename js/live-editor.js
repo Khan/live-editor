@@ -114,12 +114,10 @@ window.LiveEditor = Backbone.View.extend({
         
         this.noLint = false;
         this.editor.on("scrubbingStarted", function() {
-            console.log("scrubbingStarted");
             this.noLint = true;
         }.bind(this));
         
         this.editor.on("scrubbingEnded", function() {
-            console.log("scrubbingEnded");
             this.noLint = false;
         }.bind(this));
 
