@@ -36,11 +36,13 @@
         <script src="output_test.js"></script>
         <script src="assert_test.js"></script>
         <script>
-            if (window.mochaPhantomJS) {
-                mochaPhantomJS.run();
-            } else {
-                mocha.run();
-            }
+            onload = function(){
+                if (window.mochaPhantomJS) {
+                    mochaPhantomJS.run();
+                } else {
+                    mocha.run();
+                }
+            };
         </script>
     </body>
 </html>

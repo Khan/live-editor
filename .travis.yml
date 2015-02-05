@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+  - "0.10"
+before_script:
+  - npm install -g bower
+  - bower install
+script:
+  - ./node_modules/.bin/testee tests/output/pjs/index.html
+  - ./node_modules/.bin/testee tests/output/webpage/index.html
+  - ./node_modules/.bin/testee tests/tooltips/index.html

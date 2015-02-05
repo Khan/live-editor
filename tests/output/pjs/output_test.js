@@ -637,11 +637,24 @@ describe("Scratchpad Output Exec", function() {
     runTest({
         title: "Program functions exist",
         code: function() {
-            var x = Program.settings();
+            Program.settings();
+            Program.restart();
             Program.runTests(function() {});
             Program.restart();
         },
-        errors: []
+        errors: [],
+        setup: function(output) {
+            var p = output.output.canvas;
+            sinon.stub(p.Program, "settings");
+            sinon.stub(p.Program, "restart");
+            sinon.stub(p.Program, "runTests");
+        },
+        teardown: function(output) {
+            var p = output.output.canvas;
+            expect(p.Program.settings.calledWith()).to.be(true);
+            expect(p.Program.restart.calledWith()).to.be(true);
+            expect(p.Program.runTests.calledWith()).to.be(true);
+        }
     });
 
     runTest({
