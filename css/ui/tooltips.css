@@ -399,8 +399,11 @@ html.playing .tooltip.hide-while-playing {
 
 .scrubber-handle .flipped-arrow {
     display: inline-block;
-    transform: rotate(180deg);
-    -webkit-transform: rotate(180deg);
+    transform: scaleX(-1.0);
+    -webkit-transform: scaleX(-1.0);
+    -moz-transform: scaleX(-1.0);
+    -ms-transform: scaleX(-1.0);
+    -o-transform: scaleX(-1.0);
 }
 
 .block .tooltip:not(.picker) {
