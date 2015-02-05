@@ -55,6 +55,14 @@ window.AceEditor = Backbone.View.extend({
             editor: this.editor,
             record: this.record
         });
+        
+        this.tooltipEngine.on("scrubbingStarted", function(name) {
+            this.trigger("scrubbingStarted", name);
+        }.bind(this));
+
+        this.tooltipEngine.on("scrubbingEnded", function(name) {
+            this.trigger("scrubbingEnded", name);
+        }.bind(this));
 
         // TODO(bbondy): Support multiple content types for autosuggest.
         if (this.tooltips[this.type].indexOf("autoSuggest") !== -1) {

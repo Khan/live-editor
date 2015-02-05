@@ -111,6 +111,17 @@ window.LiveEditor = Backbone.View.extend({
             workersDir: this.workersDir,
             type: this.editorType
         });
+        
+        this.noLint = false;
+        this.editor.on("scrubbingStarted", function() {
+            console.log("scrubbingStarted");
+            this.noLint = true;
+        }.bind(this));
+        
+        this.editor.on("scrubbingEnded", function() {
+            console.log("scrubbingEnded");
+            this.noLint = false;
+        }.bind(this));
 
         this.tipbar = new TipBar({
             el: this.$(this.dom.OUTPUT_DIV),
@@ -1053,7 +1064,7 @@ window.LiveEditor = Backbone.View.extend({
             code: arguments.length === 0 ? this.editor.text() : code,
             cursor: this.editor.getSelectionIndices ? this.editor.getSelectionIndices() : -1,
             validate: this.validation || "",
-            noLint: false,
+            noLint: this.noLint,
             version: this.config.curVersion(),
             settings: this.settings || {},
             workersDir: this.workersDir,

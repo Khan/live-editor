@@ -11,6 +11,12 @@ window.TooltipEngine = Backbone.View.extend({
 
         _.each(options.tooltips, function(name) {
             this.tooltips[name] = new TooltipEngine.classes[name](childOptions);
+            this.tooltips[name].on("scrubbingStarted", function() {
+                this.trigger("scrubbingStarted", name);
+            }.bind(this));
+            this.tooltips[name].on("scrubbingEnded", function() {
+                this.trigger("scrubbingEnded", name);
+            }.bind(this));
         }.bind(this));
 
         if (record && !record.handlers.hot) {
