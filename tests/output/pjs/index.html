@@ -15,10 +15,10 @@
             // that pjs-output.js can do a GET request for the worker code and
             // their dependencies without having to wait for the initial message
             // from the parent frame that contains all of the paths.
-            if (location.search.indexOf("?workersDir=") === -1) {
+            if (location.search.indexOf("workersDir=") === -1) {
                 var workersDir = encodeURIComponent("../../../build/workers/");
                 if (location.search.indexOf("?") === -1) {
-                    location.search = "workersDir=" + workersDir;
+                    location.search = "?workersDir=" + workersDir;
                 } else {
                     location.search += "&workersDir=" + workersDir;
                 }

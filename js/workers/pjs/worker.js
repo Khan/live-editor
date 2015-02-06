@@ -73,7 +73,7 @@ self.onmessage = function(event) {
     setTimeout(function(){
         // Execute the code and the drawing function, at least once
         // TODO: Run other functions that execute on event (mousePressed, etc.)
-        //(new Function(code)).call({}, context);
+        (new Function(code)).call({}, context);
 
         // Cap the maximum number of function calls
         // Score 1 for the popular function calls that draw to the screen

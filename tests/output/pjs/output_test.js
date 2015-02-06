@@ -43,29 +43,29 @@ describe("Scratchpad Output Exec", function() {
 
     failingTest("JSHint Error", "ellipse(x, 100, 100, 100);");
 
-    //failingTest("Infinite Loop", function() {
-    //    var x = 0;
-    //    while (x < 400) {
-    //        ellipse(100, 100, 100, x);
-    //    }
-    //});
-    //
-    //failingTest("Infinite Loop with width/height", function() {
-    //    var x = 0;
-    //    while (x < width/20) {
-    //        ellipse(100, 100, 100, x);
-    //    }
-    //});
-    //
-    //failingTest("Infinite Loop Inside Draw Function", function() {
-    //    var draw = function() {
-    //        var y = 40;
-    //        while (y < 300) {
-    //            var message = "hello" + y;
-    //            text(message, 30, y);
-    //        }
-    //    };
-    //});
+    failingTest("Infinite Loop", function() {
+        var x = 0;
+        while (x < 400) {
+            ellipse(100, 100, 100, x);
+        }
+    });
+    
+    failingTest("Infinite Loop with width/height", function() {
+        var x = 0;
+        while (x < width/20) {
+            ellipse(100, 100, 100, x);
+        }
+    });
+    
+    failingTest("Infinite Loop Inside Draw Function", function() {
+        var draw = function() {
+            var y = 40;
+            while (y < 300) {
+                var message = "hello" + y;
+                text(message, 30, y);
+            }
+        };
+    });
 
     test("Looping (with Processing.js Built-in Functions)", function() {
         var go = function() {
