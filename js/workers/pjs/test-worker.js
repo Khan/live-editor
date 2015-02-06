@@ -15,26 +15,26 @@ var date = (new Date()).toDateString();
 var tester;
 
 self.onmessage = function(event) {
+    var data = JSON.parse(event.data);
+    
     if (!init) {
         init = true;
 
-        importScripts(event.data.externalsDir +
-            "es5-shim/es5-shim.js?cachebust=" + date);
-        importScripts(event.data.externalsDir +
-            "structuredjs/external/esprima.js?cachebust=" + date);
-        importScripts(event.data.externalsDir +
-            "underscore/underscore.js?cachebust=" + date);
-        importScripts(event.data.externalsDir +
-            "structuredjs/structured.js?cachebust=" + date);
+        if (data.deps) {
+            var deps = JSON.parse(data.deps);
 
-        // Bring in the testing logic
-        importScripts("../shared/output-tester.js?cachebust=" + date);
-        importScripts("./pjs-tester.js?cachebust=" + date);
+            eval(deps["es5-shim.js"]);
+            eval(deps["esprima.js"]);
+            eval(deps["underscore.js"]);
+            eval(deps["structured.js"]);
+            eval(deps["output-tester.js"]);
+            eval(deps["pjs-tester.js"]);
+        }
 
         tester = new PJSTester();
     }
 
-    tester.test(event.data.code, event.data.validate, event.data.errors,
+    tester.test(data.code, data.validate, data.errors,
         function(errors, testResults) {
             // Return the test results to the main code
             self.postMessage({

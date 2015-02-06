@@ -71,7 +71,8 @@
             "external/jshint/jshint.js",
             "external/structuredjs/external/esprima.js",
             "external/structuredjs/structured.js",
-            "external/TraceKit/tracekit.js"
+            "external/TraceKit/tracekit.js",
+            "external/blob/blob.js"
         ],
         "output_debugger_deps": [
             "external/iframe-overlay/dist/iframe-overlay.js",

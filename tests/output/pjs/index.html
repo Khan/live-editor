@@ -6,6 +6,24 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Mocha Test Runner</title>
         <link rel="stylesheet" href="../../../node_modules/mocha/mocha.css">
+        <script>
+            // pjs-output.js looks for a URL parameter called workersDir
+            // added it if it's not already part of the URL and reload so
+            // that people do have to do it when running tests.
+            //
+            // The reason why this value is passed as a URL parameter is so 
+            // that pjs-output.js can do a GET request for the worker code and
+            // their dependencies without having to wait for the initial message
+            // from the parent frame that contains all of the paths.
+            if (location.search.indexOf("?workersDir=") === -1) {
+                var workersDir = encodeURIComponent("../../../build/workers/");
+                if (location.search.indexOf("?") === -1) {
+                    location.search = "workersDir=" + workersDir;
+                } else {
+                    location.search += "&workersDir=" + workersDir;
+                }
+            }
+        </script>
     </head>
     <body>
         <div id="mocha"></div>

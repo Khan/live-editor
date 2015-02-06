@@ -6,16 +6,11 @@ this["Handlebars"]["templates"]["output"] = Handlebars.template(function (Handle
 
 
   return "<div class=\"output\"></div>\n<div class=\"test-errors\" style=\"display: none;\"></div>";});;
-var PooledWorker = function(filename, onExec) {
+var PooledWorker = function(url, onExec) {
     this.pool = [];
     this.curID = 0;
-    this.filename = filename;
+    this.url = url;
     this.onExec = onExec || function() {};
-};
-
-PooledWorker.prototype.getURL = function() {
-    return this.workersDir + this.filename +
-        "?cachebust=G" + (new Date()).toDateString();
 };
 
 PooledWorker.prototype.getWorkerFromPool = function() {
@@ -27,7 +22,7 @@ PooledWorker.prototype.getWorkerFromPool = function() {
     // seems to freak out, use lots of memory, and sometimes crash.)
     var worker = this.pool.shift();
     if (!worker) {
-        worker = new window.Worker(this.getURL());
+        worker = new window.Worker(this.url);
     }
     // Keep track of what number worker we're running so that we know
     // if any new hint workers have been started after this one
@@ -79,7 +74,7 @@ OutputTester.prototype = {
          * The worker that runs the tests in the background, if possible.
          */
         this.testWorker = new PooledWorker(
-            options.workerFile,
+            options.url,
             function(code, validate, errors, callback) {
                 var self = this;
 
@@ -117,12 +112,21 @@ OutputTester.prototype = {
                     }
                 };
 
-                worker.postMessage({
-                    code: code,
-                    validate: validate,
-                    errors: errors,
-                    externalsDir: this.externalsDir
-                });
+                if (worker.initialized) {
+                    worker.postMessage(JSON.stringify({
+                        code: code,
+                        validate: validate,
+                        errors: errors
+                    }));
+                } else {
+                    worker.postMessage(JSON.stringify({
+                        code: code,
+                        validate: validate,
+                        errors: errors,
+                        deps: options.deps
+                    }));
+                    worker.initialized = true;
+                }
             }
         );
     },

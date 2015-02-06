@@ -1,24 +1,27 @@
 var init = false;
 
 self.onmessage = function(event) {
+    var data = JSON.parse(event.data);
+
     // We don't import JSHint on load as we need to know which language
     // the user is visiting the site in. If there is no language then
     // we just use the normal file.
     if (!init) {
         init = true;
 
-        importScripts(event.data.externalsDir +
-            "es5-shim/es5-shim.js?cachebust=" + (new Date()).toDateString());
+        if (data.deps) {
+            var deps = data.deps;
 
-        importScripts(event.data.jshintFile +
-            "?cachebust=" + (new Date()).toDateString());
+            eval(deps["es5-shim.js"]);
+            eval(deps["jshint.js"]);
+            eval(deps["underscore.js"]);
 
-        importScripts(event.data.externalsDir +
-            "underscore/underscore.js?cachebust=" + (new Date()).toDateString());
+            self.JSHINT = JSHINT;    // store it in a global so we can use it next time
+        }
     }
 
     // Evaluate the code using JSHint
-    JSHINT(event.data.code);
+    JSHINT(data.code);
 
     // Return the JSHint results to the main code
     self.postMessage({
