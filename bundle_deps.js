@@ -1,6 +1,7 @@
 var q = require("q");
 var fs = require("fs");
 var mkdirp = require("mkdirp");
+var uglify = require("uglify-js");
 
 // don't worry about dependency chains at the start
 // workers who are loading these dependency are responsible
@@ -44,7 +45,8 @@ var bundle_deps = function(deps) {
             Object.keys(deps).map(function (filename) {
                 var path = deps[filename];
                 return readFile(path, { encoding: 'utf8' }).then(function (contents) {
-                    obj[filename] = contents;
+                    var result = uglify.minify(contents, {fromString: true});
+                    obj[filename] = result.code;
                 });
             })
         );
