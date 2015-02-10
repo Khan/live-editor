@@ -17402,6 +17402,7 @@
     // test program.  The reason why this bug ddoesn't appear when using just 
     // the canvas is that the canvas doesn't get "mousemove" events which occur
     // outside the canvas.
+    // TODO(kevinb7): verify that this solution works with just the canvas
     var mouseOverOccurredFlag = false;
     attachEventHandler(curElement, "mousemove", function(e) {
       if (mouseOverOccurredFlag) {
