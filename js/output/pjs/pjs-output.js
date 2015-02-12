@@ -375,23 +375,90 @@ window.PJSOutput = Backbone.View.extend({
         callback(tmpCanvas.toDataURL("image/png"));
     },
 
-    imageCache: {},
-    soundCache: {},
+    resourceCache: {},
     imageHolder: null,
 
-    // Load and cache all images that could be used in the environment
-    // Right now all images are loaded as we don't have more details on
-    // exactly which images will be required.
-    // Execution is delayed once a getImage appears in the source code
-    // and none of the images are cached. Execution begins once all the
-    // images have loaded.
-    cacheResources: function(userCode, callback) {
-        // Grab all the image calls from the source code
-        var images = userCode.match(/getImage\s*\(.*?\)/g);
-        var sounds = userCode.match(/getSound\s*\(.*?\)/g);
+    getImageFilenames: function(userCode) {
+        var filenames = [];
+        var imageRegex = /getImage\s*\(['"](.*?)['"]\)/g;
+        var match = imageRegex.exec(userCode);
+        while (match) {
+            filenames.push(match[1]);
+            match = imageRegex.exec(userCode);
+        }
+        return filenames;  
+    },
 
-        // Keep track of how many images have loaded
-        var numLoaded = 0;
+    getSoundFilenames: function(userCode) {
+        var filenames = [];
+        var imageRegex = /getSound\s*\(['"](.*?)['"]\)/g;
+        var match = imageRegex.exec(userCode);
+        while (match) {
+            filenames.push(match[1]);
+            match = imageRegex.exec(userCode);
+        }
+        return filenames;
+    },
+    
+    loadImage: function(file) {
+        var deferred = $.Deferred();
+        var path = this.output.imagesDir + file + ".png";
+
+        var img = document.createElement("img");
+        img.onload = function() {
+            deferred.resolve();
+        };
+        img.onerror = function() {
+            delete this.resourceCache[file + ".png"];
+            deferred.resolve(); // always resolve
+        }.bind(this);
+
+        img.src = path;
+        this.imageHolder.append(img);
+
+        // Cache the img element
+        // TODO(jeresig): It might be good to cache the PImage here
+        // but PImage may be mutable, so that might not work.
+        this.resourceCache[file + ".png"] = img;
+        
+        return deferred;
+    },
+    
+    loadSound: function(file) {
+        var deferred = $.Deferred();
+        var audio = document.createElement("audio");
+
+        audio.preload = "auto";
+        audio.oncanplaythrough = function() {
+            deferred.resolve();
+        };
+        audio.onerror = function() {
+            delete this.resourceCache[file + ".mp3"];
+            deferred.resolve();
+        }.bind(this);
+
+        audio.src = this.output.soundsDir + file + ".mp3";
+
+        this.resourceCache[file + ".mp3"] = {
+            audio: audio,
+            __id: function () {
+                return "getSound('" + file + "')";
+            }
+        };
+        
+        return deferred;
+    },
+    
+    // Load and cache all resources (images and sounds) that could be used in 
+    // the environment.  Right now all resources are loaded as we don't have 
+    // more details on exactly which images will be required.
+    //
+    // Execution is delayed once a getImage/getSound appears in the source code
+    // and none of the resources are cached. Execution begins once all the
+    // resources have loaded.
+    cacheResources: function(userCode, callback) {
+        var images = this.getImageFilenames(userCode);
+        var sounds = this.getSoundFilenames(userCode);
 
         // Insert the images into a hidden div to cause them to load
         // but not be visible to the user
@@ -405,92 +472,11 @@ window.PJSOutput = Backbone.View.extend({
                 })
                 .appendTo("body");
         }
+
+        var promises = images.map(this.loadImage.bind(this));
+        promises = promises.concat(sounds.map(this.loadSound.bind(this)));
         
-        var resourceCount = 0;
-        if (images !== null) {
-            resourceCount += images.length;
-        }
-        if (sounds !== null) {
-            resourceCount += sounds.length;
-        }
-
-        // Keep track of when image files are loaded
-        var loaded = function() {
-            numLoaded += 1;
-
-            // All the images have loaded so now execution can begin
-            if (numLoaded === resourceCount) {
-                callback();
-            }
-        };
-
-        // Go through all the images and begin loading them
-        _.each(images, function(file) {
-            // Get the actual file name
-            var fileMatch = /["']([A-Za-z0-9_\/-]*?)["']/.exec(file);
-
-            // Skip if the image has already been cached
-            // Or if the getImage call is malformed somehow
-            if (!fileMatch) {
-                return loaded();
-            }
-            
-            file = fileMatch[1];
-            
-            if (this.imageCache[file]) {
-                return loaded();
-            }
-            
-            // We only allow images from within a certain path
-            var path = this.output.imagesDir + file + ".png";
-
-            // Load the image in the background
-            var img = document.createElement("img");
-            img.onload = loaded;
-            img.onerror = function() {
-                delete this.imageCache[file];
-                loaded();
-            }.bind(this);
-
-            img.src = path;
-            this.imageHolder.append(img);
-
-            // Cache the img element
-            // TODO(jeresig): It might be good to cache the PImage here
-            // but PImage may be mutable, so that might not work.
-            this.imageCache[file] = img;
-        }.bind(this));
-        
-        _.each(sounds, function(file) {
-            var fileMatch = /["']([A-Za-z0-9_\/-]*?)["']/.exec(file);
-
-            if (!fileMatch) {
-                return loaded();
-            }
-
-            file = fileMatch[1];
-            
-            if (this.soundCache[file]) {
-                return loaded();
-            }
-            
-            var audio = document.createElement("audio");
-            
-            audio.preload = "auto";
-            audio.oncanplaythrough = loaded;
-            audio.onerror = function() {
-                delete this.soundCache[file];
-                loaded();
-            }.bind(this);
-            audio.src = this.output.soundsDir + file + ".mp3";
-            
-            this.soundCache[file] = {
-                audio: audio,
-                __id: function () {
-                    return "getSound('" + file + "')";
-                }
-            };
-        }.bind(this));
+        $.when.apply($, promises).then(callback);
     },
 
     // New methods and properties to add to the Processing instance
@@ -507,7 +493,7 @@ window.PJSOutput = Backbone.View.extend({
         // an error message if a file wasn't found.
         // NOTE: Need to make sure that this will be a 'safeCall'
         getImage: function(file) {
-            var cachedFile = this.imageCache[file];
+            var cachedFile = this.resourceCache[file + ".png"];
 
             // Display an error message as the file wasn't located.
             if (!cachedFile) {
@@ -539,7 +525,7 @@ window.PJSOutput = Backbone.View.extend({
         },
 
         getSound: function(filename) {
-            var sound = this.soundCache[filename];
+            var sound = this.resourceCache[filename + ".mp3"];
 
             if (!sound) {
                 throw {message:
