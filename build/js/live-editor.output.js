@@ -529,11 +529,13 @@ window.LiveEditorOutput = Backbone.View.extend({
             // Normal case
             } else {
                 // This is debounced (async)
-                this.test(userCode, this.validate, errors, function(errors, testResults) {
-                    this.results.errors = errors;
-                    this.results.tests = testResults;
-                    this.phoneHome();
-                }.bind(this));
+                if (this.validate !== "") {
+                    this.test(userCode, this.validate, errors, function(errors, testResults) {
+                        this.results.errors = errors;
+                        this.results.tests = testResults;
+                        this.phoneHome();
+                    }.bind(this));   
+                }
             }
         }.bind(this);
 

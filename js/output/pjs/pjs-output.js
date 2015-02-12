@@ -67,6 +67,11 @@ window.PJSOutput = Backbone.View.extend({
         this.bind();
  
         this.build(this.$canvas[0]);
+        
+        this.resourceCache = new PJSResourceCache({
+            canvas: this.canvas,
+            output: this.output
+        });
 
         if (this.config.useDebugger && PJSDebugger) {
             iframeOverlay.createRelay(this.$canvas[0]);
@@ -375,110 +380,6 @@ window.PJSOutput = Backbone.View.extend({
         callback(tmpCanvas.toDataURL("image/png"));
     },
 
-    resourceCache: {},
-    imageHolder: null,
-
-    getImageFilenames: function(userCode) {
-        var filenames = [];
-        var imageRegex = /getImage\s*\(['"](.*?)['"]\)/g;
-        var match = imageRegex.exec(userCode);
-        while (match) {
-            filenames.push(match[1]);
-            match = imageRegex.exec(userCode);
-        }
-        return filenames;  
-    },
-
-    getSoundFilenames: function(userCode) {
-        var filenames = [];
-        var imageRegex = /getSound\s*\(['"](.*?)['"]\)/g;
-        var match = imageRegex.exec(userCode);
-        while (match) {
-            filenames.push(match[1]);
-            match = imageRegex.exec(userCode);
-        }
-        return filenames;
-    },
-    
-    loadImage: function(file) {
-        var deferred = $.Deferred();
-        var path = this.output.imagesDir + file + ".png";
-
-        var img = document.createElement("img");
-        img.onload = function() {
-            deferred.resolve();
-        };
-        img.onerror = function() {
-            delete this.resourceCache[file + ".png"];
-            deferred.resolve(); // always resolve
-        }.bind(this);
-
-        img.src = path;
-        this.imageHolder.append(img);
-
-        // Cache the img element
-        // TODO(jeresig): It might be good to cache the PImage here
-        // but PImage may be mutable, so that might not work.
-        this.resourceCache[file + ".png"] = img;
-        
-        return deferred;
-    },
-    
-    loadSound: function(file) {
-        var deferred = $.Deferred();
-        var audio = document.createElement("audio");
-
-        audio.preload = "auto";
-        audio.oncanplaythrough = function() {
-            deferred.resolve();
-        };
-        audio.onerror = function() {
-            delete this.resourceCache[file + ".mp3"];
-            deferred.resolve();
-        }.bind(this);
-
-        audio.src = this.output.soundsDir + file + ".mp3";
-
-        this.resourceCache[file + ".mp3"] = {
-            audio: audio,
-            __id: function () {
-                return "getSound('" + file + "')";
-            }
-        };
-        
-        return deferred;
-    },
-    
-    // Load and cache all resources (images and sounds) that could be used in 
-    // the environment.  Right now all resources are loaded as we don't have 
-    // more details on exactly which images will be required.
-    //
-    // Execution is delayed once a getImage/getSound appears in the source code
-    // and none of the resources are cached. Execution begins once all the
-    // resources have loaded.
-    cacheResources: function(userCode, callback) {
-        var images = this.getImageFilenames(userCode);
-        var sounds = this.getSoundFilenames(userCode);
-
-        // Insert the images into a hidden div to cause them to load
-        // but not be visible to the user
-        if (!this.imageHolder) {
-            this.imageHolder = $("<div>")
-                .css({
-                    height: 0,
-                    width: 0,
-                    overflow: "hidden",
-                    position: "absolute"
-                })
-                .appendTo("body");
-        }
-
-        var promises = images.map(this.loadImage.bind(this));
-        promises = promises.concat(sounds.map(this.loadSound.bind(this)));
-        
-        $.when.apply($, promises).then(callback);
-    },
-
     // New methods and properties to add to the Processing instance
     processing: {
         // Global objects that we want to expose, by default
@@ -492,21 +393,8 @@ window.PJSOutput = Backbone.View.extend({
         // Only allow access to certain approved files and display
         // an error message if a file wasn't found.
         // NOTE: Need to make sure that this will be a 'safeCall'
-        getImage: function(file) {
-            var cachedFile = this.resourceCache[file + ".png"];
-
-            // Display an error message as the file wasn't located.
-            if (!cachedFile) {
-                throw {message:
-                      $._("Image '%(file)s' was not found.", {file: file})};
-            }
-
-            // Give the image a representative ID
-            var img = new this.canvas.PImage(cachedFile);
-            img.__id = function() {
-                return "getImage('" + file + "')";
-            };
-            return img;
+        getImage: function(filename) {
+            return this.resourceCache.getImage(filename);
         },
 
         // Make sure that loadImage is disabled in favor of getImage
@@ -525,14 +413,7 @@ window.PJSOutput = Backbone.View.extend({
         },
 
         getSound: function(filename) {
-            var sound = this.resourceCache[filename + ".mp3"];
-
-            if (!sound) {
-                throw {message:
-                    $._("Sound '%(file)s' was not found.", {file: filename})};
-            }
-            
-            return sound;
+            return this.resourceCache.getSound(filename);
         },
 
         playSound: function(sound) {
@@ -878,7 +759,7 @@ window.PJSOutput = Backbone.View.extend({
         }.bind(this);
 
         if (this.globals.getImage || this.globals.getSound) {
-            this.cacheResources(userCode, runCode);
+            this.resourceCache.cacheResources(userCode, runCode);
         } else {
             runCode();
         }
