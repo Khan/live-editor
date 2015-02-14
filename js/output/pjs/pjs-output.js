@@ -68,6 +68,10 @@ window.PJSOutput = Backbone.View.extend({
  
         this.build(this.$canvas[0]);
         
+        // The reason why we're passing the whole "output" object instead of 
+        // just imagesDir and soundsDir is because setPaths() is called 
+        // asynchronously on the first run so we don't actually know the value 
+        // for those paths yet.
         this.resourceCache = new PJSResourceCache({
             canvas: this.canvas,
             output: this.output

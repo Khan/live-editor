@@ -59,7 +59,6 @@ PJSResourceCache.prototype.loadResource = function(resourceRecord) {
             return this.loadSound(filename);
             break;
         default:
-            throw "we can't load '" + type + "' resources yet";
             break;
     }
 };
