@@ -111,7 +111,10 @@ window.LiveEditor = Backbone.View.extend({
             workersDir: this.workersDir,
             type: this.editorType
         });
-        
+
+        // linting in the webpage environment generates slowparseResults which 
+        // is used in the runCode step so skipping linting won't work in that 
+        // environment without some more work
         if (this.editorType === "ace_pjs") {
             this.noLint = false;
             this.editor.on("scrubbingStarted", function() {
