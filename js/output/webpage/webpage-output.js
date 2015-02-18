@@ -285,6 +285,9 @@ window.WebpageOutput = Backbone.View.extend({
         this.stateScrubber.clearAll();
         this.KA_INFINITE_LOOP = false;
         this.frameDoc.open();
+        // It's necessary in FF/IE to redefine it here
+        this.$frame.contentWindow.KAInfiniteLoopProtect = 
+                this.loopProtector.KAInfiniteLoopProtect;
         this.frameDoc.write(this.slowparseResults.code);
         this.frameDoc.close();
 
