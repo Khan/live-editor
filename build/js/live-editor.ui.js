@@ -928,14 +928,16 @@ window.LiveEditor = Backbone.View.extend({
             type: this.editorType
         });
         
-        this.noLint = false;
-        this.editor.on("scrubbingStarted", function() {
-            this.noLint = true;
-        }.bind(this));
-        
-        this.editor.on("scrubbingEnded", function() {
+        if (this.editorType === "ace_pjs") {
             this.noLint = false;
-        }.bind(this));
+            this.editor.on("scrubbingStarted", function() {
+                this.noLint = true;
+            }.bind(this));
+
+            this.editor.on("scrubbingEnded", function() {
+                this.noLint = false;
+            }.bind(this));
+        }
 
         this.tipbar = new TipBar({
             el: this.$(this.dom.OUTPUT_DIV),
