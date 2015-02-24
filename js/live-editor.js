@@ -558,7 +558,13 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     audioReadyToPlay: function() {
-        return this.player && this.player.bytesLoaded > 0;
+        // NOTE(pamela): We no longer check totalBytes,
+        //  because IE reports 0 for that 
+        // (it seems to not get the progress event)
+        // So we've changed it to just check .loaded
+        // If we need to, we can reach inside the HTML5 audio element
+        //  and check the ranges of the buffered property
+        return this.player && this.player.loaded;
     },
 
     bindPlayerHandlers: function() {
