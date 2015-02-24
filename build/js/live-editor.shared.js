@@ -488,7 +488,6 @@ var ScratchpadConfig = Backbone.Model.extend({
     },
 
     bindAutoComplete: function(editor, autoCompleteBehavior) {
-        var self = this;
         autoCompleteBehavior = autoCompleteBehavior ||
             this.autoCompleteBehavior;
 
@@ -861,6 +860,19 @@ var ScratchpadConfig = Backbone.Model.extend({
                 // Re-allow ++ and --
                 delete output.JSHint.plusplus;
             }
-        }
+        },
+
+        {
+            name: "Remove Brace Autocompletion",
+
+            ace_pjs_editor: function(editor) {
+                // Set the brace autocomplete behavior
+                this.bindAutoComplete(editor.editor, {
+                    autoBrace: false,
+                    braceIndent: false,
+                    equalsInsert: true
+                });
+            }
+        },
     ]
 });
