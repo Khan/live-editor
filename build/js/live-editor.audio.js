@@ -3033,7 +3033,6 @@ function SoundManager(smURL, smID) {
 
       for (f in html5_events) {
         if (html5_events.hasOwnProperty(f)) {
-          console.log("*** adding html5 event f", f);
           add(f, html5_events[f]);
         }
       }
@@ -3197,7 +3196,6 @@ function SoundManager(smURL, smID) {
 
           // reset position, too
           if (s.isHTML5) {
-            console.log("set position here too");
             s.position = 0;
           }
 
@@ -3220,7 +3218,7 @@ function SoundManager(smURL, smID) {
     this._whileloading = function(nBytesLoaded, nBytesTotal, nDuration, nBufferLength) {
 
       var instanceOptions = s._iO;
-      console.log("nBytesLoaded", nBytesLoaded);
+
       s.bytesLoaded = nBytesLoaded;
       s.bytesTotal = nBytesTotal;
       s.duration = Math.floor(nDuration);
@@ -3806,7 +3804,7 @@ console.log('updated metadata', s.metadata);
     }),
 
     canplaythrough: html5_event(function() {
-      console.log("---- canplaythrough event");
+
       var s = this._s;
 
       if (!s.loaded) {
@@ -3917,7 +3915,7 @@ console.log('updated metadata', s.metadata);
     progress: html5_event(function(e) {
 
       // note: can fire repeatedly after "loaded" event, due to use of HTTP range/partials
-      console.log("-------- e.loaded", e.loaded);
+
       var s = this._s,
           i, j, progStr, buffered = 0,
           isProgress = (e.type === 'progress'),
@@ -3937,8 +3935,6 @@ console.log('updated metadata', s.metadata);
         // re-build "buffered" array
         // HTML5 returns seconds. SM2 API uses msec for setPosition() etc., whether Flash or HTML5.
         for (i=0, j=ranges.length; i<j; i++) {
-          console.log(ranges.start(i));
-          console.log(ranges.end(i));
           s.buffered.push({
             'start': ranges.start(i) * msecScale,
             'end': ranges.end(i) * msecScale
@@ -3947,11 +3943,9 @@ console.log('updated metadata', s.metadata);
 
         // use the last value locally
         buffered = (ranges.end(0) - ranges.start(0)) * msecScale;
-        console.log("buffered", buffered);
-        console.log("e.target.duration", e.target.duration);
+
         // linear case, buffer sum; does not account for seeking and HTTP partials / byte ranges
         loaded = Math.min(1, buffered/(e.target.duration*msecScale));
-        console.log("new loaded", loaded);
 
         // <d>
         if (isProgress && ranges.length > 1) {
