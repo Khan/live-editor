@@ -261,6 +261,12 @@ describe("Full CSS matching with wildcards", function() {
         css: "h1 { color: rgb; }",
         callbacks: 'isValidColor("$1")'
     }, {
+        res: false,
+        title: "isValidColor() fails for no rgb wrapper ",
+        pat: "_ {color: $1}",
+        css: "h1 { color: (0, 10, 20); }",
+        callbacks: 'isValidColor("$1")'
+    }, {
         res: true, 
         title: "Concatenating multiple stylesheets",
         pat: "h1{color: red} h2{color: black}",

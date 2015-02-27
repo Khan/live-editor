@@ -463,7 +463,9 @@
 
             // If they're trying to use a color name, it should be at least 
             //  three letters long and not equal to rgb
-            return color.length >= 3 && color.indexOf("rgb") === -1;
+            return /[a-zA-Z]+/.test(color) && 
+                color.length >= 3 &&
+                color.indexOf("rgb") === -1;
         }),
 
         ///////////////////////////////////////////////////////
