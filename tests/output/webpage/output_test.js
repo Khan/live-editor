@@ -184,7 +184,19 @@ describe("Linting", function() {
             // Infinite loops dont give a location for their error message
             {row: undefined, column: undefined, text: 
                 '<span class="text">Your javascript is taking too long to run.' +
-                ' Perhaps you have a mistake in your code?</span>'}
+                ' Perhaps you have a mistake in your code?</span>'},
+            {row: undefined, column: undefined, text: 
+                '<span class="text">Your javascript encountered a runtime error. ' +
+                ' Check your console for more information.</span>'}
+        ]
+    );
+
+    failingTest("Runtime errors",
+        "<script> bla(x);</script>", [
+            // Infinite loops dont give a location for their error message
+            {row: undefined, column: undefined, text: 
+                'Your javascript encountered a runtime error. ' +
+                'Check your console for more information.'}
         ]
     );
 });

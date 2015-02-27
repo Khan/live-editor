@@ -74,6 +74,13 @@ window.WebpageOutput = Backbone.View.extend({
         source: "timeout",
     },
 
+    runtimeError: {
+        text: $._("Your javascript encountered a runtime error. " +
+                    "Check your console for more information."),
+        type: "error",
+        source: "timeout",
+    },
+
     infiniteLoopCallback:  function() {
         this.output.postParent({
             results: {
@@ -227,7 +234,11 @@ window.WebpageOutput = Backbone.View.extend({
                             "making it unable to run."));
                 }
 
+                if (this.foundRunTimeError) {
+                    errors.push(this.runtimeError);
+                }
                 callback(errors, testResults);
+
             }.bind(this));
     },
 
@@ -284,10 +295,15 @@ window.WebpageOutput = Backbone.View.extend({
     runCode: function(codeObj, callback) {
         this.stateScrubber.clearAll();
         this.KA_INFINITE_LOOP = false;
+        this.foundRunTimeError = false;
         this.frameDoc.open();
         // It's necessary in FF/IE to redefine it here
         this.$frame.contentWindow.KAInfiniteLoopProtect = 
                 this.loopProtector.KAInfiniteLoopProtect;
+        this.$frame.contentWindow.addEventListener("error", function () {
+            this.foundRunTimeError = true;
+        }.bind(this));
+
         this.frameDoc.write(this.slowparseResults.code);
         this.frameDoc.close();
 

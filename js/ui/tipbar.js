@@ -70,8 +70,9 @@ window.TipBar = Backbone.View.extend({
             .find(".message").html(texts[pos].text || texts[pos] || "").end()
             .find("a.prev").toggleClass("ui-state-disabled", pos === 0).end()
             .find("a.next").toggleClass("ui-state-disabled", pos + 1 === texts.length).end();
-
-        this.$el.find(".show-me").toggle(texts[pos].row !== -1);
+        
+        // it could be undefined, null, or -1
+        this.$el.find(".show-me").toggle(texts[pos].row > -1);
 
         bar.find(".tipnav").toggle(texts.length > 1);
 
