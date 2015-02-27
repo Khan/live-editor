@@ -1220,9 +1220,15 @@ window.LiveEditor = Backbone.View.extend({
 
         // Load the recording playback commands as well, if applicable
         if (this.recordingCommands) {
+            // Check the filename to see if a multiplier is specified,
+            // of the form audio_x1.3.mp3, which means it's 1.3x as slow
+            var url = this.recordingMP3;
+            var matches = /_x(1.\d+).mp3/.exec(url);
+            var multiplier = parseFloat(matches && matches[1]) || 1;
             this.record.loadRecording({
                 init: this.recordingInit,
-                commands: this.recordingCommands
+                commands: this.recordingCommands,
+                multiplier: multiplier
             });
         }
     },

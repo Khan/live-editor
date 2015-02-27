@@ -102,9 +102,17 @@ window.ScratchpadRecord = Backbone.Model.extend({
     },
 
     loadRecording: function(commands) {
+        var multiplier = 1;
         if (commands && commands.commands && commands.init) {
             this.initData = commands.init;
+            multiplier = commands.multiplier;
             commands = commands.commands;
+        }
+        // Multiply the command timestamp by the multiplier
+        if (multiplier !== 1) {
+            for (var i = 0; i < commands.length; i++) {
+                commands[i][0] = Math.floor(commands[i][0] * multiplier);
+            }
         }
         this.commands = commands;
         // Make no more than 50 seek caches
