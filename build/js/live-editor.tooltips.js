@@ -1355,11 +1355,12 @@ window.ScratchpadAutosuggestData = {
                 ]
             },
             {
-                name: "scale(amount)",
+                name: "scale(amount, amountY*)",
                 exampleURL: "/cs/scalex-y/6712922034143232",
                 description: $._("Increases the size of shapes drawn after the command, by expanding and contracting vertices. For example, scale(2) makes it increase in size by 200%. If called multiple times, the sizes will multiply (accumulative effect). It can be called with one parameter to resize the same in both dimensions, or with two parameters to size differently in each dimension.  To stop resizing shapes, use pushMatrix()/popMatrix()."),
                 params: [
-                    $._("amount: The amount to scale object in \"x\" and \"y\" axis")
+                    $._("amount: The amount to scale object in \"x\" and \"y\" axis"),
+                    $._("amountY: (Optional) The amount to scale object in \"y\" axis")
                 ]
             },
             {
