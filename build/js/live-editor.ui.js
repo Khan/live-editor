@@ -1788,8 +1788,11 @@ window.LiveEditor = Backbone.View.extend({
 
         this.trigger("update", data);
 
-        // Hide loading overlay
-        if (data.loaded) {
+        // Hide loading overlay if output is loaded
+        // We previously just looked at data.loaded,
+        // but that didn't work for some users (maybe message too early?)
+        // so now we also hide if we see data.results
+        if (data.loaded || data.results) {
             this.$el.find(this.dom.CANVAS_LOADING).hide();
         }
 
