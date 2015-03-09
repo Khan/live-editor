@@ -10,7 +10,8 @@ function initProcessingStubs() {
         RegExp: this.RegExp,
         Math: this.Math,
         Array: this.Array,
-        String: this.String
+        String: this.String,
+        isNaN: this.isNaN
     };
 
     (function(p, undef) {    

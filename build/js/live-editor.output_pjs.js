@@ -1615,6 +1615,7 @@ window.PJSOutput = Backbone.View.extend({
         Math: window.Math,
         Array: window.Array,
         String: window.String,
+        isNaN: window.isNaN,
 
         // getImage: Retrieve a file and return a PImage holding it
         // Only allow access to certain approved files and display
