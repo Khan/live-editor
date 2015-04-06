@@ -638,8 +638,8 @@ describe("Scratchpad Output Exec", function() {
         title: "Program functions exist",
         code: function() {
             var x = Program.settings();
-            Program.restart();
             Program.runTests(function() {});
+            Program.restart();
         },
         errors: []
     });

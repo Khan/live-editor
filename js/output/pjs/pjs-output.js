@@ -1398,7 +1398,7 @@ window.PJSOutput = Backbone.View.extend({
         // from playing sounds to displaying pop-ups
         var badProgram = $._("This program uses capabilities we've turned " +
             "off for security reasons. Khan Academy prohibits showing " +
-            "external images, playing sounds, or displaying pop-ups.");
+            "external images, playing external sounds, or displaying pop-ups.");
         var topLevelThis = "{ get externals() { throw { message: " +
             JSON.stringify(badProgram) + " } } }";
 
