@@ -185,8 +185,9 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     render: function() {
+        var params = "?workersDir=" + encodeURIComponent(this.workersDir);
         this.$el.html(Handlebars.templates["live-editor"]({
-            execFile: this.execFile,
+            execFile: this.execFile + params,
             imagesDir: this.imagesDir,
             colors: this.colors
         }));

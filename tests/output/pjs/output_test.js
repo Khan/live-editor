@@ -49,14 +49,14 @@ describe("Scratchpad Output Exec", function() {
             ellipse(100, 100, 100, x);
         }
     });
-
+    
     failingTest("Infinite Loop with width/height", function() {
         var x = 0;
         while (x < width/20) {
             ellipse(100, 100, 100, x);
         }
     });
-
+    
     failingTest("Infinite Loop Inside Draw Function", function() {
         var draw = function() {
             var y = 40;

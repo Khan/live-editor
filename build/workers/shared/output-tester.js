@@ -28,7 +28,7 @@ OutputTester.prototype = {
          * The worker that runs the tests in the background, if possible.
          */
         this.testWorker = new PooledWorker(
-            options.workerFile,
+            options.url,
             function(code, validate, errors, callback) {
                 var self = this;
 
@@ -66,12 +66,21 @@ OutputTester.prototype = {
                     }
                 };
 
-                worker.postMessage({
-                    code: code,
-                    validate: validate,
-                    errors: errors,
-                    externalsDir: this.externalsDir
-                });
+                if (worker.initialized) {
+                    worker.postMessage(JSON.stringify({
+                        code: code,
+                        validate: validate,
+                        errors: errors
+                    }));
+                } else {
+                    worker.postMessage(JSON.stringify({
+                        code: code,
+                        validate: validate,
+                        errors: errors,
+                        deps: options.deps
+                    }));
+                    worker.initialized = true;
+                }
             }
         );
     },
