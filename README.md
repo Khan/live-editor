@@ -34,3 +34,5 @@ You can use the pre-built copies of everything inside the `build/` directory. If
 At this point you can make a fresh build, using [Gulp](http://gulpjs.com/):
 
     gulp
+
+If you have an issue with "this.merge" is undefined, then rm-rf the handlebars that's inside node_modules/gulp.
