@@ -735,6 +735,19 @@ window.SQLOutput = Backbone.View.extend({
     },
 
     lint: function(userCode, callback) {
+        if (!window.SQLOutput.isSupported()) {
+            return callback([{
+                row: -1,
+                column: -1,
+                text: $._("Your browser is not recent enough to show " +
+                          "SQL output. Please upgrade your browser."),
+                type: "error",
+                source: "sqlite",
+                lint: undefined,
+                priority: 2
+            }]);
+        }
+
         // To lint we execute each statement in an isolated environment.
         // We also test for foreign key constraints being violated after
         // each statement so we can give proper line numbers to the user
@@ -873,6 +886,10 @@ window.SQLOutput = Backbone.View.extend({
     },
 
     runCode: function(userCode, callback) {
+        if (!window.SQLOutput.isSupported()) {
+            return callback([], userCode);
+        }
+
         var db = new SQL.Database();
 
         var results = SQLTester.Util.execWithResults(db, userCode);
@@ -901,5 +918,10 @@ window.SQLOutput = Backbone.View.extend({
         // Completely stop and clear the output
     }
 });
+
+window.SQLOutput.isSupported = function() {
+    // Check to make sure the typed arrays dependency is supported.
+    return "Uint8ClampedArray" in window;
+};
 
 LiveEditorOutput.registerOutput("sql", SQLOutput);
