@@ -370,6 +370,7 @@ SQLTester.Util = {
                         continue;
                     }
                     currentStatement += "-" + userCode[i];
+                    currentState = state.NORMAL;
                     break;
                 case state.IN_SINGLE_LINE_COMMENT:
                     if (userCode[i] === "\n") {
