@@ -29,6 +29,8 @@ describe("Linting", function() {
         "-- Design a database for Rick and Morty;;*");
     test("Multiline comment", "/* Design a database for Rick, \n" +
         "\nand Morty; */");
+    // Make sure single line comment parsing doesn't get messed up
+    test("Testing arithmetic operator '-' works", "SELECT 3-2");
 
     // Linting for inserting rows
     test("Inserting rows",
@@ -138,4 +140,10 @@ describe("Linting", function() {
         "FOREIGN KEY (id) REFERENCES characters(id));" +
         "INSERT INTO characters VALUES (1, 'RicK');" +
         "INSERT INTO character_episodes VALUES (1, 73);");
+
+    // Test that extra context is given other than the SQLite error
+    failingTest("Testing for extra context",
+        "CREATE TABLE characters (name TEXT);" +
+        "SELECT name WHERE name = 3;",
+        ["Are you missing a FROM clause?"]);
 });

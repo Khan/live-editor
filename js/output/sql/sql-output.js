@@ -54,6 +54,54 @@ window.SQLOutput = Backbone.View.extend({
         });
     },
 
+    /**
+     * Given an SQLite error and the current statement, suggest a better
+     * error message.  SQLlite error messages aren't always very descriptive,
+     * this should make common syntax errors easier to understand.
+     */
+    getErrorMessage: function(errorMessage, statement) {
+        errorMessage = errorMessage || "";
+        statement = statement || "";
+        statement = statement.toUpperCase();
+
+        // Possible SELECT with missing FROM
+        if (errorMessage.indexOf("no such column:") !== -1 &&
+                statement.indexOf("SELECT") !== -1 &&
+                statement.indexOf("FROM") === -1) {
+            errorMessage += ". " + $._("Are you missing a FROM clause?");
+        // Possible INSERT with missing INTO
+        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
+                statement.indexOf("INSERT") !== -1 &&
+                statement.indexOf("VALUES") !== -1 &&
+                statement.indexOf("INTO") === -1) {
+            errorMessage += ". " + $._("Are you missing the INTO keyword?");
+        // Possible INSERT INTO with missing VALUES
+        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
+                statement.indexOf("INSERT") !== -1 &&
+                statement.indexOf("INTO") !== -1 &&
+                statement.indexOf("VALUES") === -1) {
+            errorMessage += ". " +
+                $._("Are you missing the VALUES keyword?");
+        // Possible CREATE with missing what to create
+        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
+                statement.indexOf("CREATE") !== -1 && (
+                    statement.indexOf("INDEX") === -1 ||
+                    statement.indexOf("TABLE") === -1 ||
+                    statement.indexOf("TRIGGER") === -1 ||
+                    statement.indexOf("VIEW") === -1)) {
+            errorMessage += ". " +
+                $._("You may be missing what to create. For " +
+                    "example CREATE TABLE...");
+        // Possible UPDATE without SET
+        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
+                statement.indexOf("UPDATE") !== -1 &&
+                statement.indexOf("SET") === -1) {
+            errorMessage += ". " +
+                $._("Are you missing the SET keyword?");
+        }
+        return errorMessage;
+    },
+
     lint: function(userCode, callback) {
         if (!window.SQLOutput.isSupported()) {
             return callback([{
@@ -79,8 +127,8 @@ window.SQLOutput = Backbone.View.extend({
                 function(statement, lineNumber) {
             try {
                 if (!statement) {
-                    throw $._("It looks like you have an " +
-                        "unnecessary semicolon.");
+                    throw new Error($._("It looks like you have an " +
+                        "unnecessary semicolon."));
                 }
                 var result =
                     SQLTester.Util.execSingleStatementWithResults(db,
@@ -101,9 +149,9 @@ window.SQLOutput = Backbone.View.extend({
                         var allowedTypes = ["TEXT", "NUMERIC", "INTEGER",
                             "REAL", "NONE"];
                         if (allowedTypes.indexOf(type) === -1) {
-                            throw $._("Please use one of the valid column " +
+                            throw new Error($._("Please use one of the valid column " +
                                 "types when creating a table: ") +
-                                allowedTypes.join(", ");
+                                allowedTypes.join(", "));
                         }
                     });
                 });
@@ -112,9 +160,9 @@ window.SQLOutput = Backbone.View.extend({
                 var fkResults = db.exec("PRAGMA foreign_key_check;");
                 if (fkResults.length > 0) {
                     var result = fkResults[0];
-                    throw "Please check for a foreign key constraint " +
+                    throw new Error("Please check for a foreign key constraint " +
                         "on table " + result.values[0][0] +
-                        " for parent table " + result.values[0][2];
+                        " for parent table " + result.values[0][2]);
                 }
 
                 // Check if we have any new integrity errors such as NOT NULL
@@ -122,7 +170,7 @@ window.SQLOutput = Backbone.View.extend({
                 var integrityResults = db.exec("PRAGMA integrity_check(1);");
                 var result = integrityResults[0];
                 if (result.values[0][0] !== "ok") {
-                    throw "Integrity error: " + result.values[0][0];
+                    throw new Error("Integrity error: " + result.values[0][0]);
                 }
 
                 return true;
@@ -131,7 +179,7 @@ window.SQLOutput = Backbone.View.extend({
                 callback([{
                     row: lineNumber,
                     column: 0,
-                    text: e,
+                    text: this.getErrorMessage(e.message, statement),
                     type: "error",
                     source: "sqlite",
                     lint: undefined,
@@ -139,7 +187,7 @@ window.SQLOutput = Backbone.View.extend({
                 }]);
                 return false;
             }
-        });
+        }.bind(this));
 
         var tables = SQLTester.Util.getTables(db);
         db.close();

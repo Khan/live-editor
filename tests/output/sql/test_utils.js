@@ -31,6 +31,9 @@ var runTest = function(options) {
                 expect(errors).to.have.length(0);
             } else {
                 expect(errors).to.not.have.length(0);
+                _.each(options.expectedErrors, function(expectedError, i) {
+                    expect(errors[i].text.indexOf(expectedError)).to.not.be(-1);
+                });
             }
             done();
         });
@@ -48,6 +51,7 @@ var test = function(title, code) {
     runTest({
         title: title,
         code: code,
+        pass: true,
         expected: true
     });
 };
@@ -57,7 +61,8 @@ var failingTest = function(title, code, errors) {
         title: title,
         code: code,
         expected: false,
-        errors: errors
+        pass: false,
+        expectedErrors: errors
     });
 };
 

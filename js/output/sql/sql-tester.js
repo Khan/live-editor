@@ -258,8 +258,10 @@ SQLTester.prototype.testMethods = {
 
         for (key in params) {
             if (params[key][0] !== "$") {
-                console.warn("Invalid parameter in constraint " +
-                        "(should begin with a '$'): ", params[key]);
+                if (window.console) {
+                    console.warn("Invalid parameter in constraint " +
+                            "(should begin with a '$'): ", params[key]);
+                }
                 return null;
             }
         }
