@@ -42,5 +42,5 @@ We have no full-time resource working on the editing environment right now, so w
 For a deep dive into the components of the LiveEditor, [read this wiki](https://github.com/Khan/live-editor/wiki/How-the-live-editor-works).
 
 You can also watch these talks that the team has given about the editor:
-* [John Resig on CodeGenius]()
-* [Pamela Fox at ReactConf]()
+* [John Resig on CodeGenius](https://www.youtube.com/watch?v=H4sSldXv_S4)
+* [Pamela Fox at ReactConf](https://youtu.be/EzHsLt9vLbk?t=26m49s)
