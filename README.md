@@ -1,21 +1,10 @@
 # Live Code Editor
 
-The live code editor developed for the [Khan Academy Computer Science curriculum](https://www.khanacademy.org/cs/).
+This is the live coding environment developed for the [Khan Academy Computer Programming curriculum](https://www.khanacademy.org/computer-programming/). It gives learners an editor on the left (either ACE or our Blocks-based drag-and-drop editor) and an output on the right (either JS+ProcessingJS, HTML, or SQL).
 
-## How to Use
-
-Demos of how to use the editor can be found in the `demos/` directory. Specifically a good place to start is with the simple demo:
+You can find various demos in the `demos/` directory, and start playing immediately with the simple demo:
 
 * [http://khan.github.io/live-editor/demos/simple/](http://khan.github.io/live-editor/demos/simple/)
-
-
-## LiveEditor Options
-
-To configure the LiveEditor...
-
-## How it Works
-
-For a deep dive into the components of the LiveEditor, [read this wiki](https://github.com/Khan/live-editor/wiki/How-the-live-editor-works).
 
 
 ## Building
@@ -36,3 +25,22 @@ At this point you can make a fresh build, using [Gulp](http://gulpjs.com/):
     gulp
 
 If you have an issue with "this.merge" is undefined, then rm-rf the handlebars that's inside node_modules/gulp.
+
+## How you can help
+
+We have many open issues here. The top priority are those marked as [regressionbug](https://github.com/Khan/live-editor/labels/regressionbug), since those are things that used to work. After that, the ones marked as [browserbug](https://github.com/Khan/live-editor/labels/browserbug) may be the easiest to take on, and there are also plain old [bug](https://github.com/Khan/live-editor/labels/bug)s. All the issues are tagged according to their environment, [pjs](https://github.com/Khan/live-editor/labels/pjs), [webpage](https://github.com/Khan/live-editor/labels/webpage), [sql](https://github.com/Khan/live-editor/labels/sql), or if they're generally about the ACE editor, [editor](https://github.com/Khan/live-editor/labels/editor). There are also a few bugs specifically about the [demo](https://github.com/Khan/live-editor/labels/demo) pages, since those can get behind, and requests for more [tests](https://github.com/Khan/live-editor/labels/tests), since we can always use more of those!
+
+Some aspects of the editor are in subrepos with their own issue trackers, like structuredjs and structuredblocks, so be sure to poke around those and see if they're more up your bug-fixing alley.
+
+There are also a handful of [idea](https://github.com/Khan/live-editor/labels/idea)s floating here from our community. You are welcome to take them on, but it's possible we won't merge them if we worry about their effect on the programming experience on Khan Academy, like if they may introduce backwards compatibilities or performance regressions. 
+
+We have no full-time resource working on the editing environment right now, so we will do pull requests when we find ourselves with time between other projects. We thank you for your contribution, even if we may be slow to acknowledge it at times. :)
+
+
+## How it works
+
+For a deep dive into the components of the LiveEditor, [read this wiki](https://github.com/Khan/live-editor/wiki/How-the-live-editor-works).
+
+You can also watch these talks that the team has given about the editor:
+* [John Resig on CodeGenius]()
+* [Pamela Fox at ReactConf]()
