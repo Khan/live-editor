@@ -4,6 +4,7 @@
   "description": "Live Code Editor",
   "main": "dist/live-editor.js",
   "scripts": {
+    "build": "gulp build",
     "test": "gulp test"
   },
   "repository": {

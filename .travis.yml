@@ -5,6 +5,7 @@ before_script:
   - npm install -g bower
   - bower install
 script:
+  - npm run build
   - ./node_modules/.bin/testee tests/output/pjs/index.html
   - ./node_modules/.bin/testee tests/output/webpage/index.html
   - ./node_modules/.bin/testee tests/tooltips/index.html

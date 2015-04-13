@@ -644,7 +644,7 @@ describe("Scratchpad Output Exec", function() {
         },
         errors: [],
         // p.Program methods weren't being stubbed and were causing some of the
-        // test code to be run in an infinite loop after the it() block had 
+        // test code to be run in an infinite loop after the it() block had
         // completed.
         setup: function(output) {
             var p = output.output.canvas;
