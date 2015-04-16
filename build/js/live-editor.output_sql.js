@@ -957,7 +957,18 @@ window.SQLOutput = Backbone.View.extend({
         doc.open();
         doc.write(output);
         doc.close();
+
+        // If a new result set was added, scroll to the bottom
+        if (results && results.length) {
+            // Ignore the first time the scratchpad loads
+            if (window.SQLOutput.lastResultsLen !== undefined) {
+                $(doc).scrollTop($(doc).height());
+            }
+            window.SQLOutput.lastResultsLen = results.length;
+        }
+
         this.postProcessing();
+
         callback([], userCode);
     },
 
