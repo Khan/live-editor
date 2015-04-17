@@ -82,6 +82,7 @@
         "output_pjs": [
             "js/output/pjs/pjs-tester.js",
             "js/output/pjs/babyhint.js",
+            "js/output/pjs/pjs-resource-cache.js",
             "js/output/pjs/pjs-output.js"
         ],
         "output_webpage_deps": [
