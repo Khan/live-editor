@@ -4,6 +4,7 @@
   "description": "Live Code Editor",
   "main": "dist/live-editor.js",
   "scripts": {
+    "build": "gulp build",
     "test": "gulp test"
   },
   "repository": {
@@ -33,6 +34,7 @@
     "async": "^0.9.0",
     "request": "^2.44.0",
     "sinon": "^1.10.3",
+    "testee": "^0.1.8",
     "handlebars": "1.0.5-beta",
     "gulp-bower": "0.0.7",
     "gulp-symlink": "^2.0.1"

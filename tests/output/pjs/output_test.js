@@ -637,11 +637,27 @@ describe("Scratchpad Output Exec", function() {
     runTest({
         title: "Program functions exist",
         code: function() {
-            var x = Program.settings();
+            Program.settings();
+            Program.restart();
             Program.runTests(function() {});
             Program.restart();
         },
-        errors: []
+        errors: [],
+        // p.Program methods weren't being stubbed and were causing some of the
+        // test code to be run in an infinite loop after the it() block had
+        // completed.
+        setup: function(output) {
+            var p = output.output.canvas;
+            sinon.stub(p.Program, "settings");
+            sinon.stub(p.Program, "restart");
+            sinon.stub(p.Program, "runTests");
+        },
+        teardown: function(output) {
+            var p = output.output.canvas;
+            expect(p.Program.settings.calledWith()).to.be(true);
+            expect(p.Program.restart.calledWith()).to.be(true);
+            expect(p.Program.runTests.calledWith()).to.be(true);
+        }
     });
 
     runTest({

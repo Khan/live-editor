@@ -197,5 +197,7 @@ gulp.task("test", function(callback) {
     runSequence("test_output_pjs", "test_output_webpage", "test_tooltips", callback);
 });
 
-gulp.task("default", ["watch", "templates", "scripts", "workers", "styles",
-    "images", "externals"]);
+gulp.task("build",
+    ["templates", "scripts", "workers", "styles", "images", "externals"]);
+
+gulp.task("default", ["watch", "build"]);
