@@ -648,7 +648,8 @@ SQLTester.prototype.testMethods = {
             }
             if (exactValues) {
                 for (var r = 0; r < res.values.length; r++) {
-                    if (res.values[r] !== templateRes.values[r]) {
+                    // These can be objects
+                    if (!_.isEqual(res.values[r], templateRes.values[r])) {
                         return { success: false };
                     }
                 }
