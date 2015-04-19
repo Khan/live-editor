@@ -50,9 +50,6 @@ var runTest = function(options) {
     } else if (options.only) {
         itFunc = it.only;
     }
-    
-    var teardown = options.teardown;
-    var wait = options.wait;
  
     itFunc(displayTitle, function(done) {
         var output = new LiveEditorOutput({
@@ -217,4 +214,9 @@ var failingTest = function(title, code, code2, errors) {
 
 var assertEqualTest = function(title, code, assertions) {
     runTest({title: options.title, code: code, assertions: assertions});
+};
+
+var supportsMpegAudio = function() {
+    var a = document.createElement('audio');
+    return !!(a.canPlayType && a.canPlayType('audio/mpeg;').replace(/no/, ''));
 };

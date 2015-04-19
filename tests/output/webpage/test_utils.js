@@ -123,3 +123,7 @@ var assertTest = function(options) {
     };
     runTest(options);
 };
+
+var isFirefox = function() {
+    return navigator.userAgent.indexOf('Firefox') !== -1;
+};

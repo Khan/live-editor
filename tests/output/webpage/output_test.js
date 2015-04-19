@@ -33,8 +33,12 @@ describe("Output Methods", function() {
         title: "postProcessing",
         code: "<!DOCTYPE html><html><body><a href='http://www.g.com'>G</a></body></html>",
         test: function(output, errors, testResults) {
-            expect(output.output.frameDoc.body.innerHTML).to.contain(
-                "<a href=\"http://ka.org/r?url=http%3A%2F%2Fwww.g.com\" target=\"_blank\">G</a>");
+            var body = output.output.frameDoc.body;
+            var a = body.querySelector('a');
+
+            expect(a.getAttribute('target')).to.be.equal('_blank');
+            expect(a.getAttribute('href')).to.be.equal(
+                'http://ka.org/r?url=http%3A%2F%2Fwww.g.com');
         }
     });
 });
@@ -168,11 +172,24 @@ describe("Linting", function() {
         ]
     );
 
-    failingTest("Fatal slowparse error detected",
-        "<li><a href='</li><img src='https://www.kasandbox.org'>", [
-            {row: 0, column: 0, lint: {type: "UNKNOWN_SLOWPARSE_ERROR"}}
-        ]
-    );
+    if (!isFirefox()) {
+        // An exception occurs in slowparse when parsing this HTML on
+        // Chrome, Safari, and phantomjs.
+        failingTest("Fatal slowparse error detected",
+            "<li><a href='</li><img src='https://www.kasandbox.org'>", [
+                {row: 0, column: 0, lint: {type: "UNKNOWN_SLOWPARSE_ERROR"}}
+            ]
+        );
+    }
+
+    if (isFirefox()) {
+        // slowparse succeeds when parsing this HTML on Firefox.
+        failingTest("Not so fatal slowparse error detected (Firefox)",
+            "<li><a href='</li><img src='https://www.kasandbox.org'>", [
+                {row: 0, column: 7, lint: {type: "INVALID_ATTR_NAME"}}
+            ]
+        );
+    }
 
     //Scripting
     test("Script element enabled",

@@ -58,11 +58,19 @@ OutputTester.prototype = {
 
                 worker.onmessage = function(event) {
                     if (event.data.type === "test") {
+                        // PJSOutput.prototype.kill() is called synchronously
+                        // from callback so if we want test workers to be
+                        // cleaned up properly we need to add them back to the
+                        // pool first.
+                        // TODO(kevinb) track workers that have been removed
+                        // from the PooledWorker's pool so we don't have to
+                        // worry about returning workers to the pool before
+                        // calling kill()
+                        self.addWorkerToPool(worker);
                         if (self.isCurrentWorker(worker)) {
                             var data = event.data.message;
                             callback(data.errors, data.testResults);
                         }
-                        self.addWorkerToPool(worker);
                     }
                 };
 

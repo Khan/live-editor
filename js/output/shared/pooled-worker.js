@@ -41,3 +41,10 @@ PooledWorker.prototype.addWorkerToPool = function(worker) {
 PooledWorker.prototype.exec = function() {
     this.onExec.apply(this, arguments);
 };
+
+PooledWorker.prototype.kill = function() {
+    this.pool.forEach(function(worker) {
+        worker.terminate();
+    }, this);
+    this.pool = [];
+};

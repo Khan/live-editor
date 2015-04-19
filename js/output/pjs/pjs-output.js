@@ -1270,6 +1270,9 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     kill: function() {
+        this.tester.testWorker.kill();
+        this.worker.kill();
+        this.hintWorker.kill();
         this.canvas.exit();
     },
 

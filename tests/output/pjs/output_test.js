@@ -27,10 +27,13 @@ describe("Scratchpad Output Exec", function() {
         getImage("avatars/leaf-green");
     });
 
-    test("getSound with single quotes or double quotes", function() {
-        getSound('rpg/giant-no');
-        getSound("rpg/giant-no");
-    });
+    // This test requires commercial codecs
+    if (supportsMpegAudio()) {
+        test("getSound with single quotes or double quotes", function() {
+            getSound('rpg/giant-no');
+            getSound("rpg/giant-no");
+        });
+    }
 
     // Check the actual contents of error message
     failingTest("Use object as function", function() {
@@ -458,28 +461,30 @@ describe("Scratchpad Output Exec", function() {
 
     });
 
-    test("Make sure object with getSound works in injection", function() {
-        var myObj = {
-            x: 5,
-            sound: getSound("rpg/giant-no")
-        };
-        var mousePressed = function() {
-            myObj.x += 2;
-            playSound(myObj.sound);
-        };
+    // This test requires commercial codecs
+    if (supportsMpegAudio()) {
+        test("Make sure object with getSound works in injection", function () {
+                var myObj = {
+                    x: 5,
+                    sound: getSound("rpg/giant-no")
+                };
+                var mousePressed = function () {
+                    myObj.x += 2;
+                    playSound(myObj.sound);
+                };
 
-    },
-    function() {
-        var myObj = {
-            x: 5,
-            sound: getSound("rpg/giant-no")
-        };
-        var mousePressed = function() {
-            myObj.x += 2;
-            playSound(myObj.sound);
-        };
-
-    });
+            },
+            function () {
+                var myObj = {
+                    x: 5,
+                    sound: getSound("rpg/giant-no")
+                };
+                var mousePressed = function () {
+                    myObj.x += 2;
+                    playSound(myObj.sound);
+                };
+            });
+    }
 
     test("Make sure externals works in injection", function() {
         var externals;
