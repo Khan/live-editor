@@ -362,7 +362,7 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
-    matchResultColumns: function(templateDBInfo) {
+    matchResultColumns: function(templateDBInfo, numResults) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
             return {success: false};
@@ -372,7 +372,10 @@ SQLTester.prototype.testMethods = {
         var results = dbInfo.results;
         var templateResults = templateDBInfo.results;
 
-        for (var i = 0; i < results.length; i++) {
+        // This allows us to check Step 1 results even if
+        //  Step 2 results are not correct, for example.
+        numResults = numResults || results.length;
+        for (var i = 0; i < numResults; i++) {
             var res = results[i];
             var templateRes = templateResults[i];
             if (res.columns.length !== templateRes.columns.length) {
@@ -390,7 +393,7 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
-    matchResultValues: function(templateDBInfo, exactValues) {
+    matchResultValues: function(templateDBInfo, exactValues, numResults) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
             return {success: false};
@@ -404,8 +407,12 @@ SQLTester.prototype.testMethods = {
             return { success: false };
         }
 
+        // This allows us to check Step 1 results even if
+        //  Step 2 results are not correct, for example.
+        numResults = numResults || results.length; 
+        
         // Make sure we have similar results
-        for (var i = 0; i < templateResults.length; i++) {
+        for (var i = 0; i < numResults; i++) {
             var res = results[i];
             var templateRes = templateResults[i];
 
