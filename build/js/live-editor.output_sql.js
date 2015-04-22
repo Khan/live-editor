@@ -606,6 +606,10 @@ SQLTester.prototype.testMethods = {
         var results = dbInfo.results;
         var templateResults = templateDBInfo.results;
 
+        if (results.length < templateResults.length) {
+            return { success: false };
+        }
+
         // This allows us to check Step 1 results even if
         //  Step 2 results are not correct, for example.
         numResults = numResults || results.length;
