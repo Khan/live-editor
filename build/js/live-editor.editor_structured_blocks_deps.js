@@ -4227,10 +4227,8 @@ parseStatement: true, parseSourceElement: true */
      * toFind: The syntax node from the structure that we wish to find.
      * peersToFind: The remaining ordered syntax nodes that we must find after
      *     toFind (and on the same level as toFind).
-     * modify: should it call RestructureTree()?
      */
-    function checkMatchTree(currTree, toFind, peersToFind, wVars, matchResults, options, modify) {
-        if (typeof modify === 'undefined') {modify = true;}
+    function checkMatchTree(currTree, toFind, peersToFind, wVars, matchResults, options) {
         if (_.isArray(toFind)) {
             console.error("toFind should never be an array.");
             console.error(toFind);
@@ -4257,128 +4255,12 @@ parseStatement: true, parseSourceElement: true */
             }
             // Recursively check for matches
             if ((_.isArray(currTree[key]) &&
-                    checkNodeArray(currTree[key], toFind, peersToFind, wVars, matchResults, options, true)) ||
+                    checkNodeArray(currTree[key], toFind, peersToFind, wVars, matchResults, options)) ||
                 (!_.isArray(currTree[key]) &&
-                    checkMatchTree(currTree[key], toFind, peersToFind, wVars, matchResults, options, true))) {
+                    checkMatchTree(currTree[key], toFind, peersToFind, wVars, matchResults, options))) {
                 return matchResults;
             }
         }
-        if (modify) {
-            var mod = restructureTree(currTree, toFind, peersToFind, wVars, matchResults, options);
-            if (mod) {
-                return checkMatchTree(mod, toFind, peersToFind, wVars, matchResults, options, false);
-            }
-        }
-        return false;
-    }
-    
-    /*
-     * Applies simple transformations to the parse tree to reattempt matching
-     * Takes an argument list identical to checkMatchTree() above, with the exception of the recursing parameter
-     * Transformations:
-     *   a * b => b * a
-     *   a + b => b + a
-     *   a < b => b > a
-     *   a > b => b < a
-     *   a <= b => b >= a
-     *   a >= b => b <= a
-     *   a += b => a = a + b
-     *   a = a + b => a += b
-     *   a++ => a += 1
-     *   a-- => a -= 1
-     *   a && b => b && a
-     *   a || b => b || a
-     *   a === b => b === a
-     *   a != b => b != a
-     *   a !== b => b !== a
-     *   a == b => b == a
-     *   a & b => b & a
-     *   a | b => b | a
-     *   a ^ b => b ^ a
-     */
-    function restructureTree(currTree, toFind, peersToFind, wVars, matchResults, options) {
-        var r = deepClone(currTree);
-        if (currTree.type === "BinaryExpression" && _.contains(["+", "*", "<", ">", "<=", ">=", "===", "!=", "!==", "==", "&", "|", "^"],
-                                                                currTree.operator) && !options.orderMatters) {
-            r.left = currTree.right;
-            r.right = currTree.left;
-            switch (currTree.operator) {
-                case "<":
-                    r.operator = ">";
-                    break;
-                case ">":
-                    r.operator = "<";
-                    break;
-                case "<=":
-                    r.operator = ">=";
-                    break;
-                case ">=":
-                    r.operator = "<=";
-                    break;
-                default: //+, *, ===, !=, !==, ==, &, |, ^
-                    r.operator = currTree.operator;
-            }
-            return r;
-        } else if (currTree.type === "LogicalExpression" && _.contains(["&&", "||"], currTree.operator) && !options.orderMatters) {
-            r.left = currTree.right;
-            r.right = currTree.left;
-            return r;
-        } else if (currTree.type === "AssignmentExpression") {
-            if (_.contains(["+=", "-=", "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "|="], currTree.operator)) {
-                return {type: "AssignmentExpression",
-                        operator: "=",
-                        left: currTree.left,
-                        right: {type: "BinaryExpression",
-                                operator: currTree.operator.slice(0,-1),
-                                left: currTree.left,
-                                right: currTree.right}};
-            } else if (currTree.operator === "=" &&
-                     currTree.right.type === "BinaryExpression" &&
-                     _.isEqual(currTree.left, currTree.right.left) &&
-                     _.contains(["+", "-", "*", "/", "%", "<<", ">>", ">>>", "&", "^", "|"], currTree.right.operator)) {
-                     return {type: "AssignmentExpression",
-                             operator: currTree.right.operator + "=",
-                             left: currTree.left,
-                             right: currTree.right.right};
-            }
-            return false;
-        } else if (currTree.type === "UpdateExpression" && _.contains(["++", "--"], currTree.operator)) {
-            return {type: "AssignmentExpression",
-                    operator: currTree.operator[0] + "=",
-                    left: currTree.argument,
-                    right: {type: "Literal",
-                            value: 1,
-                            raw: "1"}};
-        }
-        //This section would transform "var x = 3;" to "var x; x = 3;" though it has issues.
-        /*else if ("body" in currTree && !options.notvar) {
-            var splices = [];
-            for (var i = 0; i < currTree.body.length; i++) {
-                if (currTree.body[i].type === "VariableDeclaration") {
-                    for (var j = 0; j < currTree.body[i].declarations.length; j++) {
-                        if (currTree.body[i].declarations[j].init != null) {
-                            splices.push([i, {type: "ExpressionStatement",
-                                              expression: {
-                                                  type: "AssignmentExpression",
-                                                  operator: "=",
-                                                  left: currTree.body[i].declarations[j].id,
-                                                  right: currTree.body[i].declarations[j].init}}]);
-                            r.body[i].declarations[j].init = null;
-                        }
-                    }
-                }
-            }
-            for (var s = 0; s < splices.length; s++) {
-                r.body.splice(splices[s][0] + s, 0, splices[s][1]);
-            }
-            if (splices.length > 0) {
-                console.log(currTree);
-                console.log(r);
-                return r;
-            } else {
-                return false;
-            }
-        } */
         return false;
     }
 
