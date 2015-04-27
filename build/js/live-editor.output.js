@@ -497,7 +497,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
     runCode: function(userCode, callback, cursor, noLint) {
         this.currentCode = userCode;
-
+	console.log("Inside runCode");
         this.results = {
             code: userCode,
             errors: [],
@@ -506,15 +506,18 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.lastSent = undefined;
 
         var buildDone = function(errors) {
+            console.log("Inside buildDone");
             errors = this.cleanErrors(errors || []);
-
+            console.log("Loaded?", this.loaded);
             if (!this.loaded) {
+                console.log("Telling parent we loaded");
                 this.postParent({ loaded: true });
                 this.loaded = true;
             }
 
             // Update results
             this.results.errors = errors;
+            console.log("About to phone home");
             this.phoneHome();
 
             this.toggle(!errors.length);
@@ -540,6 +543,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         }.bind(this);
 
         var lintDone = function(errors) {
+            console.log("Inside lintDone");
             if (errors.length > 0 || this.onlyRunTests) {
                 return buildDone(errors);
             }
@@ -559,6 +563,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (noLint && this.firstLint) {
             lintDone([]);
         } else {
+            console.log("About to lint");
             this.lint(userCode, lintDone);
             this.firstLint = true;
         }
@@ -579,6 +584,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // earlier errors cover newer ones, since once the user fixes the earlier errors 
         // the new ones will appear, meaning we never leave the user stuck wondering what to do. 
         // I expect that to be good enough compromise.
+        console.log("Inside phoneHome");
         if (this.lastSent && this.lastSent.errors && this.lastSent.errors.length) {
             this.results.errors = this.lastSent.errors;
         } 
