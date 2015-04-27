@@ -10388,6 +10388,7 @@ require("/tools/entry-point.js");
       "text-wrap","top","transform","transform-origin","transform-style",
       "transition","transition-delay","transition-duration",
       "transition-property","transition-timing-function","unicode-bidi",
+      "user-select",
       "vertical-align","visibility","voice-balance","voice-duration",
       "voice-family","voice-pitch","voice-pitch-range","voice-rate",
       "voice-stress","voice-volume","volume","white-space","widows","width",
@@ -11541,6 +11542,7 @@ require("/tools/entry-point.js");
     window.Slowparse = Slowparse;
   }
 }());
+
 window.LoopProtector = function(callback) {
 	this.callback = callback || function() {};
 	this.branchStartTime = 0;
