@@ -1188,7 +1188,7 @@ PJSResourceCache.prototype.cacheResources = function(userCode, callback) {
 };
 
 PJSResourceCache.prototype.getResourceRecords = function(userCode) {
-    var resourceRegex = /get(Image|Sound)\s*\(['"](.*?)['"]\)/g;
+    var resourceRegex = /get(Image|Sound)\s*\(\s*['"](.*?)['"]\s*\)/g;
 
     var resources = [];
     var match = resourceRegex.exec(userCode);
@@ -1220,8 +1220,8 @@ PJSResourceCache.prototype.loadResource = function(resourceRecord) {
 PJSResourceCache.prototype.loadImage = function(filename) {
     var deferred = $.Deferred();
     var path = this.output.imagesDir + filename + ".png";
-
     var img = document.createElement("img");
+
     img.onload = function() {
         this.cache[filename + ".png"] = img;
         deferred.resolve();

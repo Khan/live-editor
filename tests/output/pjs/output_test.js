@@ -87,6 +87,14 @@ describe("Scratchpad Output Exec", function() {
         }
     });
 
+    test("getImage with wonky spacing", function() {
+        var img = getImage( "cute/Blank" );
+
+        var draw = function() {
+            image( img, 0, 0);
+        };
+    });
+
     test("getImage with Draw Loop", function() {
         var img = getImage("cute/Blank");
 
