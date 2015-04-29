@@ -365,6 +365,8 @@
     height: 100%;
     left: 0px;
     margin: 0;
+    /* Ensure the output can be scrolled behind, like for SQL */
+    pointer-events: none;
     position: absolute;
     top: 0px;
     width: 100%;
