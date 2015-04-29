@@ -2445,7 +2445,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                     this.$(".thumb-error").text($._("Enter an image URL.")).show();
                     return;
                 }
-                var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|localhost:\d+)$/i;
+                var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|ka-perseus-images\.s3\.amazonaws\.com|wikimedia\.org|localhost:\d+)$/i;
                 var match = /\/\/([^\/]*)(?:\/|\?|#|$)/.exec(url);
                 var host = match ? match[1] : "";
                 if (!host || allowedHosts.test(host)) {
