@@ -25,7 +25,7 @@ self.onmessage = function(event) {
         importScripts(event.data.externalsDir +
             "underscore/underscore.js?cachebust=" + date);
         importScripts(event.data.externalsDir +
-            "structuredjs/structured.js?cachebust=" + date);
+            "structuredjs/structured.js?cachebust=A" + date);
 
         // Bring in the testing logic
         importScripts("../shared/output-tester.js?cachebust=" + date);
