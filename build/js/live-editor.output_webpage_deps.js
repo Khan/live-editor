@@ -11398,7 +11398,12 @@ require("/tools/entry-point.js");
       } else {
         attrNode.nodeValue = value;
       }
-      this.currentNode.attributes.setNamedItem(attrNode);
+      try {
+        // IE will error when trying to set input type="text"
+        // See http://reference.sitepoint.com/javascript/Element/setAttributeNode
+        this.currentNode.attributes.setNamedItem(attrNode);
+      } catch (e) {
+      }
     },
     // This method appends a text node to the currently active element.
     text: function(text, parseInfo) {
