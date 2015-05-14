@@ -15,7 +15,7 @@ You can use the pre-built copies of everything inside the `build/` directory. If
     npm install
     bower install
     
-    # Build the Ace editor files
+    # Build the Ace editor files (This is usually *not* needed)
     cd bower_components/ace
     npm install
     node Makefile.dryice.js -nc
@@ -23,8 +23,18 @@ You can use the pre-built copies of everything inside the `build/` directory. If
 At this point you can make a fresh build, using [Gulp](http://gulpjs.com/):
 
     gulp
+    # Or if not installed globally:
+    node_modules/gulp/bin/gulp.js
 
 If you have an issue with "this.merge" is undefined, then rm-rf the handlebars that's inside node_modules/gulp.
+
+## Testing
+
+The tests are in the `/tests` folder. They use Mocha/Chai/Sinon. Gulp typically runs the tests when relevant files change, but you can explicitly run the tests with:
+    
+    node_modules/gulp/bin/gulp.js test
+    
+Please add tests whenever possible for any change that you make or propose.
 
 ## How you can help
 
