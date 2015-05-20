@@ -58,7 +58,7 @@ OutputTester.prototype = {
 
                 worker.onmessage = function(event) {
                     if (event.data.type === "test") {
-                        // PJSOutput.prototype.kill() is called synchronous
+                        // PJSOutput.prototype.kill() is called synchronously
                         // from callback so if we want test workers to be
                         // cleaned up properly we need to add them back to the
                         // pool first.
