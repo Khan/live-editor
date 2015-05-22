@@ -158,6 +158,20 @@ describe("Scratchpad Output - JSHint syntax errors", function() {
         jshint: true,
         code: "var x=.2;"
     });
+
+    /* Fixed in JSHint updates */
+
+    assertTest({
+        title: "Shouldn't complain about break in blocks in switch",
+        jshint: true,
+        code: "switch ('a') { case 'a': { println('boo'); break; } case 'b': break; }"
+    });
+
+    assertTest({
+        title: "Shouldn't complain about wrapped returned assignments",
+        jshint: true,
+        code: "var test = function(a) { return (a = 1); };"
+    });
 });
 
 /* Errors controlled by JSHint options that we've turned on. */
