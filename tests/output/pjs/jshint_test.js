@@ -72,7 +72,7 @@ describe("Scratchpad Output - BabyHint checks", function() {
 });
 
 // Syntax errors - not controlled by JSHint options.
-xdescribe("Scratchpad Output - JSHint syntax errors", function() {
+describe("Scratchpad Output - JSHint syntax errors", function() {
     assertTest({
         title: "Extra comma in parameters to function call",
         reason: "I think you either have an extra comma or a missing argument?",
@@ -147,7 +147,7 @@ xdescribe("Scratchpad Output - JSHint syntax errors", function() {
 });
 
 /* Errors controlled by JSHint options that we've turned on. */
-xdescribe("Scratchpad Output - JSHint syntax options", function() {
+describe("Scratchpad Output - JSHint syntax options", function() {
     /* Redefinition of globals - see exposedProps in output.js */
     assertTest({
         title: "Redefining ProcessingJS function",
@@ -261,5 +261,32 @@ xdescribe("Scratchpad Output - JSHint syntax options", function() {
         reason: "It looks like you have an unnecessary semicolon.",
         jshint: true,
         code: "var foo = function() {var a;;};"
+    });
+});
+
+// Error report patterns
+describe("Scratchpad Output - Error report pattern checks", function() {
+    // De-duplication of same-line same-text errors
+    allErrorsTest({
+        title: "Report repeated error only once per line",
+        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it."],
+        jshint: true,
+        code: "for (i = 0; i < 10; i++) {}"
+    });
+
+    allErrorsTest({
+        title: "Different errors on same line are still reported sepearately",
+        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it.", 
+            "\"j\" is not defined. Make sure you're spelling it correctly and that you declared it."],
+        jshint: true,
+        code: "for (i = 0, j = 0; i * j < 100; i++, j++) {}"
+    });
+
+    allErrorsTest({
+        title: "Same error on different lines are still reported separately",
+        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it.", 
+            "\"i\" is not defined. Make sure you're spelling it correctly and that you declared it."],
+        jshint: true,
+        code: "for (i = 0; i < 10; i++) {} \n i = 4;"
     });
 });

@@ -678,8 +678,24 @@ window.PJSOutput = Backbone.View.extend({
             }
         }.bind(this));
 
-        // Add JSHINT errors at the end
-        return errors.concat(hintErrors);
+        // Add JSHINT errors at the end of BabyHint errors.
+        var allErrors = errors.concat(hintErrors);
+
+        // De-duplicate errors. Replacer tells JSON.stringify to ignore column
+        // and lint keys so objects with different columns or lint will still be
+        // treated as duplicates.
+        var replacer = function(key, value) {
+            if (key === "column" || key === "lint") {
+                return;
+            }
+            return value;
+        };
+
+        // Stringify objects to compare and de-duplicate.
+        var dedupErrors = _.uniq(allErrors, false, function(obj) {
+            return JSON.stringify(obj, replacer);
+        });
+        return dedupErrors;
     },
 
     runCode: function(userCode, callback) {

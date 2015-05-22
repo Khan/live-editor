@@ -180,7 +180,7 @@ var assertTest = function(options) {
             } else {
                 expect(errors).to.not.equal([]);
                 if (options.jshint) {
-                    expect(errors[0].lint).to.exist;
+                    expect(errors[0].lint).to.be.ok();
                     expect(errors[0].lint.reason)
                         .to.be.equal(options.reason);
                 } else {
@@ -192,6 +192,47 @@ var assertTest = function(options) {
         callback();
     };
     runTest(options);
+};
+
+/* Possible Options:
+ *  reason: List of expected lint output errors (sorted by priority)
+ *  fromTests: If true, compare reason to execution results
+ *  jshint: If true, code should be run through JSHint
+ *  title: Title of test
+ *  code: Code to be run through linter, output is compared to reason
+ */
+var allErrorsTest = function(options) {
+    options.test = function(output, errors, testResults, callback) {
+            if (options.reasons.length === 0) {
+                expect(errors.length).to.be.equal(0);
+            } else {
+                if (options.fromTests) {
+                    expect(testResults.length).to.equal(options.reasons.length);
+                    _.each(testResults, function(result, i) {
+                        expect(testResults).to.not.equal([]);
+                        expect(result.state).to.be.equal("fail");
+                        expect(result.results.meta.alsoMessage)
+                            .to.be.equal(options.reasons[i]);
+                    });
+                } else {
+                    expect(errors).to.not.equal([]);
+                    expect(errors.length).to.equal(options.reasons.length);
+                    if (options.jshint) {
+                        _.each(errors, function(error, i) {
+                            expect(error.lint).to.be.ok();
+                            expect(error.lint.reason).to.be.equal(options.reasons[i]);
+                        });
+                    } else {
+                        _.each(errors, function(error, i) {
+                            var $html = $("<div>" + error.text + "</div>");
+                            expect($html.text()).to.be.equal(options.reasons[i]);
+                        });
+                    }
+                }
+            }
+            callback();
+        };
+        runTest(options);
 };
 
 var test = function(title, code, code2) {
