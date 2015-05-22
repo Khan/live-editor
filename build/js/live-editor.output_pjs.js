@@ -1989,8 +1989,8 @@ window.PJSOutput = Backbone.View.extend({
         // and lint keys so objects with different columns or lint will still be
         // treated as duplicates.
         var replacer = function(key, value) {
-            if (key == "column" || key == "lint") {
-                return undefined;
+            if (key === "column" || key === "lint") {
+                return;
             }
             return value;
         };

@@ -69,6 +69,13 @@ describe("Scratchpad Output - BabyHint checks", function() {
         babyhint: true,
         code: "var numFlipped = 0; if (numFlipped === 2 && ?) {}"
     });
+
+    // Don't check for errors inside strings (when they include comment syntax)
+    assertTest({
+        title: "No errors should trigger inside of strings",
+        babyhint: true,
+        code: "var foo = \"rect()//\";"
+    });
 });
 
 // Syntax errors - not controlled by JSHint options.

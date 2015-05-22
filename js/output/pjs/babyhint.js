@@ -211,8 +211,8 @@ var BabyHint = {
             line = BabyHint.removeEndOfMultilineComment(line);
         }
         if (!BabyHint.inComment) {
-            line = BabyHint.removeComments(line);
             line = BabyHint.removeStrings(line);
+            line = BabyHint.removeComments(line);
 
             // Checks could detect new errors, thus must run on every line
             errors = errors
