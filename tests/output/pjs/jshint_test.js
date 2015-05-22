@@ -2,21 +2,21 @@ describe("Scratchpad Output - BabyHint checks", function() {
     /* Baby Hint errors */
     assertTest({
         title: "Misspelling a function name",
-        reason: "Did you mean to type rect instead of reect?",
+        reason: "reect is not defined. Maybe you meant to type rect, or you\'re using a variable you didn\'t define.",
         babyhint: true,
         code: "reect(20, 20, 10, 20);"
     });
 
     assertTest({
         title: "Using wrong capitalization",
-        reason: "Did you mean to type noStroke instead of noSTROKE?",
+        reason: "noSTROKE is not defined. Maybe you meant to type noStroke, or you\'re using a variable you didn\'t define.",
         babyhint: true,
         code: "noSTROKE();"
     });
 
     assertTest({
         title: "Using wrong capitalization and misspelling",
-        reason: "Did you mean to type noStroke instead of noStrokee?",
+        reason: "noStrokee is not defined. Maybe you meant to type noStroke, or you\'re using a variable you didn\'t define.",
         babyhint: true,
         code: "noStrokee();"
     });
@@ -58,7 +58,7 @@ describe("Scratchpad Output - BabyHint checks", function() {
 
     assertTest({
         title: "Spelling error that should match lowercase version instead of uppercase",
-        reason: "Did you mean to type rainbow instead of rainbo?",
+        reason: "rainbo is not defined. Maybe you meant to type rainbow, or you\'re using a variable you didn\'t define.",
         babyhint: true,
         code: "var Rainbow = function(){};\nvar RainbowRed = new Rainbow();\nvar drawRainbow = function(rainbow){\nellipse(rainbo.x, 10, 10, 10);};"
     });
@@ -120,6 +120,13 @@ describe("Scratchpad Output - JSHint syntax errors", function() {
         reason: "Unclosed string! Make sure you end your string with a quote.",
         jshint: true,
         code: "var myName=\"Stuff"
+    });
+
+    assertTest({
+        title: "Not closing a string when there are errors in the string if it's considered as code",
+        reason: "Unclosed string! Make sure you end your string with a quote.",
+        jshint: true,
+        code: "var greeting = \"Hello, my name is"
     });
 
     assertTest({
@@ -268,6 +275,20 @@ describe("Scratchpad Output - JSHint syntax options", function() {
         reason: "It looks like you have an unnecessary semicolon.",
         jshint: true,
         code: "var foo = function() {var a;;};"
+    });
+
+    assertTest({
+        title: "Using undefined variable where a BabyHint spelling suggestion exists should merge the two error messages.",
+        reason: "examle is not defined. Maybe you meant to type example, or you're using a variable you didn't define.",
+        babyhint: true,
+        code: "var example = 100;\nexamle = 30;"
+    });
+
+    assertTest({
+        title: "Using undefined variable where a BabyHint spelling suggestion exists for another variable shouldn't merge anything.",
+        reason: "x is not defined. Make sure you're spelling it correctly and that you declared it.",
+        babyhint: true,
+        code: "x=0;\nvar example = 100;\nexamle = 30;"
     });
 });
 

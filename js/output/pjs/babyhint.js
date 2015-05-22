@@ -330,7 +330,8 @@ var BabyHint = {
                 column: line.indexOf(fun),
                 text: $._("If you want to define a function, you should use \"var %(name)s = function() {}; \" instead!", {name: name}),
                 breaksCode: true,
-                source: "funcdeclaration"
+                source: "funcdeclaration",
+                context: {name: name}
             };
             errors.push(error);
         });
@@ -347,7 +348,8 @@ var BabyHint = {
                     column: line.indexOf(word),
                     text: $._("%(word)s is a reserved word.", {word: word}),
                     breaksCode: true,
-                    source: "bannedwords"
+                    source: "bannedwords",
+                    context: {word: word}
                 };
 
                 errors.push(error);
@@ -360,6 +362,9 @@ var BabyHint = {
         var errors = [];
         var words = line.split(/[^~`@#\$\^\w]/g);
         var skipNext = false;
+        // Keeps track of portion of string not yet spellchecked, so search for
+        // the second instance of the same word will be accurate.
+        var checkedChar = -1;
         _.each(words, function(word) {
             if (word.length > 0 && !skipNext) { 
                 var editDist = BabyHint.editDistance(word);
@@ -369,12 +374,14 @@ var BabyHint = {
                     dist <= BabyHint.EDIT_DISTANCE_THRESHOLD &&
                     dist < keyword.length - 1 && 
                     BabyHint.keywords.indexOf(word) === -1) {
+                    checkedChar = line.indexOf(word, checkedChar + 1)
                     var error = {
                         row: lineNumber,
-                        column: line.indexOf(word),
+                        column: checkedChar,
                         text: $._("Did you mean to type \"%(keyword)s\" instead of \"%(word)s\"?", {keyword: keyword, word: word}),
                         breaksCode: false,
-                        source: "spellcheck"
+                        source: "spellcheck",
+                        context: {keyword: keyword, word: word}
                     };
 
                     // if we have usage forms, display them as well.
@@ -557,7 +564,8 @@ var BabyHint = {
                         column: i,
                         text: $._("It looks like you have an extra \")\""),
                         breaksCode: false,
-                        source: "paramschecker"
+                        source: "paramschecker",
+                        context: {}
                     };
                     errors.push(error);
                     // if we messed up the parens matching,
@@ -575,7 +583,8 @@ var BabyHint = {
                 column: stack.pop(),
                 text: $._("It looks like you are missing a \")\" - does every \"(\" have a corresponding closing \")\"?"),
                 breaksCode: false,
-                source: "paramschecker"
+                source: "paramschecker",
+                context: {}
             };
             errors.push(error);
             // if we messed up the parens matching,
@@ -615,7 +624,8 @@ var BabyHint = {
                     column: col,
                     text: $._("Did you forget to add a comma between two parameters?"),
                     breaksCode: false, // JSHINT should break on these lines,
-                    source: "paramschecker"
+                    source: "paramschecker",
+                    context: {}
                 };
                 errors.push(error);
                 // this might confuse the parameter count, so move on for now
@@ -677,7 +687,8 @@ var BabyHint = {
                         column: index,
                         text: text,
                         breaksCode: true,
-                        source: "paramschecker"
+                        source: "paramschecker",
+                        context: {}
                     };
                     errors.push(error);
                 }

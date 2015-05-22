@@ -671,8 +671,8 @@ var BabyHint = {
             line = BabyHint.removeEndOfMultilineComment(line);
         }
         if (!BabyHint.inComment) {
-            line = BabyHint.removeComments(line);
             line = BabyHint.removeStrings(line);
+            line = BabyHint.removeComments(line);
 
             // Checks could detect new errors, thus must run on every line
             errors = errors
@@ -790,7 +790,8 @@ var BabyHint = {
                 column: line.indexOf(fun),
                 text: $._("If you want to define a function, you should use \"var %(name)s = function() {}; \" instead!", {name: name}),
                 breaksCode: true,
-                source: "funcdeclaration"
+                source: "funcdeclaration",
+                context: {name: name}
             };
             errors.push(error);
         });
@@ -807,7 +808,8 @@ var BabyHint = {
                     column: line.indexOf(word),
                     text: $._("%(word)s is a reserved word.", {word: word}),
                     breaksCode: true,
-                    source: "bannedwords"
+                    source: "bannedwords",
+                    context: {word: word}
                 };
 
                 errors.push(error);
@@ -820,6 +822,9 @@ var BabyHint = {
         var errors = [];
         var words = line.split(/[^~`@#\$\^\w]/g);
         var skipNext = false;
+        // Keeps track of portion of string not yet spellchecked, so search for
+        // the second instance of the same word will be accurate.
+        var checkedChar = -1;
         _.each(words, function(word) {
             if (word.length > 0 && !skipNext) { 
                 var editDist = BabyHint.editDistance(word);
@@ -829,12 +834,14 @@ var BabyHint = {
                     dist <= BabyHint.EDIT_DISTANCE_THRESHOLD &&
                     dist < keyword.length - 1 && 
                     BabyHint.keywords.indexOf(word) === -1) {
+                    checkedChar = line.indexOf(word, checkedChar + 1)
                     var error = {
                         row: lineNumber,
-                        column: line.indexOf(word),
+                        column: checkedChar,
                         text: $._("Did you mean to type \"%(keyword)s\" instead of \"%(word)s\"?", {keyword: keyword, word: word}),
                         breaksCode: false,
-                        source: "spellcheck"
+                        source: "spellcheck",
+                        context: {keyword: keyword, word: word}
                     };
 
                     // if we have usage forms, display them as well.
@@ -1017,7 +1024,8 @@ var BabyHint = {
                         column: i,
                         text: $._("It looks like you have an extra \")\""),
                         breaksCode: false,
-                        source: "paramschecker"
+                        source: "paramschecker",
+                        context: {}
                     };
                     errors.push(error);
                     // if we messed up the parens matching,
@@ -1035,7 +1043,8 @@ var BabyHint = {
                 column: stack.pop(),
                 text: $._("It looks like you are missing a \")\" - does every \"(\" have a corresponding closing \")\"?"),
                 breaksCode: false,
-                source: "paramschecker"
+                source: "paramschecker",
+                context: {}
             };
             errors.push(error);
             // if we messed up the parens matching,
@@ -1075,7 +1084,8 @@ var BabyHint = {
                     column: col,
                     text: $._("Did you forget to add a comma between two parameters?"),
                     breaksCode: false, // JSHINT should break on these lines,
-                    source: "paramschecker"
+                    source: "paramschecker",
+                    context: {}
                 };
                 errors.push(error);
                 // this might confuse the parameter count, so move on for now
@@ -1137,7 +1147,8 @@ var BabyHint = {
                         column: index,
                         text: text,
                         breaksCode: true,
-                        source: "paramschecker"
+                        source: "paramschecker",
+                        context: {}
                     };
                     errors.push(error);
                 }
@@ -1947,6 +1958,7 @@ window.PJSOutput = Backbone.View.extend({
     mergeErrors: function(jshintErrors, babyErrors) {
         var errors = [];
         var brokenLines = [];
+        var prioritizedChars = {};
         var hintErrors = [];
 
         // Find which lines JSHINT broke on
@@ -1954,9 +1966,20 @@ window.PJSOutput = Backbone.View.extend({
             if (error && error.line && error.character &&
                     error.reason &&
                     !/unable to continue/i.test(error.reason)) {
-                brokenLines.push(error.line - 2);
+                var realErrorLine = error.line - 2;
+                brokenLines.push(realErrorLine);
+                // Errors that override BabyLint errors in the remainder of the
+                // line. Includes: unclosed string (W112)
+                if (error.code === "W112") {
+                    error.character = error.evidence.indexOf("\"");
+                    if (!prioritizedChars[realErrorLine] ||
+                            prioritizedChars[realErrorLine] >
+                            error.character - 1) {
+                        prioritizedChars[realErrorLine] = error.character - 1;
+                    }
+                }
                 hintErrors.push({
-                    row: error.line - 2,
+                    row: realErrorLine,
                     column: error.character - 1,
                     text: error.reason,
                     type: "error",
@@ -1971,35 +1994,59 @@ window.PJSOutput = Backbone.View.extend({
         // to allow that error
         _.each(babyErrors, function(error) {
             if (_.include(brokenLines, error.row) || error.breaksCode) {
-                errors.push({
-                    row: error.row,
-                    column: error.column,
-                    text: error.text,
-                    type: "error",
-                    source: error.source,
-                    priority: 1
-                });
+                // Only include if not overridden by a JSLint error.
+                if (!prioritizedChars[error.row] ||
+                        prioritizedChars[error.row] > error.column) {
+                    errors.push({
+                        row: error.row,
+                        column: error.column,
+                        text: error.text,
+                        type: "error",
+                        source: error.source,
+                        context: error.context,
+                        priority: 1
+                    });
+                }
             }
         }.bind(this));
 
-        // Add JSHINT errors at the end of BabyHint errors.
+        // Check for JSLint and BabyLint errors on the same line and character.
+        // Merge error messages where appropriate.
+        _.each(hintErrors, function(jsError, i) {
+            _.each(errors, function(babyError, j) {
+                if (jsError.row === babyError.row &&
+                        jsError.column === babyError.column) {
+                    // Merge if JSLint error says a variable is undefined and
+                    // BabyLint has spelling suggestion.
+                    if (jsError.lint.code === "W117" &&
+                            babyError.source === "spellcheck") {
+                        errors.splice(j, 1);
+                        jsError.text = $._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " +
+                            "or you're using a variable you didn't define.",
+                            {word: jsError.lint.a, keyword: babyError.context.keyword});
+                    }
+                }
+            });
+        });
+
+        // Merge JSHint and BabyHint errors
         var allErrors = errors.concat(hintErrors);
 
-        // De-duplicate errors. Replacer tells JSON.stringify to ignore column
-        // and lint keys so objects with different columns or lint will still be
-        // treated as duplicates.
-        var replacer = function(key, value) {
-            if (key === "column" || key === "lint") {
-                return;
-            }
-            return value;
-        };
+       // De-duplicate errors. Replacer tells JSON.stringify to ignore column
+       // and lint keys so objects with different columns or lint will still be
+       // treated as duplicates.
+       var replacer = function(key, value) {
+           if (key == "column" || key == "lint") {
+               return undefined;
+           }
+           return value;
+       };
 
-        // Stringify objects to compare and de-duplicate.
-        var dedupErrors = _.uniq(allErrors, false, function(obj) {
-            return JSON.stringify(obj, replacer);
-        });
-        return dedupErrors;
+       // Stringify objects to compare and de-duplicate.
+       var dedupErrors = _.uniq(allErrors, false, function(obj) {
+           return JSON.stringify(obj, replacer);
+       });
+       return dedupErrors;
     },
 
     runCode: function(userCode, callback) {

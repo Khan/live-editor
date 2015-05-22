@@ -643,6 +643,7 @@ window.PJSOutput = Backbone.View.extend({
     mergeErrors: function(jshintErrors, babyErrors) {
         var errors = [];
         var brokenLines = [];
+        var prioritizedChars = {};
         var hintErrors = [];
 
         // Find which lines JSHINT broke on
@@ -650,9 +651,20 @@ window.PJSOutput = Backbone.View.extend({
             if (error && error.line && error.character &&
                     error.reason &&
                     !/unable to continue/i.test(error.reason)) {
-                brokenLines.push(error.line - 2);
+                var realErrorLine = error.line - 2;
+                brokenLines.push(realErrorLine);
+                // Errors that override BabyLint errors in the remainder of the
+                // line. Includes: unclosed string (W112)
+                if (error.code === "W112") {
+                    error.character = error.evidence.indexOf("\"");
+                    if (!prioritizedChars[realErrorLine] ||
+                            prioritizedChars[realErrorLine] >
+                            error.character - 1) {
+                        prioritizedChars[realErrorLine] = error.character - 1;
+                    }
+                }
                 hintErrors.push({
-                    row: error.line - 2,
+                    row: realErrorLine,
                     column: error.character - 1,
                     text: error.reason,
                     type: "error",
@@ -667,35 +679,59 @@ window.PJSOutput = Backbone.View.extend({
         // to allow that error
         _.each(babyErrors, function(error) {
             if (_.include(brokenLines, error.row) || error.breaksCode) {
-                errors.push({
-                    row: error.row,
-                    column: error.column,
-                    text: error.text,
-                    type: "error",
-                    source: error.source,
-                    priority: 1
-                });
+                // Only include if not overridden by a JSLint error.
+                if (!prioritizedChars[error.row] ||
+                        prioritizedChars[error.row] > error.column) {
+                    errors.push({
+                        row: error.row,
+                        column: error.column,
+                        text: error.text,
+                        type: "error",
+                        source: error.source,
+                        context: error.context,
+                        priority: 1
+                    });
+                }
             }
         }.bind(this));
 
-        // Add JSHINT errors at the end of BabyHint errors.
+        // Check for JSLint and BabyLint errors on the same line and character.
+        // Merge error messages where appropriate.
+        _.each(hintErrors, function(jsError, i) {
+            _.each(errors, function(babyError, j) {
+                if (jsError.row === babyError.row &&
+                        jsError.column === babyError.column) {
+                    // Merge if JSLint error says a variable is undefined and
+                    // BabyLint has spelling suggestion.
+                    if (jsError.lint.code === "W117" &&
+                            babyError.source === "spellcheck") {
+                        errors.splice(j, 1);
+                        jsError.text = $._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " +
+                            "or you're using a variable you didn't define.",
+                            {word: jsError.lint.a, keyword: babyError.context.keyword});
+                    }
+                }
+            });
+        });
+
+        // Merge JSHint and BabyHint errors
         var allErrors = errors.concat(hintErrors);
 
-        // De-duplicate errors. Replacer tells JSON.stringify to ignore column
-        // and lint keys so objects with different columns or lint will still be
-        // treated as duplicates.
-        var replacer = function(key, value) {
-            if (key === "column" || key === "lint") {
-                return;
-            }
-            return value;
-        };
+       // De-duplicate errors. Replacer tells JSON.stringify to ignore column
+       // and lint keys so objects with different columns or lint will still be
+       // treated as duplicates.
+       var replacer = function(key, value) {
+           if (key === "column" || key === "lint") {
+               return;
+           }
+           return value;
+       };
 
-        // Stringify objects to compare and de-duplicate.
-        var dedupErrors = _.uniq(allErrors, false, function(obj) {
-            return JSON.stringify(obj, replacer);
-        });
-        return dedupErrors;
+       // Stringify objects to compare and de-duplicate.
+       var dedupErrors = _.uniq(allErrors, false, function(obj) {
+           return JSON.stringify(obj, replacer);
+       });
+       return dedupErrors;
     },
 
     runCode: function(userCode, callback) {
