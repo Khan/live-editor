@@ -149,6 +149,7 @@ SQLTester.Util = {
                         continue;
                     }
                     currentStatement += "/" + userCode[i];
+                    currentState = state.NORMAL;
                     break;
                 case state.IN_MULTI_LINE_COMMENT:
                     if (userCode[i] === "*") {
