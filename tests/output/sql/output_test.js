@@ -29,8 +29,9 @@ describe("Linting", function() {
         "-- Design a database for Rick and Morty;;*");
     test("Multiline comment", "/* Design a database for Rick, \n" +
         "\nand Morty; */");
-    // Make sure single line comment parsing doesn't get messed up
+    // Make sure operators which are also part of comment indicators work.
     test("Testing arithmetic operator '-' works", "SELECT 3-2");
+    test("Testing arithmetic operator '/' works", "SELECT 3/2");
 
     // Linting for inserting rows
     test("Inserting rows",
