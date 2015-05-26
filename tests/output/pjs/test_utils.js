@@ -123,7 +123,9 @@ var runTest = function(options) {
         // during execution
         output.runCode(code1, function(errors, testResults) {
             if (options.test) {
-                options.test(output, errors, testResults, done);
+                options.test(output, errors, testResults, function() {
+                    finishTest(done, output, options);
+                });
                 return;
             }
 
