@@ -68,6 +68,7 @@ window.StructuredBlocksEditor = Backbone.View.extend({
                 setTimeout(function() {
                     $help.remove();
                 }, 300);
+                this.trigger("userChangedCode");
             }
         }.bind(this));
 

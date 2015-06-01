@@ -1037,6 +1037,12 @@ window.LiveEditor = Backbone.View.extend({
             this.markDirty();
         }.bind(this));
 
+        this.editor.on("userChangedCode", function() {
+            if (!this.record.recording && !this.record.playing) {
+              this.trigger("userChangedCode");
+            }
+        }.bind(this));
+
         this.on("runDone", this.runDone.bind(this));
 
         // This function will fire once after each synchrynous block which changes the cursor
