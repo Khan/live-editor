@@ -7,6 +7,17 @@ You can find various demos in the `demos/` directory, and start playing immediat
 
 * [http://khan.github.io/live-editor/demos/simple/](http://khan.github.io/live-editor/demos/simple/)
 
+## Running 
+
+In order to run `live-editor` locally you'll have run a local web server.  If you have python installed this can be accomplished by running the following command from the `live-editor` folder:
+
+    python -m SimpleHTTPServer
+    
+You should see the following console output:
+
+    Serving HTTP on 0.0.0.0 port 8000 ...
+    
+Open up a browser and navigate to http://0.0.0.0:8000/demos/simple.
 
 ## Building
 
