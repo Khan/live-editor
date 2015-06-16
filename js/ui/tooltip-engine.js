@@ -124,8 +124,6 @@ window.TooltipEngine = Backbone.View.extend({
             return;
         }
 
-        console.log(window.localStorage["autosuggest"]);
-
         this.last = this.last || {};
 
         var selection = this.editor.selection;
