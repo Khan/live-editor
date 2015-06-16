@@ -112,8 +112,29 @@ window.LiveEditor = Backbone.View.extend({
             type: this.editorType
         });
 
-        // linting in the webpage environment generates slowparseResults which 
-        // is used in the runCode step so skipping linting won't work in that 
+        // The following code adds a keystroke to toggle the autosuggesting.
+        // BLAME @GigabyteGiant
+        var tooltipEngine = this.config.editor.tooltipEngine;
+
+        // Adds a keyboard shortcut to the ace-editor.
+        this.editor.editor.commands.addCommand({
+            name: 'toggleAutosuggest',
+            bindKey: {
+                win: 'Ctrl+Alt+A',
+                mac: 'Command+Option+A'
+            },
+            exec: function(editor) {
+                var status = Boolean(tooltipEngine.enabled);
+                status = !status;
+
+                tooltipEngine.setEnabledStatus(status);
+
+                window.localStorage['autosuggest'] = status;
+            }
+        });
+
+        // linting in the webpage environment generates slowparseResults which
+        // is used in the runCode step so skipping linting won't work in that
         // environment without some more work
         if (this.editorType === "ace_pjs") {
             this.noLint = false;
@@ -244,7 +265,7 @@ window.LiveEditor = Backbone.View.extend({
                         });
                     }
                     self.editor.once("changeCursor", cursorDirty);
-                }, 0);                
+                }, 0);
             }
         };
         this.editor.once("changeCursor", cursorDirty);
@@ -454,7 +475,7 @@ window.LiveEditor = Backbone.View.extend({
             // Sometimes when Flash is blocked or the browser is slower,
             //  soundManager will fail to initialize at first,
             //  claiming no response from the Flash file.
-            // To handle that, we attempt a reboot 3 seconds after each 
+            // To handle that, we attempt a reboot 3 seconds after each
             //  timeout, clearing the timer if we get an onready during
             //  that time (which happens if user un-blocks flash).
             onready: function() {
@@ -571,7 +592,7 @@ window.LiveEditor = Backbone.View.extend({
 
     audioReadyToPlay: function() {
         // NOTE(pamela): We can't just check bytesLoaded,
-        //  because IE reports null for that 
+        //  because IE reports null for that
         // (it seems to not get the progress event)
         // So we've changed it to also check loaded.
         // If we need to, we can reach inside the HTML5 audio element
@@ -997,7 +1018,7 @@ window.LiveEditor = Backbone.View.extend({
         if (data.validate != null) {
             this.validation = data.validate;
         }
-        
+
         if (data.results) {
             this.trigger("runDone");
         }
@@ -1011,13 +1032,13 @@ window.LiveEditor = Backbone.View.extend({
             }.bind(this));
 
             var annotations = [];
-            for (var i = 0; i < data.results.assertions.length; i++) { 
+            for (var i = 0; i < data.results.assertions.length; i++) {
                 var unitTest = data.results.assertions[i];
                 annotations.push({
-                    row: unitTest.row, 
-                    column: unitTest.column, 
+                    row: unitTest.row,
+                    column: unitTest.column,
                     text: unitTest.text,
-                    type: "warning" 
+                    type: "warning"
                 });
                 // Underline the problem line to make it more obvious
                 //  if they don't notice the gutter icon
@@ -1080,7 +1101,7 @@ window.LiveEditor = Backbone.View.extend({
      *
      * A note about the throttling:
      * This limits updates to 50FPS. No point in updating faster than that.
-     * 
+     *
      * DO NOT CALL THIS DIRECTLY
      * Instead call markDirty because it will handle
      * throttling requests properly.
@@ -1106,7 +1127,7 @@ window.LiveEditor = Backbone.View.extend({
 
         this.postFrame(options);
     }, 20),
-    
+
     markDirty: function() {
         // They're typing. Hide the tipbar to give them a chance to fix things up
         this.tipbar.hide();
@@ -1175,7 +1196,7 @@ window.LiveEditor = Backbone.View.extend({
         // Unbind any handlers this function may have set for previous
         // screenshots
         $(window).off("message.getScreenshot");
-    
+
         // We're only expecting one screenshot back
         $(window).on("message.getScreenshot", function(e) {
             // Only call if the data is actually an image!
@@ -1183,7 +1204,7 @@ window.LiveEditor = Backbone.View.extend({
                 callback(e.originalEvent.data);
             }
         });
-    
+
         // Ask the frame for a screenshot
         this.postFrame({ screenshot: true });
     },

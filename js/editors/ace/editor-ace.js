@@ -53,9 +53,10 @@ window.AceEditor = Backbone.View.extend({
             imagesDir: options.imagesDir,
             soundsDir: options.soundsDir,
             editor: this.editor,
-            record: this.record
+            record: this.record,
+            enabled: window.localStorage['autosuggest'] || true
         });
-        
+
         this.tooltipEngine.on("scrubbingStarted", function(name) {
             this.trigger("scrubbingStarted", name);
         }.bind(this));
@@ -391,7 +392,7 @@ window.AceEditor = Backbone.View.extend({
         var doc = this.editor.getSession().getDocument();
 
         return {
-            start: doc.positionToIndex(rng.start), 
+            start: doc.positionToIndex(rng.start),
             end: doc.positionToIndex(rng.end)
         };
     },
