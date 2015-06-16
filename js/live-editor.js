@@ -113,7 +113,6 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // The following code adds a keystroke to toggle the autosuggesting.
-        // BLAME @GigabyteGiant
         var tooltipEngine = this.config.editor.tooltipEngine;
 
         // Adds a keyboard shortcut to the ace-editor.
@@ -125,10 +124,21 @@ window.LiveEditor = Backbone.View.extend({
             },
             exec: function(editor) {
                 var status = window.localStorage["autosuggest"] === "true";
-                
+
                 tooltipEngine.setEnabledStatus(status === false);
 
                 window.localStorage.setItem("autosuggest", status === false);
+            }
+        });
+
+        this.editor.editor.commands.addCommand({
+            name: 'showSettingsMenu',
+            bindKey: {
+                win: 'Ctrl+Alt+M',
+                mac: 'Ctrl+Option+M'
+            },
+            exec: function(editor) {
+                
             }
         });
 
