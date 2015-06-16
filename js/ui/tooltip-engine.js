@@ -93,9 +93,7 @@ window.TooltipEngine = Backbone.View.extend({
 
 
         this.requestTooltipDefaultCallback = function() {  //Fallback to hiding
-            // TODO (@GigabyteGiant) perhaps figure out a better way to do this?
-            // Currently, this kills the tooltip tests.
-            ScratchpadAutosuggest.enableLiveCompletion(this.enabled);
+            ScratchpadAutosuggest.enableLiveCompletion(this.enabled === "true");
             if (this.currentTooltip && this.currentTooltip.$el) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
@@ -125,6 +123,9 @@ window.TooltipEngine = Backbone.View.extend({
         if (this.ignore) {
             return;
         }
+
+        console.log(window.localStorage["autosuggest"]);
+
         this.last = this.last || {};
 
         var selection = this.editor.selection;

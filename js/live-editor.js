@@ -124,12 +124,11 @@ window.LiveEditor = Backbone.View.extend({
                 mac: 'Command+Option+A'
             },
             exec: function(editor) {
-                var status = Boolean(tooltipEngine.enabled);
-                status = !status;
+                var status = window.localStorage["autosuggest"] === "true";
+                
+                tooltipEngine.setEnabledStatus(status === false);
 
-                tooltipEngine.setEnabledStatus(status);
-
-                window.localStorage.setItem("autosuggest", status);
+                window.localStorage.setItem("autosuggest", status === false);
             }
         });
 

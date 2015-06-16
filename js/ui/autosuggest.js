@@ -11,7 +11,7 @@ window.ScratchpadAutosuggest = {
         this.initialized = true;
         this.editor = editor;
         // TODO @GigabyteGiant load value from localStorage.
-        this.enableLiveCompletion(true);
+        this.enableLiveCompletion(window.localStorage["autosuggest"] || true);
         var langTools = ace.require("ace/ext/language_tools");
 
         var customCompleters = [ScratchpadAutosuggestData._keywords,
