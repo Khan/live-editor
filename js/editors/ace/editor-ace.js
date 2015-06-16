@@ -53,8 +53,7 @@ window.AceEditor = Backbone.View.extend({
             imagesDir: options.imagesDir,
             soundsDir: options.soundsDir,
             editor: this.editor,
-            record: this.record,
-            enabled: window.localStorage['autosuggest'] || true
+            record: this.record
         });
 
         this.tooltipEngine.on("scrubbingStarted", function(name) {

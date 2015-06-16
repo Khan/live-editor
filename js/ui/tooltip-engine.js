@@ -2,7 +2,7 @@ window.TooltipEngine = Backbone.View.extend({
     initialize: function(options) {
         this.options = options;
         this.editor = options.editor;
-        this.enabled = options.enabled;
+        this.enabled = (window.localStorage['autosuggest']);
         var record = this.options.record;
 
         this.tooltips = {};

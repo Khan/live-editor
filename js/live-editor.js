@@ -129,7 +129,7 @@ window.LiveEditor = Backbone.View.extend({
 
                 tooltipEngine.setEnabledStatus(status);
 
-                window.localStorage['autosuggest'] = status;
+                window.localStorage.setItem("autosuggest", status);
             }
         });
 
