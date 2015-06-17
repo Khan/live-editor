@@ -112,35 +112,29 @@ window.LiveEditor = Backbone.View.extend({
             type: this.editorType
         });
 
-        // The following code adds a keystroke to toggle the autosuggesting.
         var tooltipEngine = this.config.editor.tooltipEngine;
 
-        // Adds a keyboard shortcut to the ace-editor.
-        this.editor.editor.commands.addCommand({
-            name: 'toggleAutosuggest',
-            bindKey: {
-                win: 'Ctrl+Alt+A',
-                mac: 'Command+Option+A'
-            },
-            exec: function(editor) {
-                var status = window.localStorage["autosuggest"] === "true";
+        // Looks to see if "autosuggest=no" is in the url,
+        //  if it is, then we disable the live autosuggestions.
+        if (window.location.search.indexOf("autosuggest=no") !== -1) {
+            tooltipEngine.setEnabledStatus(false);
+        }
 
-                tooltipEngine.setEnabledStatus(status !== true);
+        // The following code adds a keystroke to toggle the autosuggesting.
+        // this.editor.editor.commands.addCommand({
+        //     name: 'toggleAutosuggest',
+        //     bindKey: {
+        //         win: 'Ctrl+Alt+A',
+        //         mac: 'Command+Option+A'
+        //     },
+        //     exec: function(editor) {
+        //         var status = window.localStorage["autosuggest"] === "true";
 
-                window.localStorage.setItem("autosuggest", status !== true);
-            }
-        });
+        //         tooltipEngine.setEnabledStatus(status !== true);
 
-        this.editor.editor.commands.addCommand({
-            name: 'showSettingsMenu',
-            bindKey: {
-                win: 'Ctrl+Alt+M',
-                mac: 'Ctrl+Option+M'
-            },
-            exec: function(editor) {
-                
-            }
-        });
+        //         window.localStorage.setItem("autosuggest", status !== true);
+        //     }
+        // });
 
         // linting in the webpage environment generates slowparseResults which
         // is used in the runCode step so skipping linting won't work in that
