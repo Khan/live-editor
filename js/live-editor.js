@@ -112,29 +112,30 @@ window.LiveEditor = Backbone.View.extend({
             type: this.editorType
         });
 
-        var tooltipEngine = this.config.editor.tooltipEngine;
-
         // Looks to see if "autosuggest=no" is in the url,
         //  if it is, then we disable the live autosuggestions.
-        if (window.location.search.indexOf("autosuggest=no") !== -1) {
-            tooltipEngine.setEnabledStatus(false);
+        if (window.location.search.indexOf("experimental=yes") !== -1) {
+            var tooltipEngine = this.config.editor.tooltipEngine;
+
+            // Allows toggling of the autosuggestions.
+            this.editor.editor.commands.addCommand({
+                name: 'toggleAutosuggest',
+                bindKey: {
+                    win: 'Ctrl+Alt+A',
+                    mac: 'Command+Option+A'
+                },
+                exec: function(editor) {
+                    var status = window.localStorage["autosuggest"] === "true";
+
+                    tooltipEngine.setEnabledStatus(status !== true);
+
+                    window.localStorage.setItem("autosuggest", status !== true);
+                }
+            });
+        } else {
+            // since we load the enabled value from localStorage...
+            this.config.editor.tooltipEngine.setEnabledStatus("true");
         }
-
-        // The following code adds a keystroke to toggle the autosuggesting.
-        // this.editor.editor.commands.addCommand({
-        //     name: 'toggleAutosuggest',
-        //     bindKey: {
-        //         win: 'Ctrl+Alt+A',
-        //         mac: 'Command+Option+A'
-        //     },
-        //     exec: function(editor) {
-        //         var status = window.localStorage["autosuggest"] === "true";
-
-        //         tooltipEngine.setEnabledStatus(status !== true);
-
-        //         window.localStorage.setItem("autosuggest", status !== true);
-        //     }
-        // });
 
         // linting in the webpage environment generates slowparseResults which
         // is used in the runCode step so skipping linting won't work in that
