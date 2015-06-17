@@ -112,10 +112,11 @@ window.LiveEditor = Backbone.View.extend({
             type: this.editorType
         });
 
-        // Looks to see if "autosuggest=no" is in the url,
+        // Looks to see if "autosuggestToggle=yes" is in the url,
         //  if it is, then we disable the live autosuggestions.
         if (window.location.search.indexOf("autosuggestToggle=yes") !== -1) {
             var tooltipEngine = this.config.editor.tooltipEngine;
+            window.localStorage["autosuggest"] = "true";
 
             // Allows toggling of the autosuggestions.
             this.editor.editor.commands.addCommand({
@@ -129,7 +130,7 @@ window.LiveEditor = Backbone.View.extend({
 
                     tooltipEngine.setEnabledStatus(status !== true);
 
-                    window.localStorage.setItem("autosuggest", status !== true);
+                    window.localStorage.setItem("autosuggest", String(status !== true));
                 }
             });
         } else {

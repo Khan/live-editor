@@ -2,7 +2,7 @@ window.TooltipEngine = Backbone.View.extend({
     initialize: function(options) {
         this.options = options;
         this.editor = options.editor;
-        this.enabled = "true";
+        this.enabled = true;
         var record = this.options.record;
 
         this.tooltips = {};
@@ -93,7 +93,7 @@ window.TooltipEngine = Backbone.View.extend({
 
 
         this.requestTooltipDefaultCallback = function() {  //Fallback to hiding
-            ScratchpadAutosuggest.enableLiveCompletion(this.enabled === "true");
+            ScratchpadAutosuggest.enableLiveCompletion(this.enabled);
             if (this.currentTooltip && this.currentTooltip.$el) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
