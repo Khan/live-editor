@@ -116,7 +116,6 @@ window.LiveEditor = Backbone.View.extend({
         //  if it is, then we disable the live autosuggestions.
         if (window.location.search.indexOf("autosuggestToggle=yes") !== -1) {
             var tooltipEngine = this.config.editor.tooltipEngine;
-            window.localStorage["autosuggest"] = "true";
 
             // Allows toggling of the autosuggestions.
             this.editor.editor.commands.addCommand({
