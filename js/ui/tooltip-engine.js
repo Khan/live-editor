@@ -2,6 +2,7 @@ window.TooltipEngine = Backbone.View.extend({
     initialize: function(options) {
         this.options = options;
         this.editor = options.editor;
+        this.enabled = true;
         var record = this.options.record;
 
         this.tooltips = {};
@@ -56,7 +57,9 @@ window.TooltipEngine = Backbone.View.extend({
             target: this.editor.session.getDocument(),
             event: "change",
             fn: function(e) {
-                this.doRequestTooltip(e.data);
+                if (this.enabled) {
+                    this.doRequestTooltip(e.data);
+                }
             }.bind(this)
         }, {
             target: this.editor.session,
@@ -88,16 +91,21 @@ window.TooltipEngine = Backbone.View.extend({
             cb.target.on(cb.event, cb.fn);
         });
 
-        
+
         this.requestTooltipDefaultCallback = function() {  //Fallback to hiding
-            ScratchpadAutosuggest.enableLiveCompletion(true);
+            ScratchpadAutosuggest.enableLiveCompletion(this.enabled);
             if (this.currentTooltip && this.currentTooltip.$el) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
             }
         }.bind(this);
 
-        this.editor.on("requestTooltip", this.requestTooltipDefaultCallback);   
+        // Sets the live completion status to whatever value is passed in.
+        this.setEnabledStatus = function(status) {
+            this.enabled = status;
+        }.bind(this);
+
+        this.editor.on("requestTooltip", this.requestTooltipDefaultCallback);
     },
 
     remove: function() {
@@ -107,7 +115,7 @@ window.TooltipEngine = Backbone.View.extend({
         _.each(this.tooltips, function(tooltip) {
             tooltip.remove();
         });
-        
+
         this.editor.off("requestTooltip", this.requestTooltipDefaultCallback);
     },
 
@@ -115,6 +123,7 @@ window.TooltipEngine = Backbone.View.extend({
         if (this.ignore) {
             return;
         }
+
         this.last = this.last || {};
 
         var selection = this.editor.selection;
@@ -141,7 +150,7 @@ window.TooltipEngine = Backbone.View.extend({
         this.last = params;
 
         this.editor._emit("requestTooltip", params);
-    }, 
+    },
 
     // Returns true if we're inside a comment
     // This isn't a perfect check, but it is close enough.
@@ -159,23 +168,23 @@ TooltipEngine.classes = {};
   * Every Tooltip has the following major parts:
   * - initialize(), just accepts options and then tries to attach
   *   the html for the tooltip by callin render() and bind() as required
-  * 
+  *
   * - render() and bind() to set up the HTML
-  * 
-  * - A detector function. The detector functions are all bound to the 
-  *   requestTooltip event in their respective bind() method. They receive an event with 
-  *   information about where the cursor is and whether it got there because of a click, 
-  *   selection character added, etc. It chooses to either load its tooltip or let the 
+  *
+  * - A detector function. The detector functions are all bound to the
+  *   requestTooltip event in their respective bind() method. They receive an event with
+  *   information about where the cursor is and whether it got there because of a click,
+  *   selection character added, etc. It chooses to either load its tooltip or let the
   *   event keep bubbling
   *   > The detector function also sets aceLocation, which saves what portion of the
   *     text the selector is active for.
-  *   
-  * - updateText replaces whatever text is specified by the aceLocation 
+  *
+  * - updateText replaces whatever text is specified by the aceLocation
   *   with the new text. It is common for tooltips to override this function
-  *   so that they can accept a value in a different format, make it into a string 
+  *   so that they can accept a value in a different format, make it into a string
   *   and then pass the formatted value back to the function defined in TooltipBase
   *   to do the actual replace
-  * 
+  *
   * - placeOnScreen which determines where the HTML needs to be moved to in order
   *   for it to show up on by the cursor. This also pulls information from aceLocation
   *
