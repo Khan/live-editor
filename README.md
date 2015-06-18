@@ -7,16 +7,16 @@ You can find various demos in the `demos/` directory, and start playing immediat
 
 * [http://khan.github.io/live-editor/demos/simple/](http://khan.github.io/live-editor/demos/simple/)
 
-## Running 
+## Running
 
 In order to run `live-editor` locally you'll have run a local web server.  If you have python installed this can be accomplished by running the following command from the `live-editor` folder:
 
     python -m SimpleHTTPServer
-    
+
 You should see the following console output:
 
     Serving HTTP on 0.0.0.0 port 8000 ...
-    
+
 Open up a browser and navigate to http://0.0.0.0:8000/demos/simple.
 
 ## Building
@@ -26,7 +26,7 @@ You can use the pre-built copies of everything inside the `build/` directory. If
     git submodule update
     npm install
     bower install
-    
+
     # Build the Ace editor files (This is usually *not* needed)
     cd bower_components/ace
     npm install
@@ -38,14 +38,14 @@ At this point you can make a fresh build, using [Gulp](http://gulpjs.com/):
     # Or if not installed globally:
     node_modules/gulp/bin/gulp.js
 
-If you have an issue with "this.merge" is undefined, then rm-rf the handlebars that's inside node_modules/gulp.
+If you have an issue with "this.merge" is undefined, then `rm -rf node_modules/gulp-handlebars/node_modules/handlebars`.
 
 ## Testing
 
 The tests are in the `/tests` folder. They use Mocha/Chai/Sinon. Gulp typically runs the tests when relevant files change, but you can explicitly run the tests with:
-    
+
     node_modules/gulp/bin/gulp.js test
-    
+
 Please add tests whenever possible for any change that you make or propose.
 
 ## How you can help
@@ -54,7 +54,7 @@ We have many open issues here. The top priority are those marked as [regressionb
 
 Some aspects of the editor are in subrepos with their own issue trackers, like structuredjs and structuredblocks, so be sure to poke around those and see if they're more up your bug-fixing alley.
 
-There are also a handful of [idea](https://github.com/Khan/live-editor/labels/idea)s floating here from our community. You are welcome to take them on, but it's possible we won't merge them if we worry about their effect on the programming experience on Khan Academy, like if they may introduce backwards compatibilities or performance regressions. 
+There are also a handful of [idea](https://github.com/Khan/live-editor/labels/idea)s floating here from our community. You are welcome to take them on, but it's possible we won't merge them if we worry about their effect on the programming experience on Khan Academy, like if they may introduce backwards compatibilities or performance regressions.
 
 We have no full-time resource working on the editing environment right now, so we will do pull requests when we find ourselves with time between other projects. We thank you for your contribution, even if we may be slow to acknowledge it at times. :)
 
