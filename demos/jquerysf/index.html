@@ -1,0 +1,131 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="../../build/css/live-editor.core_deps.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.tooltips.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
+    <link href='http://fonts.googleapis.com/css?family=Orbitron' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+    <style>
+body {
+  background: white;
+  padding: 5px;
+}
+
+h1, h2, button {
+  font-family: 'Orbitron', sans-serif;
+}
+
+#sample-live-editor {
+  margin-top: 20px;
+}
+
+#restart-code {
+  display: none;
+}
+    </style>
+</head>
+<body>
+    <h1 id="program-title"></h1>
+    <h2 id="program-byline"></h2>
+    
+    <div id="sample-live-editor"></div>
+    <p>This is a submission to a "Generative Art" contest that we held in our Khan Academy
+    coding community. The student built the program in our real-time JS+ProcessingJS environment.
+    The environment is open sourced at <a href="http://github.com/Khan/live-editor">github.com/Khan/live-editor</a>,
+    and also includes a HTML and SQL environments. Pull requests welcome!
+    </p>
+
+    <script src="../../build/js/live-editor.core_deps.js"></script>
+    <script src="../../build/js/live-editor.editor_ace_deps.js"></script>
+    <script src="../../build/js/live-editor.audio.js"></script>
+    <script src="../../build/js/live-editor.shared.js"></script>
+    <script src="../../build/js/live-editor.tooltips.js"></script>
+    <script src="../../build/js/live-editor.ui.js"></script>
+    <script src="../../build/js/live-editor.editor_ace.js"></script>
+
+    <!-- The actual slides -->
+    <script src="slides.js"></script>
+    <script>
+(function() {
+
+var makeEditor = function(code) {
+   window.liveEditor = new LiveEditor({
+     el: $("#sample-live-editor"),
+     code: code,
+     width: 400,
+     height: 400,
+     editorHeight: "400px",
+     autoFocus: true,
+     workersDir: "../../build/workers/",
+     execFile: "../simple/output.html",
+     externalsDir: "../../build/external/",
+     imagesDir: "../../build/images/",
+     jshintFile: "../../build/external/jshint/jshint.js"
+   });
+
+function nextProgram() {
+   slideNum++;
+   window.location.hash = slideNum;
+   loadProgram(slideNum);
+}
+
+var nextButton = $('<button class="pure-button pure-button-primary">Next →</button>')
+    .css('float', 'right')
+    .on('click', function() {
+        nextProgram();
+    })
+    .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
+
+var prevButton = $('<button class="pure-button pure-button-primary">Prev ←</button>')
+    .on('click', function() {
+        slideNum--;
+        window.location.hash = slideNum;
+        loadProgram(slideNum);
+    })
+    .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
+
+};
+
+
+var loadProgram = function(num) {
+    if (window.liveEditor) {
+       window.liveEditor.remove(); 
+    }
+    $.ajax({type: "GET",
+     url: "program" + num + ".json",
+     success: function(data) {
+         var title = data.scratchpad.title;
+         var code = data.scratchpad.revision.code;
+         var username = data.creatorProfile.nickname;
+         var bio = data.creatorProfile.bio;
+         $('#program-title').text(title);
+         $('#program-byline').text('By ' + username);
+         makeEditor(code);
+         window.setTimeout(function() {
+           slideNum++;
+           window.location.hash = slideNum;
+           loadProgram(slideNum);
+         }, 1000*30);
+     },
+     error: function(xhr, status, e) {
+      console.log(arguments);  
+     }
+    });
+};
+
+
+var slideNum = 1;
+if (window.location.hash && !isNaN(Number(window.location.hash.substr(1)))) {
+    slideNum = Number(window.location.hash.substr(1));
+}
+loadProgram(slideNum);
+
+
+})();
+    </script>
+
+
+</body>
+</html>
