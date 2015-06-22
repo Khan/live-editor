@@ -99,6 +99,14 @@ var prevButton = $('<button class="pure-button pure-button-primary">Prev ←</bu
 
 };
 
+var startTimer = function () {
+    loadTimer = window.setTimeout(function() {
+      slideNum++;
+      window.location.hash = slideNum;
+      loadProgram(slideNum);
+    }, 1000*30);
+}
+
 
 var loadProgram = function(num) {
     if (window.liveEditor) {
@@ -114,11 +122,7 @@ var loadProgram = function(num) {
          $('#program-title').text(title);
          $('#program-byline').text('By ' + username);
          makeEditor(code);
-         loadTimer = window.setTimeout(function() {
-           slideNum++;
-           window.location.hash = slideNum;
-           loadProgram(slideNum);
-         }, 1000*30);
+         startTimer();
      },
      error: function(xhr, status, e) {
       console.log(arguments);  
