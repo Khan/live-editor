@@ -13,7 +13,7 @@ body {
   padding: 5px;
 }
 
-h1, h2, button {
+h1, h2 {
   font-family: 'Orbitron', sans-serif;
 }
 
@@ -50,6 +50,8 @@ h1, h2, button {
     <script>
 (function() {
 
+var loadTimer = null;
+
 var makeEditor = function(code) {
    window.liveEditor = new LiveEditor({
      el: $("#sample-live-editor"),
@@ -78,6 +80,14 @@ var nextButton = $('<button class="pure-button pure-button-primary">Next →</bu
     })
     .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
 
+var pauseButton = $('<button class="pure-button pure-button-secondary">Pause ||</button>')
+    .css('float', 'right')
+    .css('margin-right', '10px')
+    .on('click', function() {
+       window.clearTimeout(loadTimer);
+    })
+    .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
+
 var prevButton = $('<button class="pure-button pure-button-primary">Prev ←</button>')
     .on('click', function() {
         slideNum--;
@@ -103,7 +113,7 @@ var loadProgram = function(num) {
          $('#program-title').text(title);
          $('#program-byline').text('By ' + username);
          makeEditor(code);
-         window.setTimeout(function() {
+         loadTimer = window.setTimeout(function() {
            slideNum++;
            window.location.hash = slideNum;
            loadProgram(slideNum);
