@@ -76,15 +76,27 @@ function nextProgram() {
 var nextButton = $('<button class="pure-button pure-button-primary">Next →</button>')
     .css('float', 'right')
     .on('click', function() {
+        window.clearTimeout(loadTimer);
         nextProgram();
     })
     .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
+
+var paused = false;
 
 var pauseButton = $('<button class="pure-button pure-button-secondary">Pause ||</button>')
     .css('float', 'right')
     .css('margin-right', '10px')
     .on('click', function() {
-       window.clearTimeout(loadTimer);
+       paused = !paused;
+       
+       if (paused) {
+           $(this).html('Paused');
+           window.clearTimeout(loadTimer);
+       }
+       else {
+           $(this).html('Pause ||');
+           nextProgram();
+       }
     })
     .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
 
@@ -97,6 +109,14 @@ var prevButton = $('<button class="pure-button pure-button-primary">Prev ←</bu
     .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
 
 };
+
+var startTimer = function () {
+    loadTimer = window.setTimeout(function() {
+      slideNum++;
+      window.location.hash = slideNum;
+      loadProgram(slideNum);
+    }, 1000*30);
+}
 
 
 var loadProgram = function(num) {
@@ -113,11 +133,7 @@ var loadProgram = function(num) {
          $('#program-title').text(title);
          $('#program-byline').text('By ' + username);
          makeEditor(code);
-         loadTimer = window.setTimeout(function() {
-           slideNum++;
-           window.location.hash = slideNum;
-           loadProgram(slideNum);
-         }, 1000*30);
+         startTimer();
      },
      error: function(xhr, status, e) {
       console.log(arguments);  
