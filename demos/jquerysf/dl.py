@@ -1,4 +1,6 @@
-programs = [{"URL":"https://www.khanacademy.org/computer-programming/a-snow-flake-generator-wip/6727669427339264"},
+programs =  [{"URL":"https://www.khanacademy.org/computer-programming/pi-is-beautiful/5970133920776192"},
+{"URL":"https://www.khanacademy.org/computer-programming/another-doodler/4853257157607424"},
+{"URL":"https://www.khanacademy.org/computer-programming/a-snow-flake-generator-wip/6727669427339264"},
 {"URL":"https://www.khanacademy.org/computer-programming/abstract-art/4644866913075200"},
 {"URL":"https://www.khanacademy.org/computer-programming/abstract/5433561958187008"},
 {"URL":"https://www.khanacademy.org/computer-programming/amazing/6607828984922112"},
@@ -158,6 +160,9 @@ programs = [{"URL":"https://www.khanacademy.org/computer-programming/a-snow-flak
 
 import os.path
 import urllib2
+import random
+
+random.shuffle(programs)
 
 for (ind, program) in enumerate(programs):
   fname = 'program%s.json' % (ind+1)
