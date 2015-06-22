@@ -76,6 +76,7 @@ function nextProgram() {
 var nextButton = $('<button class="pure-button pure-button-primary">Next →</button>')
     .css('float', 'right')
     .on('click', function() {
+        window.clearTimeout(loadTimer);
         nextProgram();
     })
     .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
