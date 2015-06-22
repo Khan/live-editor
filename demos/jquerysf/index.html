@@ -129,8 +129,10 @@ var loadProgram = function(num) {
          var title = data.scratchpad.title;
          var code = data.scratchpad.revision.code;
          var username = data.creatorProfile.nickname;
+         var url = data.scratchpad.url;
          var bio = data.creatorProfile.bio;
-         $('#program-title').text(title);
+         var $link = $('<a>').attr('href', url).attr('target', 'blank').text(title);
+         $('#program-title').append($link);
          $('#program-byline').text('By ' + username);
          makeEditor(code);
          startTimer();
