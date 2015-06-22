@@ -81,11 +81,22 @@ var nextButton = $('<button class="pure-button pure-button-primary">Next →</bu
     })
     .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
 
+var paused = false;
+
 var pauseButton = $('<button class="pure-button pure-button-secondary">Pause ||</button>')
     .css('float', 'right')
     .css('margin-right', '10px')
     .on('click', function() {
-       window.clearTimeout(loadTimer);
+       paused = !paused;
+       
+       if (paused) {
+           $(this).html('Paused');
+           window.clearTimeout(loadTimer);
+       }
+       else {
+           $(this).html('Pause ||');
+           nextProgram();
+       }
     })
     .appendTo('.scratchpad-editor-wrap .scratchpad-toolbar');
 
