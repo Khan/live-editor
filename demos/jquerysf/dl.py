@@ -1,4 +1,4 @@
-programs =  [{"URL":"https://www.khanacademy.org/computer-programming/pi-is-beautiful/5970133920776192"},
+programs1 =  [{"URL":"https://www.khanacademy.org/computer-programming/pi-is-beautiful/5970133920776192"},
 {"URL":"https://www.khanacademy.org/computer-programming/another-doodler/4853257157607424"},
 {"URL":"https://www.khanacademy.org/computer-programming/a-snow-flake-generator-wip/6727669427339264"},
 {"URL":"https://www.khanacademy.org/computer-programming/abstract-art/4644866913075200"},
@@ -158,7 +158,7 @@ programs =  [{"URL":"https://www.khanacademy.org/computer-programming/pi-is-beau
 {"URL":"https://www.khanacademy.org/computer-programming/winstons-lens-flare/6427485556310016"},
 {"URL":"https://www.khanacademy.org/computer-programming/ying-yang/5520248507858944"}]
 
-programs = [{"URL":"https://www.khanacademy.org/computer-programming/crazy-genrative-hipno-art/4514953564389376"},
+programs2 = [{"URL":"https://www.khanacademy.org/computer-programming/crazy-genrative-hipno-art/4514953564389376"},
 {"URL":"https://www.khanacademy.org/computer-programming/all-tangled-up/4814407441973248"},
 {"URL":"https://www.khanacademy.org/computer-programming/beziers/5335718509543424"},
 {"URL":"https://www.khanacademy.org/computer-programming/colorful-spiral-art/4791817860153344"},
@@ -188,10 +188,12 @@ programs = [{"URL":"https://www.khanacademy.org/computer-programming/crazy-genra
 import os.path
 import urllib2
 import random
+import json
 
-random.shuffle(programs)
+random.shuffle(programs1)
+random.shuffle(programs2)
 
-for (ind, program) in enumerate(programs):
+for (ind, program) in enumerate(programs2):
   fname = 'program_hypno%s.json' % (ind+1)
   if os.path.isfile(fname):
     print "skipping"
@@ -199,9 +201,19 @@ for (ind, program) in enumerate(programs):
   url = program["URL"]
   id = url.split('/')[5]
   url = "https://www.khanacademy.org/api/internal/show_scratchpad?scratchpad_id=%s&casing=camel&lang=en&_=1434914962764" % (id)
-  print url
-  json = urllib2.urlopen(url)
+  resp = urllib2.urlopen(url)
+  resp_json = json.loads(resp)
+  print resp_json["creatorProfile"]["username"]
   output = open(fname, 'wb')
-  output.write(json.read())
+  output.write(resp.read())
   output.close()
+
+for (ind, program) in enumerate(programs2):
+  url = program["URL"]
+  id = url.split('/')[5]
+  url = "https://www.khanacademy.org/api/internal/show_scratchpad?scratchpad_id=%s&casing=camel&lang=en&_=1434914962764" % (id)
+  resp = urllib2.urlopen(url)
+  resp_json = json.loads(resp.read())
+  print "<li><a href='%s'>%s</a></li>" % (resp_json["scratchpad"]["url"], resp_json["scratchpad"]["title"])
+
 
