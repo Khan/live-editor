@@ -126,8 +126,13 @@ var loadProgram = function(num) {
     if (window.liveEditor) {
        window.liveEditor.remove(); 
     }
+    var url = "program" + num + ".json";
+    if (window.location.search.indexOf('hypno') > -1) {
+      url = "program_hypno" + num + ".json";
+    } 
+
     $.ajax({type: "GET",
-     url: "program" + num + ".json",
+     url: url,
      success: function(data) {
          var title = data.scratchpad.title;
          var code = data.scratchpad.revision.code;

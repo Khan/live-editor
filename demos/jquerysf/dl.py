@@ -158,6 +158,33 @@ programs =  [{"URL":"https://www.khanacademy.org/computer-programming/pi-is-beau
 {"URL":"https://www.khanacademy.org/computer-programming/winstons-lens-flare/6427485556310016"},
 {"URL":"https://www.khanacademy.org/computer-programming/ying-yang/5520248507858944"}]
 
+programs = [{"URL":"https://www.khanacademy.org/computer-programming/crazy-genrative-hipno-art/4514953564389376"},
+{"URL":"https://www.khanacademy.org/computer-programming/all-tangled-up/4814407441973248"},
+{"URL":"https://www.khanacademy.org/computer-programming/beziers/5335718509543424"},
+{"URL":"https://www.khanacademy.org/computer-programming/colorful-spiral-art/4791817860153344"},
+{"URL":"https://www.khanacademy.org/computer-programming/colors/4660569917489152"},
+{"URL":"https://www.khanacademy.org/computer-programming/crazy-genrative-hipno-art/4514953564389376"},
+{"URL":"https://www.khanacademy.org/computer-programming/emsquiggles/4666594196324352"},
+{"URL":"https://www.khanacademy.org/computer-programming/entry-2/6097923404333056"},
+{"URL":"https://www.khanacademy.org/computer-programming/gener-cellent-art/6735574499196928"},
+{"URL":"https://www.khanacademy.org/computer-programming/generated-art/6349090541666304"},
+{"URL":"https://www.khanacademy.org/computer-programming/generative-art-2nd-entry/5468237041106944"},
+{"URL":"https://www.khanacademy.org/computer-programming/generative-art/4709550731165696"},
+{"URL":"https://www.khanacademy.org/computer-programming/generative-art/4862220058099712"},
+{"URL":"https://www.khanacademy.org/computer-programming/green-and-pink/6472353603256320"},
+{"URL":"https://www.khanacademy.org/computer-programming/hypnotize/5680921623789568"},
+{"URL":"https://www.khanacademy.org/computer-programming/is-this-really-spinning/6686926629371904"},
+{"URL":"https://www.khanacademy.org/computer-programming/my-entry-cool-design-things/5063006323081216"},
+{"URL":"https://www.khanacademy.org/computer-programming/prepare-to-be-hypnotized/5651555439214592"},
+{"URL":"https://www.khanacademy.org/computer-programming/psychedelic-spiral-canvasable/6632578700410880"},
+{"URL":"https://www.khanacademy.org/computer-programming/random-lines/6200273951391744"},
+{"URL":"https://www.khanacademy.org/computer-programming/spinny-thing/4966868513325056"},
+{"URL":"https://www.khanacademy.org/computer-programming/static-colors/5245025124483072"},
+{"URL":"https://www.khanacademy.org/computer-programming/stick-band/5904010848632832"},
+{"URL":"https://www.khanacademy.org/computer-programming/super-random-art-generator/4764028884877312"},
+{"URL":"https://www.khanacademy.org/computer-programming/the-mountain-clif/5169125838159872"},
+{"URL":"https://www.khanacademy.org/computer-programming/the-portal-my-contest-entry-d/6335587432923136"}]
+
 import os.path
 import urllib2
 import random
@@ -165,7 +192,7 @@ import random
 random.shuffle(programs)
 
 for (ind, program) in enumerate(programs):
-  fname = 'program%s.json' % (ind+1)
+  fname = 'program_hypno%s.json' % (ind+1)
   if os.path.isfile(fname):
     print "skipping"
     continue
