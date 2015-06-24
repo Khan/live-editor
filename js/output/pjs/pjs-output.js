@@ -65,12 +65,12 @@ window.PJSOutput = Backbone.View.extend({
 
         this.render();
         this.bind();
- 
+
         this.build(this.$canvas[0]);
-        
-        // The reason why we're passing the whole "output" object instead of 
-        // just imagesDir and soundsDir is because setPaths() is called 
-        // asynchronously on the first run so we don't actually know the value 
+
+        // The reason why we're passing the whole "output" object instead of
+        // just imagesDir and soundsDir is because setPaths() is called
+        // asynchronously on the first run so we don't actually know the value
         // for those paths yet.
         this.resourceCache = new PJSResourceCache({
             canvas: this.canvas,
@@ -464,7 +464,6 @@ window.PJSOutput = Backbone.View.extend({
                 // This returns 0 if not found, which will mean that all
                 // the assertion failures are shown on the first line.
                 var getLineNum = function(stacktrace) {
-                    var err = new Error();
                     TraceKit.remoteFetching = false;
                     TraceKit.collectWindowErrors = false;
                     var stacktrace = TraceKit.computeStackTrace.ofCaller();
@@ -758,7 +757,7 @@ window.PJSOutput = Backbone.View.extend({
             //  they can't serialize.
             var PImage = this.canvas.PImage;
             var isStubbableObject = function(value) {
-                return $.isPlainObject(value) && 
+                return $.isPlainObject(value) &&
                     !(value instanceof PImage);
             };
 
@@ -801,7 +800,7 @@ window.PJSOutput = Backbone.View.extend({
                 }
                 context[global] = contextVal;
             }.bind(this));
-    
+
             this.worker.exec(userCode, context, function(errors, userCode) {
                 if (errors && errors.length > 0) {
                     return callback(errors, userCode);
@@ -1329,7 +1328,7 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     initTests: function(validate) {
-        return this.exec(validate, this.tester.testContext)
+        return this.exec(validate, this.tester.testContext);
     },
 
     exec: function(code) {
