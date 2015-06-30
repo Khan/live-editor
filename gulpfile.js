@@ -22,7 +22,7 @@ gulp.task("templates", function() {
     gulp.src(paths.templates)
         .pipe(changed("build/tmpl", {extension: ".js"}))
         .pipe(handlebars({
-            handlebars: require("handlebars")
+            handlebars: require("gulp-handlebars")
         }))
         .pipe(defineModule("plain"))
         .pipe(declare({
