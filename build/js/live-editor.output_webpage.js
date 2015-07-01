@@ -153,6 +153,7 @@
 
             structure = this.testContext.cleanStructure(structure);
             // HTML challenge tests
+            /* jshint forin:false */
             for (var selector in structure) {
                 var expected = structure[selector];
                 // TODO(jeresig): Maybe find a way to do this such that we can run
@@ -206,6 +207,7 @@
                     if (!(selector in css)) {
                         css[selector] = {};
                     }
+                    /* jshint forin:false */
                     for (var prop in properties) {
                         css[selector][prop] = properties[prop];
                     }
@@ -296,6 +298,7 @@
             var lastFailureMessage = {success: false};
 
             // Attempt to match the selector/property combination against every available piece of CSS
+            /* jshint forin:false */
             for (var selector in css) {
                 // On each pass we propose a new set of wVars
                 // based on the specific set things we matched.
@@ -651,7 +654,15 @@ window.WebpageOutput = Backbone.View.extend({
         this.KA_INFINITE_LOOP = true;
     },
 
-    lint: function(userCode, callback) {
+    lint: function(userCode, skip) {
+        // the deferred isn't required in this case, but we need to match the
+        // same API as the pjs-output.js' lint method.
+        var deferred = $.Deferred();
+        if (skip) {
+            deferred.resolve([]);
+            return deferred;
+        }
+        
         this.userCode = userCode;
         userCode = userCode || "";
 
@@ -679,7 +690,7 @@ window.WebpageOutput = Backbone.View.extend({
             var column = pos - previous.lastIndexOf("\n") - 1;
             var row = (previous.match(/\n/g) || []).length;
 
-            return callback([{
+            deferred.resolve([{
                 row: row,
                 column: column,
                 text: this.getLintMessage(results.error),
@@ -688,9 +699,11 @@ window.WebpageOutput = Backbone.View.extend({
                 lint: results.error,
                 priority: 2
             }]);
+            return deferred;
         }
 
-        callback([]);
+        deferred.resolve([]);
+        return deferred;
     },
 
     flattenError: function(plainError, error, base) {

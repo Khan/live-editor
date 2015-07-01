@@ -374,7 +374,7 @@ var BabyHint = {
                     dist <= BabyHint.EDIT_DISTANCE_THRESHOLD &&
                     dist < keyword.length - 1 && 
                     BabyHint.keywords.indexOf(word) === -1) {
-                    checkedChar = line.indexOf(word, checkedChar + 1)
+                    checkedChar = line.indexOf(word, checkedChar + 1);
                     var error = {
                         row: lineNumber,
                         column: checkedChar,

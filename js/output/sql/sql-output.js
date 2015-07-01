@@ -102,9 +102,17 @@ window.SQLOutput = Backbone.View.extend({
         return errorMessage;
     },
 
-    lint: function(userCode, callback) {
+    lint: function(userCode, skip) {
+        // the deferred isn't required in this case, but we need to match the
+        // same API as the pjs-output.js' lint method.
+        var deferred = $.Deferred();
+        if (skip) {
+            deferred.resolve([]);
+            return deferred;
+        }
+        
         if (!window.SQLOutput.isSupported()) {
-            return callback([{
+            deferred.resolve([{
                 row: -1,
                 column: -1,
                 text: $._("Your browser is not recent enough to show " +
@@ -114,6 +122,7 @@ window.SQLOutput = Backbone.View.extend({
                 lint: undefined,
                 priority: 2
             }]);
+            return deferred;
         }
 
         // To lint we execute each statement in an isolated environment.
@@ -176,7 +185,7 @@ window.SQLOutput = Backbone.View.extend({
                 return true;
             } catch (e) {
                 error = true;
-                callback([{
+                deferred.resolve([{
                     row: lineNumber,
                     column: 0,
                     text: this.getErrorMessage(e.message, statement),
@@ -199,8 +208,10 @@ window.SQLOutput = Backbone.View.extend({
         };
 
         if (!error) {
-            callback([]);
+            deferred.resolve([]);
         }
+        
+        return deferred;
     },
 
     initTests: function(validate) {
@@ -270,7 +281,6 @@ window.SQLOutput = Backbone.View.extend({
         });
 
         var doc = this.getDocument();
-        var oldPageTitle = $(doc).find("head > title").text();
         doc.open();
         doc.write(output);
         doc.close();

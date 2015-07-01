@@ -1,5 +1,5 @@
 describe("Challenge Assertions - SQL", function() {
-    var basicTest = (function() {
+    var basicTest = function() {
         staticTest($._("Create a table and insert some values"), function() {
             var description = $._("Now let's add 3 books into our bookshelf");
             var template = "CREATE TABLE _$1 (id INTEGER, name TEXT, rating " +
@@ -17,7 +17,7 @@ describe("Challenge Assertions - SQL", function() {
                 matchTableColumnCount(templateDB));
             assertMatch(result, description, "INSERT INTO _ VALUES (...);");
         });
-    }).toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
+    }.toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
 
     // No code should not be accepted
     var userCode = "";
@@ -31,7 +31,7 @@ describe("Challenge Assertions - SQL", function() {
 
     // Table only should not be accepted
     userCode = "CREATE TABLE books (id INTEGER, name TEXT, rating " +
-            "INTEGER);" +
+            "INTEGER);";
     assertTest({
         title: "Only a table",
         code: userCode,

@@ -834,7 +834,7 @@ var BabyHint = {
                     dist <= BabyHint.EDIT_DISTANCE_THRESHOLD &&
                     dist < keyword.length - 1 && 
                     BabyHint.keywords.indexOf(word) === -1) {
-                    checkedChar = line.indexOf(word, checkedChar + 1)
+                    checkedChar = line.indexOf(word, checkedChar + 1);
                     var error = {
                         row: lineNumber,
                         column: checkedChar,
@@ -1177,7 +1177,7 @@ function PJSResourceCache(options) {
 // Execution is delayed once a getImage/getSound appears in the source code
 // and none of the resources are cached. Execution begins once all the
 // resources have loaded.
-PJSResourceCache.prototype.cacheResources = function(userCode, callback) {
+PJSResourceCache.prototype.cacheResources = function(userCode) {
     var resourceRecords = this.getResourceRecords(userCode);
 
     // Insert the images into a hidden div to cause them to load
@@ -1195,7 +1195,7 @@ PJSResourceCache.prototype.cacheResources = function(userCode, callback) {
 
     var promises = resourceRecords.map(this.loadResource.bind(this));
 
-    $.when.apply($, promises).then(callback);
+    return $.when.apply($, promises);
 };
 
 PJSResourceCache.prototype.getResourceRecords = function(userCode) {
@@ -1219,10 +1219,8 @@ PJSResourceCache.prototype.loadResource = function(resourceRecord) {
     switch (resourceRecord.type) {
         case "image":
             return this.loadImage(filename);
-            break;
         case "sound":
             return this.loadSound(filename);
-            break;
         default:
             break;
     }
@@ -1274,13 +1272,10 @@ PJSResourceCache.prototype.getResource = function(filename, type) {
     switch (type) {
         case "image":
             return this.getImage(filename);
-            break;
         case "sound":
             return this.getSound(filename);
-            break;
         default:
             throw "we can't load '" + type + "' resources yet";
-            break;
     }
 };
 
@@ -1637,6 +1632,7 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     bindProcessing: function(obj, bindTo) {
+        /* jshint forin:false */
         for (var prop in obj) {
             var val = obj[prop];
 
@@ -1859,7 +1855,20 @@ window.PJSOutput = Backbone.View.extend({
         return propList.join(",");
     },
 
-    lint: function(userCode, callback) {
+    /**
+     * Lints user code.
+     * 
+     * @param userCode: code to lint
+     * @param skip: skips linting if true and resolves Deferred immediately
+     * @returns {$.Deferred} resolves an array of lint errors
+     */
+    lint: function(userCode, skip) {
+        var deferred = $.Deferred();
+        if (skip) {
+            deferred.resolve([]);
+            return deferred;
+        }
+        
         // Build a string of options to feed into JSHint
         // All properties are defined in the config
         var hintCode = "/*jshint " +
@@ -1877,7 +1886,11 @@ window.PJSOutput = Backbone.View.extend({
             "*/\n" + userCode;
 
         var done = function(hintData, hintErrors) {
-            this.lintDone(userCode, hintData, hintErrors, callback);
+            this.extractGlobals(hintData);
+            this.output.results.assertions = [];
+            var lintErrors = this.mergeErrors(hintErrors,
+                BabyHint.babyErrors(userCode, hintErrors));
+            deferred.resolve(lintErrors);
         }.bind(this);
 
         // Don't run JSHint if there is no code to run
@@ -1886,35 +1899,23 @@ window.PJSOutput = Backbone.View.extend({
         } else {
             this.hintWorker.exec(hintCode, done);
         }
+        
+        return deferred;
     },
 
-    lintDone: function(userCode, hintData, hintErrors, callback) {
-        var externalProps = this.props;
-
+    /**
+     * Extracts globals from the data return from the jshint and stores them
+     * in this.globals.  Used in runCode, hasOrHadDrawLoop, and injectCode.
+     * 
+     * @param hintData: an object containing JSHINT.data after jshint-worker.js
+     *      runs JSHINT(userCode).
+     */
+    extractGlobals: function(hintData) {
         this.globals = {};
-        this.output.results.assertions = [];
-
-        if (hintData && hintData.globals) {
-            for (var i = 0, l = hintData.globals.length; i < l; i++) {
-                var global = hintData.globals[i];
-
-                // Do this so that declared variables are gobbled up
-                // into the global context object
-                if (!externalProps[global] && !(global in this.canvas)) {
-                    this.canvas[global] = undefined;
-                }
-
-                this.globals[global] = true;
-            }
-        }
-
-        var errors = this.mergeErrors(hintErrors,
-            BabyHint.babyErrors(userCode, hintErrors));
-
+        
         // We only need to extract globals when the code has passed
         // the JSHint check
-        this.globals = {};
-
+        var externalProps = this.props;
         if (hintData && hintData.globals) {
             for (var i = 0, l = hintData.globals.length; i < l; i++) {
                 var global = hintData.globals[i];
@@ -1924,12 +1925,9 @@ window.PJSOutput = Backbone.View.extend({
                 if (!externalProps[global] && !(global in this.canvas)) {
                     this.canvas[global] = undefined;
                 }
-
                 this.globals[global] = true;
             }
         }
-
-        callback(errors);
     },
 
     test: function(userCode, tests, errors, callback) {
@@ -2129,11 +2127,7 @@ window.PJSOutput = Backbone.View.extend({
             }.bind(this));
         }.bind(this);
 
-        if (this.globals.getImage || this.globals.getSound) {
-            this.resourceCache.cacheResources(userCode, runCode);
-        } else {
-            runCode();
-        }
+        this.resourceCache.cacheResources(userCode).then(runCode);
     },
 
     /*

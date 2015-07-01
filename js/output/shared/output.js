@@ -2,6 +2,8 @@ window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
+    lintErrors: [],
+    runtimeErrors: [],
 
     initialize: function(options) {
         this.render();
@@ -15,6 +17,17 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (options.outputType) {
             this.setOutput(options.outputType);
         }
+        
+        // Add a timestamp property to the lintErrors and runtimeErrors arrays
+        // to keep track of which version of the code the errors are for.  A
+        // new timestamp is created when runCode is called and is assigned to
+        // lintErrors and runtimeErrors (if there is no lint) when linting and
+        // running of the code complete.  The timestamps are used later to 
+        // ensure we're not report stale errors that have already been fixed
+        // to the parent.  Adding properties to an array works because Array is
+        // essentially a special subclass of Object.
+        this.lintErrors.timestamp = 0;
+        this.runtimeErrors.timestamp = 0;
         
         this.bind();
     },
@@ -118,7 +131,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code, undefined, data.cursor, data.noLint);
+            this.runCode(data.code, undefined, data.noLint);
         }
 
         if (data.onlyRunTests != null) {
@@ -182,97 +195,132 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.validate = validate;
     },
 
-    runCode: function(userCode, callback, cursor, noLint) {
+    /**
+     * Performs all steps necessary to run code.
+     * - lint
+     * - actually run the code
+     * - manage lint and runtime errors
+     * - call the callback (via buildDone) to run tests
+     * 
+     * @param userCode: code to run
+     * @param callback: used by the tests
+     * @param noLint: disables linting if true, first run still lints
+     * 
+     * TODO(kevinb) return a Deferred and move test related code to test_utils
+     */
+    runCode: function(userCode, callback, noLint) {
         this.currentCode = userCode;
-
+        var timestamp = Date.now();
+        
         this.results = {
+            timestamp: timestamp,
             code: userCode,
             errors: [],
             assertions: []
         };
-        this.lastSent = undefined;
-
-        var buildDone = function(errors) {
-            errors = this.cleanErrors(errors || []);
-
-            if (!this.loaded) {
-                this.postParent({ loaded: true });
-                this.loaded = true;
-            }
-
-            // Update results
-            this.results.errors = errors;
-            this.phoneHome();
-
-            this.toggle(!errors.length);
-
-            // A callback for working with a test suite
-            if (callback) {
-                //This is synchronous
-                this._test(userCode, this.validate, errors, function(errors, testResults) {
-                    callback(errors, testResults);
-                    return;
-                });
-            // Normal case
-            } else {
-                // This is debounced (async)
-                if (this.validate !== "") {
-                    this.test(userCode, this.validate, errors, function(errors, testResults) {
-                        this.results.errors = errors;
-                        this.results.tests = testResults;
-                        this.phoneHome();
-                    }.bind(this));   
-                }
-            }
-        }.bind(this);
-
-        var lintDone = function(errors) {
-            if (errors.length > 0 || this.onlyRunTests) {
-                return buildDone(errors);
-            }
-
-            // Then run the user's code
-            try {
-                this.output.runCode(userCode, function(errors) {
-                    buildDone(errors);
-                }, cursor);
-
-            } catch (e) {
-                buildDone([e]);
-            }
-        }.bind(this);
+        
+        var skip = noLint && this.firstLint;
 
         // Always lint the first time, so that PJS can populate its list of globals
-        if (noLint && this.firstLint) {
-            lintDone([]);
+        this.output.lint(userCode, skip).then(function (lintErrors) {
+            this.lintErrors = lintErrors;
+            this.lintErrors.timestamp = timestamp;
+            return this.lintDone(userCode, timestamp);
+        }.bind(this)).then(function () {
+            this.buildDone(userCode, callback);
+        }.bind(this));
+        
+        this.firstLint = true;
+    },
+
+    /**
+     * Runs the code and records runtime errors.  Returns immediately if there
+     * are any lint errors.
+     * 
+     * @param userCode
+     * @param timestamp
+     * @returns {$.Deferred}
+     */
+    lintDone: function(userCode, timestamp) {
+        var deferred = $.Deferred();
+        if (this.lintErrors.length > 0 || this.onlyRunTests) {
+            deferred.resolve();
+            return deferred;
+        }
+
+        // Then run the user's code
+        try {
+            this.output.runCode(userCode, function(runtimeErrors) {
+                this.runtimeErrors = runtimeErrors;
+                this.runtimeErrors.timestamp = timestamp;
+                deferred.resolve();
+            }.bind(this));
+
+        } catch (e) {
+            if (this.outputs.hasOwnProperty('pjs')) {
+                this.runtimeErrors = [e];
+            }
+            deferred.resolve();
+        }
+        return deferred;
+    },
+
+    /**
+     * Posts results to the the parent frame and runs tests if a callback has 
+     * been provided or if the .validate property is set.
+     * 
+     * @param userCode
+     * @param callback
+     */
+    buildDone: function(userCode, callback) {
+        var errors = [];
+        // only use lint errors if the timestamp isn't stale
+        if (this.results.timestamp === this.lintErrors.timestamp) {
+            errors = errors.concat(this.lintErrors);
+        }
+        // only use runtime errors if the timestamp isn't stale
+        if (this.results.timestamp === this.runtimeErrors.timestamp) {
+            errors = errors.concat(this.runtimeErrors);
+        }
+        errors = this.cleanErrors(errors || []);
+
+        if (!this.loaded) {
+            this.postParent({ loaded: true });
+            this.loaded = true;
+        }
+
+        // Update results
+        this.results.errors = errors;
+        this.phoneHome();
+
+        this.toggle(!errors.length);
+
+        // A callback for working with a test suite
+        if (callback) {
+            //This is synchronous
+            this._test(userCode, this.validate, errors, function(errors, testResults) {
+                callback(errors, testResults);
+            });
+            // Normal case
         } else {
-            this.lint(userCode, lintDone);
-            this.firstLint = true;
+            // This is debounced (async)
+            if (this.validate !== "") {
+                this.test(userCode, this.validate, errors, function(errors, testResults) {
+                    this.results.errors = errors;
+                    this.results.tests = testResults;
+                    this.phoneHome();
+                }.bind(this));
+            }
         }
     },
 
     /**
-     * Send the most up to date errors/test results to the parent frame
+     * Send the most up to date errors/test results to the parent frame.
      */
     phoneHome: function() {
-        // Our handling of errors is leaky.
-        // In the old design errors were passed from function to function 
-        // via arguments to callbacks. Recently I have added asynchronous sources 
-        // of errors such as those from breaking out of an infinite loop.
-        // These two different mechanisms mean that it's possible for errors to 
-        // get lost, but it can't be fixed without rewriting how all of the callbacks
-        // work. As a work around if we ever see an error, never erase it.
-        // I made the judgement that rather than trying to merge the two it's ok if 
-        // earlier errors cover newer ones, since once the user fixes the earlier errors 
-        // the new ones will appear, meaning we never leave the user stuck wondering what to do. 
-        // I expect that to be good enough compromise.
-        if (this.lastSent && this.lastSent.errors && this.lastSent.errors.length) {
-            this.results.errors = this.lastSent.errors;
-        } 
         this.postParent({
             results: this.results
         });
-        this.lastSent = JSON.parse(JSON.stringify(this.results));
     },
 
 

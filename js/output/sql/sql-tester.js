@@ -6,18 +6,18 @@ var SQLTester = function(options) {
 SQLTester.prototype = new OutputTester();
 
 
-/*
- * Returns a callback which will accept arguments and make a constriant
- * used internally to create shorthand functions that accept arguments
- */
-var constraintPartial = function(callback) {
-    return function() {
-        return {
-            variables: arguments,
-            fn: callback
-        };
-    };
-};
+///*
+// * Returns a callback which will accept arguments and make a constriant
+// * used internally to create shorthand functions that accept arguments
+// */
+//var constraintPartial = function(callback) {
+//    return function() {
+//        return {
+//            variables: arguments,
+//            fn: callback
+//        };
+//    };
+//};
 
 /**
  * Small collection of some utility functions to tack onto the function
@@ -257,7 +257,7 @@ SQLTester.prototype.testMethods = {
             .exec(callback.toString())[1];
         var params = paramText.match(/[$_a-zA-z0-9]+/g);
 
-        for (key in params) {
+        for (var key in params) {
             if (params[key][0] !== "$") {
                 if (window.console) {
                     console.warn("Invalid parameter in constraint " +

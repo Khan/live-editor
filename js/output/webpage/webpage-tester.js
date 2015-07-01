@@ -153,6 +153,7 @@
 
             structure = this.testContext.cleanStructure(structure);
             // HTML challenge tests
+            /* jshint forin:false */
             for (var selector in structure) {
                 var expected = structure[selector];
                 // TODO(jeresig): Maybe find a way to do this such that we can run
@@ -206,6 +207,7 @@
                     if (!(selector in css)) {
                         css[selector] = {};
                     }
+                    /* jshint forin:false */
                     for (var prop in properties) {
                         css[selector][prop] = properties[prop];
                     }
@@ -296,6 +298,7 @@
             var lastFailureMessage = {success: false};
 
             // Attempt to match the selector/property combination against every available piece of CSS
+            /* jshint forin:false */
             for (var selector in css) {
                 // On each pass we propose a new set of wVars
                 // based on the specific set things we matched.
