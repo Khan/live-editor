@@ -47,7 +47,7 @@ window.TipBar = Backbone.View.extend({
     initialize: function(options) {
         this.liveEditor = options.liveEditor;
         this.pos = 0;
-        this.texts = [];
+        this.errors = [];
         this.render();
         this.bind();
     },
@@ -72,7 +72,7 @@ window.TipBar = Backbone.View.extend({
         this.$el.on("click", ".tipbar .tipnav a", function(e) {
             if (!$(this).hasClass("ui-state-disabled")) {
                 self.pos += $(this).hasClass("next") ? 1 : -1;
-                self.show();
+                self.update();
             }
 
             self.liveEditor.editor.focus();
@@ -80,8 +80,8 @@ window.TipBar = Backbone.View.extend({
             return false;
         });
 
-        this.$el.on("click", ".tipbar .text-wrap a", function(e) {
-            var error = self.texts[self.pos];
+        this.$el.on("click", ".tipbar .show-me a", function(e) {
+            var error = self.errors[self.pos];
 
             self.liveEditor.editor.setCursor(error);
             self.liveEditor.editor.setErrorHighlight(true);
@@ -90,31 +90,30 @@ window.TipBar = Backbone.View.extend({
         });
     },
 
-    show: function(texts) {
-        if (texts) {
-            this.pos = 0;
-            this.texts = texts;
-        } else {
-            texts = this.texts;
-        }
+    setErrors: function(errors) {
+        this.errors = errors;
+        this.update(false);
+    },
 
-
-        var pos = this.pos;
+    update: function(show) {
+        var errors = this.errors;
+        var pos = errors[this.pos] == null ? 0 : this.pos;
         var bar = this.$el.find(".tipbar");
 
         // Inject current text
         bar
-            .find(".current-pos").text(texts.length > 1 ? (pos + 1) + "/" + texts.length : "").end()
-            .find(".message").html(texts[pos].text || texts[pos] || "").end()
+            .find(".current-pos").text(errors.length > 1 ? (pos + 1) + "/" + errors.length : "").end()
+            .find(".message").html(errors[pos].text || errors[pos] || "").end()
             .find("a.prev").toggleClass("ui-state-disabled", pos === 0).end()
-            .find("a.next").toggleClass("ui-state-disabled", pos + 1 === texts.length).end();
-        
+            .find("a.next").toggleClass("ui-state-disabled", pos + 1 === errors.length).end();
+
         // it could be undefined, null, or -1
-        this.$el.find(".show-me").toggle(texts[pos].row > -1);
+        this.$el.find(".show-me").toggle(errors[pos].row > -1);
 
-        bar.find(".tipnav").toggle(texts.length > 1);
-
-        bar.show();
+        bar.find(".tipnav").toggle(errors.length > 1);
+        if (show) {
+            bar.show();
+        }
     },
 
     hide: function() {
@@ -123,8 +122,8 @@ window.TipBar = Backbone.View.extend({
         clearTimeout(this.errorDelay);
     },
 
-    toggleErrors: function(errors) {
-        var hasErrors = !!errors.length;
+    toggleErrors: function(errors, delay) {
+        var hasErrors = errors.length > 0;
 
         this.$overlay.toggle(hasErrors);
 
@@ -133,10 +132,17 @@ window.TipBar = Backbone.View.extend({
             return;
         }
 
+        this.setErrors(errors);
+
         clearTimeout(this.errorDelay);
-        this.errorDelay = setTimeout( function() {
-            this.show(errors);
-        }.bind(this), 1500);
+        this.errorDelay = setTimeout(function() {
+            this.update(true);
+        }.bind(this), delay);
+    },
+
+    setErrorPosition: function(errorPos) {
+        this.pos = errorPos;
+        this.update(true);
     }
 });
 this["Handlebars"] = this["Handlebars"] || {};
@@ -835,7 +841,10 @@ window.LiveEditor = Backbone.View.extend({
         OUTPUT_FRAME: "#output-frame",
         OUTPUT_DIV: "#output",
         ALL_OUTPUT: "#output, #output-frame",
-        RESTART_BUTTON: "#restart-code"
+        RESTART_BUTTON: "#restart-code",
+        GUTTER_ERROR: ".ace_error",
+        ERROR_BUDDY_HAPPY: ".error-buddy-happy",
+        ERROR_BUDDY_THINKING: ".error-buddy-thinking",
     },
 
     mouseCommands: ["move", "over", "out", "down", "up"],
@@ -915,6 +924,14 @@ window.LiveEditor = Backbone.View.extend({
             }.bind(this)
         });
 
+        // TEMP: Set up a query param for testing the new error experience
+        // Looks to see if "new_error_experience=yes" is in the url,
+        //  if it is, then we use the new error buddy behaviour.
+        this.newErrorExperience = false;
+        if (window.location.search.indexOf("new_error_experience=yes") !== -1) {
+            this.newErrorExperience = true;
+        }
+
         // Set up the editor
         this.editor = new this.editors[this.editorType]({
             el: this.dom.EDITOR,
@@ -929,8 +946,37 @@ window.LiveEditor = Backbone.View.extend({
             type: this.editorType
         });
 
-        // linting in the webpage environment generates slowparseResults which 
-        // is used in the runCode step so skipping linting won't work in that 
+        // Looks to see if "autosuggestToggle=yes" is in the url,
+        //  if it is, then we disable the live autosuggestions.
+        if (window.location.search.indexOf("autosuggestToggle=yes") !== -1) {
+            var tooltipEngine = this.config.editor.tooltipEngine;
+
+            // Overrides whatever is in localStorage.
+            // TODO (anyone) remove this when the URL param is removed.
+            window.localStorage["autosuggest"] = "true";
+
+            // Allows toggling of the autosuggestions.
+            this.editor.editor.commands.addCommand({
+                name: 'toggleAutosuggest',
+                bindKey: {
+                    win: 'Ctrl+Alt+A',
+                    mac: 'Command+Option+A'
+                },
+                exec: function(editor) {
+                    var status = window.localStorage["autosuggest"] === "true";
+
+                    tooltipEngine.setEnabledStatus(status !== true);
+
+                    window.localStorage.setItem("autosuggest", String(status !== true));
+                }
+            });
+        } else {
+            // since we load the enabled value from localStorage...
+            this.config.editor.tooltipEngine.setEnabledStatus("true");
+        }
+
+        // linting in the webpage environment generates slowparseResults which
+        // is used in the runCode step so skipping linting won't work in that
         // environment without some more work
         if (this.editorType === "ace_pjs") {
             this.noLint = false;
@@ -1061,7 +1107,7 @@ window.LiveEditor = Backbone.View.extend({
                         });
                     }
                     self.editor.once("changeCursor", cursorDirty);
-                }, 0);                
+                }, 0);
             }
         };
         this.editor.once("changeCursor", cursorDirty);
@@ -1215,6 +1261,16 @@ window.LiveEditor = Backbone.View.extend({
             self.record.log("restart");
         });
 
+        // Handle the gutter errors
+        $el.on("click", this.dom.GUTTER_ERROR, function() {
+            self.setErrorPosition(parseInt($(this).text(), 10));
+        });
+
+        // Handle clicks on the thinking Error Buddy
+        $el.on("click", this.dom.ERROR_BUDDY_THINKING, function() {
+            self.setErrorPosition(0);
+        });
+
         // Bind the handler to start a new recording
         $el.find("#record").on("click", function() {
             self.recordHandler(function(err) {
@@ -1271,7 +1327,7 @@ window.LiveEditor = Backbone.View.extend({
             // Sometimes when Flash is blocked or the browser is slower,
             //  soundManager will fail to initialize at first,
             //  claiming no response from the Flash file.
-            // To handle that, we attempt a reboot 3 seconds after each 
+            // To handle that, we attempt a reboot 3 seconds after each
             //  timeout, clearing the timer if we get an onready during
             //  that time (which happens if user un-blocks flash).
             onready: function() {
@@ -1388,7 +1444,7 @@ window.LiveEditor = Backbone.View.extend({
 
     audioReadyToPlay: function() {
         // NOTE(pamela): We can't just check bytesLoaded,
-        //  because IE reports null for that 
+        //  because IE reports null for that
         // (it seems to not get the progress event)
         // So we've changed it to also check loaded.
         // If we need to, we can reach inside the HTML5 audio element
@@ -1814,43 +1870,42 @@ window.LiveEditor = Backbone.View.extend({
         if (data.validate != null) {
             this.validation = data.validate;
         }
-        
+
         if (data.results) {
             this.trigger("runDone");
         }
 
         if (this.editorType.indexOf("ace_") === 0 && data.results &&
                 data.results.assertions) {
-            // Remove previously added markers
-            var markers = this.editor.editor.session.getMarkers();
-            _.each(markers, function(marker, markerId) {
-                this.editor.editor.session.removeMarker(markerId);
-            }.bind(this));
 
+            // Add gutter warning markers for assertions in the editor.
+            // E.g. Add `Program.assertEqual(2, 4);` to the live editor to see
+            // an example.
             var annotations = [];
-            for (var i = 0; i < data.results.assertions.length; i++) { 
+            for (var i = 0; i < data.results.assertions.length; i++) {
+
                 var unitTest = data.results.assertions[i];
                 annotations.push({
-                    row: unitTest.row, 
-                    column: unitTest.column, 
+                    row: unitTest.row,
+                    column: unitTest.column,
                     text: unitTest.text,
-                    type: "warning" 
+                    type: "warning"
                 });
-                // Underline the problem line to make it more obvious
-                //  if they don't notice the gutter icon
-                var AceRange = ace.require("ace/range").Range;
-                var line = this.editor.editor.session
-                    .getDocument().getLine(unitTest.row);
-                this.editor.editor.session.addMarker(
-                   new AceRange(unitTest.row, 0, unitTest.row, line.length),
-                   "ace_problem_line", "text", false);
+                this.addUnderlineMarker(unitTest.row);
            }
 
-           this.editor.editor.session.setAnnotations(annotations);
+            // Remove previously added markers
+            this.removeMarkers();
+            // Add new gutter markers
+            this.editor.editor.session.setAnnotations(annotations);
+        }
+
+        if (this.newErrorExperience && this.errorState.length === 0) {
+            this.setHappyState();
         }
 
         if (data.results && _.isArray(data.results.errors)) {
-            this.tipbar.toggleErrors(data.results.errors);
+            this.handleErrors(data.results.errors);
         }
 
         // Set the line visibility in the editor
@@ -1866,6 +1921,166 @@ window.LiveEditor = Backbone.View.extend({
         // Log the recorded action
         if (data.log) {
             this.record.log.apply(this.record, data.log);
+        }
+    },
+
+    addUnderlineMarker: function (row) {
+        // Underline the problem line to make it more obvious
+        //  if they don't notice the gutter icon
+        var AceRange = ace.require("ace/range").Range;
+        var line = this.editor.editor.session.getDocument().getLine(row);
+        this.editor.editor.session.addMarker(
+           new AceRange(row, 0, row, line.length),
+           "ace_problem_line", "text", false);
+    },
+
+    removeMarkers: function() {
+        // Remove previously added markers and decorations
+        var session = this.editor.editor.session;
+        var markers = session.getMarkers();
+        _.each(markers, function(marker, markerId) {
+            session.removeMarker(markerId);
+        });
+    },
+
+    removeGutterDecorations: function() {
+        // Remove old gutter decorations
+        var session = this.editor.editor.session;
+        _.each(this.gutterDecorations, function(errorOffset, errorRow) {
+            session.removeGutterDecoration(errorRow - 1, "ace_error");
+        });
+    },
+
+    gutterDecorations: [],
+    errorCursorRow: null,
+    showError: null,
+
+    handleErrors: function(errors) {
+
+        if (!this.newErrorExperience) {
+            this.tipbar.toggleErrors(errors, 1500);
+            return;
+        }
+
+        // New Error Experience:
+
+        // We want to check if the errors we see are caused by the line the
+        // user is currently on, and that they have just typed them, and if so
+        // give the user some time to finish what they were typing.
+
+        // When you start with no errors, the errorCursorRow is null.
+        // When you make an error, the errorCursorRow is set to the current row.
+        // When we register another error, we check if the errorCursorRow is the
+        // same as the current row:
+        //  -if it is, we set a timer for one minute of no typing before showing
+        //   you the error so you have a chance to finish what you're doing.
+        //  -if it is not, we show the error right away.
+
+        var currentRow = this.editor.getCursor().row;
+
+        // Reset the timer
+        window.clearInterval(this.errorTimeout);
+
+        if (errors.length) {
+            // There is an error
+            var session = this.editor.editor.session;
+
+            // Remove old gutter markers and decorations
+            this.removeMarkers();
+            this.removeGutterDecorations();
+
+            // Add gutter decorations
+            var gutterDecorations = [];
+            _.each(errors, function(error, index) {
+                // Create a log of which row corresponds with which error
+                // message so that when the user clicks a gutter marker they
+                // are shown the relevant error message.
+                if (gutterDecorations[error.row + 1] == null) {
+                    gutterDecorations[error.row + 1] = index;
+                    session.addGutterDecoration(error.row, "ace_error");
+                }
+
+                this.addUnderlineMarker(error.row);
+            }, this);
+
+            this.gutterDecorations = gutterDecorations;
+
+            // Set the errors
+            this.setErrors(errors);
+
+            var onlyErrorsOnThisLine = this.errorCursorRow === null ||
+                                       this.errorCursorRow === currentRow;
+            if (this.errorCursorRow === null) {
+                this.errorCursorRow = currentRow;
+            }
+
+            // If we were already planning to show the error, or if there are
+            // errors on more than the current line, or we have errors and the
+            // program was just loaded (i.e. this.showError is null) then we
+            // should show the error now. Otherwise we'll delay showing the
+            // error message to give them time to type.
+            this.showError = this.showError ||
+                             !onlyErrorsOnThisLine ||
+                             this.showError === null;
+
+            if (this.showError) {
+                // We've already timed out or moved to another line, so show
+                // the error.
+                this.setErrorState();
+            } else if (onlyErrorsOnThisLine) {
+                // There are new errors caused by typing on this line, so let's
+                // give the typer time to finish what they were writing. We'll
+                // show the tipbar if a full minute has gone by without typing.
+                this.setThinkingState();
+
+                this.errorTimeout = setTimeout(function() {
+                    this.setErrorState();
+                }.bind(this), 60000);
+            }
+        } else {
+            // If there are no errors, remove the gutter decorations that marked
+            // the errors and reset our state.
+            this.removeGutterDecorations();
+            this.setHappyState();
+            this.showError = false;
+            this.errorCursorRow = null;
+        }
+    },
+
+    // This is the current error state of Oh Noes Guy.
+    // His state can be one of:
+    // - happy (no errors)
+    // - thinking (the ambigous state where there may be an error in what the
+    //             typer is currently typing)
+    // - error (there is an error that we want to display prominently)
+    errorState: "",
+    setErrors: function(errors) {
+        this.tipbar.setErrors(errors);
+    },
+    setErrorPosition: function(errorPos) {
+        this.setErrorState();
+        this.tipbar.setErrorPosition(this.gutterDecorations[errorPos]);
+    },
+    setErrorState: function() {
+        this.errorState = "error";
+        this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
+        this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();
+        this.tipbar.update(true);
+    },
+    setThinkingState: function() {
+        if (this.errorState !== "thinking") {
+            this.errorState = "thinking";
+            this.tipbar.hide();
+            this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();
+            this.$el.find(this.dom.ERROR_BUDDY_THINKING).show();
+        }
+    },
+    setHappyState: function() {
+        if (this.errorState !== "happy") {
+            this.errorState = "happy";
+            this.tipbar.hide();
+            this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
+            this.$el.find(this.dom.ERROR_BUDDY_HAPPY).show();
         }
     },
 
@@ -1897,7 +2112,7 @@ window.LiveEditor = Backbone.View.extend({
      *
      * A note about the throttling:
      * This limits updates to 50FPS. No point in updating faster than that.
-     * 
+     *
      * DO NOT CALL THIS DIRECTLY
      * Instead call markDirty because it will handle
      * throttling requests properly.
@@ -1923,10 +2138,29 @@ window.LiveEditor = Backbone.View.extend({
 
         this.postFrame(options);
     }, 20),
-    
+
     markDirty: function() {
-        // They're typing. Hide the tipbar to give them a chance to fix things up
-        this.tipbar.hide();
+        // makeDirty is called when you type something in the editor. When this
+        // happens, we want to run the code, but also want to throttle how often
+        // we re-run so we can wait for the results of running it to come back.
+        // We keep track of the state using clean/running/dirty markers.
+
+        // The state of the output starts out "clean": the editor and the output
+        // are in sync.
+        // When you type, markDirty gets called, which will mark the state as
+        // "running" and starts of runCode in the background. Since runCode is
+        // async, if you type again while it's running then the output state
+        // will get set to "dirty".
+        // When runCode finishes it will call runDone, which will either set the
+        // state back to clean (if it was running before), or will run again if
+        // the state was dirty.
+        // If runCode takes more than 500ms then runDone will be called and we
+        // set the state back to "clean".
+
+        if (!this.newErrorExperience) {
+            this.tipbar.hide();
+        }
+
         if (this.outputState === "clean") {
             // We will run at the end of this code block
             // This stops replace from trying to execute code
@@ -1934,13 +2168,17 @@ window.LiveEditor = Backbone.View.extend({
             setTimeout(this.runCode.bind(this), 0);
             this.outputState = "running";
 
-            // 500ms is an arbitrary timeout. Hopefully long enough for reasonable programs
-            // to execute, but short enough for editor to not freeze
-            this.runTimeout = setTimeout(function() { this.trigger("runDone"); }.bind(this), 500);
+            // 500ms is an arbitrary timeout. Hopefully long enough for
+            // reasonable programs to execute, but short enough for editor to
+            // not freeze.
+            this.runTimeout = setTimeout(function() {
+                this.trigger("runDone");
+            }.bind(this), 500);
         } else {
             this.outputState = "dirty";
         }
     },
+
     // This will either be called when we receive the results
     // Or it will timeout.
     runDone: function() {
@@ -1951,26 +2189,10 @@ window.LiveEditor = Backbone.View.extend({
             this.markDirty();
         }
     },
-    // This stops us from sending  any updates until
+
+    // This stops us from sending any updates until the current run has finished
     // Reset output state to clean as a part of the frame load handler
     outputState: "dirty",
-
-    getScreenshot: function(callback) {
-        // Unbind any handlers this function may have set for previous
-        // screenshots
-        $(window).unbind("message.getScreenshot");
-
-        // We're only expecting one screenshot back
-        $(window).bind("message.getScreenshot", function(e) {
-            // Only call if the data is actually an image!
-            if (/^data:/.test(e.originalEvent.data)) {
-                callback(e.originalEvent.data);
-            }
-        });
-
-        // Ask the frame for a screenshot
-        this.postFrame({ screenshot: true });
-    },
 
     updateCanvasSize: function(width, height) {
         width = width || this.defaultOutputWidth;
@@ -1992,7 +2214,7 @@ window.LiveEditor = Backbone.View.extend({
         // Unbind any handlers this function may have set for previous
         // screenshots
         $(window).off("message.getScreenshot");
-    
+
         // We're only expecting one screenshot back
         $(window).on("message.getScreenshot", function(e) {
             // Only call if the data is actually an image!
@@ -2000,7 +2222,7 @@ window.LiveEditor = Backbone.View.extend({
                 callback(e.originalEvent.data);
             }
         });
-    
+
         // Ask the frame for a screenshot
         this.postFrame({ screenshot: true });
     },

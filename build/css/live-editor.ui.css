@@ -201,9 +201,25 @@
     margin-right: 5px;
 }
 
-.scratchpad-wrap .scratchpad-toolbar .simple-button.pull-left {
+.scratchpad-wrap .scratchpad-toolbar .simple-button.pull-right {
     float: right;
     margin-left: 5px;
+}
+
+.scratchpad-wrap .error-buddy-resting {
+    color: #4A7040;
+    display: inline-block;
+    height: 35px;
+    position: relative;
+    white-space: nowrap;
+}
+.scratchpad-wrap .error-buddy-resting .error-buddy-happy,
+.scratchpad-wrap .error-buddy-resting .error-buddy-thinking {
+    position: absolute;
+}
+.scratchpad-wrap .error-buddy-resting img {
+    height: 35px;
+    vertical-align: middle;
 }
 
 .scratchpad-editor-bigplay-button,

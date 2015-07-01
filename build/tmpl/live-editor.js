@@ -12,9 +12,14 @@ function program1(depth0,data) {
 function program3(depth0,data) {
   
   
-  return "Restart";}
+  return "Hmm...";}
 
 function program5(depth0,data) {
+  
+  
+  return "Restart";}
+
+function program7(depth0,data) {
   
   var buffer = "", stack1;
   buffer += "\n                <a href=\"\" class=\"draw-color-button\" id=\"";
@@ -24,27 +29,27 @@ function program5(depth0,data) {
   buffer += escapeExpression(stack1) + "\">\n                    <span></span>\n                </a>\n                ";
   return buffer;}
 
-function program7(depth0,data) {
+function program9(depth0,data) {
   
   
   return "Record";}
 
-function program9(depth0,data) {
+function program11(depth0,data) {
   
   
   return "Loading...";}
 
-function program11(depth0,data) {
+function program13(depth0,data) {
   
   
   return "Enable Flash to load audio:";}
 
-function program13(depth0,data) {
+function program15(depth0,data) {
   
   
   return "Play";}
 
-function program15(depth0,data) {
+function program17(depth0,data) {
   
   
   return "Loading audio...";}
@@ -74,10 +79,21 @@ function program15(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</span>\n            </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar\">\n            <button id=\"restart-code\"\n                class=\"simple-button pull-right\">\n                <span class=\"icon-refresh\"></span>\n                ";
+  buffer += "</span>\n            </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar\">\n            <div class=\"error-buddy-resting\">\n                <div class=\"error-buddy-happy\" style=\"display:none;\">\n                    <img src=\"/images/scratchpads/ohnoes-happy.png\"/>\n                </div>\n                <div class=\"error-buddy-thinking\" style=\"display:none;\">\n                    <img src=\"/images/scratchpads/ohnoes-hmm.png\"/>\n                    ";
+  buffer += "\n                    ";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(3, program3, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n                </div>\n            </div>\n            <button id=\"restart-code\"\n                class=\"simple-button pull-right\">\n                <span class=\"icon-refresh\"></span>\n                ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(5, program5, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -88,7 +104,7 @@ function program15(depth0,data) {
   foundHelper = helpers.colors;
   stack1 = foundHelper || depth0.colors;
   stack2 = helpers.each;
-  tmp1 = self.program(5, program5, data);
+  tmp1 = self.program(7, program7, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -97,7 +113,7 @@ function program15(depth0,data) {
   buffer += "\n            </div>\n\n            <!-- Record button -->\n            <button id=\"record\" class=\"simple-button pull-left\" style=\"display:none;\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(7, program7, data);
+  tmp1 = self.program(9, program9, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -112,7 +128,7 @@ function program15(depth0,data) {
   buffer += escapeExpression(stack1) + "/throbber-full.gif\">\n                <span class=\"hide-text\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(9, program9, data);
+  tmp1 = self.program(11, program11, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -122,7 +138,7 @@ function program15(depth0,data) {
   buffer += "</span>\n            </div>\n\n            <!-- This cannot be removed, if we want Flash to keep working! -->\n            <div id=\"sm2-container\">\n                ";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(11, program11, data);
+  tmp1 = self.program(13, program13, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -132,7 +148,7 @@ function program15(depth0,data) {
   buffer += "\n                <br>\n            </div>\n\n            <button class=\"scratchpad-editor-bigplay-button\" style=\"display:none;\">\n                <span class=\"icon-play\"></span>\n                <span class=\"hide-text\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(13, program13, data);
+  tmp1 = self.program(15, program15, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
@@ -142,7 +158,7 @@ function program15(depth0,data) {
   buffer += "</span>\n            </button>\n          </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar\">\n            <!-- Row for playback controls -->\n            <div class=\"scratchpad-playbar\" style=\"display:none;\">\n                <div class=\"scratchpad-playbar-area\" style=\"display:none;\">\n                    <button\n                        class=\"simple-button primary scratchpad-playbar-play\"\n                        type=\"button\">\n                        <span class=\"icon-play\"></span>\n                    </button>\n\n                    <div class=\"scratchpad-playbar-progress\"></div>\n\n                    <span class=\"scratchpad-playbar-timeleft\"></span>\n                </div>\n                <div class=\"loading-msg\">\n                    ";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(15, program15, data);
+  tmp1 = self.program(17, program17, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
   tmp1.inverse = self.noop;
