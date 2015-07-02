@@ -1,10 +1,14 @@
 /**
- * The purpose of this file is to test which errors output.runCode passes to
- * the callback when different combinations of lint and/or runtime errors 
- * occur.  In particular we want to ensure that the errors we getting in the 
- * callback don't include stale errors so that we can avoid the issue raised in
- * https://github.com/Khan/live-editor/issues/285.
+ * This file contains tests that are difficult to write using the normal test 
+ * helpers from test_utils.js.  The tests require custom asynchronous code in 
+ * order to reproduce failures.
  */
+
+// Test which errors output.runCode passes to the callback when different 
+// combinations of lint and/or runtime errors occur.  In particular we want to 
+// ensure that the errors we getting in the callback don't include stale errors 
+// so that we can avoid the issue raised in
+// https://github.com/Khan/live-editor/issues/285
 describe("async error order tests", function () {
 
     var output;
@@ -128,6 +132,64 @@ describe("async error order tests", function () {
                 expect(runCodeStub.called).to.be(false);
                 
                 done();
+            });
+        });
+    });
+});
+
+describe("Code Injection", function() {
+    
+    // This tests reproduces the "string not a function" error from
+    // https://github.com/Khan/live-editor/issues/279.
+    it("should not throw 'string is not a function'", function (done) {
+        var output = new LiveEditorOutput({
+            outputType: "pjs",
+            workersDir: "../../../build/workers/",
+            externalsDir: "../../../build/external/",
+            imagesDir: "../../../build/images/",
+            soundsDir: "../../../sounds/",
+            jshintFile: "../../../build/external/jshint/jshint.js",
+            useDebugger: false
+        });
+        
+        var code = getCodeFromOptions(function() {
+            var stars = [];
+            var Star = function(x, y) { this.x = x; this.y = y; };
+            Star.prototype.draw = function() { ellipse(this.x, this.y, 10, 10); };
+            for (var i = 0; i < 20; i++) {
+                // The Star constructor must be called with random value to
+                // reproduce the error.
+                stars.push(new Star(random(0, width), random(0, height)));
+            }
+            draw = function() {
+                background(0, 0, 0);
+                for (var i = 0; i < stars.length; i++) { stars[i].draw(); }
+            };
+    
+        });
+        
+        var error;
+        var listener = window.addEventListener('error', function(e) {
+            error = e;
+            window.removeEventListener('error', listener);
+        }); 
+    
+        output.runCode(code, function(errors, testResults) {
+            expect(errors.length).to.be(0);
+            
+            // The same code can be re-used, we just need to run the code twice
+            // to produce the error.
+            output.runCode(code, function(errors, testResults) {
+                expect(errors.length).to.be(0);
+                setTimeout(function () {
+                    // If we call done asynchronously when we get an error then
+                    // mocha will report two results for this test: one that's
+                    // failed and another that's succeed.  This is probably a
+                    // mocha bug.  TODO(kevinb) try upgrading mocha
+                    if (!error) {
+                        done();
+                    }
+                }, 1000);
             });
         });
     });

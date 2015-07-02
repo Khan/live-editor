@@ -1,3 +1,4 @@
+/*jshint unused: false*/
 /* Possibly options:
  *  code: First code to run
  *  code2: Code to run after
@@ -27,18 +28,6 @@ var runTest = function(options) {
 
     var displayTitle = options.title +
         " (Version: " + options.version + ")";
-
-    var getCodeFromOptions = function(code) {
-        // Assume the code is a string, by default
-        // If not then we assume that it's a function so we need to
-        // extract the code to run from the serialized function
-        if (code && typeof code !== "string") {
-            code = code.toString();
-            code = code.substr(code.indexOf("{") + 1);
-            code = code.substr(0, code.length - 1);
-        }
-        return code;
-    };
 
     var code1 = getCodeFromOptions(options.code);
     var code2 = getCodeFromOptions(options.code2);
@@ -255,11 +244,19 @@ var failingTest = function(title, code, code2, errors) {
     });
 };
 
-var assertEqualTest = function(title, code, assertions) {
-    runTest({title: options.title, code: code, assertions: assertions});
-};
-
 var supportsMpegAudio = function() {
     var a = document.createElement('audio');
     return !!(a.canPlayType && a.canPlayType('audio/mpeg;').replace(/no/, ''));
+};
+
+var getCodeFromOptions = function(code) {
+    // Assume the code is a string, by default
+    // If not then we assume that it's a function so we need to
+    // extract the code to run from the serialized function
+    if (code && typeof code !== "string") {
+        code = code.toString();
+        code = code.substr(code.indexOf("{") + 1);
+        code = code.substr(0, code.length - 1);
+    }
+    return code;
 };

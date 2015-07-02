@@ -922,7 +922,7 @@ window.PJSOutput = Backbone.View.extend({
         this.grabObj = {};
 
         // Extract a list of instances that were created using applyInstance
-        this.instances = [];
+        PJSOutput.instances = [];
 
         // Replace all calls to 'new Something' with
         // this.newInstance(Something)()
@@ -986,21 +986,21 @@ window.PJSOutput = Backbone.View.extend({
 
             // Keep track of all the constructor functions that may
             // have to be reinitialized
-            for (var i = 0, l = this.instances.length; i < l; i++) {
-                constructors[this.instances[i].constructor.__name] = true;
+            for (var i = 0, l = PJSOutput.instances.length; i < l; i++) {
+                constructors[PJSOutput.instances[i].constructor.__name] = true;
             }
 
             // The instantiated instances have changed, which means that
             // we need to re-run everything.
             if (this.oldInstances &&
                     PJSOutput.stringifyArray(this.oldInstances) !==
-                    PJSOutput.stringifyArray(this.instances)) {
+                    PJSOutput.stringifyArray(PJSOutput.instances)) {
                 rerun = true;
             }
 
             // Reset the instances list
-            this.oldInstances = this.instances;
-            this.instances = null;
+            this.oldInstances = PJSOutput.instances;
+            PJSOutput.instances = [];
 
             // Look for new top-level function calls to inject
             for (var i = 0; i < fnCalls.length; i++) {
@@ -1240,7 +1240,13 @@ window.PJSOutput = Backbone.View.extend({
         // Make sure the object actually exists before we try
         // to inject stuff into it
         if (!this.canvas[name]) {
-            this.canvas[name] = $.isArray(obj) ? [] : {};
+            if ($.isArray(obj)) {
+                this.canvas[name] = [];
+            } else if ($.isFunction(obj)) {
+                this.canvas[name] = function() {};
+            } else {
+                this.canvas[name] = {};
+            }
         }
 
         // A specific property to inspect of the object
@@ -1477,6 +1483,8 @@ window.PJSOutput = Backbone.View.extend({
 
 // Add in some static helper methods
 _.extend(PJSOutput, {
+    instances: [],
+    
     // Turn a JavaScript object into a form that can be executed
     // (Note: The form will not necessarily be able to pass a JSON linter)
     // (Note: JSON.stringify might throw an exception. We don't capture it
@@ -1536,7 +1544,6 @@ _.extend(PJSOutput, {
     // new Foo(a, b, c) into: applyInstance(Foo)(a, b, c)
     applyInstance: function(classFn, className) {
         // Don't wrap it if we're dealing with a built-in object (like RegExp)
-
         try {
             var funcName = (/^function\s*(\w+)/.exec(classFn) || [])[1];
             if (funcName && window[funcName] === classFn) {
@@ -1587,6 +1594,11 @@ _.extend(PJSOutput, {
         }.bind(this);
 
         // Keep track of the instances that have been instantiated
+        // Note: this.instances here is actually PJSOutput.instances which is
+        // a singleton.  This means that multiple instances of PJSOutput will
+        // shared the same instances array.  Since each PJSOutput lives in its 
+        // own iframe with its own execution context, each should have its own
+        // copy of PJSOutput.instances.
         if (this.instances) {
             this.instances.push(obj);
         }

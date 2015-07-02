@@ -240,19 +240,6 @@ var SQLTester = function(options) {
 SQLTester.prototype = new OutputTester();
 
 
-///*
-// * Returns a callback which will accept arguments and make a constriant
-// * used internally to create shorthand functions that accept arguments
-// */
-//var constraintPartial = function(callback) {
-//    return function() {
-//        return {
-//            variables: arguments,
-//            fn: callback
-//        };
-//    };
-//};
-
 /**
  * Small collection of some utility functions to tack onto the function
  * constructor itself.  Does not store state so don't require an object.
