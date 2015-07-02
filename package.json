@@ -5,7 +5,8 @@
   "main": "dist/live-editor.js",
   "scripts": {
     "build": "gulp build",
-    "test": "gulp test"
+    "test": "gulp test",
+    "install": "rm -rf node_modules/gulp-handlebars/node_modules/handlebars"
   },
   "repository": {
     "type": "git",
