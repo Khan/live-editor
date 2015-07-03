@@ -420,8 +420,8 @@
          * "_" == "div"
          */
         singleSelectorMatch: function(pattern, selector, wVars) {
-            patternParts = pattern.split(" ");
-            selectorParts = selector.split(" ");
+            var patternParts = pattern.split(" ");
+            var selectorParts = selector.split(" ");
             if (patternParts.length !== selectorParts.length) {
                 return false;
             }

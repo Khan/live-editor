@@ -36236,6 +36236,7 @@ module.exports = ProcessingDebugger;
 
 },{}]},{},[1])(1)
 });
+/* global ProcessingDebugger */
 window.PJSDebugger = Backbone.View.extend({
     
     initialize: function(options) {

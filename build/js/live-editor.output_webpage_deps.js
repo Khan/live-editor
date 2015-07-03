@@ -11624,6 +11624,7 @@ window.StateScrubber = function(target) {
 
     // Since variables initially on window will not be reset, try to freeze them to
     // avoid state leaking between executions.
+    /* jshint forin:false */
     for (var prop in this.globalVariables) {
         try {
             var propDescriptor =

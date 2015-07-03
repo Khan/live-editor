@@ -428,6 +428,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
 // Maintain all of the configuration options and settings for the site.
 // Have them be versioned and attached to the ScratchpadRevision so that
 // later config changes don't break old code.
+/* jshint unused:false */
 var ScratchpadConfig = Backbone.Model.extend({
     version: null,
 
@@ -700,8 +701,10 @@ var ScratchpadConfig = Backbone.Model.extend({
 
                 // Attach the auto-complete for the editor
                 // (must be re-done every time the mode is set)
-                this.bindAutoComplete(aceEditor, {
-                    autoBrace: true
+                this.bindAutoComplete(editor.editor, {
+                    autoBrace: false,
+                    braceIndent: false,
+                    equalsInsert: true
                 });
             },
 
@@ -849,12 +852,10 @@ var ScratchpadConfig = Backbone.Model.extend({
             name: "Brace Autocompletion Changes",
 
             ace_pjs_editor: function(editor) {
-                // Set the brace autocomplete behavior
-                this.bindAutoComplete(editor.editor, {
-                    autoBrace: false,
-                    braceIndent: true,
-                    equalsInsert: true
-                });
+                // We no longer version editor changes,
+                // since we made talkie recording more robust.
+                // We still version jshint changes however,
+                // so we keep this one around as a null change.
             }
         },
 
@@ -868,19 +869,6 @@ var ScratchpadConfig = Backbone.Model.extend({
                 // Re-allow ++ and --
                 delete output.JSHint.plusplus;
             }
-        },
-
-        {
-            name: "Remove Brace Autocompletion",
-
-            ace_pjs_editor: function(editor) {
-                // Set the brace autocomplete behavior
-                this.bindAutoComplete(editor.editor, {
-                    autoBrace: false,
-                    braceIndent: false,
-                    equalsInsert: true
-                });
-            }
-        },
+        }
     ]
 });

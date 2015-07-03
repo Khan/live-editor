@@ -1957,7 +1957,6 @@ window.TooltipBase = Backbone.View.extend({
 
         var editor = parent.editor;
         var loc = this.aceLocation;
-        var pos = editor.selection.getCursor();
         var editorBB = editor.renderer.scroller.getBoundingClientRect();
         var editorHeight = editorBB.height;
         if (typeof loc.tooltipCursor !== "number") {
@@ -2078,8 +2077,6 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
     },
 
     bind: function() {
-        var over = false;
-        var down = false;
         this.$el.on("mousedown", function() {
             this.$el.hide();
             this.options.editor.focus();
@@ -2207,8 +2204,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         };
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
 
-        if (event.source && event.source.action === "insertText" && event.source.text.length === 1 
-                && this.parent.options.type === "ace_pjs") {
+        if (event.source && event.source.action === "insertText" && 
+            event.source.text.length === 1 && this.parent.options.type === "ace_pjs") {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
                 this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");

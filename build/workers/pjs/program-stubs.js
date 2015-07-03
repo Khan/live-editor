@@ -2,6 +2,7 @@
 // inside the context- it turns the functions into null values instead.
 // That may also be the behavior of older browsers.
 // This fixes that by defining them in this stub instead.
+/* jshint unused:false */
 function initProgramStubs(context) {
     /*
      * Processing functions that return values should have implementations
