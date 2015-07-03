@@ -149,9 +149,11 @@ var output = {};
 
 console.log("Mapping old data format to new format...");
 for (var id in input) {
-    var mapped = new Mapper(input[id].commands);
-    output[id] = input[id];
-    output[id].commands = mapped.log;
+    if (input.hasOwnProperty(id)) {
+        var mapped = new Mapper(input[id].commands);
+        output[id] = input[id];
+        output[id].commands = mapped.log;   
+    }
 }
 
 console.log("Writing out data...");

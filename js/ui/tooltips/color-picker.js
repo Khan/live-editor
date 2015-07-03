@@ -100,8 +100,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         };
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
 
-        if (event.source && event.source.action === "insertText" && event.source.text.length === 1 
-                && this.parent.options.type === "ace_pjs") {
+        if (event.source && event.source.action === "insertText" && 
+            event.source.text.length === 1 && this.parent.options.type === "ace_pjs") {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
                 this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");

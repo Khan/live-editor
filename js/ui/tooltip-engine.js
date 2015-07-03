@@ -217,7 +217,6 @@ window.TooltipBase = Backbone.View.extend({
 
         var editor = parent.editor;
         var loc = this.aceLocation;
-        var pos = editor.selection.getCursor();
         var editorBB = editor.renderer.scroller.getBoundingClientRect();
         var editorHeight = editorBB.height;
         if (typeof loc.tooltipCursor !== "number") {

@@ -149,7 +149,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         // set/clear breakpoints by clicking in the gutter
         this.editor.on("guttermousedown", function(e) {
             var target = e.domEvent.target;
-            if (target.className.indexOf("ace_gutter-cell") == -1) {
+            if (target.className.indexOf("ace_gutter-cell") === -1) {
                 return;
             }
 
@@ -191,7 +191,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
             var delta = e.data;
             var range = delta.range;
-            if (range.end.row == range.start.row) {
+            if (range.end.row === range.start.row) {
                 return;
             }
 

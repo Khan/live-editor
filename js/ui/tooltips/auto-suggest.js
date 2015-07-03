@@ -34,8 +34,6 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
     },
 
     bind: function() {
-        var over = false;
-        var down = false;
         this.$el.on("mousedown", function() {
             this.$el.hide();
             this.options.editor.focus();

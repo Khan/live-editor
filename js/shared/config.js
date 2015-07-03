@@ -1,6 +1,7 @@
 // Maintain all of the configuration options and settings for the site.
 // Have them be versioned and attached to the ScratchpadRevision so that
 // later config changes don't break old code.
+/* jshint unused:false */
 var ScratchpadConfig = Backbone.Model.extend({
     version: null,
 

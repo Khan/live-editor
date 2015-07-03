@@ -442,10 +442,6 @@ window.AceEditor = Backbone.View.extend({
         }
     },
 
-    setReadOnly: function(state) {
-        this.editor.setReadOnly(state);
-    },
-
     undo: function() {
         this.editor.undo();
     }

@@ -1,2 +1,10 @@
-build/js/live-editor.output.js
-build/js/live-editor.output_sql.js
+build/
+demos/
+external/
+tests/
+
+# TODO(kevinb) fix the lint in this file (there's lots of it)
+js/workers/pjs/processing-stubs.js
+
+# TODO(kevinb) i18n-ize
+tmpl/sql-results.handlebars

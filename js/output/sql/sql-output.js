@@ -1,3 +1,4 @@
+/* global SQLTester */
 window.SQLOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
