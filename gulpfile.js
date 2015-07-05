@@ -16,6 +16,7 @@ var mochaPhantomJS = require("gulp-mocha-phantomjs");
 var staticServe = require("node-static");
 var request = require("request");
 
+var check = require("./check.js");
 var paths = require("./build-paths.json");
 
 gulp.task("templates", function() {
@@ -197,7 +198,18 @@ gulp.task("test", function(callback) {
     runSequence("test_output_pjs", "test_output_webpage", "test_tooltips", callback);
 });
 
+// Check to make sure all source files and dependencies exist before building.
+gulp.task("check", function() {
+    var missing = check();
+    if (missing.length > 0) {
+        console.log("Aborting build");
+        process.exit();
+    } else {
+        console.log("all files exist");
+    }
+});
+
 gulp.task("build",
-    ["templates", "scripts", "workers", "styles", "images", "externals"]);
+    ["check", "templates", "scripts", "workers", "styles", "images", "externals"]);
 
 gulp.task("default", ["watch", "build"]);
