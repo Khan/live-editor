@@ -43,4 +43,4 @@ setTimeout(function() {
             "This may be because of errors on the page.");
         phantom.exit(1);
     }
-}, 1 * 60 * 1000);
+}, 5 * 60 * 1000);
