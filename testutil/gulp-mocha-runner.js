@@ -1,5 +1,8 @@
 /**
+ * A gulp plugin that runs mocha tests in phantomjs.
  * 
+ * Supports running tests in an iframe inside phantomjs because the test
+ * results are passed back to the plugin using stdout via console.log().
  */
 var PluginError = require("gulp-util").PluginError;
 var spawn = require("child_process").spawn;
