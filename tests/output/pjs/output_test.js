@@ -2,6 +2,13 @@
 /* global text, color, textFont, fill, text, background, createFont, PVector */
 /* global externals, exp, link, width, draw, mouseMoved, Program */
 
+describe("Version test", function() {
+    it.only("should use version 4 or greater", function() {
+        var config = new ScratchpadConfig({});
+        expect(config.latestVersion()).to.be(4);
+    });  
+});
+
 // Test the lower level functions in Output
 describe("Scratchpad CanvasOutput functions", function() {
     it("stringifyArray", function() {

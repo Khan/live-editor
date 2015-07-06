@@ -442,6 +442,19 @@ var ScratchpadConfig = Backbone.Model.extend({
                 // Re-allow ++ and --
                 delete output.JSHint.plusplus;
             }
+        },
+
+        {
+            name: "version 4 placeholder"
+            
+            // At one time live-editor.shared.js had a (version 4) entry that a
+            // duplicate "Brace Autocompletion Changes" before it was disabled.
+            // This duplicate was probably introduced by a merge. Unfortunately,
+            // many of the revisions in the datastore are version 4.  This 
+            // placeholder version ensures that those revisions continue to work
+            // without throwing exceptions.
         }
+        
+        // NOTE: update version test in output_test.js
     ]
 });
