@@ -22,7 +22,7 @@ Open up a browser and navigate to http://0.0.0.0:8000/demos/simple.
 
 You can use the pre-built copies of everything inside the `build/` directory. If you wish to make some changes and re-build the library from scratch you'll need to install some dependencies:
 
-    git submodule update
+    git submodule update --init --recursive
     npm install
     bower install
 
