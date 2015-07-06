@@ -43,7 +43,7 @@ module.exports = function() {
             console.log("  bower install");
         }
         if (submodule) {
-            console.log("  git submodule sync && git submodule update");
+            console.log("  git submodule update --init --recursive");
         }
     }
     return missing;
