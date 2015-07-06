@@ -7,34 +7,39 @@ var mockObject = function(obj, mocks) {
 
 window.tooltipClasses = TooltipEngine.classes;
 
-window.ACE = new AceEditor({ //Initializes TooltipEngine internally
-    el: "#faux_editor",
-    autoFocus: true,
-    config: new ScratchpadConfig({
-        version: 3
-    }),
-    imagesDir: "../../build/images/",
-    externalsDir: "",
-    workersDir: "",
-    record: new ScratchpadRecord(),
-    type: "ace_pjs"
-});
+var uniqueEditor = function() {
+    var elem = document.createElement('div');
+    document.body.appendChild(elem);
+    var ace = new AceEditor({ //Initializes TooltipEngine internally
+        el: elem,
+        autoFocus: true,
+        config: new ScratchpadConfig({
+            version: 3
+        }),
+        imagesDir: "../../build/images/",
+        externalsDir: "",
+        workersDir: "",
+        record: new ScratchpadRecord(),
+        type: "ace_pjs"
+    });
+    ScratchpadAutosuggest.init(ace.editor);
+    ace.editor.focus();
+    ace.setSelection({
+        start: {
+            row: 0,
+            column: 0
+        },
+        end: {
+            row: 0,
+            column: 0
+        }
+    });
+    return ace;
+};
 
+window.ACE = uniqueEditor();
 window.editor = ACE.editor;
 window.TTE = ACE.tooltipEngine;
-
-ScratchpadAutosuggest.init(editor);
-editor.focus();
-ACE.setSelection({
-    start: {
-        row: 0,
-        column: 0
-    },
-    end: {
-        row: 0,
-        column: 0
-    }
-});
 
 for (var TooltipName in TooltipEngine.prototype.classes) {
     var Tooltip = TooltipEngine.classes[TooltipName];

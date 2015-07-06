@@ -18,8 +18,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             .appendTo("body")
             .find(".picker").ColorPicker({
                 flat: true,
-                onChange: function(hsb, hex, rgb) {
-                    this.updateText(rgb);
+                onChange: function(hsb, hex, rgb, undoMode) {
+                    this.updateText(rgb, undoMode);
                 }.bind(this)
             }).end()
             .hide();
@@ -134,8 +134,25 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.$el.find(".picker").ColorPickerSetColor(rgb);
     },
 
-    updateText: function(rgb) {
-        TooltipBase.prototype.updateText.call(this, rgb.r + ", " + rgb.g + ", " + rgb.b);
+    updateText: function(rgb, undoMode) {
+        var avoidUndo = false;
+        if (undoMode === 'startScrub') {
+            // TODO: Next 4 lines of code needs refactoring with textAtAceLocation() in number-scrubber.js.
+            // TODO: Sort out this, self, ace, to make it callable from both places, and put it in tooltip-engine.js.
+            var Range = ace.require("ace/range").Range;
+            var loc = this.aceLocation;
+            var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
+            this.originalText = this.parent.editor.getSession().getTextRange(range);
+            this.wasReadOnly = this.parent.editor.getReadOnly();
+            this.parent.editor.setReadOnly(true);
+            avoidUndo = true;
+        } else if (undoMode === 'midScrub') {
+            avoidUndo = true;
+        } else if (undoMode === 'stopScrub') {
+            TooltipBase.prototype.updateText.call(this, this.originalText, undefined, true);
+            this.parent.editor.setReadOnly(this.wasReadOnly);
+        }
+        TooltipBase.prototype.updateText.call(this, rgb.r + ", " + rgb.g + ", " + rgb.b, undefined, avoidUndo);
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }
 });

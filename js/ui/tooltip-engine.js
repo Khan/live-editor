@@ -185,7 +185,7 @@ TooltipEngine.classes = {};
   *
   * Every Tooltip has the following major parts:
   * - initialize(), just accepts options and then tries to attach
-  *   the html for the tooltip by callin render() and bind() as required
+  *   the html for the tooltip by calling render() and bind() as required
   *
   * - render() and bind() to set up the HTML
   *
@@ -235,6 +235,7 @@ window.TooltipBase = Backbone.View.extend({
 
         var editor = parent.editor;
         var loc = this.aceLocation;
+        var pos = editor.selection.getCursor();
         var editorBB = editor.renderer.scroller.getBoundingClientRect();
         var editorHeight = editorBB.height;
         if (typeof loc.tooltipCursor !== "number") {
@@ -251,7 +252,17 @@ window.TooltipBase = Backbone.View.extend({
             .toggle(!(relativePos < 0 || relativePos >= editorHeight));
     },
 
-    updateText: function(newText, customSelection) {
+    // Third parameter, if true, tells ACE not to remember this update in the undo chain. Useful in
+    // number-scrubbing.
+    // THIS IS A PROBLEMATIC HACK.
+    //  - If the undo chain and the editor's text are left in an inconsistent state, then
+    //     future undo's will change the wrong text. I (ChrisJPhoenix) think this just means you need to
+    //     put the editor's text back the way it was before letting anything else happen.
+    //     This causes problems if the user hits the keyboard in the middle of a number-scrub: undo
+    //     won't put things back correctly. Thus, use editor.setReadOnly(true) while using this hack.
+    //  - I use the session's $fromUndo variable to tell the editor not to save undo's. This
+    //     is undocumented. There's currently (7/25/15) a test for it in tooltips_test.js.
+    updateText: function(newText, customSelection, avoidUndo) {
         if (!this.parent || this.parent.options.record.playing) {
             return;
         }
@@ -264,7 +275,17 @@ window.TooltipBase = Backbone.View.extend({
         var loc = this.aceLocation;
         var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
 
+        // We probably could just set it to false when we're done, but someone else might
+        // be trying a similar hack, or... who knows?
+        var undoState;
+        if (avoidUndo) {
+            undoState = editor.session.$fromUndo;
+            editor.session.$fromUndo = true;
+        }
         editor.session.replace(range, newText);
+        if (avoidUndo) {
+            editor.session.$fromUndo = undoState;
+        }
 
         range.end.column = range.start.column + newText.length;
         if (customSelection) {

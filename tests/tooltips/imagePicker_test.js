@@ -1,3 +1,4 @@
+
 describe("imagePicker - detection", function() {
     var mockedImagePicker = getMockedTooltip(tooltipClasses.imagePicker, ["detector"]);
 
@@ -87,3 +88,4 @@ describe("imagePicker - Integration tests (running on a real editor)", function(
         expect(TTE.currentTooltip).to.be.equal(TTE.tooltips.imagePicker);
     });
 });
+
