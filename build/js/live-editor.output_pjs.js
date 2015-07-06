@@ -2904,10 +2904,10 @@ _.extend(PJSOutput, {
         }.bind(this);
 
         // Keep track of the instances that have been instantiated
-        // Notes: this.instances here is actually PJSOutput.instances which is
+        // Note: this.instances here is actually PJSOutput.instances which is
         // a singleton.  This means that multiple instances of PJSOutput will
         // shared the same instances array.  Since each PJSOutput lives in its 
-        // own iframe with its own execution context, each should have it's own
+        // own iframe with its own execution context, each should have its own
         // copy of PJSOutput.instances.
         if (this.instances) {
             this.instances.push(obj);

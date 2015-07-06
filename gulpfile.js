@@ -15,8 +15,9 @@ var runSequence = require("run-sequence");
 var mochaPhantomJS = require("gulp-mocha-phantomjs");
 var staticServe = require("node-static");
 var request = require("request");
-var mochaRunner = require("./testutil/gulp-mocha-runner.js");
+var gutil = require("gulp-util");
 
+var mochaRunner = require("./testutil/gulp-mocha-runner.js");
 var check = require("./check.js");
 var paths = require("./build-paths.json");
 
@@ -33,13 +34,14 @@ gulp.task("templates", function() {
         .pipe(gulp.dest("build/tmpl"));
 });
 
+var firstBuild = true;
 var scriptTypes = Object.keys(paths.scripts);
 
 scriptTypes.forEach(function(type) {
     gulp.task("script_" + type, ["templates"], function() {
         var outputFileName = "live-editor." + type + ".js";
         return gulp.src(paths.scripts[type])
-            .pipe(newer("build/js/" + outputFileName))
+            .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
             .pipe(concat(outputFileName))
             .pipe(gulp.dest("build/js"));
     });
@@ -47,7 +49,7 @@ scriptTypes.forEach(function(type) {
     gulp.task("script_" + type + "_min", ["script_" + type], function() {
         var outputFileName = "live-editor." + type + ".min.js";
         return gulp.src(["build/js/live-editor." + type + ".js"])
-            .pipe(newer("build/js/" + outputFileName))
+            .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
             .pipe(uglify())
             .pipe(concat(outputFileName))
             .pipe(gulp.dest("build/js"));
@@ -84,7 +86,7 @@ styleTypes.forEach(function(type) {
     gulp.task("style_" + type, function() {
         var outputFileName = "live-editor." + type + ".css";
         return gulp.src(paths.styles[type])
-            .pipe(newer("build/css/" + outputFileName))
+            .pipe(firstBuild ? gutil.noop() : newer("build/css/" + outputFileName))
             .pipe(concat(outputFileName))
             .pipe(gulp.dest("build/css"));
     });
@@ -221,6 +223,9 @@ gulp.task("check", function() {
 });
 
 gulp.task("build",
-    ["check", "templates", "scripts", "workers", "styles", "images", "externals"]);
+    ["check", "templates", "scripts", "workers", "styles", "images", "externals"],
+    function() {
+        firstBuild = false;
+    });
 
 gulp.task("default", ["watch", "build"]);
