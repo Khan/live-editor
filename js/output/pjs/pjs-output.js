@@ -929,7 +929,7 @@ window.PJSOutput = Backbone.View.extend({
         // Used for keeping track of unique instances
         if (!this.debugger) {
             userCode = userCode && userCode.replace(
-                /\bnew[\s\n]+([A-Z]{1,2}[a-z0-9_]+)([\s\n]*\()/g,
+                /\bnew[\s\n]+([A-Z]{1,2}[a-zA-Z0-9_]+)([\s\n]*\()/g,
                 "PJSOutput.applyInstance($1,'$1')$2");
         } else {
             // we'll use the debugger's newCallback delegate method to

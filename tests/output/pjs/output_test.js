@@ -743,6 +743,23 @@ describe("Scratchpad Output Exec", function() {
     });
 
     runTest({
+        title: "should transform constructors with multiple capital letters",
+        code: function() {
+            var CommandQueue = function() {};
+            var commandQueue = new CommandQueue();
+        },
+        setup: function(output) {
+            sinon.spy(output.output, "exec");
+        },
+        teardown: function(output) {
+            var code = output.output.exec.getCall(0).args[0];
+            expect(code).to.contain("PJSOutput.applyInstance(CommandQueue,'CommandQueue')()");
+            expect(code).to.not.contain("new CommandQueue");
+            output.output.exec.restore();
+        }
+    });
+
+    runTest({
         // https://github.com/Khan/live-editor/issues/235
         title: "Modifying properties of globals doesn't clobber color properties",
         code: function() {
