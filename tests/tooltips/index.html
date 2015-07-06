@@ -32,9 +32,17 @@
         <script src="../../build/js/live-editor.editor_ace.js"></script>
         <script src="../../build/js/live-editor.tooltips.js"></script>
         <script src="../../node_modules/mocha/mocha.js"></script>
-        <script src="../sinon.js"></script>
+        <script src="../../node_modules/sinon/pkg/sinon.js"></script>
         <script src="../../node_modules/expect.js/index.js"></script>
-        <script>mocha.setup("bdd");</script>
+        <script src="../../testutil/json-reporter.js"></script>
+        <script>
+            var isPhantomJS = /PhantomJS/.test(navigator.userAgent);
+
+            mocha.setup({
+                ui: 'bdd',
+                reporter: isPhantomJS ? jsonReporter : 'html'
+            });
+        </script>
         <script src="shared.js"></script>
         <script src="numberScrubber_test.js"></script>
         <script src="imagePicker_test.js"></script>
@@ -44,11 +52,7 @@
         <script src="tooltips_test.js"></script>
         <script>
             onload = function(){
-                if (window.mochaPhantomJS) {
-                    mochaPhantomJS.run();
-                } else {
-                    mocha.run();
-                }
+                mocha.run();
             };
         </script>
     </body>

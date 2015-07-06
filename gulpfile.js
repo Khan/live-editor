@@ -15,6 +15,7 @@ var runSequence = require("run-sequence");
 var mochaPhantomJS = require("gulp-mocha-phantomjs");
 var staticServe = require("node-static");
 var request = require("request");
+var mochaRunner = require("./testutil/gulp-mocha-runner.js");
 
 var check = require("./check.js");
 var paths = require("./build-paths.json");
@@ -156,18 +157,27 @@ var runTest = function(fileName) {
     };
 };
 
-gulp.task("test_output_pjs", ["script_output_pjs"],
-    runTest("output/pjs/index.html"));
 
-gulp.task("test_output_webpage", ["script_output_webpage"],
-    runTest("output/webpage/index.html"));
+gulp.task("test_output_pjs", ["script_output_pjs"], function() {
+    return gulp.src("tests/output/pjs/index.html")
+        .pipe(mochaRunner());
+});
 
-// TODO(bbondy): Uncomment when phantomJS has support for typed arrays
-// gulp.task("test_output_sql", ["script_output_sql"],
-//    runTest("output/sql/index.html"));
+gulp.task("test_output_webpage", ["script_output_webpage"], function() {
+    return gulp.src("tests/output/webpage/index.html")
+        .pipe(mochaRunner());
+});
 
-gulp.task("test_tooltips", ["script_tooltips"],
-    runTest("tooltips/index.html"));
+// TODO(kevinb): Uncomment when phantomJS has been upgraded to 2.0
+//gulp.task("test_output_sql", ["script_output_sql"], function() {
+//    return gulp.src("tests/output/sql/index.html")
+//        .pipe(mochaRunner());
+//});
+
+gulp.task("test_tooltips", ["script_tooltips"], function() {
+    return gulp.src("tests/tooltips/index.html")
+        .pipe(mochaRunner());
+});
 
 // TODO(kevinb7): Add task for debugger tests once ES5 is supported
 
@@ -189,6 +199,7 @@ gulp.task("test_record_data", function(done) {
 
 // NOTE(jeresig): Not included in the main tests yet, as they take a
 // long time to run.
+// TODO(kevinb) find out about recording-data.json
 gulp.task("test_record", ["test_record_data"],
     runTest("record/index.html"));
 
