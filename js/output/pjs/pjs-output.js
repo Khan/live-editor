@@ -1144,6 +1144,7 @@ window.PJSOutput = Backbone.View.extend({
                     // need to clear the display
                     if (oldProp === "draw") {
                         this.clear();
+                        this.canvas.draw = this.DUMMY;
                     }
                 }
             }

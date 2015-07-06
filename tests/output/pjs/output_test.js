@@ -795,6 +795,26 @@ describe("Scratchpad Output Exec", function() {
         },
         wait: 100
     });
+
+    runTest({
+        title: "Removing draw() sets it to the DUMMY function",
+        code: function() {
+            var foo = { c:color(255, 0, 0), r:100 };
+            var draw = function() {
+                background(255);
+                fill(foo.c);
+                ellipse(200, 200, foo.r, foo.r);
+            };
+        },
+        code2: function () {
+            var foo = { c:color(255, 0, 0), r:200 };
+        },
+        teardown: function(output) {
+            var p = output.output.canvas;
+            expect(p.draw).to.be(output.output.DUMMY);
+        },
+        wait: 100
+    });
 });
 
 describe("Output Methods", function() {
