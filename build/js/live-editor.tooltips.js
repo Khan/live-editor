@@ -1766,6 +1766,24 @@ window.TooltipEngine = Backbone.View.extend({
                     TooltipBase.prototype.updateText.call(this.currentTooltip, e.hot);
                 }
             }.bind(this);
+
+            // disable autofill when playback or seeking has started
+            ["playStarted", "runSeek"].forEach(function(event) {
+                record.on(event, function() {
+                    _.values(this.tooltips).forEach(function(tooltip) {
+                        tooltip.autofill = false;
+                    });
+                }.bind(this));
+            }, this);
+
+            // enable autofill when playback or seeking has stopped
+            ["playPaused", "playStopped", "seekDone"].forEach(function(event) {
+                record.on(event, function() {
+                    _.values(this.tooltips).forEach(function(tooltip) {
+                        tooltip.autofill = true;
+                    });
+                }.bind(this));
+            }, this);
         }
 
         this.currentTooltip = undefined;
@@ -2110,6 +2128,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
 
         var funcs = (this.parent.options.type === "ace_webpage") ? "rgb|rgba" : "background|fill|stroke|color";
         this.regex = RegExp("(\\b(?:"+funcs+")\\s*\\()[^\\)]*$");
+        this.autofill = true;
 
         this.render();
         this.bind();
@@ -2205,7 +2224,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
 
         if (event.source && event.source.action === "insertText" && 
-            event.source.text.length === 1 && this.parent.options.type === "ace_pjs") {
+            event.source.text.length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
                 this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");
@@ -2407,12 +2426,12 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         }
     });
 
-
     TooltipEngine.classes.imageModal = TooltipBase.extend({
         initialize: function(options) {
             this.options = options;
             this.options.files = ExtendedOutputImages;
             this.parent = options.parent;
+            this.autofill = true;
             this.render();
             this.bindToRequestTooltip();
             _.extend(this.options.record.handlers, {
@@ -2533,6 +2552,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 }]
             }];
             this.parent = options.parent;
+            this.autofill = true;
             this.render();
             this.bindToRequestTooltip();
         },
@@ -2560,7 +2580,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 closing.length === 0 &&
                 event.source &&
                 event.source.action === "insertText" &&
-                event.source.text.length === 1) {
+                event.source.text.length === 1 && this.autofill) {
                 closing = ")" + (this.isInParenthesis(
                     event.pre.slice(0, functionStart)) ? "" : ";");
                 this.insert({
@@ -2630,6 +2650,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
+        this.autofill = true;
         this.render();
         this.bindToRequestTooltip();
     },
@@ -2654,8 +2675,9 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         };
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
 
+        // TODO(kevinb) extract this into a method on TooltipBase
         if (leadingPadding.length === 0 && path.length === 0 && this.closing.length === 0 &&
-            event.source && event.source.action === "insertText" && event.source.text.length === 1) {
+            event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.autofill) {
 
             this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");
             this.insert({

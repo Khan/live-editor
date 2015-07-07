@@ -26,6 +26,24 @@ window.TooltipEngine = Backbone.View.extend({
                     TooltipBase.prototype.updateText.call(this.currentTooltip, e.hot);
                 }
             }.bind(this);
+
+            // disable autofill when playback or seeking has started
+            ["playStarted", "runSeek"].forEach(function(event) {
+                record.on(event, function() {
+                    _.values(this.tooltips).forEach(function(tooltip) {
+                        tooltip.autofill = false;
+                    });
+                }.bind(this));
+            }, this);
+
+            // enable autofill when playback or seeking has stopped
+            ["playPaused", "playStopped", "seekDone"].forEach(function(event) {
+                record.on(event, function() {
+                    _.values(this.tooltips).forEach(function(tooltip) {
+                        tooltip.autofill = true;
+                    });
+                }.bind(this));
+            }, this);
         }
 
         this.currentTooltip = undefined;

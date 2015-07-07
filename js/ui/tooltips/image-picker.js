@@ -5,6 +5,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
+        this.autofill = true;
         this.render();
         this.bindToRequestTooltip();
     },
@@ -29,8 +30,9 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         };
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
 
+        // TODO(kevinb) extract this into a method on TooltipBase
         if (leadingPadding.length === 0 && path.length === 0 && this.closing.length === 0 &&
-            event.source && event.source.action === "insertText" && event.source.text.length === 1) {
+            event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.autofill) {
 
             this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");
             this.insert({

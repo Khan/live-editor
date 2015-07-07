@@ -163,12 +163,12 @@
         }
     });
 
-
     TooltipEngine.classes.imageModal = TooltipBase.extend({
         initialize: function(options) {
             this.options = options;
             this.options.files = ExtendedOutputImages;
             this.parent = options.parent;
+            this.autofill = true;
             this.render();
             this.bindToRequestTooltip();
             _.extend(this.options.record.handlers, {
@@ -289,6 +289,7 @@
                 }]
             }];
             this.parent = options.parent;
+            this.autofill = true;
             this.render();
             this.bindToRequestTooltip();
         },
@@ -316,7 +317,7 @@
                 closing.length === 0 &&
                 event.source &&
                 event.source.action === "insertText" &&
-                event.source.text.length === 1) {
+                event.source.text.length === 1 && this.autofill) {
                 closing = ")" + (this.isInParenthesis(
                     event.pre.slice(0, functionStart)) ? "" : ";");
                 this.insert({

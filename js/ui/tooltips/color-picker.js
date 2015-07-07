@@ -6,6 +6,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
 
         var funcs = (this.parent.options.type === "ace_webpage") ? "rgb|rgba" : "background|fill|stroke|color";
         this.regex = RegExp("(\\b(?:"+funcs+")\\s*\\()[^\\)]*$");
+        this.autofill = true;
 
         this.render();
         this.bind();
@@ -101,7 +102,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
 
         if (event.source && event.source.action === "insertText" && 
-            event.source.text.length === 1 && this.parent.options.type === "ace_pjs") {
+            event.source.text.length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
                 this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");
