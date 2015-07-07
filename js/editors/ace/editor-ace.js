@@ -12,9 +12,9 @@ window.AceEditor = Backbone.View.extend({
             "imagePicker",
             "soundModal",
             "colorPicker",
+            "numberScrubber",
             "numberScrubberClick",
-            "autoSuggest",
-            "numberScrubber"
+            "autoSuggest"
         ],
         ace_webpage: [
             "imageModal",
