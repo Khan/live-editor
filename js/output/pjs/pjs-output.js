@@ -162,6 +162,10 @@ window.PJSOutput = Backbone.View.extend({
             // method on it which returns "rgba(0,0,0,0)" which doesn't doesn't
             // contain the string "return" so it fails.
             safeCalls.color = true;
+            
+            // It doesn't affect the main Processing instance.  It fails the 
+            // above test because it calls "new Processing();".
+            safeCalls.createGraphics = true;
 
             // The one exception to the rule above is the draw function
             // (which is defined on init but CAN be overridden).
@@ -995,6 +999,23 @@ window.PJSOutput = Backbone.View.extend({
             if (this.oldInstances &&
                     PJSOutput.stringifyArray(this.oldInstances) !==
                     PJSOutput.stringifyArray(PJSOutput.instances)) {
+                rerun = true;
+            }
+            
+            // TODO(kevinb) cache instances returned by createGraphics.
+            // Rerun if there are any uses of createGraphics.  The problem is
+            // not actually createGraphics, but rather calls that render stuff
+            // to the Processing instances returned by createGraphics.  In the 
+            // future we might be able to reuse these instances, but we'd need
+            // to track which call to createGraphics returned which instance.
+            // Using the arguments as an id is insufficient.  We'd have to use
+            // some combination of which line number createGraphics was called
+            // on whether it was the first call, second call, etc. that created
+            // it to deal with loops.  We'd also need to take into account edit
+            // operations that add/remove lines so that we could update the 
+            // line number in the id to avoid unnecessary reruns.  After all of
+            // that we'll still have to fall back to rerun in all other cases.
+            if (/createGraphics[\s\n]*\(/.test(userCode)) {
                 rerun = true;
             }
 

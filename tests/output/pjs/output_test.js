@@ -3,7 +3,7 @@
 /* global externals, exp, link, width, draw, mouseMoved, Program */
 
 describe("Version test", function() {
-    it.only("should use version 4 or greater", function() {
+    it("should use version 4 or greater", function() {
         var config = new ScratchpadConfig({});
         expect(config.latestVersion()).to.be(4);
     });  
@@ -466,6 +466,20 @@ describe("Scratchpad Output Exec", function() {
             image(myObj.img, myObj.x, 0); // <-- Remove this semicolon and add it back!
         };
 
+    });
+    
+    runTest({
+        title: "Make sure methods on objects returned by createGraphics work",
+        code: function() {
+            var img = getImage("avatars/leafers-seedling");
+
+            var gfx = createGraphics(400, 400, 1);
+            gfx.image(img, 0, 0);
+
+            var draw = function() {
+                image(gfx, 10, 0);
+            };
+        }
     });
 
     // This test requires commercial codecs
