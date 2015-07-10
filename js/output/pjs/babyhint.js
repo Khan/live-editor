@@ -94,6 +94,7 @@ var BabyHint = {
         "image": [3, 5],
         "line": 4,
         "loadImage": [1, 3],
+        "getImage": 1,
         "mag": [2, 3],
         "max": 2,
         "min": 2,
