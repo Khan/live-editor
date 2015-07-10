@@ -1,22 +1,34 @@
 window.LoopProtector = function(callback) {
-	this.callback = callback || function() {};
-	this.branchStartTime = 0;
-	this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
+    this.callback = callback || function () { };
+    this.branchStartTime = 0;
+    this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
+    this.visible = true;
+    
+    visibly.onVisible(function () {
+        this.visible = true;
+        this.branchStartTime = 0;
+    }.bind(this));
+
+    visibly.onHidden(function () {
+        this.visible = false;
+    }.bind(this));
 };
 
 window.LoopProtector.prototype = {
-	// Make sure to attach this function to the global scope
-	_KAInfiniteLoopProtect: function() {
+    // Make sure to attach this function to the global scope
+    _KAInfiniteLoopProtect: function () {
         var now = new Date().getTime();
         if (!this.branchStartTime) {
             this.branchStartTime = now;
-            setTimeout(function() {
+            setTimeout(function () {
                 this.branchStartTime = 0;
             }.bind(this), 0);
         } else if (now - this.branchStartTime > 200) {
-        	this.callback();
-            throw "KA_INFINITE_LOOP";
+            if (this.visible) {
+                this.callback();
+                throw "KA_INFINITE_LOOP";   
+            }
         }
     },
 
@@ -43,14 +55,15 @@ window.LoopProtector.prototype = {
         }
     },
 
-	protect: function(ast, callback) {
-		callback = callback || function() {};
+    protect: function (ast, callback) {
+        callback = callback || function () {
+            };
 
-		if (_.isString(ast)) {
-        	var ast = esprima.parse(ast);
-		}
+        if (_.isString(ast)) {
+            var ast = esprima.parse(ast);
+        }
         this.protectAst(ast);
         text = escodegen.generate(ast);
         return text;
-	}
+    }
 };

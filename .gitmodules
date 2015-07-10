@@ -22,3 +22,6 @@
 [submodule "external/debugger"]
 	path = external/debugger
 	url = https://github.com/kevinb7/debugger
+[submodule "external/visibly"]
+	path = external/visibly
+	url = https://github.com/Khan/visibly.js
