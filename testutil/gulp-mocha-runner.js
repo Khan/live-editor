@@ -23,7 +23,15 @@ var plugin = function (options) {
             return;
         }
 
-        error.stackArray.forEach(function(stackFrame) {
+        error.stackArray.filter(function(stackFrame) { 
+            if (!stackFrame.url) {
+                return false;
+            } else if (stackFrame.url && stackFrame.url.indexOf("mocha.js") !== -1) {
+                return false;
+            } else {
+                return true;
+            }
+        }).forEach(function(stackFrame) {
             var url = stackFrame.sourceURL;
             url = url.replace(
                 new RegExp("file://" + __dirname + "/"), "");
@@ -51,7 +59,22 @@ var plugin = function (options) {
             var msgStr = data.toString().trim();
             
             if (msgStr.charAt(0) === "[") {
-                var msgObj = JSON.parse(msgStr);
+                var msgObj;
+                try {
+                    msgObj = JSON.parse(msgStr);
+                } catch(e) {
+                    // sometimes we get malformed JSON, just ignore it
+                    if (msgStr.indexOf("pass") > 0) {
+                        process.stdout.write("\x1b[32m.\x1b[0m"); // green
+                    } else if (msgStr.indexOf("fail") > 0) {
+                        process.stdout.write("\x1b[31mF\x1b[0m"); // red
+                        failures.push({
+                            fullTitle: "unknown",
+                            message: "unknown"
+                        });
+                    }
+                    return;
+                }
                 var type = msgObj[0];
                 var params = msgObj[1];
 
@@ -71,9 +94,11 @@ var plugin = function (options) {
                         console.log("The following tests failed:");
                         failures.forEach(function(failure) {
                             var error = failure.error;
-                            console.log(indent + failure.fullTitle);
-                            console.log(indent + indent + error.message);
-                            printStackTrace(error);
+                            if (error) {
+                                console.log(indent + failure.fullTitle);
+                                console.log(indent + indent + error.message);
+                                printStackTrace(error);
+                            }
                         });
                     }
 
@@ -111,7 +136,15 @@ var plugin = function (options) {
             }
         });
         phantom.stderr.on("data", function(data) {
-            errors.push(JSON.parse(data.toString("utf-8")));
+            var error = JSON.parse(data.toString("utf-8"));
+
+            // skip infinite loop exceptions, these indicate that the system is
+            // is working correctly
+            if (error.msg === "KA_INFINITE_LOOP") {
+                return;
+            }
+
+            errors.push(error);
         });
     }
 
