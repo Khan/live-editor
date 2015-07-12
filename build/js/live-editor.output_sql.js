@@ -232,13 +232,12 @@ function program20(depth0,data) {
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n</div>\n</body>\n</html>\n";
   return buffer;});;
-var SQLTester = function(options) {
+var SQLTester = function SQLTester(options) {
     this.initialize(options);
     this.bindTestContext();
 };
 
 SQLTester.prototype = new OutputTester();
-
 
 /**
  * Small collection of some utility functions to tack onto the function
@@ -255,15 +254,13 @@ SQLTester.Util = {
      *   - columns: array of object of extra properties on each column
      *      cid, name, type, notnul, dflt_value, pk
      */
-    getTables: function(db) {
-        var tablesResult = db.exec("SELECT name FROM sqlite_master WHERE " +
-                "type='table' and tbl_name != 'sqlite_sequence';");
-        var tables = tablesResult.length === 0? [] :
-                tablesResult[0].values.map(function(t) {
+    getTables: function getTables(db) {
+        var tablesResult = db.exec("SELECT name FROM sqlite_master WHERE " + "type='table' and tbl_name != 'sqlite_sequence';");
+        var tables = tablesResult.length === 0 ? [] : tablesResult[0].values.map(function (t) {
             return t[0];
         });
 
-        tables = tables.map(function(table) {
+        tables = tables.map(function (table) {
             var rowCount = SQLTester.Util.getRowCount(db, table);
             var tablesInfoResult = db.exec("PRAGMA table_info(" + table + ")");
             var v = tablesInfoResult[0].values;
@@ -272,7 +269,7 @@ SQLTester.Util = {
                 name: table,
                 rowCount: rowCount,
                 hasSingleRow: rowCount === 1, // lame, for handlebars :(
-                columns: v.map(function(v) {
+                columns: v.map(function (v) {
                     return {
                         cid: v[0],
                         name: v[1],
@@ -293,7 +290,7 @@ SQLTester.Util = {
      * @param db The database to perform the query on
      * @param table The name of the table to query
      */
-    getRowCount: function(db, table) {
+    getRowCount: function getRowCount(db, table) {
         var result = db.exec("SELECT count(*) FROM " + table);
         return result[0].values[0][0];
     },
@@ -307,7 +304,7 @@ SQLTester.Util = {
      *     lineNumber is the line of code corresponding to the statement
      *     return false from the callback to cancel executing
      */
-    forEachStatement: function(userCode, callback) {
+    forEachStatement: function forEachStatement(userCode, callback) {
 
         // Implements a simple state machine by hand which will parse out
         // comments and separate on semicolons.
@@ -321,7 +318,7 @@ SQLTester.Util = {
             IN_MULTI_LINE_COMMENT: 5,
             IN_MULTI_LINE_COMMENT_PLUS_STAR: 6,
             IN_SINGLE_QUOTE_STRING: 7,
-            IN_DOUBLE_QUOTE_STRING: 8,
+            IN_DOUBLE_QUOTE_STRING: 8
         };
 
         var currentState = state.NORMAL;
@@ -415,16 +412,14 @@ SQLTester.Util = {
      * @param userCode The code to run
      * @return An array of result objects
      */
-    execWithResults: function(db, userCode) {
+    execWithResults: function execWithResults(db, userCode) {
         var results = [];
-        SQLTester.Util.forEachStatement(userCode, function(statementCode) {
+        SQLTester.Util.forEachStatement(userCode, function (statementCode) {
             // Ignore empty statements, this should be caught be linting
             if (!statementCode) {
                 return;
             }
-            var result =
-                SQLTester.Util.execSingleStatementWithResults(db,
-                    statementCode);
+            var result = SQLTester.Util.execSingleStatementWithResults(db, statementCode);
             if (result) {
                 results.push(result);
             }
@@ -438,9 +433,9 @@ SQLTester.Util = {
      * @param statement The statement to execute
      * @return a result object or if no results returns null
      */
-    execSingleStatementWithResults: function(db, statementCode) {
+    execSingleStatementWithResults: function execSingleStatementWithResults(db, statementCode) {
         var stmt = db.prepare(statementCode);
-        var o = { values: []};
+        var o = { values: [] };
         while (stmt.step()) {
             if (!o.columns) {
                 o.columns = stmt.getColumnNames();
@@ -451,11 +446,11 @@ SQLTester.Util = {
             // arrays within arrays on Firefox.
             var rowData = stmt.get();
             if (rowData) {
-                rowData = rowData.map(function(data) {
+                rowData = rowData.map(function (data) {
                     return { data: data };
                 });
             }
-            o.values.push({ result: rowData});
+            o.values.push({ result: rowData });
         }
         if (o.columns) {
             return o;
@@ -473,16 +468,14 @@ SQLTester.prototype.testMethods = {
      * This allows much terser definition of callback functions since you
      * don't have to explicitly state the parameters in a separate list.
      */
-    constraint: function(callback) {
-        var paramText = /^function [^\(]*\(([^\)]*)\)/
-            .exec(callback.toString())[1];
+    constraint: function constraint(callback) {
+        var paramText = /^function [^\(]*\(([^\)]*)\)/.exec(callback.toString())[1];
         var params = paramText.match(/[$_a-zA-z0-9]+/g);
 
         for (var key in params) {
             if (params[key][0] !== "$") {
                 if (window.console) {
-                    console.warn("Invalid parameter in constraint " +
-                            "(should begin with a '$'): ", params[key]);
+                    console.warn("Invalid parameter in constraint " + "(should begin with a '$'): ", params[key]);
                 }
                 return null;
             }
@@ -493,10 +486,9 @@ SQLTester.prototype.testMethods = {
         };
     },
 
-    initTemplateDB: function(structure) {
+    initTemplateDB: function initTemplateDB(structure) {
         var templateDB = new SQL.Database();
-        var templateResults =
-            SQLTester.Util.execWithResults(templateDB, structure);
+        var templateResults = SQLTester.Util.execWithResults(templateDB, structure);
         var templateTables = SQLTester.Util.getTables(templateDB, true);
         templateDB.close();
         return {
@@ -509,10 +501,10 @@ SQLTester.prototype.testMethods = {
     /*
      * Returns the result of matching a structure against the user's SQL
      */
-    matchTableCount: function(templateDBInfo) {
+    matchTableCount: function matchTableCount(templateDBInfo) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
-            return {success: false};
+            return { success: false };
         }
 
         var dbInfo = this.userCode;
@@ -525,10 +517,10 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
-    matchTableRowCount: function(templateDBInfo) {
+    matchTableRowCount: function matchTableRowCount(templateDBInfo) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
-            return {success: false};
+            return { success: false };
         }
 
         var dbInfo = this.userCode;
@@ -548,10 +540,10 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
-    matchTableColumnCount: function(templateDBInfo) {
+    matchTableColumnCount: function matchTableColumnCount(templateDBInfo) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
-            return {success: false};
+            return { success: false };
         }
 
         var dbInfo = this.userCode;
@@ -568,10 +560,10 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
-    matchResultCount: function(templateDBInfo) {
+    matchResultCount: function matchResultCount(templateDBInfo) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
-            return {success: false};
+            return { success: false };
         }
 
         var dbInfo = this.userCode;
@@ -584,10 +576,10 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
-    matchResultColumns: function(templateDBInfo, numResults) {
+    matchResultColumns: function matchResultColumns(templateDBInfo, numResults) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
-            return {success: false};
+            return { success: false };
         }
 
         var dbInfo = this.userCode;
@@ -608,9 +600,8 @@ SQLTester.prototype.testMethods = {
                 return { success: false };
             }
             for (var c = 0; c < res.columns.length; c++) {
-                var col = res.columns[c].toLowerCase().replace(/ /g,'');
-                var templateCol =
-                    templateRes.columns[c].toLowerCase().replace(/ /g,'');
+                var col = res.columns[c].toLowerCase().replace(/ /g, "");
+                var templateCol = templateRes.columns[c].toLowerCase().replace(/ /g, "");
                 if (col !== templateCol) {
                     return { success: false };
                 }
@@ -619,10 +610,10 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
-    matchResultValues: function(templateDBInfo, exactValues, numResults) {
+    matchResultValues: function matchResultValues(templateDBInfo, exactValues, numResults) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
-            return {success: false};
+            return { success: false };
         }
 
         var dbInfo = this.userCode;
@@ -635,8 +626,8 @@ SQLTester.prototype.testMethods = {
 
         // This allows us to check Step 1 results even if
         //  Step 2 results are not correct, for example.
-        numResults = numResults || results.length; 
-        
+        numResults = numResults || results.length;
+
         // Make sure we have similar results
         for (var i = 0; i < numResults; i++) {
             var res = results[i];
@@ -660,7 +651,7 @@ SQLTester.prototype.testMethods = {
     /*
      * Creates a new test result (i.e. new challenge tab)
      */
-    assertMatch: function(result, description, hint, image) {
+    assertMatch: function assertMatch(result, description, hint, image) {
         var alternateMessage;
         var alsoMessage;
 
@@ -676,14 +667,11 @@ SQLTester.prototype.testMethods = {
             alsoMessage: alsoMessage,
             image: image
         });
-    },
+    }
 };
-
-
-
 /* global SQLTester */
 window.SQLOutput = Backbone.View.extend({
-    initialize: function(options) {
+    initialize: function initialize(options) {
         this.config = options.config;
         this.output = options.output;
         this.externalsDir = options.externalsDir;
@@ -696,7 +684,7 @@ window.SQLOutput = Backbone.View.extend({
         this.config.runCurVersion("sql", this);
 
         // Register a helper to tell the difference between null and 0
-        Handlebars.registerHelper('isNull', function(variable, options) {
+        Handlebars.registerHelper("isNull", function (variable, options) {
             if (variable === null) {
                 return options.fn(this);
             } else {
@@ -705,32 +693,28 @@ window.SQLOutput = Backbone.View.extend({
         });
     },
 
-    render: function() {
+    render: function render() {
         this.$el.empty();
-        this.$frame = $("<iframe>")
-            .css({width: "100%", height: "100%", border: "0"})
-            .appendTo(this.el)
-            .show();
+        this.$frame = $("<iframe>").css({ width: "100%", height: "100%", border: "0" }).appendTo(this.el).show();
     },
 
-    getDocument: function() {
+    getDocument: function getDocument() {
         return this.$frame[0].contentWindow.document;
     },
 
-    getScreenshot: function(screenshotSize, callback) {
+    getScreenshot: function getScreenshot(screenshotSize, callback) {
         html2canvas(this.getDocument().body, {
             imagesDir: this.output.imagesDir,
-            onrendered: function(canvas) {
+            onrendered: function onrendered(canvas) {
                 var width = screenshotSize;
-                var height = (screenshotSize / canvas.width) * canvas.height;
+                var height = screenshotSize / canvas.width * canvas.height;
 
                 // We want to resize the image to a thumbnail,
                 // which we can do by creating a temporary canvas
                 var tmpCanvas = document.createElement("canvas");
                 tmpCanvas.width = screenshotSize;
                 tmpCanvas.height = screenshotSize;
-                tmpCanvas.getContext("2d").drawImage(
-                    canvas, 0, 0, width, height);
+                tmpCanvas.getContext("2d").drawImage(canvas, 0, 0, width, height);
 
                 // Send back the screenshot data
                 callback(tmpCanvas.toDataURL("image/png"));
@@ -743,50 +727,31 @@ window.SQLOutput = Backbone.View.extend({
      * error message.  SQLlite error messages aren't always very descriptive,
      * this should make common syntax errors easier to understand.
      */
-    getErrorMessage: function(errorMessage, statement) {
+    getErrorMessage: function getErrorMessage(errorMessage, statement) {
         errorMessage = errorMessage || "";
         statement = statement || "";
         statement = statement.toUpperCase();
 
         // Possible SELECT with missing FROM
-        if (errorMessage.indexOf("no such column:") !== -1 &&
-                statement.indexOf("SELECT") !== -1 &&
-                statement.indexOf("FROM") === -1) {
+        if (errorMessage.indexOf("no such column:") !== -1 && statement.indexOf("SELECT") !== -1 && statement.indexOf("FROM") === -1) {
             errorMessage += ". " + $._("Are you missing a FROM clause?");
-        // Possible INSERT with missing INTO
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
-                statement.indexOf("INSERT") !== -1 &&
-                statement.indexOf("VALUES") !== -1 &&
-                statement.indexOf("INTO") === -1) {
+            // Possible INSERT with missing INTO
+        } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("INSERT") !== -1 && statement.indexOf("VALUES") !== -1 && statement.indexOf("INTO") === -1) {
             errorMessage += ". " + $._("Are you missing the INTO keyword?");
-        // Possible INSERT INTO with missing VALUES
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
-                statement.indexOf("INSERT") !== -1 &&
-                statement.indexOf("INTO") !== -1 &&
-                statement.indexOf("VALUES") === -1) {
-            errorMessage += ". " +
-                $._("Are you missing the VALUES keyword?");
-        // Possible CREATE with missing what to create
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
-                statement.indexOf("CREATE") !== -1 && (
-                    statement.indexOf("INDEX") === -1 ||
-                    statement.indexOf("TABLE") === -1 ||
-                    statement.indexOf("TRIGGER") === -1 ||
-                    statement.indexOf("VIEW") === -1)) {
-            errorMessage += ". " +
-                $._("You may be missing what to create. For " +
-                    "example CREATE TABLE...");
-        // Possible UPDATE without SET
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
-                statement.indexOf("UPDATE") !== -1 &&
-                statement.indexOf("SET") === -1) {
-            errorMessage += ". " +
-                $._("Are you missing the SET keyword?");
+            // Possible INSERT INTO with missing VALUES
+        } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("INSERT") !== -1 && statement.indexOf("INTO") !== -1 && statement.indexOf("VALUES") === -1) {
+            errorMessage += ". " + $._("Are you missing the VALUES keyword?");
+            // Possible CREATE with missing what to create
+        } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("CREATE") !== -1 && (statement.indexOf("INDEX") === -1 || statement.indexOf("TABLE") === -1 || statement.indexOf("TRIGGER") === -1 || statement.indexOf("VIEW") === -1)) {
+            errorMessage += ". " + $._("You may be missing what to create. For " + "example CREATE TABLE...");
+            // Possible UPDATE without SET
+        } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("UPDATE") !== -1 && statement.indexOf("SET") === -1) {
+            errorMessage += ". " + $._("Are you missing the SET keyword?");
         }
         return errorMessage;
     },
 
-    lint: function(userCode, skip) {
+    lint: function lint(userCode, skip) {
         // the deferred isn't required in this case, but we need to match the
         // same API as the pjs-output.js' lint method.
         var deferred = $.Deferred();
@@ -794,13 +759,12 @@ window.SQLOutput = Backbone.View.extend({
             deferred.resolve([]);
             return deferred;
         }
-        
+
         if (!window.SQLOutput.isSupported()) {
             deferred.resolve([{
                 row: -1,
                 column: -1,
-                text: $._("Your browser is not recent enough to show " +
-                          "SQL output. Please upgrade your browser."),
+                text: $._("Your browser is not recent enough to show " + "SQL output. Please upgrade your browser."),
                 type: "error",
                 source: "sqlite",
                 lint: undefined,
@@ -816,16 +780,12 @@ window.SQLOutput = Backbone.View.extend({
         var error;
         var db = new SQL.Database();
         var results = [];
-        SQLTester.Util.forEachStatement(userCode,
-                function(statement, lineNumber) {
+        SQLTester.Util.forEachStatement(userCode, (function (statement, lineNumber) {
             try {
                 if (!statement) {
-                    throw new Error($._("It looks like you have an " +
-                        "unnecessary semicolon."));
+                    throw new Error($._("It looks like you have an " + "unnecessary semicolon."));
                 }
-                var result =
-                    SQLTester.Util.execSingleStatementWithResults(db,
-                        statement);
+                var result = SQLTester.Util.execSingleStatementWithResults(db, statement);
                 if (result) {
                     results.push(result);
                 }
@@ -836,15 +796,12 @@ window.SQLOutput = Backbone.View.extend({
                 // Instead it would be better for learning purposes to require
                 // the valid names that things coerce to.
                 var tables = SQLTester.Util.getTables(db);
-                tables.forEach(function(table) {
-                    table.columns.forEach(function(column) {
-                        var type =  column.type.toUpperCase();
-                        var allowedTypes = ["TEXT", "NUMERIC", "INTEGER",
-                            "REAL", "NONE"];
+                tables.forEach(function (table) {
+                    table.columns.forEach(function (column) {
+                        var type = column.type.toUpperCase();
+                        var allowedTypes = ["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE"];
                         if (allowedTypes.indexOf(type) === -1) {
-                            throw new Error($._("Please use one of the valid column " +
-                                "types when creating a table: ") +
-                                allowedTypes.join(", "));
+                            throw new Error($._("Please use one of the valid column " + "types when creating a table: ") + allowedTypes.join(", "));
                         }
                     });
                 });
@@ -853,9 +810,7 @@ window.SQLOutput = Backbone.View.extend({
                 var fkResults = db.exec("PRAGMA foreign_key_check;");
                 if (fkResults.length > 0) {
                     var result = fkResults[0];
-                    throw new Error("Please check for a foreign key constraint " +
-                        "on table " + result.values[0][0] +
-                        " for parent table " + result.values[0][2]);
+                    throw new Error("Please check for a foreign key constraint " + "on table " + result.values[0][0] + " for parent table " + result.values[0][2]);
                 }
 
                 // Check if we have any new integrity errors such as NOT NULL
@@ -880,7 +835,7 @@ window.SQLOutput = Backbone.View.extend({
                 }]);
                 return false;
             }
-        }.bind(this));
+        }).bind(this));
 
         var tables = SQLTester.Util.getTables(db);
         db.close();
@@ -894,52 +849,47 @@ window.SQLOutput = Backbone.View.extend({
         if (!error) {
             deferred.resolve([]);
         }
-        
+
         return deferred;
     },
 
-    initTests: function(validate) {
+    initTests: function initTests(validate) {
         if (!validate) {
             return;
         }
 
         try {
             var code = "with(arguments[0]){\n" + validate + "\n}";
-            (new Function(code)).apply({}, this.tester.testContext);
-
+            new Function(code).apply({}, this.tester.testContext);
         } catch (e) {
             return e;
         }
     },
 
-    test: function(userCode, tests, errors, callback) {
+    test: function test(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
-        this.tester.test(this.dbInfo, tests, errors,
-            function(errors, testResults) {
-                if (errorCount !== errors.length) {
-                    // Note: Scratchpad challenge checks against the exact
-                    // translated text "A critical problem occurred..." to
-                    // figure out whether we hit this case.
-                    var message = $._("Error: %(message)s",
-                        {message: errors[errors.length - 1].message});
-                    // TODO(jeresig): Find a better way to show this
-                    this.output.$el.find(".test-errors").text(message).show();
-                    this.tester.testContext.assert(false, message,
-                        $._("A critical problem occurred in your program " +
-                            "making it unable to run."));
-                }
+        this.tester.test(this.dbInfo, tests, errors, (function (errors, testResults) {
+            if (errorCount !== errors.length) {
+                // Note: Scratchpad challenge checks against the exact
+                // translated text "A critical problem occurred..." to
+                // figure out whether we hit this case.
+                var message = $._("Error: %(message)s", { message: errors[errors.length - 1].message });
+                // TODO(jeresig): Find a better way to show this
+                this.output.$el.find(".test-errors").text(message).show();
+                this.tester.testContext.assert(false, message, $._("A critical problem occurred in your program " + "making it unable to run."));
+            }
 
-                callback(errors, testResults);
-            }.bind(this));
+            callback(errors, testResults);
+        }).bind(this));
     },
 
-    postProcessing: function() {
+    postProcessing: function postProcessing() {
         var doc = this.getDocument();
         var self = this;
-        $(doc).find("table.sql-schema-table").each(function() {
+        $(doc).find("table.sql-schema-table").each(function () {
             var tableName = $(this).data("table-name");
-            $(this).find("th a").click(function() {
+            $(this).find("th a").click(function () {
                 self.output.postParent({
                     action: "sql-table-click",
                     table: tableName
@@ -948,7 +898,7 @@ window.SQLOutput = Backbone.View.extend({
         });
     },
 
-    runCode: function(userCode, callback) {
+    runCode: function runCode(userCode, callback) {
         if (!window.SQLOutput.isSupported()) {
             return callback([], userCode);
         }
@@ -983,18 +933,18 @@ window.SQLOutput = Backbone.View.extend({
         callback([], userCode);
     },
 
-    clear: function() {
-        // Clear the output
-    },
+    clear: function clear() {},
 
-    kill: function() {
-        // Completely stop and clear the output
-    }
+    kill: function kill() {}
 });
 
-window.SQLOutput.isSupported = function() {
+window.SQLOutput.isSupported = function () {
     // Check to make sure the typed arrays dependency is supported.
     return "Uint8ClampedArray" in window;
 };
 
 LiveEditorOutput.registerOutput("sql", SQLOutput);
+
+// Clear the output
+
+// Completely stop and clear the output

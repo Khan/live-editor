@@ -1,6 +1,7 @@
 var http = require("http");
 var zlib = require("zlib");
 var fs = require("fs");
+var path = require("path");
 
 var gulp = require("gulp");
 
@@ -16,6 +17,8 @@ var mochaPhantomJS = require("gulp-mocha-phantomjs");
 var staticServe = require("node-static");
 var request = require("request");
 var gutil = require("gulp-util");
+var babel = require("gulp-babel");
+var gulpIf = require("gulp-if");
 
 var mochaRunner = require("./testutil/gulp-mocha-runner.js");
 var check = require("./check.js");
@@ -40,8 +43,14 @@ var scriptTypes = Object.keys(paths.scripts);
 scriptTypes.forEach(function(type) {
     gulp.task("script_" + type, ["templates"], function() {
         var outputFileName = "live-editor." + type + ".js";
+        var srcPath = path.join(__dirname, "js");
+
         return gulp.src(paths.scripts[type])
             .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
+            .pipe(gulpIf(function (file) {
+                // transform source files but not dependencies
+                return file.path.indexOf(srcPath) === 0;   
+            }, babel({ blacklist: ["strict"] })))
             .pipe(concat(outputFileName))
             .pipe(gulp.dest("build/js"));
     });

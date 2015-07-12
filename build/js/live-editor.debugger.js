@@ -630,7 +630,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
     el: ".scratchpad-debugger",
 
-    initialize: function(options) {
+    initialize: function initialize(options) {
         this.editor = options.editor;
         this.liveEditor = options.liveEditor;
 
@@ -638,7 +638,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.bind();
     },
 
-    render: function() {
+    render: function render() {
         this.$el.html(Handlebars.templates["debugger"]({
             execFile: this.execFile,
             imagesDir: this.imagesDir,
@@ -646,13 +646,13 @@ window.ScratchpadDebugger = Backbone.View.extend({
         }));
     },
 
-    postFrame: function(data) {
+    postFrame: function postFrame(data) {
         this.liveEditor.postFrame(data);
     },
 
-    bind: function() {
+    bind: function bind() {
         // create the overlay first before binding any event handlers because
-        // createOverlay moves the iframe's position in the DOM tree which 
+        // createOverlay moves the iframe's position in the DOM tree which
         // unbinds existing event handlers
         var iframe = $("iframe").get(0);
         this.overlay = iframeOverlay.createOverlay(iframe);
@@ -663,7 +663,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
         $(window).on("message", this.listenMessages.bind(this));
 
-        $el.on("change", ".debug-mode", function() {
+        $el.on("change", ".debug-mode", function () {
             self.debuggerLevel = $el.find(".debugger-level-select option:selected").val();
 
             if (this.checked) {
@@ -692,20 +692,20 @@ window.ScratchpadDebugger = Backbone.View.extend({
             self.postFrame({
                 type: "debugger",
                 action: "debug",
-                state: this.checked ? "on": "off"
+                state: this.checked ? "on" : "off"
             });
         });
 
         var scroller = self.liveEditor.$el.find(".ace_scroller").get(0);
         // needs to be on the capture phase to prevent existing event handlers
         // from firing
-        scroller.addEventListener("mousedown", function(e) {
+        scroller.addEventListener("mousedown", function (e) {
             if (self.get("enabled")) {
                 e.stopImmediatePropagation();
             }
         }, true);
 
-        $el.on("change", ".debugger-level-select", function() {
+        $el.on("change", ".debugger-level-select", function () {
             self.debuggerLevel = $(this).find("option:selected").val();
 
             if (self.debuggerLevel === "beginner") {
@@ -717,7 +717,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
             }
         });
 
-        $el.on("click", ".debug-begin", function() {
+        $el.on("click", ".debug-begin", function () {
             self.postFrame({
                 type: "debugger",
                 action: "start",
@@ -728,7 +728,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
             self.enableButtons();
         });
 
-        $el.on("click", ".debug-end", function() {
+        $el.on("click", ".debug-end", function () {
             self.postFrame({
                 type: "debugger",
                 action: "resume",
@@ -736,7 +736,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
             });
         });
 
-        $el.on("click", ".debug-restart", function() {
+        $el.on("click", ".debug-restart", function () {
             self.postFrame({
                 type: "debugger",
                 action: "start",
@@ -744,28 +744,28 @@ window.ScratchpadDebugger = Backbone.View.extend({
             });
         });
 
-        $el.on("click", ".debug-continue", function() {
+        $el.on("click", ".debug-continue", function () {
             self.postFrame({
                 type: "debugger",
                 action: "resume"
             });
         });
 
-        $el.on("click", ".step-over", function() {
+        $el.on("click", ".step-over", function () {
             self.postFrame({
                 type: "debugger",
                 action: "stepOver"
             });
         });
 
-        $el.on("click", ".step-in", function() {
+        $el.on("click", ".step-in", function () {
             self.postFrame({
                 type: "debugger",
                 action: "stepIn"
             });
         });
 
-        $el.on("click", ".step-out", function() {
+        $el.on("click", ".step-out", function () {
             self.postFrame({
                 type: "debugger",
                 action: "stepOut"
@@ -773,7 +773,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         });
 
         // set/clear breakpoints by clicking in the gutter
-        this.editor.on("guttermousedown", function(e) {
+        this.editor.on("guttermousedown", function (e) {
             var target = e.domEvent.target;
             if (target.className.indexOf("ace_gutter-cell") === -1) {
                 return;
@@ -810,7 +810,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         // Based on:
         // https://github.com/ajaxorg/cloud9/blob/master/plugins-client/ext.debugger/breakpoints.js#L170
         var session = this.editor.session;
-        session.on("change", function(e) {
+        session.on("change", function (e) {
             if (!session.$breakpoints.length) {
                 return;
             }
@@ -844,23 +844,21 @@ window.ScratchpadDebugger = Backbone.View.extend({
         });
     },
 
-    getBreakpoints: function() {
+    getBreakpoints: function getBreakpoints() {
         var breakpoints = {};
-        this.editor.session.getBreakpoints().forEach(function(value, index) {
+        this.editor.session.getBreakpoints().forEach(function (value, index) {
             breakpoints[index + 1] = true;
         });
         return breakpoints;
     },
 
-    listenMessages: function(e) {
+    listenMessages: function listenMessages(e) {
         var event = e.originalEvent;
         var data;
 
         try {
             data = JSON.parse(event.data);
-        } catch (err) {
-            // Malformed JSON, we don't care about it
-        }
+        } catch (err) {}
 
         if (!data) {
             return;
@@ -893,7 +891,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         }
     },
 
-    enableButtons: function() {
+    enableButtons: function enableButtons() {
         this.$el.find(".step-over").removeAttr("disabled");
         this.$el.find(".step-in").removeAttr("disabled");
         this.$el.find(".step-out").removeAttr("disabled");
@@ -901,7 +899,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.$el.find(".debug-continue").removeAttr("disabled");
     },
 
-    disableButtons: function() {
+    disableButtons: function disableButtons() {
         this.$el.find(".step-over").attr("disabled", "");
         this.$el.find(".step-in").attr("disabled", "");
         this.$el.find(".step-out").attr("disabled", "");
@@ -910,6 +908,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
     }
 });
 
+// Malformed JSON, we don't care about it
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
 this["Handlebars"]["templates"]["debugger"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {

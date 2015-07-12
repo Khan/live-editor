@@ -1,4 +1,4 @@
-window.PJSTester = function(options) {
+window.PJSTester = function (options) {
     this.initialize(options);
     this.bindTestContext();
 };
@@ -9,34 +9,29 @@ PJSTester.prototype.testMethods = {
     /*
      * See if any of the patterns match the code
      */
-    firstMatchingPattern: function(patterns) {
-        return _.find(patterns, _.bind(function(pattern) {
+    firstMatchingPattern: function firstMatchingPattern(patterns) {
+        return _.find(patterns, _.bind(function (pattern) {
             return this.testContext.matches(pattern);
         }, this));
     },
 
-    hasFnCall: function(name, check) {
+    hasFnCall: function hasFnCall(name, check) {
         for (var i = 0, l = this.fnCalls.length; i < l; i++) {
-            var retVal = this.testContext.checkFn(
-                this.fnCalls[i], name, check);
+            var retVal = this.testContext.checkFn(this.fnCalls[i], name, check);
 
             if (retVal === true) {
                 return;
             }
         }
 
-        this.testContext.assert(false,
-            $._("Expected function call to '%(name)s' was not made.",
-            {name: name}));
+        this.testContext.assert(false, $._("Expected function call to '%(name)s' was not made.", { name: name }));
     },
 
-    orderedFnCalls: function(calls) {
+    orderedFnCalls: function orderedFnCalls(calls) {
         var callPos = 0;
 
         for (var i = 0, l = this.fnCalls.length; i < l; i++) {
-            var retVal = this.testContext.checkFn(
-                this.fnCalls[i],
-                    calls[callPos][0], calls[callPos][1]);
+            var retVal = this.testContext.checkFn(this.fnCalls[i], calls[callPos][0], calls[callPos][1]);
 
             if (retVal === true) {
                 callPos += 1;
@@ -47,12 +42,10 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false,
-            $._("Expected function call to '%(name)s' was not made.",
-            {name: calls[callPos][0]}));
+        this.testContext.assert(false, $._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
     },
 
-    checkFn: function(fnCall, name, check) {
+    checkFn: function checkFn(fnCall, name, check) {
         if (fnCall.name !== name) {
             return;
         }
@@ -62,56 +55,48 @@ PJSTester.prototype.testMethods = {
         if (typeof check === "object") {
             if (check.length !== fnCall.args.length) {
                 pass = false;
-
             } else {
                 for (var c = 0; c < check.length; c++) {
-                    if (check[c] !== null &&
-                        check[c] !== fnCall.args[c]) {
+                    if (check[c] !== null && check[c] !== fnCall.args[c]) {
                         pass = false;
                     }
                 }
             }
-
         } else if (typeof check === "function") {
             pass = check(fnCall);
         }
 
         if (pass) {
-            this.testContext.assert(true,
-                $._("Correct function call made to %(name)s.",
-                {name: name}));
+            this.testContext.assert(true, $._("Correct function call made to %(name)s.", { name: name }));
         }
 
         return pass;
     },
 
-    _isVarName: function(str) {
+    _isVarName: function _isVarName(str) {
         return _.isString(str) && str.length > 0 && str[0] === "$";
     },
 
-    _assertVarName: function(str) {
+    _assertVarName: function _assertVarName(str) {
         if (!this.testContext._isVarName(str)) {
-            throw new Error(
-                $._("Expected '%(name)s' to be a valid variable name.",
-                    {name: str}));
+            throw new Error($._("Expected '%(name)s' to be a valid variable name.", { name: str }));
         }
     },
 
     /*
      * Satisfied when predicate(var) is true.
      */
-    unaryOp: function(varName, predicate) {
+    unaryOp: function unaryOp(varName, predicate) {
         this.testContext._assertVarName(varName);
-        return this.testContext.constraint([varName], function(ast) {
-            return !!(ast && !_.isUndefined(ast.value) &&
-                predicate(ast.value));
+        return this.testContext.constraint([varName], function (ast) {
+            return !!(ast && !_.isUndefined(ast.value) && predicate(ast.value));
         });
     },
 
     /*
      * Satisfied when var is any literal.
      */
-    isLiteral: function(varName) {
+    isLiteral: function isLiteral(varName) {
         function returnsTrue() {
             return true;
         }
@@ -122,15 +107,15 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when var is a number.
      */
-    isNumber: function(varName) {
+    isNumber: function isNumber(varName) {
         return this.testContext.unaryOp(varName, _.isNumber);
     },
 
     /*
      * Satisfied when var is an identifier
      */
-    isIdentifier: function(varName) {
-        return this.testContext.constraint([varName], function(ast) {
+    isIdentifier: function isIdentifier(varName) {
+        return this.testContext.constraint([varName], function (ast) {
             return !!(ast && ast.type && ast.type === "Identifier");
         });
     },
@@ -138,48 +123,42 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when var is a boolean.
      */
-    isBoolean: function(varName) {
+    isBoolean: function isBoolean(varName) {
         return this.testContext.unaryOp(varName, _.isBoolean);
     },
 
     /*
      * Satisfied when var is a string.
      */
-    isString: function(varName) {
+    isString: function isString(varName) {
         return this.testContext.unaryOp(varName, _.isString);
     },
 
     /*
      * Satisfied when pred(first, second) is true.
      */
-    binaryOp: function(first, second, predicate) {
+    binaryOp: function binaryOp(first, second, predicate) {
         var variables = [];
         var fn;
         if (this.testContext._isVarName(first)) {
             variables.push(first);
             if (this.testContext._isVarName(second)) {
                 variables.push(second);
-                fn = function(a, b) {
-                    return !!(a && b && !_.isUndefined(a.value) &&
-                        !_.isUndefined(b.value) &&
-                        predicate(a.value, b.value));
+                fn = function (a, b) {
+                    return !!(a && b && !_.isUndefined(a.value) && !_.isUndefined(b.value) && predicate(a.value, b.value));
                 };
             } else {
-                fn = function(a) {
-                    return !!(a && !_.isUndefined(a.value) &&
-                        predicate(a.value, second));
+                fn = function (a) {
+                    return !!(a && !_.isUndefined(a.value) && predicate(a.value, second));
                 };
             }
         } else if (this.testContext._isVarName(second)) {
             variables.push(second);
-            fn = function(b) {
-                return !!(b && !_.isUndefined(b.value) &&
-                    predicate(first, b.value));
+            fn = function (b) {
+                return !!(b && !_.isUndefined(b.value) && predicate(first, b.value));
             };
         } else {
-            throw new Error($._("Expected either '%(first)s' or '%(second)s'" +
-                " to be a valid variable name.",
-                {first: first, second: second}));
+            throw new Error($._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
         }
 
         return this.testContext.constraint(variables, fn);
@@ -188,8 +167,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a < b
      */
-    lessThan: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    lessThan: function lessThan(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a < b;
         });
     },
@@ -197,8 +176,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a <= b
      */
-    lessThanOrEqual: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    lessThanOrEqual: function lessThanOrEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a <= b;
         });
     },
@@ -206,8 +185,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a > b
      */
-    greaterThan: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    greaterThan: function greaterThan(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a > b;
         });
     },
@@ -215,8 +194,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a > 0
      */
-    positive: function(a) {
-        return this.testContext.unaryOp(a, function(a) {
+    positive: function positive(a) {
+        return this.testContext.unaryOp(a, function (a) {
             return a > 0;
         });
     },
@@ -224,8 +203,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a > 0
      */
-    negative: function(a) {
-        return this.testContext.unaryOp(a, function(a) {
+    negative: function negative(a) {
+        return this.testContext.unaryOp(a, function (a) {
             return a < 0;
         });
     },
@@ -233,8 +212,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a >= b
      */
-    greaterThanOrEqual: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    greaterThanOrEqual: function greaterThanOrEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a >= b;
         });
     },
@@ -242,18 +221,15 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when min <= val <= max
      */
-    inRange: function(val, min, max) {
-        return this.testContext.and(
-            this.testContext.greaterThanOrEqual(val, min),
-            this.testContext.lessThanOrEqual(val, max)
-        );
+    inRange: function inRange(val, min, max) {
+        return this.testContext.and(this.testContext.greaterThanOrEqual(val, min), this.testContext.lessThanOrEqual(val, max));
     },
 
     /*
      * Satisfied when a === b
      */
-    equal: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    equal: function equal(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a === b;
         });
     },
@@ -261,8 +237,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a !== b
      */
-    notEqual: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    notEqual: function notEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a !== b;
         });
     },
@@ -270,23 +246,23 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when constraint is not satisfied
      */
-    not: function(constraint) {
-        return this.testContext.constraint(constraint.variables, function() {
+    not: function not(constraint) {
+        return this.testContext.constraint(constraint.variables, function () {
             return !constraint.fn.apply({}, arguments);
         });
     },
 
-    _naryShortCircuitingOp: function(allOrAny, args) {
+    _naryShortCircuitingOp: function _naryShortCircuitingOp(allOrAny, args) {
         var variables = _.union.apply({}, _.pluck(args, "variables"));
 
-        var argNameToIndex = _.object(_.map(variables, function(item, i) {
+        var argNameToIndex = _.object(_.map(variables, function (item, i) {
             return [item, i];
         }));
 
-        return this.testContext.constraint(variables, function() {
+        return this.testContext.constraint(variables, function () {
             var constraintArgs = arguments;
-            return allOrAny(args, function(constraint) {
-                var fnArgs = _.map(constraint.variables, function(varName) {
+            return allOrAny(args, function (constraint) {
+                var fnArgs = _.map(constraint.variables, function (varName) {
                     return constraintArgs[argNameToIndex[varName]];
                 });
 
@@ -298,14 +274,14 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when all of the input constraints are satisfied
      */
-    and: function() {
+    and: function and() {
         return this.testContext._naryShortCircuitingOp(_.all, arguments);
     },
 
     /*
      * Satisfied when any of the input constraints are satisfied
      */
-    or: function() {
+    or: function or() {
         return this.testContext._naryShortCircuitingOp(_.any, arguments);
     },
 
@@ -313,7 +289,7 @@ PJSTester.prototype.testMethods = {
      * Returns a new structure from the combination of a pattern and a
      * constraint
      */
-    structure: function(pattern, constraint) {
+    structure: function structure(pattern, constraint) {
         return {
             pattern: pattern,
             constraint: constraint
@@ -323,7 +299,7 @@ PJSTester.prototype.testMethods = {
     /*
      * Creates a new variable constraint
      */
-    constraint: function(variables, fn) {
+    constraint: function constraint(variables, fn) {
         return {
             variables: variables,
             fn: fn
@@ -333,7 +309,7 @@ PJSTester.prototype.testMethods = {
     /*
      * Returns the result of matching a structure against the user's code
      */
-    match: function(structure) {
+    match: function match(structure) {
         // If there were syntax errors, don't even try to match it
         if (this.errors.length) {
             return {
@@ -349,12 +325,12 @@ PJSTester.prototype.testMethods = {
         // If we don't see a pattern property, they probably passed in
         // a pattern itself, so we'll turn it into a structure
         if (structure && _.isUndefined(structure.pattern)) {
-            structure = {pattern: structure};
+            structure = { pattern: structure };
         }
 
         // If nothing is passed in or the pattern is non-existent, return
         // failure
-        if (!structure || ! structure.pattern) {
+        if (!structure || !structure.pattern) {
             return {
                 success: false,
                 message: ""
@@ -363,10 +339,9 @@ PJSTester.prototype.testMethods = {
 
         try {
             var callbacks = structure.constraint;
-            var success = Structured.match(this.userCode,
-                structure.pattern, {
-                    varCallbacks: callbacks
-                });
+            var success = Structured.match(this.userCode, structure.pattern, {
+                varCallbacks: callbacks
+            });
 
             return {
                 success: success,
@@ -378,10 +353,7 @@ PJSTester.prototype.testMethods = {
             }
             return {
                 success: true,
-                message: $._("Hm, we're having some trouble " +
-                    "verifying your answer for this step, so we'll give " +
-                    "you the benefit of the doubt as we work to fix it. " +
-                    "Please click \"Report a problem\" to notify us.")
+                message: $._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
             };
         }
     },
@@ -389,7 +361,7 @@ PJSTester.prototype.testMethods = {
     /*
      * Returns true if the structure matches the user's code
      */
-    matches: function(structure) {
+    matches: function matches(structure) {
         if (typeof structure !== "object") {
             structure = this.testContext.structure(structure);
         }
@@ -399,28 +371,29 @@ PJSTester.prototype.testMethods = {
     /*
      * Creates a new test result (i.e. new challenge tab)
      */
-    assertMatch: function(result, description, hint, image, syntaxChecks) {
+    assertMatch: function assertMatch(result, description, hint, image, syntaxChecks) {
         if (syntaxChecks) {
             // If we found any syntax errors or warnings, we'll send it
             // through the special syntax checks
-            var foundErrors = _.any(this.errors, function(error) {
+            var foundErrors = _.any(this.errors, function (error) {
                 return error.lint;
             });
 
             if (foundErrors) {
-                _.each(syntaxChecks, function(syntaxCheck) {
+                _.each(syntaxChecks, (function (syntaxCheck) {
                     // Check if we find the regex anywhere in the code
                     var foundCheck = this.userCode.search(syntaxCheck.re);
-                    var rowNum = -1, colNum = -1, errorMsg;
+                    var rowNum = -1,
+                        colNum = -1,
+                        errorMsg;
                     if (foundCheck > -1) {
                         errorMsg = syntaxCheck.msg;
 
                         // Find line number and character
                         var lines = this.userCode.split("\n");
                         var totalChars = 0;
-                        _.each(lines, function(line, num) {
-                            if (rowNum === -1 &&
-                                foundCheck < totalChars + line.length) {
+                        _.each(lines, function (line, num) {
+                            if (rowNum === -1 && foundCheck < totalChars + line.length) {
                                 rowNum = num;
                                 colNum = foundCheck - totalChars;
                             }
@@ -434,7 +407,7 @@ PJSTester.prototype.testMethods = {
                             type: "error"
                         });
                     }
-                }.bind(this));
+                }).bind(this));
             }
         }
 
@@ -450,8 +423,7 @@ PJSTester.prototype.testMethods = {
         this.testContext.assert(result.success, description, "", {
             // We can accept string hints here because
             //  we never match against them anyway
-            structure: _.isString(hint) ? "function() {" + hint + "}" :
-                hint.toString(),
+            structure: _.isString(hint) ? "function() {" + hint + "}" : hint.toString(),
             alternateMessage: alternateMessage,
             alsoMessage: alsoMessage,
             image: image
@@ -483,48 +455,10 @@ var BabyHint = {
     // non-function keywords go here
     keywords: [
     /* RESERVED WORDS */
-        "break",
-        "case",
-        "catch",
-        "continue",
-        "default",
-        "do",
-        "else",
-        "finally",
-        "for",
-        "function",
-        "if",
-        "in",
-        "instanceof",
-        "new",
-        "return",
-        "switch",
-        "this",
-        "throw",
-        "try",
-        "typeof",
-        "var",
-        "while",
+    "break", "case", "catch", "continue", "default", "do", "else", "finally", "for", "function", "if", "in", "instanceof", "new", "return", "switch", "this", "throw", "try", "typeof", "var", "while",
     /* JAVASCRIPT OBJECT PROPERTIES AND FUNCTIONS */
     /* Omit those included in the global context */
-        "charAt",
-        "charCodeAt",
-        "fromCharCode",
-        "indexOf",
-        "lastIndexOf",
-        "length",
-        "pop",
-        "prototype",
-        "push",
-        "replace",
-        "search",
-        "shift",
-        "slice",
-        "substring",
-        "toLowerCase",
-        "toUpperCase",
-        "unshift"
-    ],
+    "charAt", "charCodeAt", "fromCharCode", "indexOf", "lastIndexOf", "length", "pop", "prototype", "push", "replace", "search", "shift", "slice", "substring", "toLowerCase", "toUpperCase", "unshift"],
 
     // Expected number of parameters for known functions.
     // (Some functions can take multiple signatures)
@@ -580,17 +514,13 @@ var BabyHint = {
     functionFormSuggestion: {
         // forms that don't have documentation scratchpads
         // or weird formatting
-        "function" : "var drawWinston = function() { ... };",
-        "while" : "while (x < 20) { ... };"
+        "function": "var drawWinston = function() { ... };",
+        "while": "while (x < 20) { ... };"
     },
 
     // functions in the global context that we want
     // blacklisted because it's complicated...
-    functionParamBlacklist: [
-        "debug",
-        "max",
-        "min"
-    ],
+    functionParamBlacklist: ["debug", "max", "min"],
 
     // These properties can be used for malicious purposes
     // It's just a stop-gap measure, making it much harder
@@ -606,20 +536,19 @@ var BabyHint = {
     inComment: false,
     spellChecked: false,
 
-    init: function(options) {
+    init: function init(options) {
         // grab globals from Processing object
         for (var f in options.context) {
             if (typeof options.context[f] === "function") {
                 BabyHint.keywords.push(f);
-                if (!(f in BabyHint.functionParamCount) &&
-                    !_.include(BabyHint.functionParamBlacklist, f)) {
+                if (!(f in BabyHint.functionParamCount) && !_.include(BabyHint.functionParamBlacklist, f)) {
                     BabyHint.functionParamCount[f] = options.context[f].length;
                 }
             }
         }
     },
 
-    initDocumentation: function(docTitles) {
+    initDocumentation: function initDocumentation(docTitles) {
         for (var i = 0; i < docTitles.length; i++) {
             var usage = docTitles[i];
 
@@ -637,7 +566,7 @@ var BabyHint = {
         }
     },
 
-    babyErrors: function(source, hintErrors) {
+    babyErrors: function babyErrors(source, hintErrors) {
         var errorLines = {};
         var lines = (source || "").split("\n");
         BabyHint.errors = [];
@@ -646,24 +575,23 @@ var BabyHint = {
         BabyHint.spellChecked = false;
 
         // Build a map of the lines on which JSHint produced an error
-        _.each(hintErrors, function(error) {
+        _.each(hintErrors, function (error) {
             // Get correct index number from the reported line number
             if (error) {
                 errorLines[error.line - 2] = true;
             }
         });
 
-        _.each(lines, function(line, index) {
+        _.each(lines, function (line, index) {
             // Check the line for errors
-            BabyHint.errors = BabyHint.errors.concat(
-                BabyHint.parseLine(line, index, errorLines[index]));
+            BabyHint.errors = BabyHint.errors.concat(BabyHint.parseLine(line, index, errorLines[index]));
         });
 
         return BabyHint.errors;
     },
 
     // Checks a single line for errors
-    parseLine: function(line, lineNumber, hasError) {
+    parseLine: function parseLine(line, lineNumber, hasError) {
         var errors = [];
 
         if (BabyHint.inComment) {
@@ -677,37 +605,36 @@ var BabyHint = {
 
             // Checks could detect new errors, thus must run on every line
             errors = errors
-                // check for incorrect function declarations
-                .concat(BabyHint.checkFunctionDecl(line, lineNumber))
-                // we don't allow ending lines with "="
-                .concat(BabyHint.checkTrailingEquals(line, lineNumber))
-                // check for correct number of parameters
-                .concat(BabyHint.checkFunctionParams(line, lineNumber))
-                // check for banned property names
-                .concat(BabyHint.checkBannedProperties(line, lineNumber));
+            // check for incorrect function declarations
+            .concat(BabyHint.checkFunctionDecl(line, lineNumber))
+            // we don't allow ending lines with "="
+            .concat(BabyHint.checkTrailingEquals(line, lineNumber))
+            // check for correct number of parameters
+            .concat(BabyHint.checkFunctionParams(line, lineNumber))
+            // check for banned property names
+            .concat(BabyHint.checkBannedProperties(line, lineNumber));
 
             // Checks only run on lines with existing errors
             if (hasError) {
                 errors = errors
-                    // check for missing space after var
-                    .concat(BabyHint.checkSpaceAfterVar(line, lineNumber));
+                // check for missing space after var
+                .concat(BabyHint.checkSpaceAfterVar(line, lineNumber));
 
-                    // only check spelling for the first error shown
-                    if (!BabyHint.spellChecked) {
-                        errors = errors.concat(BabyHint.checkSpelling(line, lineNumber));
-                        BabyHint.spellChecked = true;
-                    }
+                // only check spelling for the first error shown
+                if (!BabyHint.spellChecked) {
+                    errors = errors.concat(BabyHint.checkSpelling(line, lineNumber));
+                    BabyHint.spellChecked = true;
+                }
             }
 
             // add new variables for future spellchecking
-            BabyHint.variables = BabyHint.variables.concat(
-                BabyHint.getVariables(line));
+            BabyHint.variables = BabyHint.variables.concat(BabyHint.getVariables(line));
         }
 
         return errors;
     },
 
-    removeComments: function(line) {
+    removeComments: function removeComments(line) {
         // replace commented out code with whitespaces
         // first check for "//"
         var index = line.indexOf("//");
@@ -722,16 +649,13 @@ var BabyHint = {
             while (closeIndex !== -1 && closeIndex <= index + 1) {
                 // unopened comments - let JSHINT catch these
                 // we'll just remove the extra */ for now
-                line = line.slice(0, closeIndex) +
-                        "  " + line.slice(closeIndex + 2);
+                line = line.slice(0, closeIndex) + "  " + line.slice(closeIndex + 2);
                 closeIndex = line.indexOf("*/");
             }
             if (closeIndex > index + 1) {
                 // found /* */ on the same line
                 var comment = line.slice(index, closeIndex + 2);
-                line = line.slice(0, index) +
-                        comment.replace(/./g, " ") +
-                        line.slice(closeIndex + 2);
+                line = line.slice(0, index) + comment.replace(/./g, " ") + line.slice(closeIndex + 2);
             } else if (closeIndex === -1) {
                 // beginning of a multi-line comment
                 // inComment won't take effect until the next line
@@ -742,17 +666,16 @@ var BabyHint = {
         return line;
     },
 
-    removeEndOfMultilineComment: function(line) {
+    removeEndOfMultilineComment: function removeEndOfMultilineComment(line) {
         var index = line.indexOf("*/");
         if (index !== -1) {
             BabyHint.inComment = false;
-            line = line.slice(0, index + 2).replace(/./g, " ") +
-                    line.slice(index + 2);
+            line = line.slice(0, index + 2).replace(/./g, " ") + line.slice(index + 2);
         }
         return line;
     },
 
-    removeStrings: function(line) {
+    removeStrings: function removeStrings(line) {
         // currently JSHINT doesn't allow multi-line strings, so
         // all string quotes should be closed on the same line
         var openIndex = -1;
@@ -764,53 +687,51 @@ var BabyHint = {
                 if (letter === "\"") {
                     openIndex = i;
                     quoteType = "\"";
-                } else if (letter === "\'") {
+                } else if (letter === "'") {
                     openIndex = i;
-                    quoteType = "\'";
+                    quoteType = "'";
                 }
             } else if (letter === quoteType) {
                 // replace string contents with whitespace
                 var string = line.slice(openIndex + 1, i);
-                line = line.slice(0, openIndex + 1) +
-                        string.replace(/./g, " ") +
-                        line.slice(i);
+                line = line.slice(0, openIndex + 1) + string.replace(/./g, " ") + line.slice(i);
                 openIndex = -1;
             }
         }
         return line;
     },
 
-    checkFunctionDecl: function(line, lineNumber) {
+    checkFunctionDecl: function checkFunctionDecl(line, lineNumber) {
         var errors = [];
         var functions = line.match(/function\s+\w+/g);
-        _.each(functions, function(fun) {
+        _.each(functions, function (fun) {
             var name = fun.split(/\s+/g)[1];
             // I18N: Don't translate the '\" var %(name)s = function() {}; \"' part
             var error = {
                 row: lineNumber,
                 column: line.indexOf(fun),
-                text: $._("If you want to define a function, you should use \"var %(name)s = function() {}; \" instead!", {name: name}),
+                text: $._("If you want to define a function, you should use \"var %(name)s = function() {}; \" instead!", { name: name }),
                 breaksCode: true,
                 source: "funcdeclaration",
-                context: {name: name}
+                context: { name: name }
             };
             errors.push(error);
         });
         return errors;
     },
 
-    checkBannedProperties: function(line, lineNumber) {
+    checkBannedProperties: function checkBannedProperties(line, lineNumber) {
         var errors = [];
         var words = line.split(/[^~`@#\$\^\w]/g);
-        _.each(words, function(word) {
+        _.each(words, function (word) {
             if (BabyHint.bannedProperties.hasOwnProperty(word)) {
                 var error = {
                     row: lineNumber,
                     column: line.indexOf(word),
-                    text: $._("%(word)s is a reserved word.", {word: word}),
+                    text: $._("%(word)s is a reserved word.", { word: word }),
                     breaksCode: true,
                     source: "bannedwords",
-                    context: {word: word}
+                    context: { word: word }
                 };
 
                 errors.push(error);
@@ -819,55 +740,52 @@ var BabyHint = {
         return errors;
     },
 
-    checkSpelling: function(line, lineNumber) {
+    checkSpelling: function checkSpelling(line, lineNumber) {
         var errors = [];
         var words = line.split(/[^~`@#\$\^\w]/g);
         var skipNext = false;
         // Keeps track of portion of string not yet spellchecked, so search for
         // the second instance of the same word will be accurate.
         var checkedChar = -1;
-        _.each(words, function(word) {
-            if (word.length > 0 && !skipNext) { 
+        _.each(words, function (word) {
+            if (word.length > 0 && !skipNext) {
                 var editDist = BabyHint.editDistance(word);
                 var dist = editDist.editDistance;
                 var keyword = editDist.keyword;
-                if (dist > 0 &&
-                    dist <= BabyHint.EDIT_DISTANCE_THRESHOLD &&
-                    dist < keyword.length - 1 && 
-                    BabyHint.keywords.indexOf(word) === -1) {
+                if (dist > 0 && dist <= BabyHint.EDIT_DISTANCE_THRESHOLD && dist < keyword.length - 1 && BabyHint.keywords.indexOf(word) === -1) {
                     checkedChar = line.indexOf(word, checkedChar + 1);
                     var error = {
                         row: lineNumber,
                         column: checkedChar,
-                        text: $._("Did you mean to type \"%(keyword)s\" instead of \"%(word)s\"?", {keyword: keyword, word: word}),
+                        text: $._("Did you mean to type \"%(keyword)s\" instead of \"%(word)s\"?", { keyword: keyword, word: word }),
                         breaksCode: false,
                         source: "spellcheck",
-                        context: {keyword: keyword, word: word}
+                        context: { keyword: keyword, word: word }
                     };
 
                     // if we have usage forms, display them as well.
                     if (BabyHint.functionFormSuggestion[keyword]) {
-                        error.text += " " + $._("In case you forgot, you can use it like \"%(usage)s\"", {usage: BabyHint.functionFormSuggestion[keyword]});
+                        error.text += " " + $._("In case you forgot, you can use it like \"%(usage)s\"", { usage: BabyHint.functionFormSuggestion[keyword] });
                     }
 
                     errors.push(error);
                 }
             }
             // Don't spell check variable declarations or function arguments
-            skipNext = (word === "var") || (word === "function");
+            skipNext = word === "var" || word === "function";
         });
         return errors;
     },
 
-    editDistance: function(word) {
+    editDistance: function editDistance(word) {
         var wordOrig = word;
         word = word.toLowerCase();
 
         // Dynamic programming implementation of Levenshtein Distance.
         // The rows are the letters of the keyword.
         // The cols are the letters of the word.
-        var make2DArray = function(rows, cols, initialVal) {
-            initialVal = (typeof initialVal === "undefined") ? 0 : initialVal;
+        var make2DArray = function make2DArray(rows, cols, initialVal) {
+            initialVal = typeof initialVal === "undefined" ? 0 : initialVal;
             var array2D = [];
             for (var i = 0; i < rows; i++) {
                 array2D[i] = [];
@@ -880,7 +798,7 @@ var BabyHint = {
 
         var minDist = Infinity;
         var minWord = "";
-        _.each(BabyHint.keywords.concat(BabyHint.variables), function(keyword) {
+        _.each(BabyHint.keywords.concat(BabyHint.variables), function (keyword) {
 
             // Take care of words being precisely the same
             if (keyword === wordOrig) {
@@ -922,9 +840,7 @@ var BabyHint = {
                 var minInRow = Number.MAX_VALUE;
                 for (var j = 1; j < cols; j++) {
                     var diff = keyword[i] === word[j] ? 0 : 1;
-                    var dist = _.min([table[i - 1][j] + 1,
-                                        table[i][j - 1] + 1,
-                                        table[i - 1][j - 1] + diff]);
+                    var dist = _.min([table[i - 1][j] + 1, table[i][j - 1] + 1, table[i - 1][j - 1] + diff]);
                     minInRow = Math.min(minInRow, dist);
                     table[i][j] = dist;
                 }
@@ -938,10 +854,10 @@ var BabyHint = {
                 minWord = keyword;
             }
         });
-        return {editDistance: minDist, keyword: minWord};
+        return { editDistance: minDist, keyword: minWord };
     },
 
-    checkSpaceAfterVar: function(line, lineNumber) {
+    checkSpaceAfterVar: function checkSpaceAfterVar(line, lineNumber) {
         // Sometimes students forget the space between "var" and the
         // variable name. This only finds the first occurence of this
         // missing space
@@ -953,7 +869,7 @@ var BabyHint = {
             var error = {
                 row: lineNumber,
                 column: line.search(regex) + 3,
-                text: $._("Did you forget a space between \"var\" and \"%(variable)s\"?", {variable: variableName}),
+                text: $._("Did you forget a space between \"var\" and \"%(variable)s\"?", { variable: variableName }),
                 breaksCode: false
             };
             errors.push(error);
@@ -961,7 +877,7 @@ var BabyHint = {
         return errors;
     },
 
-    checkTrailingEquals: function(line, lineNumber) {
+    checkTrailingEquals: function checkTrailingEquals(line, lineNumber) {
         var errors = [];
         var i = line.length - 1;
         // find the last character in the line
@@ -980,7 +896,7 @@ var BabyHint = {
         return errors;
     },
 
-    getVariables: function(line) {
+    getVariables: function getVariables(line) {
         // Add any new variables for future spellchecking.
         // This misses variables that are not the first variable to be
         // declared on a line (e.g. var draw = function() {var x = 3;};)
@@ -997,7 +913,7 @@ var BabyHint = {
         if (functionRegex.exec(line)) {
             var fun = RegExp.$1;
             var params = fun.split(/\s*,\s*/);
-            _.each(params, function(param) {
+            _.each(params, function (param) {
                 if (param) {
                     variables.push(param);
                 }
@@ -1006,7 +922,7 @@ var BabyHint = {
         return variables;
     },
 
-    checkFunctionParams: function(line, lineNumber) {
+    checkFunctionParams: function checkFunctionParams(line, lineNumber) {
         // Many Processing functions don't break if passed the wrong
         // number of parameters, but they also don't work.
         // We want to display errors for these specific cases.
@@ -1057,7 +973,7 @@ var BabyHint = {
         var functions = line.match(/\w+\s*\(/g) || [];
         // find all functions calls on an object
         var objectFunctions = line.match(/\.\s*\w+\s*\(/g) || [];
-        objectFunctions = _.map(objectFunctions, function(fun) {
+        objectFunctions = _.map(objectFunctions, function (fun) {
             // remove the leading '.'
             var functionStart = fun.indexOf(fun.match(/\w/g)[0]);
             return fun.slice(functionStart);
@@ -1114,13 +1030,10 @@ var BabyHint = {
                 if (typeof expectedParams !== "undefined") {
                     functionCall = "\"" + functionName + "()\"";
 
-                    if (typeof expectedParams === "number" &&
-                        numParams !== expectedParams) {
+                    if (typeof expectedParams === "number" && numParams !== expectedParams) {
 
-                        text = $.ngettext("%(name)s takes 1 parameter, not %(given)s!", "%(name)s takes %(num)s parameters, not %(given)s!", expectedParams, {name: functionCall, given: numParams});
-
-                    } else if (typeof expectedParams !== "number" &&
-                                !_.include(expectedParams, numParams)) {
+                        text = $.ngettext("%(name)s takes 1 parameter, not %(given)s!", "%(name)s takes %(num)s parameters, not %(given)s!", expectedParams, { name: functionCall, given: numParams });
+                    } else if (typeof expectedParams !== "number" && !_.include(expectedParams, numParams)) {
 
                         var listOfParams = "" + expectedParams[0];
 
@@ -1128,17 +1041,16 @@ var BabyHint = {
                             listOfParams += ", " + expectedParams[j];
                         }
 
-                        listOfParams += " " + $._("or") + " " +
-                                        expectedParams[expectedParams.length - 1];
+                        listOfParams += " " + $._("or") + " " + expectedParams[expectedParams.length - 1];
 
-                        text = $._("%(name)s takes %(list)s parameters, not %(given)s!", {name: functionCall, list: listOfParams, given: numParams});
+                        text = $._("%(name)s takes %(list)s parameters, not %(given)s!", { name: functionCall, list: listOfParams, given: numParams });
                     }
                 }
 
                 if (text) {
                     var functionForm = BabyHint.functionFormSuggestion[functionName];
                     if (functionForm) {
-                        text = $._("It looks like you're trying to use %(name)s. In case you forgot, you can use it like: %(usage)s", {name: functionCall, usage: "\"" + functionForm + "\""});
+                        text = $._("It looks like you're trying to use %(name)s. In case you forgot, you can use it like: %(usage)s", { name: functionCall, usage: "\"" + functionForm + "\"" });
                     }
                 }
 
@@ -1155,43 +1067,39 @@ var BabyHint = {
                 }
             }
             // remove this function call so we don't mess up future comma counts
-            line = line.slice(0, index) + params.replace(/./g, "0") +
-                    line.slice(parenPairs[index] + 1);
+            line = line.slice(0, index) + params.replace(/./g, "0") + line.slice(parenPairs[index] + 1);
         }
         return errors;
     }
 };
 // TODO(jlfwong): Stop globalizing BabyHint
 window.BabyHint = BabyHint;
-
 function PJSResourceCache(options) {
-    this.canvas = options.canvas;   // customized Processing instance
-    this.output = options.output;   // LiveEditorOutput instance
+    this.canvas = options.canvas; // customized Processing instance
+    this.output = options.output; // LiveEditorOutput instance
     this.cache = {};
     this.imageHolder = null;
 }
 
-// Load and cache all resources (images and sounds) that could be used in 
-// the environment.  Right now all resources are loaded as we don't have 
+// Load and cache all resources (images and sounds) that could be used in
+// the environment.  Right now all resources are loaded as we don't have
 // more details on exactly which images will be required.
 //
 // Execution is delayed once a getImage/getSound appears in the source code
 // and none of the resources are cached. Execution begins once all the
 // resources have loaded.
-PJSResourceCache.prototype.cacheResources = function(userCode) {
+PJSResourceCache.prototype.cacheResources = function (userCode) {
     var resourceRecords = this.getResourceRecords(userCode);
 
     // Insert the images into a hidden div to cause them to load
     // but not be visible to the user
     if (!this.imageHolder) {
-        this.imageHolder = $("<div>")
-            .css({
-                height: 0,
-                width: 0,
-                overflow: "hidden",
-                position: "absolute"
-            })
-            .appendTo("body");
+        this.imageHolder = $("<div>").css({
+            height: 0,
+            width: 0,
+            overflow: "hidden",
+            position: "absolute"
+        }).appendTo("body");
     }
 
     var promises = resourceRecords.map(this.loadResource.bind(this));
@@ -1199,7 +1107,7 @@ PJSResourceCache.prototype.cacheResources = function(userCode) {
     return $.when.apply($, promises);
 };
 
-PJSResourceCache.prototype.getResourceRecords = function(userCode) {
+PJSResourceCache.prototype.getResourceRecords = function (userCode) {
     var resourceRegex = /get(Image|Sound)\s*\(\s*['"](.*?)['"]\s*\)/g;
 
     var resources = [];
@@ -1215,7 +1123,7 @@ PJSResourceCache.prototype.getResourceRecords = function(userCode) {
     return resources;
 };
 
-PJSResourceCache.prototype.loadResource = function(resourceRecord) {
+PJSResourceCache.prototype.loadResource = function (resourceRecord) {
     var filename = resourceRecord.filename;
     switch (resourceRecord.type) {
         case "image":
@@ -1227,18 +1135,18 @@ PJSResourceCache.prototype.loadResource = function(resourceRecord) {
     }
 };
 
-PJSResourceCache.prototype.loadImage = function(filename) {
+PJSResourceCache.prototype.loadImage = function (filename) {
     var deferred = $.Deferred();
     var path = this.output.imagesDir + filename + ".png";
     var img = document.createElement("img");
 
-    img.onload = function() {
+    img.onload = (function () {
         this.cache[filename + ".png"] = img;
         deferred.resolve();
-    }.bind(this);
-    img.onerror = function() {
+    }).bind(this);
+    img.onerror = (function () {
         deferred.resolve(); // always resolve
-    }.bind(this);
+    }).bind(this);
 
     img.src = path;
     this.imageHolder.append(img);
@@ -1246,30 +1154,30 @@ PJSResourceCache.prototype.loadImage = function(filename) {
     return deferred;
 };
 
-PJSResourceCache.prototype.loadSound = function(filename) {
+PJSResourceCache.prototype.loadSound = function (filename) {
     var deferred = $.Deferred();
     var audio = document.createElement("audio");
 
     audio.preload = "auto";
-    audio.oncanplaythrough = function() {
+    audio.oncanplaythrough = (function () {
         this.cache[filename + ".mp3"] = {
             audio: audio,
-            __id: function () {
+            __id: function __id() {
                 return "getSound('" + filename + "')";
             }
         };
         deferred.resolve();
-    }.bind(this);
-    audio.onerror = function() {
+    }).bind(this);
+    audio.onerror = (function () {
         deferred.resolve();
-    }.bind(this);
+    }).bind(this);
 
     audio.src = this.output.soundsDir + filename + ".mp3";
 
     return deferred;
 };
 
-PJSResourceCache.prototype.getResource = function(filename, type) {
+PJSResourceCache.prototype.getResource = function (filename, type) {
     switch (type) {
         case "image":
             return this.getImage(filename);
@@ -1280,35 +1188,32 @@ PJSResourceCache.prototype.getResource = function(filename, type) {
     }
 };
 
-PJSResourceCache.prototype.getImage = function(filename) {
+PJSResourceCache.prototype.getImage = function (filename) {
     var image = this.cache[filename + ".png"];
 
     if (!image) {
-        throw {message:
-            $._("Image '%(file)s' was not found.", {file: filename})};
+        throw { message: $._("Image '%(file)s' was not found.", { file: filename }) };
     }
 
     // cache <img> instead of PImage until we investigate how caching
     // PImage instances affects loadPixels(), pixels[], updatePixels()
     var pImage = new this.canvas.PImage(image);
-    pImage.__id = function() {
+    pImage.__id = function () {
         return "getImage('" + filename + "')";
     };
 
     return pImage;
 };
 
-PJSResourceCache.prototype.getSound = function(filename) {
+PJSResourceCache.prototype.getSound = function (filename) {
     var sound = this.cache[filename + ".mp3"];
 
     if (!sound) {
-        throw {message:
-            $._("Sound '%(file)s' was not found.", {file: filename})};
+        throw { message: $._("Sound '%(file)s' was not found.", { file: filename }) };
     }
 
     return sound;
 };
-
 window.PJSOutput = Backbone.View.extend({
     // Canvas mouse events to track
     // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
@@ -1321,10 +1226,7 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     // Methods that trigger the draw loop
-    drawLoopMethods: ["draw", "mouseClicked", "mouseDragged", "mouseMoved",
-        "mousePressed", "mouseReleased", "mouseScrolled", "mouseOver",
-        "mouseOut", "touchStart", "touchEnd", "touchMove", "touchCancel",
-        "keyPressed", "keyReleased", "keyTyped"],
+    drawLoopMethods: ["draw", "mouseClicked", "mouseDragged", "mouseMoved", "mousePressed", "mouseReleased", "mouseScrolled", "mouseOver", "mouseOut", "touchStart", "touchEnd", "touchMove", "touchCancel", "keyPressed", "keyReleased", "keyTyped"],
 
     // Some PJS methods don't work well within a worker.
     // createGraphics: Creates a whole new Processing object and our stubbing
@@ -1362,8 +1264,8 @@ window.PJSOutput = Backbone.View.extend({
      * exact case, we detect that the function is not safe, but it
      * should indeed be safe.  So add it here! :)
      */
-    idempotentCalls: [ "createFont" ],
-    initialize: function(options) {
+    idempotentCalls: ["createFont"],
+    initialize: function initialize(options) {
         // Handle recording playback
         this.handlers = {};
 
@@ -1391,7 +1293,7 @@ window.PJSOutput = Backbone.View.extend({
         if (this.config.useDebugger && PJSDebugger) {
             iframeOverlay.createRelay(this.$canvas[0]);
 
-            this.debugger = new PJSDebugger({
+            this["debugger"] = new PJSDebugger({
                 context: this.canvas,
                 output: this
             });
@@ -1406,10 +1308,10 @@ window.PJSOutput = Backbone.View.extend({
             // are to be exposed by Processing.js to the user.
             var externalProps = this.props = {},
 
-                // this.safeCalls holds the names of the properties
-                // which are functions which appear to not have any
-                // side effects when called.
-                safeCalls = this.safeCalls = {};
+            // this.safeCalls holds the names of the properties
+            // which are functions which appear to not have any
+            // side effects when called.
+            safeCalls = this.safeCalls = {};
 
             // Make sure that only certain properties can be manipulated
             for (var processingProp in this.canvas) {
@@ -1417,7 +1319,7 @@ window.PJSOutput = Backbone.View.extend({
                 // these shouldn't be exposed to the user.
                 if (processingProp.indexOf("__") < 0) {
                     var value = this.canvas[processingProp],
-                        isFunction = (typeof value === "function");
+                        isFunction = typeof value === "function";
 
                     // If the property is a function or begins with an uppercase
                     // character (as is the case for constants in Processing.js)
@@ -1425,12 +1327,7 @@ window.PJSOutput = Backbone.View.extend({
                     // or is a key-related function (as in keyPressed)
                     // then the user should not be allowed to override the
                     // property (restricted by JSHINT).
-                    externalProps[processingProp] =
-                        !(/^[A-Z]/.test(processingProp) ||
-                            processingProp === "height" ||
-                            processingProp === "width" ||
-                            processingProp === "key" ||
-                            isFunction && processingProp.indexOf("key") < 0);
+                    externalProps[processingProp] = !(/^[A-Z]/.test(processingProp) || processingProp === "height" || processingProp === "width" || processingProp === "key" || isFunction && processingProp.indexOf("key") < 0);
 
                     // Find the functions which could be safe to call
                     // (in that they have no side effects when called)
@@ -1453,13 +1350,8 @@ window.PJSOutput = Backbone.View.extend({
                             //          objects.
                             //    If all three of these are the case assume then
                             //    assume that there are no side effects.
-                            if (this.idempotentCalls
-                                    .indexOf(processingProp) !== -1 ||
-                                /native code/.test(strValue) ||
-                                /return /.test(strValue) &&
-                                !/p\./.test(strValue) &&
-                                !/new P/.test(strValue)) {
-                                    safeCalls[processingProp] = true;
+                            if (this.idempotentCalls.indexOf(processingProp) !== -1 || /native code/.test(strValue) || /return /.test(strValue) && !/p\./.test(strValue) && !/new P/.test(strValue)) {
+                                safeCalls[processingProp] = true;
                             }
                         } catch (e) {}
                     }
@@ -1473,8 +1365,8 @@ window.PJSOutput = Backbone.View.extend({
             // method on it which returns "rgba(0,0,0,0)" which doesn't doesn't
             // contain the string "return" so it fails.
             safeCalls.color = true;
-            
-            // It doesn't affect the main Processing instance.  It fails the 
+
+            // It doesn't affect the main Processing instance.  It fails the
             // above test because it calls "new Processing();".
             safeCalls.createGraphics = true;
 
@@ -1486,9 +1378,9 @@ window.PJSOutput = Backbone.View.extend({
         // Load JSHint config options
         this.config.runCurVersion("jshint", this);
 
-        this.config.on("versionSwitched", function(e, version) {
+        this.config.on("versionSwitched", (function (e, version) {
             this.config.runVersion(version, "processing", this.canvas);
-        }.bind(this));
+        }).bind(this));
 
         BabyHint.init({
             context: this.canvas
@@ -1497,25 +1389,20 @@ window.PJSOutput = Backbone.View.extend({
         return this;
     },
 
-    render: function() {
+    render: function render() {
         this.$el.empty();
-        this.$canvas = $("<canvas>")
-            .attr("id", "output-canvas")
-            .appendTo(this.el)
-            .show();
+        this.$canvas = $("<canvas>").attr("id", "output-canvas").appendTo(this.el).show();
     },
 
-    bind: function() {
+    bind: function bind() {
         if (window !== window.top) {
-            var windowMethods = ["alert", "open", "showModalDialog",
-                "confirm", "prompt", "eval"];
+            var windowMethods = ["alert", "open", "showModalDialog", "confirm", "prompt", "eval"];
             for (var i = 0, l = windowMethods.length; i < l; i++) {
                 window.constructor.prototype[windowMethods[i]] = $.noop;
             }
         }
 
-        if (window !== window.top && Object.freeze &&
-                Object.getOwnPropertyDescriptor) {
+        if (window !== window.top && Object.freeze && Object.getOwnPropertyDescriptor) {
             // Freezing the whole window, and more specifically
             // window.location, causes a redirect on Safari 6 and 7.
             // Test case: http://ejohn.org/files/freeze-test.html
@@ -1535,8 +1422,7 @@ window.PJSOutput = Backbone.View.extend({
                     // nasty console messages when trying to freeze non
                     // configurable properties.
                     try {
-                        var propDescriptor =
-                            Object.getOwnPropertyDescriptor(window, prop);
+                        var propDescriptor = Object.getOwnPropertyDescriptor(window, prop);
                         if (!propDescriptor || propDescriptor.configurable) {
                             Object.defineProperty(window, prop, {
                                 value: window[prop],
@@ -1544,11 +1430,7 @@ window.PJSOutput = Backbone.View.extend({
                                 configurable: false
                             });
                         }
-                    } catch(e) {
-                        // Couldn't access property for permissions reasons,
-                        //  like window.frame
-                        // Only happens on prod where it's cross-origin
-                    }
+                    } catch (e) {}
                 }
             }
 
@@ -1576,11 +1458,11 @@ window.PJSOutput = Backbone.View.extend({
         var offset = this.$canvas.offset();
 
         // Go through all of the mouse events to track
-        _.each(this.trackedMouseEvents, function(name) {
+        _.each(this.trackedMouseEvents, (function (name) {
             var eventType = "mouse" + name;
 
             // Track that event on the Canvas element
-            this.$canvas.on(eventType, function(e) {
+            this.$canvas.on(eventType, (function (e) {
                 // Only log if recording is occurring
                 if (this.output.recording) {
                     // Log the command
@@ -1591,10 +1473,10 @@ window.PJSOutput = Backbone.View.extend({
                         log: [name, x, y]
                     });
                 }
-            }.bind(this));
+            }).bind(this));
 
             // Handle the command during playback
-            this.handlers[name] = function(x, y) {
+            this.handlers[name] = (function (x, y) {
                 // Build the clientX and clientY values
                 var pageX = x + offset.left;
                 var pageY = y + offset.top;
@@ -1606,25 +1488,22 @@ window.PJSOutput = Backbone.View.extend({
 
                 // See: https://developer.mozilla.org/en/DOM/
                 //          event.initMouseEvent
-                evt.initMouseEvent(eventType, true, true, window, 0,
-                    0, 0, clientX, clientY,
-                    false, false, false, false,
-                    0, document.documentElement);
+                evt.initMouseEvent(eventType, true, true, window, 0, 0, 0, clientX, clientY, false, false, false, false, 0, document.documentElement);
 
                 // And execute it upon the canvas element
                 this.$canvas[0].dispatchEvent(evt);
-            }.bind(this);
-        }.bind(this));
+            }).bind(this);
+        }).bind(this));
 
         // Dynamically set the width and height based upon the size of the
         // window, which could be changed in the parent page
         $(window).on("resize", this.setDimensions);
     },
 
-    build: function(canvas) {
-        this.canvas = new Processing(canvas, function(instance) {
+    build: function build(canvas) {
+        this.canvas = new Processing(canvas, (function (instance) {
             instance.draw = this.DUMMY;
-        }.bind(this));
+        }).bind(this));
 
         this.bindProcessing(this.processing, this.canvas);
 
@@ -1636,7 +1515,7 @@ window.PJSOutput = Backbone.View.extend({
         this.setDimensions();
     },
 
-    bindProcessing: function(obj, bindTo) {
+    bindProcessing: function bindProcessing(obj, bindTo) {
         /* jshint forin:false */
         for (var prop in obj) {
             var val = obj[prop];
@@ -1656,14 +1535,12 @@ window.PJSOutput = Backbone.View.extend({
         }
     },
 
-    setDimensions: function() {
+    setDimensions: function setDimensions() {
         var $window = $(window);
         var width = $window.width();
         var height = $window.height();
 
-        if (this.canvas &&
-            (width !== this.canvas.width ||
-            height !== this.canvas.height)) {
+        if (this.canvas && (width !== this.canvas.width || height !== this.canvas.height)) {
             // Set the canvas element to be the right size
             this.$canvas.width(width).height(height);
 
@@ -1677,24 +1554,23 @@ window.PJSOutput = Backbone.View.extend({
 
     messageHandlers: {
         // Play back mouse actions
-        mouseAction: function(data) {
+        mouseAction: function mouseAction(data) {
             data = data.mouseAction;
             this.handlers[data.name](data.x, data.y);
         },
 
-        documentation: function(data) {
+        documentation: function documentation(data) {
             BabyHint.initDocumentation(data.documentation);
         }
     },
 
-    getScreenshot: function(screenshotSize, callback) {
+    getScreenshot: function getScreenshot(screenshotSize, callback) {
         // We want to resize the image to a thumbnail,
         // which we can do by creating a temporary canvas
         var tmpCanvas = document.createElement("canvas");
         tmpCanvas.width = screenshotSize;
         tmpCanvas.height = screenshotSize;
-        tmpCanvas.getContext("2d").drawImage(
-            this.$canvas[0], 0, 0, screenshotSize, screenshotSize);
+        tmpCanvas.getContext("2d").drawImage(this.$canvas[0], 0, 0, screenshotSize, screenshotSize);
 
         // Send back the screenshot data
         callback(tmpCanvas.toDataURL("image/png"));
@@ -1714,40 +1590,40 @@ window.PJSOutput = Backbone.View.extend({
         // Only allow access to certain approved files and display
         // an error message if a file wasn't found.
         // NOTE: Need to make sure that this will be a 'safeCall'
-        getImage: function(filename) {
+        getImage: function getImage(filename) {
             return this.resourceCache.getImage(filename);
         },
 
         // Make sure that loadImage is disabled in favor of getImage
-        loadImage: function(file) {
-            throw {message: "Use getImage instead of loadImage."};
+        loadImage: function loadImage(file) {
+            throw { message: "Use getImage instead of loadImage." };
         },
 
         // Make sure that requestImage is disabled in favor of getImage
-        requestImage: function(file) {
-            throw {message: "Use getImage instead of requestImage."};
+        requestImage: function requestImage(file) {
+            throw { message: "Use getImage instead of requestImage." };
         },
 
         // Disable link method
-        link: function() {
-            throw {message: $._("link() method is disabled.")};
+        link: function link() {
+            throw { message: $._("link() method is disabled.") };
         },
 
-        getSound: function(filename) {
+        getSound: function getSound(filename) {
             return this.resourceCache.getSound(filename);
         },
 
-        playSound: function(sound) {
+        playSound: function playSound(sound) {
             if (sound && sound.audio && sound.audio.play) {
                 sound.audio.currentTime = 0;
                 sound.audio.play();
             } else {
-                throw {message: $._("No sound file provided.")};
+                throw { message: $._("No sound file provided.") };
             }
         },
 
         // Basic console logging
-        debug: function() {
+        debug: function debug() {
             console.log.apply(console, arguments);
         },
 
@@ -1755,22 +1631,21 @@ window.PJSOutput = Backbone.View.extend({
         // Including being able to dynamically force execute of the tests
         // Or even run their own tests.
         Program: {
-            settings: function() {
+            settings: function settings() {
                 return this.output.settings || {};
             },
 
             // Force the program to restart (run again)
-            restart: function() {
+            restart: function restart() {
                 this.output.restart();
             },
 
             // Force the tests to run again
-            runTests: function(callback) {
-                return this.output.test(this.output.getUserCode(),
-                    this.output.validate, [], callback);
+            runTests: function runTests(callback) {
+                return this.output.test(this.output.getUserCode(), this.output.validate, [], callback);
             },
 
-            assertEqual: function(actual, expected) {
+            assertEqual: function assertEqual(actual, expected) {
                 // Uses TraceKit to get stacktrace of caller,
                 // it looks for the line number of the first anonymous eval
                 // Stack traces are pretty nasty and not standardized yet
@@ -1779,7 +1654,7 @@ window.PJSOutput = Backbone.View.extend({
                 // so they can go sit in the dunce corner today.
                 // This returns 0 if not found, which will mean that all
                 // the assertion failures are shown on the first line.
-                var getLineNum = function(stacktrace) {
+                var getLineNum = function getLineNum(stacktrace) {
                     TraceKit.remoteFetching = false;
                     TraceKit.collectWindowErrors = false;
                     var stacktrace = TraceKit.computeStackTrace.ofCaller();
@@ -1800,10 +1675,9 @@ window.PJSOutput = Backbone.View.extend({
                     return;
                 }
 
-                var msg = $._("Assertion failed: " +
-                    "%(actual)s is not equal to %(expected)s.", {
-                        actual: JSON.stringify(actual),
-                        expected: JSON.stringify(expected)
+                var msg = $._("Assertion failed: " + "%(actual)s is not equal to %(expected)s.", {
+                    actual: JSON.stringify(actual),
+                    expected: JSON.stringify(expected)
                 });
 
                 var lineNum = getLineNum();
@@ -1819,7 +1693,7 @@ window.PJSOutput = Backbone.View.extend({
 
             // Run a single test (specified by a function)
             // and send the results back to the parent frame
-            runTest: function(name, fn) {
+            runTest: function runTest(name, fn) {
                 if (arguments.length === 1) {
                     fn = name;
                     name = "";
@@ -1844,10 +1718,10 @@ window.PJSOutput = Backbone.View.extend({
         }
     },
 
-    DUMMY: function() {},
+    DUMMY: function DUMMY() {},
 
     // Generate a string list of properties
-    propListString: function(props) {
+    propListString: function propListString(props) {
         var bannedProps = this.bannedProps;
         var propList = [];
 
@@ -1867,36 +1741,34 @@ window.PJSOutput = Backbone.View.extend({
      * @param skip: skips linting if true and resolves Deferred immediately
      * @returns {$.Deferred} resolves an array of lint errors
      */
-    lint: function(userCode, skip) {
+    lint: function lint(userCode, skip) {
         var deferred = $.Deferred();
         if (skip) {
             deferred.resolve([]);
             return deferred;
         }
-        
+
         // Build a string of options to feed into JSHint
         // All properties are defined in the config
-        var hintCode = "/*jshint " +
-            this.propListString(this.JSHint) + " */" +
+        var hintCode = "/*jshint " + this.propListString(this.JSHint) + " */" +
 
-            // Build a string of variables names to feed into JSHint
-            // This lets JSHint know which variables are globally exposed
-            // and which can be overridden, more details:
-            // http://www.jshint.com/about/
-            // propName: true (is a global property, but can be overridden)
-            // propName: false (is a global property, cannot be overridden)
-            "/*global " + this.propListString(this.props) +
+        // Build a string of variables names to feed into JSHint
+        // This lets JSHint know which variables are globally exposed
+        // and which can be overridden, more details:
+        // http://www.jshint.com/about/
+        // propName: true (is a global property, but can be overridden)
+        // propName: false (is a global property, cannot be overridden)
+        "/*global " + this.propListString(this.props) +
 
-            // The user's code to execute
-            "*/\n" + userCode;
+        // The user's code to execute
+        "*/\n" + userCode;
 
-        var done = function(hintData, hintErrors) {
+        var done = (function (hintData, hintErrors) {
             this.extractGlobals(hintData);
             this.output.results.assertions = [];
-            var lintErrors = this.mergeErrors(hintErrors,
-                BabyHint.babyErrors(userCode, hintErrors));
+            var lintErrors = this.mergeErrors(hintErrors, BabyHint.babyErrors(userCode, hintErrors));
             deferred.resolve(lintErrors);
-        }.bind(this);
+        }).bind(this);
 
         // Don't run JSHint if there is no code to run
         if (!userCode) {
@@ -1904,7 +1776,7 @@ window.PJSOutput = Backbone.View.extend({
         } else {
             this.hintWorker.exec(hintCode, done);
         }
-        
+
         return deferred;
     },
 
@@ -1915,9 +1787,9 @@ window.PJSOutput = Backbone.View.extend({
      * @param hintData: an object containing JSHINT.data after jshint-worker.js
      *      runs JSHINT(userCode).
      */
-    extractGlobals: function(hintData) {
+    extractGlobals: function extractGlobals(hintData) {
         this.globals = {};
-        
+
         // We only need to extract globals when the code has passed
         // the JSHint check
         var externalProps = this.props;
@@ -1935,48 +1807,40 @@ window.PJSOutput = Backbone.View.extend({
         }
     },
 
-    test: function(userCode, tests, errors, callback) {
+    test: function test(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
-        this.tester.testWorker.exec(userCode, tests, errors,
-            function(errors, testResults) {
-                if (errorCount !== errors.length) {
-                    // Note: Scratchpad challenge checks against the exact
-                    // translated text "A critical problem occurred..." to
-                    // figure out whether we hit this case.
-                    var message = $._("Error: %(message)s",
-                        {message: errors[errors.length - 1].message});
-                    // TODO(jeresig): Find a better way to show this
-                    this.output.$el.find(".test-errors").text(message).show();
-                    this.tester.testContext.assert(false, message,
-                        $._("A critical problem occurred in your program " +
-                            "making it unable to run."));
-                }
+        this.tester.testWorker.exec(userCode, tests, errors, (function (errors, testResults) {
+            if (errorCount !== errors.length) {
+                // Note: Scratchpad challenge checks against the exact
+                // translated text "A critical problem occurred..." to
+                // figure out whether we hit this case.
+                var message = $._("Error: %(message)s", { message: errors[errors.length - 1].message });
+                // TODO(jeresig): Find a better way to show this
+                this.output.$el.find(".test-errors").text(message).show();
+                this.tester.testContext.assert(false, message, $._("A critical problem occurred in your program " + "making it unable to run."));
+            }
 
-                callback(errors, testResults);
-            }.bind(this));
+            callback(errors, testResults);
+        }).bind(this));
     },
 
-    mergeErrors: function(jshintErrors, babyErrors) {
+    mergeErrors: function mergeErrors(jshintErrors, babyErrors) {
         var errors = [];
         var brokenLines = [];
         var prioritizedChars = {};
         var hintErrors = [];
 
         // Find which lines JSHINT broke on
-        _.each(jshintErrors, function(error) {
-            if (error && error.line && error.character &&
-                    error.reason &&
-                    !/unable to continue/i.test(error.reason)) {
+        _.each(jshintErrors, (function (error) {
+            if (error && error.line && error.character && error.reason && !/unable to continue/i.test(error.reason)) {
                 var realErrorLine = error.line - 2;
                 brokenLines.push(realErrorLine);
                 // Errors that override BabyLint errors in the remainder of the
                 // line. Includes: unclosed string (W112)
                 if (error.code === "W112") {
                     error.character = error.evidence.indexOf("\"");
-                    if (!prioritizedChars[realErrorLine] ||
-                            prioritizedChars[realErrorLine] >
-                            error.character - 1) {
+                    if (!prioritizedChars[realErrorLine] || prioritizedChars[realErrorLine] > error.character - 1) {
                         prioritizedChars[realErrorLine] = error.character - 1;
                     }
                 }
@@ -1990,15 +1854,14 @@ window.PJSOutput = Backbone.View.extend({
                     priority: 2
                 });
             }
-        }.bind(this));
+        }).bind(this));
 
         // Add baby errors if JSHINT also broke on those lines, OR we don't want
         // to allow that error
-        _.each(babyErrors, function(error) {
+        _.each(babyErrors, (function (error) {
             if (_.include(brokenLines, error.row) || error.breaksCode) {
                 // Only include if not overridden by a JSLint error.
-                if (!prioritizedChars[error.row] ||
-                        prioritizedChars[error.row] > error.column) {
+                if (!prioritizedChars[error.row] || prioritizedChars[error.row] > error.column) {
                     errors.push({
                         row: error.row,
                         column: error.column,
@@ -2010,22 +1873,18 @@ window.PJSOutput = Backbone.View.extend({
                     });
                 }
             }
-        }.bind(this));
+        }).bind(this));
 
         // Check for JSLint and BabyLint errors on the same line and character.
         // Merge error messages where appropriate.
-        _.each(hintErrors, function(jsError, i) {
-            _.each(errors, function(babyError, j) {
-                if (jsError.row === babyError.row &&
-                        jsError.column === babyError.column) {
+        _.each(hintErrors, function (jsError, i) {
+            _.each(errors, function (babyError, j) {
+                if (jsError.row === babyError.row && jsError.column === babyError.column) {
                     // Merge if JSLint error says a variable is undefined and
                     // BabyLint has spelling suggestion.
-                    if (jsError.lint.code === "W117" &&
-                            babyError.source === "spellcheck") {
+                    if (jsError.lint.code === "W117" && babyError.source === "spellcheck") {
                         errors.splice(j, 1);
-                        jsError.text = $._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " +
-                            "or you're using a variable you didn't define.",
-                            {word: jsError.lint.a, keyword: babyError.context.keyword});
+                        jsError.text = $._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " + "or you're using a variable you didn't define.", { word: jsError.lint.a, keyword: babyError.context.keyword });
                     }
                 }
             });
@@ -2034,30 +1893,29 @@ window.PJSOutput = Backbone.View.extend({
         // Merge JSHint and BabyHint errors
         var allErrors = errors.concat(hintErrors);
 
-       // De-duplicate errors. Replacer tells JSON.stringify to ignore column
-       // and lint keys so objects with different columns or lint will still be
-       // treated as duplicates.
-       var replacer = function(key, value) {
-           if (key === "column" || key === "lint") {
-               return;
-           }
-           return value;
-       };
+        // De-duplicate errors. Replacer tells JSON.stringify to ignore column
+        // and lint keys so objects with different columns or lint will still be
+        // treated as duplicates.
+        var replacer = function replacer(key, value) {
+            if (key === "column" || key === "lint") {
+                return;
+            }
+            return value;
+        };
 
-       // Stringify objects to compare and de-duplicate.
-       var dedupErrors = _.uniq(allErrors, false, function(obj) {
-           return JSON.stringify(obj, replacer);
-       });
-       return dedupErrors;
+        // Stringify objects to compare and de-duplicate.
+        var dedupErrors = _.uniq(allErrors, false, function (obj) {
+            return JSON.stringify(obj, replacer);
+        });
+        return dedupErrors;
     },
 
-    runCode: function(userCode, callback) {
-        var runCode = function() {
+    runCode: function runCode(userCode, callback) {
+        var runCode = (function () {
 
             // Check for any reason not to use a worker
-            var doNotUserWorker = _(this.workerBreakingMethods)
-                .some(function(w) {
-                    return userCode.indexOf(w) !== -1;
+            var doNotUserWorker = _(this.workerBreakingMethods).some(function (w) {
+                return userCode.indexOf(w) !== -1;
             });
 
             if (!window.Worker || doNotUserWorker) {
@@ -2066,7 +1924,6 @@ window.PJSOutput = Backbone.View.extend({
 
             var context = {};
 
-
             // We can send object literals over, but not
             //  objects created with a constructor.
             // jQuery thinks PImage is a plain object,
@@ -2074,13 +1931,12 @@ window.PJSOutput = Backbone.View.extend({
             //  otherwise we'll give web workers an object that
             //  they can't serialize.
             var PImage = this.canvas.PImage;
-            var isStubbableObject = function(value) {
-                return $.isPlainObject(value) &&
-                    !(value instanceof PImage);
+            var isStubbableObject = function isStubbableObject(value) {
+                return $.isPlainObject(value) && !(value instanceof PImage);
             };
 
             // Recursively replaces functions with stubs
-            var stubFunctionsInObject = function(object) {
+            var stubFunctionsInObject = function stubFunctionsInObject(object) {
                 // For null and such
                 if (!object) {
                     return object;
@@ -2090,7 +1946,7 @@ window.PJSOutput = Backbone.View.extend({
                 if (_.isArray(object)) {
                     newObj = [];
                 }
-                _.each(object, function(val, key) {
+                _.each(object, function (val, key) {
                     if (typeof val === "function") {
                         newObj[key] = "__STUBBED_FUNCTION__";
                     } else if (typeof val !== "object") {
@@ -2104,7 +1960,7 @@ window.PJSOutput = Backbone.View.extend({
                 return newObj;
             };
 
-            _.each(this.globals, function(val, global) {
+            _.each(this.globals, (function (val, global) {
                 var value = this.canvas[global];
                 var contextVal;
                 if (typeof value === "function" || global === "Math") {
@@ -2117,9 +1973,9 @@ window.PJSOutput = Backbone.View.extend({
                     contextVal = {};
                 }
                 context[global] = contextVal;
-            }.bind(this));
+            }).bind(this));
 
-            this.worker.exec(userCode, context, function(errors, userCode) {
+            this.worker.exec(userCode, context, (function (errors, userCode) {
                 if (errors && errors.length > 0) {
                     return callback(errors, userCode);
                 }
@@ -2129,8 +1985,8 @@ window.PJSOutput = Backbone.View.extend({
                 } catch (e) {
                     callback([e]);
                 }
-            }.bind(this));
-        }.bind(this);
+            }).bind(this));
+        }).bind(this);
 
         this.resourceCache.cacheResources(userCode).then(runCode);
     },
@@ -2139,12 +1995,11 @@ window.PJSOutput = Backbone.View.extend({
      * Checks to see if a draw loop-introducing method currently
      * exists, or did exist, in the user's program.
      */
-    hasOrHadDrawLoop: function() {
+    hasOrHadDrawLoop: function hasOrHadDrawLoop() {
         for (var i = 0, l = this.drawLoopMethods.length; i < l; i++) {
             var name = this.drawLoopMethods[i];
-            if (this.globals[name] ||
-                this.lastGrab && this.lastGrab[name]) {
-                    return true;
+            if (this.globals[name] || this.lastGrab && this.lastGrab[name]) {
+                return true;
             }
         }
 
@@ -2156,12 +2011,11 @@ window.PJSOutput = Backbone.View.extend({
      * user's program (defined is equivalent to !undefined or if it's
      * just a stub program.)
      */
-    drawLoopMethodDefined: function() {
+    drawLoopMethodDefined: function drawLoopMethodDefined() {
         for (var i = 0, l = this.drawLoopMethods.length; i < l; i++) {
             var name = this.drawLoopMethods[i];
-            if (this.canvas[name] !== this.DUMMY &&
-                this.canvas[name] !== undefined) {
-                    return true;
+            if (this.canvas[name] !== this.DUMMY && this.canvas[name] !== undefined) {
+                return true;
             }
         }
 
@@ -2205,32 +2059,32 @@ window.PJSOutput = Backbone.View.extend({
      *   - All of these pieces of injected code are collected together and are
      *     executed in the context of the live Processing.js environment.
      */
-    injectCode: function(userCode, callback) {
+    injectCode: function injectCode(userCode, callback) {
         // Holds all the global variables extracted from the user's code
         var grabAll = {},
 
-            // Holds all the function calls that came from function calls that
-            // have side effects
-            fnCalls = [],
+        // Holds all the function calls that came from function calls that
+        // have side effects
+        fnCalls = [],
 
-            // Is true if the code needs to be completely re-run
-            // This is true when instantiated objects that need
-            // to be reinitialized.
-            rerun = false,
+        // Is true if the code needs to be completely re-run
+        // This is true when instantiated objects that need
+        // to be reinitialized.
+        rerun = false,
 
-            // Keep track of which function properties need to be
-            // reinitialized after the constructor has been changed
-            reinit = {},
+        // Keep track of which function properties need to be
+        // reinitialized after the constructor has been changed
+        reinit = {},
 
-            // A map of all global constructors (used for later
-            // reinitialization of instances upon a constructor change)
-            constructors = {},
+        // A map of all global constructors (used for later
+        // reinitialization of instances upon a constructor change)
+        constructors = {},
 
-            // The properties exposed by the Processing.js object
-            externalProps = this.props,
+        // The properties exposed by the Processing.js object
+        externalProps = this.props,
 
-            // The code string to inject into the live execution
-            inject = "";
+        // The code string to inject into the live execution
+        inject = "";
 
         // Grab all object properties and prototype properties from
         // all objects and function prototypes
@@ -2242,14 +2096,9 @@ window.PJSOutput = Backbone.View.extend({
         // Replace all calls to 'new Something' with
         // this.newInstance(Something)()
         // Used for keeping track of unique instances
-        if (!this.debugger) {
-            userCode = userCode && userCode.replace(
-                /\bnew[\s\n]+([A-Z]{1,2}[a-zA-Z0-9_]+)([\s\n]*\()/g,
-                "PJSOutput.applyInstance($1,'$1')$2");
-        } else {
-            // we'll use the debugger's newCallback delegate method to
-            // keep track of object instances
-        }
+        if (!this["debugger"]) {
+            userCode = userCode && userCode.replace(/\bnew[\s\n]+([A-Z]{1,2}[a-zA-Z0-9_]+)([\s\n]*\()/g, "PJSOutput.applyInstance($1,'$1')$2");
+        } else {}
 
         // If we have a draw function then we need to do injection
         // If we had a draw function then we still need to do injection
@@ -2266,22 +2115,19 @@ window.PJSOutput = Backbone.View.extend({
             // their arguments.
             // TODO(jeresig): See if we can move this off into the worker
             // thread to save an execution.
-            _.each(this.globals, function(val, global) {
+            _.each(this.globals, (function (val, global) {
                 var value = this.canvas[global];
                 // Expose all the global values, if they already exist although
                 // even if they are undefined, the result will still get sucked
                 // into grabAll) Replace functions that have side effects with
                 // placeholders (for later execution)
-                grabAll[global] = ((typeof value === "function" &&
-                        !this.safeCalls[global]) ?
-                    function() {
-                        if (typeof fnCalls !== "undefined") {
-                            fnCalls.push([global, arguments]);
-                        }
-                        return 0;
-                    } :
-                    value);
-            }.bind(this));
+                grabAll[global] = typeof value === "function" && !this.safeCalls[global] ? function () {
+                    if (typeof fnCalls !== "undefined") {
+                        fnCalls.push([global, arguments]);
+                    }
+                    return 0;
+                } : value;
+            }).bind(this));
 
             // Run the code with the grabAll context. The code is run with no
             // side effects and instead all function calls and globally-defined
@@ -2293,7 +2139,7 @@ window.PJSOutput = Backbone.View.extend({
             }
 
             // Attach names to all functions
-            _.each(grabAll, function(val, prop) {
+            _.each(grabAll, function (val, prop) {
                 if (typeof val === "function") {
                     val.__name = prop;
                 }
@@ -2307,23 +2153,21 @@ window.PJSOutput = Backbone.View.extend({
 
             // The instantiated instances have changed, which means that
             // we need to re-run everything.
-            if (this.oldInstances &&
-                    PJSOutput.stringifyArray(this.oldInstances) !==
-                    PJSOutput.stringifyArray(PJSOutput.instances)) {
+            if (this.oldInstances && PJSOutput.stringifyArray(this.oldInstances) !== PJSOutput.stringifyArray(PJSOutput.instances)) {
                 rerun = true;
             }
-            
+
             // TODO(kevinb) cache instances returned by createGraphics.
             // Rerun if there are any uses of createGraphics.  The problem is
             // not actually createGraphics, but rather calls that render stuff
-            // to the Processing instances returned by createGraphics.  In the 
+            // to the Processing instances returned by createGraphics.  In the
             // future we might be able to reuse these instances, but we'd need
             // to track which call to createGraphics returned which instance.
             // Using the arguments as an id is insufficient.  We'd have to use
             // some combination of which line number createGraphics was called
             // on whether it was the first call, second call, etc. that created
             // it to deal with loops.  We'd also need to take into account edit
-            // operations that add/remove lines so that we could update the 
+            // operations that add/remove lines so that we could update the
             // line number in the id to avoid unnecessary reruns.  After all of
             // that we'll still have to fall back to rerun in all other cases.
             if (/createGraphics[\s\n]*\(/.test(userCode)) {
@@ -2339,27 +2183,25 @@ window.PJSOutput = Backbone.View.extend({
                 // Reconstruction the function call
                 var args = Array.prototype.slice.call(fnCalls[i][1]);
 
-
                 var results = [];
-                _(args).each(function(arg, argIndex) {
+                _(args).each((function (arg, argIndex) {
                     // Parameters here can come in the form of objects.
                     // For any object parameter, we don't want to serialize it
                     // because we'd lose the whole prototype chain.
                     // Instead we create temporary variables for each.
                     if (!_.isArray(arg) && _.isObject(arg)) {
-                        var varName = "__obj__" +
-                            fnCalls[i][0] + "__" + argIndex;
+                        var varName = "__obj__" + fnCalls[i][0] + "__" + argIndex;
                         this.canvas[varName] = arg;
                         results.push(varName);
                     } else {
                         results.push(PJSOutput.stringify(arg));
                     }
-                }.bind(this));
+                }).bind(this));
                 inject += fnCalls[i][0] + "(" + results.join(", ") + ");\n";
             }
 
             // We also look for newly-changed global variables to inject
-            _.each(grabAll, function(val, prop) {
+            _.each(grabAll, (function (val, prop) {
                 // Turn the result of the extracted value into
                 // a nicely-formatted string
                 try {
@@ -2370,10 +2212,7 @@ window.PJSOutput = Backbone.View.extend({
                     // overridden, and that either the property wasn't in the
                     // last extraction or that the value of the property has
                     // changed.
-                    if (this.lastGrab &&
-                            externalProps[prop] !== false &&
-                            (!(prop in this.lastGrab) ||
-                            grabAll[prop] !== this.lastGrab[prop])) {
+                    if (this.lastGrab && externalProps[prop] !== false && (!(prop in this.lastGrab) || grabAll[prop] !== this.lastGrab[prop])) {
 
                         // If we hit a function we need to re-execute the code
                         // by injecting it. Preserves the closure.
@@ -2390,14 +2229,13 @@ window.PJSOutput = Backbone.View.extend({
                             // properties that need to be re-injected)
                             reinit[prop] = true;
 
-                            inject += "var " + prop + " = " +
-                                grabAll[prop] + ";\n";
+                            inject += "var " + prop + " = " + grabAll[prop] + ";\n";
 
                             // Give the function a name as well
                             inject += prop + ".__name = '" + prop + "';\n";
 
-                        // Otherwise it's ok to inject it directly into the
-                        // new environment
+                            // Otherwise it's ok to inject it directly into the
+                            // new environment
                         } else {
                             // If we have an object, then copy over all of the
                             // properties so we don't accidentally destroy
@@ -2406,9 +2244,7 @@ window.PJSOutput = Backbone.View.extend({
                             // TODO(bbondy): This may copy over things that
                             // were deleted. If we ever run into a problematic
                             // program, we may want to add support here.
-                            if (!_.isArray(val) && _.isObject(val) &&
-                                    !_.isArray(this.canvas[prop]) &&
-                                    _.isObject(this.canvas[prop])) {
+                            if (!_.isArray(val) && _.isObject(val) && !_.isArray(this.canvas[prop]) && _.isObject(this.canvas[prop])) {
                                 // Copy over all of the properties
                                 for (var p in val) {
                                     if (val.hasOwnProperty(p)) {
@@ -2424,32 +2260,29 @@ window.PJSOutput = Backbone.View.extend({
                     // For each function we also need to make sure that we
                     // extract all of the object and prototype properties
                     // (Since they won't be detected normally)
-                    if (typeof val === "function" &&
-                            externalProps[prop] !== false) {
+                    if (typeof val === "function" && externalProps[prop] !== false) {
                         this.objectExtract(prop, val);
                         this.objectExtract(prop, val, "prototype");
                     }
 
-                // The variable contains something that can't be serialized
-                // (such as instantiated objects) and so we need to extract it
+                    // The variable contains something that can't be serialized
+                    // (such as instantiated objects) and so we need to extract it
                 } catch (e) {
                     this.objectExtract(prop, val);
                 }
-            }.bind(this));
+            }).bind(this));
 
             // Insertion of new object properties
-            _.each(this.grabObj, function(val, objProp) {
+            _.each(this.grabObj, (function (val, objProp) {
                 var baseName = /^[^.[]*/.exec(objProp)[0];
 
                 // If we haven't done an extraction before or if the value
                 // has changed, or if the function was reinitialized,
                 // insert the new value.
-                if (!this.lastGrabObj ||
-                        this.lastGrabObj[objProp] !== val ||
-                        reinit[baseName]) {
+                if (!this.lastGrabObj || this.lastGrabObj[objProp] !== val || reinit[baseName]) {
                     inject += objProp + " = " + val + ";\n";
                 }
-            }.bind(this));
+            }).bind(this));
 
             // Deletion of old object properties
             for (var objProp in this.lastGrabObj) {
@@ -2466,9 +2299,7 @@ window.PJSOutput = Backbone.View.extend({
                 // the property isn't a Processing.js-defined property
                 // (e.g. don't delete 'background') but allow the 'draw'
                 // function to be deleted (as it's user-defined)
-                if (!(oldProp in grabAll) &&
-                        (!(oldProp in this.props) ||
-                            _.contains(this.drawLoopMethods, oldProp))) {
+                if (!(oldProp in grabAll) && (!(oldProp in this.props) || _.contains(this.drawLoopMethods, oldProp))) {
                     // Create the code to delete the variable
                     inject += "delete " + oldProp + ";\n";
 
@@ -2493,8 +2324,7 @@ window.PJSOutput = Backbone.View.extend({
         if (this.lastGrab) {
             for (var prop in this.liveReset) {
                 if (!this.globals[prop] && this.lastGrab[prop]) {
-                    this.canvas[prop].apply(this.canvas,
-                        this.liveReset[prop]);
+                    this.canvas[prop].apply(this.canvas, this.liveReset[prop]);
                 }
             }
         }
@@ -2502,8 +2332,7 @@ window.PJSOutput = Backbone.View.extend({
         // Re-run the entire program if we don't need to inject the changes
         // (Injection only needs to occur if a draw loop exists and if a prior
         // run took place)
-        if (!hasOrHadDrawLoop || !this.drawLoopMethodDefined() ||
-                !this.lastGrab || rerun) {
+        if (!hasOrHadDrawLoop || !this.drawLoopMethodDefined() || !this.lastGrab || rerun) {
             // Clear the output if no injection is occurring
             this.clear();
 
@@ -2523,13 +2352,13 @@ window.PJSOutput = Backbone.View.extend({
             }
 
             // Attach names to all functions
-            _.each(this.globals, function(val, prop) {
+            _.each(this.globals, function (val, prop) {
                 if (typeof val === "function") {
                     val.__name = prop;
                 }
             });
 
-        // Otherwise if there is code to inject
+            // Otherwise if there is code to inject
         } else if (inject) {
             // Force a call to the draw function to force checks for instances
             // and to make sure that errors in the draw loop are caught.
@@ -2559,24 +2388,19 @@ window.PJSOutput = Backbone.View.extend({
         if (callback) {
             try {
                 callback([]);
-            } catch(e) {
-                // Ignore any errors that were generated in the callback
-                // NOTE(jeresig): This is needed because Mocha throws errors
-                // when it encounters an assertion error, which causes this
-                // to go haywire, generating an in-code error.
-            }
+            } catch (e) {}
         }
     },
 
     // Extract an object's properties for dynamic insertion
-    objectExtract: function(name, obj, proto) {
+    objectExtract: function objectExtract(name, obj, proto) {
         // Make sure the object actually exists before we try
         // to inject stuff into it
         if (!this.canvas[name]) {
             if ($.isArray(obj)) {
                 this.canvas[name] = [];
             } else if ($.isFunction(obj)) {
-                this.canvas[name] = function() {};
+                this.canvas[name] = function () {};
             } else {
                 this.canvas[name] = {};
             }
@@ -2596,11 +2420,9 @@ window.PJSOutput = Backbone.View.extend({
                 // Turn the result of the extracted function into
                 // a nicely-formatted string (maintains the closure)
                 if (typeof obj[objProp] === "function") {
-                    this.grabObj[name + (proto ? "." + proto : "") +
-                            "['" + objProp + "']"] =
-                        PJSOutput.stringify(obj[objProp]);
+                    this.grabObj[name + (proto ? "." + proto : "") + "['" + objProp + "']"] = PJSOutput.stringify(obj[objProp]);
 
-                // Otherwise we should probably just inject the value directly
+                    // Otherwise we should probably just inject the value directly
                 } else {
                     // Get the object that we'll be injecting into
                     var outputObj = this.canvas[name];
@@ -2616,7 +2438,7 @@ window.PJSOutput = Backbone.View.extend({
         }
     },
 
-    restart: function() {
+    restart: function restart() {
         this.lastGrab = null;
         this.lastGrabObj = null;
 
@@ -2630,46 +2452,44 @@ window.PJSOutput = Backbone.View.extend({
         this.canvas._clearLogs();
     },
 
-    toggle: function(doToggle) {
+    toggle: function toggle(doToggle) {
         if (doToggle) {
             this.canvas.loop();
-
         } else {
             this.canvas.noLoop();
         }
     },
 
-    clear: function() {
+    clear: function clear() {
         for (var prop in this.liveReset) {
             if (this.liveReset.hasOwnProperty(prop)) {
-                this.canvas[prop].apply(this.canvas,
-                    this.liveReset[prop]);
+                this.canvas[prop].apply(this.canvas, this.liveReset[prop]);
             }
         }
     },
 
     seed: null,
 
-    reseedRandom: function() {
+    reseedRandom: function reseedRandom() {
         this.seed = Math.floor(Math.random() * 4294967296);
     },
 
-    restoreRandomSeed: function() {
+    restoreRandomSeed: function restoreRandomSeed() {
         this.canvas.randomSeed(this.seed);
     },
 
-    kill: function() {
+    kill: function kill() {
         this.tester.testWorker.kill();
         this.worker.kill();
         this.hintWorker.kill();
         this.canvas.exit();
     },
 
-    initTests: function(validate) {
+    initTests: function initTests(validate) {
         return this.exec(validate, this.tester.testContext);
     },
 
-    exec: function(code) {
+    exec: function exec(code) {
         if (!code) {
             return;
         }
@@ -2692,25 +2512,20 @@ window.PJSOutput = Backbone.View.extend({
         // the top-level 'this' is empty except for this.externals, which
         // throws this message this is how users were getting at everything
         // from playing sounds to displaying pop-ups
-        var badProgram = $._("This program uses capabilities we've turned " +
-            "off for security reasons. Khan Academy prohibits showing " +
-            "external images, playing external sounds, or displaying pop-ups.");
-        var topLevelThis = "{ get externals() { throw { message: " +
-            JSON.stringify(badProgram) + " } } }";
+        var badProgram = $._("This program uses capabilities we've turned " + "off for security reasons. Khan Academy prohibits showing " + "external images, playing external sounds, or displaying pop-ups.");
+        var topLevelThis = "{ get externals() { throw { message: " + JSON.stringify(badProgram) + " } } }";
 
         // if we pass in the env as a parameter, the user will be able to get
         // at it through the 'arguments' binding, so we close over it instead
-        code = "var " + envName + " = arguments;\n(function(){\n" + code +
-            "\n}).apply(" + topLevelThis + ");";
+        code = "var " + envName + " = arguments;\n(function(){\n" + code + "\n}).apply(" + topLevelThis + ");";
 
         try {
 
-            if (this.debugger) {
-                this.debugger.exec(originalCode);
+            if (this["debugger"]) {
+                this["debugger"].exec(originalCode);
             } else {
-                (new Function(code)).apply(this.canvas, contexts);
+                new Function(code).apply(this.canvas, contexts);
             }
-
         } catch (e) {
             return e;
         }
@@ -2719,139 +2534,126 @@ window.PJSOutput = Backbone.View.extend({
     /*
      * The worker that analyzes the user's code.
      */
-    hintWorker: new PooledWorker(
-        "pjs/jshint-worker.js",
-        function(hintCode, callback) {
-            // Fallback in case of no worker support
-            if (!window.Worker) {
-                JSHINT(hintCode);
-                callback(JSHINT.data(), JSHINT.errors);
-                return;
+    hintWorker: new PooledWorker("pjs/jshint-worker.js", function (hintCode, callback) {
+        // Fallback in case of no worker support
+        if (!window.Worker) {
+            JSHINT(hintCode);
+            callback(JSHINT.data(), JSHINT.errors);
+            return;
+        }
+
+        var worker = this.getWorkerFromPool();
+
+        worker.onmessage = (function (event) {
+            if (event.data.type === "jshint") {
+                // If a new request has come in since the worker started
+                // then we just ignore the results and don't fire the callback
+                if (this.isCurrentWorker(worker)) {
+                    var data = event.data.message;
+                    callback(data.hintData, data.hintErrors);
+                }
+                this.addWorkerToPool(worker);
+            }
+        }).bind(this);
+
+        worker.postMessage({
+            code: hintCode,
+            externalsDir: this.externalsDir,
+            jshintFile: this.jshintFile
+        });
+    }),
+
+    worker: new PooledWorker("pjs/worker.js", function (userCode, context, callback) {
+        var timeout;
+        var worker = this.getWorkerFromPool();
+
+        var done = (function (e) {
+            if (timeout) {
+                clearTimeout(timeout);
             }
 
-            var worker = this.getWorkerFromPool();
+            if (worker) {
+                this.addWorkerToPool(worker);
+            }
 
-            worker.onmessage = function(event) {
-                if (event.data.type === "jshint") {
-                    // If a new request has come in since the worker started
-                    // then we just ignore the results and don't fire the callback
-                    if (this.isCurrentWorker(worker)) {
-                        var data = event.data.message;
-                        callback(data.hintData, data.hintErrors);
-                    }
-                    this.addWorkerToPool(worker);
-                }
-            }.bind(this);
+            if (e) {
+                // Make sure that the caller knows that we're done
+                callback([e]);
+            } else {
+                callback([], userCode);
+            }
+        }).bind(this);
 
-            worker.postMessage({
-                code: hintCode,
-                externalsDir: this.externalsDir,
-                jshintFile: this.jshintFile
-            });
-        }
-    ),
-
-    worker: new PooledWorker(
-        "pjs/worker.js",
-        function(userCode, context, callback) {
-            var timeout;
-            var worker = this.getWorkerFromPool();
-
-            var done = function(e) {
-                if (timeout) {
-                    clearTimeout(timeout);
-                }
-
-                if (worker) {
-                    this.addWorkerToPool(worker);
-                }
-
-                if (e) {
-                    // Make sure that the caller knows that we're done
-                    callback([e]);
-                } else {
-                    callback([], userCode);
-                }
-            }.bind(this);
-
-            worker.onmessage = function(event) {
-                // Execution of the worker has begun so we wait for it...
-                if (event.data.execStarted) {
-                    // If the thread doesn't finish executing quickly, kill it
-                    // and don't execute the code
-                    timeout = window.setTimeout(function() {
-                        worker.terminate();
-                        worker = null;
-                        done({message:
-                            $._("The program is taking too long to run. " +
-                                "Perhaps you have a mistake in your code?")});
-                    }, 500);
-
-                } else if (event.data.type === "end") {
-                    done();
-
-                } else if (event.data.type === "error") {
-                    done({message: event.data.message});
-                }
-            };
-
-            worker.onerror = function(event) {
-                event.preventDefault();
-                done(event);
-            };
-
-            try {
-                worker.postMessage({
-                    code: userCode,
-                    context: context
-                });
-            } catch (e) {
-                // TODO: Object is too complex to serialize, try to find
-                // an alternative workaround
+        worker.onmessage = function (event) {
+            // Execution of the worker has begun so we wait for it...
+            if (event.data.execStarted) {
+                // If the thread doesn't finish executing quickly, kill it
+                // and don't execute the code
+                timeout = window.setTimeout(function () {
+                    worker.terminate();
+                    worker = null;
+                    done({ message: $._("The program is taking too long to run. " + "Perhaps you have a mistake in your code?") });
+                }, 500);
+            } else if (event.data.type === "end") {
                 done();
+            } else if (event.data.type === "error") {
+                done({ message: event.data.message });
             }
+        };
+
+        worker.onerror = function (event) {
+            event.preventDefault();
+            done(event);
+        };
+
+        try {
+            worker.postMessage({
+                code: userCode,
+                context: context
+            });
+        } catch (e) {
+            // TODO: Object is too complex to serialize, try to find
+            // an alternative workaround
+            done();
         }
-    )
+    })
 });
 
 // Add in some static helper methods
 _.extend(PJSOutput, {
     instances: [],
-    
+
     // Turn a JavaScript object into a form that can be executed
     // (Note: The form will not necessarily be able to pass a JSON linter)
     // (Note: JSON.stringify might throw an exception. We don't capture it
     //        here as we'll want to deal with it later.)
-    stringify: function(obj) {
+    stringify: function stringify(obj) {
         // Use toString on functions
         if (typeof obj === "function") {
             return obj.toString();
 
-        // If we're dealing with an instantiated object just
-        // use its generated ID
+            // If we're dealing with an instantiated object just
+            // use its generated ID
         } else if (obj && obj.__id) {
             return obj.__id();
 
-        // Check if we're dealing with an array
-        } else if (obj &&
-                Object.prototype.toString.call(obj) === "[object Array]") {
+            // Check if we're dealing with an array
+        } else if (obj && Object.prototype.toString.call(obj) === "[object Array]") {
             return this.stringifyArray(obj);
 
-        // JSON.stringify returns undefined, not as a string, so we specially
-        // handle that
+            // JSON.stringify returns undefined, not as a string, so we specially
+            // handle that
         } else if (typeof obj === "undefined") {
-                return "undefined";
+            return "undefined";
         }
 
         // If all else fails, attempt to JSON-ify the string
         // TODO(jeresig): We should probably do recursion to better handle
         // complex objects that might hold instances.
-        return JSON.stringify(obj, function(k, v) {
+        return JSON.stringify(obj, function (k, v) {
             // Don't jsonify the canvas or its context because it can lead
             // to circular jsonification errors on chrome.
-            if (v && (v.id !== undefined && v.id === "output-canvas" ||
-                    typeof CanvasRenderingContext2D !== "undefined" &&
-                    v instanceof CanvasRenderingContext2D)) {
+            if (v && (v.id !== undefined && v.id === "output-canvas" || typeof CanvasRenderingContext2D !== "undefined" && v instanceof CanvasRenderingContext2D)) {
                 return undefined;
             }
             return v;
@@ -2860,7 +2662,7 @@ _.extend(PJSOutput, {
 
     // Turn an array into a string list
     // (Especially useful for serializing a list of arguments)
-    stringifyArray: function(array) {
+    stringifyArray: function stringifyArray(array) {
         var results = [];
 
         for (var i = 0, l = array.length; i < l; i++) {
@@ -2875,17 +2677,17 @@ _.extend(PJSOutput, {
     // instance (see: .__id())
     // Meant to translate:
     // new Foo(a, b, c) into: applyInstance(Foo)(a, b, c)
-    applyInstance: function(classFn, className) {
+    applyInstance: function applyInstance(classFn, className) {
         // Don't wrap it if we're dealing with a built-in object (like RegExp)
         try {
             var funcName = (/^function\s*(\w+)/.exec(classFn) || [])[1];
             if (funcName && window[funcName] === classFn) {
                 return classFn;
             }
-        } catch(e) {}
+        } catch (e) {}
 
         // Return a function for later execution.
-        return function() {
+        return (function () {
             var args = arguments;
 
             // Create a temporary constructor function
@@ -2903,14 +2705,14 @@ _.extend(PJSOutput, {
 
             // Return the new instance
             return obj;
-        }.bind(this);
+        }).bind(this);
     },
 
     // called whenever a user defined class is called to instantiate an object.
     // adds metadata to the class and the object to keep track of it and to
     // serialize it.
     // Called in PJSOutput.applyInstance and the Debugger's context.__instantiate__
-    newCallback: function (classFn, className, obj, args) {
+    newCallback: function newCallback(classFn, className, obj, args) {
         // Make sure a name is set for the class if one has not been
         // set already
         if (!classFn.__name && className) {
@@ -2921,15 +2723,14 @@ _.extend(PJSOutput, {
         obj.constructor = classFn;
 
         // Generate a semi-unique ID for the instance
-        obj.__id = function() {
-            return "new " + classFn.__name + "(" +
-                this.stringifyArray(args) + ")";
-        }.bind(this);
+        obj.__id = (function () {
+            return "new " + classFn.__name + "(" + this.stringifyArray(args) + ")";
+        }).bind(this);
 
         // Keep track of the instances that have been instantiated
         // Note: this.instances here is actually PJSOutput.instances which is
         // a singleton.  This means that multiple instances of PJSOutput will
-        // shared the same instances array.  Since each PJSOutput lives in its 
+        // shared the same instances array.  Since each PJSOutput lives in its
         // own iframe with its own execution context, each should have its own
         // copy of PJSOutput.instances.
         if (this.instances) {
@@ -2939,3 +2740,15 @@ _.extend(PJSOutput, {
 });
 
 LiveEditorOutput.registerOutput("pjs", PJSOutput);
+
+// Couldn't access property for permissions reasons,
+//  like window.frame
+// Only happens on prod where it's cross-origin
+
+// we'll use the debugger's newCallback delegate method to
+// keep track of object instances
+
+// Ignore any errors that were generated in the callback
+// NOTE(jeresig): This is needed because Mocha throws errors
+// when it encounters an assertion error, which causes this
+// to go haywire, generating an in-code error.

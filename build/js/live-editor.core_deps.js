@@ -29684,7 +29684,7 @@ return parser;
   })
 
 }(window.jQuery);
-(function() {
+(function () {
     // If no language is specified, or if an unknown language is specified,
     // then fall back to using "en" as the base language
     var defaultLang = "en";
@@ -29739,7 +29739,7 @@ return parser;
         "zh-TW": "nplurals=1; plural=0"
     };
 
-    var getPluralForm = function(lang) {
+    var getPluralForm = function getPluralForm(lang) {
         return plural_forms[lang] || plural_forms[defaultLang];
     };
 
@@ -29757,7 +29757,7 @@ return parser;
      *  interpolateStringToArray("test", {}) -> ["test"]
      *  interpolateStringToArray("test %(num)s", {num: 5}) -> ["test ", 5, ""]
      */
-    var interpolateStringToArray = function(str, options) {
+    var interpolateStringToArray = function interpolateStringToArray(str, options) {
         options = options || {};
 
         // Split the string into its language fragments and substitutions
@@ -29766,9 +29766,7 @@ return parser;
         // Replace the substitutions with the appropriate option
         for (var i = 1; i < split.length; i += 2) {
             var replaceWith = options[split[i]];
-            split[i] = _.isUndefined(replaceWith) ?
-                "%(" + split[i] + ")s" :
-                replaceWith;
+            split[i] = _.isUndefined(replaceWith) ? "%(" + split[i] + ")s" : replaceWith;
         }
         return split;
     };
@@ -29779,7 +29777,7 @@ return parser;
      *   $._("Some string")
      *   $._("Hello %(name)s", {name: "John"})
      */
-    jQuery._ = function(str, options) {
+    jQuery._ = function (str, options) {
         // Sometimes we're given an argument that's meant for ngettext().  This
         // happens if the same string is used in both $._() and $.ngettext()
         // (.g. a = $._(foo); b = $.ngettext("foo", "bar", count);
@@ -29821,7 +29819,7 @@ return parser;
      * other things added to props, such as this.props.ref and
      * this.props.children
      */
-    window.$_ = function(options, str) {
+    window.$_ = function (options, str) {
         if (arguments.length !== 2 || !_.isString(str)) {
             return "<$_> must have exactly one child, which must be a string";
         }
@@ -29842,7 +29840,7 @@ return parser;
      *     messages: ["%(num)s 猫 %(username)s"]
      *   }, 3, {username: "John"});
      */
-    jQuery.ngettext = function(singular, plural, num, options) {
+    jQuery.ngettext = function (singular, plural, num, options) {
         var message_info = singular;
 
         // Fall back to the default lang
@@ -29876,8 +29874,7 @@ return parser;
 
             // Add the messages into the Jed.js i18n object.
             // By default the first item in the array is ignored
-            i18n.options.locale_data[lang][singular] =
-                [null].concat(message_info.messages);
+            i18n.options.locale_data[lang][singular] = [null].concat(message_info.messages);
         }
 
         // Get the options to substitute into the string
@@ -29895,7 +29892,7 @@ return parser;
      *  - num: The number upon which to toggle the plural forms.
      *  - lang: The language to use as the basis for the pluralization.
      */
-    jQuery.ngetpos = function(num, lang) {
+    jQuery.ngetpos = function (num, lang) {
         lang = lang || "en";
 
         // Generate a function which will give the position of the message
@@ -29911,7 +29908,7 @@ return parser;
      *  - num: The number upon which to toggle the plural forms.
      *  - lang: The language to use as the basis for the pluralization.
      */
-    jQuery.isSingular = function(num, lang) {
+    jQuery.isSingular = function (num, lang) {
         return jQuery.ngetpos(num, lang) === 0;
     };
 
@@ -29932,7 +29929,7 @@ return parser;
      * This is just used for marking up those fragments that need translation.
      * The translated text is injected at deploy-time.
      */
-    i18n.handlebars_underscore = function(options) {
+    i18n.handlebars_underscore = function (options) {
         return options.fn(this);
     };
 
@@ -29945,7 +29942,7 @@ return parser;
      * It does not need to actually do anything and hence returns the contents
      * as is.
      */
-    i18n.handlebars_do_not_translate = function(options) {
+    i18n.handlebars_do_not_translate = function (options) {
         return options.fn(this);
     };
 
@@ -29966,7 +29963,7 @@ return parser;
      *  - lang: The language to use as the basis for the pluralization.
      *  - pos: The expected plural form (depends upon the language)
      */
-    i18n.handlebars_ngettext = function(num, lang, pos, options) {
+    i18n.handlebars_ngettext = function (num, lang, pos, options) {
         // This method has two signatures:
         // (num) (the default for when the code is run in dev mode)
         // (num, lang, pos) (for when the code is run in prod mode)
@@ -29982,9 +29979,7 @@ return parser;
         // If the result of the plural form function given the specified
         // number matches the expected position then we give the first
         // result, otherwise we give the inverse result.
-        return jQuery.ngetpos(num) === pos ?
-            options.fn(this) :
-            options.inverse(this);
+        return jQuery.ngetpos(num) === pos ? options.fn(this) : options.inverse(this);
     };
 
     window.i18n = i18n;
@@ -29993,9 +29988,7 @@ return parser;
 if (typeof Handlebars !== "undefined") {
     Handlebars.registerHelper("_", i18n.handlebars_underscore);
 
-    Handlebars.registerHelper("i18nDoNotTranslate",
-        i18n.handlebars_do_not_translate);
+    Handlebars.registerHelper("i18nDoNotTranslate", i18n.handlebars_do_not_translate);
 
-    Handlebars.registerHelper("ngettext",
-        i18n.handlebars_ngettext);
+    Handlebars.registerHelper("ngettext", i18n.handlebars_ngettext);
 }
