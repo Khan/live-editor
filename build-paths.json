@@ -26,6 +26,9 @@
         "editor_ace": [
             "js/editors/ace/editor-ace.js"
         ],
+        "editor_textarea": [
+            "js/editors/textarea/editor-textarea.js"
+        ],
         "editor_structured_blocks_deps": [
             "external/structured-blocks/external/jquery.ui.touch-punch.min.js",
             "external/structuredjs/external/esprima.js",
