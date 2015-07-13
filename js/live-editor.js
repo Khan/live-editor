@@ -37,7 +37,7 @@ window.LiveEditor = Backbone.View.extend({
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
         this.soundsDir = options.soundsDir;
-        this.execFile = this._qualifyURL(options.execFile);
+        this.execFile = options.execFile ? this._qualifyURL(options.execFile) : "";
         this.jshintFile = this._qualifyURL(options.jshintFile ||
             this.externalsDir + "jshint/jshint.js");
         this.redirectUrl = options.redirectUrl;
@@ -1279,6 +1279,10 @@ window.LiveEditor = Backbone.View.extend({
             JSON.stringify(data), this.postFrameOrigin());
     },
 
+    hasFrame: function() {
+        return !!(this.execFile);
+    },
+
     /*
      * Restart the code in the output frame.
      */
@@ -1390,6 +1394,45 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     getScreenshot: function(callback) {
+        // If we don't have an output frame then we need to render our
+        // own screenshot (so we just use the text in the editor)
+        if (!this.hasFrame()) {
+            var canvas = document.createElement("canvas");
+            canvas.width = 200;
+            canvas.height = 200;
+            var ctx = canvas.getContext("2d");
+
+            // Default sizing, we also use a 5px margin
+            var lineHeight = 24;
+            var maxWidth = 190;
+
+            // We go through all of this so that the text will wrap nicely
+            var text = this.editor.text();
+            var words = text.split(/\s+/);
+            var lines = 0;
+            var currentLine = words[0];
+
+            ctx.font = lineHeight + "px serif";
+
+            for (var i = 1; i < words.length; i++) {
+                var word = words[i];
+                var width = ctx.measureText(currentLine + " " + word).width;
+                if (width < maxWidth) {
+                    currentLine += " " + word;
+                } else {
+                    lines += 1;
+                    ctx.fillText(currentLine, 5, (lineHeight + 5) * lines);
+                    currentLine = word;
+                }
+            }
+            lines += 1;
+            ctx.fillText(currentLine, 5, (lineHeight + 5) * lines + 5);
+
+            // Render it to an image and we're done!
+            callback(canvas.toDataURL("image/png"));
+            return;
+        }
+
         // Unbind any handlers this function may have set for previous
         // screenshots
         $(window).off("message.getScreenshot");
