@@ -25,6 +25,7 @@
     "gulp": "^3.8.6",
     "gulp-bower": "0.0.7",
     "gulp-changed": "^0.4.1",
+    "gulp-chmod": "^1.2.0",
     "gulp-concat": "^2.3.4",
     "gulp-declare": "^0.2.0",
     "gulp-define-module": "^0.1.1",

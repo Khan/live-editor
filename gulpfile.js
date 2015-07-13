@@ -19,6 +19,7 @@ var request = require("request");
 var gutil = require("gulp-util");
 var babel = require("./babel-plugin.js");
 var gulpIf = require("gulp-if");
+var chmod = require("gulp-chmod");
 
 var mochaRunner = require("./testutil/gulp-mocha-runner.js");
 var check = require("./check.js");
@@ -52,6 +53,7 @@ scriptTypes.forEach(function(type) {
                 return file.path.indexOf(srcPath) === 0;   
             }, babel({ blacklist: ["strict"] })))
             .pipe(concat(outputFileName))
+            .pipe(chmod(644))
             .pipe(gulp.dest("build/js"));
     });
 
@@ -61,6 +63,7 @@ scriptTypes.forEach(function(type) {
             .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
             .pipe(uglify())
             .pipe(concat(outputFileName))
+            .pipe(chmod(644))
             .pipe(gulp.dest("build/js"));
     });
 });
