@@ -63,6 +63,7 @@
         ],
         "shared": [
             "js/shared/images.js",
+            "js/shared/sounds.js",
             "js/shared/record.js",
             "js/shared/config.js",
             "external/visibly/visibly.js"
