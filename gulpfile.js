@@ -17,7 +17,7 @@ var mochaPhantomJS = require("gulp-mocha-phantomjs");
 var staticServe = require("node-static");
 var request = require("request");
 var gutil = require("gulp-util");
-var babel = require("gulp-babel");
+var babel = require("./babel-plugin.js");
 var gulpIf = require("gulp-if");
 
 var mochaRunner = require("./testutil/gulp-mocha-runner.js");
