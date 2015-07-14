@@ -11,7 +11,4 @@ before_script:
   - bower install
 script:
   - npm run build
-  - ./node_modules/.bin/testee tests/output/pjs/index.html --browsers firefox
-  - ./node_modules/.bin/testee tests/output/sql/index.html --browsers firefox
-  - ./node_modules/.bin/testee tests/output/webpage/index.html --browsers firefox
-  - ./node_modules/.bin/testee tests/tooltips/index.html --browsers firefox
+  - npm test
