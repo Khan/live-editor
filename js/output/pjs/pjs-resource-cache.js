@@ -83,6 +83,13 @@ PJSResourceCache.prototype.loadImage = function(filename) {
 PJSResourceCache.prototype.loadSound = function(filename) {
     var deferred = $.Deferred();
     var audio = document.createElement("audio");
+    var parts = filename.split("/");
+    
+    var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
+    if (!group || group.sounds.indexOf(parts[1]) === -1) {
+        deferred.resolve();
+        return deferred;
+    }
 
     audio.preload = "auto";
     audio.oncanplaythrough = function() {

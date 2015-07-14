@@ -5,10 +5,22 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
         this.parent = options.parent;
         this.render();
         this.bind();
+        this.mouse = false;
+        
+        document.addEventListener("mousedown", () => {
+            this.mouse = true;
+        });
+        document.addEventListener("mouseup", () => {
+            this.mouse = false;
+        });
     },
 
     detector: function(event) {
         if (!/(\b[^\d\W][\w]*)\s*\(\s*([^\)]*)$/.test(event.pre) || this.parent.options.record.playing) {
+            return;
+        }
+        if (event.source && event.source.type === "changeCursor" && this.mouse) {
+            // ignore changeCursor events when the mouse button is down
             return;
         }
         var functionCall = RegExp.$1;

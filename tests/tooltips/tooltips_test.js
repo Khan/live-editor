@@ -9,14 +9,14 @@ describe("General Tooltip Tests", function(){
         var pre = "rect(12";
             
         var e = getTooltipRequestEvent(line, pre);
-        TTE.editor._emit("requestTooltip", e)
+        TTE.editor._emit("requestTooltip", e);
         expect(TTE.currentTooltip).to.be.equal(TTE.tooltips.autoSuggest);
 
         e = getTooltipRequestEvent(line, pre); // Reset propagationStopped
         e.source = {action: "click"};
-        TTE.editor._emit("requestTooltip", e)
+        TTE.editor._emit("requestTooltip", e);
         expect(TTE.currentTooltip).to.be.equal(TTE.tooltips.numberScrubber);
-    })
+    }); 
 
     it("Remove succeeds", function() {
         TTE.remove();

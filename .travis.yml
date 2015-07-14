@@ -1,17 +1,9 @@
 language: node_js
-addons:
-  firefox: "34.0"
 node_js:
-  - "0.10"
-before_install:
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
+  - "0.12"
 before_script:
   - npm install -g bower
   - bower install
 script:
   - npm run build
-  - ./node_modules/.bin/testee tests/output/pjs/index.html --browsers firefox
-  - ./node_modules/.bin/testee tests/output/sql/index.html --browsers firefox
-  - ./node_modules/.bin/testee tests/output/webpage/index.html --browsers firefox
-  - ./node_modules/.bin/testee tests/tooltips/index.html --browsers firefox
+  - npm test

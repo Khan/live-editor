@@ -1639,14 +1639,28 @@ window.TooltipBase = Backbone.View.extend({
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.autoSuggest = TooltipBase.extend({
     initialize: function initialize(options) {
+        var _this = this;
+
         this.options = options;
         this.parent = options.parent;
         this.render();
         this.bind();
+        this.mouse = false;
+
+        document.addEventListener("mousedown", function () {
+            _this.mouse = true;
+        });
+        document.addEventListener("mouseup", function () {
+            _this.mouse = false;
+        });
     },
 
     detector: function detector(event) {
         if (!/(\b[^\d\W][\w]*)\s*\(\s*([^\)]*)$/.test(event.pre) || this.parent.options.record.playing) {
+            return;
+        }
+        if (event.source && event.source.type === "changeCursor" && this.mouse) {
+            // ignore changeCursor events when the mouse button is down
             return;
         }
         var functionCall = RegExp.$1;
@@ -2085,20 +2099,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         defaultFile: "\"rpg/metal-clink\"",
         initialize: function initialize(options) {
             this.options = options;
-            this.options.files = [{
-                className: "Sound effects",
-                groups: [{
-                    groupName: "rpg",
-                    sounds: "battle-magic battle-spell battle-swing coin-jingle door-open giant-hyah giant-no giant-yah hit-clop hit-splat hit-thud hit-whack metal-chime metal-clink step-heavy water-bubble water-slosh".split(" "),
-                    cite: $._("'RPG Sound Effects' sounds by artisticdude"),
-                    citeLink: "http://opengameart.org/content/rpg-sound-pack"
-                }, {
-                    groupName: "retro",
-                    sounds: "boom1 boom2 coin hit1 hit2 jump1 jump2 laser1 laser2 laser3 laser4 rumble thruster-short thruster-long whistle1 whistle2".split(" "),
-                    cite: $._("'Retro Game Sounds' sounds by spongejr"),
-                    citeLink: "https://www.khanacademy.org/profile/spongejr/"
-                }]
-            }];
+            this.options.files = OutputSounds;
             this.parent = options.parent;
             this.autofill = true;
             this.render();
