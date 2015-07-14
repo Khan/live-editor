@@ -1639,14 +1639,28 @@ window.TooltipBase = Backbone.View.extend({
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.autoSuggest = TooltipBase.extend({
     initialize: function initialize(options) {
+        var _this = this;
+
         this.options = options;
         this.parent = options.parent;
         this.render();
         this.bind();
+        this.mouse = false;
+
+        document.addEventListener("mousedown", function () {
+            _this.mouse = true;
+        });
+        document.addEventListener("mouseup", function () {
+            _this.mouse = false;
+        });
     },
 
     detector: function detector(event) {
         if (!/(\b[^\d\W][\w]*)\s*\(\s*([^\)]*)$/.test(event.pre) || this.parent.options.record.playing) {
+            return;
+        }
+        if (event.source && event.source.type === "changeCursor" && this.mouse) {
+            // ignore changeCursor events when the mouse button is down
             return;
         }
         var functionCall = RegExp.$1;

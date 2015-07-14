@@ -8,7 +8,7 @@ window.AceEditor = Backbone.View.extend({
     tooltips: {
         // The earlier in the list a tooltip appears
         // the higher priority it gets.
-        ace_pjs: ["imagePicker", "soundModal", "colorPicker", "numberScrubber", "numberScrubberClick", "autoSuggest"],
+        ace_pjs: ["imagePicker", "soundModal", "colorPicker", "numberScrubberClick", "autoSuggest", "numberScrubber"],
         ace_webpage: ["imageModal", "colorPicker", "numberScrubber"],
         ace_sql: ["numberScrubber"]
     },
