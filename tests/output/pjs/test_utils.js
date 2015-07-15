@@ -93,20 +93,6 @@ var runTest = function(options) {
             }
         };
 
-        // Theoretically, jQuery.mouseup should work, but it wasn't working
-        //  for me across PhantomJS/browser, and this does.
-        var simulateClick = function() {
-            var ev = document.createEvent("MouseEvent");
-            ev.initMouseEvent(
-                "mouseup",
-                true, true,
-                window, null,
-                0, 0, 0, 0,
-                false, false, false, false,
-                0, null
-            );
-            output.output.$canvas[0].dispatchEvent(ev);
-        };
 
         // Run once to make sure that no errors are thrown
         // during execution
@@ -120,14 +106,14 @@ var runTest = function(options) {
 
             checkErrors(options.errors, errors);
             checkAssertions(options.assertions, output.results.assertions);
-            options.simulateClick && simulateClick();
+            options.simulateClick && simulateClick(output);
 
             if (code2) {
                 output.runCode(code2, function(errors) {
                     checkErrors(options.errors2, errors);
                     checkAssertions(options.assertions2,
                         output.results.assertions);
-                    options.simulateClick && simulateClick();
+                    options.simulateClick && simulateClick(output);
 
                     finishTest(done, output, options);
                 });
@@ -259,4 +245,19 @@ var getCodeFromOptions = function(code) {
         code = code.substr(0, code.length - 1);
     }
     return code;
+};
+
+// Theoretically, jQuery.mouseup should work, but it wasn't working
+//  for me across PhantomJS/browser, and this does.
+var simulateClick = function(output) {
+    var ev = document.createEvent("MouseEvent");
+    ev.initMouseEvent(
+        "mouseup",
+        true, true,
+        window, null,
+        0, 0, 0, 0,
+        false, false, false, false,
+        0, null
+    );
+    output.output.$canvas[0].dispatchEvent(ev);
 };

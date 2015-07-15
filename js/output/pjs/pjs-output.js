@@ -183,6 +183,8 @@ window.PJSOutput = Backbone.View.extend({
             context: this.canvas
         });
 
+        this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this));
+
         return this;
     },
 
@@ -1365,6 +1367,9 @@ window.PJSOutput = Backbone.View.extend({
 
         var contexts = Array.prototype.slice.call(arguments, 1);
         var originalCode = code;
+        
+        code = this.loopProtector.protect(code);
+        contexts[0].KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
 
         // this is kind of sort of supposed to fake a gensym that the user
         // can't access but since we're limited to string manipulation, we
@@ -1403,6 +1408,23 @@ window.PJSOutput = Backbone.View.extend({
         } catch (e) {
             return e;
         }
+    },
+
+    infiniteLoopCallback:  function() {
+        this.output.postParent({
+            results: {
+                code: this.output.currentCode,
+                errors: [this.infiniteLoopError]
+            }
+        });
+        this.KA_INFINITE_LOOP = true;
+    },
+
+    infiniteLoopError: {
+        text: $._("Your javascript is taking too long to run. " +
+            "Perhaps you have a mistake in your code?"),
+        type: "error",
+        source: "timeout",
     },
 
     /*

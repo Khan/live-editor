@@ -11603,11 +11603,10 @@ window.LoopProtector.prototype = {
         callback = callback || function () {};
 
         if (_.isString(ast)) {
-            var ast = esprima.parse(ast);
+            ast = esprima.parse(ast);
         }
         this.protectAst(ast);
-        text = escodegen.generate(ast);
-        return text;
+        return escodegen.generate(ast);
     }
 };
 /**

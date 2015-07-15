@@ -194,3 +194,43 @@ describe("Code Injection", function() {
         });
     });
 });
+
+describe("LoopProtector", function() {
+
+    it("should throw KA_INFINITE_LOOP", function (done) {
+        var output = new LiveEditorOutput({
+            outputType: "pjs",
+            workersDir: "../../../build/workers/",
+            externalsDir: "../../../build/external/",
+            imagesDir: "../../../build/images/",
+            soundsDir: "../../../sounds/",
+            jshintFile: "../../../build/external/jshint/jshint.js",
+            useDebugger: false
+        });
+
+        var code = getCodeFromOptions(function() {
+            var mouseClicked = function() {
+                var i = 0;
+                while (true) {
+                    i++;
+                }
+            };
+        });
+
+        var asyncError;
+        var listener = window.addEventListener('error', function(e) {
+            asyncError = e.error;
+            window.removeEventListener('error', listener);
+        });
+
+        output.runCode(code, function(errors, testResults) {
+            expect(errors.length).to.be(0);
+            simulateClick(output);
+            
+            setTimeout(function () {
+                expect(asyncError).to.equal("KA_INFINITE_LOOP");
+                done();
+            }, 100);
+        });
+    });
+});
