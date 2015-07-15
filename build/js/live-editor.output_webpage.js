@@ -632,6 +632,8 @@ window.WebpageOutput = Backbone.View.extend({
     },
 
     lint: function lint(userCode, skip) {
+        var _this = this;
+
         // the deferred isn't required in this case, but we need to match the
         // same API as the pjs-output.js' lint method.
         var deferred = $.Deferred();
@@ -647,7 +649,9 @@ window.WebpageOutput = Backbone.View.extend({
         var results = {};
         try {
             results = Slowparse.HTML(document, userCode, {
-                scriptPreprocessor: this.loopProtector.protect.bind(this.loopProtector),
+                scriptPreprocessor: function scriptPreprocessor(code) {
+                    return _this.loopProtector.protect(code);
+                },
                 disableTags: ["iframe", "embed", "object"]
             });
         } catch (e) {

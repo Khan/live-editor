@@ -88209,8 +88209,16 @@ window.TraceKit = TraceKit;
 
 }(window));
 
-window.LoopProtector = function (callback) {
+/**
+ * Creates a new LoopProtector object.
+ *
+ * @param callback: called whenever a loop takes more than <timeout>ms to complete.
+ * @param timeout: threshold time, default 200ms.
+ * @constructor
+ */
+window.LoopProtector = function (callback, timeout) {
     this.callback = callback || function () {};
+    this.timeout = timeout || 200;
     this.branchStartTime = 0;
     this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
@@ -88227,7 +88235,21 @@ window.LoopProtector = function (callback) {
 };
 
 window.LoopProtector.prototype = {
-    // Make sure to attach this function to the global scope
+    /**
+     * Throws 'KA_INFINITE_LOOP' if the difference between the current time
+     * and this.brancStartTime is greater than this.timeout.
+     * 
+     * The difference grows as long as this method is called synchronously.  As
+     * soon as the current execution stack completes and the browser grabs the
+     * next task off the event queue this.branchStartTime will be reset by the
+     * timeout.
+     * 
+     * In order to use this correctly, you must add a reference to this function
+     * to the global scope where the user code is being run.  See the exec()
+     * method in pjs-output.js for an example of how to do this.
+     * 
+     * @private
+     */
     _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect() {
         var now = new Date().getTime();
         if (!this.branchStartTime) {
@@ -88235,9 +88257,10 @@ window.LoopProtector.prototype = {
             setTimeout((function () {
                 this.branchStartTime = 0;
             }).bind(this), 0);
-        } else if (now - this.branchStartTime > 200) {
+        } else if (now - this.branchStartTime > this.timeout) {
             if (this.visible) {
                 this.callback();
+                // TODO(kevinb) throw an Error instance
                 throw "KA_INFINITE_LOOP";
             }
         }
@@ -88245,6 +88268,7 @@ window.LoopProtector.prototype = {
 
     riskyStatements: ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration"],
 
+    // TODO(kevinb) use estraverse to walk the tree
     protectAst: function protectAst(ast) {
         if (this.riskyStatements.indexOf(ast.type) !== -1) {
             ast.body.body.unshift(this.loopBreak);
@@ -88260,12 +88284,8 @@ window.LoopProtector.prototype = {
         }
     },
 
-    protect: function protect(ast, callback) {
-        callback = callback || function () {};
-
-        if (_.isString(ast)) {
-            ast = esprima.parse(ast);
-        }
+    protect: function protect(code) {
+        var ast = esprima.parse(code);
         this.protectAst(ast);
         return escodegen.generate(ast);
     }

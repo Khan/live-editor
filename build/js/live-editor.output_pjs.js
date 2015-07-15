@@ -1393,7 +1393,7 @@ window.PJSOutput = Backbone.View.extend({
             context: this.canvas
         });
 
-        this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this));
+        this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this), 500);
 
         return this;
     },
