@@ -57,7 +57,7 @@
             "js/ui/structured-blocks-tooltips.js"
         ],
         "debugger": [
-            "external/iframe-overlay/dist/iframe-overlay.js",
+            "bower_components/iframe-overlay/dist/iframe-overlay.js",
             "js/ui/debugger.js",
             "build/tmpl/debugger.js"
         ],
@@ -78,7 +78,7 @@
             "js/output/shared/loop-protect.js"
         ],
         "output_debugger_deps": [
-            "external/iframe-overlay/dist/iframe-overlay.js",
+            "bower_components/iframe-overlay/dist/iframe-overlay.js",
             "external/debugger/build/debugger.js",
             "external/debugger/build/processing-debugger.js",
             "js/output/pjs/pjs-debugger.js"
