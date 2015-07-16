@@ -6,6 +6,14 @@
     display: none;
 }
 
+.scratchpad-wrap.no-output .scratchpad-canvas-wrap {
+    display: none;
+}
+
+.scratchpad-wrap.no-output .scratchpad-editor-wrap {
+    margin-right: 0;
+}
+
 .scratchpad-wrap .scratchpad-canvas-wrap {
     float: right;
 }
@@ -131,6 +139,12 @@
 .scratchpad-ace-editor .ace_line {
     direction: ltr;
     unicode-bidi: bidi-override;
+}
+
+.scratchpad-editor .textarea-editor {
+    font-size: 16px;
+    height: 100%;
+    width: 100%;
 }
 
 .scratchpad-playbar {
