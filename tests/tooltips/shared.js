@@ -106,7 +106,7 @@ var testMockedTooltipDetection = function(tooltip, line, pre) {
 
 function testReplace(tooltip, line, pre, updates, result) {
     var event = getTooltipRequestEvent(line, pre);
-    newLine = line;
+    var newLine = line;
     var oldReplace = editor.session.replace;
     editor.session.replace = sinon.spy(function(range, newText) {
         newLine = applyReplace(newLine, range, newText);
