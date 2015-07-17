@@ -184,7 +184,7 @@ window.PJSOutput = Backbone.View.extend({
         });
 
         this.loopProtector = new LoopProtector(
-            this.infiniteLoopCallback.bind(this), 500);
+            this.infiniteLoopCallback.bind(this), 2000, 500);
 
         return this;
     },
@@ -1407,7 +1407,11 @@ window.PJSOutput = Backbone.View.extend({
             }
 
         } catch (e) {
-            return e;
+            if (e.message === "KA_INFINITE_LOOP") {
+                return this.infiniteLoopError;
+            } else {
+                return e;
+            }
         }
     },
 
