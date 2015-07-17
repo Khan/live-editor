@@ -11,7 +11,6 @@ window.LoopProtector = function(callback, timeout) {
     this.branchStartTime = 0;
     this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
-    this.visible = true;
     
     visibly.onVisible(function () {
         this.visible = true;
@@ -21,6 +20,8 @@ window.LoopProtector = function(callback, timeout) {
     visibly.onHidden(function () {
         this.visible = false;
     }.bind(this));
+
+    this.visible = !visibly.hidden();
 };
 
 window.LoopProtector.prototype = {

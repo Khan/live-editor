@@ -1,7 +1,5 @@
 window.TextareaEditor = Backbone.View.extend({
     initialize: function initialize(options) {
-        var self = this;
-
         this.defaultCode = options.code;
         this.autoFocus = options.autoFocus;
         this.config = options.config;
