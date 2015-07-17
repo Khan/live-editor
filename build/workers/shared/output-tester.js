@@ -87,6 +87,7 @@ OutputTester.prototype = {
     bindTestContext: function(obj) {
         obj = obj || this.testContext;
 
+        /* jshint forin:false */
         for (var prop in obj) {
             if (typeof obj[prop] === "object") {
                 this.bindTestContext(obj[prop]);

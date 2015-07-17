@@ -36236,51 +36236,52 @@ module.exports = ProcessingDebugger;
 
 },{}]},{},[1])(1)
 });
+/* global ProcessingDebugger */
 window.PJSDebugger = Backbone.View.extend({
-    
-    initialize: function(options) {
+
+    initialize: function initialize(options) {
         this.output = options.output;
-        
-        this.debugger = new ProcessingDebugger({ 
-            context: options.context 
+
+        this["debugger"] = new ProcessingDebugger({
+            context: options.context
         });
-        this.debugger.breakpointsEnabled = false;
-        
+        this["debugger"].breakpointsEnabled = false;
+
         this.bind();
     },
-    
-    exec: function(code) {
-        this.debugger.load(code);
-        this.debugger.start();
+
+    exec: function exec(code) {
+        this["debugger"].load(code);
+        this["debugger"].start();
     },
-    
-    bind: function() {
+
+    bind: function bind() {
         window.addEventListener("message", this.handleMessage.bind(this), false);
 
-        this.debugger.onNewObject = window.PJSOutput.newCallback.bind(PJSOutput);
+        this["debugger"].onNewObject = window.PJSOutput.newCallback.bind(PJSOutput);
 
-        this.debugger.onBreakpoint = function() {
+        this["debugger"].onBreakpoint = (function () {
             this.postParent({
                 type: "debugger",
                 action: "step",
-                line: this.debugger.currentLine
+                line: this["debugger"].currentLine
             });
-        }.bind(this);
+        }).bind(this);
 
-        this.debugger.onFunctionDone = function() {
+        this["debugger"].onFunctionDone = (function () {
             this.postParent({
                 type: "debugger",
                 action: "done"
             });
-        }.bind(this);
+        }).bind(this);
     },
 
-    handleMessage: function(event) {
+    handleMessage: function handleMessage(event) {
         var data;
 
         this.frameSource = event.source;
         this.frameOrigin = event.origin;
-        
+
         if (typeof event.data === "object") {
             return;
         }
@@ -36290,75 +36291,73 @@ window.PJSDebugger = Backbone.View.extend({
         } catch (err) {
             return;
         }
-        
+
         if (data.type !== "debugger") {
             return;
         }
 
         if (data.action === "debug") {
             if (data.state === "on") {
-                this.debugger.breakpointsEnabled = true;
+                this["debugger"].breakpointsEnabled = true;
             } else if (data.state === "off") {
-                this.debugger.breakpointsEnabled = false;
-                this.debugger.resume();
+                this["debugger"].breakpointsEnabled = false;
+                this["debugger"].resume();
                 this.output.restart();
             }
         }
 
         if (data.action === "start") {
             this.output.clear();
-            this.debugger.breakpoints = data.breakpoints;
-            this.debugger.start(data.paused);
+            this["debugger"].breakpoints = data.breakpoints;
+            this["debugger"].start(data.paused);
         }
 
         if (data.action === "resume") {
-            this.debugger.resume();
+            this["debugger"].resume();
         }
 
         if (data.action === "stepIn") {
-            this.debugger.stepIn();
+            this["debugger"].stepIn();
             this.postParent({
                 type: "debugger",
                 action: "step",
-                line: this.debugger.currentLine
+                line: this["debugger"].currentLine
             });
         }
 
         if (data.action === "stepOver") {
-            this.debugger.stepOver();
+            this["debugger"].stepOver();
             this.postParent({
                 type: "debugger",
                 action: "step",
-                line: this.debugger.currentLine
+                line: this["debugger"].currentLine
             });
         }
 
         if (data.action === "stepOut") {
-            this.debugger.stepOut();
+            this["debugger"].stepOut();
             this.postParent({
                 type: "debugger",
                 action: "step",
-                line: this.debugger.currentLine
+                line: this["debugger"].currentLine
             });
         }
 
         if (data.action === "setBreakpoint") {
-            this.debugger.setBreakpoint(data.line);
+            this["debugger"].setBreakpoint(data.line);
         }
 
         if (data.action === "clearBreakpoint") {
-            this.debugger.clearBreakpoint(data.line);
+            this["debugger"].clearBreakpoint(data.line);
         }
     },
 
     // Send a message back to the parent frame
-    postParent: function(data) {
+    postParent: function postParent(data) {
         // If there is no frameSource (e.g. we're not embedded in another page)
         // Then we don't need to care about sending the messages anywhere!
         if (this.frameSource) {
-            this.frameSource.postMessage(
-                typeof data === "string" ? data : JSON.stringify(data),
-                this.frameOrigin);
+            this.frameSource.postMessage(typeof data === "string" ? data : JSON.stringify(data), this.frameOrigin);
         }
     }
 });

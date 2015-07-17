@@ -6533,17 +6533,17 @@ function program15(depth0,data) {
   buffer += "</span></p>\n    </div>\n</div>";
   return buffer;});;
 $(document).delegate("a.ui-button", {
-    mouseenter: function() {
+    mouseenter: function mouseenter() {
         if (!$(this).hasClass("ui-state-disabled")) {
             $(this).addClass("ui-state-hover");
         }
     },
 
-    mouseleave: function() {
+    mouseleave: function mouseleave() {
         $(this).removeClass("ui-state-hover");
     },
 
-    click: function(e) {
+    click: function click(e) {
         e.preventDefault();
 
         if (!$(this).hasClass("ui-state-disabled")) {
@@ -6552,16 +6552,6 @@ $(document).delegate("a.ui-button", {
     }
 });
 
-$.fn.buttonize = function() {
-    return this.find(".ui-button")
-        .addClass("ui-widget ui-state-default ui-corner-all")
-        .find("span:first").addClass("ui-button-icon-primary ui-icon").end()
-        .filter(":has(.ui-button-text)")
-            .addClass("ui-button-text-icon-primary")
-        .end()
-        .not(":has(.ui-button-text)")
-            .addClass("ui-button-icon-only")
-            .append("<span class='ui-button-text'>&nbsp;</span>")
-        .end()
-    .end();
+$.fn.buttonize = function () {
+    return this.find(".ui-button").addClass("ui-widget ui-state-default ui-corner-all").find("span:first").addClass("ui-button-icon-primary ui-icon").end().filter(":has(.ui-button-text)").addClass("ui-button-text-icon-primary").end().not(":has(.ui-button-text)").addClass("ui-button-icon-only").append("<span class='ui-button-text'>&nbsp;</span>").end().end();
 };

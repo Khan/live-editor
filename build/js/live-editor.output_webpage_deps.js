@@ -11548,37 +11548,68 @@ require("/tools/entry-point.js");
   }
 }());
 
-window.LoopProtector = function(callback) {
-	this.callback = callback || function() {};
-	this.branchStartTime = 0;
-	this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
+/**
+ * Creates a new LoopProtector object.
+ *
+ * @param callback: called whenever a loop takes more than <timeout>ms to complete.
+ * @param timeout: threshold time, default 200ms.
+ * @constructor
+ */
+window.LoopProtector = function (callback, timeout) {
+    this.callback = callback || function () {};
+    this.timeout = timeout || 200;
+    this.branchStartTime = 0;
+    this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
+
+    visibly.onVisible((function () {
+        this.visible = true;
+        this.branchStartTime = 0;
+    }).bind(this));
+
+    visibly.onHidden((function () {
+        this.visible = false;
+    }).bind(this));
+
+    this.visible = !visibly.hidden();
 };
 
 window.LoopProtector.prototype = {
-	// Make sure to attach this function to the global scope
-	_KAInfiniteLoopProtect: function() {
+    /**
+     * Throws 'KA_INFINITE_LOOP' if the difference between the current time
+     * and this.brancStartTime is greater than this.timeout.
+     * 
+     * The difference grows as long as this method is called synchronously.  As
+     * soon as the current execution stack completes and the browser grabs the
+     * next task off the event queue this.branchStartTime will be reset by the
+     * timeout.
+     * 
+     * In order to use this correctly, you must add a reference to this function
+     * to the global scope where the user code is being run.  See the exec()
+     * method in pjs-output.js for an example of how to do this.
+     * 
+     * @private
+     */
+    _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect() {
         var now = new Date().getTime();
         if (!this.branchStartTime) {
             this.branchStartTime = now;
-            setTimeout(function() {
+            setTimeout((function () {
                 this.branchStartTime = 0;
-            }.bind(this), 0);
-        } else if (now - this.branchStartTime > 200) {
-        	this.callback();
-            throw "KA_INFINITE_LOOP";
+            }).bind(this), 0);
+        } else if (now - this.branchStartTime > this.timeout) {
+            if (this.visible) {
+                this.callback();
+                // TODO(kevinb) throw an Error instance
+                throw "KA_INFINITE_LOOP";
+            }
         }
     },
 
-    riskyStatements: [
-        "DoWhileStatement",
-        "WhileStatement",
-        "ForStatement",
-        "FunctionExpression",
-        "FunctionDeclaration"
-    ],
+    riskyStatements: ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration"],
 
-    protectAst: function(ast) {
+    // TODO(kevinb) use estraverse to walk the tree
+    protectAst: function protectAst(ast) {
         if (this.riskyStatements.indexOf(ast.type) !== -1) {
             ast.body.body.unshift(this.loopBreak);
         }
@@ -11593,25 +11624,20 @@ window.LoopProtector.prototype = {
         }
     },
 
-	protect: function(ast, callback) {
-		callback = callback || function() {};
-
-		if (_.isString(ast)) {
-        	var ast = esprima.parse(ast);
-		}
+    protect: function protect(code) {
+        var ast = esprima.parse(code);
         this.protectAst(ast);
-        text = escodegen.generate(ast);
-        return text;
-	}
+        return escodegen.generate(ast);
+    }
 };
 /**
  * StateScrubber
  * Resets the global javascript state in the browser
  * (timeouts, intervals and global variables)
  */
-window.StateScrubber = function(target) {
+window.StateScrubber = function (target) {
     this.target = target;
-    this.firstTimeout = target.setTimeout(function() {}, 0);
+    this.firstTimeout = target.setTimeout(function () {}, 0);
 
     // We will record all the variables that we see on window on startup
     // these will be the only keys we leave intact when we reset window
@@ -11624,10 +11650,10 @@ window.StateScrubber = function(target) {
 
     // Since variables initially on window will not be reset, try to freeze them to
     // avoid state leaking between executions.
+    /* jshint forin:false */
     for (var prop in this.globalVariables) {
         try {
-            var propDescriptor =
-                Object.getOwnPropertyDescriptor(target, prop);
+            var propDescriptor = Object.getOwnPropertyDescriptor(target, prop);
             if (!propDescriptor || propDescriptor.configurable) {
                 Object.defineProperty(target, prop, {
                     value: target[prop],
@@ -11635,18 +11661,14 @@ window.StateScrubber = function(target) {
                     configurable: false
                 });
             }
-        } catch(e) {
-            // Couldn't access property for permissions reasons,
-            // like window.frame
-            // Only happens on prod where it's cross-origin
-        }
+        } catch (e) {}
     }
     // Completely lock down window's prototype chain
     Object.freeze(Object.getPrototypeOf(target));
 };
 
 window.StateScrubber.prototype = {
-    clearGlobals: function() {
+    clearGlobals: function clearGlobals() {
         for (var prop in this.target) {
             if (!this.globalVariables[prop] && this.target.hasOwnProperty(prop)) {
                 // This should get rid of variables which cannot be deleted
@@ -11657,25 +11679,29 @@ window.StateScrubber.prototype = {
         }
     },
 
-    clearTimeoutsAndIntervals: function() {
-    	// Intervals are acutally also timeouts under the hood, so clearing all the 
-    	// timeouts since last time is sufficient.
-    	// (If you're interested intervals are timeouts with the repeat flag set to true:
-    	// www.w3.org/TR/html5/webappapis.html#timers)
-        var lastTimeout = this.target.setTimeout(function() {}, 0);
+    clearTimeoutsAndIntervals: function clearTimeoutsAndIntervals() {
+        // Intervals are acutally also timeouts under the hood, so clearing all the
+        // timeouts since last time is sufficient.
+        // (If you're interested intervals are timeouts with the repeat flag set to true:
+        // www.w3.org/TR/html5/webappapis.html#timers)
+        var lastTimeout = this.target.setTimeout(function () {}, 0);
 
-        for (var i=this.firstTimeout; i<lastTimeout; i++) {
+        for (var i = this.firstTimeout; i < lastTimeout; i++) {
             this.target.clearTimeout(i);
         }
 
         this.firstTimeout = lastTimeout;
     },
 
-    clearAll: function() {
-    	this.clearGlobals();
-    	this.clearTimeoutsAndIntervals();
+    clearAll: function clearAll() {
+        this.clearGlobals();
+        this.clearTimeoutsAndIntervals();
     }
 };
+
+// Couldn't access property for permissions reasons,
+// like window.frame
+// Only happens on prod where it's cross-origin
 /*
  * StructuredJS provides an API for static analysis of code based on an abstract
  * syntax tree generated by Esprima (compliant with the Mozilla Parser
@@ -12623,7 +12649,7 @@ window.StateScrubber.prototype = {
     exports.prettify = prettyHtml;
 })(typeof window !== "undefined" ? window : global);
 
-window.PJSTester = function(options) {
+window.PJSTester = function (options) {
     this.initialize(options);
     this.bindTestContext();
 };
@@ -12634,34 +12660,29 @@ PJSTester.prototype.testMethods = {
     /*
      * See if any of the patterns match the code
      */
-    firstMatchingPattern: function(patterns) {
-        return _.find(patterns, _.bind(function(pattern) {
+    firstMatchingPattern: function firstMatchingPattern(patterns) {
+        return _.find(patterns, _.bind(function (pattern) {
             return this.testContext.matches(pattern);
         }, this));
     },
 
-    hasFnCall: function(name, check) {
+    hasFnCall: function hasFnCall(name, check) {
         for (var i = 0, l = this.fnCalls.length; i < l; i++) {
-            var retVal = this.testContext.checkFn(
-                this.fnCalls[i], name, check);
+            var retVal = this.testContext.checkFn(this.fnCalls[i], name, check);
 
             if (retVal === true) {
                 return;
             }
         }
 
-        this.testContext.assert(false,
-            $._("Expected function call to '%(name)s' was not made.",
-            {name: name}));
+        this.testContext.assert(false, $._("Expected function call to '%(name)s' was not made.", { name: name }));
     },
 
-    orderedFnCalls: function(calls) {
+    orderedFnCalls: function orderedFnCalls(calls) {
         var callPos = 0;
 
         for (var i = 0, l = this.fnCalls.length; i < l; i++) {
-            var retVal = this.testContext.checkFn(
-                this.fnCalls[i],
-                    calls[callPos][0], calls[callPos][1]);
+            var retVal = this.testContext.checkFn(this.fnCalls[i], calls[callPos][0], calls[callPos][1]);
 
             if (retVal === true) {
                 callPos += 1;
@@ -12672,12 +12693,10 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false,
-            $._("Expected function call to '%(name)s' was not made.",
-            {name: calls[callPos][0]}));
+        this.testContext.assert(false, $._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
     },
 
-    checkFn: function(fnCall, name, check) {
+    checkFn: function checkFn(fnCall, name, check) {
         if (fnCall.name !== name) {
             return;
         }
@@ -12687,56 +12706,48 @@ PJSTester.prototype.testMethods = {
         if (typeof check === "object") {
             if (check.length !== fnCall.args.length) {
                 pass = false;
-
             } else {
                 for (var c = 0; c < check.length; c++) {
-                    if (check[c] !== null &&
-                        check[c] !== fnCall.args[c]) {
+                    if (check[c] !== null && check[c] !== fnCall.args[c]) {
                         pass = false;
                     }
                 }
             }
-
         } else if (typeof check === "function") {
             pass = check(fnCall);
         }
 
         if (pass) {
-            this.testContext.assert(true,
-                $._("Correct function call made to %(name)s.",
-                {name: name}));
+            this.testContext.assert(true, $._("Correct function call made to %(name)s.", { name: name }));
         }
 
         return pass;
     },
 
-    _isVarName: function(str) {
+    _isVarName: function _isVarName(str) {
         return _.isString(str) && str.length > 0 && str[0] === "$";
     },
 
-    _assertVarName: function(str) {
+    _assertVarName: function _assertVarName(str) {
         if (!this.testContext._isVarName(str)) {
-            throw new Error(
-                $._("Expected '%(name)s' to be a valid variable name.",
-                    {name: str}));
+            throw new Error($._("Expected '%(name)s' to be a valid variable name.", { name: str }));
         }
     },
 
     /*
      * Satisfied when predicate(var) is true.
      */
-    unaryOp: function(varName, predicate) {
+    unaryOp: function unaryOp(varName, predicate) {
         this.testContext._assertVarName(varName);
-        return this.testContext.constraint([varName], function(ast) {
-            return !!(ast && !_.isUndefined(ast.value) &&
-                predicate(ast.value));
+        return this.testContext.constraint([varName], function (ast) {
+            return !!(ast && !_.isUndefined(ast.value) && predicate(ast.value));
         });
     },
 
     /*
      * Satisfied when var is any literal.
      */
-    isLiteral: function(varName) {
+    isLiteral: function isLiteral(varName) {
         function returnsTrue() {
             return true;
         }
@@ -12747,15 +12758,15 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when var is a number.
      */
-    isNumber: function(varName) {
+    isNumber: function isNumber(varName) {
         return this.testContext.unaryOp(varName, _.isNumber);
     },
 
     /*
      * Satisfied when var is an identifier
      */
-    isIdentifier: function(varName) {
-        return this.testContext.constraint([varName], function(ast) {
+    isIdentifier: function isIdentifier(varName) {
+        return this.testContext.constraint([varName], function (ast) {
             return !!(ast && ast.type && ast.type === "Identifier");
         });
     },
@@ -12763,48 +12774,42 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when var is a boolean.
      */
-    isBoolean: function(varName) {
+    isBoolean: function isBoolean(varName) {
         return this.testContext.unaryOp(varName, _.isBoolean);
     },
 
     /*
      * Satisfied when var is a string.
      */
-    isString: function(varName) {
+    isString: function isString(varName) {
         return this.testContext.unaryOp(varName, _.isString);
     },
 
     /*
      * Satisfied when pred(first, second) is true.
      */
-    binaryOp: function(first, second, predicate) {
+    binaryOp: function binaryOp(first, second, predicate) {
         var variables = [];
         var fn;
         if (this.testContext._isVarName(first)) {
             variables.push(first);
             if (this.testContext._isVarName(second)) {
                 variables.push(second);
-                fn = function(a, b) {
-                    return !!(a && b && !_.isUndefined(a.value) &&
-                        !_.isUndefined(b.value) &&
-                        predicate(a.value, b.value));
+                fn = function (a, b) {
+                    return !!(a && b && !_.isUndefined(a.value) && !_.isUndefined(b.value) && predicate(a.value, b.value));
                 };
             } else {
-                fn = function(a) {
-                    return !!(a && !_.isUndefined(a.value) &&
-                        predicate(a.value, second));
+                fn = function (a) {
+                    return !!(a && !_.isUndefined(a.value) && predicate(a.value, second));
                 };
             }
         } else if (this.testContext._isVarName(second)) {
             variables.push(second);
-            fn = function(b) {
-                return !!(b && !_.isUndefined(b.value) &&
-                    predicate(first, b.value));
+            fn = function (b) {
+                return !!(b && !_.isUndefined(b.value) && predicate(first, b.value));
             };
         } else {
-            throw new Error($._("Expected either '%(first)s' or '%(second)s'" +
-                " to be a valid variable name.",
-                {first: first, second: second}));
+            throw new Error($._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
         }
 
         return this.testContext.constraint(variables, fn);
@@ -12813,8 +12818,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a < b
      */
-    lessThan: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    lessThan: function lessThan(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a < b;
         });
     },
@@ -12822,8 +12827,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a <= b
      */
-    lessThanOrEqual: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    lessThanOrEqual: function lessThanOrEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a <= b;
         });
     },
@@ -12831,8 +12836,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a > b
      */
-    greaterThan: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    greaterThan: function greaterThan(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a > b;
         });
     },
@@ -12840,8 +12845,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a > 0
      */
-    positive: function(a) {
-        return this.testContext.unaryOp(a, function(a) {
+    positive: function positive(a) {
+        return this.testContext.unaryOp(a, function (a) {
             return a > 0;
         });
     },
@@ -12849,8 +12854,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a > 0
      */
-    negative: function(a) {
-        return this.testContext.unaryOp(a, function(a) {
+    negative: function negative(a) {
+        return this.testContext.unaryOp(a, function (a) {
             return a < 0;
         });
     },
@@ -12858,8 +12863,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a >= b
      */
-    greaterThanOrEqual: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    greaterThanOrEqual: function greaterThanOrEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a >= b;
         });
     },
@@ -12867,18 +12872,15 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when min <= val <= max
      */
-    inRange: function(val, min, max) {
-        return this.testContext.and(
-            this.testContext.greaterThanOrEqual(val, min),
-            this.testContext.lessThanOrEqual(val, max)
-        );
+    inRange: function inRange(val, min, max) {
+        return this.testContext.and(this.testContext.greaterThanOrEqual(val, min), this.testContext.lessThanOrEqual(val, max));
     },
 
     /*
      * Satisfied when a === b
      */
-    equal: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    equal: function equal(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a === b;
         });
     },
@@ -12886,8 +12888,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a !== b
      */
-    notEqual: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    notEqual: function notEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a !== b;
         });
     },
@@ -12895,23 +12897,23 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when constraint is not satisfied
      */
-    not: function(constraint) {
-        return this.testContext.constraint(constraint.variables, function() {
+    not: function not(constraint) {
+        return this.testContext.constraint(constraint.variables, function () {
             return !constraint.fn.apply({}, arguments);
         });
     },
 
-    _naryShortCircuitingOp: function(allOrAny, args) {
+    _naryShortCircuitingOp: function _naryShortCircuitingOp(allOrAny, args) {
         var variables = _.union.apply({}, _.pluck(args, "variables"));
 
-        var argNameToIndex = _.object(_.map(variables, function(item, i) {
+        var argNameToIndex = _.object(_.map(variables, function (item, i) {
             return [item, i];
         }));
 
-        return this.testContext.constraint(variables, function() {
+        return this.testContext.constraint(variables, function () {
             var constraintArgs = arguments;
-            return allOrAny(args, function(constraint) {
-                var fnArgs = _.map(constraint.variables, function(varName) {
+            return allOrAny(args, function (constraint) {
+                var fnArgs = _.map(constraint.variables, function (varName) {
                     return constraintArgs[argNameToIndex[varName]];
                 });
 
@@ -12923,14 +12925,14 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when all of the input constraints are satisfied
      */
-    and: function() {
+    and: function and() {
         return this.testContext._naryShortCircuitingOp(_.all, arguments);
     },
 
     /*
      * Satisfied when any of the input constraints are satisfied
      */
-    or: function() {
+    or: function or() {
         return this.testContext._naryShortCircuitingOp(_.any, arguments);
     },
 
@@ -12938,7 +12940,7 @@ PJSTester.prototype.testMethods = {
      * Returns a new structure from the combination of a pattern and a
      * constraint
      */
-    structure: function(pattern, constraint) {
+    structure: function structure(pattern, constraint) {
         return {
             pattern: pattern,
             constraint: constraint
@@ -12948,7 +12950,7 @@ PJSTester.prototype.testMethods = {
     /*
      * Creates a new variable constraint
      */
-    constraint: function(variables, fn) {
+    constraint: function constraint(variables, fn) {
         return {
             variables: variables,
             fn: fn
@@ -12958,7 +12960,7 @@ PJSTester.prototype.testMethods = {
     /*
      * Returns the result of matching a structure against the user's code
      */
-    match: function(structure) {
+    match: function match(structure) {
         // If there were syntax errors, don't even try to match it
         if (this.errors.length) {
             return {
@@ -12974,12 +12976,12 @@ PJSTester.prototype.testMethods = {
         // If we don't see a pattern property, they probably passed in
         // a pattern itself, so we'll turn it into a structure
         if (structure && _.isUndefined(structure.pattern)) {
-            structure = {pattern: structure};
+            structure = { pattern: structure };
         }
 
         // If nothing is passed in or the pattern is non-existent, return
         // failure
-        if (!structure || ! structure.pattern) {
+        if (!structure || !structure.pattern) {
             return {
                 success: false,
                 message: ""
@@ -12988,10 +12990,9 @@ PJSTester.prototype.testMethods = {
 
         try {
             var callbacks = structure.constraint;
-            var success = Structured.match(this.userCode,
-                structure.pattern, {
-                    varCallbacks: callbacks
-                });
+            var success = Structured.match(this.userCode, structure.pattern, {
+                varCallbacks: callbacks
+            });
 
             return {
                 success: success,
@@ -13003,10 +13004,7 @@ PJSTester.prototype.testMethods = {
             }
             return {
                 success: true,
-                message: $._("Hm, we're having some trouble " +
-                    "verifying your answer for this step, so we'll give " +
-                    "you the benefit of the doubt as we work to fix it. " +
-                    "Please click \"Report a problem\" to notify us.")
+                message: $._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
             };
         }
     },
@@ -13014,7 +13012,7 @@ PJSTester.prototype.testMethods = {
     /*
      * Returns true if the structure matches the user's code
      */
-    matches: function(structure) {
+    matches: function matches(structure) {
         if (typeof structure !== "object") {
             structure = this.testContext.structure(structure);
         }
@@ -13024,28 +13022,29 @@ PJSTester.prototype.testMethods = {
     /*
      * Creates a new test result (i.e. new challenge tab)
      */
-    assertMatch: function(result, description, hint, image, syntaxChecks) {
+    assertMatch: function assertMatch(result, description, hint, image, syntaxChecks) {
         if (syntaxChecks) {
             // If we found any syntax errors or warnings, we'll send it
             // through the special syntax checks
-            var foundErrors = _.any(this.errors, function(error) {
+            var foundErrors = _.any(this.errors, function (error) {
                 return error.lint;
             });
 
             if (foundErrors) {
-                _.each(syntaxChecks, function(syntaxCheck) {
+                _.each(syntaxChecks, (function (syntaxCheck) {
                     // Check if we find the regex anywhere in the code
                     var foundCheck = this.userCode.search(syntaxCheck.re);
-                    var rowNum = -1, colNum = -1, errorMsg;
+                    var rowNum = -1,
+                        colNum = -1,
+                        errorMsg;
                     if (foundCheck > -1) {
                         errorMsg = syntaxCheck.msg;
 
                         // Find line number and character
                         var lines = this.userCode.split("\n");
                         var totalChars = 0;
-                        _.each(lines, function(line, num) {
-                            if (rowNum === -1 &&
-                                foundCheck < totalChars + line.length) {
+                        _.each(lines, function (line, num) {
+                            if (rowNum === -1 && foundCheck < totalChars + line.length) {
                                 rowNum = num;
                                 colNum = foundCheck - totalChars;
                             }
@@ -13059,7 +13058,7 @@ PJSTester.prototype.testMethods = {
                             type: "error"
                         });
                     }
-                }.bind(this));
+                }).bind(this));
             }
         }
 
@@ -13075,8 +13074,7 @@ PJSTester.prototype.testMethods = {
         this.testContext.assert(result.success, description, "", {
             // We can accept string hints here because
             //  we never match against them anyway
-            structure: _.isString(hint) ? "function() {" + hint + "}" :
-                hint.toString(),
+            structure: _.isString(hint) ? "function() {" + hint + "}" : hint.toString(),
             alternateMessage: alternateMessage,
             alsoMessage: alsoMessage,
             image: image

@@ -630,7 +630,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
     el: ".scratchpad-debugger",
 
-    initialize: function(options) {
+    initialize: function initialize(options) {
         this.editor = options.editor;
         this.liveEditor = options.liveEditor;
 
@@ -638,7 +638,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.bind();
     },
 
-    render: function() {
+    render: function render() {
         this.$el.html(Handlebars.templates["debugger"]({
             execFile: this.execFile,
             imagesDir: this.imagesDir,
@@ -646,13 +646,13 @@ window.ScratchpadDebugger = Backbone.View.extend({
         }));
     },
 
-    postFrame: function(data) {
+    postFrame: function postFrame(data) {
         this.liveEditor.postFrame(data);
     },
 
-    bind: function() {
+    bind: function bind() {
         // create the overlay first before binding any event handlers because
-        // createOverlay moves the iframe's position in the DOM tree which 
+        // createOverlay moves the iframe's position in the DOM tree which
         // unbinds existing event handlers
         var iframe = $("iframe").get(0);
         this.overlay = iframeOverlay.createOverlay(iframe);
@@ -663,7 +663,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
         $(window).on("message", this.listenMessages.bind(this));
 
-        $el.on("change", ".debug-mode", function() {
+        $el.on("change", ".debug-mode", function () {
             self.debuggerLevel = $el.find(".debugger-level-select option:selected").val();
 
             if (this.checked) {
@@ -692,20 +692,20 @@ window.ScratchpadDebugger = Backbone.View.extend({
             self.postFrame({
                 type: "debugger",
                 action: "debug",
-                state: this.checked ? "on": "off"
+                state: this.checked ? "on" : "off"
             });
         });
 
         var scroller = self.liveEditor.$el.find(".ace_scroller").get(0);
         // needs to be on the capture phase to prevent existing event handlers
         // from firing
-        scroller.addEventListener("mousedown", function(e) {
+        scroller.addEventListener("mousedown", function (e) {
             if (self.get("enabled")) {
                 e.stopImmediatePropagation();
             }
         }, true);
 
-        $el.on("change", ".debugger-level-select", function() {
+        $el.on("change", ".debugger-level-select", function () {
             self.debuggerLevel = $(this).find("option:selected").val();
 
             if (self.debuggerLevel === "beginner") {
@@ -717,7 +717,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
             }
         });
 
-        $el.on("click", ".debug-begin", function() {
+        $el.on("click", ".debug-begin", function () {
             self.postFrame({
                 type: "debugger",
                 action: "start",
@@ -728,7 +728,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
             self.enableButtons();
         });
 
-        $el.on("click", ".debug-end", function() {
+        $el.on("click", ".debug-end", function () {
             self.postFrame({
                 type: "debugger",
                 action: "resume",
@@ -736,7 +736,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
             });
         });
 
-        $el.on("click", ".debug-restart", function() {
+        $el.on("click", ".debug-restart", function () {
             self.postFrame({
                 type: "debugger",
                 action: "start",
@@ -744,28 +744,28 @@ window.ScratchpadDebugger = Backbone.View.extend({
             });
         });
 
-        $el.on("click", ".debug-continue", function() {
+        $el.on("click", ".debug-continue", function () {
             self.postFrame({
                 type: "debugger",
                 action: "resume"
             });
         });
 
-        $el.on("click", ".step-over", function() {
+        $el.on("click", ".step-over", function () {
             self.postFrame({
                 type: "debugger",
                 action: "stepOver"
             });
         });
 
-        $el.on("click", ".step-in", function() {
+        $el.on("click", ".step-in", function () {
             self.postFrame({
                 type: "debugger",
                 action: "stepIn"
             });
         });
 
-        $el.on("click", ".step-out", function() {
+        $el.on("click", ".step-out", function () {
             self.postFrame({
                 type: "debugger",
                 action: "stepOut"
@@ -773,9 +773,9 @@ window.ScratchpadDebugger = Backbone.View.extend({
         });
 
         // set/clear breakpoints by clicking in the gutter
-        this.editor.on("guttermousedown", function(e) {
+        this.editor.on("guttermousedown", function (e) {
             var target = e.domEvent.target;
-            if (target.className.indexOf("ace_gutter-cell") == -1) {
+            if (target.className.indexOf("ace_gutter-cell") === -1) {
                 return;
             }
 
@@ -810,14 +810,14 @@ window.ScratchpadDebugger = Backbone.View.extend({
         // Based on:
         // https://github.com/ajaxorg/cloud9/blob/master/plugins-client/ext.debugger/breakpoints.js#L170
         var session = this.editor.session;
-        session.on("change", function(e) {
+        session.on("change", function (e) {
             if (!session.$breakpoints.length) {
                 return;
             }
 
             var delta = e.data;
             var range = delta.range;
-            if (range.end.row == range.start.row) {
+            if (range.end.row === range.start.row) {
                 return;
             }
 
@@ -844,23 +844,21 @@ window.ScratchpadDebugger = Backbone.View.extend({
         });
     },
 
-    getBreakpoints: function() {
+    getBreakpoints: function getBreakpoints() {
         var breakpoints = {};
-        this.editor.session.getBreakpoints().forEach(function(value, index) {
+        this.editor.session.getBreakpoints().forEach(function (value, index) {
             breakpoints[index + 1] = true;
         });
         return breakpoints;
     },
 
-    listenMessages: function(e) {
+    listenMessages: function listenMessages(e) {
         var event = e.originalEvent;
         var data;
 
         try {
             data = JSON.parse(event.data);
-        } catch (err) {
-            // Malformed JSON, we don't care about it
-        }
+        } catch (err) {}
 
         if (!data) {
             return;
@@ -893,7 +891,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         }
     },
 
-    enableButtons: function() {
+    enableButtons: function enableButtons() {
         this.$el.find(".step-over").removeAttr("disabled");
         this.$el.find(".step-in").removeAttr("disabled");
         this.$el.find(".step-out").removeAttr("disabled");
@@ -901,7 +899,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.$el.find(".debug-continue").removeAttr("disabled");
     },
 
-    disableButtons: function() {
+    disableButtons: function disableButtons() {
         this.$el.find(".step-over").attr("disabled", "");
         this.$el.find(".step-in").attr("disabled", "");
         this.$el.find(".step-out").attr("disabled", "");
@@ -910,11 +908,192 @@ window.ScratchpadDebugger = Backbone.View.extend({
     }
 });
 
+// Malformed JSON, we don't care about it
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
 this["Handlebars"]["templates"]["debugger"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
   helpers = helpers || Handlebars.helpers;
-  var foundHelper, self=this;
+  var buffer = "", stack1, foundHelper, tmp1, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
 
+function program1(depth0,data) {
+  
+  
+  return "Debug Mode";}
 
-  return "<div class=\"scratchpad-debugger\">\n    Debug Mode\n    <input type=\"checkbox\" class=\"debug-mode\">\n    <span class=\"debugger-level\" style=\"display:none;margin-left:20px;\">\n        Level\n        <select class=\"debugger-level-select\">\n            <option value=\"beginner\" selected>Beginner</option>\n            <option value=\"advanced\">Advanced</option>\n        </select>\n    </span>\n\n    <div class=\"debugger-simple\" style=\"display:none;margin-top:5px;\">\n        <button class=\"debug-begin\" style=\"margin-right:20px;\">Begin</button>\n        <button class=\"step-in\" disabled>Step</button>\n        <button class=\"debug-end\" disabled style=\"margin-left:20px;\">End\n        </button>\n    </div>\n    <div class=\"debugger-complex\" style=\"display:none;margin-top:5px;\">\n        <button class=\"debug-restart\" style=\"margin-right:10px;\">Restart\n        </button>\n        <!-- start/restart -->\n        <button class=\"step-over\" disabled>Step Over</button>\n        <button class=\"step-in\" disabled>Step In</button>\n        <button class=\"step-out\" disabled>Step Out</button>\n        <button class=\"debug-continue\" disabled style=\"margin-left:10px;\">\n            Continue\n        </button>\n    </div>\n</div>\n";});;
+function program3(depth0,data) {
+  
+  
+  return "Level";}
+
+function program5(depth0,data) {
+  
+  
+  return "Beginner";}
+
+function program7(depth0,data) {
+  
+  
+  return "Advanced";}
+
+function program9(depth0,data) {
+  
+  
+  return "Begin";}
+
+function program11(depth0,data) {
+  
+  
+  return "Step";}
+
+function program13(depth0,data) {
+  
+  
+  return "End";}
+
+function program15(depth0,data) {
+  
+  
+  return "Restart";}
+
+function program17(depth0,data) {
+  
+  
+  return "Step Over";}
+
+function program19(depth0,data) {
+  
+  
+  return "Step In";}
+
+function program21(depth0,data) {
+  
+  
+  return "Step Out";}
+
+function program23(depth0,data) {
+  
+  
+  return "Continue";}
+
+  buffer += "<div class=\"scratchpad-debugger\">\n    ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(1, program1, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n    <input type=\"checkbox\" class=\"debug-mode\">\n    <span class=\"debugger-level\" style=\"display:none;margin-left:20px;\">\n        ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(3, program3, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        <select class=\"debugger-level-select\">\n            <option value=\"beginner\" selected>\n                ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(5, program5, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n            </option>\n            <option value=\"advanced\">\n                ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(7, program7, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n            </option>\n        </select>\n    </span>\n\n    <div class=\"debugger-simple\" style=\"display:none;margin-top:5px;\">\n        <button class=\"debug-begin\" style=\"margin-right:20px;\">\n            ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(9, program9, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </button>\n        <button class=\"step-in\" disabled>\n            ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(11, program11, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </button>\n        <button class=\"debug-end\" disabled style=\"margin-left:20px;\">\n            ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(13, program13, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </button>\n    </div>\n    <div class=\"debugger-complex\" style=\"display:none;margin-top:5px;\">\n        <button class=\"debug-restart\" style=\"margin-right:10px;\">\n            ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(15, program15, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </button>\n        <!-- start/restart -->\n        <button class=\"step-over\" disabled>\n            ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(17, program17, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </button>\n        <button class=\"step-in\" disabled>\n            ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(19, program19, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </button>\n        <button class=\"step-out\" disabled>\n            ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(21, program21, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </button>\n        <button class=\"debug-continue\" disabled style=\"margin-left:10px;\">\n            ";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(23, program23, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n        </button>\n    </div>\n</div>\n";
+  return buffer;});;

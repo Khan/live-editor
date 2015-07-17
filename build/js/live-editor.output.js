@@ -6,19 +6,18 @@ this["Handlebars"]["templates"]["output"] = Handlebars.template(function (Handle
 
 
   return "<div class=\"output\"></div>\n<div class=\"test-errors\" style=\"display: none;\"></div>";});;
-var PooledWorker = function(filename, onExec) {
+var PooledWorker = function PooledWorker(filename, onExec) {
     this.pool = [];
     this.curID = 0;
     this.filename = filename;
-    this.onExec = onExec || function() {};
+    this.onExec = onExec || function () {};
 };
 
-PooledWorker.prototype.getURL = function() {
-    return this.workersDir + this.filename +
-        "?cachebust=G" + (new Date()).toDateString();
+PooledWorker.prototype.getURL = function () {
+    return this.workersDir + this.filename + "?cachebust=G" + new Date().toDateString();
 };
 
-PooledWorker.prototype.getWorkerFromPool = function() {
+PooledWorker.prototype.getWorkerFromPool = function () {
     // NOTE(jeresig): This pool of workers is used to cut down on the
     // number of new web workers that we need to create. If the user
     // is typing really fast, or scrubbing numbers, it has the
@@ -37,31 +36,29 @@ PooledWorker.prototype.getWorkerFromPool = function() {
 };
 
 /* Returns true if the passed in worker is the most recently created */
-PooledWorker.prototype.isCurrentWorker = function(worker) {
+PooledWorker.prototype.isCurrentWorker = function (worker) {
     return this.curID === worker.id;
 };
 
-PooledWorker.prototype.addWorkerToPool = function(worker) {
+PooledWorker.prototype.addWorkerToPool = function (worker) {
     // Return the worker back to the pool
     this.pool.push(worker);
 };
 
-PooledWorker.prototype.exec = function() {
+PooledWorker.prototype.exec = function () {
     this.onExec.apply(this, arguments);
 };
 
-PooledWorker.prototype.kill = function() {
-    this.pool.forEach(function(worker) {
-        console.log("terminating worker: %s", this.filename);
+PooledWorker.prototype.kill = function () {
+    this.pool.forEach(function (worker) {
         worker.terminate();
     }, this);
     this.pool = [];
 };
-
-window.OutputTester = function() {};
+window.OutputTester = function () {};
 
 OutputTester.prototype = {
-    initialize: function(options) {
+    initialize: function initialize(options) {
         var tester = this;
 
         this.tests = [];
@@ -87,66 +84,64 @@ OutputTester.prototype = {
         /*
          * The worker that runs the tests in the background, if possible.
          */
-        this.testWorker = new PooledWorker(
-            options.workerFile,
-            function(code, validate, errors, callback) {
-                var self = this;
+        this.testWorker = new PooledWorker(options.workerFile, function (code, validate, errors, callback) {
+            var self = this;
 
-                // If there are syntax errors in the tests themselves,
-                //  then we ignore the request to test.
-                try {
-                    tester.exec(validate);
-                } catch(e) {
-                    if (window.console) {
-                        console.warn(e.message);
-                    }
-                    return;
+            // If there are syntax errors in the tests themselves,
+            //  then we ignore the request to test.
+            try {
+                tester.exec(validate);
+            } catch (e) {
+                if (window.console) {
+                    console.warn(e.message);
                 }
-
-                // If there's no Worker support *or* there
-                //  are syntax errors in user code, we do the testing in
-                //  the browser instead.
-                // We do it in-browser in the latter case as
-                //  the code is often in a syntax-error state,
-                //  and the browser doesn't like creating that many workers,
-                //  and the syntax error tests that we have are fast.
-                if (!window.Worker || errors.length > 0) {
-                    return tester.test(code, validate, errors, callback);
-                }
-
-                var worker = this.getWorkerFromPool();
-
-                worker.onmessage = function(event) {
-                    if (event.data.type === "test") {
-                        // PJSOutput.prototype.kill() is called synchronous
-                        // from callback so if we want test workers to be
-                        // cleaned up properly we need to add them back to the
-                        // pool first.
-                        // TODO(kevinb) track workers that have been removed
-                        // from the PooledWorker's pool so we don't have to
-                        // worry about returning workers to the pool before
-                        // calling kill()
-                        self.addWorkerToPool(worker);
-                        if (self.isCurrentWorker(worker)) {
-                            var data = event.data.message;
-                            callback(data.errors, data.testResults);
-                        }
-                    }
-                };
-
-                worker.postMessage({
-                    code: code,
-                    validate: validate,
-                    errors: errors,
-                    externalsDir: this.externalsDir
-                });
+                return;
             }
-        );
+
+            // If there's no Worker support *or* there
+            //  are syntax errors in user code, we do the testing in
+            //  the browser instead.
+            // We do it in-browser in the latter case as
+            //  the code is often in a syntax-error state,
+            //  and the browser doesn't like creating that many workers,
+            //  and the syntax error tests that we have are fast.
+            if (!window.Worker || errors.length > 0) {
+                return tester.test(code, validate, errors, callback);
+            }
+
+            var worker = this.getWorkerFromPool();
+
+            worker.onmessage = function (event) {
+                if (event.data.type === "test") {
+                    // PJSOutput.prototype.kill() is called synchronously
+                    // from callback so if we want test workers to be
+                    // cleaned up properly we need to add them back to the
+                    // pool first.
+                    // TODO(kevinb) track workers that have been removed
+                    // from the PooledWorker's pool so we don't have to
+                    // worry about returning workers to the pool before
+                    // calling kill()
+                    self.addWorkerToPool(worker);
+                    if (self.isCurrentWorker(worker)) {
+                        var data = event.data.message;
+                        callback(data.errors, data.testResults);
+                    }
+                }
+            };
+
+            worker.postMessage({
+                code: code,
+                validate: validate,
+                errors: errors,
+                externalsDir: this.externalsDir
+            });
+        });
     },
 
-    bindTestContext: function(obj) {
+    bindTestContext: function bindTestContext(obj) {
         obj = obj || this.testContext;
 
+        /* jshint forin:false */
         for (var prop in obj) {
             if (typeof obj[prop] === "object") {
                 this.bindTestContext(obj[prop]);
@@ -156,7 +151,7 @@ OutputTester.prototype = {
         }
     },
 
-    test: function(userCode, validate, errors, callback) {
+    test: function test(userCode, validate, errors, callback) {
         var testResults = [];
         errors = this.errors = errors || [];
         this.userCode = userCode;
@@ -177,7 +172,7 @@ OutputTester.prototype = {
         callback(errors, testResults);
     },
 
-    runTest: function(test, i) {
+    runTest: function runTest(test, i) {
         var result = {
             name: test.name,
             state: "pass",
@@ -193,21 +188,21 @@ OutputTester.prototype = {
         return result;
     },
 
-    exec: function(code) {
+    exec: function exec(code) {
         if (!code) {
             return true;
         }
 
         code = "with(arguments[0]){\n" + code + "\n}";
-        (new Function(code)).call({}, this.testContext);
+        new Function(code).call({}, this.testContext);
 
         return true;
     },
 
     defaultTestContext: {
-        test: function(name, fn, type) {
-            if (!fn) {
-                fn = name;
+        test: function test(name, _fn, type) {
+            if (!_fn) {
+                _fn = name;
                 name = $._("Test Case");
             }
 
@@ -216,9 +211,9 @@ OutputTester.prototype = {
 
                 type: type || "default",
 
-                fn: function() {
+                fn: function fn() {
                     try {
-                        return fn.apply(this, arguments);
+                        return _fn.apply(this, arguments);
                     } catch (e) {
                         if (window.console) {
                             console.warn(e);
@@ -228,11 +223,11 @@ OutputTester.prototype = {
             });
         },
 
-        staticTest: function(name, fn) {
+        staticTest: function staticTest(name, fn) {
             this.testContext.test(name, fn, "static");
         },
 
-        log: function(msg, state, expected, type, meta) {
+        log: function log(msg, state, expected, type, meta) {
             type = type || "info";
 
             var item = {
@@ -254,31 +249,29 @@ OutputTester.prototype = {
             return item;
         },
 
-        task: function(msg, tip) {
-            this.curTask = this.testContext.log(msg,
-                "pass", tip, "task");
+        task: function task(msg, tip) {
+            this.curTask = this.testContext.log(msg, "pass", tip, "task");
             this.curTask.results = [];
         },
 
-        endTask: function() {
+        endTask: function endTask() {
             this.curTask = null;
         },
 
-        assert: function(pass, msg, expected, meta) {
+        assert: function assert(pass, msg, expected, meta) {
             pass = !!pass;
-            this.testContext.log(msg, pass ? "pass" : "fail",
-                expected, "assertion", meta);
+            this.testContext.log(msg, pass ? "pass" : "fail", expected, "assertion", meta);
             return pass;
         },
 
-        isEqual: function(a, b, msg) {
+        isEqual: function isEqual(a, b, msg) {
             return this.testContext.assert(a === b, msg, [a, b]);
         },
 
         /*
          * Returns a pass result with an optional message
          */
-        pass: function(message) {
+        pass: function pass(message) {
             return {
                 success: true,
                 message: message
@@ -288,7 +281,7 @@ OutputTester.prototype = {
         /*
          * Returns a fail result with an optional message
          */
-        fail: function(message) {
+        fail: function fail(message) {
             return {
                 success: false,
                 message: message
@@ -299,31 +292,29 @@ OutputTester.prototype = {
          * If any of results passes, returns the first pass. Otherwise, returns
          * the first fail.
          */
-        anyPass: function() {
-            return _.find(arguments, this.testContext.passes) || arguments[0] ||
-                this.testContext.fail();
+        anyPass: function anyPass() {
+            return _.find(arguments, this.testContext.passes) || arguments[0] || this.testContext.fail();
         },
 
         /*
          * If any of results fails, returns the first fail. Otherwise, returns
          * the first pass.
          */
-        allPass: function() {
-            return _.find(arguments, this.testContext.fails) || arguments[0] ||
-                this.testContext.pass();
+        allPass: function allPass() {
+            return _.find(arguments, this.testContext.fails) || arguments[0] || this.testContext.pass();
         },
 
         /*
          * Returns true if the result represents a pass.
          */
-        passes: function(result) {
+        passes: function passes(result) {
             return result.success;
         },
 
         /*
          * Returns true if the result represents a fail.
          */
-        fails: function(result) {
+        fails: function fails(result) {
             return !result.success;
         }
     }
@@ -332,8 +323,10 @@ window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
+    lintErrors: [],
+    runtimeErrors: [],
 
-    initialize: function(options) {
+    initialize: function initialize(options) {
         this.render();
 
         this.setPaths(options);
@@ -345,21 +338,31 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (options.outputType) {
             this.setOutput(options.outputType);
         }
-        
+
+        // Add a timestamp property to the lintErrors and runtimeErrors arrays
+        // to keep track of which version of the code the errors are for.  A
+        // new timestamp is created when runCode is called and is assigned to
+        // lintErrors and runtimeErrors (if there is no lint) when linting and
+        // running of the code complete.  The timestamps are used later to
+        // ensure we're not report stale errors that have already been fixed
+        // to the parent.  Adding properties to an array works because Array is
+        // essentially a special subclass of Object.
+        this.lintErrors.timestamp = 0;
+        this.runtimeErrors.timestamp = 0;
+
         this.bind();
     },
 
-    render: function() {
+    render: function render() {
         this.$el.html("<div class=\"output\"></div>");
     },
 
-    bind: function() {
+    bind: function bind() {
         // Handle messages coming in from the parent frame
-        window.addEventListener("message",
-            this.handleMessage.bind(this), false);
+        window.addEventListener("message", this.handleMessage.bind(this), false);
     },
 
-    setOutput: function(outputType) {
+    setOutput: function setOutput(outputType) {
         var OutputClass = this.outputs[outputType];
         this.output = new OutputClass({
             el: this.$el.find(".output"),
@@ -369,7 +372,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         });
     },
 
-    setPaths: function(data) {
+    setPaths: function setPaths(data) {
         if (data.workersDir) {
             this.workersDir = this._qualifyURL(data.workersDir);
             PooledWorker.prototype.workersDir = this.workersDir;
@@ -393,13 +396,13 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
     },
 
-    _qualifyURL: function(url){
+    _qualifyURL: function _qualifyURL(url) {
         var a = document.createElement("a");
         a.href = url;
         return a.href;
     },
 
-    handleMessage: function(event) {
+    handleMessage: function handleMessage(event) {
         var data;
 
         this.frameSource = event.source;
@@ -411,7 +414,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // filter out events that are objects
         // currently the only messages that contain objects are messages
         // being sent by Poster instances being used by the iframeOverlay
-        // in pjs-output.js and ui/debugger.js 
+        // in pjs-output.js and ui/debugger.js
         if (typeof event.data === "object") {
             return;
         }
@@ -448,11 +451,11 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code, undefined, data.cursor, data.noLint);
+            this.runCode(data.code, undefined, data.noLint);
         }
 
         if (data.onlyRunTests != null) {
-            this.onlyRunTests = !!(data.onlyRunTests);
+            this.onlyRunTests = !!data.onlyRunTests;
         } else {
             this.onlyRunTests = false;
         }
@@ -470,10 +473,10 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Take a screenshot of the output
         if (data.screenshot != null) {
             var screenshotSize = data.screenshotSize || 200;
-            this.output.getScreenshot(screenshotSize, function(data) {
+            this.output.getScreenshot(screenshotSize, (function (data) {
                 // Send back the screenshot data
                 this.postParent(data);
-            }.bind(this));
+            }).bind(this));
         }
 
         if (this.output.messageHandlers) {
@@ -486,23 +489,21 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     // Send a message back to the parent frame
-    postParent: function(data) {
+    postParent: function postParent(data) {
         // If there is no frameSource (e.g. we're not embedded in another page)
         // Then we don't need to care about sending the messages anywhere!
         if (this.frameSource) {
-            this.frameSource.postMessage(
-                typeof data === "string" ? data : JSON.stringify(data),
-                this.frameOrigin);
+            this.frameSource.postMessage(typeof data === "string" ? data : JSON.stringify(data), this.frameOrigin);
         }
     },
 
-    notifyActive: _.once(function() {
+    notifyActive: _.once(function () {
         this.postParent({ active: true });
     }),
 
     // This function stores the new tests on the validate property
     //  and it executes the test code to see if its valid
-    initTests: function(validate) {
+    initTests: function initTests(validate) {
         // Only update the tests if they have changed
         if (this.validate === validate) {
             return;
@@ -512,122 +513,155 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.validate = validate;
     },
 
-    runCode: function(userCode, callback, cursor, noLint) {
+    /**
+     * Performs all steps necessary to run code.
+     * - lint
+     * - actually run the code
+     * - manage lint and runtime errors
+     * - call the callback (via buildDone) to run tests
+     * 
+     * @param userCode: code to run
+     * @param callback: used by the tests
+     * @param noLint: disables linting if true, first run still lints
+     * 
+     * TODO(kevinb) return a Deferred and move test related code to test_utils
+     */
+    runCode: function runCode(userCode, callback, noLint) {
         this.currentCode = userCode;
+        var timestamp = Date.now();
 
         this.results = {
+            timestamp: timestamp,
             code: userCode,
             errors: [],
             assertions: []
         };
-        this.lastSent = undefined;
 
-        var buildDone = function(errors) {
-            errors = this.cleanErrors(errors || []);
-
-            if (!this.loaded) {
-                this.postParent({ loaded: true });
-                this.loaded = true;
-            }
-
-            // Update results
-            this.results.errors = errors;
-            this.phoneHome();
-
-            this.toggle(!errors.length);
-
-            // A callback for working with a test suite
-            if (callback) {
-                //This is synchronous
-                this._test(userCode, this.validate, errors, function(errors, testResults) {
-                    callback(errors, testResults);
-                    return;
-                });
-            // Normal case
-            } else {
-                // This is debounced (async)
-                if (this.validate !== "") {
-                    this.test(userCode, this.validate, errors, function(errors, testResults) {
-                        this.results.errors = errors;
-                        this.results.tests = testResults;
-                        this.phoneHome();
-                    }.bind(this));   
-                }
-            }
-        }.bind(this);
-
-        var lintDone = function(errors) {
-            if (errors.length > 0 || this.onlyRunTests) {
-                return buildDone(errors);
-            }
-
-            // Then run the user's code
-            try {
-                this.output.runCode(userCode, function(errors) {
-                    buildDone(errors);
-                }, cursor);
-
-            } catch (e) {
-                buildDone([e]);
-            }
-        }.bind(this);
+        var skip = noLint && this.firstLint;
 
         // Always lint the first time, so that PJS can populate its list of globals
-        if (noLint && this.firstLint) {
-            lintDone([]);
+        this.output.lint(userCode, skip).then((function (lintErrors) {
+            this.lintErrors = lintErrors;
+            this.lintErrors.timestamp = timestamp;
+            return this.lintDone(userCode, timestamp);
+        }).bind(this)).then((function () {
+            this.buildDone(userCode, callback);
+        }).bind(this));
+
+        this.firstLint = true;
+    },
+
+    /**
+     * Runs the code and records runtime errors.  Returns immediately if there
+     * are any lint errors.
+     * 
+     * @param userCode
+     * @param timestamp
+     * @returns {$.Deferred}
+     */
+    lintDone: function lintDone(userCode, timestamp) {
+        var deferred = $.Deferred();
+        if (this.lintErrors.length > 0 || this.onlyRunTests) {
+            deferred.resolve();
+            return deferred;
+        }
+
+        // Then run the user's code
+        try {
+            this.output.runCode(userCode, (function (runtimeErrors) {
+                this.runtimeErrors = runtimeErrors;
+                this.runtimeErrors.timestamp = timestamp;
+                deferred.resolve();
+            }).bind(this));
+        } catch (e) {
+            if (this.outputs.hasOwnProperty("pjs")) {
+                this.runtimeErrors = [e];
+            }
+            deferred.resolve();
+        }
+        return deferred;
+    },
+
+    /**
+     * Posts results to the the parent frame and runs tests if a callback has 
+     * been provided or if the .validate property is set.
+     * 
+     * @param userCode
+     * @param callback
+     */
+    buildDone: function buildDone(userCode, callback) {
+        var errors = [];
+        // only use lint errors if the timestamp isn't stale
+        if (this.results.timestamp === this.lintErrors.timestamp) {
+            errors = errors.concat(this.lintErrors);
+        }
+        // only use runtime errors if the timestamp isn't stale
+        if (this.results.timestamp === this.runtimeErrors.timestamp) {
+            errors = errors.concat(this.runtimeErrors);
+        }
+        errors = this.cleanErrors(errors || []);
+
+        if (!this.loaded) {
+            this.postParent({ loaded: true });
+            this.loaded = true;
+        }
+
+        // Update results
+        this.results.errors = errors;
+        this.phoneHome();
+
+        this.toggle(!errors.length);
+
+        // A callback for working with a test suite
+        if (callback) {
+            //This is synchronous
+            this._test(userCode, this.validate, errors, function (errors, testResults) {
+                callback(errors, testResults);
+            });
+            // Normal case
         } else {
-            this.lint(userCode, lintDone);
-            this.firstLint = true;
+            // This is debounced (async)
+            if (this.validate !== "") {
+                this.test(userCode, this.validate, errors, (function (errors, testResults) {
+                    this.results.errors = errors;
+                    this.results.tests = testResults;
+                    this.phoneHome();
+                }).bind(this));
+            }
         }
     },
 
     /**
-     * Send the most up to date errors/test results to the parent frame
+     * Send the most up to date errors/test results to the parent frame.
      */
-    phoneHome: function() {
-        // Our handling of errors is leaky.
-        // In the old design errors were passed from function to function 
-        // via arguments to callbacks. Recently I have added asynchronous sources 
-        // of errors such as those from breaking out of an infinite loop.
-        // These two different mechanisms mean that it's possible for errors to 
-        // get lost, but it can't be fixed without rewriting how all of the callbacks
-        // work. As a work around if we ever see an error, never erase it.
-        // I made the judgement that rather than trying to merge the two it's ok if 
-        // earlier errors cover newer ones, since once the user fixes the earlier errors 
-        // the new ones will appear, meaning we never leave the user stuck wondering what to do. 
-        // I expect that to be good enough compromise.
-        if (this.lastSent && this.lastSent.errors && this.lastSent.errors.length) {
-            this.results.errors = this.lastSent.errors;
-        } 
+    phoneHome: function phoneHome() {
         this.postParent({
             results: this.results
         });
-        this.lastSent = JSON.parse(JSON.stringify(this.results));
     },
 
-
-    test: _.throttle(function() {
+    test: _.throttle(function () {
         this._test.apply(this, arguments);
     }, 200),
-    _test: function(userCode, validate, errors, callback) {
+    _test: function _test(userCode, validate, errors, callback) {
         this.output.test(userCode, validate, errors, callback);
     },
 
-    lint: function(userCode, callback) {
+    lint: function lint(userCode, callback) {
         this.output.lint(userCode, callback);
     },
 
-    getUserCode: function() {
+    getUserCode: function getUserCode() {
         return this.currentCode || "";
     },
 
-    toggle: function(toggle) {
+    toggle: function toggle(_toggle) {
         if (this.output.toggle) {
-            this.output.toggle(toggle);
+            this.output.toggle(_toggle);
         }
     },
 
-    restart: function() {
+    restart: function restart() {
         // This is called on load and it's possible that the output
         // hasn't been set yet.
         if (!this.output) {
@@ -641,8 +675,8 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.runCode(this.getUserCode());
     },
 
-    cleanErrors: function(errors) {
-        errors = errors.map(function(error) {
+    cleanErrors: function cleanErrors(errors) {
+        errors = errors.map((function (error) {
             if (!$.isPlainObject(error)) {
                 return {
                     row: error.lineno ? error.lineno - 2 : -1,
@@ -657,15 +691,14 @@ window.LiveEditorOutput = Backbone.View.extend({
             return {
                 row: error.row,
                 column: error.column,
-                text: _.compose(this.prettify, this.clean)(
-                    error.text || error.message || ""),
+                text: _.compose(this.prettify, this.clean)(error.text || error.message || ""),
                 type: error.type,
                 lint: error.lint,
                 source: error.source
             };
-        }.bind(this));
+        }).bind(this));
 
-        errors = errors.sort(function(a, b) {
+        errors = errors.sort(function (a, b) {
             var diff = a.row - b.row;
             return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
         });
@@ -674,7 +707,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     // This adds html tags around quoted lines so they can be formatted
-    prettify: function(str) {
+    prettify: function prettify(str) {
         str = str.split("\"");
         var htmlString = "";
         for (var i = 0; i < str.length; i++) {
@@ -693,11 +726,11 @@ window.LiveEditorOutput = Backbone.View.extend({
         return htmlString;
     },
 
-    clean: function(str) {
+    clean: function clean(str) {
         return String(str).replace(/</g, "&lt;");
     }
 });
 
-LiveEditorOutput.registerOutput = function(name, output) {
+LiveEditorOutput.registerOutput = function (name, output) {
     LiveEditorOutput.prototype.outputs[name] = output;
 };
