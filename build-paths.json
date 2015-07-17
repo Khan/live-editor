@@ -78,7 +78,6 @@
             "external/structured-blocks/external/escodegen.browser.js",
             "external/structuredjs/structured.js",
             "external/TraceKit/tracekit.js",
-            "external/estraverse/estraverse.js",
             "js/output/shared/loop-protect.js"
         ],
         "output_debugger_deps": [
@@ -98,7 +97,6 @@
             "external/structured-blocks/external/escodegen.browser.js",
             "external/html2canvas/html2canvas.js",
             "external/slowparse/slowparse.js",
-            "external/estraverse/estraverse.js",
             "js/output/shared/loop-protect.js",
             "js/output/webpage/state-scrubber.js",
             "external/structuredjs/structured.js",

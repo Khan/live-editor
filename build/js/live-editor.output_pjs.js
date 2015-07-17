@@ -2508,6 +2508,7 @@ window.PJSOutput = Backbone.View.extend({
 
         code = this.loopProtector.protect(code);
         contexts[0].KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
+        contexts[0].KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
 
         // this is kind of sort of supposed to fake a gensym that the user
         // can't access but since we're limited to string manipulation, we

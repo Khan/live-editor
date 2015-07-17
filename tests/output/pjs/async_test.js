@@ -196,8 +196,7 @@ describe("Code Injection", function() {
 });
 
 describe("LoopProtector", function() {
-    // TODO(kevinb) fix this tests after refactoring the LoopDetector
-    it.skip("should throw KA_INFINITE_LOOP", function (done) {
+    it("should throw KA_INFINITE_LOOP", function (done) {
         var output = new LiveEditorOutput({
             outputType: "pjs",
             workersDir: "../../../build/workers/",
@@ -228,7 +227,7 @@ describe("LoopProtector", function() {
             simulateClick(output);
             
             setTimeout(function () {
-                expect(asyncError).to.equal("KA_INFINITE_LOOP");
+                expect(asyncError.message).to.equal("KA_INFINITE_LOOP");
                 done();
             }, 100);
         });
