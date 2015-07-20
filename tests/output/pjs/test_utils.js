@@ -261,3 +261,15 @@ var simulateClick = function(output) {
     );
     output.output.$canvas[0].dispatchEvent(ev);
 };
+
+var createLiveEditorOutput = function() {
+    return new LiveEditorOutput({
+        outputType: "pjs",
+        workersDir: "../../../build/workers/",
+        externalsDir: "../../../build/external/",
+        imagesDir: "../../../build/images/",
+        soundsDir: "../../../sounds/",
+        jshintFile: "../../../build/external/jshint/jshint.js",
+        useDebugger: false
+    });
+};

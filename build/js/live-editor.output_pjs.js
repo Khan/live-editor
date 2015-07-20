@@ -2211,6 +2211,11 @@ window.PJSOutput = Backbone.View.extend({
 
             // We also look for newly-changed global variables to inject
             _.each(grabAll, (function (val, prop) {
+                // ignore KAInfiniteLoop functions
+                if (/^KAInfiniteLoop/.test(prop)) {
+                    return;
+                }
+
                 // Turn the result of the extracted value into
                 // a nicely-formatted string
                 try {
@@ -2303,7 +2308,12 @@ window.PJSOutput = Backbone.View.extend({
             // Make sure that deleted variables are removed.
             // Go through all the previously-defined properties and check to see
             // if they've been removed.
+            /* jshint forin:false */
             for (var oldProp in this.lastGrab) {
+                // ignore KAInfiniteLoop functions
+                if (/^KAInfiniteLoop/.test(oldProp)) {
+                    continue;
+                }
                 // If the property doesn't exist in this grab extraction and
                 // the property isn't a Processing.js-defined property
                 // (e.g. don't delete 'background') but allow the 'draw'

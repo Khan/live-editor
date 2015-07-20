@@ -14,15 +14,7 @@ describe("async error order tests", function () {
     var output;
         
     beforeEach(function () {
-        output = new LiveEditorOutput({
-            outputType: "pjs",
-            workersDir: "../../../build/workers/",
-            externalsDir: "../../../build/external/",
-            imagesDir: "../../../build/images/",
-            soundsDir: "../../../sounds/",
-            jshintFile: "../../../build/external/jshint/jshint.js",
-            useDebugger: false
-        });
+        output = createLiveEditorOutput();
 
         // have cleanErrors pass through errors so that they're easy to verify
         sinon.stub(output, "cleanErrors", function (errors) {
@@ -142,16 +134,8 @@ describe("Code Injection", function() {
     // This tests reproduces the "string not a function" error from
     // https://github.com/Khan/live-editor/issues/279.
     it("should not throw 'string is not a function'", function (done) {
-        var output = new LiveEditorOutput({
-            outputType: "pjs",
-            workersDir: "../../../build/workers/",
-            externalsDir: "../../../build/external/",
-            imagesDir: "../../../build/images/",
-            soundsDir: "../../../sounds/",
-            jshintFile: "../../../build/external/jshint/jshint.js",
-            useDebugger: false
-        });
-        
+        var output = createLiveEditorOutput();
+
         var code = getCodeFromOptions(function() {
             var stars = [];
             var Star = function(x, y) { this.x = x; this.y = y; };
@@ -197,15 +181,7 @@ describe("Code Injection", function() {
 
 describe("LoopProtector", function() {
     it("should throw KA_INFINITE_LOOP", function (done) {
-        var output = new LiveEditorOutput({
-            outputType: "pjs",
-            workersDir: "../../../build/workers/",
-            externalsDir: "../../../build/external/",
-            imagesDir: "../../../build/images/",
-            soundsDir: "../../../sounds/",
-            jshintFile: "../../../build/external/jshint/jshint.js",
-            useDebugger: false
-        });
+        var output = createLiveEditorOutput();
 
         var code = getCodeFromOptions(function() {
             var mouseClicked = function() {
@@ -230,6 +206,36 @@ describe("LoopProtector", function() {
                 expect(asyncError.message).to.equal("KA_INFINITE_LOOP");
                 done();
             }, 100);
+        });
+    });
+    
+    it("should handle deleting all code and undoing it", function(done) {
+        var output = createLiveEditorOutput();
+
+        var code = getCodeFromOptions(function() {
+            fill(255, 0, 255);
+
+            var draw = function() {
+                background(255, 255, 255);
+                ellipse(36, 45, 12, 12);
+            };
+        });
+
+        output.runCode(code, function(errors, testResults) {
+            expect(errors.length).to.be(0);
+            // simulate deleting all the code...
+            output.runCode("", function(errors, testResults) {
+                setTimeout(function() {
+                    expect(errors.length).to.be(0);
+                    // ...and then undoing it
+                    setTimeout(function() {
+                        output.runCode(code, function(errors, testResults) {
+                            expect(errors.length).to.be(0);
+                            done();
+                        });
+                    }, 500);
+                }, 200);
+            });
         });
     });
 });
