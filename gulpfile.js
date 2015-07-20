@@ -119,16 +119,17 @@ gulp.task("watch", function() {
     });
 
     // Run output tests when the output code changes
-    gulp.watch(paths.scripts.output, ["test"]);
-    gulp.watch(paths.scripts.output_pjs
-        .concat(["tests/output/pjs/*"]), ["test_output_pjs"]);
-    gulp.watch(paths.scripts.output_webpage
-        .concat(["tests/output/webpage/*"]), ["test_output_webpage"]);
+    // TODO(kevinb): uncomment once running tests is rock solid
+    //gulp.watch(paths.scripts.output, ["test"]);
+    //gulp.watch(paths.scripts.output_pjs
+    //    .concat(["tests/output/pjs/*"]), ["test_output_pjs"]);
+    //gulp.watch(paths.scripts.output_webpage
+    //    .concat(["tests/output/webpage/*"]), ["test_output_webpage"]);
     // TODO(bbondy): Uncomment when PhantomJS has support for typed arrays
     // gulp.watch(paths.scripts.output_sql
     //    .concat(["tests/output/sql/*"]), ["test_output_sql"]);
-    gulp.watch(paths.scripts.tooltips
-        .concat(["tests/tooltips/*"]), ["test_tooltips"]);
+    //gulp.watch(paths.scripts.tooltips
+    //    .concat(["tests/tooltips/*"]), ["test_tooltips"]);
 
     styleTypes.forEach(function(type) {
         gulp.watch(paths.styles[type], ["style_" + type]);
