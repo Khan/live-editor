@@ -555,12 +555,12 @@ var BabyHint = {
         // first match up pairs of parentheses
         var parenPairs = {};
         var stack = [];
-        for (var i = 0; i < line.length; i++) {
+        for (let i = 0; i < line.length; i++) {
             if (line[i] === "(") {
                 stack.push(i);
             } else if (line[i] === ")") {
                 if (stack.length === 0) {
-                    var error = {
+                    let error = {
                         row: lineNumber,
                         column: i,
                         text: $._("It looks like you have an extra \")\""),
@@ -579,7 +579,7 @@ var BabyHint = {
         }
         if (stack.length > 0) {
             // check if there's anything left in the stack
-            var error = {
+            let error = {
                 row: lineNumber,
                 column: stack.pop(),
                 text: $._("It looks like you are missing a \")\" - does every \"(\" have a corresponding closing \")\"?"),
@@ -593,7 +593,10 @@ var BabyHint = {
             return errors;
         }
 
-        // find all function calls
+        // Find all function calls.
+        // This will also include "if", "for", and "while".  These will be 
+        // filtered out later so that we don't generate errors for param checks
+        // on things that aren't function calls.
         var functions = line.match(/\w+\s*\(/g) || [];
         // find all functions calls on an object
         var objectFunctions = line.match(/\.\s*\w+\s*\(/g) || [];
@@ -604,10 +607,13 @@ var BabyHint = {
         });
 
         // go through functions from right to left
-        for (var i = functions.length - 1; i >= 0; i--) {
+        for (let i = functions.length - 1; i >= 0; i--) {
             var index = line.lastIndexOf(functions[i]);
 
             var functionName = functions[i].split(/\(\s*/g)[0];
+            if (["for", "if", "while"].indexOf(functionName.trim()) !== -1) {
+                continue;
+            }
 
             // extract the stuff inside the parens
             index += functionName.length;
@@ -620,7 +626,7 @@ var BabyHint = {
                 while (line[col] !== " ") {
                     col++;
                 }
-                var error = {
+                let error = {
                     row: lineNumber,
                     column: col,
                     text: $._("Did you forget to add a comma between two parameters?"),
@@ -664,7 +670,7 @@ var BabyHint = {
 
                         var listOfParams = "" + expectedParams[0];
 
-                        for (var j = 1; j < expectedParams.length - 1; j++) {
+                        for (let j = 1; j < expectedParams.length - 1; j++) {
                             listOfParams += ", " + expectedParams[j];
                         }
 
@@ -683,7 +689,7 @@ var BabyHint = {
                 }
 
                 if (text) {
-                    var error = {
+                    let error = {
                         row: lineNumber,
                         column: index,
                         text: text,

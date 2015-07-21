@@ -76,6 +76,13 @@ describe("Scratchpad Output - BabyHint checks", function() {
         babyhint: true,
         code: "var foo = \"rect()//\";"
     });
+
+    assertTest({
+        title: "It should only trigger a single error for undefined var in for loop definition",
+        reason: "x is not defined. Make sure you're spelling it correctly and that you declared it.",
+        babyhint: true,
+        code: "for (var i = 0; i < 10; x++) { }"
+    });
 });
 
 // Syntax errors - not controlled by JSHint options.

@@ -969,7 +969,10 @@ var BabyHint = {
             return errors;
         }
 
-        // find all function calls
+        // Find all function calls.
+        // This will also include "if", "for", and "while".  These will be
+        // filtered out later so that we don't generate errors for param checks
+        // on things that aren't function calls.
         var functions = line.match(/\w+\s*\(/g) || [];
         // find all functions calls on an object
         var objectFunctions = line.match(/\.\s*\w+\s*\(/g) || [];
@@ -984,6 +987,9 @@ var BabyHint = {
             var index = line.lastIndexOf(functions[i]);
 
             var functionName = functions[i].split(/\(\s*/g)[0];
+            if (["for", "if", "while"].indexOf(functionName.trim()) !== -1) {
+                continue;
+            }
 
             // extract the stuff inside the parens
             index += functionName.length;
