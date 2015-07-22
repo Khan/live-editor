@@ -83,6 +83,14 @@ describe("Scratchpad Output - BabyHint checks", function() {
         babyhint: true,
         code: "for (var i = 0; i < 10; x++) { }"
     });
+    
+    assertTest({
+        title: "Missing comma should only report a single error",
+        reason: "Did you forget to add a comma between two parameters?",
+        babyhint: true,
+        code: "fill(255, 0 0);",
+        count: 1
+    });
 });
 
 // Syntax errors - not controlled by JSHint options.

@@ -156,6 +156,9 @@ var assertTest = function(options) {
                     .to.be.equal(options.reason);
             } else {
                 expect(errors).to.not.equal([]);
+                if (options.count) {
+                    expect(errors.length).to.equal(options.count);
+                }
                 if (options.jshint) {
                     expect(errors[0].lint).to.be.ok();
                     expect(errors[0].lint.reason)

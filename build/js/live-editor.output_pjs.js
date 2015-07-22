@@ -1841,13 +1841,12 @@ window.PJSOutput = Backbone.View.extend({
     },
 
     mergeErrors: function mergeErrors(jshintErrors, babyErrors) {
-        var errors = [];
         var brokenLines = [];
         var prioritizedChars = {};
         var hintErrors = [];
 
         // Find which lines JSHINT broke on
-        _.each(jshintErrors, (function (error) {
+        _.each(jshintErrors, function (error) {
             if (error && error.line && error.character && error.reason && !/unable to continue/i.test(error.reason)) {
                 var realErrorLine = error.line - 2;
                 brokenLines.push(realErrorLine);
@@ -1869,44 +1868,50 @@ window.PJSOutput = Backbone.View.extend({
                     priority: 2
                 });
             }
-        }).bind(this));
+        });
 
-        // Add baby errors if JSHINT also broke on those lines, OR we don't want
-        // to allow that error
-        _.each(babyErrors, (function (error) {
-            if (_.include(brokenLines, error.row) || error.breaksCode) {
-                // Only include if not overridden by a JSLint error.
-                if (!prioritizedChars[error.row] || prioritizedChars[error.row] > error.column) {
-                    errors.push({
-                        row: error.row,
-                        column: error.column,
-                        text: error.text,
-                        type: "error",
-                        source: error.source,
-                        context: error.context,
-                        priority: 1
-                    });
-                }
-            }
-        }).bind(this));
+        // only use baby errors if JSHint also broke on those lines OR
+        // we want to prevent the user from making this mistake
+        babyErrors = babyErrors.filter(function (error) {
+            return (_.include(brokenLines, error.row) || error.breaksCode) && (!prioritizedChars[error.row] || prioritizedChars[error.row] > error.column);
+        }).map(function (error) {
+            return {
+                row: error.row,
+                column: error.column,
+                text: error.text,
+                type: "error",
+                source: error.source,
+                context: error.context,
+                priority: 1
+            };
+        });
 
-        // Check for JSLint and BabyLint errors on the same line and character.
+        // Check for JSHint and BabyHint errors on the same line and character.
         // Merge error messages where appropriate.
-        _.each(hintErrors, function (jsError, i) {
-            _.each(errors, function (babyError, j) {
+        _.each(hintErrors, function (jsError) {
+            _.each(babyErrors, function (babyError) {
                 if (jsError.row === babyError.row && jsError.column === babyError.column) {
                     // Merge if JSLint error says a variable is undefined and
                     // BabyLint has spelling suggestion.
                     if (jsError.lint.code === "W117" && babyError.source === "spellcheck") {
-                        errors.splice(j, 1);
-                        jsError.text = $._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " + "or you're using a variable you didn't define.", { word: jsError.lint.a, keyword: babyError.context.keyword });
+                        babyError.text = $._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " + "or you're using a variable you didn't define.", { word: jsError.lint.a, keyword: babyError.context.keyword });
                     }
                 }
             });
         });
 
         // Merge JSHint and BabyHint errors
-        var allErrors = errors.concat(hintErrors);
+        var errors = babyErrors;
+        var babyErrorRows = _.uniq(babyErrors.map(function (error) {
+            return error.row;
+        }));
+        hintErrors.forEach(function (error) {
+            // only add JSHint errors if there isn't already a BabyHint error
+            // on that line (row).
+            if (!_.contains(babyErrorRows, error.row)) {
+                errors.push(error);
+            }
+        });
 
         // De-duplicate errors. Replacer tells JSON.stringify to ignore column
         // and lint keys so objects with different columns or lint will still be
@@ -1919,7 +1924,7 @@ window.PJSOutput = Backbone.View.extend({
         };
 
         // Stringify objects to compare and de-duplicate.
-        var dedupErrors = _.uniq(allErrors, false, function (obj) {
+        var dedupErrors = _.uniq(errors, false, function (obj) {
             return JSON.stringify(obj, replacer);
         });
         return dedupErrors;
