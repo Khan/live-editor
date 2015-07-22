@@ -88217,10 +88217,12 @@ window.TraceKit = TraceKit;
  * @param asyncTimeout: treshold time used during draw() and other callbacks
  * @constructor
  */
-window.LoopProtector = function (callback, mainTimeout, asyncTimeout) {
+window.LoopProtector = function (callback, mainTimeout, asyncTimeout, reportLocation) {
     this.callback = callback || function () {};
     this.timeout = 200;
     this.branchStartTime = 0;
+    this.loopCounts = {};
+    this.reportLocation = reportLocation;
 
     this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
 
@@ -88265,7 +88267,15 @@ window.LoopProtector.prototype = {
      */
     // TODO(kevinb) add parameter for location information from the AST
     // TODO(kevinb) count how many times each this is called for each location from the AST
-    _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect() {
+    _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect(location) {
+        var _this = this;
+
+        if (location) {
+            if (!this.loopCounts[location]) {
+                this.loopCounts[location] = 0;
+            }
+            this.loopCounts[location] += 1;
+        }
         var now = new Date().getTime();
         if (!this.branchStartTime) {
             this.branchStartTime = now;
@@ -88274,8 +88284,29 @@ window.LoopProtector.prototype = {
             }).bind(this), 0);
         } else if (now - this.branchStartTime > this.timeout) {
             if (this.visible) {
-                this.callback();
-                throw new Error("KA_INFINITE_LOOP");
+                (function () {
+                    // Determine which of KAInfiniteLoopProtect's callsites has
+                    // the most calls.
+                    var max = 0; // current max count
+                    var hotLocation = null; // callsite with most calls
+                    Object.keys(_this.loopCounts).forEach(function (location) {
+                        if (_this.loopCounts[location] > max) {
+                            max = _this.loopCounts[location];
+                            hotLocation = location;
+                        }
+                    });
+                    if (hotLocation) {
+                        hotLocation = JSON.parse(hotLocation);
+                    }
+                    _this.callback(hotLocation);
+
+                    // TODO(kevinb): if we call the callback do we still need to throw?
+                    var error = new Error("KA_INFINITE_LOOP");
+                    if (_this.reportLocation) {
+                        error.location = hotLocation;
+                    }
+                    throw error;
+                })();
             }
         }
     },
@@ -88289,7 +88320,28 @@ window.LoopProtector.prototype = {
 
     protectAst: function protectAst(ast) {
         if (this.riskyStatements.indexOf(ast.type) !== -1) {
-            ast.body.body.unshift(this.loopBreak);
+            if (this.reportLocation) {
+                var _location = {
+                    type: ast.type,
+                    loc: ast.loc
+                };
+                ast.body.body.unshift({
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "KAInfiniteLoopProtect"
+                        },
+                        "arguments": [{
+                            "type": "Literal",
+                            "value": JSON.stringify(_location)
+                        }]
+                    }
+                });
+            } else {
+                ast.body.body.unshift(this.loopBreak);
+            }
         }
         for (var prop in ast) {
             if (ast.hasOwnProperty(prop) && _.isObject(ast[prop])) {
@@ -88303,7 +88355,7 @@ window.LoopProtector.prototype = {
     },
 
     protect: function protect(code) {
-        var ast = esprima.parse(code);
+        var ast = esprima.parse(code, { loc: true });
         this.protectAst(ast);
 
         // Many pjs programs take a while to start up because they're generating

@@ -184,7 +184,7 @@ window.PJSOutput = Backbone.View.extend({
         });
 
         this.loopProtector = new LoopProtector(
-            this.infiniteLoopCallback.bind(this), 2000, 500);
+            this.infiniteLoopCallback.bind(this), 2000, 500, true);
 
         return this;
     },
@@ -1425,12 +1425,29 @@ window.PJSOutput = Backbone.View.extend({
             }
         }
     },
+    
+    nodeLookup: {
+        "WhileStatement": $._("<code>while</code> loop"),
+        "DoWhileStatement": $._("<code>do-while</code> loop"),
+        "ForStatement": $._("<code>for</code> loop"),
+        "FunctionDeclaration": $._("<code>function</code>"),
+        "FunctionExpression": $._("<code>function</code>")
+    },
 
-    infiniteLoopCallback:  function() {
+    infiniteLoopCallback:  function(hotLocation) {
+        var text = $._(
+            "A %(type)s is taking too long to run. " + 
+            "Perhaps you have a mistake in your code?", {
+            type: this.nodeLookup[hotLocation.type]
+        });
+
         this.output.postParent({
             results: {
                 code: this.output.currentCode,
-                errors: [this.infiniteLoopError]
+                errors: [{
+                    text: text,
+                    row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
+                }]
             }
         });
         this.KA_INFINITE_LOOP = true;

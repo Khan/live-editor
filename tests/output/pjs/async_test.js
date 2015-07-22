@@ -198,12 +198,17 @@ describe("LoopProtector", function() {
             window.removeEventListener('error', listener);
         });
 
+        // TODO(kevinb) update async tests to listen for postMessage events
+        // This is so that we can use the same mechanism that LiveEditor uses
+        // to get asynchronous errors
         output.runCode(code, function(errors, testResults) {
             expect(errors.length).to.be(0);
             simulateClick(output);
             
             setTimeout(function () {
                 expect(asyncError.message).to.equal("KA_INFINITE_LOOP");
+                expect(asyncError.location.type).to.equal("WhileStatement");
+                expect(asyncError.location.loc.start.line).to.equal(4);
                 done();
             }, 100);
         });
