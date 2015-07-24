@@ -2438,17 +2438,26 @@ window.PJSOutput = Backbone.View.extend({
         return this.exec(validate, this.tester.testContext);
     },
 
-    exec: function exec(code) {
+    /**
+     * Executes the user's code.
+     * 
+     * @param code: The user code to execute.
+     * @param context: An object containing global object we'd like the user to
+     *                 have access to.  It's also used to capture objects that
+     *                 the user defines so that we can re-inject them into the
+     *                 execution context as users modify their programs.
+     * @returns {Error?}
+     */
+    exec: function exec(code, context) {
         if (!code) {
             return;
         }
 
-        var contexts = Array.prototype.slice.call(arguments, 1);
         var originalCode = code;
 
         code = this.loopProtector.protect(code);
-        contexts[0].KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
-        contexts[0].KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
+        context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
+        context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
 
         // this is kind of sort of supposed to fake a gensym that the user
         // can't access but since we're limited to string manipulation, we
@@ -2456,12 +2465,7 @@ window.PJSOutput = Backbone.View.extend({
         // long and random every time the code runs and hope for the best!
         var envName = "__env__" + Math.floor(Math.random() * 1000000000);
 
-        for (var i = 0; i < contexts.length; i++) {
-            if (contexts[i]) {
-                code = "with(" + envName + "[" + i + "]){\n" + code + "\n}";
-            }
-        }
-
+        code = "with(" + envName + "[0]){\n" + code + "\n}";
         // the top-level 'this' is empty except for this.externals, which
         // throws this message this is how users were getting at everything
         // from playing sounds to displaying pop-ups
@@ -2477,7 +2481,7 @@ window.PJSOutput = Backbone.View.extend({
             if (this["debugger"]) {
                 this["debugger"].exec(originalCode);
             } else {
-                new Function(code).apply(this.canvas, contexts);
+                new Function(code).call(this.canvas, context);
             }
         } catch (e) {
             if (e.message === "KA_INFINITE_LOOP") {
