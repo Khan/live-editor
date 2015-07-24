@@ -88215,6 +88215,8 @@ window.TraceKit = TraceKit;
  * @param callback: called whenever a loop takes more than <timeout>ms to complete.
  * @param mainTimeout: threshold time used while executing main program body
  * @param asyncTimeout: treshold time used during draw() and other callbacks
+ * @param reportLocation: true if the location of the long running loop should be
+ *                        passed to the callback. TODO(kevinb) use this for webpages
  * @constructor
  */
 window.LoopProtector = function (callback, mainTimeout, asyncTimeout, reportLocation) {
@@ -88265,8 +88267,6 @@ window.LoopProtector.prototype = {
      * 
      * @private
      */
-    // TODO(kevinb) add parameter for location information from the AST
-    // TODO(kevinb) count how many times each this is called for each location from the AST
     _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect(location) {
         var _this = this;
 
@@ -88300,12 +88300,10 @@ window.LoopProtector.prototype = {
                     }
                     _this.callback(hotLocation);
 
-                    // TODO(kevinb): if we call the callback do we still need to throw?
-                    var error = new Error("KA_INFINITE_LOOP");
-                    if (_this.reportLocation) {
-                        error.location = hotLocation;
-                    }
-                    throw error;
+                    // We throw here, but only to interrupt execution, not to
+                    // communicate back to the PJSOutput.  This is done via the
+                    // callback.
+                    throw new Error("KA_INFINITE_LOOP");
                 })();
             }
         }

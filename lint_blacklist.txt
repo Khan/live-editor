@@ -8,6 +8,3 @@ js/workers/pjs/processing-stubs.js
 
 # TODO(kevinb) i18n-ize
 tmpl/sql-results.handlebars
-
-# TODO(kevinb) fix allowUncaught upstream and wait for an official build of 2.3.0
-testutil/mocha.js

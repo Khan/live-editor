@@ -180,9 +180,9 @@ describe("Code Injection", function() {
 });
 
 describe("LoopProtector", function() {
-    it("should throw KA_INFINITE_LOOP", function (done) {
+    it("should stop Infinite Loops in event handlers", function (done) {
         var output = createLiveEditorOutput();
-
+    
         var code = getCodeFromOptions(function() {
             var mouseClicked = function() {
                 var i = 0;
@@ -192,25 +192,15 @@ describe("LoopProtector", function() {
             };
         });
 
-        var asyncError;
-        var listener = window.addEventListener('error', function(e) {
-            asyncError = e.error;
-            window.removeEventListener('error', listener);
-        });
+        output.output.loopProtector = new LoopProtector(function (hotLocation) {
+            expect(hotLocation.type).to.equal("WhileStatement");
+            expect(hotLocation.loc.start.line).to.equal(4);
+            done();
+        }, 200, 50, true);
 
-        // TODO(kevinb) update async tests to listen for postMessage events
-        // This is so that we can use the same mechanism that LiveEditor uses
-        // to get asynchronous errors
         output.runCode(code, function(errors, testResults) {
             expect(errors.length).to.be(0);
             simulateClick(output);
-            
-            setTimeout(function () {
-                expect(asyncError.message).to.equal("KA_INFINITE_LOOP");
-                expect(asyncError.location.type).to.equal("WhileStatement");
-                expect(asyncError.location.loc.start.line).to.equal(4);
-                done();
-            }, 100);
         });
     });
     
