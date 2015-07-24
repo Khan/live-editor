@@ -62,7 +62,12 @@ function program4(depth0,data,depth1) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                <img src=\"/images/throbber.gif\" data-lazy-src=\"";
+  buffer += escapeExpression(stack1) + "\">\n                <img src=\"";
+  foundHelper = helpers.imagesDir;
+  stack1 = foundHelper || depth1.imagesDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "...imagesDir", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "/throbber.gif\" data-lazy-src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth1.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -98,5 +103,10 @@ function program4(depth0,data,depth1) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n    </div>\n</div>\n";
+  buffer += "\n    </div>\n</div>\n<script>console.log(\"imagesDir = ";
+  foundHelper = helpers.imagesDir;
+  stack1 = foundHelper || depth0.imagesDir;
+  if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
+  else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
+  buffer += escapeExpression(stack1) + "\");</script>";
   return buffer;});;
