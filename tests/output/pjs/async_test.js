@@ -243,4 +243,64 @@ describe("LoopProtector", function() {
             });
         });
     });
+
+    it("should stop Infinite Loops", function (done) {
+        var output = createLiveEditorOutput();
+
+        var code = getCodeFromOptions(function () {
+            var x = 0;
+            while (x < 400) {
+                ellipse(100, 100, 100, x);
+            }
+        });
+
+        output.output.loopProtector = new LoopProtector(function (hotLocation) {
+            expect(hotLocation.type).to.equal("WhileStatement");
+            expect(hotLocation.loc.start.line).to.equal(3);
+            done();
+        }, 200, 50, true);
+
+        output.runCode(code, function (errors, testResults) { });
+    });
+
+    it("should stop Infinites Loop with width/height", function (done) {
+        var output = createLiveEditorOutput();
+
+        var code = getCodeFromOptions(function () {
+            var x = 0;
+            while (x < width/20) {
+                ellipse(100, 100, 100, x);
+            }
+        });
+
+        output.output.loopProtector = new LoopProtector(function (hotLocation) {
+            expect(hotLocation.type).to.equal("WhileStatement");
+            expect(hotLocation.loc.start.line).to.equal(3);
+            done();
+        }, 200, 50, true);
+
+        output.runCode(code, function (errors, testResults) { });
+    });
+
+    it("should stop Infinite Loop Inside Draw Function", function (done) {
+        var output = createLiveEditorOutput();
+
+        var code = getCodeFromOptions(function () {
+            var draw = function() {
+                var y = 40;
+                while (y < 300) {
+                    var message = "hello" + y;
+                    text(message, 30, y);
+                }
+            };
+        });
+
+        output.output.loopProtector = new LoopProtector(function (hotLocation) {
+            expect(hotLocation.type).to.equal("WhileStatement");
+            expect(hotLocation.loc.start.line).to.equal(4);
+            done();
+        }, 200, 50, true);
+
+        output.runCode(code, function (errors, testResults) { });
+    });
 });

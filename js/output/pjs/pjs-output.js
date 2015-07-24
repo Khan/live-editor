@@ -15,13 +15,6 @@ window.PJSOutput = Backbone.View.extend({
         "mouseOut", "touchStart", "touchEnd", "touchMove", "touchCancel",
         "keyPressed", "keyReleased", "keyTyped"],
 
-    // Some PJS methods don't work well within a worker.
-    // createGraphics: Creates a whole new Processing object and our stubbing
-    //                 code doesn't play well with it.
-    //                 TODO(bbondy): We may be able to fix this if we have
-    //                 time to debug more while still using the worker.
-    workerBreakingMethods: ["createGraphics"],
-
     // During live coding all of the following state must be reset
     // when it's no longer used.
     liveReset: {
@@ -748,83 +741,7 @@ window.PJSOutput = Backbone.View.extend({
 
     runCode: function(userCode, callback) {
         var runCode = function() {
-
-            // Check for any reason not to use a worker
-            var doNotUserWorker = _(this.workerBreakingMethods)
-                .some(function(w) {
-                    return userCode.indexOf(w) !== -1;
-            });
-
-            if (!window.Worker || doNotUserWorker) {
-                return this.injectCode(userCode, callback);
-            }
-
-            var context = {};
-
-
-            // We can send object literals over, but not
-            //  objects created with a constructor.
-            // jQuery thinks PImage is a plain object,
-            //  so we must specially check for it,
-            //  otherwise we'll give web workers an object that
-            //  they can't serialize.
-            var PImage = this.canvas.PImage;
-            var isStubbableObject = function(value) {
-                return $.isPlainObject(value) &&
-                    !(value instanceof PImage);
-            };
-
-            // Recursively replaces functions with stubs
-            var stubFunctionsInObject = function(object) {
-                // For null and such
-                if (!object) {
-                    return object;
-                }
-
-                var newObj = {};
-                if (_.isArray(object)) {
-                    newObj = [];
-                }
-                _.each(object, function(val, key) {
-                    if (typeof val === "function") {
-                        newObj[key] = "__STUBBED_FUNCTION__";
-                    } else if (typeof val !== "object") {
-                        newObj[key] = val;
-                    } else if (isStubbableObject(val)) {
-                        newObj[key] = stubFunctionsInObject(val);
-                    } else {
-                        newObj[key] = {};
-                    }
-                });
-                return newObj;
-            };
-
-            _.each(this.globals, function(val, global) {
-                var value = this.canvas[global];
-                var contextVal;
-                if (typeof value === "function" || global === "Math") {
-                    contextVal = "__STUBBED_FUNCTION__";
-                } else if (typeof value !== "object") {
-                    contextVal = value;
-                } else if (isStubbableObject(value)) {
-                    contextVal = stubFunctionsInObject(value);
-                } else {
-                    contextVal = {};
-                }
-                context[global] = contextVal;
-            }.bind(this));
-
-            this.worker.exec(userCode, context, function(errors, userCode) {
-                if (errors && errors.length > 0) {
-                    return callback(errors, userCode);
-                }
-
-                try {
-                    this.injectCode(userCode, callback);
-                } catch (e) {
-                    callback([e]);
-                }
-            }.bind(this));
+            this.injectCode(userCode, callback);
         }.bind(this);
 
         this.resourceCache.cacheResources(userCode).then(runCode);
@@ -1365,7 +1282,6 @@ window.PJSOutput = Backbone.View.extend({
 
     kill: function() {
         this.tester.testWorker.kill();
-        this.worker.kill();
         this.hintWorker.kill();
         this.canvas.exit();
     },
@@ -1495,68 +1411,6 @@ window.PJSOutput = Backbone.View.extend({
                 externalsDir: this.externalsDir,
                 jshintFile: this.jshintFile
             });
-        }
-    ),
-
-    worker: new PooledWorker(
-        "pjs/worker.js",
-        function(userCode, context, callback) {
-            var timeout;
-            var worker = this.getWorkerFromPool();
-
-            var done = function(e) {
-                if (timeout) {
-                    clearTimeout(timeout);
-                }
-
-                if (worker) {
-                    this.addWorkerToPool(worker);
-                }
-
-                if (e) {
-                    // Make sure that the caller knows that we're done
-                    callback([e]);
-                } else {
-                    callback([], userCode);
-                }
-            }.bind(this);
-
-            worker.onmessage = function(event) {
-                // Execution of the worker has begun so we wait for it...
-                if (event.data.execStarted) {
-                    // If the thread doesn't finish executing quickly, kill it
-                    // and don't execute the code
-                    timeout = window.setTimeout(function() {
-                        worker.terminate();
-                        worker = null;
-                        done({message:
-                            $._("The program is taking too long to run. " +
-                                "Perhaps you have a mistake in your code?")});
-                    }, 500);
-
-                } else if (event.data.type === "end") {
-                    done();
-
-                } else if (event.data.type === "error") {
-                    done({message: event.data.message});
-                }
-            };
-
-            worker.onerror = function(event) {
-                event.preventDefault();
-                done(event);
-            };
-
-            try {
-                worker.postMessage({
-                    code: userCode,
-                    context: context
-                });
-            } catch (e) {
-                // TODO: Object is too complex to serialize, try to find
-                // an alternative workaround
-                done();
-            }
         }
     )
 });

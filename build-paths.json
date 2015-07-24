@@ -132,11 +132,8 @@
     },
     "workers_pjs": [
         "js/workers/pjs/jshint-worker.js",
-        "js/workers/pjs/processing-stubs.js",
-        "js/workers/pjs/program-stubs.js",
         "js/workers/pjs/test-worker.js",
-        "js/output/pjs/pjs-tester.js",
-        "js/workers/pjs/worker.js"
+        "js/output/pjs/pjs-tester.js"
     ],
     "workers_webpage": [
         "bower_components/ace-builds/src-noconflict/worker-html.js"
