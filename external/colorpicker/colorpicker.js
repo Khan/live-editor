@@ -2,15 +2,15 @@
  *
  * Color picker
  * Author: Stefan Petre www.eyecon.ro
- * 
+ *
  * Dual licensed under the MIT and GPL licenses
  *
  */
 (function ($) {
-    // We only use the more responsive touch events on iPad/iPhone
-    //  because otherwise we also use touch on touch-enabled ChromeBooks,
-    //  and students can no longer use their mouse.
-    var isITouch = /(iPhone|iPod|iPad).*AppleWebKit/i.test(navigator.userAgent);
+	// We only use the more responsive touch events on iPad/iPhone
+	//  because otherwise we also use touch on touch-enabled ChromeBooks,
+	//  and students can no longer use their mouse.
+	var isITouch = /(iPhone|iPod|iPad).*AppleWebKit/i.test(navigator.userAgent);
 
 	var ColorPicker = function () {
 		var
