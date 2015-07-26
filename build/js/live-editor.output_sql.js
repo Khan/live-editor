@@ -600,8 +600,8 @@ SQLTester.prototype.testMethods = {
                 return { success: false };
             }
             for (var c = 0; c < res.columns.length; c++) {
-                var col = res.columns[c].toLowerCase().replace(/ /g, "");
-                var templateCol = templateRes.columns[c].toLowerCase().replace(/ /g, "");
+                var col = res.columns[c].toLowerCase().replace(/ /g, '');
+                var templateCol = templateRes.columns[c].toLowerCase().replace(/ /g, '');
                 if (col !== templateCol) {
                     return { success: false };
                 }
@@ -684,7 +684,7 @@ window.SQLOutput = Backbone.View.extend({
         this.config.runCurVersion("sql", this);
 
         // Register a helper to tell the difference between null and 0
-        Handlebars.registerHelper("isNull", function (variable, options) {
+        Handlebars.registerHelper('isNull', function (variable, options) {
             if (variable === null) {
                 return options.fn(this);
             } else {
@@ -737,17 +737,17 @@ window.SQLOutput = Backbone.View.extend({
             errorMessage += ". " + $._("Are you missing a FROM clause?");
             // Possible INSERT with missing INTO
         } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("INSERT") !== -1 && statement.indexOf("VALUES") !== -1 && statement.indexOf("INTO") === -1) {
-            errorMessage += ". " + $._("Are you missing the INTO keyword?");
-            // Possible INSERT INTO with missing VALUES
-        } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("INSERT") !== -1 && statement.indexOf("INTO") !== -1 && statement.indexOf("VALUES") === -1) {
-            errorMessage += ". " + $._("Are you missing the VALUES keyword?");
-            // Possible CREATE with missing what to create
-        } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("CREATE") !== -1 && (statement.indexOf("INDEX") === -1 || statement.indexOf("TABLE") === -1 || statement.indexOf("TRIGGER") === -1 || statement.indexOf("VIEW") === -1)) {
-            errorMessage += ". " + $._("You may be missing what to create. For " + "example CREATE TABLE...");
-            // Possible UPDATE without SET
-        } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("UPDATE") !== -1 && statement.indexOf("SET") === -1) {
-            errorMessage += ". " + $._("Are you missing the SET keyword?");
-        }
+                errorMessage += ". " + $._("Are you missing the INTO keyword?");
+                // Possible INSERT INTO with missing VALUES
+            } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("INSERT") !== -1 && statement.indexOf("INTO") !== -1 && statement.indexOf("VALUES") === -1) {
+                    errorMessage += ". " + $._("Are you missing the VALUES keyword?");
+                    // Possible CREATE with missing what to create
+                } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("CREATE") !== -1 && (statement.indexOf("INDEX") === -1 || statement.indexOf("TABLE") === -1 || statement.indexOf("TRIGGER") === -1 || statement.indexOf("VIEW") === -1)) {
+                        errorMessage += ". " + $._("You may be missing what to create. For " + "example CREATE TABLE...");
+                        // Possible UPDATE without SET
+                    } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("UPDATE") !== -1 && statement.indexOf("SET") === -1) {
+                            errorMessage += ". " + $._("Are you missing the SET keyword?");
+                        }
         return errorMessage;
     },
 
@@ -933,9 +933,13 @@ window.SQLOutput = Backbone.View.extend({
         callback([], userCode);
     },
 
-    clear: function clear() {},
+    clear: function clear() {
+        // Clear the output
+    },
 
-    kill: function kill() {}
+    kill: function kill() {
+        // Completely stop and clear the output
+    }
 });
 
 window.SQLOutput.isSupported = function () {
@@ -944,7 +948,3 @@ window.SQLOutput.isSupported = function () {
 };
 
 LiveEditorOutput.registerOutput("sql", SQLOutput);
-
-// Clear the output
-
-// Completely stop and clear the output

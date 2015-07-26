@@ -260,8 +260,8 @@ window.ScratchpadRecord = Backbone.Model.extend({
             // The first cache is at -1 as the cache at position 0 is the
             // cache of running the first command
         } else {
-            this.cacheRestore(-1 * this.seekCacheInterval);
-        }
+                this.cacheRestore(-1 * this.seekCacheInterval);
+            }
 
         // Execute commands and build cache, bringing state up to current
         for (var i = cacheOffset; i <= seekPos; i++) {
@@ -831,7 +831,12 @@ var ScratchpadConfig = Backbone.Model.extend({
     }, {
         name: "Brace Autocompletion Changes",
 
-        ace_pjs_editor: function ace_pjs_editor(editor) {}
+        ace_pjs_editor: function ace_pjs_editor(editor) {
+            // We no longer version editor changes,
+            // since we made talkie recording more robust.
+            // We still version jshint changes however,
+            // so we keep this one around as a null change.
+        }
     }, {
         name: "Disable Un-needed JSHint Rules",
 
@@ -856,11 +861,6 @@ var ScratchpadConfig = Backbone.Model.extend({
     // NOTE: update version test in output_test.js
     ]
 });
-
-// We no longer version editor changes,
-// since we made talkie recording more robust.
-// We still version jshint changes however,
-// so we keep this one around as a null change.
 /*!
  * visibly - v0.7 Page Visibility API Polyfill
  * http://github.com/addyosmani

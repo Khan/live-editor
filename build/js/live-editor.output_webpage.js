@@ -864,13 +864,13 @@ window.WebpageOutput = Backbone.View.extend({
         }
     },
 
-    clear: function clear() {},
+    clear: function clear() {
+        // Clear the output
+    },
 
-    kill: function kill() {}
+    kill: function kill() {
+        // Completely stop and clear the output
+    }
 });
 
 LiveEditorOutput.registerOutput("webpage", WebpageOutput);
-
-// Clear the output
-
-// Completely stop and clear the output

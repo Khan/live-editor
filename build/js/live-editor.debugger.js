@@ -858,7 +858,9 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
         try {
             data = JSON.parse(event.data);
-        } catch (err) {}
+        } catch (err) {
+            // Malformed JSON, we don't care about it
+        }
 
         if (!data) {
             return;
@@ -907,8 +909,6 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.$el.find(".debug-continue").attr("disabled", "");
     }
 });
-
-// Malformed JSON, we don't care about it
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
 this["Handlebars"]["templates"]["debugger"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {

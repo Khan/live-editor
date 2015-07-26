@@ -12,17 +12,17 @@ function program1(depth0,data) {
 function program3(depth0,data) {
   
   var buffer = "", stack1;
-  buffer += "\n                <iframe id=\"output-frame\"\n                    src=\"";
+  buffer += "\r\n                <iframe id=\"output-frame\"\r\n                    src=\"";
   foundHelper = helpers.execFile;
   stack1 = foundHelper || depth0.execFile;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "execFile", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\"\n                    data-src=\"";
+  buffer += escapeExpression(stack1) + "\"\r\n                    data-src=\"";
   foundHelper = helpers.execFile;
   stack1 = foundHelper || depth0.execFile;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "execFile", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\"></iframe>\n            ";
+  buffer += escapeExpression(stack1) + "\"></iframe>\r\n            ";
   return buffer;}
 
 function program5(depth0,data) {
@@ -43,11 +43,11 @@ function program9(depth0,data) {
 function program11(depth0,data) {
   
   var buffer = "", stack1;
-  buffer += "\n                <a href=\"\" class=\"draw-color-button\" id=\"";
+  buffer += "\r\n                <a href=\"\" class=\"draw-color-button\" id=\"";
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                    <span></span>\n                </a>\n                ";
+  buffer += escapeExpression(stack1) + "\">\r\n                    <span></span>\r\n                </a>\r\n                ";
   return buffer;}
 
 function program13(depth0,data) {
@@ -85,7 +85,7 @@ function program21(depth0,data) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\">\n    <!-- Canvases (Drawing + Output) -->\n    <div class=\"scratchpad-canvas-wrap\">\n        <div id=\"output\">\n            <!-- Extra data-src attribute to work around\n                 cross-origin access policies. -->\n            ";
+  buffer += "\">\r\n    <!-- Canvases (Drawing + Output) -->\r\n    <div class=\"scratchpad-canvas-wrap\">\r\n        <div id=\"output\">\r\n            <!-- Extra data-src attribute to work around\r\n                 cross-origin access policies. -->\r\n            ";
   foundHelper = helpers.execFile;
   stack1 = foundHelper || depth0.execFile;
   stack2 = helpers['if'];
@@ -95,12 +95,12 @@ function program21(depth0,data) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n            <canvas class=\"scratchpad-draw-canvas\" style=\"display:none;\"\n                width=\"400\" height=\"400\"></canvas>\n\n            <div class=\"overlay disable-overlay\" style=\"display:none;\">\n            </div>\n\n            <div class=\"scratchpad-canvas-loading\">\n                <img src=\"";
+  buffer += "\r\n            <canvas class=\"scratchpad-draw-canvas\" style=\"display:none;\"\r\n                width=\"400\" height=\"400\"></canvas>\r\n\r\n            <div class=\"overlay disable-overlay\" style=\"display:none;\">\r\n            </div>\r\n\r\n            <div class=\"scratchpad-canvas-loading\">\r\n                <img src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "/throbber-full.gif\">\n                <span class=\"hide-text\">";
+  buffer += escapeExpression(stack1) + "/throbber-full.gif\">\r\n                <span class=\"hide-text\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(5, program5, data);
@@ -110,18 +110,18 @@ function program21(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</span>\n            </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar\">\n            <div class=\"error-buddy-resting\">\n                <div class=\"error-buddy-happy\" style=\"display:none;\">\n                    <img src=\"";
+  buffer += "</span>\r\n            </div>\r\n        </div>\r\n\r\n        <div class=\"scratchpad-toolbar\">\r\n            <div class=\"error-buddy-resting\">\r\n                <div class=\"error-buddy-happy\" style=\"display:none;\">\r\n                    <img src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "/ohnoes-happy.png\"/>\n                </div>\n                <div class=\"error-buddy-thinking\" style=\"display:none;\">\n                    <img src=\"";
+  buffer += escapeExpression(stack1) + "/ohnoes-happy.png\"/>\r\n                </div>\r\n                <div class=\"error-buddy-thinking\" style=\"display:none;\">\r\n                    <img src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "/ohnoes-hmm.png\"/>\n                    ";
-  buffer += "\n                    ";
+  buffer += escapeExpression(stack1) + "/ohnoes-hmm.png\"/>\r\n                    ";
+  buffer += "\r\n                    ";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(7, program7, data);
@@ -131,7 +131,7 @@ function program21(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n                </div>\n            </div>\n            <button id=\"restart-code\"\n                class=\"simple-button pull-right\">\n                <span class=\"icon-refresh\"></span>\n                ";
+  buffer += "\r\n                </div>\r\n            </div>\r\n            <button id=\"restart-code\"\r\n                class=\"simple-button pull-right\">\r\n                <span class=\"icon-refresh\"></span>\r\n                ";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(9, program9, data);
@@ -141,7 +141,7 @@ function program21(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</button>\n\n            <!-- Widgets for selecting colors to doodle on the canvas during\n                recordings -->\n            <div id=\"draw-widgets\" style=\"display:none;\">\n                <a href=\"\" id=\"draw-clear-button\" class=\"ui-button\">\n                    <span class=\"ui-icon-cancel\"></span>\n                </a>\n                ";
+  buffer += "</button>\r\n\r\n            <!-- Widgets for selecting colors to doodle on the canvas during\r\n                recordings -->\r\n            <div id=\"draw-widgets\" style=\"display:none;\">\r\n                <a href=\"\" id=\"draw-clear-button\" class=\"ui-button\">\r\n                    <span class=\"ui-icon-cancel\"></span>\r\n                </a>\r\n                ";
   foundHelper = helpers.colors;
   stack1 = foundHelper || depth0.colors;
   stack2 = helpers.each;
@@ -151,7 +151,7 @@ function program21(depth0,data) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n            </div>\n\n            <!-- Record button -->\n            <button id=\"record\" class=\"simple-button pull-left\" style=\"display:none;\">";
+  buffer += "\r\n            </div>\r\n\r\n            <!-- Record button -->\r\n            <button id=\"record\" class=\"simple-button pull-left\" style=\"display:none;\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(13, program13, data);
@@ -161,12 +161,12 @@ function program21(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</button>\n        </div>\n    </div>\n\n    <!-- Editor -->\n    <div class=\"scratchpad-editor-wrap overlay-container\">\n        <div class=\"scratchpad-editor-tabs\">\n          <div id=\"scratchpad-code-editor-tab\" class=\"scratchpad-editor-tab\">\n            <div class=\"scratchpad-editor scratchpad-ace-editor\"></div>\n            <div class=\"overlay disable-overlay\" style=\"display:none;\">\n            </div>\n\n            <div class=\"scratchpad-editor-bigplay-loading\" style=\"display:none;\">\n                <img src=\"";
+  buffer += "</button>\r\n        </div>\r\n    </div>\r\n\r\n    <!-- Editor -->\r\n    <div class=\"scratchpad-editor-wrap overlay-container\">\r\n        <div class=\"scratchpad-editor-tabs\">\r\n          <div id=\"scratchpad-code-editor-tab\" class=\"scratchpad-editor-tab\">\r\n            <div class=\"scratchpad-editor scratchpad-ace-editor\"></div>\r\n            <div class=\"overlay disable-overlay\" style=\"display:none;\">\r\n            </div>\r\n\r\n            <div class=\"scratchpad-editor-bigplay-loading\" style=\"display:none;\">\r\n                <img src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "/throbber-full.gif\">\n                <span class=\"hide-text\">";
+  buffer += escapeExpression(stack1) + "/throbber-full.gif\">\r\n                <span class=\"hide-text\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(15, program15, data);
@@ -176,7 +176,7 @@ function program21(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</span>\n            </div>\n\n            <!-- This cannot be removed, if we want Flash to keep working! -->\n            <div id=\"sm2-container\">\n                ";
+  buffer += "</span>\r\n            </div>\r\n\r\n            <!-- This cannot be removed, if we want Flash to keep working! -->\r\n            <div id=\"sm2-container\">\r\n                ";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(17, program17, data);
@@ -186,7 +186,7 @@ function program21(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n                <br>\n            </div>\n\n            <button class=\"scratchpad-editor-bigplay-button\" style=\"display:none;\">\n                <span class=\"icon-play\"></span>\n                <span class=\"hide-text\">";
+  buffer += "\r\n                <br>\r\n            </div>\r\n\r\n            <button class=\"scratchpad-editor-bigplay-button\" style=\"display:none;\">\r\n                <span class=\"icon-play\"></span>\r\n                <span class=\"hide-text\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(19, program19, data);
@@ -196,7 +196,7 @@ function program21(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</span>\n            </button>\n          </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar\">\n            <!-- Row for playback controls -->\n            <div class=\"scratchpad-playbar\" style=\"display:none;\">\n                <div class=\"scratchpad-playbar-area\" style=\"display:none;\">\n                    <button\n                        class=\"simple-button primary scratchpad-playbar-play\"\n                        type=\"button\">\n                        <span class=\"icon-play\"></span>\n                    </button>\n\n                    <div class=\"scratchpad-playbar-progress\"></div>\n\n                    <span class=\"scratchpad-playbar-timeleft\"></span>\n                </div>\n                <div class=\"loading-msg\">\n                    ";
+  buffer += "</span>\r\n            </button>\r\n          </div>\r\n        </div>\r\n\r\n        <div class=\"scratchpad-toolbar\">\r\n            <!-- Row for playback controls -->\r\n            <div class=\"scratchpad-playbar\" style=\"display:none;\">\r\n                <div class=\"scratchpad-playbar-area\" style=\"display:none;\">\r\n                    <button\r\n                        class=\"simple-button primary scratchpad-playbar-play\"\r\n                        type=\"button\">\r\n                        <span class=\"icon-play\"></span>\r\n                    </button>\r\n\r\n                    <div class=\"scratchpad-playbar-progress\"></div>\r\n\r\n                    <span class=\"scratchpad-playbar-timeleft\"></span>\r\n                </div>\r\n                <div class=\"loading-msg\">\r\n                    ";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(21, program21, data);
@@ -206,5 +206,5 @@ function program21(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n                </div>\n            </div>\n            <div class=\"scratchpad-debugger\"></div>\n        </div>\n\n        <div class=\"scratchpad-toolbar scratchpad-dev-record-row\" style=\"display:none;\"></div>\n    </div>\n</div>";
+  buffer += "\r\n                </div>\r\n            </div>\r\n            <div class=\"scratchpad-debugger\"></div>\r\n        </div>\r\n\r\n        <div class=\"scratchpad-toolbar scratchpad-dev-record-row\" style=\"display:none;\"></div>\r\n    </div>\r\n</div>";
   return buffer;});;

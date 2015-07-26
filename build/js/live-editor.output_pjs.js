@@ -687,9 +687,9 @@ var BabyHint = {
                 if (letter === "\"") {
                     openIndex = i;
                     quoteType = "\"";
-                } else if (letter === "'") {
+                } else if (letter === "\'") {
                     openIndex = i;
-                    quoteType = "'";
+                    quoteType = "\'";
                 }
             } else if (letter === quoteType) {
                 // replace string contents with whitespace
@@ -1438,7 +1438,11 @@ window.PJSOutput = Backbone.View.extend({
                                 configurable: false
                             });
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        // Couldn't access property for permissions reasons,
+                        //  like window.frame
+                        // Only happens on prod where it's cross-origin
+                    }
                 }
             }
 
@@ -2039,6 +2043,8 @@ window.PJSOutput = Backbone.View.extend({
         if (!this["debugger"]) {
             userCode = userCode && userCode.replace(/\bnew[\s\n]+([A-Z]{1,2}[a-zA-Z0-9_]+)([\s\n]*\()/g, "PJSOutput.applyInstance($1,'$1')$2");
         } else {}
+        // we'll use the debugger's newCallback delegate method to
+        // keep track of object instances
 
         // If we have a draw function then we need to do injection
         // If we had a draw function then we still need to do injection
@@ -2310,18 +2316,18 @@ window.PJSOutput = Backbone.View.extend({
 
             // Otherwise if there is code to inject
         } else if (inject) {
-            // Force a call to the draw function to force checks for instances
-            // and to make sure that errors in the draw loop are caught.
-            if (this.globals.draw) {
-                inject += "\ndraw();";
-            }
+                // Force a call to the draw function to force checks for instances
+                // and to make sure that errors in the draw loop are caught.
+                if (this.globals.draw) {
+                    inject += "\ndraw();";
+                }
 
-            // Execute the injected code
-            var error = this.exec(inject, this.canvas);
-            if (error) {
-                return callback([error]);
+                // Execute the injected code
+                var error = this.exec(inject, this.canvas);
+                if (error) {
+                    return callback([error]);
+                }
             }
-        }
 
         // Need to make sure that the draw function is never deleted
         // (Otherwise Processing.js starts to freak out)
@@ -2338,7 +2344,12 @@ window.PJSOutput = Backbone.View.extend({
         if (callback) {
             try {
                 callback([]);
-            } catch (e) {}
+            } catch (e) {
+                // Ignore any errors that were generated in the callback
+                // NOTE(jeresig): This is needed because Mocha throws errors
+                // when it encounters an assertion error, which causes this
+                // to go haywire, generating an in-code error.
+            }
         }
     },
 
@@ -2572,17 +2583,17 @@ _.extend(PJSOutput, {
             // If we're dealing with an instantiated object just
             // use its generated ID
         } else if (obj && obj.__id) {
-            return obj.__id();
+                return obj.__id();
 
-            // Check if we're dealing with an array
-        } else if (obj && Object.prototype.toString.call(obj) === "[object Array]") {
-            return this.stringifyArray(obj);
+                // Check if we're dealing with an array
+            } else if (obj && Object.prototype.toString.call(obj) === "[object Array]") {
+                    return this.stringifyArray(obj);
 
-            // JSON.stringify returns undefined, not as a string, so we specially
-            // handle that
-        } else if (typeof obj === "undefined") {
-            return "undefined";
-        }
+                    // JSON.stringify returns undefined, not as a string, so we specially
+                    // handle that
+                } else if (typeof obj === "undefined") {
+                        return "undefined";
+                    }
 
         // If all else fails, attempt to JSON-ify the string
         // TODO(jeresig): We should probably do recursion to better handle
@@ -2677,15 +2688,3 @@ _.extend(PJSOutput, {
 });
 
 LiveEditorOutput.registerOutput("pjs", PJSOutput);
-
-// Couldn't access property for permissions reasons,
-//  like window.frame
-// Only happens on prod where it's cross-origin
-
-// we'll use the debugger's newCallback delegate method to
-// keep track of object instances
-
-// Ignore any errors that were generated in the callback
-// NOTE(jeresig): This is needed because Mocha throws errors
-// when it encounters an assertion error, which causes this
-// to go haywire, generating an in-code error.

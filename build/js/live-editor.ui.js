@@ -998,10 +998,10 @@ window.LiveEditor = Backbone.View.extend({
 
                 // Allows toggling of the autosuggestions.
                 this.editor.editor.commands.addCommand({
-                    name: "toggleAutosuggest",
+                    name: 'toggleAutosuggest',
                     bindKey: {
-                        win: "Ctrl+Alt+A",
-                        mac: "Command+Option+A"
+                        win: 'Ctrl+Alt+A',
+                        mac: 'Command+Option+A'
                     },
                     exec: function exec(editor) {
                         var status = window.localStorage["autosuggest"] === "true";
@@ -1515,8 +1515,8 @@ window.LiveEditor = Backbone.View.extend({
 
                     // Otherwise we can assume that we need to start playing from the top
                 } else if (self.player.playState === 0) {
-                    self.player.play();
-                }
+                        self.player.play();
+                    }
             },
 
             // Pause when recording playback pauses
@@ -1849,7 +1849,9 @@ window.LiveEditor = Backbone.View.extend({
 
         try {
             data = JSON.parse(event.data);
-        } catch (err) {}
+        } catch (err) {
+            // Malformed JSON, we don't care about it
+        }
 
         if (!data) {
             return;
@@ -2286,5 +2288,3 @@ window.LiveEditor = Backbone.View.extend({
 LiveEditor.registerEditor = function (name, editor) {
     LiveEditor.prototype.editors[name] = editor;
 };
-
-// Malformed JSON, we don't care about it

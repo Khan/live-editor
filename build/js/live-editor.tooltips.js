@@ -2,9 +2,9 @@
  *
  * Color picker
  * Author: Stefan Petre www.eyecon.ro
- * 
+ *
  * Dual licensed under the MIT and GPL licenses
- * 
+ *
  */
 (function ($) {
     // We only use the more responsive touch events on iPad/iPhone
@@ -78,7 +78,7 @@
                     change.apply(this);
                 }
             },
-            change = function (ev) {
+            change = function (ev, undoMode) {
                 var cal = $(this).parent().parent(), col;
                 if (this.parentNode.className.indexOf('_hex') > 0) {
                     cal.data('colorpicker').color = col = HexToHSB(fixHex(this.value));
@@ -103,7 +103,7 @@
                 setSelector(col, cal.get(0));
                 setHue(col, cal.get(0));
                 setNewColor(col, cal.get(0));
-                cal.data('colorpicker').onChange.apply(cal, [col, HSBToHex(col), HSBToRGB(col)]);
+                cal.data('colorpicker').onChange.apply(cal, [col, HSBToHex(col), HSBToRGB(col), undoMode]);
             },
             blur = function (ev) {
                 var cal = $(this).parent().parent();
@@ -137,7 +137,7 @@
                     y: ev.pageY,
                     field: field,
                     val: parseInt(field.val(), 10),
-                    preview: $(this).parent().parent().data('colorpicker').livePreview					
+                    preview: $(this).parent().parent().data('colorpicker').livePreview
                 };
                 $(document).bind(events.end, current, upIncrement);
                 $(document).bind(events.move, current, moveIncrement);
@@ -163,12 +163,12 @@
                     y: $(this).offset().top
                 };
                 ev.data = current;
-                moveHue(ev);
+                moveHue(ev, "startScrub");
                 current.preview = current.cal.data('colorpicker').livePreview;
                 $(document).bind(events.end, current, upHue);
                 $(document).bind(events.move, current, moveHue);
             },
-            moveHue = function (ev) {
+            moveHue = function (ev, undoMode) {
                 var pos = getPagePos(ev);
                 if (!pos.pageX && !pos.pageY) {
                     return false;
@@ -179,12 +179,12 @@
                         .eq(4)
                         .val(parseInt(360*(150 - Math.max(0,Math.min(150,(pos.pageY - ev.data.y))))/150, 10))
                         .get(0),
-                    [ev.data.preview]
+                    [ev.data.preview, undoMode || "midScrub"]
                 );
                 return false;
             },
             upHue = function (ev) {
-                moveHue(ev);
+                moveHue(ev, "stopScrub");
                 fillRGBFields(ev.data.cal.data('colorpicker').color, ev.data.cal.get(0));
                 fillHexFields(ev.data.cal.data('colorpicker').color, ev.data.cal.get(0));
                 $(document).unbind(events.end, upHue);
@@ -198,12 +198,12 @@
                     pos: $(this).offset()
                 };
                 ev.data = current;
-                moveSelector(ev);
+                moveSelector(ev, "startScrub");
                 current.preview = current.cal.data('colorpicker').livePreview;
                 $(document).bind(events.end, current, upSelector);
                 $(document).bind(events.move, current, moveSelector);
             },
-            moveSelector = function (ev) {
+            moveSelector = function (ev, undoMode) {
                 var pos = getPagePos(ev);
                 if (!pos.pageX && !pos.pageY) {
                     return false;
@@ -217,12 +217,12 @@
                         .eq(5)
                         .val(parseInt(100*(Math.max(0,Math.min(150,(pos.pageX - ev.data.pos.left))))/150, 10))
                         .get(0),
-                    [ev.data.preview]
+                    [ev.data.preview, undoMode || "midScrub"]
                 );
                 return false;
             },
             upSelector = function (ev) {
-                moveSelector(ev);
+                moveSelector(ev, "stopScrub");
                 fillRGBFields(ev.data.cal.data('colorpicker').color, ev.data.cal.get(0));
                 fillHexFields(ev.data.cal.data('colorpicker').color, ev.data.cal.get(0));
                 $(document).unbind(events.end, upSelector);
@@ -303,7 +303,7 @@
                     s: Math.min(100, Math.max(0, hsb.s)),
                     b: Math.min(100, Math.max(0, hsb.b))
                 };
-            }, 
+            },
             fixRGB = function (rgb) {
                 return {
                     r: Math.min(255, Math.max(0, rgb.r)),
@@ -322,7 +322,7 @@
                     hex = o.join('');
                 }
                 return hex;
-            }, 
+            },
             HexToRGB = function (hex) {
                 var hex = parseInt(((hex.indexOf('#') > -1) ? hex.substring(1) : hex), 16);
                 return {r: hex >> 16, g: (hex & 0x00FF00) >> 8, b: (hex & 0x0000FF)};
@@ -341,7 +341,7 @@
                 var delta = max - min;
                 hsb.b = max;
                 if (max != 0) {
-                    
+
                 }
                 hsb.s = max != 0 ? 255 * delta / max : 0;
                 if (hsb.s != 0) {
@@ -375,13 +375,13 @@
                     var t2 = (255-s)*v/255;
                     var t3 = (t1-t2)*(h%60)/60;
                     if(h==360) h = 0;
-                    if(h<60) {rgb.r=t1;	rgb.b=t2; rgb.g=t2+t3}
-                    else if(h<120) {rgb.g=t1; rgb.b=t2;	rgb.r=t1-t3}
-                    else if(h<180) {rgb.g=t1; rgb.r=t2;	rgb.b=t2+t3}
-                    else if(h<240) {rgb.b=t1; rgb.r=t2;	rgb.g=t1-t3}
-                    else if(h<300) {rgb.b=t1; rgb.g=t2;	rgb.r=t2+t3}
-                    else if(h<360) {rgb.r=t1; rgb.g=t2;	rgb.b=t1-t3}
-                    else {rgb.r=0; rgb.g=0;	rgb.b=0}
+                    if(h<60) {rgb.r=t1;    rgb.b=t2; rgb.g=t2+t3}
+                    else if(h<120) {rgb.g=t1; rgb.b=t2;    rgb.r=t1-t3}
+                    else if(h<180) {rgb.g=t1; rgb.r=t2;    rgb.b=t2+t3}
+                    else if(h<240) {rgb.b=t1; rgb.r=t2;    rgb.g=t1-t3}
+                    else if(h<300) {rgb.b=t1; rgb.g=t2;    rgb.r=t2+t3}
+                    else if(h<360) {rgb.r=t1; rgb.g=t2;    rgb.b=t1-t3}
+                    else {rgb.r=0; rgb.g=0;    rgb.b=0}
                 }
                 return {r:Math.round(rgb.r), g:Math.round(rgb.g), b:Math.round(rgb.b)};
             },
@@ -564,7 +564,7 @@ window.ScratchpadAutosuggest = {
         // Local completer is currently disabled because it doesn't work
         // perfectly, even with wrapping it.  I think implementing a custom
         // one before enabling would be best.
-         // The internal local completer thinks numbers are identifiers
+          // The internal local completer thinks numbers are identifiers
         // and suggests them if they are used, get rid of that by
         // wrapping the internal local completer in our own!
         this.localVariableCompleter = {
@@ -575,7 +575,7 @@ window.ScratchpadAutosuggest = {
                         session, pos, prefix, callback);
                     return;
                 }
-                 if (prefix.length === 0) {
+                  if (prefix.length === 0) {
                     callback(null, []);
                 }
             }.bind(this)
@@ -1505,7 +1505,7 @@ TooltipEngine.classes = {};
  *
  * Every Tooltip has the following major parts:
  * - initialize(), just accepts options and then tries to attach
- *   the html for the tooltip by callin render() and bind() as required
+ *   the html for the tooltip by calling render() and bind() as required
  *
  * - render() and bind() to set up the HTML
  *
@@ -1555,6 +1555,7 @@ window.TooltipBase = Backbone.View.extend({
 
         var editor = parent.editor;
         var loc = this.aceLocation;
+        var pos = editor.selection.getCursor();
         var editorBB = editor.renderer.scroller.getBoundingClientRect();
         var editorHeight = editorBB.height;
         if (typeof loc.tooltipCursor !== "number") {
@@ -1569,7 +1570,17 @@ window.TooltipBase = Backbone.View.extend({
         }).toggle(!(relativePos < 0 || relativePos >= editorHeight));
     },
 
-    updateText: function updateText(newText, customSelection) {
+    // Third parameter, if true, tells ACE not to remember this update in the undo chain. Useful in
+    // number-scrubbing.
+    // THIS IS A PROBLEMATIC HACK.
+    //  - If the undo chain and the editor's text are left in an inconsistent state, then
+    //     future undo's will change the wrong text. I (ChrisJPhoenix) think this just means you need to
+    //     put the editor's text back the way it was before letting anything else happen.
+    //     This causes problems if the user hits the keyboard in the middle of a number-scrub: undo
+    //     won't put things back correctly. Thus, use editor.setReadOnly(true) while using this hack.
+    //  - I use the session's $fromUndo variable to tell the editor not to save undo's. This
+    //     is undocumented. There's currently (7/25/15) a test for it in tooltips_test.js.
+    updateText: function updateText(newText, customSelection, avoidUndo) {
         if (!this.parent || this.parent.options.record.playing) {
             return;
         }
@@ -1582,7 +1593,17 @@ window.TooltipBase = Backbone.View.extend({
         var loc = this.aceLocation;
         var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
 
+        // We probably could just set it to false when we're done, but someone else might
+        // be trying a similar hack, or... who knows?
+        var undoState;
+        if (avoidUndo) {
+            undoState = editor.session.$fromUndo;
+            editor.session.$fromUndo = true;
+        }
         editor.session.replace(range, newText);
+        if (avoidUndo) {
+            editor.session.$fromUndo = undoState;
+        }
 
         range.end.column = range.start.column + newText.length;
         if (customSelection) {
@@ -1727,8 +1748,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
     render: function render() {
         this.$el = $("<div class='tooltip picker'><div class='picker'>" + "</div><div class='arrow'></div></div>").appendTo("body").find(".picker").ColorPicker({
             flat: true,
-            onChange: (function (hsb, hex, rgb) {
-                this.updateText(rgb);
+            onChange: (function (hsb, hex, rgb, undoMode) {
+                this.updateText(rgb, undoMode);
             }).bind(this)
         }).end().hide();
     },
@@ -1782,14 +1803,14 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         var paramsEnd = paramsStart + body.length;
         var functionEnd = paramsStart + pieces[0].length;
 
-        var allColors = _.map(body.split(","), parseFloat);
+        var allColors = _.map(body.split(','), parseFloat);
         if (allColors.length === 4 && !isNaN(allColors[3])) {
-            body = body.slice(0, body.lastIndexOf(","));
+            body = body.slice(0, body.lastIndexOf(','));
             paramsEnd = paramsStart + body.length;
             this.closing = event.line.slice(paramsEnd, functionEnd);
         }
 
-        var colors = _.map(body.split(","), function (c) {
+        var colors = _.map(body.split(','), function (c) {
             c = parseFloat(c);
             return isNaN(c) ? 0 : c;
         });
@@ -1837,8 +1858,25 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.$el.find(".picker").ColorPickerSetColor(rgb);
     },
 
-    updateText: function updateText(rgb) {
-        TooltipBase.prototype.updateText.call(this, rgb.r + ", " + rgb.g + ", " + rgb.b);
+    updateText: function updateText(rgb, undoMode) {
+        var avoidUndo = false;
+        if (undoMode === 'startScrub') {
+            // TODO: Next 4 lines of code needs refactoring with textAtAceLocation() in number-scrubber.js.
+            // TODO: Sort out this, self, ace, to make it callable from both places, and put it in tooltip-engine.js.
+            var Range = ace.require("ace/range").Range;
+            var loc = this.aceLocation;
+            var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
+            this.originalText = this.parent.editor.getSession().getTextRange(range);
+            this.wasReadOnly = this.parent.editor.getReadOnly();
+            this.parent.editor.setReadOnly(true);
+            avoidUndo = true;
+        } else if (undoMode === 'midScrub') {
+            avoidUndo = true;
+        } else if (undoMode === 'stopScrub') {
+            TooltipBase.prototype.updateText.call(this, this.originalText, undefined, true);
+            this.parent.editor.setReadOnly(this.wasReadOnly);
+        }
+        TooltipBase.prototype.updateText.call(this, rgb.r + ", " + rgb.g + ", " + rgb.b, undefined, avoidUndo);
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }
 });
@@ -2296,7 +2334,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
     },
 
     updateText: function updateText(newPath) {
-        var newText = "\"" + newPath + "\"";
+        var newText = '"' + newPath + '"';
         TooltipBase.prototype.updateText.call(this, newText);
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }
@@ -2391,6 +2429,13 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
 
         var $scrubberHandle = $("<div class='scrubber-handle'/>").append($leftButton).append($center).append($rightButton);
 
+        var textAtAceLocation = function textAtAceLocation() {
+            var Range = ace.require("ace/range").Range;
+            var loc = self.aceLocation;
+            var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
+            return self.parent.editor.getSession().getTextRange(range);
+        };
+
         if (!clickOnly) {
             $scrubberHandle.draggable({
                 axis: "x",
@@ -2402,6 +2447,13 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     self.$el.addClass("dragging");
                     $(this).css("visibility", "hidden");
                     self.trigger("scrubbingStarted");
+                    // The text-to-be-tweaked needs to be the same length at the start and end
+                    // of the anti-undo changes.
+                    // I could probably just remember the length, but I like putting back the
+                    // original string. (It might even matter for i18n.)
+                    self.originalString = textAtAceLocation();
+                    self.wasReadOnly = self.parent.editor.getReadOnly();
+                    self.parent.editor.setReadOnly(true);
                 },
                 drag: function drag(evt, ui) {
                     var thisOffset = ui.helper.offset();
@@ -2411,7 +2463,8 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     var exp = getExponent(evt);
                     self.decimals = Math.max(0, -exp);
                     self.intermediateValue = self.value + Math.round(dx / 2.0) * Math.pow(10, exp);
-                    self.updateText(self.intermediateValue.toFixed(self.decimals));
+                    // Third parameter true means: Don't let this be remembered in the undo chain.
+                    self.updateText(self.intermediateValue.toFixed(self.decimals), undefined, true);
                     self.dragged = true;
                 },
                 stop: function stop(evt, ui) {
@@ -2420,6 +2473,10 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
 
                     var exp = getExponent(evt);
                     self.decimals = Math.max(0, -exp);
+                    // put back the original string from before we started the un-undo manipulations
+                    self.updateText(self.originalString, undefined, true);
+                    // ...And this makes one undo-able replacement placing the drag's final value.
+                    self.updateText(self.intermediateValue.toFixed(self.decimals));
                     self.updateTooltip(self.intermediateValue, self.decimals);
                     self.trigger("scrubbingEnded");
 
@@ -2427,6 +2484,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     // are called after stop
                     setTimeout(function () {
                         self.dragged = false;
+                        self.parent.editor.setReadOnly(self.wasReadOnly);
                     }, 0);
                 }
             });
@@ -2566,10 +2624,10 @@ window.TooltipUtils = {
                 if (height < top) {
                     return true; // continue;
                 } else if (height < bottom) {
-                    self.loadNow(elem);
-                } else {
-                    return false; // break;
-                }
+                        self.loadNow(elem);
+                    } else {
+                        return false; // break;
+                    }
             });
         });
     },
@@ -2658,12 +2716,12 @@ this["Handlebars"]["templates"]["image-picker"] = Handlebars.template(function (
 function program1(depth0,data) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n        <div class=\"media-group\">\n            <h3>";
+  buffer += "\r\n        <div class=\"media-group\">\r\n            <h3>";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth0.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</h3>\n            ";
+  buffer += escapeExpression(stack1) + "</h3>\r\n            ";
   foundHelper = helpers.cite;
   stack1 = foundHelper || depth0.cite;
   stack2 = helpers['if'];
@@ -2673,7 +2731,7 @@ function program1(depth0,data) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n            ";
+  buffer += "\r\n            ";
   foundHelper = helpers.images;
   stack1 = foundHelper || depth0.images;
   stack2 = helpers.each;
@@ -2683,12 +2741,12 @@ function program1(depth0,data) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n        </div>\n    ";
+  buffer += "\r\n        </div>\r\n    ";
   return buffer;}
 function program2(depth0,data) {
   
   var buffer = "", stack1;
-  buffer += "\n                <p><a href=\"";
+  buffer += "\r\n                <p><a href=\"";
   foundHelper = helpers.citeLink;
   stack1 = foundHelper || depth0.citeLink;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -2698,13 +2756,13 @@ function program2(depth0,data) {
   stack1 = foundHelper || depth0.cite;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "cite", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</a></p>\n            ";
+  buffer += escapeExpression(stack1) + "</a></p>\r\n            ";
   return buffer;}
 
 function program4(depth0,data,depth1) {
   
   var buffer = "", stack1;
-  buffer += "\n            <div class=\"image\" data-path=\"";
+  buffer += "\r\n            <div class=\"image\" data-path=\"";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth1.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -2713,7 +2771,7 @@ function program4(depth0,data,depth1) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                <img src=\"";
+  buffer += escapeExpression(stack1) + "\">\r\n                <img src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth1.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -2732,11 +2790,11 @@ function program4(depth0,data,depth1) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + ".png\"/>\n                <span class=\"name\">";
+  buffer += escapeExpression(stack1) + ".png\"/>\r\n                <span class=\"name\">";
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</span>\n            </div>\n            ";
+  buffer += escapeExpression(stack1) + "</span>\r\n            </div>\r\n            ";
   return buffer;}
 
   buffer += "<div class=\"current-media\"><img src=\"";
@@ -2744,7 +2802,7 @@ function program4(depth0,data,depth1) {
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "cute/Blank.png\"/></div>\n<div class=\"media-groups\">\n    <div style=\"position: relative;\">\n    ";
+  buffer += escapeExpression(stack1) + "cute/Blank.png\"/></div>\r\n<div class=\"media-groups\">\r\n    <div style=\"position: relative;\">\r\n    ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   stack2 = helpers.each;
@@ -2754,7 +2812,7 @@ function program4(depth0,data,depth1) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n    </div>\n</div>\n<script>console.log(\"imagesDir = ";
+  buffer += "\r\n    </div>\r\n</div>\r\n<script>console.log(\"imagesDir = ";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -2833,7 +2891,7 @@ this["Handlebars"]["templates"]["mediapicker-modal"] = Handlebars.template(funct
 function program1(depth0,data) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n      <li ";
+  buffer += "\r\n      <li ";
   foundHelper = helpers.$first;
   stack1 = foundHelper || depth0.$first;
   stack2 = helpers['if'];
@@ -2856,7 +2914,7 @@ function program1(depth0,data) {
   stack1 = foundHelper || depth0.className;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "className", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</a></li>\n    ";
+  buffer += escapeExpression(stack1) + "</a></li>\r\n    ";
   return buffer;}
 function program2(depth0,data) {
   
@@ -2866,7 +2924,7 @@ function program2(depth0,data) {
 function program4(depth0,data,depth1) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n      <div class=\"tab-pane ";
+  buffer += "\r\n      <div class=\"tab-pane ";
   foundHelper = helpers.$first;
   stack1 = foundHelper || depth0.$first;
   stack2 = helpers['if'];
@@ -2884,7 +2942,7 @@ function program4(depth0,data,depth1) {
   if(typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, { hash: {} }); }
   else if(stack2=== undef) { stack1 = helperMissing.call(depth0, "slugify", stack1, { hash: {} }); }
   else { stack1 = stack2; }
-  buffer += escapeExpression(stack1) + "\">\n        <div class=\"mediapicker-modal-content\">\n        <div style=\"position: relative;\">\n        ";
+  buffer += escapeExpression(stack1) + "\">\r\n        <div class=\"mediapicker-modal-content\">\r\n        <div style=\"position: relative;\">\r\n        ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   stack2 = helpers.each;
@@ -2894,7 +2952,7 @@ function program4(depth0,data,depth1) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n        </div>\n        </div>\n\n        <div class=\"right\">\n        ";
+  buffer += "\r\n        </div>\r\n        </div>\r\n\r\n        <div class=\"right\">\r\n        ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   foundHelper = helpers.hasMultipleItems;
@@ -2906,7 +2964,7 @@ function program4(depth0,data,depth1) {
   if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n        </div>\n\n        <div style=\"clear: both;\"></div>\n      </div>\n    ";
+  buffer += "\r\n        </div>\r\n\r\n        <div style=\"clear: both;\"></div>\r\n      </div>\r\n    ";
   return buffer;}
 function program5(depth0,data) {
   
@@ -2916,7 +2974,7 @@ function program5(depth0,data) {
 function program7(depth0,data,depth1,depth2) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n            <div class=\"mediapicker-modal-group\">\n                ";
+  buffer += "\r\n            <div class=\"mediapicker-modal-group\">\r\n                ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth1.groups;
   foundHelper = helpers.hasMultipleItems;
@@ -2928,7 +2986,7 @@ function program7(depth0,data,depth1,depth2) {
   if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n                ";
+  buffer += "\r\n                ";
   foundHelper = helpers.cite;
   stack1 = foundHelper || depth0.cite;
   stack2 = helpers['if'];
@@ -2938,7 +2996,7 @@ function program7(depth0,data,depth1,depth2) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n                ";
+  buffer += "\r\n                ";
   foundHelper = helpers.images;
   stack1 = foundHelper || depth0.images;
   stack2 = helpers.each;
@@ -2948,7 +3006,7 @@ function program7(depth0,data,depth1,depth2) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n                ";
+  buffer += "\r\n                ";
   foundHelper = helpers.sounds;
   stack1 = foundHelper || depth0.sounds;
   stack2 = helpers.each;
@@ -2958,12 +3016,12 @@ function program7(depth0,data,depth1,depth2) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n            </div>\n        ";
+  buffer += "\r\n            </div>\r\n        ";
   return buffer;}
 function program8(depth0,data) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n                <h3 id=\"im-group-";
+  buffer += "\r\n                <h3 id=\"im-group-";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth0.groupName;
   foundHelper = helpers.slugify;
@@ -2976,13 +3034,13 @@ function program8(depth0,data) {
   stack1 = foundHelper || depth0.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</h3>\n                ";
+  buffer += escapeExpression(stack1) + "</h3>\r\n                ";
   return buffer;}
 
 function program10(depth0,data) {
   
   var buffer = "", stack1;
-  buffer += "\n                    <p><a href=\"";
+  buffer += "\r\n                    <p><a href=\"";
   foundHelper = helpers.citeLink;
   stack1 = foundHelper || depth0.citeLink;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -2992,13 +3050,13 @@ function program10(depth0,data) {
   stack1 = foundHelper || depth0.cite;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "cite", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</a></p>\n                ";
+  buffer += escapeExpression(stack1) + "</a></p>\r\n                ";
   return buffer;}
 
 function program12(depth0,data,depth1,depth3) {
   
   var buffer = "", stack1;
-  buffer += "\n                <div class=\"image mediapicker-modal-file\"\n                    data-update-path=\"";
+  buffer += "\r\n                <div class=\"image mediapicker-modal-file\"\r\n                    data-update-path=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth3.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -3012,7 +3070,7 @@ function program12(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + ".png\"\n                    data-preview-path=\"";
+  buffer += escapeExpression(stack1) + ".png\"\r\n                    data-preview-path=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth3.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -3031,7 +3089,7 @@ function program12(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + ".png\"\n                    data-path=\"";
+  buffer += escapeExpression(stack1) + ".png\"\r\n                    data-path=\"";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth1.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -3040,7 +3098,7 @@ function program12(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                    <div class=\"thumb-shell\"><img src=\"";
+  buffer += escapeExpression(stack1) + "\">\r\n                    <div class=\"thumb-shell\"><img src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth3.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -3064,17 +3122,17 @@ function program12(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + ".png\"/></div>\n                    <span>";
+  buffer += escapeExpression(stack1) + ".png\"/></div>\r\n                    <span>";
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</span>\n                </div>\n                ";
+  buffer += escapeExpression(stack1) + "</span>\r\n                </div>\r\n                ";
   return buffer;}
 
 function program14(depth0,data,depth1,depth3) {
   
   var buffer = "", stack1;
-  buffer += "\n                <div class=\"sound mediapicker-modal-file\"\n                    data-update-path='\"";
+  buffer += "\r\n                <div class=\"sound mediapicker-modal-file\"\r\n                    data-update-path='\"";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth1.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -3083,7 +3141,7 @@ function program14(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\"'\n                    data-preview-path=\"";
+  buffer += escapeExpression(stack1) + "\"'\r\n                    data-preview-path=\"";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth1.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -3092,7 +3150,7 @@ function program14(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\"\n                    data-path=\"";
+  buffer += escapeExpression(stack1) + "\"\r\n                    data-path=\"";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth1.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -3101,7 +3159,7 @@ function program14(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                    <audio data-lazy-src=\"";
+  buffer += escapeExpression(stack1) + "\">\r\n                    <audio data-lazy-src=\"";
   foundHelper = helpers.soundsDir;
   stack1 = foundHelper || depth3.soundsDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -3115,17 +3173,17 @@ function program14(depth0,data,depth1,depth3) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + ".mp3\" controls/>\n                    <span>";
+  buffer += escapeExpression(stack1) + ".mp3\" controls/>\r\n                    <span>";
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</span>\n                </div>\n                ";
+  buffer += escapeExpression(stack1) + "</span>\r\n                </div>\r\n                ";
   return buffer;}
 
 function program16(depth0,data) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n        <ul class=\"nav nav-pills nav-stackable\">\n        ";
+  buffer += "\r\n        <ul class=\"nav nav-pills nav-stackable\">\r\n        ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   foundHelper = helpers.patchedEach;
@@ -3137,12 +3195,12 @@ function program16(depth0,data) {
   if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n        </ul>\n        ";
+  buffer += "\r\n        </ul>\r\n        ";
   return buffer;}
 function program17(depth0,data) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n            <li ";
+  buffer += "\r\n            <li ";
   foundHelper = helpers.$first;
   stack1 = foundHelper || depth0.$first;
   stack2 = helpers['if'];
@@ -3165,7 +3223,7 @@ function program17(depth0,data) {
   stack1 = foundHelper || depth0.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</a></li>\n        ";
+  buffer += escapeExpression(stack1) + "</a></li>\r\n        ";
   return buffer;}
 function program18(depth0,data) {
   
@@ -3182,7 +3240,7 @@ function program22(depth0,data) {
   
   return "Ok";}
 
-  buffer += "<div class=\"modal mediapicker-modal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n    ";
+  buffer += "<div class=\"modal mediapicker-modal\">\r\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\r\n    ";
   foundHelper = helpers.classes;
   stack1 = foundHelper || depth0.classes;
   foundHelper = helpers.patchedEach;
@@ -3194,7 +3252,7 @@ function program22(depth0,data) {
   if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n    </ul>\n\n    <div class=\"tab-content\">\n    ";
+  buffer += "\r\n    </ul>\r\n\r\n    <div class=\"tab-content\">\r\n    ";
   foundHelper = helpers.classes;
   stack1 = foundHelper || depth0.classes;
   foundHelper = helpers.patchedEach;
@@ -3206,7 +3264,7 @@ function program22(depth0,data) {
   if(foundHelper && typeof stack2 === functionType) { stack1 = stack2.call(depth0, stack1, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack2, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n    </div>\n\n    <div class=\"mediapicker-modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">";
+  buffer += "\r\n    </div>\r\n\r\n    <div class=\"mediapicker-modal-footer\">\r\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(20, program20, data);
@@ -3216,7 +3274,7 @@ function program22(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</button>\n      <button type=\"button\" class=\"simple-button green mediapicker-modal-submit\" data-dismiss=\"modal\">";
+  buffer += "</button>\r\n      <button type=\"button\" class=\"simple-button green mediapicker-modal-submit\" data-dismiss=\"modal\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(22, program22, data);
@@ -3226,7 +3284,7 @@ function program22(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</button>\n    </div>\n</div>";
+  buffer += "</button>\r\n    </div>\r\n</div>";
   return buffer;});;
 (function () {
     var ESC = 27;
