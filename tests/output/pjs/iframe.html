@@ -43,8 +43,7 @@
             
             mocha.setup({
                 ui: 'bdd',
-                reporter: isPhantomJS ? jsonReporter : 'html',
-                allowUncaught: true
+                reporter: isPhantomJS ? jsonReporter : 'html'
             });
         </script>
         <script src="test_utils.js"></script>

@@ -192,9 +192,9 @@ describe("LoopProtector", function() {
             };
         });
 
-        output.output.loopProtector = new LoopProtector(function (hotLocation) {
-            expect(hotLocation.type).to.equal("WhileStatement");
-            expect(hotLocation.loc.start.line).to.equal(4);
+        output.output.loopProtector = new LoopProtector(function (error) {
+            expect(error.html).to.contain("while");
+            expect(error.row).to.equal(3);
             done();
         }, 200, 50, true);
 
@@ -244,13 +244,15 @@ describe("LoopProtector", function() {
             }
         });
 
-        output.output.loopProtector = new LoopProtector(function (hotLocation) {
-            expect(hotLocation.type).to.equal("WhileStatement");
-            expect(hotLocation.loc.start.line).to.equal(3);
-            done();
+        output.output.loopProtector = new LoopProtector(function (error) {
+            // caught by the runCode callback
         }, 200, 50, true);
 
-        output.runCode(code, function (errors, testResults) { });
+        output.runCode(code, function (errors, testResults) {
+            expect(errors[0].text).to.contain("while");
+            expect(errors[0].row).to.equal(2);
+            done();
+        });
     });
 
     it("should stop Infinites Loop with width/height", function (done) {
@@ -263,13 +265,15 @@ describe("LoopProtector", function() {
             }
         });
 
-        output.output.loopProtector = new LoopProtector(function (hotLocation) {
-            expect(hotLocation.type).to.equal("WhileStatement");
-            expect(hotLocation.loc.start.line).to.equal(3);
-            done();
+        output.output.loopProtector = new LoopProtector(function (error) {
+            // caught by the runCode callback
         }, 200, 50, true);
 
-        output.runCode(code, function (errors, testResults) { });
+        output.runCode(code, function (errors, testResults) {
+            expect(errors[0].text).to.contain("while");
+            expect(errors[0].row).to.equal(2);
+            done();
+        });
     });
 
     it("should stop Infinite Loop Inside Draw Function", function (done) {
@@ -285,12 +289,14 @@ describe("LoopProtector", function() {
             };
         });
 
-        output.output.loopProtector = new LoopProtector(function (hotLocation) {
-            expect(hotLocation.type).to.equal("WhileStatement");
-            expect(hotLocation.loc.start.line).to.equal(4);
-            done();
+        output.output.loopProtector = new LoopProtector(function (error) {
+            // caught by the runCode callback
         }, 200, 50, true);
 
-        output.runCode(code, function (errors, testResults) { });
+        output.runCode(code, function (errors, testResults) {
+            expect(errors[0].text).to.contain("while");
+            expect(errors[0].row).to.equal(3);
+            done();
+        });
     });
 });

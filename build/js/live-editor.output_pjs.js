@@ -2484,43 +2484,21 @@ window.PJSOutput = Backbone.View.extend({
                 new Function(code).call(this.canvas, context);
             }
         } catch (e) {
-            if (e.message === "KA_INFINITE_LOOP") {
-                return this.infiniteLoopError;
-            } else {
-                return e;
-            }
+            return e;
         }
     },
 
-    nodeLookup: {
-        "WhileStatement": $._("<code>while</code> loop"),
-        "DoWhileStatement": $._("<code>do-while</code> loop"),
-        "ForStatement": $._("<code>for</code> loop"),
-        "FunctionDeclaration": $._("<code>function</code>"),
-        "FunctionExpression": $._("<code>function</code>")
-    },
-
-    infiniteLoopCallback: function infiniteLoopCallback(hotLocation) {
-        var text = $._("A %(type)s is taking too long to run. " + "Perhaps you have a mistake in your code?", {
-            type: this.nodeLookup[hotLocation.type]
-        });
-
+    infiniteLoopCallback: function infiniteLoopCallback(error) {
         this.output.postParent({
             results: {
                 code: this.output.currentCode,
                 errors: [{
-                    text: text,
-                    row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
+                    text: error.html,
+                    row: error.row
                 }]
             }
         });
         this.KA_INFINITE_LOOP = true;
-    },
-
-    infiniteLoopError: {
-        text: $._("Your javascript is taking too long to run. " + "Perhaps you have a mistake in your code?"),
-        type: "error",
-        source: "timeout"
     },
 
     /*

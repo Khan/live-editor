@@ -42,6 +42,14 @@ window.LoopProtector = function(callback, mainTimeout, asyncTimeout, reportLocat
     this.visible = !visibly.hidden();
 };
 
+window.LoopProtector.nodeMessages = {
+    "WhileStatement": $._("<code>while</code> loop"),
+    "DoWhileStatement": $._("<code>do-while</code> loop"),
+    "ForStatement": $._("<code>for</code> loop"),
+    "FunctionDeclaration": $._("<code>function</code>"),
+    "FunctionExpression": $._("<code>function</code>")
+};
+
 window.LoopProtector.prototype = {
     /**
      * Throws 'KA_INFINITE_LOOP' if the difference between the current time
@@ -73,6 +81,12 @@ window.LoopProtector.prototype = {
             }.bind(this), 0);
         } else if (now - this.branchStartTime > this.timeout) {
             if (this.visible) {
+                if (!this.reportLocation) {
+                    let error = new Error("KA_INFINITE_LOOP");
+                    this.callback(error);
+                    throw error;
+                }
+                
                 // Determine which of KAInfiniteLoopProtect's callsites has 
                 // the most calls.
                 let max = 0;            // current max count
@@ -83,15 +97,24 @@ window.LoopProtector.prototype = {
                         hotLocation = location;
                     }
                 });
-                if (hotLocation) {
-                    hotLocation = JSON.parse(hotLocation);
-                }
-                this.callback(hotLocation);
                 
-                // We throw here, but only to interrupt execution, not to
-                // communicate back to the PJSOutput.  This is done via the
-                // callback.
-                throw new Error("KA_INFINITE_LOOP");
+                hotLocation = JSON.parse(hotLocation);
+
+                let html = $._(
+                    "A %(type)s is taking too long to run. " +
+                    "Perhaps you have a mistake in your code?", {
+                        type: LoopProtector.nodeMessages[hotLocation.type]
+                    });
+
+                let error = {
+                    html: html,
+                    row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
+                };
+
+                this.callback(error);
+                
+                // We throw here to interrupt communication but also to 
+                throw error;
             }
         }
     },

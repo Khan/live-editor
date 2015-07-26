@@ -688,10 +688,12 @@ window.LiveEditorOutput = Backbone.View.extend({
                 };
             }
 
+            var text = error.html ? this.prettify(error.html) : this.prettify(this.clean(error.text || error.message || ""));
+
             return {
                 row: error.row,
                 column: error.column,
-                text: _.compose(this.prettify, this.clean)(error.text || error.message || ""),
+                text: text,
                 type: error.type,
                 lint: error.lint,
                 source: error.source
