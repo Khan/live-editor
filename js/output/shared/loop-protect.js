@@ -132,14 +132,15 @@ window.LoopProtector.prototype = {
         "FunctionDeclaration"
     ],
 
-    protectAst: function(ast) {
-        if (this.riskyStatements.indexOf(ast.type) !== -1) {
+    // Called by walkAST whenever it leaves a node so AST mutations are okay
+    leave(node) {
+        if (this.riskyStatements.indexOf(node.type) !== -1) {
             if (this.reportLocation) {
                 let location = {
-                    type: ast.type,
-                    loc: ast.loc
+                    type: node.type,
+                    loc: node.loc
                 };
-                ast.body.body.unshift({
+                node.body.body.unshift({
                     "type": "ExpressionStatement",
                     "expression": {
                         "type": "CallExpression",
@@ -156,41 +157,37 @@ window.LoopProtector.prototype = {
                     }
                 });
             } else {
-                ast.body.body.unshift(this.loopBreak);
+                node.body.body.unshift(this.loopBreak);
             }
         }
-        for (let prop in ast) {
-            if (ast.hasOwnProperty(prop) && _.isObject(ast[prop])) {
-                if (_.isArray(ast[prop])) {
-                    _.each(ast[prop], this.protectAst.bind(this));
-                } else {
-                    this.protectAst(ast[prop]);
-                }
+
+        if (node.type === "Program") {
+            // Many pjs programs take a while to start up because they're generating
+            // terrain or textures or whatever.  Instead of complaining about all of
+            // those programs taking too long, we allow the main program body to take
+            // a little longer to run.  We call KAInfiniteLoopSetTimeout and set
+            // the timeout to mainTimeout just to reset the value when the program
+            // is re-run.
+            if (this.setMainTimeout) {
+                node.body.unshift(this.setMainTimeout);
+            }
+
+            // Any asynchronous calls such as mouseClicked() or calls to draw() 
+            // should take much less time so that the app (and the browser) remain
+            // responsive as the app is running so we call KAInfiniteLoopSetTimeout
+            // at the end of main and set timeout to be asyncTimeout
+            if (this.setAsyncTimeout) {
+                node.body.push(this.setAsyncTimeout);
             }
         }
     },
     
+    // Convenience method used by webpage-output.js
     protect: function (code) {
         let ast = esprima.parse(code, { loc: true });
-        this.protectAst(ast);
 
-        // Many pjs programs take a while to start up because they're generating
-        // terrain or textures or whatever.  Instead of complaining about all of
-        // those programs taking too long, we allow the main program body to take
-        // a little longer to run.  We call KAInfiniteLoopSetTimeout and set
-        // the timeout to mainTimeout just to reset the value when the program
-        // is re-run.
-        if (this.setMainTimeout) {
-            ast.body.unshift(this.setMainTimeout);
-        }
+        walkAST(ast, [this]);
         
-        // Any asynchronous calls such as mouseClicked() or calls to draw() 
-        // should take much less time so that the app (and the browser) remain
-        // responsive as the app is running so we call KAInfiniteLoopSetTimeout
-        // at the end of main and set timeout to be asyncTimeout
-        if (this.setAsyncTimeout) {
-            ast.body.push(this.setAsyncTimeout);
-        }
         return escodegen.generate(ast);
     }
 };

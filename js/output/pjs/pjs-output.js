@@ -739,12 +739,13 @@ window.PJSOutput = Backbone.View.extend({
         return dedupErrors;
     },
 
+    // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
     runCode: function(userCode, callback) {
-        var runCode = function() {
-            this.injectCode(userCode, callback);
-        }.bind(this);
+        this.ast = esprima.parse(userCode, { loc: true });
 
-        this.resourceCache.cacheResources(userCode).then(runCode);
+        this.resourceCache.cacheResources(this.ast).then(() => {
+            this.injectCode(userCode, callback);
+        });
     },
 
     /*
@@ -1139,7 +1140,7 @@ window.PJSOutput = Backbone.View.extend({
             }
 
             // Run the code as normal
-            var error = this.exec(userCode, this.canvas);
+            var error = this.exec(userCode, this.canvas, this.ast);
             if (error) {
                 return callback([error]);
             }
@@ -1298,16 +1299,20 @@ window.PJSOutput = Backbone.View.extend({
      *                 have access to.  It's also used to capture objects that
      *                 the user defines so that we can re-inject them into the
      *                 execution context as users modify their programs.
+     * @param ast: An object representing a parsed AST. Optional, for re-using ASTs.
      * @returns {Error?}
      */
-    exec: function(code, context) {
+    exec: function(code, context, ast) {
         if (!code) {
             return;
         }
 
-        var originalCode = code;
+        ast = ast || esprima.parse(code, { loc: true });
+
+        walkAST(ast, [this.loopProtector]);
+
+        code = escodegen.generate(ast);
         
-        code = this.loopProtector.protect(code);
         context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
 
@@ -1315,16 +1320,16 @@ window.PJSOutput = Backbone.View.extend({
         // can't access but since we're limited to string manipulation, we
         // can't guarantee this fo sho' so we just change the name to something
         // long and random every time the code runs and hope for the best!
-        var envName = "__env__" + Math.floor(Math.random() * 1000000000);
+        let envName = "__env__" + Math.floor(Math.random() * 1000000000);
 
         code = `with(${envName}[0]){\n${code}\n}`;
         // the top-level 'this' is empty except for this.externals, which
         // throws this message this is how users were getting at everything
         // from playing sounds to displaying pop-ups
-        var badProgram = $._("This program uses capabilities we've turned " +
+        let badProgram = $._("This program uses capabilities we've turned " +
             "off for security reasons. Khan Academy prohibits showing " +
             "external images, playing external sounds, or displaying pop-ups.");
-        var topLevelThis = "{ get externals() { throw { message: " +
+        let topLevelThis = "{ get externals() { throw { message: " +
             JSON.stringify(badProgram) + " } } }";
 
         // if we pass in the env as a parameter, the user will be able to get

@@ -40,6 +40,10 @@ describe("Scratchpad Output Exec", function() {
             getSound('rpg/giant-no');
             getSound("rpg/giant-no");
         });
+
+        test("getSound with computed string", function() {
+            getSound('rpg/' + 'giant-no');
+        });
     }
 
     // Check the actual contents of error message
@@ -108,6 +112,11 @@ describe("Scratchpad Output Exec", function() {
         var draw = function() {
             image(imageMap[0], 10, 10);
         };
+    });
+
+    test("getImage with computed string", function() {
+        var img = getImage("cute/" + "Blank" );
+        image(img, 0, 0);
     });
 
     failingTest("getImage with simple string", function () {

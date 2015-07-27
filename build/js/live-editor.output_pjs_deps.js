@@ -88210,6 +88210,59 @@ window.TraceKit = TraceKit;
 }(window));
 
 /**
+ * Traverses an AST an calls visitor methods on each of the visitors.
+ * 
+ * @param node: root of the AST to walk.
+ * @param visitors: one or more objects containing 'enter' and/or 'leave' 
+ *                  methods which accept a single AST node as an argument.
+ */
+window.walkAST = function (node, visitors) {
+    visitors.forEach(function (visitor) {
+        if (visitor.enter) {
+            visitor.enter(node);
+        }
+    });
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+        for (var _iterator = Object.keys(node)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var prop = _step.value;
+
+            if (node.hasOwnProperty(prop) && node[prop] instanceof Object) {
+                if (Array.isArray(node[prop])) {
+                    node[prop].forEach(function (child) {
+                        return walkAST(child, visitors);
+                    });
+                } else if (node.type) {
+                    // don't walk metadata props like "loc"
+                    walkAST(node[prop], visitors);
+                }
+            }
+        }
+    } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion && _iterator["return"]) {
+                _iterator["return"]();
+            }
+        } finally {
+            if (_didIteratorError) {
+                throw _iteratorError;
+            }
+        }
+    }
+
+    visitors.forEach(function (visitor) {
+        if (visitor.leave) {
+            visitor.leave(node);
+        }
+    });
+};
+/**
  * Creates a new LoopProtector object.
  *
  * @param callback: called whenever a loop takes more than <timeout>ms to complete.
@@ -88337,14 +88390,15 @@ window.LoopProtector.prototype = {
 
     riskyStatements: ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration"],
 
-    protectAst: function protectAst(ast) {
-        if (this.riskyStatements.indexOf(ast.type) !== -1) {
+    // called by walkAST whenever it leaves a node so AST mutations are okay
+    leave: function leave(node) {
+        if (this.riskyStatements.indexOf(node.type) !== -1) {
             if (this.reportLocation) {
                 var _location = {
-                    type: ast.type,
-                    loc: ast.loc
+                    type: node.type,
+                    loc: node.loc
                 };
-                ast.body.body.unshift({
+                node.body.body.unshift({
                     "type": "ExpressionStatement",
                     "expression": {
                         "type": "CallExpression",
@@ -88359,41 +88413,37 @@ window.LoopProtector.prototype = {
                     }
                 });
             } else {
-                ast.body.body.unshift(this.loopBreak);
+                node.body.body.unshift(this.loopBreak);
             }
         }
-        for (var prop in ast) {
-            if (ast.hasOwnProperty(prop) && _.isObject(ast[prop])) {
-                if (_.isArray(ast[prop])) {
-                    _.each(ast[prop], this.protectAst.bind(this));
-                } else {
-                    this.protectAst(ast[prop]);
-                }
+
+        if (node.type === "Program") {
+            // Many pjs programs take a while to start up because they're generating
+            // terrain or textures or whatever.  Instead of complaining about all of
+            // those programs taking too long, we allow the main program body to take
+            // a little longer to run.  We call KAInfiniteLoopSetTimeout and set
+            // the timeout to mainTimeout just to reset the value when the program
+            // is re-run.
+            if (this.setMainTimeout) {
+                node.body.unshift(this.setMainTimeout);
+            }
+
+            // Any asynchronous calls such as mouseClicked() or calls to draw()
+            // should take much less time so that the app (and the browser) remain
+            // responsive as the app is running so we call KAInfiniteLoopSetTimeout
+            // at the end of main and set timeout to be asyncTimeout
+            if (this.setAsyncTimeout) {
+                node.body.push(this.setAsyncTimeout);
             }
         }
     },
 
+    // convenience method used by webpage-output.js
     protect: function protect(code) {
         var ast = esprima.parse(code, { loc: true });
-        this.protectAst(ast);
 
-        // Many pjs programs take a while to start up because they're generating
-        // terrain or textures or whatever.  Instead of complaining about all of
-        // those programs taking too long, we allow the main program body to take
-        // a little longer to run.  We call KAInfiniteLoopSetTimeout and set
-        // the timeout to mainTimeout just to reset the value when the program
-        // is re-run.
-        if (this.setMainTimeout) {
-            ast.body.unshift(this.setMainTimeout);
-        }
+        walkAST(ast, [this]);
 
-        // Any asynchronous calls such as mouseClicked() or calls to draw()
-        // should take much less time so that the app (and the browser) remain
-        // responsive as the app is running so we call KAInfiniteLoopSetTimeout
-        // at the end of main and set timeout to be asyncTimeout
-        if (this.setAsyncTimeout) {
-            ast.body.push(this.setAsyncTimeout);
-        }
         return escodegen.generate(ast);
     }
 };

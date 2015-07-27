@@ -3,17 +3,8 @@ function PJSResourceCache(options) {
     this.output = options.output;   // LiveEditorOutput instance
     this.cache = {};
     this.imageHolder = null;
-}
-
-// Load and cache all resources (images and sounds) that could be used in 
-// the environment.  Right now all resources are loaded as we don't have 
-// more details on exactly which images will be required.
-//
-// Execution is delayed once a getImage/getSound appears in the source code
-// and none of the resources are cached. Execution begins once all the
-// resources have loaded.
-PJSResourceCache.prototype.cacheResources = function(userCode) {
-    var resourceRecords = this.getResourceRecords(userCode);
+    
+    this.queue = [];
 
     // Insert the images into a hidden div to cause them to load
     // but not be visible to the user
@@ -27,26 +18,30 @@ PJSResourceCache.prototype.cacheResources = function(userCode) {
             })
             .appendTo("body");
     }
+}
 
-    var promises = resourceRecords.map(this.loadResource.bind(this));
-
+/**
+ * Load and cache all resources (images and sounds) referenced in the code.
+ * 
+ * All resources are loaded as we don't have more details on exactly which
+ * images will be required.  Execution is delayed if a getImage/getSound call
+ * is encountered in the source code and none of the resources have been loaded
+ * yet.  Execution begins once all the resources have loaded.
+ * 
+ * @param ast: The root node of the AST for the code we want to cache resources 
+ *             for.  The reason why we pass in an AST is because we'd like
+ *             pjs-output.js to parse user code once and re-use the AST as many
+ *             time as possible.
+ * @returns {Promise}
+ */
+PJSResourceCache.prototype.cacheResources = function(ast) {
+    walkAST(ast, [this]);
+    this.queue = _.uniq(this.queue);
+    var promises = this.queue.map((resource) => {
+        return this.loadResource(resource);
+    });
+    this.queue = [];
     return $.when.apply($, promises);
-};
-
-PJSResourceCache.prototype.getResourceRecords = function(userCode) {
-    var resourceRegex = /get(Image|Sound)\s*\(\s*['"](.*?)['"]\s*\)/g;
-
-    var resources = [];
-    var match = resourceRegex.exec(userCode);
-    while (match) {
-        resources.push({
-            filename: match[2],
-            type: match[1].toLowerCase()
-        });
-        match = resourceRegex.exec(userCode);
-    }
-
-    return resources;
 };
 
 PJSResourceCache.prototype.loadResource = function(resourceRecord) {
@@ -148,4 +143,34 @@ PJSResourceCache.prototype.getSound = function(filename) {
     }
 
     return sound;
+};
+
+// AST visitor method called by walkAST in pjs-output.js' exec method
+PJSResourceCache.prototype.leave = function(node) {
+    if (node.type === "Literal" && typeof(node.value) === "string") {
+
+        OutputImages.forEach(group => {
+            group.images.forEach(image => {
+                if (node.value.indexOf(image) !== -1) {
+                    this.queue.push({
+                        filename: `${group.groupName}/${image}`,
+                        type: "image"
+                    });
+                }
+            });
+        });
+
+        OutputSounds.forEach(cls => {
+            cls.groups.forEach(group => {
+                group.sounds.forEach(sound => {
+                    if (node.value.indexOf(sound) !== -1) {
+                        this.queue.push({
+                            filename: `${group.groupName}/${sound}`,
+                            type: "sound"
+                        });
+                    }
+                });
+            });
+        });
+    }
 };
