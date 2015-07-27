@@ -1101,12 +1101,12 @@ function PJSResourceCache(options) {
 }
 
 /**
- * Load and cache all resources (images and sounds).
+ * Load and cache all resources (images and sounds) referenced in the code.
  * 
  * All resources are loaded as we don't have more details on exactly which
- * images will be required.  Execution is delayed once a getImage/getSound 
- * appears in the source code and none of the resources are cached.  Execution 
- * begins once all the resources have loaded.
+ * images will be required.  Execution is delayed if a getImage/getSound call
+ * is encountered in the source code and none of the resources have been loaded
+ * yet.  Execution begins once all the resources have loaded.
  * 
  * @param ast: The root node of the AST for the code we want to cache resources 
  *             for.  The reason why we pass in an AST is because we'd like
@@ -1120,7 +1120,6 @@ PJSResourceCache.prototype.cacheResources = function (ast) {
     walkAST(ast, [this]);
     this.queue = _.uniq(this.queue);
     var promises = this.queue.map(function (resource) {
-        console.log("loading: " + resource.filename);
         return _this.loadResource(resource);
     });
     this.queue = [];
@@ -2479,7 +2478,7 @@ window.PJSOutput = Backbone.View.extend({
      *                 have access to.  It's also used to capture objects that
      *                 the user defines so that we can re-inject them into the
      *                 execution context as users modify their programs.
-     * @param ast: use an existing ast
+     * @param ast: An object representing a parsed AST. Optional, for re-using ASTs.
      * @returns {Error?}
      */
     exec: function exec(code, context, ast) {
@@ -2493,7 +2492,6 @@ window.PJSOutput = Backbone.View.extend({
 
         code = escodegen.generate(ast);
 
-        //code = this.loopProtector.protect(code);
         context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
 
