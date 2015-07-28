@@ -11549,7 +11549,7 @@ require("/tools/entry-point.js");
 }());
 
 /**
- * Traverses an AST an calls visitor methods on each of the visitors.
+ * Traverses an AST and calls visitor methods on each of the visitors.
  * 
  * @param node: root of the AST to walk.
  * @param visitors: one or more objects containing 'enter' and/or 'leave' 
@@ -11729,7 +11729,7 @@ window.LoopProtector.prototype = {
 
     riskyStatements: ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration"],
 
-    // called by walkAST whenever it leaves a node so AST mutations are okay
+    // Called by walkAST whenever it leaves a node so AST mutations are okay
     leave: function leave(node) {
         if (this.riskyStatements.indexOf(node.type) !== -1) {
             if (this.reportLocation) {
@@ -11777,7 +11777,7 @@ window.LoopProtector.prototype = {
         }
     },
 
-    // convenience method used by webpage-output.js
+    // Convenience method used by webpage-output.js
     protect: function protect(code) {
         var ast = esprima.parse(code, { loc: true });
 

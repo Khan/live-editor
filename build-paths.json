@@ -12,7 +12,8 @@
             "bower_components/backbone/backbone.js",
             "bower_components/jed/jed.js",
             "bower_components/bootstrap/js/bootstrap-tab.js",
-            "js/shared/i18n.js"
+            "js/shared/i18n.js",
+            "node_modules/babel-core/browser-polyfill.min.js"
         ],
         "editor_ace_deps": [
             "bower_components/ace-builds/src-noconflict/ace.js",
