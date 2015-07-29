@@ -2231,6 +2231,10 @@ window.LiveEditor = Backbone.View.extend({
 
             // We go through all of this so that the text will wrap nicely
             var text = this.editor.text();
+
+            // Remove all HTML markup
+            text = text.replace(/<[^>]+>/g, "");
+
             var words = text.split(/\s+/);
             var lines = 0;
             var currentLine = words[0];
