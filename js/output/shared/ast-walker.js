@@ -6,6 +6,7 @@
  *                  methods which accept a single AST node as an argument.
  */
 window.walkAST = function(node, visitors) {
+    console.log(`entering: ${node.type}`);
     visitors.forEach(visitor => {
         if (visitor.enter) {
             visitor.enter(node);
@@ -25,4 +26,5 @@ window.walkAST = function(node, visitors) {
             visitor.leave(node);
         }
     });
+    console.log(`leaving: ${node.type}`);
 };

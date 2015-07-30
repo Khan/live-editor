@@ -741,10 +741,14 @@ window.PJSOutput = Backbone.View.extend({
 
     // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
     runCode: function(userCode, callback) {
-        this.ast = esprima.parse(userCode, { loc: true });
+        // TODO: get the "map" as well and use that to correct line numbers
+        let { code, ast } = babel.transform(userCode, {
+            blacklist: ['strict']
+        }); 
+        this.ast = ast;
 
         this.resourceCache.cacheResources(this.ast).then(() => {
-            this.injectCode(userCode, callback);
+            this.injectCode(code, callback);
         });
     },
 
@@ -1307,12 +1311,20 @@ window.PJSOutput = Backbone.View.extend({
             return;
         }
 
-        ast = ast || esprima.parse(code, { loc: true });
+        if (!ast) {
+            ast = babel.transform(code, { 
+                blacklist: [ "strict" ]
+            }).ast;
+        }
 
-        walkAST(ast, [this.loopProtector]);
+        estraverse.traverse(ast.program, {
+            leave: (node) => {
+                this.loopProtector.leave(node);
+            }
+        });
 
-        code = escodegen.generate(ast);
-        
+        code = escodegen.generate(ast.program);
+
         context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
 

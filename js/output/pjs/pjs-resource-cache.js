@@ -35,7 +35,11 @@ function PJSResourceCache(options) {
  * @returns {Promise}
  */
 PJSResourceCache.prototype.cacheResources = function(ast) {
-    walkAST(ast, [this]);
+    estraverse.traverse(ast.program, {
+        leave: (node) => {
+            this.leave(node);
+        }
+    });
     this.queue = _.uniq(this.queue);
     var promises = this.queue.map((resource) => {
         return this.loadResource(resource);

@@ -611,7 +611,7 @@ var BabyHint = {
             var index = line.lastIndexOf(functions[i]);
 
             var functionName = functions[i].split(/\(\s*/g)[0];
-            if (["for", "if", "while"].indexOf(functionName.trim()) !== -1) {
+            if (["for", "if", "while", "constructor"].indexOf(functionName.trim()) !== -1) {
                 continue;
             }
 

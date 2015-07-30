@@ -11556,6 +11556,7 @@ require("/tools/entry-point.js");
  *                  methods which accept a single AST node as an argument.
  */
 window.walkAST = function (node, visitors) {
+    console.log("entering: " + node.type);
     visitors.forEach(function (visitor) {
         if (visitor.enter) {
             visitor.enter(node);
@@ -11600,6 +11601,7 @@ window.walkAST = function (node, visitors) {
             visitor.leave(node);
         }
     });
+    console.log("leaving: " + node.type);
 };
 /**
  * Creates a new LoopProtector object.
@@ -11732,6 +11734,11 @@ window.LoopProtector.prototype = {
     // Called by walkAST whenever it leaves a node so AST mutations are okay
     leave: function leave(node) {
         if (this.riskyStatements.indexOf(node.type) !== -1) {
+            if (node.type === "FunctionDeclaration") {
+                if (["_classCallCheck"].indexOf(node.id.name) !== -1) {
+                    return;
+                }
+            }
             if (this.reportLocation) {
                 var _location = {
                     type: node.type,

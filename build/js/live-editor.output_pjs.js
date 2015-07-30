@@ -987,7 +987,7 @@ var BabyHint = {
             var index = line.lastIndexOf(functions[i]);
 
             var functionName = functions[i].split(/\(\s*/g)[0];
-            if (["for", "if", "while"].indexOf(functionName.trim()) !== -1) {
+            if (["for", "if", "while", "constructor"].indexOf(functionName.trim()) !== -1) {
                 continue;
             }
 
@@ -1117,7 +1117,11 @@ function PJSResourceCache(options) {
 PJSResourceCache.prototype.cacheResources = function (ast) {
     var _this = this;
 
-    walkAST(ast, [this]);
+    estraverse.traverse(ast.program, {
+        leave: function leave(node) {
+            _this.leave(node);
+        }
+    });
     this.queue = _.uniq(this.queue);
     var promises = this.queue.map(function (resource) {
         return _this.loadResource(resource);
@@ -1956,10 +1960,19 @@ window.PJSOutput = Backbone.View.extend({
     runCode: function runCode(userCode, callback) {
         var _this = this;
 
-        this.ast = esprima.parse(userCode, { loc: true });
+        // TODO: get the "map" as well and use that to correct line numbers
+
+        var _babel$transform = babel.transform(userCode, {
+            blacklist: ["strict"]
+        });
+
+        var code = _babel$transform.code;
+        var ast = _babel$transform.ast;
+
+        this.ast = ast;
 
         this.resourceCache.cacheResources(this.ast).then(function () {
-            _this.injectCode(userCode, callback);
+            _this.injectCode(code, callback);
         });
     },
 
@@ -2482,15 +2495,25 @@ window.PJSOutput = Backbone.View.extend({
      * @returns {Error?}
      */
     exec: function exec(code, context, ast) {
+        var _this2 = this;
+
         if (!code) {
             return;
         }
 
-        ast = ast || esprima.parse(code, { loc: true });
+        if (!ast) {
+            ast = babel.transform(code, {
+                blacklist: ["strict"]
+            }).ast;
+        }
 
-        walkAST(ast, [this.loopProtector]);
+        estraverse.traverse(ast.program, {
+            leave: function leave(node) {
+                _this2.loopProtector.leave(node);
+            }
+        });
 
-        code = escodegen.generate(ast);
+        code = escodegen.generate(ast.program);
 
         context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;

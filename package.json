@@ -47,5 +47,9 @@
     "sinon": "^1.10.3",
     "through2": "^2.0.0",
     "vinyl-sourcemaps-apply": "^0.1.4"
+  },
+  "dependencies": {
+    "estraverse": "^4.1.0",
+    "jshint": "^2.8.0"
   }
 }

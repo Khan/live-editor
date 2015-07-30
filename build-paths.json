@@ -80,7 +80,9 @@
             "external/structuredjs/structured.js",
             "external/TraceKit/tracekit.js",
             "js/output/shared/ast-walker.js",
-            "js/output/shared/loop-protect.js"
+            "js/output/shared/loop-protect.js",
+            "node_modules/babel-core/browser.min.js",
+            "external/estraverse/estraverse.js"
         ],
         "output_debugger_deps": [
             "bower_components/iframe-overlay/dist/iframe-overlay.js",

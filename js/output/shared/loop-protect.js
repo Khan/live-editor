@@ -135,6 +135,11 @@ window.LoopProtector.prototype = {
     // Called by walkAST whenever it leaves a node so AST mutations are okay
     leave(node) {
         if (this.riskyStatements.indexOf(node.type) !== -1) {
+            if (node.type === "FunctionDeclaration") {
+                if (["_classCallCheck"].indexOf(node.id.name) !== -1) {
+                    return;
+                }
+            }
             if (this.reportLocation) {
                 let location = {
                     type: node.type,
