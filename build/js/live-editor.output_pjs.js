@@ -1408,6 +1408,9 @@ window.PJSOutput = Backbone.View.extend({
             // The one exception to the rule above is the draw function
             // (which is defined on init but CAN be overridden).
             externalProps.draw = true;
+
+            this.beatsPerMinute = 120;
+            this.notes = [];
         }
 
         // Load JSHint config options
@@ -1422,6 +1425,10 @@ window.PJSOutput = Backbone.View.extend({
         });
 
         this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this), 2000, 500, true);
+
+        this.channelCount = 0;
+
+        this.pluginLoaded = false;
 
         return this;
     },
@@ -1662,6 +1669,63 @@ window.PJSOutput = Backbone.View.extend({
         // Basic console logging
         debug: function debug() {
             console.log.apply(console, arguments);
+        },
+
+        // MIDI.programChange(count, MIDI.GM.byName[inst].number);
+        // note: { note: "A0", beats: 1 }
+        playNote: function playNote(note) {
+            var key = note.note;
+            var beats = note.beats;
+            var length = beats / this.beatsPerMinute * 60;
+            var notes = this.notes;
+            var callback = function callback() {
+                notes.push(MIDI.noteOn(0, MIDI.keyToNote[key], 127, 0));
+                MIDI.noteOff(0, MIDI.keyToNote[key], length);
+            };
+            if (this.pluginLoaded) callback();else {
+                MIDI.loadPlugin({
+                    soundfontUrl: "../../external/midi-js/examples/soundfont/",
+                    instrument: "acoustic_grand_piano",
+                    onsuccess: callback
+                });
+                this.pluginLoaded = true;
+            }
+        },
+
+        stopNotes: function stopNotes() {
+            MIDI.stopAllNotes();
+            MIDI.Player.stop();
+        },
+
+        // TODO(meredith)
+        // TODO(juliana)
+        playSequence: function playSequence(sequence) {
+            var _this = this;
+
+            var currDelay = 0;
+            _.each(sequence, function (note, i) {
+                var key = note.note;
+                var beats = note.beats;
+                var length = beats / _this.beatsPerMinute * 60;
+                if (key === "rest") {
+                    currDelay += length;
+                    return;
+                }
+                var notes = _this.notes;
+                var callback = function callback() {
+                    notes.push(MIDI.noteOn(0, MIDI.keyToNote[key], 127, currDelay));
+                    MIDI.noteOff(0, MIDI.keyToNote[key], currDelay + length);
+                };
+                if (_this.pluginLoaded) callback();else {
+                    MIDI.loadPlugin({
+                        soundfontUrl: "../../external/midi-js/examples/soundfont/",
+                        instrument: "acoustic_grand_piano",
+                        onsuccess: callback
+                    });
+                    _this.pluginLoaded = true;
+                }
+                currDelay += length;
+            });
         },
 
         // Allow programs to have some control over the program running
@@ -1954,12 +2018,12 @@ window.PJSOutput = Backbone.View.extend({
 
     // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
     runCode: function runCode(userCode, callback) {
-        var _this = this;
+        var _this2 = this;
 
         this.ast = esprima.parse(userCode, { loc: true });
 
         this.resourceCache.cacheResources(this.ast).then(function () {
-            _this.injectCode(userCode, callback);
+            _this2.injectCode(userCode, callback);
         });
     },
 
@@ -2432,6 +2496,12 @@ window.PJSOutput = Backbone.View.extend({
 
         // Clear Processing logs
         this.canvas._clearLogs();
+
+        // MIDI.stopAllNotes();
+        // MIDI.Player.stop();
+        // _.each(this.notes, (note) => { note.stop(); });
+        // this.notes = [];
+        // this.pluginLoaded = false;
     },
 
     toggle: function toggle(doToggle) {
@@ -2485,6 +2555,15 @@ window.PJSOutput = Backbone.View.extend({
         if (!code) {
             return;
         }
+        if (this.pluginLoaded) {
+            MIDI.stopAllNotes();
+            MIDI.Player.stop();
+        }
+        _.each(this.notes, function (note) {
+            note.stop();
+        });
+        this.notes = [];
+        this.pluginLoaded = false;
 
         ast = ast || esprima.parse(code, { loc: true });
 

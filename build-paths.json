@@ -80,7 +80,11 @@
             "external/structuredjs/structured.js",
             "external/TraceKit/tracekit.js",
             "js/output/shared/ast-walker.js",
-            "js/output/shared/loop-protect.js"
+            "js/output/shared/loop-protect.js",
+            "external/midi-js/build/MIDI.js",
+            "external/midi-js/inc/shim/Base64.js",
+            "external/midi-js/inc/shim/Base64binary.js",
+            "external/midi-js/inc/shim/WebAudioAPI.js"
         ],
         "output_debugger_deps": [
             "bower_components/iframe-overlay/dist/iframe-overlay.js",
