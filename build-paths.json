@@ -1,4 +1,4 @@
-{
+
     "templates": [
         "tmpl/*.handlebars"
     ],
@@ -12,7 +12,8 @@
             "bower_components/backbone/backbone.js",
             "bower_components/jed/jed.js",
             "bower_components/bootstrap/js/bootstrap-tab.js",
-            "js/shared/i18n.js"
+            "js/shared/i18n.js",
+            "node_modules/babel-core/browser-polyfill.min.js"
         ],
         "editor_ace_deps": [
             "bower_components/ace-builds/src-noconflict/ace.js",
@@ -20,6 +21,7 @@
             "bower_components/ace-builds/src-noconflict/mode-html.js",
             "bower_components/ace-builds/src-noconflict/ext-static_highlight.js",
             "bower_components/ace-builds/src-noconflict/mode-sql.js",
+            "bower_components/ace-builds/src-noconflict/mode-python.js",
             "bower_components/ace-builds/src-noconflict/ext-searchbox.js",
             "bower_components/ace-builds/src-noconflict/ext-language_tools.js"
         ],
@@ -115,6 +117,13 @@
             "js/output/sql/sql-tester.js",
             "js/output/sql/sql-output.js"
         ],
+        "output_python_deps": [
+            "external/skulpt/skulpt.min.js",
+            "external/skulpt/skulpt-stdlib.js"
+        ],
+        "output_python": [
+            "js/output/python/python-output.js"
+        ],
         "output": [
             "build/tmpl/output.js",
             "js/output/shared/pooled-worker.js",
@@ -132,11 +141,8 @@
     },
     "workers_pjs": [
         "js/workers/pjs/jshint-worker.js",
-        "js/workers/pjs/processing-stubs.js",
-        "js/workers/pjs/program-stubs.js",
         "js/workers/pjs/test-worker.js",
-        "js/output/pjs/pjs-tester.js",
-        "js/workers/pjs/worker.js"
+        "js/output/pjs/pjs-tester.js"
     ],
     "workers_webpage": [
         "bower_components/ace-builds/src-noconflict/worker-html.js"
