@@ -51,6 +51,8 @@ PJSResourceCache.prototype.loadResource = function(resourceRecord) {
             return this.loadImage(filename);
         case "sound":
             return this.loadSound(filename);
+        case "midi":
+            return this.loadMidiPlugin(filename);
         default:
             break;
     }
@@ -105,6 +107,15 @@ PJSResourceCache.prototype.loadSound = function(filename) {
     return deferred;
 };
 
+PJSResourceCache.prototype.loadMidiPlugin = function(filename) {
+    console.log("loading the plugin! " + filename);
+    MIDI.loadPlugin({
+        soundfontUrl: "../../external/midi-js/examples/soundfont/",
+        instrument: filename,
+        onsuccess: function() { console.log("loaded!"); }
+    });
+};
+
 PJSResourceCache.prototype.getResource = function(filename, type) {
     switch (type) {
         case "image":
@@ -145,6 +156,35 @@ PJSResourceCache.prototype.getSound = function(filename) {
     return sound;
 };
 
+PJSResourceCache.prototype.getMidiPlugin = function(filename, callback) {
+    if (this.cache[filename]) callback();
+    else {
+        console.log("loading the plugin! " + filename);
+        MIDI.loadPlugin({
+            soundfontUrl: "../../external/midi-js/examples/soundfont/",
+            instrument: filename,
+            onsuccess: callback
+        });
+        this.cache[filename] = true;
+    }
+};
+
+// PJSResourceCache.prototype.loadMidiPlugin = function() {
+//     if (this.cache["midiPlugin"]) return true;
+//     MIDI.loadPlugin({
+//         soundfontUrl: "../../external/midi-js/examples/soundfont/",
+//         instrument: "acoustic_grand_piano",
+//     });
+//     sleep(100);
+// };
+
+function sleep(miliseconds) {
+           var currentTime = new Date().getTime();
+
+           while (currentTime + miliseconds >= new Date().getTime()) {
+           }
+       }
+
 // AST visitor method called by walkAST in pjs-output.js' exec method
 PJSResourceCache.prototype.leave = function(node) {
     if (node.type === "Literal" && typeof(node.value) === "string") {
@@ -171,6 +211,13 @@ PJSResourceCache.prototype.leave = function(node) {
                     }
                 });
             });
+        });
+    }
+    if (node.type === "ExpressionStatement" && (node.expression.callee.name === "playSequence" || node.expression.callee.name === "playNode")) {
+        console.log("found music function! adding to queue...");
+        this.queue.push({
+            filename: "acoustic_grand_piano",
+            type: "midi"
         });
     }
 };
