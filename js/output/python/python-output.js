@@ -47,6 +47,7 @@ window.PythonOutput = Backbone.View.extend({
     },
 
     lint: function lint(userCode, skip) {
+        console.log(userCode);
         this.slowparseResults = userCode;
         var deferred = $.Deferred();
         deferred.resolve([]);
@@ -73,7 +74,7 @@ window.PythonOutput = Backbone.View.extend({
         function outf(text) { 
             if (text != '\n') {
                 document.getElementById("skulpt_pre").style.color = "rgb(204, 204, 204)";
-                document.getElementById("skulpt_pre").innerHTML = text;
+                document.getElementById("skulpt_pre").innerHTML += text + "\n";
             }
         } 
         function builtinRead(x) {
@@ -82,6 +83,9 @@ window.PythonOutput = Backbone.View.extend({
             }
             return Sk.builtinFiles["files"][x];
         }
+
+        document.getElementById("skulpt_pre").innerHTML = "";
+        document.getElementById("skulpt_canvas_div").innerHTML = "";
 
         var prog = this.slowparseResults;
         Sk.pre = "skulpt_pre";
@@ -97,8 +101,8 @@ window.PythonOutput = Backbone.View.extend({
         myPromise.then(
             function(mod) {},
             function(err) {
-                document.getElementById("skulpt_pre").style.color = "red";
-                document.getElementById("skulpt_pre").innerHTML = err.toString();
+                /*document.getElementById("skulpt_pre").style.color = "red";
+                document.getElementById("skulpt_pre").innerHTML = err.toString();*/
             }
         );
         
