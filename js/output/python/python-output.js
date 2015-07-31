@@ -9,22 +9,41 @@ window.PythonOutput = Backbone.View.extend({
 
     render: function render() {
         this.$el.empty();
-        this.$frame = $("<iframe id='output_iframe'>").css({ width: "100%", height: "100%", border: "0" }).appendTo(this.el).show()[0];
-        this.frameDoc = this.$frame.contentDocument;
+        var canvas_style = "style='position: relative;width: 100%;height: 80%;margin: 0;'";
+        var pre_style = "style='position: relative;width: 100%;height: 20%;margin: 0;" +
+            "white-space: pre-wrap;white-space: -moz-pre-wrap;white-space: -pre-wrap;white-space: -o-pre-wrap;word-wrap: break-word;" +
+            "overflow: auto;" +
+            "background-color: black;" +
+            "color: rgb(204, 204, 204);'";
+        var pre_html = "<pre id='skulpt_pre'" + pre_style + "></pre>";
+        var canvas_html = "<div id='skulpt_canvas_div'" + canvas_style + "></div>";
+        var html = "<div id='output'>" + canvas_html + pre_html + "</div>";
+        this.$frame = $(html).css({ width: "100%", height: "100%", border: "0", position: "absolute"}).appendTo(this.el).show()[0];
     },
 
-    getScreenshot: function getScreenshot(screenshotSize, callback) {},
+    getScreenshot: function(screenshotSize, callback) {
+        try {
+        html2canvas(document.getElementById('skulpt_canvas_div'), {
+            imagesDir: this.output.imagesDir,
+            onrendered: function(canvas) {
+                var width = screenshotSize;
+                var height = (screenshotSize / canvas.width) * canvas.height;
 
-    infiniteLoopError: {
-        text: $._("Your javascript is taking too long to run. " + "Perhaps you have a mistake in your code?"),
-        type: "error",
-        source: "timeout"
-    },
+                // We want to resize the image to a thumbnail,
+                // which we can do by creating a temporary canvas
+                var tmpCanvas = document.createElement("canvas");
+                tmpCanvas.width = screenshotSize;
+                tmpCanvas.height = screenshotSize;
+                tmpCanvas.getContext("2d").drawImage(
+                    canvas, 0, 0, width, height);
 
-    runtimeError: {
-        text: $._("Your javascript encountered a runtime error. " + "Check your console for more information."),
-        type: "error",
-        source: "timeout"
+                // Send back the screenshot data
+                callback(tmpCanvas.toDataURL("image/png"));
+            }
+        });
+        } catch (err) {
+            console.log(err);
+        }
     },
 
     lint: function lint(userCode, skip) {
@@ -51,11 +70,10 @@ window.PythonOutput = Backbone.View.extend({
     postProcessing: function postProcessing(oldPageTitle) {},
 
     runCode: function runCode(codeObj, callback) {
-        // need to focus on fixing thisSSSSS!!!
         function outf(text) { 
             if (text != '\n') {
-                // innerHTML: $('#output_iframe').contents().find('body')[0].innerHTML
-                $('#output_iframe').contents().find('body').html(text);
+                document.getElementById("skulpt_pre").style.color = "rgb(204, 204, 204)";
+                document.getElementById("skulpt_pre").innerHTML = text;
             }
         } 
         function builtinRead(x) {
@@ -66,13 +84,12 @@ window.PythonOutput = Backbone.View.extend({
         }
 
         var prog = this.slowparseResults;
-        Sk.pre = "output";
-    
-        try {
-            Sk.configure({output:outf, read:builtinRead}); 
-        } catch(err) {}
+        Sk.pre = "skulpt_pre";
+        Sk.canvas = "skulpt_canvas_div";
 
-        (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = 'mycanvas';
+        Sk.configure({output:outf, read:builtinRead}); 
+
+        (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = "skulpt_canvas_div";
         var myPromise = Sk.misceval.asyncToPromise(function() {
            return Sk.importMainWithBody("<stdin>", false, prog, true);
         });
@@ -80,7 +97,8 @@ window.PythonOutput = Backbone.View.extend({
         myPromise.then(
             function(mod) {},
             function(err) {
-                console.log(err.toString());
+                document.getElementById("skulpt_pre").style.color = "red";
+                document.getElementById("skulpt_pre").innerHTML = err.toString();
             }
         );
         
