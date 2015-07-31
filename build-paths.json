@@ -12,8 +12,7 @@
             "bower_components/backbone/backbone.js",
             "bower_components/jed/jed.js",
             "bower_components/bootstrap/js/bootstrap-tab.js",
-            "js/shared/i18n.js",
-            "node_modules/babel-core/browser-polyfill.min.js"
+            "js/shared/i18n.js"
         ],
         "editor_ace_deps": [
             "bower_components/ace-builds/src-noconflict/ace.js",
@@ -70,7 +69,8 @@
             "js/shared/sounds.js",
             "js/shared/record.js",
             "js/shared/config.js",
-            "external/visibly/visibly.js"
+            "external/visibly/visibly.js",
+            "node_modules/babel-core/browser-polyfill.min.js"
         ],
         "output_pjs_deps": [
             "external/processing-js/processing.js",
