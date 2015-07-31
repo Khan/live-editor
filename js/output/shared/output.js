@@ -417,5 +417,6 @@ window.LiveEditorOutput = Backbone.View.extend({
 });
 
 LiveEditorOutput.registerOutput = function(name, output) {
+    console.log("hai, called with " + name);
     LiveEditorOutput.prototype.outputs[name] = output;
 };
