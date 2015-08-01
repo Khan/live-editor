@@ -7,7 +7,7 @@ module.exports = function() {
     var traverse = function(obj) {
         if (Array.isArray(obj)) {
             obj.forEach(function (path) {
-                if (path.indexOf("*") === -1) {
+                if (path.indexOf("*") === -1 && path.indexOf("build/tmpl") === -1) {
                     try {
                         fs.statSync(path);
                     } catch(e) {
