@@ -15,14 +15,14 @@ window.PythonOutput = Backbone.View.extend({
             "overflow: auto;" +
             "background-color: black;" +
             "color: rgb(204, 204, 204);'";
-        var pre_html = "<pre id='skulpt_pre'" + pre_style + "></pre>";
+        var pre_html = "<pre id='skulpt_pre' class='ui-widget-content'" + pre_style + "></pre>";
         var canvas_html = "<div id='skulpt_canvas_div'" + canvas_style + "></div>";
         var html = "<div id='output'>" + canvas_html + pre_html + "</div>";
         this.$frame = $(html).css({ width: "100%", height: "100%", border: "0", position: "absolute"}).appendTo(this.el).show()[0];
+        //$("#skulpt_pre").resizable;
     },
 
     getScreenshot: function(screenshotSize, callback) {
-        try {
         html2canvas(document.getElementById('skulpt_canvas_div'), {
             imagesDir: this.output.imagesDir,
             onrendered: function(canvas) {
@@ -41,13 +41,9 @@ window.PythonOutput = Backbone.View.extend({
                 callback(tmpCanvas.toDataURL("image/png"));
             }
         });
-        } catch (err) {
-            console.log(err);
-        }
     },
 
     lint: function lint(userCode, skip) {
-        console.log(userCode);
         this.slowparseResults = userCode;
         var deferred = $.Deferred();
         deferred.resolve([]);
@@ -71,6 +67,31 @@ window.PythonOutput = Backbone.View.extend({
     postProcessing: function postProcessing(oldPageTitle) {},
 
     runCode: function runCode(codeObj, callback) {
+        // PyGal Integration -----------------------------------------------------------------
+        
+        // the domOutput is called whenever the chart is rendered
+        // and is expected to append the provided html to the DOM
+        // and return the resulting jquery element
+        /*Sk.domOutput = function(html) {
+            console.log("oh hai!");
+            return $('#skulpt_canvas_div');
+            //return $('body').append(html).children().last();
+        };
+
+        // tell Skulpt where to find pygal.js and its dependencies are
+        // '../../bower_components/pygal.js/__init__.js'
+        Sk.externalLibraries = {
+            pygal : {
+                path : 'external/pygal.js/__init__.js',
+                dependencies : []
+            }
+        };*/
+
+        // optionally configure the size (in pixels) at which the charts should render
+        //Sk.availableWidth = 600;
+        //Sk.availableHeight = 400;
+        // -----------------------------------------------------------------------------------
+
         function outf(text) { 
             if (text != '\n') {
                 document.getElementById("skulpt_pre").style.color = "rgb(204, 204, 204)";
@@ -101,8 +122,7 @@ window.PythonOutput = Backbone.View.extend({
         myPromise.then(
             function(mod) {},
             function(err) {
-                /*document.getElementById("skulpt_pre").style.color = "red";
-                document.getElementById("skulpt_pre").innerHTML = err.toString();*/
+                console.log(err.toString());
             }
         );
         
