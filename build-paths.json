@@ -158,6 +158,9 @@
         "external/structuredjs/external/esprima.js",
         "external/structuredjs/structured.js",
         "bower_components/underscore/underscore.js",
+        "bower_components/highcharts/highcharts.js",
+        "bower_components/highcharts/highcharts-more.js",
+        "bower_components/pygal.js/__init__.js",
         "bower_components/soundmanager/swf/**"
     ],
     "styles": {

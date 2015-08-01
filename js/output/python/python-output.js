@@ -19,7 +19,6 @@ window.PythonOutput = Backbone.View.extend({
         var canvas_html = "<div id='skulpt_canvas_div'" + canvas_style + "></div>";
         var html = "<div id='output'>" + canvas_html + pre_html + "</div>";
         this.$frame = $(html).css({ width: "100%", height: "100%", border: "0", position: "absolute"}).appendTo(this.el).show()[0];
-        //$("#skulpt_pre").resizable;
     },
 
     getScreenshot: function(screenshotSize, callback) {
@@ -72,24 +71,27 @@ window.PythonOutput = Backbone.View.extend({
         // the domOutput is called whenever the chart is rendered
         // and is expected to append the provided html to the DOM
         // and return the resulting jquery element
-        /*Sk.domOutput = function(html) {
+        Sk.domOutput = function(html) {
             console.log("oh hai!");
             return $('#skulpt_canvas_div');
-            //return $('body').append(html).children().last();
         };
 
         // tell Skulpt where to find pygal.js and its dependencies are
         // '../../bower_components/pygal.js/__init__.js'
+        this.externalsDir = this.output.externalsDir;
         Sk.externalLibraries = {
             pygal : {
-                path : 'external/pygal.js/__init__.js',
-                dependencies : []
+                path : this.externalsDir + 'bower_components/pygal.js/__init__.js',
+                dependencies : [
+                    this.externalsDir + 'bower_components/highcharts/highcharts.js',
+                    this.externalsDir + 'bower_components/highcharts/highcharts-more.js'
+                ]
             }
-        };*/
+        };
 
         // optionally configure the size (in pixels) at which the charts should render
-        //Sk.availableWidth = 600;
-        //Sk.availableHeight = 400;
+        Sk.availableWidth = $('#skulpt_canvas_div').width();
+        Sk.availableHeight = $('#skulpt_canvas_div').height();
         // -----------------------------------------------------------------------------------
 
         function outf(text) { 

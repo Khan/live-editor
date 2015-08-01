@@ -89,7 +89,7 @@ gulp.task("workers", function() {
 
 gulp.task("externals", function() {
     gulp.src(paths.externals, {base: "./"})
-        .pipe(gulp.dest("build/"));
+        .pipe(gulp.dest("build/external/"));
 });
 
 var styleTypes = Object.keys(paths.styles);
