@@ -27,7 +27,9 @@
     "jed": "0.5.0",
     "escope": "~1.0.0",
     "iframe-overlay": "0.1.4",
-    "poster": "0.1.0"
+    "poster": "0.1.0",
+    "pygal.js": "0.0.0",
+    "highcharts": "~3.0.7"
   },
   "resolutions": {
     "jquery": "~2.1.1"
