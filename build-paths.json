@@ -118,6 +118,8 @@
             "js/output/sql/sql-output.js"
         ],
         "output_python_deps": [
+            "external/rgbcolor/rgbcolor.js",
+            "bower_components/canvg/dist/canvg.js",
             "external/html2canvas/html2canvas.js",
             "external/skulpt/skulpt.min.js",
             "external/skulpt/skulpt-stdlib.js"

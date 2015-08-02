@@ -1,0 +1,63 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Live Editor Simple Demo</title>
+    <link rel="stylesheet" href="../../build/css/live-editor.core_deps.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.tooltips.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        h1 {
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+        #sample-live-editor {
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Python Live Editor Example</h1>
+    <div id="sample-live-editor"></div>
+
+    <script src="../../build/js/live-editor.core_deps.js"></script>
+    <script src="../../build/js/live-editor.editor_ace_deps.js"></script>
+    <script src="../../build/js/live-editor.audio.js"></script>
+    <script src="../../build/js/live-editor.shared.js"></script>
+    <script src="../../build/js/live-editor.tooltips.js"></script>
+    <script src="../../build/js/live-editor.ui.js"></script>
+    <script src="../../build/js/live-editor.editor_ace.js"></script>
+
+    <script>
+    var outputUrl = "output_python.html";
+    var useDebugger = false;
+
+    window.liveEditor = new LiveEditor({
+        el: $("#sample-live-editor"),
+        outputType: "python",
+        code: window.localStorage["test-code"] || "print 'hello, world!'",
+        editorType: "ace_python",
+        width: 400,
+        height: 400,
+        editorHeight: "70%",
+        autoFocus: true,
+        workersDir: "../../build/workers/",
+        externalsDir: "../../build/external/",
+        imagesDir: "../../build/images/",
+        soundsDir: "../../sounds/",
+        execFile: outputUrl,
+        jshintFile: "../../build/external/jshint/jshint.js",
+        useDebugger: useDebugger
+    });
+
+    liveEditor.editor.on("change", function() {
+        window.localStorage["test-code"] = liveEditor.editor.text();
+    });
+
+    </script>
+</body>
+</html>

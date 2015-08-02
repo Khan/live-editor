@@ -74,7 +74,7 @@ window.PythonOutput = Backbone.View.extend({
         this.slowparseResults = userCode;
         var deferred = $.Deferred();
         deferred.resolve([]);
-        return deferred;
+        return deferred;        
     },
 
     flattenError: function flattenError(plainError, error, base) {
@@ -149,13 +149,40 @@ window.PythonOutput = Backbone.View.extend({
         });
 
         myPromise.then(
-            function(mod) {},
+            function(mod) {
+                callback([]);
+            },
             function(err) {
                 console.log(err.toString());
+                if (err.traceback.length > 0) {
+                    if ("lineno" in err.traceback[0]) {
+                        row = err.traceback[0].lineno;    
+                    }
+                    else {
+                        row = 0;
+                    }
+    
+                    if ("colno" in err.traceback[0]) {
+                        column = err.traceback[0].colno;    
+                    }
+                    else {
+                        column = 0;
+                    }
+                } else {
+                    row = column = 0;
+                }
+
+                callback([{
+                    row: row,
+                    column: column,
+                    text: err.toString(),
+                    type: "error",
+                    source: "slowparse"
+                }], prog);                
             }
         );
         
-        callback([]);
+        
     },
 
     clear: function clear() {},
