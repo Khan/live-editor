@@ -25,3 +25,6 @@
 [submodule "external/visibly"]
 	path = external/visibly
 	url = https://github.com/Khan/visibly.js
+[submodule "external/ast-editor"]
+	path = external/ast-editor
+	url = https://github.com/kevinb7/ast-editor

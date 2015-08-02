@@ -99,12 +99,12 @@ window.AceEditor = Backbone.View.extend({
             self.setErrorHighlight(false);
         });
 
-        this.editor.on("change", (function () {
-            self.trigger("change");
-            if (this.editor.curOp && this.editor.curOp.command.name) {
-                self.trigger("userChangedCode");
-            }
-        }).bind(this));
+        //this.editor.on("change", function() {
+        //    self.trigger("change");
+        //    if (this.editor.curOp && this.editor.curOp.command.name) {
+        //      self.trigger("userChangedCode");
+        //    }
+        //}.bind(this));
 
         this.editor.on("click", function () {
             self.trigger("click");

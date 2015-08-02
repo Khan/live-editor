@@ -132,7 +132,8 @@
             "build/tmpl/live-editor.js",
             "js/ui/canvas.js",
             "js/ui/record.js",
-            "js/live-editor.js"
+            "js/live-editor.js",
+            "external/ast-editor/demo/bundle.js"
         ]
     },
     "workers_pjs": [
