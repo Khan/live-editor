@@ -4,11 +4,26 @@ window.PythonOutput = Backbone.View.extend({
         this.output = options.output;
         // TODO(hannah): Implement a tester.
         this.tester = null;
+        this.error = null;
         this.render();
+
+        // Register a helper to tell the difference between null and 0
+        Handlebars.registerHelper("isNull", function (variable, options) {
+            if (variable === null) {
+                return options.fn(this);
+            } else {
+                return options.inverse(this);
+            }
+        });
     },
 
     render: function render() {
         this.$el.empty();
+        this.$frame = $("<iframe>")
+            .css({width: "100%", height: "100%", border: "0"})
+            .appendTo(this.el)
+            .show();
+        /*this.$el.empty();
         var canvas_style = "style='position: relative;width: 100%;height: 80%;margin: 0;'";
         var pre_style = "style='position: relative;width: 100%;height: 20%;margin: 0;" +
             "white-space: pre-wrap;white-space: -moz-pre-wrap;white-space: -pre-wrap;white-space: -o-pre-wrap;word-wrap: break-word;" +
@@ -19,7 +34,8 @@ window.PythonOutput = Backbone.View.extend({
         var pre_html = "<pre id='skulpt_pre' class='ui-widget-content' " + pre_style + "></pre>";
         var canvas_html = "<div id='skulpt_canvas_div'" + canvas_style + "></div>";
         var html = "<div id='output'>" + canvas_html + resize_html + pre_html + "</div>";
-        this.$frame = $(html).css({ width: "100%", height: "100%", border: "0", position: "absolute"}).appendTo(this.el).show()[0];
+        this.$frame = $(html).css({ width: "100%", height: "100%", border: "0", position: "absolute"}).appendTo(this.el).show()[0];*/
+
     },
 
     getScreenshot: function(screenshotSize, callback) {
@@ -70,10 +86,61 @@ window.PythonOutput = Backbone.View.extend({
         });
     },
 
+    getDocument: function () {
+        return this.$frame[0].contentWindow.document;
+    },
+
     lint: function lint(userCode, skip) {
         this.slowparseResults = userCode;
+        var prog = this.slowparseResults;
+        var error = null;
+         
         var deferred = $.Deferred();
-        deferred.resolve([]);
+        (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = "skulpt_canvas_div";
+
+        Sk.read = function (x) {
+            if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
+                throw "File not found: '" + x + "'";
+            }
+            return Sk.builtinFiles["files"][x];
+        };
+        
+        
+        var myPromise = Sk.misceval.asyncToPromise(function() {
+            console.log(Sk.importMainWithBody("<stdin>", false, prog, true));
+           return Sk.importMainWithBody("<stdin>", false, prog, true);
+        });
+
+        myPromise.then(
+            function(mod) {
+                deferred.resolve([]);
+            },
+            function(err) {
+                if ("lineno" in err.traceback[0]) {
+                    row = err.traceback[0].lineno;    
+                }
+                else {
+                    row = 0;
+                }
+
+                if ("colno" in err.traceback[0]) {
+                    column = err.traceback[0].colno;    
+                }
+                else {
+                    column = 0;
+                }
+
+                error = err.toString;
+                console.log(deferred);
+                deferred.resolve([{
+                    row: row,
+                    column: column,
+                    text: err.toString(),
+                    type: "error",
+                    source: "slowparse"
+                }]);
+            }
+        );
         return deferred;
     },
 
@@ -120,11 +187,18 @@ window.PythonOutput = Backbone.View.extend({
         Sk.availableWidth = $('#skulpt_canvas_div').width();
         Sk.availableHeight = $('#skulpt_canvas_div').height();
         // -----------------------------------------------------------------------------------
+        var deferred = $.Deferred();
+        var results = [];
+        var errors = [];
+        var prog = this.slowparseResults;
+        Sk.pre = "skulpt_pre";
+        Sk.canvas = "skulpt_canvas_div";
+        Sk.configure({output:outf, read:builtinRead}); 
+        (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = "skulpt_canvas_div";
 
         function outf(text) { 
             if (text != '\n') {
-                document.getElementById("skulpt_pre").style.color = "rgb(204, 204, 204)";
-                document.getElementById("skulpt_pre").innerHTML += text + "\n";
+                results.push(text);
             }
         } 
         function builtinRead(x) {
@@ -133,28 +207,41 @@ window.PythonOutput = Backbone.View.extend({
             }
             return Sk.builtinFiles["files"][x];
         }
-
-        document.getElementById("skulpt_pre").innerHTML = "";
-        document.getElementById("skulpt_canvas_div").innerHTML = "";
-
-        var prog = this.slowparseResults;
-        Sk.pre = "skulpt_pre";
-        Sk.canvas = "skulpt_canvas_div";
-
-        Sk.configure({output:outf, read:builtinRead}); 
-
-        (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = "skulpt_canvas_div";
+        
+        
         var myPromise = Sk.misceval.asyncToPromise(function() {
-           return Sk.importMainWithBody("<stdin>", false, prog, true);
+           return Sk.importMainWithBody("<stdin>", false, codeObj, true);
         });
 
         myPromise.then(
             function(mod) {},
             function(err) {
-                console.log(err.toString());
+                if ("lineno" in err.traceback[0]) {
+                    row = err.traceback[0].lineno;    
+                }
+                else {
+                    row = 0;
+                }
+
+                if ("colno" in err.traceback[0]) {
+                    column = err.traceback[0].colno;    
+                }
+                else {
+                    column = 0;
+                }
+
+                error = err.toString;
+
+                callback([error], userCode);                
             }
         );
-        
+
+        var output = Handlebars.templates["python-results"]({results: results, errors:errors});
+        var doc = this.getDocument();
+        doc.open();
+        doc.write(output);
+        doc.close();
+
         callback([]);
     },
 

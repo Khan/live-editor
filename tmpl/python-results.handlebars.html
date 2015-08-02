@@ -1,0 +1,40 @@
+<html>
+    <head>
+        {{!
+        These styles are intentionally not put next to the other styles so that
+            they will apply only to the Python iframe output.
+        }}
+        <style>
+            body{
+                padding: 0;
+                margin: 0;
+            }
+            .console {
+                position:fixed;
+                bottom:0;
+                width:100%;
+                max-height:20%;
+                overflow: scroll;
+                background-color: black;
+                color: rgb(204, 204, 204);
+                font-family: monospace;
+                padding: 1em;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id='output'>
+            <div class="skulpt_canvas_div"></div>
+            <div class="console">
+                {{#each results}}
+                    {{this}}
+                    <br/>
+                {{/each}}
+            </div>
+            <!-- <pre id='skulpt_pre' class='ui-widget-content'></pre>
+            <div id='skulpt_canvas_div'></div> -->
+        </div>
+        </div>
+    </body>
+</html>
