@@ -255,7 +255,7 @@ var ScratchpadConfig = Backbone.Model.extend({
                 session.setUseWorker(false);
 
                 // Set the font size
-                aceEditor.setFontSize("14px");
+                aceEditor.setFontSize("20px");
 
                 // Disable highlighting the selected word
                 aceEditor.setHighlightSelectedWord(false);
@@ -302,7 +302,7 @@ var ScratchpadConfig = Backbone.Model.extend({
                 session.setUseSoftTabs(true);
 
                 // Set the font size
-                aceEditor.setFontSize("14px");
+                aceEditor.setFontSize("20px");
 
                 // Disable highlighting the selected word
                 aceEditor.setHighlightSelectedWord(false);

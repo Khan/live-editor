@@ -991,156 +991,44 @@ window.LiveEditor = Backbone.View.extend({
         var ast = {
             type: "Program",
             body: [{
-                type: "LineComment",
-                content: "Single line comment" // newlines are disallowed
-            }, {
-                type: "BlockComment",
-                content: "Block Comment\nLine 1\nLine 2"
-            }, {
-                type: "BlankStatement"
-            }, {
-                type: "ForOfStatement",
-                left: {
-                    type: "VariableDeclaration",
-                    declarations: [{
-                        type: "VariableDeclarator",
-                        id: {
-                            type: "Identifier",
-                            name: "a"
-                        },
-                        init: null
-                    }],
-                    kind: "let"
-                },
-                right: {
-                    type: "ArrayExpression",
-                    elements: [{ type: "Literal", raw: "1.0" }, { type: "Literal", raw: "2.0" }, { type: "Literal", raw: "3.0" }, { type: "Literal", raw: "4.0" }]
-                },
-                body: {
-                    type: "BlockStatement",
-                    body: [{
-                        type: "ExpressionStatement",
-                        expression: {
-                            type: "AssignmentExpression",
-                            left: {
-                                type: "Identifier",
-                                name: "a"
-                            },
-                            right: {
-                                type: "BinaryExpression",
-                                operator: "+",
-                                left: {
-                                    type: "Identifier",
-                                    name: "a"
-                                },
-                                right: {
-                                    type: "Literal",
-                                    raw: "1"
-                                }
-                            }
-                        }
-                    }, { type: "BlankStatement" }, {
-                        type: "ExpressionStatement",
-                        expression: {
-                            type: "CallExpression",
-                            callee: {
-                                type: "Identifier",
-                                name: "ellipse"
-                            },
-                            arguments: [{
-                                type: "BinaryExpression",
-                                operator: "*",
-                                left: {
-                                    type: "Identifier",
-                                    name: "a"
-                                },
-                                right: {
-                                    type: "Literal",
-                                    raw: "50"
-                                }
-                            }, {
-                                type: "Literal",
-                                raw: "100"
-                            }, {
-                                type: "Literal",
-                                raw: "100"
-                            }, {
-                                type: "Literal",
-                                raw: "100"
-                            }]
-                        }
+                type: "ExpressionStatement",
+                expression: {
+                    type: "CallExpression",
+                    callee: {
+                        type: "Identifier",
+                        name: "fill"
+                    },
+                    arguments: [{
+                        type: "Literal",
+                        raw: "255"
+                    }, {
+                        type: "Literal",
+                        raw: "0"
+                    }, {
+                        type: "Literal",
+                        raw: "0"
                     }]
                 }
-            }, { type: "BlankStatement" }, {
-                type: "ClassDeclaration",
-                id: {
-                    type: "Identifier",
-                    name: "Foo"
-                },
-                body: {
-                    type: "ClassBody",
-                    body: [{
-                        type: "MethodDefinition",
-                        key: {
-                            type: "Identifier",
-                            name: "constructor"
-                        },
-                        value: {
-                            "type": "FunctionExpression",
-                            "id": null,
-                            "params": [],
-                            "defaults": [],
-                            "body": {
-                                "type": "BlockStatement",
-                                "body": [{ type: "BlankStatement" }]
-                            },
-                            "generator": false,
-                            "expression": false
-                        },
-                        kind: "constructor",
-                        computed: false,
-                        "static": false
+            }, {
+                type: "ExpressionStatement",
+                expression: {
+                    type: "CallExpression",
+                    callee: {
+                        type: "Identifier",
+                        name: "rect"
+                    },
+                    arguments: [{
+                        type: "Literal",
+                        raw: "100"
                     }, {
-                        type: "MethodDefinition",
-                        key: {
-                            type: "Identifier",
-                            name: "bar"
-                        },
-                        value: {
-                            "type": "FunctionExpression",
-                            "id": null,
-                            "params": [{
-                                type: "Identifier",
-                                name: "x"
-                            }, {
-                                type: "Identifier",
-                                name: "y"
-                            }],
-                            "defaults": [],
-                            "body": {
-                                "type": "BlockStatement",
-                                "body": [{
-                                    type: "ReturnStatement",
-                                    argument: {
-                                        type: "BinaryExpression",
-                                        operator: "+",
-                                        left: {
-                                            type: "Identifier",
-                                            name: "x"
-                                        },
-                                        right: {
-                                            type: "Identifier",
-                                            name: "y"
-                                        }
-                                    }
-                                }]
-                            },
-                            "generator": false,
-                            "expression": false
-                        },
-                        kind: "method",
-                        computed: false,
-                        "static": false
+                        type: "Literal",
+                        raw: "100"
+                    }, {
+                        type: "Literal",
+                        raw: "100"
+                    }, {
+                        type: "Literal",
+                        raw: "100"
                     }]
                 }
             }]
@@ -1148,11 +1036,14 @@ window.LiveEditor = Backbone.View.extend({
 
         setTimeout(function () {
             ASTEditor.init(_this.editor.editor, ast);
+            _this.editor.editor.setOptions({
+                fontSize: "20px"
+            });
             ASTEditor.watcher.on("run", function (userCode) {
                 console.log(userCode);
                 _this.markDirty();
             });
-        }, 100);
+        });
 
         var tooltipEngine = this.config.editor.tooltipEngine;
         if (tooltipEngine.setEnabledStatus) {
@@ -3584,6 +3475,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	        })();
+	    } else if (c === ")") {
+	        if (cursorParentNode.type === "FunctionExpression") {
+	            // TODO check that we're inside the param list
+	            // TODO create a function that gives the range of the param list
+	            var firstLine = cursorParentNode.body.body[0];
+	            row = firstLine.loc.start.line - 1;
+	            column = firstLine.loc.start.column;
+	            update(row, column);
+	        } else if (cursorParentNode.type === "MethodDefinition") {
+	            var firstLine = cursorParentNode.value.body.body[0];
+	            row = firstLine.loc.start.line - 1;
+	            column = firstLine.loc.start.column;
+	            update(row, column);
+	        } else {
+	            var nodes = findNode(prog, line, column + 1);
+	            if (["Parentheses", "CallExpression"].indexOf(nodes.cursorNode.type) !== -1) {
+	                column += 1;
+	                update(row, column);
+	            }
+	        }
+	    } else if (c === "]") {
+	        if (cursorParentNode.type === "ArrayExpression") {
+	            var nodes = findNode(prog, line, column + 1);
+	            if (nodes.cursorNode.type === "ArrayExpression") {
+	                column += 1;
+	                update(row, column);
+	            }
+	        }
 	    } else if (cursorNode.type === "ArrayExpression" && cursorNode.elements.length === 0) {
 	        var node = null;
 	        if (/[0-9\.]/.test(c)) {
@@ -3690,15 +3609,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	            column += 1;
 
 	            update(row, column);
-	        } else if (c === "=" && cursorParentNode.type === "ExpressionStatement") {
-	            cursorParentNode.expression = {
-	                type: "AssignmentExpression",
-	                left: cursorNode,
-	                right: {
-	                    type: "Placeholder"
+	        } else if (c === "=") {
+	            if (cursorParentNode.type === "ExpressionStatement") {
+	                cursorParentNode.expression = {
+	                    type: "AssignmentExpression",
+	                    left: cursorNode,
+	                    right: {
+	                        type: "Placeholder"
+	                    }
+	                };
+	                column += 3;
+	            } else if (cursorParentNode.type === "VariableDeclarator") {
+	                cursorParentNode.init = { type: "Placeholder" };
+	                column += 3;
+	            } else if (cursorParentNode.type === "MemberExpression") {
+	                var path = findNodePath(prog, line, column);
+	                var node = null;
+	                // find the largest expression with the cursor at the end
+	                for (var i = path.length - 1; i > -1; i--) {
+	                    node = path[i];
+	                    if (node.type === "ExpressionStatement") {
+	                        break;
+	                    }
 	                }
-	            };
-	            column += 3;
+	                var expr = node.expression;
+	                node.expression = {
+	                    type: "AssignmentExpression",
+	                    left: expr,
+	                    right: { type: "Placeholder" }
+	                };
+	                column += 3;
+	            }
 	            update(row, column);
 	        } else if (/[\+\-\*\/<>]/.test(c)) {
 	            if (cursorParentNode.type === "VariableDeclarator") {
@@ -3734,9 +3675,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                type: "Placeholder",
 	                                accept: "Identifier"
 	                            },
-	                            init: {
-	                                type: "Placeholder"
-	                            }
+	                            init: null
 	                        }],
 	                        kind: "let"
 	                    };
@@ -3766,9 +3705,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    };
 	                    column += 2;
 	                } else if (cursorNode.name === "return") {
+	                    // TODO check if we're inside a function
 	                    node = {
 	                        type: "ReturnStatement",
 	                        argument: { type: "Placeholder" }
+	                    };
+	                    column += 1;
+	                } else if (cursorNode.name === "class") {
+	                    node = {
+	                        type: "ClassDeclaration",
+	                        id: {
+	                            type: "Placeholder",
+	                            accept: "Identifier"
+	                        },
+	                        body: {
+	                            type: "ClassBody",
+	                            body: [{ type: 'BlankStatement' }]
+	                        }
 	                    };
 	                    column += 1;
 	                }
@@ -3819,6 +3772,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                };
 	                copyProps(node, cursorNode);
 	                column += 2;
+	            } else if (cursorParentNode.type === "MethodDefinition") {
+	                column += 1;
 	            } else {
 	                var callee = JSON.parse(JSON.stringify(cursorNode));
 	                clearProps(cursorNode);
@@ -3914,7 +3869,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	            // TODO create an actual node for param/arg lists
 	            cursorNode.arguments = [node];
 	            update(row, column);
-	        } else if (/[\+\-\*\/<>]/.test(c) && (!cursorNode.accept || cursorNode.accept === "BinaryExpression")) {
+	        } else if (/[\+\-\*\/<>]/.test(c)) {
+	            var left = JSON.parse(JSON.stringify(cursorNode));
+	            cursorNode.type = "BinaryExpression";
+	            cursorNode.left = left;
+	            cursorNode.right = { type: "Placeholder" };
+	            cursorNode.operator = c;
+	            column += 3;
+	            update(row, column);
+	        }
+	    } else if (cursorNode.type === "Parentheses") {
+	        if (/[\+\-\*\/<>]/.test(c)) {
 	            var left = JSON.parse(JSON.stringify(cursorNode));
 	            cursorNode.type = "BinaryExpression";
 	            cursorNode.left = left;
@@ -4069,6 +4034,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        update(row, column);
 	                    }
 	            }
+	        } else if (node2.type === "MemberExpression") {
+	            // TODO: check both sides of the dot and maintain the one that isn't a placeholder
+	            var obj = node2.object;
+	            clearProps(node2);
+	            copyProps(obj, node2);
+	            column -= 2;
+	            update(row, column);
 	        }
 	    } else if (node1.type === "ArrayExpression" && node1.elements.length === 0) {
 	        clearProps(node1);
@@ -4154,6 +4126,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        row += 1;
 	        column = cursorParentNode.loc.start.column;
 	        update(row, column);
+	    } else if (cursorNode.type === "Program") {
+	        var body = cursorNode.body;
+	        body.push({ type: "BlankStatement" });
+	        row += 1;
+	        update(row, column);
 	    } else if (cursorParentNode.type === "MethodDefinition") {
 	        var classBody = path[path.length - 3];
 	        var body = classBody.body;
@@ -4174,7 +4151,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return cursorStatementNode === element;
 	        });
 
-	        elements.splice(idx + 1, 0, { type: "BlankStatement" });
+	        if (column === cursorStatementNode.loc.start.column) {
+	            elements.splice(idx, 0, { type: "BlankStatement" });
+	        } else if (column === cursorStatementNode.loc.end.column) {
+	            elements.splice(idx + 1, 0, { type: "BlankStatement" });
+	        }
+
 	        row += 1;
 	        column = cursorStatementParentNode.loc.start.column;
 	        update(row, column);
@@ -4212,6 +4194,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (parent.init === node) {
 	            return "init";
+	        }
+	    } else if (parent.type === "MemberExpression") {
+	        if (parent.object === node) {
+	            return "object";
+	        }
+	        if (parent.property === node) {
+	            return "property";
 	        }
 	    } else if (["ExpressionStatement", "Parentheses"].indexOf(parent.type) !== -1) {
 	        return "expression";
@@ -4499,8 +4488,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var cursorNode = _findNode.cursorNode;
 	    var cursorParentNode = _findNode.cursorParentNode;
 
-	    if (["Literal", "Identifier"].indexOf(cursorNode.type) !== -1) {
+	    if (["Literal", "Identifier", "Parentheses"].indexOf(cursorNode.type) !== -1) {
 	        if (cursorNode.loc.start.column <= column - 1) {
+	            column -= 1;
+	            setCursor(row, column);
+	            return;
+	        }
+	    }
+
+	    // enter from the right
+	    if (cursorNode.type === "CallExpression") {
+	        if (cursorNode.loc.end.column === column) {
 	            column -= 1;
 	            setCursor(row, column);
 	            return;
@@ -4523,6 +4521,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else if (propName === "init") {
 	            // TODO: check the type, if it's a placeholder then we need to select it
 	            var loc = _parent.id.loc;
+	            row = loc.end.line - 1;
+	            column = loc.end.column;
+	            setCursor(row, column);
+	            break;
+	        } else if (propName === "property") {
+	            var loc = _parent.object.loc;
 	            row = loc.end.line - 1;
 	            column = loc.end.column;
 	            setCursor(row, column);
@@ -4575,6 +4579,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	            setCursor(row, column);
 	        }
 	    }
+
+	    var nodes = findNode(prog, row + 1, column - 1);
+	    // we use cursorParentNode here because the identifier for the CallExpression
+	    // is smushed right up against the '(' so it's impossible to find it unless
+	    // we changed the the findNode method
+	    // TODO investigate adding an option to findNode to change whether the ranges are inclusive or not
+	    if (["CallExpression"].indexOf(nodes.cursorParentNode.type) !== -1) {
+	        column -= 1;
+	        setCursor(row, column);
+	        return;
+	    }
 	};
 
 	var right = function right(path, row, column) {
@@ -4583,7 +4598,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var cursorNode = _findNode2.cursorNode;
 	    var cursorParentNode = _findNode2.cursorParentNode;
 
-	    if (["Literal", "Identifier"].indexOf(cursorNode.type) !== -1) {
+	    if (["Literal", "Identifier", "Parentheses"].indexOf(cursorNode.type) !== -1) {
 	        if (column + 1 <= cursorNode.loc.end.column) {
 	            column += 1;
 	            setCursor(row, column);
@@ -4610,6 +4625,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //hideCursor();
 	            // TODO: check the type, e.g. PlaceHolder
 
+	            break;
+	        } else if (propName === "object") {
+	            var loc = _parent2.property.loc;
+	            row = loc.end.line - 1;
+	            column = loc.start.column;
+	            setCursor(row, column);
 	            break;
 	        }
 	    }
@@ -4659,6 +4680,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            setCursor(row, column);
 	        }
 	    }
+
+	    var nodes = findNode(prog, row + 1, column + 1);
+	    if (["Parentheses", "CallExpression"].indexOf(nodes.cursorNode.type) !== -1) {
+	        column += 1;
+	        setCursor(row, column);
+	        return;
+	    }
 	};
 
 	module.exports = {
@@ -4679,6 +4707,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                var cursorNode = _findNode3.cursorNode;
 
+	                console.log(cursorNode);
 	                if (cursorNode.type === "Placeholder") {
 	                    var loc = cursorNode.loc;
 	                    var row = loc.start.line - 1;
