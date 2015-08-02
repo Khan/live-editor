@@ -8,7 +8,13 @@ window.AceEditor = Backbone.View.extend({
     tooltips: {
         // The earlier in the list a tooltip appears
         // the higher priority it gets.
-        ace_pjs: ["imagePicker", "soundModal", "colorPicker", "numberScrubberClick", "autoSuggest", "numberScrubber"],
+        ace_pjs: [
+        // TODO: fix tooltips so that they work with the ast-editor
+        //"imagePicker",
+        //"soundModal",
+        //"colorPicker",
+        //"numberScrubberClick",
+        "autoSuggest"],
         ace_webpage: ["imageModal", "colorPicker", "numberScrubber"],
         ace_sql: ["numberScrubber"]
     },
@@ -424,3 +430,5 @@ window.AceEditor = Backbone.View.extend({
 LiveEditor.registerEditor("ace_pjs", AceEditor);
 LiveEditor.registerEditor("ace_webpage", AceEditor);
 LiveEditor.registerEditor("ace_sql", AceEditor);
+
+//"numberScrubber"

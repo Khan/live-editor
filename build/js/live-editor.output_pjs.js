@@ -2495,28 +2495,29 @@ window.PJSOutput = Backbone.View.extend({
      * @returns {Error?}
      */
     exec: function exec(code, context, ast) {
-        var _this2 = this;
-
         if (!code) {
             return;
         }
 
-        if (!ast) {
-            ast = babel.transform(code, {
-                blacklist: ["strict"]
-            }).ast;
-        }
+        //if (!ast) {
+        //    ast = babel.transform(code, {
+        //        blacklist: [ "strict" ]
+        //    }).ast;
+        //}
+        //
+        //estraverse.traverse(ast.program, {
+        //    leave: (node) => {
+        //        this.loopProtector.leave(node);
+        //    }
+        //});
+        //
+        //code = escodegen.generate(ast.program);
 
-        estraverse.traverse(ast.program, {
-            leave: function leave(node) {
-                _this2.loopProtector.leave(node);
-            }
-        });
+        // TODO: rewrite loop protect as a babel transform
+        code = babel.transform(code, { blacklist: ["strict"] }).code;
 
-        code = escodegen.generate(ast.program);
-
-        context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
-        context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
+        //context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
+        //context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
 
         // this is kind of sort of supposed to fake a gensym that the user
         // can't access but since we're limited to string manipulation, we

@@ -9,12 +9,13 @@ window.AceEditor = Backbone.View.extend({
         // The earlier in the list a tooltip appears
         // the higher priority it gets.
         ace_pjs: [
-            "imagePicker",
-            "soundModal",
-            "colorPicker",
-            "numberScrubberClick",
+            // TODO: fix tooltips so that they work with the ast-editor
+            //"imagePicker",
+            //"soundModal",
+            //"colorPicker",
+            //"numberScrubberClick",
             "autoSuggest",
-            "numberScrubber"
+            //"numberScrubber"
         ],
         ace_webpage: [
             "imageModal",
