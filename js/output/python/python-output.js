@@ -15,14 +15,42 @@ window.PythonOutput = Backbone.View.extend({
             "overflow: auto;" +
             "background-color: black;" +
             "color: rgb(204, 204, 204);'";
-        var pre_html = "<pre id='skulpt_pre' class='ui-widget-content'" + pre_style + "></pre>";
+        var resize_html = "<div style='height: 5px; cursor: n-resize; background-color: rgb(169, 169, 169);'></div>";
+        var pre_html = "<pre id='skulpt_pre' class='ui-widget-content' " + pre_style + "></pre>";
         var canvas_html = "<div id='skulpt_canvas_div'" + canvas_style + "></div>";
-        var html = "<div id='output'>" + canvas_html + pre_html + "</div>";
+        var html = "<div id='output'>" + canvas_html + resize_html + pre_html + "</div>";
         this.$frame = $(html).css({ width: "100%", height: "100%", border: "0", position: "absolute"}).appendTo(this.el).show()[0];
     },
 
     getScreenshot: function(screenshotSize, callback) {
-        html2canvas(document.getElementById('skulpt_canvas_div'), {
+        var nodesToRecover = [];
+        var nodesToRemove = [];
+
+        var svgElem = $('#output').find('svg');
+
+        svgElem.each(function(index, node) {
+            var parentNode = node.parentNode;
+            var svg = parentNode.innerHTML;
+
+            var canvas = document.createElement('canvas');
+
+            canvg(canvas, svg);
+
+            nodesToRecover.push({
+                parent: parentNode,
+                child: node
+            });
+            parentNode.removeChild(node);
+
+            nodesToRemove.push({
+                parent: parentNode,
+                child: canvas
+            });
+
+            parentNode.appendChild(canvas);
+        });
+
+        html2canvas(document.getElementById('output'), {
             imagesDir: this.output.imagesDir,
             onrendered: function(canvas) {
                 var width = screenshotSize;
@@ -72,7 +100,6 @@ window.PythonOutput = Backbone.View.extend({
         // and is expected to append the provided html to the DOM
         // and return the resulting jquery element
         Sk.domOutput = function(html) {
-            console.log("oh hai!");
             return $('#skulpt_canvas_div');
         };
 
