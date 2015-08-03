@@ -169,22 +169,6 @@ PJSResourceCache.prototype.getMidiPlugin = function(filename, callback) {
     }
 };
 
-// PJSResourceCache.prototype.loadMidiPlugin = function() {
-//     if (this.cache["midiPlugin"]) return true;
-//     MIDI.loadPlugin({
-//         soundfontUrl: "../../external/midi-js/examples/soundfont/",
-//         instrument: "acoustic_grand_piano",
-//     });
-//     sleep(100);
-// };
-
-function sleep(miliseconds) {
-           var currentTime = new Date().getTime();
-
-           while (currentTime + miliseconds >= new Date().getTime()) {
-           }
-       }
-
 // AST visitor method called by walkAST in pjs-output.js' exec method
 PJSResourceCache.prototype.leave = function(node) {
     if (node.type === "Literal" && typeof(node.value) === "string") {
@@ -213,7 +197,7 @@ PJSResourceCache.prototype.leave = function(node) {
             });
         });
     }
-    if (node.type === "ExpressionStatement" && (node.expression.callee.name === "playSequence" || node.expression.callee.name === "playNode")) {
+    if (node.type === "ExpressionStatement" && (node.expression.callee.name === "playSequence" || node.expression.callee.name === "playNote")) {
         console.log("found music function! adding to queue...");
         this.queue.push({
             filename: "acoustic_grand_piano",

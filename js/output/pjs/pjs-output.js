@@ -181,8 +181,20 @@ window.PJSOutput = Backbone.View.extend({
 
         this.beatsPerMinute = 120;
         this.notes = [];
-        // this.pluginLoaded = false;
-
+        this.chordDict = {"A":  ["A3", "Db4", "E4"],
+                          "Am": ["A3", "C4", "E4"],
+                          "B":  ["B3", "Eb4", "Gb4"],
+                          "Bm": ["B3", "D4", "Gb4"],
+                          "C":  ["C3", "E3", "G3"],
+                          "Cm": ["C3", "Eb3", "G3"],
+                          "D":  ["D3", "Gb3", "A3"],
+                          "Dm": ["D3", "F3", "A3"],
+                          "E":  ["E3", "Ab3", "B3"],
+                          "Em": ["E3", "G3", "B3"],
+                          "F":  ["F3", "A3", "C4"],
+                          "Fm": ["F3", "Ab3", "C3"],
+                          "G":  ["G3", "B3", "D4"],
+                          "Gm": ["G3", "Bb3", "D3"]}
         return this;
     },
 
@@ -440,65 +452,55 @@ window.PJSOutput = Backbone.View.extend({
             console.log.apply(console, arguments);
         },
 
-        // MIDI.programChange(count, MIDI.GM.byName[inst].number);
-        // note: { note: "A0", beats: 1 }
         playNote: function(note) {
             console.log("trying to play!");
-            // this.resourceCache.loadMidiPlugin();
-            var key = note.note;
-            var beats = note.beats;
-            var length = beats / this.beatsPerMinute * 60;
-            // var notes = this.notes;
-            // var callback = function() {
+            var key;
+            var length = note.beats / this.beatsPerMinute * 60;
+            if (note.notes || note.chord) {
+                if (note.chord) {
+                    key = this.chordDict[note.chord];
+                } else {
+                    key = note.notes;
+                }
+                key = _.map(key, (elem) => {
+                    return MIDI.keyToNote[elem];
+                });
+                MIDI.chordOn(0, key, 127, 0);
+                MIDI.chordOff(0, key, length);
+            } else {
+                key = note.note;
+                if (key === "rest") return;
                 this.notes.push(MIDI.noteOn(0, MIDI.keyToNote[key], 127, 0));
                 MIDI.noteOff(0, MIDI.keyToNote[key], length);
-            // }
-            // this.resourceCache.getMidiPlugin("acoustic_grand_piano", callback);
-            // if (this.pluginLoaded) callback();
-            // else {
-            //     MIDI.loadPlugin({
-            //         soundfontUrl: "../../external/midi-js/examples/soundfont/",
-            //         instrument: "acoustic_grand_piano",
-            //         onsuccess: callback
-            //     });
-            //     this.pluginLoaded = true;
-            // }
+            }
         },
 
-        // stopNotes: function() {
-        //     MIDI.stopAllNotes();
-        //     MIDI.Player.stop();
-        // },
-
-        // TODO(meredith)
-        // TODO(juliana)
         playSequence: function(sequence) {
             console.log("trying to play!");
-            // this.resourceCache.loadMidiPlugin();
             var currDelay = 0;
             _.each(sequence, (note, i) => {
-                var key = note.note;
-                var beats = note.beats;
-                var length = beats / this.beatsPerMinute * 60;
-                if (key === "rest") {
-                    currDelay += length;
-                    return;
-                }
-                // var notes = this.notes;
-                // var callback = function() {
+                var key;
+                var length = note.beats / this.beatsPerMinute * 60;
+                if (note.notes || note.chord) {
+                    if (note.chord) {
+                        key = this.chordDict[note.chord];
+                    } else {
+                        key = note.notes;
+                    }
+                    key = _.map(key, (elem) => {
+                        return MIDI.keyToNote[elem];
+                    });
+                    MIDI.chordOn(0, key, 127, currDelay);
+                    MIDI.chordOff(0, key, currDelay + length);
+                } else {
+                    key = note.note;
+                    if (key === "rest") {
+                        currDelay += length;
+                        return;
+                    }
                     this.notes.push(MIDI.noteOn(0, MIDI.keyToNote[key], 127, currDelay));
                     MIDI.noteOff(0, MIDI.keyToNote[key], currDelay + length);
-                // }
-                // this.resourceCache.getMidiPlugin("acoustic_grand_piano", callback);
-                // if (this.pluginLoaded) callback();
-                // else {
-                //     MIDI.loadPlugin({
-                //         soundfontUrl: "../../external/midi-js/examples/soundfont/",
-                //         instrument: "acoustic_grand_piano",
-                //         onsuccess: callback
-                //     });
-                //     this.pluginLoaded = true;
-                // }
+                }
                 currDelay += length;
             });
         },
@@ -818,7 +820,7 @@ window.PJSOutput = Backbone.View.extend({
             MIDI.stopAllNotes();
             MIDI.Player.stop();
         //}
-        _.each(this.notes, (note) => { note.stop(); });
+        _.each(this.notes, (note) => { if (note) note.stop(); });
         this.notes = [];
     },
 
@@ -1325,12 +1327,6 @@ window.PJSOutput = Backbone.View.extend({
 
         // Clear Processing logs
         this.canvas._clearLogs();
-
-        // MIDI.stopAllNotes();
-        // MIDI.Player.stop();
-        // _.each(this.notes, (note) => { note.stop(); });
-        // this.notes = [];
-        // this.pluginLoaded = false;
     },
 
     toggle: function(doToggle) {
@@ -1390,9 +1386,8 @@ window.PJSOutput = Backbone.View.extend({
             // MIDI.stopAllNotes();
             // MIDI.Player.stop();
         //}
-        _.each(this.notes, (note) => { note.stop(); });
+        _.each(this.notes, (note) => { if (note) note.stop(); });
         this.notes = [];
-        // this.pluginLoaded = false;
 
         ast = ast || esprima.parse(code, { loc: true });
 
