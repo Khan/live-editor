@@ -494,6 +494,7 @@ var BabyHint = {
         "min": 2,
         "noise": [1, 2, 3],
         "PVector": [0, 2, 3],
+        "Avatar": 1,
         "random": [0, 1, 2],
         "RegExp": [1, 2],
         "rect": [4, 5],
@@ -1395,6 +1396,10 @@ window.PJSOutput = Backbone.View.extend({
 
             // PVector is actually safe, there are no obvious side effects
             safeCalls.PVector = true;
+
+            // Avatar object calls
+            safeCalls.Avatar = true;
+
             // The same is true for the color function.  The reason why color
             // fails the test above is because processing-js defines a toString
             // method on it which returns "rgba(0,0,0,0)" which doesn't doesn't

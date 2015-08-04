@@ -1811,7 +1811,7 @@
 
     // Adding a programable avatar to live-editor (albertochiwas)
     // Tested with:
-    // var p = new Avatar("squirrel.svg");
+    // var p = new Avatar("squirrel");
     // p.zoom(0.5);
     // var draw = function() {
     //    background(99);
@@ -1820,29 +1820,24 @@
 
     var Avatar = p.Avatar = (function() {
       function Avatar( fname ) {
-        this.shape = p.loadShape( "../../build/images/puppets/" + fname );  // Reads SVG file
-        this.name = fname;
-        this.w0 = this.width = this.shape.width;
-        this.cx = this.width / 2.0;
-        this.h0 = this.height = this.shape.height;
-        this.cy = this.height / 2.0;
+        this.init(fname);
       }
-
-      // Common vector operations for Avatar
+      // Avatar API
       Avatar.prototype = {
-
         set: function( fname ) {
-          this.shape = p.loadShape( "../../build/images/puppets/" + fname );  // Reads SVG file
+          this.init(fname);
+        },
+        get: function() {
+          return new Avatar( this.name );
+        },
+        init: function( fname ) {
+          this.shape = p.loadShape("../../build/images/puppets/"+ fname +".svg");  // Reads SVG file
           this.name = fname;
           this.w0 = this.width = this.shape.width;
           this.cx = this.width / 2.0;
           this.h0 = this.height = this.shape.height;
           this.cy = this.height / 2.0;
         },
-        get: function() {
-          return new Avatar( this.name );
-        },
-
         zoom: function( s ) {
           this.shape.scale( s );
           this.width = s * this.w0;
@@ -17895,7 +17890,7 @@
       "parseInt", "peg", "perspective", "PImage", "pixels", "PMatrix2D",
       "PMatrix3D", "PMatrixStack", "pmouseX", "pmouseY", "point",
       "pointLight", "popMatrix", "popStyle", "pow", "print", "printCamera",
-      "println", "printMatrix", "printProjection", "PShape", "PShapeSVG",
+      "println", "printMatrix", "printProjection", "PShape", "PShapeSVG", "Avatar",
       "pushMatrix", "pushStyle", "quad", "radians", "random", "Random",
       "randomSeed", "rect", "rectMode", "red", "redraw", "requestImage",
       "resetMatrix", "reverse", "rotate", "rotateX", "rotateY", "rotateZ",
