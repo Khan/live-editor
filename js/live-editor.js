@@ -1409,8 +1409,14 @@ window.LiveEditor = Backbone.View.extend({
             // We go through all of this so that the text will wrap nicely
             var text = this.editor.text();
 
-            // Remove all HTML markup
+            // Remove all HTML markup and un-escape entities
             text = text.replace(/<[^>]+>/g, "");
+            text = text.replace(/&nbsp;|&#160;/g, " ");
+            text = text.replace(/&lt;|&#60;/g, "<");
+            text = text.replace(/&gt;|&#62;/g, ">");
+            text = text.replace(/&amp;|&#38;/g, "&");
+            text = text.replace(/&quot;|&#34;/g, "\"");
+            text = text.replace(/&apos;|&#39;/g, "\'");
 
             var words = text.split(/\s+/);
             var lines = 0;
