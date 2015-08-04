@@ -1809,6 +1809,70 @@
     // XXX(jeresig)
     p.angleMode = "radians";
 
+    var Avatar = p.Avatar = (function() {
+      function Avatar( fname ) {
+        this.root = p.loadShape( "../../build/images/avatars/svg/leaf-blue.svg" ); // + fname );  // Reads SVG file
+        this.name = fname;
+        this.w0 = this.width = this.root.width;
+        this.cx = this.width / 2.0;
+        this.h0 = this.height = this.root.height;
+        this.cy = this.height / 2.0;
+      }
+
+      // Common vector operations for Avatar
+      Avatar.prototype = {
+
+        set: function( fname ) {
+          this.root = p.loadShape( "../../build/images/avatars/svg/leaf-blue.svg" ); // + fname );
+          this.name = fname;
+          this.w0 = this.width = this.root.width;
+          this.cx = this.width / 2.0;
+          this.h0 = this.height = this.root.height;
+          this.cy = this.height / 2.0;
+        },
+        get: function() {
+          return new Avatar( this.name );
+        },
+
+        zoom: function( s ) {
+          this.root.scale(s);
+          this.width = s * this.w0;
+          this.cx = this.width / 2.0;
+          this.height = s * this.h0;
+          this.cy = this.height / 2.0;
+        },
+        draw: function( x, y ) {
+          p.shape( this.root, x-this.cx, y-this.cy );
+        },
+        toString: function() {
+          return "Avatar(" +  this.name + ")";
+        },
+        array: function() {
+          return [this.name, this.root, this.width, this.height];
+        }
+      };
+
+      function createAvatarMethod(method) {
+        return function(v1, v2) {
+          var v = v1.get();
+          v[method](v2);
+          return v;
+        };
+      }
+
+      // Create the static methods of Avatar automatically
+      // We don't do toString because it causes a TypeError
+      //  when attempting to stringify Avatar
+      for (var method in Avatar.prototype) {
+        if (Avatar.prototype.hasOwnProperty(method) && !Avatar.hasOwnProperty(method) &&
+            method !== "toString") {
+          Avatar[method] = createAvatarMethod(method);
+        }
+      }
+
+      return Avatar;
+    }());
+
     var PVector = p.PVector = (function() {
       function PVector(x, y, z) {
         this.x = x || 0;
