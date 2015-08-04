@@ -50,8 +50,8 @@
         "avatar.scale(0.5);\n"+
         "var draw = function() {\n"+
         "\tbackground(200);\n"+
-        "\tavatar.rotateAll(random(-2,2));\n"+
-        "\tav.rotate(floor(random(10)), random(-9,9));\n"+
+        "\tav.rotate(Avatar.r_arm, random(-5,5));\n"+
+        "\tav.rotate(Avatar.r_elbow, random(-5,5));\n"+
         "\tavatar.draw(mouseX,mouseY);\n"+
         "};",
         width: 400,

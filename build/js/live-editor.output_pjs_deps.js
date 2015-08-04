@@ -1809,16 +1809,7 @@
     // XXX(jeresig)
     p.angleMode = "radians";
 
-    // Adding a programable avatar to live-editor
-    // Test editor code:
-    // var av = new Avatar("squirrel");
-    // av.zoom(0.5);
-    // var draw = function() {
-    //    background(99);
-    //    av.rotate(0.1);
-    //    av.draw(mouseX,mouseY);
-    // }
-    // (albertochiwas)
+    // Adding a programable avatar to live-editor -- (albertochiwas)
     var Avatar = p.Avatar = (function() {
       function Avatar( fname ) {
         this.init(fname);
@@ -1860,13 +1851,11 @@
             this.puppet.rotate( rad );
             this.puppet.translate( -this.cx, -this.cy );
         },
-
         rotate: function( i, rad ) {
             this.m[i].translate( this.p[i].x, this.p[i].y );
             this.m[i].rotate( rad );
             this.m[i].translate( -this.p[i].x, -this.p[i].y );
         },
-
         draw: function( x, y ) {
           p.shape( this.shape, x-this.cx, y-this.cy );
         },
@@ -1898,6 +1887,12 @@
 
       return Avatar;
     }());
+
+    // Avatar constants (joints) - (albertochiwas)
+    Avatar.l_arm   = Avatar.BrazoIzq  = 1;
+    Avatar.l_elbow = Avatar.CodoIzq   = 2;
+    Avatar.r_arm   = Avatar.BrazoDer  = 3;
+    Avatar.r_elbow = Avatar.CodoDer   = 4;
 
     var PVector = p.PVector = (function() {
       function PVector(x, y, z) {
