@@ -1809,13 +1809,22 @@
     // XXX(jeresig)
     p.angleMode = "radians";
 
+    // Adding a programable avatar to live-editor (albertochiwas)
+    // Tested with:
+    // var p = new Avatar("squirrel.svg");
+    // p.zoom(0.5);
+    // var draw = function() {
+    //    background(99);
+    //    p.draw(mouseX,mouseY);
+    // }
+
     var Avatar = p.Avatar = (function() {
       function Avatar( fname ) {
-        this.root = p.loadShape( "../../build/images/avatars/svg/leaf-blue.svg" ); // + fname );  // Reads SVG file
+        this.shape = p.loadShape( "../../build/images/puppets/" + fname );  // Reads SVG file
         this.name = fname;
-        this.w0 = this.width = this.root.width;
+        this.w0 = this.width = this.shape.width;
         this.cx = this.width / 2.0;
-        this.h0 = this.height = this.root.height;
+        this.h0 = this.height = this.shape.height;
         this.cy = this.height / 2.0;
       }
 
@@ -1823,11 +1832,11 @@
       Avatar.prototype = {
 
         set: function( fname ) {
-          this.root = p.loadShape( "../../build/images/avatars/svg/leaf-blue.svg" ); // + fname );
+          this.shape = p.loadShape( "../../build/images/puppets/" + fname );  // Reads SVG file
           this.name = fname;
-          this.w0 = this.width = this.root.width;
+          this.w0 = this.width = this.shape.width;
           this.cx = this.width / 2.0;
-          this.h0 = this.height = this.root.height;
+          this.h0 = this.height = this.shape.height;
           this.cy = this.height / 2.0;
         },
         get: function() {
@@ -1835,20 +1844,20 @@
         },
 
         zoom: function( s ) {
-          this.root.scale(s);
+          this.shape.scale( s );
           this.width = s * this.w0;
           this.cx = this.width / 2.0;
           this.height = s * this.h0;
           this.cy = this.height / 2.0;
         },
         draw: function( x, y ) {
-          p.shape( this.root, x-this.cx, y-this.cy );
+          p.shape( this.shape, x-this.cx, y-this.cy );
         },
         toString: function() {
           return "Avatar(" +  this.name + ")";
         },
         array: function() {
-          return [this.name, this.root, this.width, this.height];
+          return [this.name, this.shape, this.width, this.height];
         }
       };
 
