@@ -1811,11 +1811,12 @@
 
     // Adding a programable avatar to live-editor
     // Test editor code:
-    // var p = new Avatar("squirrel");
-    // p.zoom(0.5);
+    // var av = new Avatar("squirrel");
+    // av.zoom(0.5);
     // var draw = function() {
     //    background(99);
-    //    p.draw(mouseX,mouseY);
+    //    av.rotate(0.1);
+    //    av.draw(mouseX,mouseY);
     // }
     // (albertochiwas)
     var Avatar = p.Avatar = (function() {
@@ -1837,9 +1838,9 @@
           this.cx = this.width / 2.0;
           this.h0 = this.height = this.shape.height;
           this.cy = this.height / 2.0;
-          this.m0 = this.shape.getChild("puppet").getChild("m2");
-          var pv = this.m0.getChild("pivot_m2");
-          this.p0 = new p.PVector(pv.params[0],pv.params[1]);
+          this.m0 = this.shape.getChild("puppet").getChild("m1"); // TODO: Arrays
+          var pv = this.m0.getChild("pivot_m1");
+          this.p0 = new p.PVector(pv.params[0],pv.params[1]); // TODO: Arrays
         },
         scale: function( s ) {
           this.shape.scale( s );
@@ -1849,9 +1850,11 @@
           this.cy = this.height / 2.0;
         },
         rotate: function ( rad ) { // DON'T WORK
-          this.m0.translate( this.p0.x, this.p0.y );
-          this.m0.rotate( rad );
-          this.m0.translate( -this.p0.x, -this.p0.y );
+          with(this.p0) {
+            this.m0.translate( x, y ); // this.p0.x
+            this.m0.rotate( rad );
+            this.m0.translate( -x, -y );
+          }
         },
         draw: function( x, y ) {
           p.shape( this.shape, x-this.cx, y-this.cy );
