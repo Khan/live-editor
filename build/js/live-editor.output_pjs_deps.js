@@ -1833,14 +1833,20 @@
         },
         init: function( fname ) {
           this.shape = p.loadShape("../../build/images/puppets/"+ fname +".svg");  // Reads SVG file
+          this.puppet = this.shape.getChild("puppet");
           this.name = fname;
           this.w0 = this.width = this.shape.width;
           this.cx = this.width / 2.0;
           this.h0 = this.height = this.shape.height;
           this.cy = this.height / 2.0;
-          this.m0 = this.shape.getChild("puppet").getChild("m1"); // TODO: Arrays
-          var pv = this.m0.getChild("pivot_m1");
-          this.p0 = new p.PVector(pv.params[0],pv.params[1]); // TODO: Arrays
+          this.m = []; // body parts
+          this.p = []; // pivots
+          for (var i=0; i<10; i++) {
+            var m = this.puppet.getChild("m"+i);
+            this.m[i] = m;
+            var pv = m.getChild("pivot_m"+i);
+            this.p[i] = new p.PVector(pv.params[0],pv.params[1]);
+          }
         },
         scale: function( s ) {
           this.shape.scale( s );
@@ -1849,13 +1855,18 @@
           this.height = s * this.h0;
           this.cy = this.height / 2.0;
         },
-        rotate: function ( rad ) { // DON'T WORK
-          with(this.p0) {
-            this.m0.translate( x, y ); // this.p0.x
-            this.m0.rotate( rad );
-            this.m0.translate( -x, -y );
-          }
+        rotateAll: function( rad ) {
+            this.puppet.translate( this.cx, this.cy );
+            this.puppet.rotate( rad );
+            this.puppet.translate( -this.cx, -this.cy );
         },
+
+        rotate: function( i, rad ) {
+            this.m[i].translate( this.p[i].x, this.p[i].y );
+            this.m[i].rotate( rad );
+            this.m[i].translate( -this.p[i].x, -this.p[i].y );
+        },
+
         draw: function( x, y ) {
           p.shape( this.shape, x-this.cx, y-this.cy );
         },
