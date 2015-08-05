@@ -1810,6 +1810,7 @@
     p.angleMode = "radians";
 
     // Adding a programable avatar to live-editor -- (albertochiwas)
+    // TODO - absolute angle property -- setAngle() method -- wave() method
     var Avatar = p.Avatar = (function() {
       function Avatar( fname ) {
         this.init(fname);
@@ -1846,15 +1847,15 @@
           this.height = s * this.h0;
           this.cy = this.height / 2.0;
         },
-        rotateAll: function( rad ) {
-            this.puppet.translate( this.cx, this.cy );
-            this.puppet.rotate( rad );
-            this.puppet.translate( -this.cx, -this.cy );
+        rotateAll: function( deg ) {
+          this.puppet.translate( this.cx, this.cy );
+          this.puppet.rotate( deg );
+          this.puppet.translate( -this.cx, -this.cy );
         },
-        rotate: function( i, rad ) {
-            this.m[i].translate( this.p[i].x, this.p[i].y );
-            this.m[i].rotate( rad );
-            this.m[i].translate( -this.p[i].x, -this.p[i].y );
+        rotate: function( i, deg ) {
+          this.m[i].translate( this.p[i].x, this.p[i].y );
+          this.m[i].rotate( deg );
+          this.m[i].translate( -this.p[i].x, -this.p[i].y );
         },
         draw: function( x, y ) {
           p.shape( this.shape, x-this.cx, y-this.cy );
@@ -1862,8 +1863,8 @@
         toString: function() {
           return "Avatar(" +  this.name + ")";
         },
-        array: function() {
-          return [this.name, this.shape, this.width, this.height];
+        array: function() { // ??
+          return [this.name, this.puppet, this.width, this.height, this.m, this.p];
         }
       };
 
