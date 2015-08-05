@@ -1889,10 +1889,16 @@
     }());
 
     // Avatar constants (joints) - (albertochiwas)
-    Avatar.l_arm   = Avatar.BrazoIzq  = 1;
-    Avatar.l_elbow = Avatar.CodoIzq   = 2;
-    Avatar.r_arm   = Avatar.BrazoDer  = 3;
-    Avatar.r_elbow = Avatar.CodoDer   = 4;
+    Avatar.head    = Avatar.Cabeza     = 0;
+    Avatar.l_arm   = Avatar.BrazoIzq   = 1;
+    Avatar.l_elbow = Avatar.CodoIzq    = 2;
+    Avatar.r_arm   = Avatar.BrazoDer   = 3;
+    Avatar.r_elbow = Avatar.CodoDer    = 4;
+    Avatar.hip = Avatar.Cadera = Avatar.Cola = 5;
+    Avatar.l_leg   = Avatar.PiernaIzq  = 6;
+    Avatar.l_knee  = Avatar.RodillaIzq = 7;
+    Avatar.r_leg   = Avatar.PiernaDer  = 8;
+    Avatar.r_knee  = Avatar.RodillaDer = 9;
 
     var PVector = p.PVector = (function() {
       function PVector(x, y, z) {
