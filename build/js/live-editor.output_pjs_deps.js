@@ -1824,6 +1824,18 @@
           return new Avatar( this.name );
         },
         init: function( fname ) {
+          // Avatar constants (joints) - (albertochiwas)
+          this.Head   = this.Cabeza     = 0;
+          this.LArm   = this.BrazoIzq   = 1;
+          this.LElbow = this.CodoIzq    = 2;
+          this.RArm   = this.BrazoDer   = 3;
+          this.RElbow = this.CodoDer    = 4;
+          this.Hip = this.Tail = this.Cadera = this.Rabo = 5;
+          this.LLeg   = this.PiernaIzq  = 6;
+          this.LKnee  = this.RodillaIzq = 7;
+          this.RLeg   = this.PiernaDer  = 8;
+          this.RKnee  = this.RodillaDer = 9;
+          this.Joints = 10;
           this.shape = p.loadShape("../../build/images/puppets/"+ fname +".svg");  // Reads SVG file
           this.puppet = this.shape.getChild("puppet");
           this.name = fname;
@@ -1831,13 +1843,15 @@
           this.cx = this.width / 2.0;
           this.h0 = this.height = this.shape.height;
           this.cy = this.height / 2.0;
-          this.m = []; // body parts
-          this.p = []; // pivots
-          for (var i=0; i<10; i++) {
+          this.m = new Array(this.Joints); // body parts
+          this.p = new Array(this.Joints); // pivots
+          this.angle = new Array(this.Joints); // rotation angle
+          for (var i=0; i<this.Joints; i++) {
             var m = this.puppet.getChild("m"+i);
             this.m[i] = m;
             var pv = m.getChild("pivot_m"+i);
             this.p[i] = new p.PVector(pv.params[0],pv.params[1]);
+            this.angle[i] = 0;
           }
         },
         scale: function( s ) {
@@ -1852,20 +1866,43 @@
           this.puppet.rotate( deg );
           this.puppet.translate( -this.cx, -this.cy );
         },
-        rotate: function( i, deg ) {
+        rotate: function( j, deg ) {
+          var i = Math.abs(j) % this.Joints; // avoid out of index error
           this.m[i].translate( this.p[i].x, this.p[i].y );
           this.m[i].rotate( deg );
           this.m[i].translate( -this.p[i].x, -this.p[i].y );
+          this.angle[i] = (this.angle[i] + deg) % 360;
+        },
+        setAngle: function( j, deg ) {
+          var i = Math.abs(j) % this.Joints; // avoid out of index error
+          var nang = deg % 360;
+          this.m[i].translate( this.p[i].x, this.p[i].y );
+          this.m[i].rotate( nang - this.angle[i] );
+          this.m[i].translate( -this.p[i].x, -this.p[i].y );
+          this.angle[i] = nang;
+        },
+        getAngle: function(i) {
+          return this.angle[i];
         },
         draw: function( x, y ) {
           p.shape( this.shape, x-this.cx, y-this.cy );
         },
-        toString: function() {
-          return "Avatar(" +  this.name + ")";
+        wave: function( frame ) {
+          if ( frame === 0 ) {
+            this.setAngle(this.LArm,30);
+            this.setAngle(this.LElbow,90);
+          } else if ( frame % 2 === 1 ) {
+            this.rotate(this.LElbow, 30);
+          } else {
+            this.rotate(this.LElbow, -30);
+          }
         },
-        array: function() { // ??
-          return [this.name, this.puppet, this.width, this.height, this.m, this.p];
-        }
+        toString: function() {
+            return "Avatar(" +  this.name + ")";
+          },
+          array: function() { // ??
+            return [this.name, this.puppet, this.width, this.height, this.m, this.p];
+          }
       };
 
       function createAvatarMethod(method) {
@@ -1889,17 +1926,6 @@
       return Avatar;
     }());
 
-    // Avatar constants (joints) - (albertochiwas)
-    Avatar.head    = Avatar.Cabeza     = 0;
-    Avatar.l_arm   = Avatar.BrazoIzq   = 1;
-    Avatar.l_elbow = Avatar.CodoIzq    = 2;
-    Avatar.r_arm   = Avatar.BrazoDer   = 3;
-    Avatar.r_elbow = Avatar.CodoDer    = 4;
-    Avatar.hip = Avatar.Cadera = Avatar.Cola = 5;
-    Avatar.l_leg   = Avatar.PiernaIzq  = 6;
-    Avatar.l_knee  = Avatar.RodillaIzq = 7;
-    Avatar.r_leg   = Avatar.PiernaDer  = 8;
-    Avatar.r_knee  = Avatar.RodillaDer = 9;
 
     var PVector = p.PVector = (function() {
       function PVector(x, y, z) {
