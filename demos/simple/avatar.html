@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Live Editor Simple Demo</title>
+    <title>Live Editor Simple Avatar Demo</title>
     <link rel="stylesheet" href="../../build/css/live-editor.core_deps.css"/>
     <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
     <link rel="stylesheet" href="../../build/css/live-editor.tooltips.css"/>
@@ -22,7 +22,7 @@
     </style>
 </head>
 <body>
-    <h1>Avatar Live Editor Example</h1>
+    <h1>Live Editor Simple Avatar Demo</h1>
     <div id="sample-live-editor"></div>
 
     <script src="../../build/js/live-editor.core_deps.js"></script>
@@ -46,12 +46,14 @@
     window.liveEditor = new LiveEditor({
         el: $("#sample-live-editor"),
         code: window.localStorage["test-code"] ||
-        "var avatar = new Avatar('panther');\n"+
-        "avatar.scale(0.5);\n"+
+        "var avatar = new Avatar('squirrel');\n"+
+        "avatar.scale(0.2);\n"+
+        "avatar.rotate(avatar.RArm,-30);\n"+
+        "avatar.startWave(199);\n"+
+        "noCursor();\n"+
         "var draw = function() {\n"+
         "\tbackground(200);\n"+
-        "\tav.rotate(Avatar.r_arm, random(-5,5));\n"+
-        "\tav.rotate(Avatar.r_elbow, random(-5,5));\n"+
+        "\tavatar.wave();\n"+
         "\tavatar.draw(mouseX,mouseY);\n"+
         "};",
         width: 400,

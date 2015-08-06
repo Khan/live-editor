@@ -1846,6 +1846,7 @@
           this.m = new Array(this.Joints); // body parts
           this.p = new Array(this.Joints); // pivots
           this.angle = new Array(this.Joints); // rotation angle
+          this.waveCount = p.frameCount + 199; // for wave()
           for (var i=0; i<this.Joints; i++) {
             var m = this.puppet.getChild("m"+i);
             this.m[i] = m;
@@ -1887,14 +1888,19 @@
         draw: function( x, y ) {
           p.shape( this.shape, x-this.cx, y-this.cy );
         },
-        wave: function( frame ) {
-          if ( frame === 0 ) {
-            this.setAngle(this.LArm,30);
-            this.setAngle(this.LElbow,90);
-          } else if ( frame % 2 === 1 ) {
-            this.rotate(this.LElbow, 30);
-          } else {
-            this.rotate(this.LElbow, -30);
+        startWave: function( frames ) {
+          this.setAngle(this.LArm,30);
+          this.setAngle(this.LElbow,90);
+          this.waveCount = p.frameCount + frames;
+        },
+        wave: function() {
+          var cmp = this.waveCount - p.frameCount;
+          if ( cmp>0 && (cmp % 16 === 0) ) {
+            if ( ((cmp / 16) % 2) === 0 ) {
+              this.rotate(this.LElbow, 30);
+            } else {
+              this.rotate(this.LElbow, -30);
+            }
           }
         },
         toString: function() {
