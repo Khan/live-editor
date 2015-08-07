@@ -122,6 +122,9 @@ describe("Linting", function() {
         '<button type="submit">Submit</button>'
     ]);
 
+    test("regular links are not banned", '<a href="http://google.com"></a>');
+    test("regular scripts are not banned", '<script src="http://google.com"></script>');
+
     failingTest("INVALID_TAG_NAME raised by < at EOF",
         '<', [
             {row: 0, column: 0, lint: {type: "INVALID_TAG_NAME"}}
@@ -172,6 +175,18 @@ describe("Linting", function() {
         ]
     );
 
+    failingTest("Malformed outward link href without protocol banned",
+        "<a href='www.google.com'></a>", [
+            {row: 0, column: 9, lint: {type: "WWW_LINK_WITHOUT_PROTOCOL"}}
+        ]
+    );
+
+    failingTest("Malformed outward script without protocol banned",
+        "<script src='www.google.com'></script>", [
+            {row: 0, column: 13, lint: {type: "WWW_LINK_WITHOUT_PROTOCOL"}}
+        ]
+    );
+
     if (!isFirefox()) {
         // An exception occurs in slowparse when parsing this HTML on
         // Chrome, Safari, and phantomjs.
@@ -199,10 +214,10 @@ describe("Linting", function() {
     failingTest("Infinite loop errors",
         "<script> while(true){} </script>", [
             // Infinite loops dont give a location for their error message
-            {row: undefined, column: undefined, text: 
+            {row: undefined, column: undefined, text:
                 '<span class="text">Your javascript is taking too long to run.' +
                 ' Perhaps you have a mistake in your code?</span>'},
-            {row: undefined, column: undefined, text: 
+            {row: undefined, column: undefined, text:
                 '<span class="text">Your javascript encountered a runtime error. ' +
                 ' Check your console for more information.</span>'}
         ]
@@ -211,7 +226,7 @@ describe("Linting", function() {
     failingTest("Runtime errors",
         "<script> bla(x);</script>", [
             // Infinite loops dont give a location for their error message
-            {row: undefined, column: undefined, text: 
+            {row: undefined, column: undefined, text:
                 'Your javascript encountered a runtime error. ' +
                 'Check your console for more information.'}
         ]
