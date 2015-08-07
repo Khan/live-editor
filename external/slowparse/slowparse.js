@@ -421,6 +421,29 @@
         cursor: attribute.value.start
       };
     },
+    //Special error type for links that start with www
+    WWW_LINK_WITHOUT_PROTOCOL: function(parser, nameTok, valueTok) {
+      var currentNode = parser.domBuilder.currentNode,
+          openTag = this._combine({
+            name: currentNode.nodeName.toLowerCase()
+          }, currentNode.parseInfo.openTag),
+          attribute = {
+            name: {
+              value: nameTok.value,
+              start: nameTok.interval.start,
+              end: nameTok.interval.end
+            },
+            value: {
+              start: valueTok.interval.start + 1,
+              end: valueTok.interval.end - 1
+            }
+          };
+      return {
+        openTag: openTag,
+        attribute: attribute,
+        cursor: attribute.value.start
+      };
+    },
     // These are CSS errors.
     UNKOWN_CSS_KEYWORD: function(parser, start, end, value) {
       return {
@@ -1727,6 +1750,11 @@
           );
         }
 
+        //Add a new validator to check if there is link content that is missing a protocol
+        if (valueTok.value.match(/www/) && !valueTok.value.match(/https?:\/\//)) {
+            throw new ParseError("WWW_LINK_WITHOUT_PROTOCOL", this, nameTok, valueTok);
+        }
+
         var unquotedValue = replaceEntityRefs(valueTok.value.slice(1, -1));
 
         if (this.options.noScript && /^javascript:/i.test(unquotedValue)) {
@@ -1756,17 +1784,17 @@
   //
   // The DOM builder is given a single document DOM object that will
   // be used to create all necessary DOM nodes.
-  function DOMBuilder(sourceCode, disallowActiveAttributes, scriptPreprocessor) { 
-    this.disallowActiveAttributes = disallowActiveAttributes; 
-    this.scriptPreprocessor = scriptPreprocessor; 
+  function DOMBuilder(sourceCode, disallowActiveAttributes, scriptPreprocessor) {
+    this.disallowActiveAttributes = disallowActiveAttributes;
+    this.scriptPreprocessor = scriptPreprocessor;
     this.document = document;
-    this.sourceCode = sourceCode; 
-    this.code = ""; 
+    this.sourceCode = sourceCode;
+    this.code = "";
     this.fragment = document.createDocumentFragment();
     this.currentNode = this.fragment;
     this.contexts = [];
     this.rules = [];
-    this.last = 0; 
+    this.last = 0;
     this.pushContext("html", 0);
   }
 
@@ -1819,44 +1847,44 @@
     },
     // This method appends a text node to the currently active element.
     text: function(text, parseInfo) {
-      if (this.currentNode && this.currentNode.attributes) { 
+      if (this.currentNode && this.currentNode.attributes) {
         var type = this.currentNode.attributes.type || "";
         if (type.toLowerCase) {
             type = type.toLowerCase();
         } else if (type.nodeValue) { // button type="submit"
             type = type.nodeValue;
         }
-        if (this.currentNode.nodeName.toLowerCase() === "script" && (!type || type === "text/javascript")) { 
-          this.javascript(text, parseInfo); 
+        if (this.currentNode.nodeName.toLowerCase() === "script" && (!type || type === "text/javascript")) {
+          this.javascript(text, parseInfo);
           // Don't actually add javascript to the DOM we're building
           // because it will execute and we don't want that.
           return;
         } else if (this.currentNode.nodeName.toLowerCase() === "style") {
           this.rules.push.apply(this.rules, parseInfo.rules);
-        } 
-      } 
+        }
+      }
       var textNode = this.document.createTextNode(text);
       textNode.parseInfo = parseInfo;
       this.currentNode.appendChild(textNode);
     },
-    javascript: function(text, parseInfo) { 
-      try { 
-        text = this.scriptPreprocessor(text); 
-      } catch(err) { 
-        // This is meant to handle esprima errors 
-        if (err.index && err.description && err.message) { 
-          var cursor = this.currentNode.parseInfo.openTag.end + err.index; 
-          throw {parseInfo: {type: "JAVASCRIPT_ERROR", message: err.description, cursor: cursor} }; 
-        } else { 
-          throw err; 
-        } 
-      } 
-      this.code += this.sourceCode.slice(this.last, parseInfo.start); 
-      this.code += text; 
-      this.last = parseInfo.end; 
+    javascript: function(text, parseInfo) {
+      try {
+        text = this.scriptPreprocessor(text);
+      } catch(err) {
+        // This is meant to handle esprima errors
+        if (err.index && err.description && err.message) {
+          var cursor = this.currentNode.parseInfo.openTag.end + err.index;
+          throw {parseInfo: {type: "JAVASCRIPT_ERROR", message: err.description, cursor: cursor} };
+        } else {
+          throw err;
+        }
+      }
+      this.code += this.sourceCode.slice(this.last, parseInfo.start);
+      this.code += text;
+      this.last = parseInfo.end;
     },
     close: function() {
-      this.code += this.sourceCode.slice(this.last); 
+      this.code += this.sourceCode.slice(this.last);
     }
   };
 
@@ -1907,9 +1935,9 @@
           errorDetectors = options.errorDetectors || [],
           disallowActiveAttributes = (typeof options.disallowActiveAttributes === "undefined") ? false : options.disallowActiveAttributes;
 
-      var scriptPreprocessor = options.scriptPreprocessor || function(x) {return x;}; 
-      var domBuilder = new DOMBuilder(html, disallowActiveAttributes, scriptPreprocessor); 
-      var parser = new HTMLParser(stream, domBuilder, options); 
+      var scriptPreprocessor = options.scriptPreprocessor || function(x) {return x;};
+      var domBuilder = new DOMBuilder(html, disallowActiveAttributes, scriptPreprocessor);
+      var parser = new HTMLParser(stream, domBuilder, options);
 
       try {
         var _ = parser.parse();
