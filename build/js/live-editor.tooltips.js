@@ -3045,7 +3045,7 @@ function program12(depth0,data,depth1,depth3) {
   stack1 = foundHelper || depth3.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, ".........imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "/throbber.gif\" data-lazy-src=\"";
+  buffer += escapeExpression(stack1) + "throbber.gif\" data-lazy-src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth3.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
