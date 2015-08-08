@@ -3,7 +3,7 @@ function PJSResourceCache(options) {
     this.output = options.output;   // LiveEditorOutput instance
     this.cache = {};
     this.imageHolder = null;
-    
+
     this.queue = [];
 
     // Insert the images into a hidden div to cause them to load
@@ -22,13 +22,13 @@ function PJSResourceCache(options) {
 
 /**
  * Load and cache all resources (images and sounds) referenced in the code.
- * 
+ *
  * All resources are loaded as we don't have more details on exactly which
  * images will be required.  Execution is delayed if a getImage/getSound call
  * is encountered in the source code and none of the resources have been loaded
  * yet.  Execution begins once all the resources have loaded.
- * 
- * @param ast: The root node of the AST for the code we want to cache resources 
+ *
+ * @param ast: The root node of the AST for the code we want to cache resources
  *             for.  The reason why we pass in an AST is because we'd like
  *             pjs-output.js to parse user code once and re-use the AST as many
  *             time as possible.
@@ -79,7 +79,7 @@ PJSResourceCache.prototype.loadSound = function(filename) {
     var deferred = $.Deferred();
     var audio = document.createElement("audio");
     var parts = filename.split("/");
-    
+
     var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
     if (!group || group.sounds.indexOf(parts[1]) === -1) {
         deferred.resolve();
@@ -149,7 +149,7 @@ PJSResourceCache.prototype.getSound = function(filename) {
 PJSResourceCache.prototype.leave = function(node) {
     if (node.type === "Literal" && typeof(node.value) === "string") {
 
-        OutputImages.forEach(group => {
+        AllImages.forEach(group => {
             group.images.forEach(image => {
                 if (node.value.indexOf(image) !== -1) {
                     this.queue.push({

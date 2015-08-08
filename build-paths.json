@@ -65,6 +65,7 @@
             "build/tmpl/debugger.js"
         ],
         "shared": [
+            "js/shared/all-images.js",
             "js/shared/images.js",
             "js/shared/sounds.js",
             "js/shared/record.js",
