@@ -79,7 +79,6 @@
             "external/structuredjs/external/esprima.js",
             "external/structured-blocks/external/escodegen.browser.js",
             "external/structuredjs/structured.js",
-            "external/TraceKit/tracekit.js",
             "js/output/shared/ast-walker.js",
             "js/output/shared/loop-protect.js"
         ],

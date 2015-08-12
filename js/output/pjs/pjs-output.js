@@ -155,8 +155,8 @@ window.PJSOutput = Backbone.View.extend({
             // method on it which returns "rgba(0,0,0,0)" which doesn't doesn't
             // contain the string "return" so it fails.
             safeCalls.color = true;
-            
-            // It doesn't affect the main Processing instance.  It fails the 
+
+            // It doesn't affect the main Processing instance.  It fails the
             // above test because it calls "new Processing();".
             safeCalls.createGraphics = true;
 
@@ -455,32 +455,7 @@ window.PJSOutput = Backbone.View.extend({
                     this.output.validate, [], callback);
             },
 
-            assertEqual: function(actual, expected) {
-                // Uses TraceKit to get stacktrace of caller,
-                // it looks for the line number of the first anonymous eval
-                // Stack traces are pretty nasty and not standardized yet
-                // so this is not as elegant as one might hope.
-                // Safari doesn't even give line numbers for anonymous evals,
-                // so they can go sit in the dunce corner today.
-                // This returns 0 if not found, which will mean that all
-                // the assertion failures are shown on the first line.
-                var getLineNum = function(stacktrace) {
-                    TraceKit.remoteFetching = false;
-                    TraceKit.collectWindowErrors = false;
-                    var stacktrace = TraceKit.computeStackTrace.ofCaller();
-                    var lines = stacktrace.stack;
-                    for (var i = 0; i < lines.length; i++) {
-                        if (lines[i].func === "Object.apply.get.message") {
-                            // Chrome
-                            return lines[i].line - 5;
-                        } else if (lines[i].func === "anonymous/<") {
-                            // Firefox
-                            return lines[i].line - 4;
-                        }
-                    }
-                    return -1;
-                };
-
+            assertEqual: function(actual, expected, line, column) {
                 if (_.isEqual(actual, expected)) {
                     return;
                 }
@@ -491,14 +466,8 @@ window.PJSOutput = Backbone.View.extend({
                         expected: JSON.stringify(expected)
                 });
 
-                var lineNum = getLineNum();
-                // Display on first line if we didn't find a line #
-                if (lineNum < 0) {
-                    lineNum = 0;
-                }
-
                 this.output.results.assertions.push({
-                    row: lineNum, column: 0, text: msg
+                    row: line - 1, column: column, text: msg
                 });
             },
 
@@ -547,7 +516,7 @@ window.PJSOutput = Backbone.View.extend({
 
     /**
      * Lints user code.
-     * 
+     *
      * @param userCode: code to lint
      * @param skip: skips linting if true and resolves Deferred immediately
      * @returns {$.Deferred} resolves an array of lint errors
@@ -558,7 +527,7 @@ window.PJSOutput = Backbone.View.extend({
             deferred.resolve([]);
             return deferred;
         }
-        
+
         // Build a string of options to feed into JSHint
         // All properties are defined in the config
         var hintCode = "/*jshint " +
@@ -589,20 +558,20 @@ window.PJSOutput = Backbone.View.extend({
         } else {
             this.hintWorker.exec(hintCode, done);
         }
-        
+
         return deferred;
     },
 
     /**
      * Extracts globals from the data return from the jshint and stores them
      * in this.globals.  Used in runCode, hasOrHadDrawLoop, and injectCode.
-     * 
+     *
      * @param hintData: an object containing JSHINT.data after jshint-worker.js
      *      runs JSHINT(userCode).
      */
     extractGlobals: function(hintData) {
         this.globals = {};
-        
+
         // We only need to extract globals when the code has passed
         // the JSHint check
         var externalProps = this.props;
@@ -678,7 +647,7 @@ window.PJSOutput = Backbone.View.extend({
 
         // Only use baby errors if JSHint also broke on those lines OR
         // we want to prevent the user from making this mistake.
-        babyErrors = babyErrors.filter((error) => 
+        babyErrors = babyErrors.filter((error) =>
             (_.include(brokenLines, error.row) || error.breaksCode) &&
             (!prioritizedChars[error.row] || prioritizedChars[error.row] > error.column)
         ).map(error => {
@@ -715,7 +684,7 @@ window.PJSOutput = Backbone.View.extend({
         let errors = babyErrors;
         let babyErrorRows = _.uniq(babyErrors.map(error => error.row));
         hintErrors.forEach(error => {
-            // Only add JSHint errors if there isn't already a BabyHint error 
+            // Only add JSHint errors if there isn't already a BabyHint error
             // on that line (row).
             if (!_.contains(babyErrorRows, error.row)) {
                 errors.push(error);
@@ -925,18 +894,18 @@ window.PJSOutput = Backbone.View.extend({
                     PJSOutput.stringifyArray(PJSOutput.instances)) {
                 rerun = true;
             }
-            
+
             // TODO(kevinb) cache instances returned by createGraphics.
             // Rerun if there are any uses of createGraphics.  The problem is
             // not actually createGraphics, but rather calls that render stuff
-            // to the Processing instances returned by createGraphics.  In the 
+            // to the Processing instances returned by createGraphics.  In the
             // future we might be able to reuse these instances, but we'd need
             // to track which call to createGraphics returned which instance.
             // Using the arguments as an id is insufficient.  We'd have to use
             // some combination of which line number createGraphics was called
             // on whether it was the first call, second call, etc. that created
             // it to deal with loops.  We'd also need to take into account edit
-            // operations that add/remove lines so that we could update the 
+            // operations that add/remove lines so that we could update the
             // line number in the id to avoid unnecessary reruns.  After all of
             // that we'll still have to fall back to rerun in all other cases.
             if (/createGraphics[\s\n]*\(/.test(userCode)) {
@@ -1293,7 +1262,7 @@ window.PJSOutput = Backbone.View.extend({
 
     /**
      * Executes the user's code.
-     * 
+     *
      * @param code: The user code to execute.
      * @param context: An object containing global object we'd like the user to
      *                 have access to.  It's also used to capture objects that
@@ -1309,10 +1278,34 @@ window.PJSOutput = Backbone.View.extend({
 
         ast = ast || esprima.parse(code, { loc: true });
 
-        walkAST(ast, [this.loopProtector]);
+        walkAST(ast, null, [this.loopProtector, {
+            leave(node, path) {
+                if (node.type === "Identifier" && node.name === "Program") {
+                    let parent = path[path.length - 2];
+                    let grandparent = path[path.length - 3];
+                    if (parent.type === "MemberExpression" &&
+                            parent.object === node &&
+                            parent.property.type === "Identifier" &&
+                            parent.property.name === "assertEqual") {
+                        if (grandparent.type === "CallExpression") {
+                            // append line and column as arguments to
+                            // Program.assertEquals
+                            grandparent.arguments.push({
+                                type: "Literal",
+                                value: grandparent.loc.start.line
+                            },
+                            {
+                                type: "Literal",
+                                value: grandparent.loc.start.column
+                            });
+                        }
+                    }
+                }
+            }
+        }]);
 
         code = escodegen.generate(ast);
-        
+
         context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
 
@@ -1401,7 +1394,7 @@ window.PJSOutput = Backbone.View.extend({
 // Add in some static helper methods
 _.extend(PJSOutput, {
     instances: [],
-    
+
     // Turn a JavaScript object into a form that can be executed
     // (Note: The form will not necessarily be able to pass a JSON linter)
     // (Note: JSON.stringify might throw an exception. We don't capture it
@@ -1513,7 +1506,7 @@ _.extend(PJSOutput, {
         // Keep track of the instances that have been instantiated
         // Note: this.instances here is actually PJSOutput.instances which is
         // a singleton.  This means that multiple instances of PJSOutput will
-        // shared the same instances array.  Since each PJSOutput lives in its 
+        // shared the same instances array.  Since each PJSOutput lives in its
         // own iframe with its own execution context, each should have its own
         // copy of PJSOutput.instances.
         if (this.instances) {

@@ -694,6 +694,27 @@ describe("Scratchpad Output Exec", function() {
         assertions2: []
     });
 
+    runTest({
+        title: "Program.assertEqual() returns correct line number inside functions",
+        code: function() {
+            var foo = function () {
+                Program.assertEqual(2, 4);
+            };
+            foo();
+        },
+        code2: function() {
+            var foo = function () {
+                Program.assertEqual(2, 2);
+            };
+            foo();
+        },
+        errors: [],
+        assertions: [{
+            "row":2,"column":4,
+            "text": "Assertion failed: 2 is not equal to 4."}],
+        assertions2: []
+    });
+
     /**
      * Some calls do not currently work within workers.
      * For example createGraphics creates a whole new Processing

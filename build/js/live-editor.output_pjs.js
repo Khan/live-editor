@@ -1117,7 +1117,7 @@ function PJSResourceCache(options) {
 PJSResourceCache.prototype.cacheResources = function (ast) {
     var _this = this;
 
-    walkAST(ast, [this]);
+    walkAST(ast, null, [this]);
     this.queue = _.uniq(this.queue);
     var promises = this.queue.map(function (resource) {
         return _this.loadResource(resource);
@@ -1682,32 +1682,7 @@ window.PJSOutput = Backbone.View.extend({
                 return this.output.test(this.output.getUserCode(), this.output.validate, [], callback);
             },
 
-            assertEqual: function assertEqual(actual, expected) {
-                // Uses TraceKit to get stacktrace of caller,
-                // it looks for the line number of the first anonymous eval
-                // Stack traces are pretty nasty and not standardized yet
-                // so this is not as elegant as one might hope.
-                // Safari doesn't even give line numbers for anonymous evals,
-                // so they can go sit in the dunce corner today.
-                // This returns 0 if not found, which will mean that all
-                // the assertion failures are shown on the first line.
-                var getLineNum = function getLineNum(stacktrace) {
-                    TraceKit.remoteFetching = false;
-                    TraceKit.collectWindowErrors = false;
-                    var stacktrace = TraceKit.computeStackTrace.ofCaller();
-                    var lines = stacktrace.stack;
-                    for (var i = 0; i < lines.length; i++) {
-                        if (lines[i].func === "Object.apply.get.message") {
-                            // Chrome
-                            return lines[i].line - 5;
-                        } else if (lines[i].func === "anonymous/<") {
-                            // Firefox
-                            return lines[i].line - 4;
-                        }
-                    }
-                    return -1;
-                };
-
+            assertEqual: function assertEqual(actual, expected, line, column) {
                 if (_.isEqual(actual, expected)) {
                     return;
                 }
@@ -1717,14 +1692,8 @@ window.PJSOutput = Backbone.View.extend({
                     expected: JSON.stringify(expected)
                 });
 
-                var lineNum = getLineNum();
-                // Display on first line if we didn't find a line #
-                if (lineNum < 0) {
-                    lineNum = 0;
-                }
-
                 this.output.results.assertions.push({
-                    row: lineNum, column: 0, text: msg
+                    row: line - 1, column: column, text: msg
                 });
             },
 
@@ -1773,7 +1742,7 @@ window.PJSOutput = Backbone.View.extend({
 
     /**
      * Lints user code.
-     * 
+     *
      * @param userCode: code to lint
      * @param skip: skips linting if true and resolves Deferred immediately
      * @returns {$.Deferred} resolves an array of lint errors
@@ -1820,7 +1789,7 @@ window.PJSOutput = Backbone.View.extend({
     /**
      * Extracts globals from the data return from the jshint and stores them
      * in this.globals.  Used in runCode, hasOrHadDrawLoop, and injectCode.
-     * 
+     *
      * @param hintData: an object containing JSHINT.data after jshint-worker.js
      *      runs JSHINT(userCode).
      */
@@ -2472,7 +2441,7 @@ window.PJSOutput = Backbone.View.extend({
 
     /**
      * Executes the user's code.
-     * 
+     *
      * @param code: The user code to execute.
      * @param context: An object containing global object we'd like the user to
      *                 have access to.  It's also used to capture objects that
@@ -2488,7 +2457,27 @@ window.PJSOutput = Backbone.View.extend({
 
         ast = ast || esprima.parse(code, { loc: true });
 
-        walkAST(ast, [this.loopProtector]);
+        walkAST(ast, null, [this.loopProtector, {
+            leave: function leave(node, path) {
+                if (node.type === "Identifier" && node.name === "Program") {
+                    var _parent = path[path.length - 2];
+                    var grandparent = path[path.length - 3];
+                    if (_parent.type === "MemberExpression" && _parent.object === node && _parent.property.type === "Identifier" && _parent.property.name === "assertEqual") {
+                        if (grandparent.type === "CallExpression") {
+                            // append line and column as arguments to
+                            // Program.assertEquals
+                            grandparent.arguments.push({
+                                type: "Literal",
+                                value: grandparent.loc.start.line
+                            }, {
+                                type: "Literal",
+                                value: grandparent.loc.start.column
+                            });
+                        }
+                    }
+                }
+            }
+        }]);
 
         code = escodegen.generate(ast);
 

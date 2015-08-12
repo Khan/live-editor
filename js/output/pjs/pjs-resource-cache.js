@@ -35,7 +35,7 @@ function PJSResourceCache(options) {
  * @returns {Promise}
  */
 PJSResourceCache.prototype.cacheResources = function(ast) {
-    walkAST(ast, [this]);
+    walkAST(ast, null, [this]);
     this.queue = _.uniq(this.queue);
     var promises = this.queue.map((resource) => {
         return this.loadResource(resource);
