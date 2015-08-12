@@ -7,12 +7,12 @@ this["Handlebars"]["templates"]["image-picker"] = Handlebars.template(function (
 function program1(depth0,data) {
   
   var buffer = "", stack1, stack2;
-  buffer += "\n        <div class=\"media-group\">\n            <h3>";
+  buffer += "\r\n        <div class=\"media-group\">\r\n            <h3>";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth0.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "groupName", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</h3>\n            ";
+  buffer += escapeExpression(stack1) + "</h3>\r\n            ";
   foundHelper = helpers.cite;
   stack1 = foundHelper || depth0.cite;
   stack2 = helpers['if'];
@@ -22,7 +22,7 @@ function program1(depth0,data) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n            ";
+  buffer += "\r\n            ";
   foundHelper = helpers.images;
   stack1 = foundHelper || depth0.images;
   stack2 = helpers.each;
@@ -32,12 +32,12 @@ function program1(depth0,data) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n        </div>\n    ";
+  buffer += "\r\n        </div>\r\n    ";
   return buffer;}
 function program2(depth0,data) {
   
   var buffer = "", stack1;
-  buffer += "\n                <p><a href=\"";
+  buffer += "\r\n                <p><a href=\"";
   foundHelper = helpers.citeLink;
   stack1 = foundHelper || depth0.citeLink;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -47,13 +47,13 @@ function program2(depth0,data) {
   stack1 = foundHelper || depth0.cite;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "cite", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</a></p>\n            ";
+  buffer += escapeExpression(stack1) + "</a></p>\r\n            ";
   return buffer;}
 
 function program4(depth0,data,depth1) {
   
   var buffer = "", stack1;
-  buffer += "\n            <div class=\"image\" data-path=\"";
+  buffer += "\r\n            <div class=\"image\" data-path=\"";
   foundHelper = helpers.groupName;
   stack1 = foundHelper || depth1.groupName;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -62,7 +62,7 @@ function program4(depth0,data,depth1) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "\">\n                <img src=\"";
+  buffer += escapeExpression(stack1) + "\">\r\n                <img src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth1.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -81,11 +81,11 @@ function program4(depth0,data,depth1) {
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + ".png\"/>\n                <span class=\"name\">";
+  buffer += escapeExpression(stack1) + ".png\"/>\r\n                <span class=\"name\">";
   stack1 = depth0;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "this", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "</span>\n            </div>\n            ";
+  buffer += escapeExpression(stack1) + "</span>\r\n            </div>\r\n            ";
   return buffer;}
 
   buffer += "<div class=\"current-media\"><img src=\"";
@@ -93,7 +93,7 @@ function program4(depth0,data,depth1) {
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "cute/Blank.png\"/></div>\n<div class=\"media-groups\">\n    <div style=\"position: relative;\">\n    ";
+  buffer += escapeExpression(stack1) + "cute/Blank.png\"/></div>\r\n<div class=\"media-groups\">\r\n    <div style=\"position: relative;\">\r\n    ";
   foundHelper = helpers.groups;
   stack1 = foundHelper || depth0.groups;
   stack2 = helpers.each;
@@ -103,7 +103,7 @@ function program4(depth0,data,depth1) {
   tmp1.inverse = self.noop;
   stack1 = stack2.call(depth0, stack1, tmp1);
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n    </div>\n</div>\n<script>console.log(\"imagesDir = ";
+  buffer += "\r\n    </div>\r\n</div>\r\n<script>console.log(\"imagesDir = ";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }

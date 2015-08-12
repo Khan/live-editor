@@ -566,7 +566,7 @@ window.LiveEditorOutput = Backbone.View.extend({
                 deferred.resolve();
             }).bind(this));
         } catch (e) {
-            if (this.outputs.hasOwnProperty("pjs")) {
+            if (this.outputs.hasOwnProperty('pjs')) {
                 this.runtimeErrors = [e];
             }
             deferred.resolve();
