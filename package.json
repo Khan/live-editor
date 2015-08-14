@@ -29,6 +29,7 @@
     "gulp-concat": "^2.3.4",
     "gulp-declare": "^0.2.0",
     "gulp-define-module": "^0.1.1",
+    "gulp-eol": "^0.1.1",
     "gulp-handlebars": "~2.1.0",
     "gulp-if": "^1.2.5",
     "gulp-mocha-phantomjs": "^0.5.0",
