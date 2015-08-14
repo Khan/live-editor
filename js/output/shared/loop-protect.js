@@ -20,16 +20,16 @@ window.LoopProtector = function(callback, mainTimeout, asyncTimeout, reportLocat
     // cache ASTs for function calls to KAInfiniteLoopSetTimeout
     if (mainTimeout) {
         this.setMainTimeout =
-            esprima.parse(`KAInfiniteLoopSetTimeout(${mainTimeout})`).body[0];   
+            esprima.parse(`KAInfiniteLoopSetTimeout(${mainTimeout})`).body[0];
     }
     if (asyncTimeout) {
         this.setAsyncTimeout =
-            esprima.parse(`KAInfiniteLoopSetTimeout(${asyncTimeout})`).body[0];   
+            esprima.parse(`KAInfiniteLoopSetTimeout(${asyncTimeout})`).body[0];
     }
 
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
-    
+
     visibly.onVisible(function () {
         this.visible = true;
         this.branchStartTime = 0;
@@ -54,16 +54,16 @@ window.LoopProtector.prototype = {
     /**
      * Throws 'KA_INFINITE_LOOP' if the difference between the current time
      * and this.brancStartTime is greater than this.timeout.
-     * 
+     *
      * The difference grows as long as this method is called synchronously.  As
      * soon as the current execution stack completes and the browser grabs the
      * next task off the event queue this.branchStartTime will be reset by the
      * timeout.
-     * 
+     *
      * In order to use this correctly, you must add a reference to this function
      * to the global scope where the user code is being run.  See the exec()
      * method in pjs-output.js for an example of how to do this.
-     * 
+     *
      * @private
      */
     _KAInfiniteLoopProtect: function (location) {
@@ -86,8 +86,8 @@ window.LoopProtector.prototype = {
                     this.callback(error);
                     throw error;
                 }
-                
-                // Determine which of KAInfiniteLoopProtect's callsites has 
+
+                // Determine which of KAInfiniteLoopProtect's callsites has
                 // the most calls.
                 let max = 0;            // current max count
                 let hotLocation = null; // callsite with most calls
@@ -97,7 +97,7 @@ window.LoopProtector.prototype = {
                         hotLocation = location;
                     }
                 });
-                
+
                 hotLocation = JSON.parse(hotLocation);
 
                 let html = $._(
@@ -112,13 +112,13 @@ window.LoopProtector.prototype = {
                 };
 
                 this.callback(error);
-                
-                // We throw here to interrupt communication but also to 
+
+                // We throw here to interrupt communication but also to
                 throw error;
             }
         }
     },
-    
+
     _KAInfiniteLoopSetTimeout: function (timeout) {
         this.timeout = timeout;
         this.branchStartTime = 0;
@@ -172,7 +172,7 @@ window.LoopProtector.prototype = {
                 node.body.unshift(this.setMainTimeout);
             }
 
-            // Any asynchronous calls such as mouseClicked() or calls to draw() 
+            // Any asynchronous calls such as mouseClicked() or calls to draw()
             // should take much less time so that the app (and the browser) remain
             // responsive as the app is running so we call KAInfiniteLoopSetTimeout
             // at the end of main and set timeout to be asyncTimeout
@@ -181,13 +181,13 @@ window.LoopProtector.prototype = {
             }
         }
     },
-    
+
     // Convenience method used by webpage-output.js
     protect: function (code) {
         let ast = esprima.parse(code, { loc: true });
 
-        walkAST(ast, [this]);
-        
+        walkAST(ast, null, [this]);
+
         return escodegen.generate(ast);
     }
 };

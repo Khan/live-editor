@@ -87201,16 +87201,16 @@ window.LoopProtector.prototype = {
     /**
      * Throws 'KA_INFINITE_LOOP' if the difference between the current time
      * and this.brancStartTime is greater than this.timeout.
-     * 
+     *
      * The difference grows as long as this method is called synchronously.  As
      * soon as the current execution stack completes and the browser grabs the
      * next task off the event queue this.branchStartTime will be reset by the
      * timeout.
-     * 
+     *
      * In order to use this correctly, you must add a reference to this function
      * to the global scope where the user code is being run.  See the exec()
      * method in pjs-output.js for an example of how to do this.
-     * 
+     *
      * @private
      */
     _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect(location) {
@@ -87327,7 +87327,7 @@ window.LoopProtector.prototype = {
     protect: function protect(code) {
         var ast = esprima.parse(code, { loc: true });
 
-        walkAST(ast, [this]);
+        walkAST(ast, null, [this]);
 
         return escodegen.generate(ast);
     }
