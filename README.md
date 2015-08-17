@@ -1,6 +1,8 @@
 [![Code Climate](https://codeclimate.com/github/Khan/live-editor/badges/gpa.svg)](https://codeclimate.com/github/Khan/live-editor)
 # Live Code Editor
 
+[![Join the chat at https://gitter.im/Khan/live-editor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Khan/live-editor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This is the live coding environment developed for the [Khan Academy Computer Programming curriculum](https://www.khanacademy.org/computer-programming/). It gives learners an editor on the left (either ACE or our Blocks-based drag-and-drop editor) and an output on the right (either JS+ProcessingJS, HTML, or SQL).
 
 You can find various demos in the `demos/` directory, and start playing immediately with the simple demo:
