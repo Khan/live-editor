@@ -2143,8 +2143,13 @@ window.PJSOutput = Backbone.View.extend({
 
             // We also look for newly-changed global variables to inject
             _.each(grabAll, (function (val, prop) {
-                // ignore KAInfiniteLoop functions
+                // Ignore KAInfiniteLoop functions.
                 if (/^KAInfiniteLoop/.test(prop)) {
+                    return;
+                }
+                // Ignore PJSOuput so that we can still access 'test', 'lint'
+                // and other methods in our tests.
+                if (/^PJSOutput/.test(prop)) {
                     return;
                 }
 
@@ -2454,6 +2459,19 @@ window.PJSOutput = Backbone.View.extend({
             return;
         }
 
+        // this is kind of sort of supposed to fake a gensym that the user
+        // can't access but since we're limited to string manipulation, we
+        // can't guarantee this fo sho' so we just change the name to something
+        // long and random every time the code runs and hope for the best!
+        var envName = "__env__" + Math.floor(Math.random() * 1000000000);
+
+        // This is necessary because sometimes 'code' is code that we want to
+        // inject.  This injected code can contain code obtained from calling
+        // .toString() on functions that were grabbed.  These may contain
+        // references to KAInfiniteLoopCount that have already been prefixed
+        // with a previous __env__ string.
+        // TODO(kevinb) figure out how to use the AST so we're not calling .toString() on functions
+        code = code.replace(/__env__[0-9]+\./g, "");
         var ast = esprima.parse(code, { loc: true });
 
         // loopProtector adds LoopProtector code which checks how long it's
@@ -2462,19 +2480,24 @@ window.PJSOutput = Backbone.View.extend({
         // Program.assertEquals.
         walkAST(ast, null, [this.loopProtector, ASTTransforms.rewriteAssertEquals]);
 
+        // rewriteContextVariables has to be done separately because loopProtector
+        // adds variable references which need to be rewritten.
+        // Profile first before trying to combine these two passes.  It may be
+        // that parsing is dominating
+        walkAST(ast, null, [ASTTransforms.rewriteContextVariables(envName)]);
+
         code = escodegen.generate(ast);
 
         context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
         context.KAInfiniteLoopCount = 0;
 
-        // this is kind of sort of supposed to fake a gensym that the user
-        // can't access but since we're limited to string manipulation, we
-        // can't guarantee this fo sho' so we just change the name to something
-        // long and random every time the code runs and hope for the best!
-        var envName = "__env__" + Math.floor(Math.random() * 1000000000);
+        // Adding this to the context is required for any calls to applyInstance.
+        // Instead of doing this we should change how we're rewriting constructor
+        // calls.  Currently we're doing a global replace which causes things
+        // that look like 'new' calls in comments to be replaced as well.
+        context.PJSOutput = PJSOutput;
 
-        code = "with(" + envName + "[0]){\n" + code + "\n}";
         // the top-level 'this' is empty except for this.externals, which
         // throws this message this is how users were getting at everything
         // from playing sounds to displaying pop-ups
@@ -2483,14 +2506,15 @@ window.PJSOutput = Backbone.View.extend({
 
         // if we pass in the env as a parameter, the user will be able to get
         // at it through the 'arguments' binding, so we close over it instead
-        code = "var " + envName + " = arguments;\n(function(){\n" + code + "\n}).apply(" + topLevelThis + ");";
+        code = "var " + envName + " = arguments[0];\n(function(){\n" + code + "\n}).apply(" + topLevelThis + ");";
 
         try {
 
             if (this["debugger"]) {
                 this["debugger"].exec(originalCode);
             } else {
-                new Function(code).call(this.canvas, context);
+                var func = new Function(code);
+                func(context);
             }
         } catch (e) {
             return e;

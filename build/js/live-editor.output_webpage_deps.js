@@ -11707,9 +11707,15 @@ window.walkAST = function (node, path, visitors) {
 
             if (node.hasOwnProperty(prop) && node[prop] instanceof Object) {
                 if (Array.isArray(node[prop])) {
-                    node[prop].forEach(function (child) {
-                        return walkAST(child, path, visitors);
-                    });
+                    var i = 0;
+                    while (i < node[prop].length) {
+                        var child = node[prop][i];
+                        // Skip over the number of replacements.  This is usually
+                        // just 1, but in situations involving multiple variable
+                        // declarations we end up replacing one statement with
+                        // multiple statements and we need to step over all of them.
+                        i += walkAST(child, path, visitors);
+                    }
                 } else if (node[prop].type) {
                     // don't walk metadata props like "loc"
                     walkAST(node[prop], path, visitors);
@@ -11731,12 +11737,38 @@ window.walkAST = function (node, path, visitors) {
         }
     }
 
+    var step = 1;
     visitors.forEach(function (visitor) {
         if (visitor.leave) {
-            visitor.leave(node, path);
+            (function () {
+                var replacement = visitor.leave(node, path);
+                if (replacement) {
+                    if (replacement instanceof Array) {
+                        var _parent = path[path.length - 2];
+                        if (_parent.body) {
+                            var index = _parent.body.findIndex(function (child) {
+                                return child === node;
+                            });
+                            Array.prototype.splice.apply(_parent.body, [index, 1].concat(replacement));
+                            // Since we replaced one statement with multiple statements
+                            // we'll want to skip over all of them so set 'step' to
+                            // the number of replacements.
+                            step = replacement.length;
+                        }
+                    } else {
+                        Object.keys(node).forEach(function (key) {
+                            delete node[key];
+                        });
+                        Object.keys(replacement).forEach(function (key) {
+                            node[key] = replacement[key];
+                        });
+                    }
+                }
+            })();
         }
     });
     path.pop();
+    return step;
 };
 /**
  * Creates a new LoopProtector object.
