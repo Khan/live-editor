@@ -795,6 +795,9 @@ window.PJSOutput = Backbone.View.extend({
             // have side effects
             fnCalls = [],
 
+            // Holds rendered code for each of the calls in fnCalls
+            calls = [],
+
             // Is true if the code needs to be completely re-run
             // This is true when instantiated objects that need
             // to be reinitialized.
@@ -937,7 +940,7 @@ window.PJSOutput = Backbone.View.extend({
                         results.push(PJSOutput.stringify(arg));
                     }
                 }.bind(this));
-                inject += fnCalls[i][0] + "(" + results.join(", ") + ");\n";
+                calls.push(fnCalls[i][0] + "(" + results.join(", ") + ");");
             }
 
             // We also look for newly-changed global variables to inject
@@ -1135,7 +1138,7 @@ window.PJSOutput = Backbone.View.extend({
             }
 
             // Execute the injected code
-            var error = this.exec(inject, this.canvas);
+            var error = this.exec(inject, this.canvas, calls);
             if (error) {
                 return callback([error]);
             }
@@ -1273,9 +1276,11 @@ window.PJSOutput = Backbone.View.extend({
      *                 have access to.  It's also used to capture objects that
      *                 the user defines so that we can re-inject them into the
      *                 execution context as users modify their programs.
+     * @param calls: An array of strings containing all of the function calls
+     *               to be injected.
      * @returns {Error?}
      */
-    exec: function(code, context) {
+    exec: function(code, context, calls) {
         if (!code) {
             return;
         }
@@ -1307,7 +1312,19 @@ window.PJSOutput = Backbone.View.extend({
         // that parsing is dominating
         walkAST(ast, null, [ASTTransforms.rewriteContextVariables(envName)]);
 
-        code = escodegen.generate(ast);
+        code = "";
+        if (calls) {
+            // Prepend injected function calls with envName and any arguments
+            // that are objects with envName as well.  This is a lot quicker
+            // than parsing these and using rewriteContextVariables, especially
+            // if there are a lot of inject function calls.
+            code += calls.map(call => {
+                call = call.replace(/__obj__/g, `${envName}.__obj__`);
+                return `${envName}.${call}`;
+            }).join("\n");
+        }
+
+        code += escodegen.generate(ast);
 
         context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;

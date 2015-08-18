@@ -71,6 +71,20 @@ describe("Scratchpad Output Exec", function() {
         background(105, 171, 74);
     });
 
+    test("for loop with variable declaration", function() {
+        for (var i = 0; i < 10; i++) {
+            ellipse(25 * i, 200, 50, 50);
+        }
+    });
+
+    test("try-catch", function() {
+        try {
+            throw "hello";
+        } catch(e) {
+            debug(e);
+        }
+    });
+
     failingTest("Too Many Draw Operations", function() {
         for (var i = 0; i < 17000; i++) {
             ellipse(100, 100, 100, 100);
