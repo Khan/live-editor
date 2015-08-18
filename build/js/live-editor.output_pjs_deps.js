@@ -16321,8 +16321,6 @@
      */
     p.textSize = function(size) {
       if (size !== curTextSize) {
-        // round size to the nearest tenth so that we don't explode the cache
-        size = Math.round(10 * size) / 10;
         curTextFont = PFont.get(curFontName, size);
         curTextSize = size;
         // recache metrics
