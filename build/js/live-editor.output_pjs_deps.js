@@ -87086,6 +87086,135 @@ require("/tools/entry-point.js");
     exports.prettify = prettyHtml;
 })(typeof window !== "undefined" ? window : global);
 
+window.ASTBuilder = {
+    /**
+     * @param {Expression} left
+     * @param {string} operator: "=", "+=", "-=", "*=", "/=", etc.
+     * @param {Expression} right
+     */
+    AssignmentExpression: function AssignmentExpression(left, operator, right) {
+        return {
+            type: "AssignmentExpression",
+            left: left,
+            operator: operator,
+            right: right
+        };
+    },
+    /**
+     * @param {Expression} left
+     * @param {string} operator: "+", "-", "*", "/", "<", ">", "<=", ">=", etc.
+     * @param {Expression} right
+     */
+    BinaryExpression: function BinaryExpression(left, operator, right) {
+        return {
+            type: "BinaryExpression",
+            left: left,
+            operator: operator,
+            right: right
+        };
+    },
+    /**
+     * @param {Array} body: an array of Expressions
+     */
+    BlockStatement: function BlockStatement(body) {
+        return {
+            type: "BlockStatement",
+            body: body
+        };
+    },
+    /**
+     * @param {Expression} callee
+     * @param {Array} args
+     */
+    CallExpression: function CallExpression(callee, args) {
+        return {
+            type: "CallExpression",
+            callee: callee,
+            arguments: args
+        };
+    },
+    /**
+     * @param {Expression} expression
+     */
+    ExpressionStatement: function ExpressionStatement(expression) {
+        return {
+            type: "ExpressionStatement",
+            expression: expression
+        };
+    },
+    /**
+     * @param {string} name
+     */
+    Identifier: function Identifier(name) {
+        return {
+            type: "Identifier",
+            name: name
+        };
+    },
+    /**
+     * @param {Expression} test
+     * @param {Statement} consequent: usually a BlockStatement
+     * @param {Statement?} alternate: usually a BlockStatement when not omitted
+     */
+    IfStatement: function IfStatement(test, consequent) {
+        var alternate = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+        return {
+            type: "IfStatement",
+            test: test,
+            consequent: consequent,
+            alternate: alternate
+        };
+    },
+    /**
+     * @param {Number|String|null|RegExp} value
+     */
+    Literal: function Literal(value) {
+        return {
+            type: "Literal",
+            value: value
+        };
+    },
+    /**
+     * @param {Expression} object
+     * @param {Expression} property
+     * @param {Boolean?} computed - true => obj[prop], false => obj.prop
+     */
+    MemberExpression: function MemberExpression(object, property) {
+        var computed = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+
+        return {
+            type: "MemberExpression",
+            object: object,
+            property: property,
+            computed: computed
+        };
+    },
+    /**
+     * @param {Expression} argument
+     * @param {string} operator: "++" or "--"
+     * @param {Boolean} prefix: true => ++argument, false => argument++
+     */
+    UpdateExpression: function UpdateExpression(argument, operator, prefix) {
+        return {
+            type: "UpdateExpression",
+            argument: argument,
+            operator: operator,
+            prefix: prefix
+        };
+    },
+    /**
+     * @param {Array} declarations
+     * @param {string} kind: "var", "let", "const"
+     */
+    VariableDeclaration: function VariableDeclaration(declarations, kind) {
+        return {
+            type: "VariableDeclaration",
+            declarations: declarations,
+            kind: kind
+        };
+    }
+};
 /**
  * Traverses an AST and calls visitor methods on each of the visitors.
  *
@@ -87167,12 +87296,8 @@ window.LoopProtector = function (callback, mainTimeout, asyncTimeout, reportLoca
     this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
 
     // cache ASTs for function calls to KAInfiniteLoopSetTimeout
-    if (mainTimeout) {
-        this.setMainTimeout = esprima.parse("KAInfiniteLoopSetTimeout(" + mainTimeout + ")").body[0];
-    }
-    if (asyncTimeout) {
-        this.setAsyncTimeout = esprima.parse("KAInfiniteLoopSetTimeout(" + asyncTimeout + ")").body[0];
-    }
+    this.mainTimeout = mainTimeout;
+    this.asyncTimeout = asyncTimeout;
 
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
@@ -87277,26 +87402,24 @@ window.LoopProtector.prototype = {
 
     // Called by walkAST whenever it leaves a node so AST mutations are okay
     leave: function leave(node) {
+        var b = window.ASTBuilder;
+
         if (this.riskyStatements.indexOf(node.type) !== -1) {
             if (this.reportLocation) {
                 var _location = {
                     type: node.type,
                     loc: node.loc
                 };
-                node.body.body.unshift({
-                    "type": "ExpressionStatement",
-                    "expression": {
-                        "type": "CallExpression",
-                        "callee": {
-                            "type": "Identifier",
-                            "name": "KAInfiniteLoopProtect"
-                        },
-                        "arguments": [{
-                            "type": "Literal",
-                            "value": JSON.stringify(_location)
-                        }]
-                    }
-                });
+
+                // Inserts the following code at the start of riskt statements:
+                //
+                // KAInfiniteLoopCount++;
+                // if (KAInfiniteLoopCount > 1000) {
+                //     KAInfiniteLoopProtect();
+                //     KAInfiniteLoopCount = 0;
+                // }
+                node.body.body.unshift(b.IfStatement(b.BinaryExpression(b.Identifier("KAInfiniteLoopCount"), ">", b.Literal(1000)), b.BlockStatement([b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopProtect"), [b.Literal(JSON.stringify(_location))])), b.ExpressionStatement(b.AssignmentExpression(b.Identifier("KAInfiniteLoopCount"), "=", b.Literal(0)))])));
+                node.body.body.unshift(b.ExpressionStatement(b.UpdateExpression(b.Identifier("KAInfiniteLoopCount"), "++", false)));
             } else {
                 node.body.body.unshift(this.loopBreak);
             }
@@ -87309,16 +87432,16 @@ window.LoopProtector.prototype = {
             // a little longer to run.  We call KAInfiniteLoopSetTimeout and set
             // the timeout to mainTimeout just to reset the value when the program
             // is re-run.
-            if (this.setMainTimeout) {
-                node.body.unshift(this.setMainTimeout);
+            if (this.mainTimeout) {
+                node.body.unshift(b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopSetTimeout"), [b.Literal(this.mainTimeout)])));
             }
 
             // Any asynchronous calls such as mouseClicked() or calls to draw()
             // should take much less time so that the app (and the browser) remain
             // responsive as the app is running so we call KAInfiniteLoopSetTimeout
             // at the end of main and set timeout to be asyncTimeout
-            if (this.setAsyncTimeout) {
-                node.body.push(this.setAsyncTimeout);
+            if (this.asyncTimeout) {
+                node.body.push(b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopSetTimeout"), [b.Literal(this.asyncTimeout)])));
             }
         }
     },

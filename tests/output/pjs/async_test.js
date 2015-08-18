@@ -290,13 +290,14 @@ describe("LoopProtector", function() {
         });
 
         output.output.loopProtector = new LoopProtector(function (error) {
-            // caught by the runCode callback
+            expect(error.html).to.contain("while");
+            expect(error.row).to.equal(3);
+            done();
         }, 200, 50, true);
 
         output.runCode(code, function (errors, testResults) {
             expect(errors[0].text).to.contain("while");
             expect(errors[0].row).to.equal(3);
-            done();
         });
     });
 });

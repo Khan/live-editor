@@ -18,14 +18,8 @@ window.LoopProtector = function(callback, mainTimeout, asyncTimeout, reportLocat
     this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
 
     // cache ASTs for function calls to KAInfiniteLoopSetTimeout
-    if (mainTimeout) {
-        this.setMainTimeout =
-            esprima.parse(`KAInfiniteLoopSetTimeout(${mainTimeout})`).body[0];
-    }
-    if (asyncTimeout) {
-        this.setAsyncTimeout =
-            esprima.parse(`KAInfiniteLoopSetTimeout(${asyncTimeout})`).body[0];
-    }
+    this.mainTimeout = mainTimeout;
+    this.asyncTimeout = asyncTimeout;
 
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
@@ -134,28 +128,46 @@ window.LoopProtector.prototype = {
 
     // Called by walkAST whenever it leaves a node so AST mutations are okay
     leave(node) {
+        let b = window.ASTBuilder;
+
         if (this.riskyStatements.indexOf(node.type) !== -1) {
             if (this.reportLocation) {
                 let location = {
                     type: node.type,
                     loc: node.loc
                 };
-                node.body.body.unshift({
-                    "type": "ExpressionStatement",
-                    "expression": {
-                        "type": "CallExpression",
-                        "callee": {
-                            "type": "Identifier",
-                            "name": "KAInfiniteLoopProtect"
-                        },
-                        "arguments": [
-                            {
-                                "type": "Literal",
-                                "value": JSON.stringify(location)
-                            }
-                        ]
-                    }
-                });
+
+                // Inserts the following code at the start of riskt statements:
+                //
+                // KAInfiniteLoopCount++;
+                // if (KAInfiniteLoopCount > 1000) {
+                //     KAInfiniteLoopProtect();
+                //     KAInfiniteLoopCount = 0;
+                // }
+                node.body.body.unshift(
+                    b.IfStatement(
+                        b.BinaryExpression(
+                            b.Identifier("KAInfiniteLoopCount"),
+                            ">",
+                            b.Literal(1000)
+                        ),
+                        b.BlockStatement([
+                            b.ExpressionStatement(b.CallExpression(
+                                b.Identifier("KAInfiniteLoopProtect"),
+                                [b.Literal(JSON.stringify(location))]
+                            )),
+                            b.ExpressionStatement(b.AssignmentExpression(
+                                b.Identifier("KAInfiniteLoopCount"),
+                                "=",
+                                b.Literal(0)
+                            ))
+                        ])
+                    )
+                );
+                node.body.body.unshift(
+                    b.ExpressionStatement(b.UpdateExpression(
+                        b.Identifier("KAInfiniteLoopCount"), "++", false))
+                );
             } else {
                 node.body.body.unshift(this.loopBreak);
             }
@@ -168,16 +180,26 @@ window.LoopProtector.prototype = {
             // a little longer to run.  We call KAInfiniteLoopSetTimeout and set
             // the timeout to mainTimeout just to reset the value when the program
             // is re-run.
-            if (this.setMainTimeout) {
-                node.body.unshift(this.setMainTimeout);
+            if (this.mainTimeout) {
+                node.body.unshift(
+                    b.ExpressionStatement(b.CallExpression(
+                        b.Identifier("KAInfiniteLoopSetTimeout"),
+                        [b.Literal(this.mainTimeout)]
+                    ))
+                );
             }
 
             // Any asynchronous calls such as mouseClicked() or calls to draw()
             // should take much less time so that the app (and the browser) remain
             // responsive as the app is running so we call KAInfiniteLoopSetTimeout
             // at the end of main and set timeout to be asyncTimeout
-            if (this.setAsyncTimeout) {
-                node.body.push(this.setAsyncTimeout);
+            if (this.asyncTimeout) {
+                node.body.push(
+                    b.ExpressionStatement(b.CallExpression(
+                        b.Identifier("KAInfiniteLoopSetTimeout"),
+                        [b.Literal(this.asyncTimeout)]
+                    ))
+                );
             }
         }
     },
