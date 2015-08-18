@@ -10010,7 +10010,7 @@ require("/tools/entry-point.js");
       };
     },
     //Special error type for links that start with www
-    WWW_LINK_WITHOUT_PROTOCOL: function(parser, nameTok, valueTok) {
+    LINK_WITHOUT_PROTOCOL: function(parser, nameTok, valueTok) {
       var currentNode = parser.domBuilder.currentNode,
           openTag = this._combine({
             name: currentNode.nodeName.toLowerCase()
@@ -11339,8 +11339,8 @@ require("/tools/entry-point.js");
         }
 
         //Add a new validator to check if there is link content that is missing a protocol
-        if (valueTok.value.match(/www/) && !valueTok.value.match(/https?:\/\//)) {
-            throw new ParseError("WWW_LINK_WITHOUT_PROTOCOL", this, nameTok, valueTok);
+        if ((nameTok.value === "href" || nameTok.value === "src") && !valueTok.value.match(/https?:\/\//)) {
+            throw new ParseError("LINK_WITHOUT_PROTOCOL", this, nameTok, valueTok);
         }
 
         var unquotedValue = replaceEntityRefs(valueTok.value.slice(1, -1));
