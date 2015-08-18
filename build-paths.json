@@ -81,7 +81,8 @@
             "external/structuredjs/structured.js",
             "js/output/shared/ast-builder.js",
             "js/output/shared/ast-walker.js",
-            "js/output/shared/loop-protect.js"
+            "js/output/shared/loop-protect.js",
+            "js/output/pjs/pjs-ast-transforms.js"
         ],
         "output_debugger_deps": [
             "bower_components/iframe-overlay/dist/iframe-overlay.js",

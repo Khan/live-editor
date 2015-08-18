@@ -87455,3 +87455,26 @@ window.LoopProtector.prototype = {
         return escodegen.generate(ast);
     }
 };
+window.ASTTransforms = {};
+
+var b = window.ASTBuilder;
+
+/**
+ * Visitor object which adds line and column information as additional args,
+ * e.g. Program.assertEqual(a, b) => Program.assertEqual(a, b, <line>, <column>)
+ * where <line> and <column> are number literals.
+ */
+ASTTransforms.rewriteAssertEquals = {
+    leave: function leave(node, path) {
+        if (node.type === "Identifier" && node.name === "Program") {
+            var _parent = path[path.length - 2];
+            if (_parent.type === "MemberExpression" && _parent.object === node && _parent.property.type === "Identifier" && _parent.property.name === "assertEqual") {
+
+                var grandparent = path[path.length - 3];
+                if (grandparent.type === "CallExpression") {
+                    grandparent.arguments.push(b.Literal(grandparent.loc.start.line), b.Literal(grandparent.loc.start.column));
+                }
+            }
+        }
+    }
+};

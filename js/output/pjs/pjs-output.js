@@ -1109,7 +1109,7 @@ window.PJSOutput = Backbone.View.extend({
             }
 
             // Run the code as normal
-            var error = this.exec(userCode, this.canvas, this.ast);
+            var error = this.exec(userCode, this.canvas);
             if (error) {
                 return callback([error]);
             }
@@ -1268,41 +1268,20 @@ window.PJSOutput = Backbone.View.extend({
      *                 have access to.  It's also used to capture objects that
      *                 the user defines so that we can re-inject them into the
      *                 execution context as users modify their programs.
-     * @param ast: An object representing a parsed AST. Optional, for re-using ASTs.
      * @returns {Error?}
      */
-    exec: function(code, context, ast) {
+    exec: function(code, context) {
         if (!code) {
             return;
         }
 
-        ast = ast || esprima.parse(code, { loc: true });
+        let ast = esprima.parse(code, { loc: true });
 
-        walkAST(ast, null, [this.loopProtector, {
-            leave(node, path) {
-                if (node.type === "Identifier" && node.name === "Program") {
-                    let parent = path[path.length - 2];
-                    let grandparent = path[path.length - 3];
-                    if (parent.type === "MemberExpression" &&
-                            parent.object === node &&
-                            parent.property.type === "Identifier" &&
-                            parent.property.name === "assertEqual") {
-                        if (grandparent.type === "CallExpression") {
-                            // append line and column as arguments to
-                            // Program.assertEquals
-                            grandparent.arguments.push({
-                                type: "Literal",
-                                value: grandparent.loc.start.line
-                            },
-                            {
-                                type: "Literal",
-                                value: grandparent.loc.start.column
-                            });
-                        }
-                    }
-                }
-            }
-        }]);
+        // loopProtector adds LoopProtector code which checks how long it's
+        // taking to run event loop and will throw if it's taking too long.
+        // rewriteAssertEquals adds line and column arguments to calls to
+        // Program.assertEquals.
+        walkAST(ast, null, [this.loopProtector, ASTTransforms.rewriteAssertEquals]);
 
         code = escodegen.generate(ast);
 
