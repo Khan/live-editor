@@ -177,19 +177,19 @@ describe("Linting", function() {
 
     failingTest("Malformed outward link href without protocol banned",
         "<a href='www.google.com'></a>", [
-            {row: 0, column: 9, lint: {type: "LINK_WITHOUT_PROTOCOL"}}
+            {row: 0, column: 9, lint: {type: "INVALID_URL"}}
         ]
     );
 
     failingTest("Malformed outward link href without protocol banned",
         "<a href='google.com'></a>", [
-            {row: 0, column: 9, lint: {type: "LINK_WITHOUT_PROTOCOL"}}
+            {row: 0, column: 9, lint: {type: "INVALID_URL"}}
         ]
     );
 
     failingTest("Malformed outward script without protocol banned",
         "<script src='www.google.com'></script>", [
-            {row: 0, column: 13, lint: {type: "LINK_WITHOUT_PROTOCOL"}}
+            {row: 0, column: 13, lint: {type: "INVALID_URL"}}
         ]
     );
 
