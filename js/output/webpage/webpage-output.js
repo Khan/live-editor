@@ -24,12 +24,12 @@ window.WebpageOutput = Backbone.View.extend({
 
         // Set up infinite loop protection
         this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this));
-        this.$frame.contentWindow.KAInfiniteLoopProtect = 
+        this.$frame.contentWindow.KAInfiniteLoopProtect =
             this.loopProtector.KAInfiniteLoopProtect;
         // In case frame didn't load (like in IE10), this adds it
         //  once the frame has loaded
         this.$frame.addEventListener("load", function () {
-            this.$frame.contentWindow.KAInfiniteLoopProtect = 
+            this.$frame.contentWindow.KAInfiniteLoopProtect =
                 this.loopProtector.KAInfiniteLoopProtect;
         }.bind(this));
         // Do this at the end so variables I add to the global scope stay
@@ -99,7 +99,7 @@ window.WebpageOutput = Backbone.View.extend({
             deferred.resolve([]);
             return deferred;
         }
-        
+
         this.userCode = userCode;
         userCode = userCode || "";
 
@@ -173,6 +173,7 @@ window.WebpageOutput = Backbone.View.extend({
             EVENT_HANDLER_ATTR_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using the \"%(attribute_name_value)s\" JavaScript event handler attribute.", error),
             HTML_CODE_IN_CSS_BLOCK: $._("Did you put HTML code inside a CSS area?", error),
             HTTP_LINK_FROM_HTTPS_PAGE: $._("The \"&lt;%(openTag_name)s&gt;\" tag's \"%(attribute_name_value)s\" attribute currently points to an insecure resource.", error),
+            INVALID_URL: $._("The \"&lt;%(openTag_name)s&gt;\" tag's \"%(attribute_name_value)s\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?", error),
             INVALID_ATTR_NAME: $._("The attribute name \"%(attribute_name_value)s\" is not permitted under HTML5 naming conventions.", error),
             UNSUPPORTED_ATTR_NAMESPACE: $._("The attribute \"%(attribute_name_value)s\" uses an attribute namespace that is not permitted under HTML5 conventions.", error),
             MULTIPLE_ATTR_NAMESPACES: $._("The attribute \"%(attribute_name_value)s\" has multiple namespaces. Check your text and make sure there's only a single namespace prefix for the attribute.", error),
@@ -308,7 +309,7 @@ window.WebpageOutput = Backbone.View.extend({
         this.foundRunTimeError = false;
         this.frameDoc.open();
         // It's necessary in FF/IE to redefine it here
-        this.$frame.contentWindow.KAInfiniteLoopProtect = 
+        this.$frame.contentWindow.KAInfiniteLoopProtect =
                 this.loopProtector.KAInfiniteLoopProtect;
         this.$frame.contentWindow.addEventListener("error", function () {
             this.foundRunTimeError = true;
@@ -324,7 +325,7 @@ window.WebpageOutput = Backbone.View.extend({
         } else {
             callback([]);
         }
-        
+
     },
 
     clear: function() {
@@ -337,4 +338,3 @@ window.WebpageOutput = Backbone.View.extend({
 });
 
 LiveEditorOutput.registerOutput("webpage", WebpageOutput);
-
