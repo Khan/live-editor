@@ -87596,7 +87596,7 @@ ASTTransforms.rewriteContextVariables = function (envName) {
 
                     // These values show up a Identifiers in the AST.  We don't
                     // want to prefix them so return.
-                    if (["undefined", "Infinity", "NaN"].includes(node.name)) {
+                    if (["undefined", "Infinity", "NaN", "arguments"].includes(node.name)) {
                         return;
                     }
 

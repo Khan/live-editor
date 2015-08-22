@@ -84,6 +84,16 @@ describe("Scratchpad Output Exec", function() {
             debug(e);
         }
     });
+    
+    test("arguments special object/array", function() {
+        var foo = function() {
+            var x = arguments[0];
+            var y = arguments[1];
+            ellipse(x,y,100,100);
+        };
+
+        foo(200,200);
+    });
 
     failingTest("Too Many Draw Operations", function() {
         for (var i = 0; i < 17000; i++) {

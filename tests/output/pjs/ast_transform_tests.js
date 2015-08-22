@@ -71,17 +71,23 @@ describe("AST Transforms", function () {
         expect(transformedCode).to.equal(expectedCode);
     });
     
-    it("should handle built-in constants", function () {
+    it("should handle built-in identifiers", function () {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var x = undefined;
             var y = Infinity;
             var z = NaN;
+            var foo = function() {
+                console.log(arguments);
+            };
         }));
 
         var expectedCode = cleanupCode(getCodeFromOptions(function() {
             __env__.x = undefined;
             __env__.y = Infinity;
             __env__.z = NaN;
+            __env__.foo = function () {
+                __env__.console.log(arguments);
+            };
         }));
 
         expect(transformedCode).to.equal(expectedCode);
