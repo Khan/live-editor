@@ -123,6 +123,8 @@ describe("Linting", function() {
     ]);
 
     test("regular links are not banned", '<a href="http://google.com"></a>');
+    test("in-page links are not banned", '<a href="#foobar"></a>');
+    test("javascript hrefs are not banned", '<a href="javascript:void(0)"></a>');
     test("regular scripts are not banned", '<script src="http://google.com"></script>');
 
     failingTest("INVALID_TAG_NAME raised by < at EOF",
