@@ -143,6 +143,13 @@ describe("Scratchpad Output Exec", function() {
         image(img, 0, 0);
     });
 
+    test("for-in loop with variable declaration", function() {
+        var obj = { a: 1, b: 2, c: 3 };
+        for (var i in obj) {
+            println(obj);
+        }
+    });
+
     failingTest("getImage with simple string", function () {
         var toolbox = getImage("toolbox");
 

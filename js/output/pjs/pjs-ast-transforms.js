@@ -132,7 +132,12 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
                     // Single VariableDeclarators
 
                     let decl = node.declarations[0];
-                    if (decl.init === null) {
+
+                    // If the current variable declaration has an "init" value of null
+                    //  (IE. no init value given to parser), and the current node type
+                    //  doesn't match "ForInStatement" (a for-in loop), exit the
+                    //  function.
+                    if (decl.init === null && parent.type !== "ForInStatement") {
                         return;
                     }
 
@@ -150,16 +155,25 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
                                 )
                             );
                         } else {
-                            // Handle variables declared inside a 'for' statement
-                            // occurring in the global scope.
-                            //
-                            // e.g. for (var i = 0; i < 10; i++) { ... } =>
-                            //      for (__env__.i = 0; __env__.i < 10; __env__.i++)
-                            return b.AssignmentExpression(
-                                b.MemberExpression(b.Identifier(envName),b.Identifier(decl.id.name)),
-                                "=",
-                                decl.init
-                            );
+                            if (["ForStatement"].includes(parent.type)) {
+                                // Handle variables declared inside a 'for' statement
+                                // occurring in the global scope.
+                                //
+                                // e.g. for (var i = 0; i < 10; i++) { ... } =>
+                                //      for (__env__.i = 0; __env__.i < 10; __env__.i++)
+                                return b.AssignmentExpression(
+                                    b.MemberExpression(b.Identifier(envName),b.Identifier(decl.id.name)),
+                                    "=",
+                                    decl.init
+                                );
+                            } else if (["ForInStatement"].includes(parent.type)) {
+                                // Handle variables declared inside a 'for in' statement,
+                                //  occuring in the global scope.
+                                // Example:
+                                //  for (var i in obj) { ... }
+                                //  for (__env__.i in __env__.obj) { ... }
+                                return b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name))
+                            }
                         }
                     }
                 } else {
@@ -180,7 +194,6 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
                                         decl.init
                                     )
                                 ));
-
                         } else {
                             // Before: for (var i = 0, j = 0; i * j < 100; i++, j++) { ... }
                             // After: for (__env__.i = 0, __env__.j = 0; __env__.i * __env__.j < 100; ...) { ... }
