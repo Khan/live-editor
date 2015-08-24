@@ -164,7 +164,7 @@ ASTTransforms.rewriteContextVariables = function(envName) {
                                 return b.AssignmentExpression(
                                     b.MemberExpression(b.Identifier(envName),b.Identifier(decl.id.name)),
                                     "=",
-                                    decl.init === null ? "a" : decl.init
+                                    decl.init
                                 );
                             } else if (["ForInStatement"].includes(parent.type)) {
                                 // Handle variables declared inside a 'for in' statement,
