@@ -147,14 +147,22 @@ describe("AST Transforms", function () {
 
     it("should handle variable declarations inside a 'for-in' statement", function () {
         var transformedCode = transformCode(getCodeFromOptions(function() {
-            var obj = { a: 1, b: 2, c: 3 };
+            var obj = {
+                a: 1,
+                b: 2,
+                c: 3
+            };
             for (var i in obj) {
                 print(i);
             }
         }));
 
         var expectedCode = cleanupCode(getCodeFromOptions(function() {
-            __env__.obj = { a: 1, b: 2, c: 3 };
+            __env__.obj = {
+                a: 1,
+                b: 2,
+                c: 3
+            };
             for (__env__.i in __env__.obj) {
                 __env__.print(__env__.i);
             }
