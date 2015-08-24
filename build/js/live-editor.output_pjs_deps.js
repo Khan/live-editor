@@ -87600,10 +87600,11 @@ ASTTransforms.rewriteContextVariables = function (envName, context) {
                         return;
                     }
 
-                    // Prefix identifiers that exist in the context object or
-                    // are one of the draw loop functions.  Also, prefix any
-                    // other identifers that exist at the global scope.
-                    if (node.name in context || drawLoopMethods.includes(node.name) || scopeIndex === 0) {
+                    // Prefix identifiers that exist in the context object and
+                    // have not been defined in any scope or are one of the draw
+                    // loop functions.  Also, prefix any other identifers that
+                    // exist at the global scope.
+                    if (node.name in context && scopeIndex === -1 || drawLoopMethods.includes(node.name) || scopeIndex === 0) {
                         return b.MemberExpression(b.Identifier(envName), b.Identifier(node.name));
                     }
                 }

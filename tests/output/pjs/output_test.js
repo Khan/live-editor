@@ -95,6 +95,20 @@ describe("Scratchpad Output Exec", function() {
         foo(200,200);
     });
 
+    runTest({
+        title: "inner scope variables supercede global variables",
+        code: function() {
+            var foo = 5;
+            var bar = function() {
+                var foo = 10;
+                Program.assertEqual(foo, 10);
+            };
+            bar();
+        },
+        errors: [],
+        assertions: []
+    });
+
     failingTest("Too Many Draw Operations", function() {
         for (var i = 0; i < 17000; i++) {
             ellipse(100, 100, 100, 100);
