@@ -1285,6 +1285,16 @@ window.PJSOutput = Backbone.View.extend({
             return;
         }
 
+        context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
+        context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
+        context.KAInfiniteLoopCount = 0;
+
+        // Adding this to the context is required for any calls to applyInstance.
+        // TODO(kevinb) We should change how we're rewriting constructor calls.
+        // Currently we're doing a global replace which causes things that look
+        // like 'new' calls in comments to be replaced as well.
+        context.PJSOutput = PJSOutput;
+
         // this is kind of sort of supposed to fake a gensym that the user
         // can't access but since we're limited to string manipulation, we
         // can't guarantee this fo sho' so we just change the name to something
@@ -1310,7 +1320,7 @@ window.PJSOutput = Backbone.View.extend({
         // adds variable references which need to be rewritten.
         // Profile first before trying to combine these two passes.  It may be
         // that parsing is dominating
-        walkAST(ast, null, [ASTTransforms.rewriteContextVariables(envName)]);
+        walkAST(ast, null, [ASTTransforms.rewriteContextVariables(envName, context)]);
 
         code = "";
         if (calls) {
@@ -1325,16 +1335,6 @@ window.PJSOutput = Backbone.View.extend({
         }
 
         code += escodegen.generate(ast);
-
-        context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
-        context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
-        context.KAInfiniteLoopCount = 0;
-
-        // Adding this to the context is required for any calls to applyInstance.
-        // Instead of doing this we should change how we're rewriting constructor
-        // calls.  Currently we're doing a global replace which causes things
-        // that look like 'new' calls in comments to be replaced as well.
-        context.PJSOutput = PJSOutput;
 
         // the top-level 'this' is empty except for this.externals, which
         // throws this message this is how users were getting at everything

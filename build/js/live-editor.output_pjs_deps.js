@@ -87547,7 +87547,7 @@ var scopes = [{}];
  * @param {string} envName
  * @returns {Object}
  */
-ASTTransforms.rewriteContextVariables = function (envName) {
+ASTTransforms.rewriteContextVariables = function (envName, context) {
     return {
         enter: function enter(node, path) {
             // Create a new scope whenever we encounter a function declaration/expression
@@ -87600,10 +87600,10 @@ ASTTransforms.rewriteContextVariables = function (envName) {
                         return;
                     }
 
-                    // Only prefix identifiers that were defined in the global
-                    // scope or weren't defined (because they're references
-                    // provided by the context, e.g. fill, rect, etc.)
-                    if (scopeIndex < 1) {
+                    // Prefix identifiers that exist in the context object or
+                    // are one of the draw loop functions.  Also, prefix any
+                    // other identifers that exist at the global scope.
+                    if (node.name in context || drawLoopMethods.includes(node.name) || scopeIndex === 0) {
                         return b.MemberExpression(b.Identifier(envName), b.Identifier(node.name));
                     }
                 }

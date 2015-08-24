@@ -739,6 +739,23 @@ describe("Scratchpad Output Exec", function() {
         assertions2: []
     });
 
+    runTest({
+        title: "hoisting should work",
+        code: function() {
+            var foo = function() {
+                var bar = function() {
+                    return a;
+                };
+                var a = 5;
+                return bar;
+            };
+
+            Program.assertEqual(foo()(), 5);
+        },
+        errors: [],
+        assertions: []
+    });
+
     /**
      * Some calls do not currently work within workers.
      * For example createGraphics creates a whole new Processing

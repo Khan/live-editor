@@ -10009,7 +10009,7 @@ require("/tools/entry-point.js");
         cursor: attribute.value.start
       };
     },
-    //Special error type for links that start with www
+    //Special error type for urls that start with www
     INVALID_URL: function(parser, nameTok, valueTok) {
       var currentNode = parser.domBuilder.currentNode,
           openTag = this._combine({
@@ -11338,9 +11338,13 @@ require("/tools/entry-point.js");
           );
         }
 
-        //Add a new validator to check if there is link content that is missing a protocol
-        if ((nameTok.value === "href" || nameTok.value === "src") && !valueTok.value.match(/https?:\/\//)) {
+        //Add a new validator to check if there is invalid link content
+        if (nameTok.value === "href" || nameTok.value === "src") {
+          if (!valueTok.match(regexp)) {
+            //Cheers to Diego Perini: https://gist.github.com/dperini/729294
+            var regexp = /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/i;
             throw new ParseError("INVALID_URL", this, nameTok, valueTok);
+          }
         }
 
         var unquotedValue = replaceEntityRefs(valueTok.value.slice(1, -1));
