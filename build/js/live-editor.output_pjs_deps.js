@@ -87636,7 +87636,7 @@ ASTTransforms.rewriteContextVariables = function (envName) {
                                 //
                                 // e.g. for (var i = 0; i < 10; i++) { ... } =>
                                 //      for (__env__.i = 0; __env__.i < 10; __env__.i++)
-                                return b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init === null ? "a" : decl.init);
+                                return b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init);
                             } else if (["ForInStatement"].includes(parent.type)) {
                                 // Handle variables declared inside a 'for in' statement,
                                 //  occuring in the global scope.
