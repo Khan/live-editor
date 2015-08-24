@@ -87547,7 +87547,7 @@ var scopes = [{}];
  * @param {string} envName
  * @returns {Object}
  */
-ASTTransforms.rewriteContextVariables = function (envName) {
+ASTTransforms.rewriteContextVariables = function (envName, context) {
     return {
         enter: function enter(node, path) {
             // Create a new scope whenever we encounter a function declaration/expression
@@ -87600,10 +87600,10 @@ ASTTransforms.rewriteContextVariables = function (envName) {
                         return;
                     }
 
-                    // Only prefix identifiers that were defined in the global
-                    // scope or weren't defined (because they're references
-                    // provided by the context, e.g. fill, rect, etc.)
-                    if (scopeIndex < 1) {
+                    // Prefix identifiers that exist in the context object or
+                    // are one of the draw loop functions.  Also, prefix any
+                    // other identifers that exist at the global scope.
+                    if (node.name in context || drawLoopMethods.includes(node.name) || scopeIndex === 0) {
                         return b.MemberExpression(b.Identifier(envName), b.Identifier(node.name));
                     }
                 }
@@ -87613,7 +87613,12 @@ ASTTransforms.rewriteContextVariables = function (envName) {
                     // Single VariableDeclarators
 
                     var decl = node.declarations[0];
-                    if (decl.init === null) {
+
+                    // If the current variable declaration has an "init" value of null
+                    //  (IE. no init value given to parser), and the current node type
+                    //  doesn't match "ForInStatement" (a for-in loop), exit the
+                    //  function.
+                    if (decl.init === null && parent.type !== "ForInStatement") {
                         return;
                     }
 
@@ -87625,12 +87630,21 @@ ASTTransforms.rewriteContextVariables = function (envName) {
                         if (["Program", "BlockStatement"].includes(parent.type)) {
                             return b.ExpressionStatement(b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init));
                         } else {
-                            // Handle variables declared inside a 'for' statement
-                            // occurring in the global scope.
-                            //
-                            // e.g. for (var i = 0; i < 10; i++) { ... } =>
-                            //      for (__env__.i = 0; __env__.i < 10; __env__.i++)
-                            return b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init);
+                            if (["ForStatement"].includes(parent.type)) {
+                                // Handle variables declared inside a 'for' statement
+                                // occurring in the global scope.
+                                //
+                                // e.g. for (var i = 0; i < 10; i++) { ... } =>
+                                //      for (__env__.i = 0; __env__.i < 10; __env__.i++)
+                                return b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init);
+                            } else if (["ForInStatement"].includes(parent.type)) {
+                                // Handle variables declared inside a 'for in' statement,
+                                //  occuring in the global scope.
+                                // Example:
+                                //  for (var i in obj) { ... }
+                                //  for (__env__.i in __env__.obj) { ... }
+                                return b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name));
+                            }
                         }
                     }
                 } else {

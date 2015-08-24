@@ -13,7 +13,18 @@ var cleanupCode = function(code) {
 var transformCode = function(code) {
     var ast = esprima.parse(code);
     var envName = "__env__";
-    walkAST(ast, null, [ASTTransforms.rewriteContextVariables(envName)]);
+    
+    // The tests use ellipse(), console.log(), and print() so we need to make
+    // sure they're defined in the context object otherwise the transform won't
+    // prefix them when they're used inside of a function body.
+    var context = {
+        ellipse: function() {},
+        console: {
+            log: function() {}
+        },
+        print: function() {}
+    };
+    walkAST(ast, null, [ASTTransforms.rewriteContextVariables(envName, context)]);
 
     return escodegen.generate(ast);
 };
@@ -125,7 +136,7 @@ describe("AST Transforms", function () {
 
         expect(transformedCode).to.equal(expectedCode);
     });
-    
+
     it("should handle draw loop functions inside 'draw'", function () {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var draw = function() {
@@ -140,6 +151,24 @@ describe("AST Transforms", function () {
                 };
                 var y = 10;
             };
+        }));
+
+        expect(transformedCode).to.equal(expectedCode);
+    });
+
+    it("should handle variable declarations inside a 'for-in' statement", function () {
+        var transformedCode = transformCode(getCodeFromOptions(function() {
+            var obj = { a: 1, b: 2, c: 3 };
+            for (var i in obj) {
+                print(i);
+            }
+        }));
+
+        var expectedCode = cleanupCode(getCodeFromOptions(function() {
+            __env__.obj = { a: 1, b: 2, c: 3 };
+            for (__env__.i in __env__.obj) {
+                __env__.print(__env__.i);
+            }
         }));
 
         expect(transformedCode).to.equal(expectedCode);

@@ -143,6 +143,13 @@ describe("Scratchpad Output Exec", function() {
         image(img, 0, 0);
     });
 
+    test("for-in loop with variable declaration", function() {
+        var obj = { a: 1, b: 2, c: 3 };
+        for (var i in obj) {
+            println(obj);
+        }
+    });
+
     failingTest("getImage with simple string", function () {
         var toolbox = getImage("toolbox");
 
@@ -737,6 +744,23 @@ describe("Scratchpad Output Exec", function() {
             "row":2,"column":4,
             "text": "Assertion failed: 2 is not equal to 4."}],
         assertions2: []
+    });
+
+    runTest({
+        title: "hoisting should work",
+        code: function() {
+            var foo = function() {
+                var bar = function() {
+                    return a;
+                };
+                var a = 5;
+                return bar;
+            };
+
+            Program.assertEqual(foo()(), 5);
+        },
+        errors: [],
+        assertions: []
     });
 
     /**
