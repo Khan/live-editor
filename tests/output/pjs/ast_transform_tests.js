@@ -125,7 +125,7 @@ describe("AST Transforms", function () {
 
         expect(transformedCode).to.equal(expectedCode);
     });
-    
+
     it("should handle draw loop functions inside 'draw'", function () {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var draw = function() {
