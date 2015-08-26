@@ -1758,9 +1758,13 @@
         var url = valueTok.value.substring(1, valueTok.value.length-1);
         if (!url.match(regexp)) {
           if (nameTok.value === "src"){
-            throw new ParseError("INVALID_URL", this, nameTok, valueTok);
+            if (url.substring(0, 2) !== "//") {
+              throw new ParseError("INVALID_URL", this, nameTok, valueTok);
+            }
           } else if (nameTok.value === "href") {
-            if (url.charAt(0) !== "#" && url.substring(0, 10) !== "javascript") {
+            if (url.charAt(0) !== "#" &&
+                url.substring(0, 10) !== "javascript" &&
+                url.substring(0, 2) !== "//") {
               throw new ParseError("INVALID_URL", this, nameTok, valueTok);
             }
           }
