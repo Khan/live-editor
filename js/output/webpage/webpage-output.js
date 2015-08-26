@@ -272,7 +272,7 @@ window.WebpageOutput = Backbone.View.extend({
         // Change external links to a redirecting proxy
         $(this.frameDoc).find("a").each(function(ind, a) {
             var url = $(a).attr("href");
-            if (url && url[0] !== "#") {
+            if (url && url[0] !== "#" && url.substring(0, 10) !== "javascript") {
                 $(a).attr("target", "_blank");
                 $(a).attr("href", this.transformUrl(url));
             }
