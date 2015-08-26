@@ -92,7 +92,7 @@ describe("Linting", function() {
 
     test("parsing of HTML with void elements:", [
         '<br>',
-        '<img src="data:image/png,aaaa">'
+        '<img src="https://www.google.com/images/srpr/logo11w.png">'
     ]);
 
     test("parsing of text content w/ newlines", [
@@ -122,7 +122,13 @@ describe("Linting", function() {
         '<button type="submit">Submit</button>'
     ]);
 
-    test("regular links are not banned", '<a href="http://google.com"></a>');
+    test("links with valid protocols are not banned", [
+      '<a href="http://google.com"></a>',
+      '<a href="https://google.com"></a>',
+      '<script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script>',
+      '<a href="ftp://google.com"></a>',
+      '<a href="mailto:khan@ka.com"></a>'
+    ]);
     test("in-page links are not banned", '<a href="#foobar"></a>');
     test("javascript hrefs are not banned", '<a href="javascript:void(0)"></a>');
     test("regular scripts are not banned", '<script src="http://google.com"></script>');
