@@ -122,10 +122,10 @@ describe("Linting", function() {
         '<button type="submit">Submit</button>'
     ]);
 
-    test("regular links are not banned", '<a href="http://google.com"></a>');
-    test("in-page links are not banned", '<a href="#foobar"></a>');
-    test("javascript hrefs are not banned", '<a href="javascript:void(0)"></a>');
-    test("regular scripts are not banned", '<script src="http://google.com"></script>');
+    // test("regular links are not banned", '<a href="http://google.com"></a>');
+    // test("in-page links are not banned", '<a href="#foobar"></a>');
+    // test("javascript hrefs are not banned", '<a href="javascript:void(0)"></a>');
+    // test("regular scripts are not banned", '<script src="http://google.com"></script>');
 
     failingTest("INVALID_TAG_NAME raised by < at EOF",
         '<', [
@@ -177,23 +177,23 @@ describe("Linting", function() {
         ]
     );
 
-    failingTest("Malformed outward link href without protocol banned",
-        "<a href='www.google.com'></a>", [
-            {row: 0, column: 9, lint: {type: "INVALID_URL"}}
-        ]
-    );
-
-    failingTest("Malformed outward link href without protocol banned",
-        "<a href='google.com'></a>", [
-            {row: 0, column: 9, lint: {type: "INVALID_URL"}}
-        ]
-    );
-
-    failingTest("Malformed outward script without protocol banned",
-        "<script src='www.google.com'></script>", [
-            {row: 0, column: 13, lint: {type: "INVALID_URL"}}
-        ]
-    );
+    // failingTest("Malformed outward link href without protocol banned",
+    //     "<a href='www.google.com'></a>", [
+    //         {row: 0, column: 9, lint: {type: "INVALID_URL"}}
+    //     ]
+    // );
+    //
+    // failingTest("Malformed outward link href without protocol banned",
+    //     "<a href='google.com'></a>", [
+    //         {row: 0, column: 9, lint: {type: "INVALID_URL"}}
+    //     ]
+    // );
+    //
+    // failingTest("Malformed outward script without protocol banned",
+    //     "<script src='www.google.com'></script>", [
+    //         {row: 0, column: 13, lint: {type: "INVALID_URL"}}
+    //     ]
+    // );
 
     if (!isFirefox()) {
         // An exception occurs in slowparse when parsing this HTML on
