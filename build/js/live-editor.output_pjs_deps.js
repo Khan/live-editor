@@ -1809,6 +1809,130 @@
     // XXX(jeresig)
     p.angleMode = "radians";
 
+    // Adding a programable avatar to live-editor -- (albertochiwas)
+    // TODO - absolute angle property -- setAngle() method -- wave() method
+    var Avatar = p.Avatar = (function() {
+      function Avatar( fname ) {
+        this.init(fname);
+      }
+      // Avatar API
+      Avatar.prototype = {
+        set: function( fname ) {
+          this.init(fname);
+        },
+        get: function() {
+          return new Avatar( this.name );
+        },
+        init: function( fname ) {
+          // Avatar constants (joints) - (albertochiwas)
+          this.Head   = this.Cabeza     = 0;
+          this.LArm   = this.BrazoIzq   = 1;
+          this.LElbow = this.CodoIzq    = 2;
+          this.RArm   = this.BrazoDer   = 3;
+          this.RElbow = this.CodoDer    = 4;
+          this.Hip = this.Tail = this.Cadera = this.Rabo = 5;
+          this.LLeg   = this.PiernaIzq  = 6;
+          this.LKnee  = this.RodillaIzq = 7;
+          this.RLeg   = this.PiernaDer  = 8;
+          this.RKnee  = this.RodillaDer = 9;
+          this.Joints = 10;
+          this.shape = p.loadShape("../../build/images/puppets/"+ fname +".svg");  // Reads SVG file
+          this.puppet = this.shape.getChild("puppet");
+          this.name = fname;
+          this.w0 = this.width = this.shape.width;
+          this.cx = this.width / 2.0;
+          this.h0 = this.height = this.shape.height;
+          this.cy = this.height / 2.0;
+          this.m = new Array(this.Joints); // body parts
+          this.p = new Array(this.Joints); // pivots
+          this.angle = new Array(this.Joints); // rotation angle
+          this.waveCount = p.frameCount + 199; // for wave()
+          for (var i=0; i<this.Joints; i++) {
+            var m = this.puppet.getChild("m"+i);
+            this.m[i] = m;
+            var pv = m.getChild("pivot_m"+i);
+            this.p[i] = new p.PVector(pv.params[0],pv.params[1]);
+            this.angle[i] = 0;
+          }
+        },
+        scale: function( s ) {
+          this.shape.scale( s );
+          this.width = s * this.w0;
+          this.cx = this.width / 2.0;
+          this.height = s * this.h0;
+          this.cy = this.height / 2.0;
+        },
+        rotateAll: function( deg ) {
+          this.puppet.translate( this.cx, this.cy );
+          this.puppet.rotate( deg );
+          this.puppet.translate( -this.cx, -this.cy );
+        },
+        rotate: function( j, deg ) {
+          var i = Math.abs(j) % this.Joints; // avoid out of index error
+          this.m[i].translate( this.p[i].x, this.p[i].y );
+          this.m[i].rotate( deg );
+          this.m[i].translate( -this.p[i].x, -this.p[i].y );
+          this.angle[i] = (this.angle[i] + deg) % 360;
+        },
+        setAngle: function( j, deg ) {
+          var i = Math.abs(j) % this.Joints; // avoid out of index error
+          var nang = deg % 360;
+          this.m[i].translate( this.p[i].x, this.p[i].y );
+          this.m[i].rotate( nang - this.angle[i] );
+          this.m[i].translate( -this.p[i].x, -this.p[i].y );
+          this.angle[i] = nang;
+        },
+        getAngle: function(i) {
+          return this.angle[i];
+        },
+        draw: function( x, y ) {
+          p.shape( this.shape, x-this.cx, y-this.cy );
+        },
+        startWave: function( frames ) {
+          this.setAngle(this.LArm,30);
+          this.setAngle(this.LElbow,90);
+          this.waveCount = p.frameCount + frames;
+        },
+        wave: function() {
+          var cmp = this.waveCount - p.frameCount;
+          if ( cmp>0 && (cmp % 16 === 0) ) {
+            if ( ((cmp / 16) % 2) === 0 ) {
+              this.rotate(this.LElbow, 30);
+            } else {
+              this.rotate(this.LElbow, -30);
+            }
+          }
+        },
+        toString: function() {
+            return "Avatar(" +  this.name + ")";
+          },
+          array: function() { // ??
+            return [this.name, this.puppet, this.width, this.height, this.m, this.p];
+          }
+      };
+
+      function createAvatarMethod(method) {
+        return function(v1, v2) {
+          var v = v1.get();
+          v[method](v2);
+          return v;
+        };
+      }
+
+      // Create the static methods of Avatar automatically
+      // We don't do toString because it causes a TypeError
+      //  when attempting to stringify Avatar
+      for (var method in Avatar.prototype) {
+        if (Avatar.prototype.hasOwnProperty(method) && !Avatar.hasOwnProperty(method) &&
+            method !== "toString") {
+          Avatar[method] = createAvatarMethod(method);
+        }
+      }
+
+      return Avatar;
+    }());
+
+
     var PVector = p.PVector = (function() {
       function PVector(x, y, z) {
         this.x = x || 0;
@@ -17822,7 +17946,7 @@
       "parseInt", "peg", "perspective", "PImage", "pixels", "PMatrix2D",
       "PMatrix3D", "PMatrixStack", "pmouseX", "pmouseY", "point",
       "pointLight", "popMatrix", "popStyle", "pow", "print", "printCamera",
-      "println", "printMatrix", "printProjection", "PShape", "PShapeSVG",
+      "println", "printMatrix", "printProjection", "PShape", "PShapeSVG", "Avatar",
       "pushMatrix", "pushStyle", "quad", "radians", "random", "Random",
       "randomSeed", "rect", "rectMode", "red", "redraw", "requestImage",
       "resetMatrix", "reverse", "rotate", "rotateX", "rotateY", "rotateZ",
