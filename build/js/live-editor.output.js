@@ -511,11 +511,11 @@ window.LiveEditorOutput = Backbone.View.extend({
      * - actually run the code
      * - manage lint and runtime errors
      * - call the callback (via buildDone) to run tests
-     * 
+     *
      * @param userCode: code to run
      * @param callback: used by the tests
      * @param noLint: disables linting if true, first run still lints
-     * 
+     *
      * TODO(kevinb) return a Deferred and move test related code to test_utils
      */
     runCode: function runCode(userCode, callback, noLint) {
@@ -526,15 +526,20 @@ window.LiveEditorOutput = Backbone.View.extend({
             timestamp: timestamp,
             code: userCode,
             errors: [],
-            assertions: []
+            assertions: [],
+            warnings: []
         };
 
         var skip = noLint && this.firstLint;
 
         // Always lint the first time, so that PJS can populate its list of globals
-        this.output.lint(userCode, skip).then((function (lintErrors) {
-            this.lintErrors = lintErrors;
-            this.lintErrors.timestamp = timestamp;
+        this.output.lint(userCode, skip).then((function (lintResults) {
+            if (lintResults.length > 0 && lintResults[0].type === "error") {
+                this.lintErrors = lintResults;
+                this.lintErrors.timestamp = timestamp;
+            } else if (lintResults.length > 0 && lintResults[0].type === "warning") {
+                this.lintWarnings = lintResults;
+            }
             return this.lintDone(userCode, timestamp);
         }).bind(this)).then((function () {
             this.buildDone(userCode, callback);
@@ -546,7 +551,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     /**
      * Runs the code and records runtime errors.  Returns immediately if there
      * are any lint errors.
-     * 
+     *
      * @param userCode
      * @param timestamp
      * @returns {$.Deferred}
@@ -575,9 +580,9 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     /**
-     * Posts results to the the parent frame and runs tests if a callback has 
+     * Posts results to the the parent frame and runs tests if a callback has
      * been provided or if the .validate property is set.
-     * 
+     *
      * @param userCode
      * @param callback
      */
@@ -592,6 +597,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             errors = errors.concat(this.runtimeErrors);
         }
         errors = this.cleanErrors(errors || []);
+        warnings = this.lintWarnings || [];
 
         if (!this.loaded) {
             this.postParent({ loaded: true });
@@ -600,6 +606,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Update results
         this.results.errors = errors;
+        this.results.warnings = warnings;
         this.phoneHome();
 
         this.toggle(!errors.length);

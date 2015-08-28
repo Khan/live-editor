@@ -1055,23 +1055,32 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         if (this.editorType.indexOf("ace_") === 0 && data.results &&
-                data.results.assertions) {
-
-            // Add gutter warning markers for assertions in the editor.
+                (data.results.assertions || data.results.warnings)) {
+            // Add gutter warning markers in the editor.
             // E.g. Add `Program.assertEqual(2, 4);` to the live editor to see
             // an example.
             var annotations = [];
             for (var i = 0; i < data.results.assertions.length; i++) {
-
-                var unitTest = data.results.assertions[i];
+                let assertion = data.results.assertions[i];
                 annotations.push({
-                    row: unitTest.row,
-                    column: unitTest.column,
-                    text: unitTest.text,
+                    row: assertion.row,
+                    column: assertion.column,
+                    text: assertion.text,
                     type: "warning"
                 });
-                this.addUnderlineMarker(unitTest.row);
-           }
+                this.addUnderlineMarker(assertion.row);
+            }
+
+            for (var i = 0; i < data.results.warnings.length; i++) {
+                let warning = data.results.warnings[i];
+                annotations.push({
+                    row: warning.row,
+                    column: warning.column,
+                    text: warning.text,
+                    type: "warning"
+                });
+                this.addUnderlineMarker(warning.row);
+            }
 
             // Remove previously added markers
             this.removeMarkers();
