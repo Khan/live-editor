@@ -949,9 +949,15 @@ window.PJSOutput = Backbone.View.extend({
                 if (/^KAInfiniteLoop/.test(prop)) {
                     return;
                 }
+
                 // Ignore PJSOuput so that we can still access 'test', 'lint'
                 // and other methods in our tests.
                 if (/^PJSOutput/.test(prop)) {
+                    return;
+                }
+
+                // Ignore drawLoopMethods.
+                if (drawLoopMethods.includes(prop)) {
                     return;
                 }
 

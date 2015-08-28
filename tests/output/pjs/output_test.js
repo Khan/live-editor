@@ -776,6 +776,26 @@ describe("Scratchpad Output Exec", function() {
         errors: [],
         assertions: []
     });
+    
+    runTest({
+        title: "local variables in closure of global draw should update",
+        code: function() {
+            (function () {
+                var radius = 100;
+                draw = function() {
+                    ellipse(200,200,2*radius,2*radius);
+                };
+            })();
+        },
+        code2: function() {
+            (function () {
+                var radius = 50;
+                draw = function() {
+                    ellipse(200,200,2*radius,2*radius);
+                };
+            })();
+        }
+    });
 
     /**
      * Some calls do not currently work within workers.
