@@ -1810,12 +1810,61 @@
     p.angleMode = "radians";
 
     // Adding a programable avatar to live-editor -- (albertochiwas)
-    // TODO - absolute angle property -- setAngle() method -- wave() method
-    var Avatar = p.Avatar = (function() {
+    // TODO - scale atrib
+
+    function defaultLimits() { //.2 if error or limits array file is missing
+      return [ // default joint ranges
+        [-180,180], [-180,180], [-180,180], [-180,180], [-180,180],
+        [-180,180], [-180,180], [-180,180], [-180,180], [-180,180]];
+    }
+
+    function missingFile(url) //.2 Detects file (http://goo.gl/XkhrCu)
+    {
+      var http = new XMLHttpRequest();
+      http.open('HEAD', url, false);
+      http.send();
+      var notFound = (http.status === 404);
+      if (notFound) {
+        p.println("Error: missing "+url+" file");
+      }
+      return notFound;
+    }
+
+    function loadLimits( fn, len ) //.2 load joint limits array from text file (albertochiwas)
+    {
+      if ( missingFile(fn) ) {
+        return defaultLimits();
+      }
+      var line = p.loadStrings(fn); // read int array from text file
+      var tam = line.length;
+      if ( tam < len ) {
+        p.println("Error: incomplete data inside "+fn+" file");
+        return defaultLimits();
+      }
+      var ini = 0;
+      if (line[0].charAt(0) === '%' && tam >= (len+1)) { // first line starts with %
+        ini = 1;
+      }
+      var r = new Array(len); // joint limits array
+      for ( var i=ini; i<=(ini+(len-1)); i++ ) { // for each limit (min,max)
+        var row = line[i].trim().split(',');
+        if ( row.length !== 2 ) {
+          p.println("Error: missing limit (pos="+i+") - "+ini);
+          return defaultLimits();
+        }
+        var idx = i - ini;
+        r[idx] = Array(2); // [min,max] range
+        r[idx][0] = parseInt(row[0].trim()); // string to int
+        r[idx][1] = parseInt(row[1].trim());
+      }
+      return r; // array[][] output
+    }
+
+    var Avatar = p.Avatar = (function() { // Avatar class ver. 0.2 (albertochiwas)
       function Avatar( fname ) {
         this.init(fname);
       }
-      // Avatar API
+      // Avatar API TODO: Add to AST array functions
       Avatar.prototype = {
         set: function( fname ) {
           this.init(fname);
@@ -1824,21 +1873,27 @@
           return new Avatar( this.name );
         },
         init: function( fname ) {
-          // Avatar constants (joints) - (albertochiwas)
-          this.Head   = this.Cabeza     = 0;
-          this.LArm   = this.BrazoIzq   = 1;
-          this.LElbow = this.CodoIzq    = 2;
-          this.RArm   = this.BrazoDer   = 3;
-          this.RElbow = this.CodoDer    = 4;
-          this.Hip = this.Tail = this.Cadera = this.Rabo = 5;
-          this.LLeg   = this.PiernaIzq  = 6;
-          this.LKnee  = this.RodillaIzq = 7;
-          this.RLeg   = this.PiernaDer  = 8;
-          this.RKnee  = this.RodillaDer = 9;
-          this.Joints = 10;
-          this.shape = p.loadShape("../../build/images/puppets/"+ fname +".svg");  // Reads SVG file
-          this.puppet = this.shape.getChild("puppet");
+          var path = "/live-editor/build/images/puppets/";  // TODO: Relative URL
+          var svgFile = path + fname +".svg";
+          if (missingFile(svgFile)) { //.2 detect svg
+            return null;
+          }
+          this.shape = p.loadShape(svgFile);  // Read SVG file
           this.name = fname;
+          // Avatar constants (joints) TODO: Test as class attributes
+          this.Head = this.Cabeza     = 0;
+          this.LA   = this.BrazoIzq   = 1;
+          this.LE   = this.CodoIzq    = 2;
+          this.RA   = this.BrazoDer   = 3;
+          this.RE   = this.CodoDer    = 4;
+          this.Hip  = this.Tail = this.Cadera = this.Rabo = 5;
+          this.LL   = this.PiernaIzq  = 6;
+          this.LK   = this.RodillaIzq = 7;
+          this.RL   = this.PiernaDer  = 8;
+          this.RK   = this.RodillaDer = 9;
+          this.Joints = 10;
+          this.limits = loadLimits(path + fname +".txt", this.Joints);  //.2 Read Joint Angle Limits
+          this.puppet = this.shape.getChild("puppet");
           this.w0 = this.width = this.shape.width;
           this.cx = this.width / 2.0;
           this.h0 = this.height = this.shape.height;
@@ -1867,20 +1922,35 @@
           this.puppet.rotate( deg );
           this.puppet.translate( -this.cx, -this.cy );
         },
-        rotate: function( j, deg ) {
+        _inRange: function( i, angle ) { //.2 angle within limits
+          var mn = this.limits[i][0];
+          var mx = this.limits[i][1];
+          if ( angle < mn ) {
+            return mn;
+          } else if ( angle > mx ) {
+            return mx;
+          }
+          return angle;
+        },
+        rotate: function( j, deg_param ) {
           var i = Math.abs(j) % this.Joints; // avoid out of index error
-          this.m[i].translate( this.p[i].x, this.p[i].y );
-          this.m[i].rotate( deg );
-          this.m[i].translate( -this.p[i].x, -this.p[i].y );
-          this.angle[i] = (this.angle[i] + deg) % 360;
+          var deg = deg_param % 360;
+          var nextAng = this.angle[i] + deg;
+          var newAngle = this._inRange(i, nextAng); //.2
+          if ( newAngle === nextAng ) { // approved?
+            this.m[i].translate( this.p[i].x, this.p[i].y );
+            this.m[i].rotate( deg );
+            this.m[i].translate( -this.p[i].x, -this.p[i].y );
+            this.angle[i] = newAngle;
+          }
         },
         setAngle: function( j, deg ) {
           var i = Math.abs(j) % this.Joints; // avoid out of index error
-          var nang = deg % 360;
+          var newAngle = this._inRange(i, deg); //.2
           this.m[i].translate( this.p[i].x, this.p[i].y );
-          this.m[i].rotate( nang - this.angle[i] );
+          this.m[i].rotate( newAngle - this.angle[i] );
           this.m[i].translate( -this.p[i].x, -this.p[i].y );
-          this.angle[i] = nang;
+          this.angle[i] = newAngle;
         },
         getAngle: function(i) {
           return this.angle[i];
@@ -1888,18 +1958,39 @@
         draw: function( x, y ) {
           p.shape( this.shape, x-this.cx, y-this.cy );
         },
-        startWave: function( frames ) {
-          this.setAngle(this.LArm,30);
-          this.setAngle(this.LElbow,90);
+        drawPivots: function( x, y ) { //.2 To debug avatar pivots
+          this.draw(x,y);
+          p.fill(255, 196, 0);
+          for (var i=0; i<this.Joints; i++) {
+            switch (i) {
+              case 2: case 4: // codos
+              case 7: case 9: // rodillas
+                p.pushMatrix();
+                var xg = this.p[i-1].x + x - 200;
+                var yg = this.p[i-1].y + y - 200;
+                p.translate(xg,yg);
+                p.rotate(this.getAngle(i-1));
+                p.translate(-xg,-yg);
+                p.ellipse(this.p[i].x+x-200, this.p[i].y+y-200, 10, 10);
+                p.popMatrix();
+                    break;
+              default:
+                p.ellipse(this.p[i].x+x-200, this.p[i].y+y-200, 10, 10);
+            }
+          }
+        },
+        setWave: function( frames ) {
+          this.setAngle(this.LA,30);
+          this.setAngle(this.LE,90);
           this.waveCount = p.frameCount + frames;
         },
         wave: function() {
           var cmp = this.waveCount - p.frameCount;
           if ( cmp>0 && (cmp % 16 === 0) ) {
             if ( ((cmp / 16) % 2) === 0 ) {
-              this.rotate(this.LElbow, 30);
+              this.rotate(this.LE, 30);
             } else {
-              this.rotate(this.LElbow, -30);
+              this.rotate(this.LE, -30);
             }
           }
         },
@@ -2164,7 +2255,7 @@
       }
 
       // Create the static methods of PVector automatically
-      // We don't do toString because it causes a TypeError 
+      // We don't do toString because it causes a TypeError
       //  when attempting to stringify PVector
       for (var method in PVector.prototype) {
         if (PVector.prototype.hasOwnProperty(method) && !PVector.hasOwnProperty(method) &&
@@ -17525,7 +17616,7 @@
     // by a "mousemove".  Unfortunately, both events have the same coordinates
     // which causes (pmouseX, pmouseY) === (mouseX, mouseY) when the cursor
     // re-enters the iframe which results in a gap in the line in the paint
-    // test program.  The reason why this bug ddoesn't appear when using just 
+    // test program.  The reason why this bug ddoesn't appear when using just
     // the canvas is that the canvas doesn't get "mousemove" events which occur
     // outside the canvas.
     // TODO(kevinb7): verify that this solution works with just the canvas
@@ -17701,10 +17792,10 @@
       if (!p.__usingDebugger) {
         p.keyCode = 0;
         // When the debugger is in use all callbacks are queued and thus not
-        // run synchronously therefore, setting keyCode = 0; immediatedly as 
+        // run synchronously therefore, setting keyCode = 0; immediatedly as
         // it is without this check results keyCode being 0 when keyPressed()
         // is finally run which is not the behaviour we want.
-        // The ProcessingDebugger sets keyCode to 0 right before it calls 
+        // The ProcessingDebugger sets keyCode to 0 right before it calls
         // keyTyped().
         // https://github.com/kevinb7/stepper/blob/master/src/processing-debugger.ts#L41-L43
       }
@@ -83309,35 +83400,35 @@ require._core = {
 require.resolve = (function () {
     return function (x, cwd) {
         if (!cwd) cwd = '/';
-        
+
         if (require._core[x]) return x;
         var path = require.modules.path();
         cwd = path.resolve('/', cwd);
         var y = cwd || '/';
-        
+
         if (x.match(/^(?:\.\.?\/|\/)/)) {
             var m = loadAsFileSync(path.resolve(y, x))
                 || loadAsDirectorySync(path.resolve(y, x));
             if (m) return m;
         }
-        
+
         var n = loadNodeModulesSync(x, y);
         if (n) return n;
-        
+
         throw new Error("Cannot find module '" + x + "'");
-        
+
         function loadAsFileSync (x) {
             x = path.normalize(x);
             if (require.modules[x]) {
                 return x;
             }
-            
+
             for (var i = 0; i < require.extensions.length; i++) {
                 var ext = require.extensions[i];
                 if (require.modules[x + ext]) return x + ext;
             }
         }
-        
+
         function loadAsDirectorySync (x) {
             x = x.replace(/\/+$/, '');
             var pkgfile = path.normalize(x + '/package.json');
@@ -83357,10 +83448,10 @@ require.resolve = (function () {
                     if (m) return m;
                 }
             }
-            
+
             return loadAsFileSync(x + '/index');
         }
-        
+
         function loadNodeModulesSync (x, start) {
             var dirs = nodeModulesPathsSync(start);
             for (var i = 0; i < dirs.length; i++) {
@@ -83370,23 +83461,23 @@ require.resolve = (function () {
                 var n = loadAsDirectorySync(dir + '/' + x);
                 if (n) return n;
             }
-            
+
             var m = loadAsFileSync(x);
             if (m) return m;
         }
-        
+
         function nodeModulesPathsSync (start) {
             var parts;
             if (start === '/') parts = [ '' ];
             else parts = path.normalize(start).split('/');
-            
+
             var dirs = [];
             for (var i = parts.length - 1; i >= 0; i--) {
                 if (parts[i] === 'node_modules') continue;
                 var dir = parts.slice(0, i + 1).join('/') + '/node_modules';
                 dirs.push(dir);
             }
-            
+
             return dirs;
         }
     };
@@ -83402,13 +83493,13 @@ require.alias = function (from, to) {
         res = require.resolve(from, '/');
     }
     var basedir = path.dirname(res);
-    
+
     var keys = (Object.keys || function (obj) {
         var res = [];
         for (var key in obj) res.push(key);
         return res;
     })(require.modules);
-    
+
     for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
         if (key.slice(0, basedir.length + 1) === basedir + '/') {
@@ -83425,18 +83516,18 @@ require.alias = function (from, to) {
     var process = {};
     var global = typeof window !== 'undefined' ? window : {};
     var definedProcess = false;
-    
+
     require.define = function (filename, fn) {
         if (!definedProcess && require.modules.__browserify_process) {
             process = require.modules.__browserify_process();
             definedProcess = true;
         }
-        
+
         var dirname = require._core[filename]
             ? ''
             : require.modules.path().dirname(filename)
         ;
-        
+
         var require_ = function (file) {
             var requiredModule = require(file, dirname);
             var cached = require.cache[require.resolve(file, dirname)];
@@ -83460,7 +83551,7 @@ require.alias = function (from, to) {
             loaded : false,
             parent: null
         };
-        
+
         require.modules[filename] = function () {
             require.cache[filename] = module_;
             fn.call(
@@ -83570,7 +83661,7 @@ path = normalizeArray(filter(path.split('/'), function(p) {
   if (path && trailingSlash) {
     path += '/';
   }
-  
+
   return (isAbsolute ? '/' : '') + path;
 };
 
@@ -86363,15 +86454,15 @@ require("/tools/entry-point.js");
         options = options || {};
         // Many possible inputs formats are accepted for varCallbacks
         // Constraints can be:
-        // 1. a function (from which we will extract the variables)  
+        // 1. a function (from which we will extract the variables)
         // 2. an objects (which already has separate .fn and .variables properties)
         //
         // It will also accept a list of either of the above (or a mix of the two).
-        // Finally it can accept an object for which the keys are the variables and 
+        // Finally it can accept an object for which the keys are the variables and
         // the values are the callbacks (This option is mainly for historical reasons)
         var varCallbacks = options.varCallbacks || [];
-        // We need to keep a hold of the original varCallbacks object because 
-        // When structured first came out it returned the failure message by 
+        // We need to keep a hold of the original varCallbacks object because
+        // When structured first came out it returned the failure message by
         // changing the .failure property on the varCallbacks object and some uses rely on that.
         // We hope to get rid of this someday.
         // TODO: Change over the code so to have a better API
@@ -88335,9 +88426,9 @@ window.TraceKit = TraceKit;
 
 /**
  * Traverses an AST and calls visitor methods on each of the visitors.
- * 
+ *
  * @param node: root of the AST to walk.
- * @param visitors: one or more objects containing 'enter' and/or 'leave' 
+ * @param visitors: one or more objects containing 'enter' and/or 'leave'
  *                  methods which accept a single AST node as an argument.
  */
 window.walkAST = function (node, visitors) {
@@ -88440,16 +88531,16 @@ window.LoopProtector.prototype = {
     /**
      * Throws 'KA_INFINITE_LOOP' if the difference between the current time
      * and this.brancStartTime is greater than this.timeout.
-     * 
+     *
      * The difference grows as long as this method is called synchronously.  As
      * soon as the current execution stack completes and the browser grabs the
      * next task off the event queue this.branchStartTime will be reset by the
      * timeout.
-     * 
+     *
      * In order to use this correctly, you must add a reference to this function
      * to the global scope where the user code is being run.  See the exec()
      * method in pjs-output.js for an example of how to do this.
-     * 
+     *
      * @private
      */
     _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect(location) {

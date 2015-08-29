@@ -12,7 +12,7 @@
    height="400"
    id="svg4262"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="pantera_firme3.svg"
+   sodipodi:docname="pantera_firme2.svg"
    viewBox="">
   <sodipodi:namedview
      pagecolor="#ffffff"
@@ -174,6 +174,76 @@
          x2="131.52464"
          y2="489.38974"
          style="fill:none;stroke:#ffffff;stroke-width:3.9279964;stroke-miterlimit:10" />
+      <line
+         id="Letra_I_raya_up"
+         stroke-miterlimit="10"
+         x1="241.959"
+         y1="512.11102"
+         x2="254.08299"
+         y2="507.79199"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_I_raya_down"
+         stroke-miterlimit="10"
+         x1="246.494"
+         y1="524.841"
+         x2="258.62201"
+         y2="520.51898"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_I"
+         stroke-miterlimit="10"
+         x1="248.66701"
+         y1="510.479"
+         x2="252.96201"
+         y2="522.53497"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_T_1_"
+         stroke-miterlimit="10"
+         x1="268.465"
+         y1="519.823"
+         x2="263.23099"
+         y2="505.13901"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_T_raya_1_"
+         stroke-miterlimit="10"
+         x1="257.35999"
+         y1="506.478"
+         x2="268.62701"
+         y2="502.461"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <path
+         id="Letra_C"
+         stroke-miterlimit="10"
+         d="m 279.93,497.96 c 0,0 -9.01,1.133 -6.252,9.295 2.759,8.163 11.856,3.445 11.856,3.445"
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_H_raya_izq"
+         stroke-miterlimit="10"
+         x1="286.302"
+         y1="495.604"
+         x2="291.73801"
+         y2="509.92499"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_H_raya_der"
+         stroke-miterlimit="10"
+         x1="294.94699"
+         y1="492.02802"
+         x2="300.48401"
+         y2="506.603"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_H"
+         stroke-miterlimit="10"
+         x1="288.729"
+         y1="502.004"
+         x2="298.41599"
+         y2="498.32599"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
     </g>
     <g
        id="chest">
@@ -182,6 +252,85 @@
          id="Camiseta"
          inkscape:connector-curvature="0"
          style="fill:#0d1247;fill-opacity:1" />
+      <path
+         id="Letra_P"
+         stroke-miterlimit="10"
+         d="m 174.206,320.729 c 0,0 0,-13.157 0,-15.587 0,-2.431 7.167,-4.862 7.167,2.574 0,7.866 -7.167,3.959 -7.167,3.959"
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <path
+         id="Letra_A"
+         stroke-miterlimit="10"
+         d="m 186.789,320.729 c 0,0 2.359,-15.695 3.432,-15.587 1.072,0.107 4.29,7.866 4.29,7.866 l 3.861,7.722"
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_A_raya"
+         stroke-miterlimit="10"
+         x1="188.431"
+         y1="313.935"
+         x2="194.97501"
+         y2="313.935"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <path
+         id="Letra_N"
+         stroke-miterlimit="10"
+         d="m 205.236,322.158 c 0,0 -1.285,-13.156 -0.427,-14.729 0.857,-1.574 8.948,14.151 9.722,13.299 0.774,-0.852 -1.02,-16.232 -1.02,-16.232"
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <polyline
+         id="Letra_T_raya"
+         stroke-miterlimit="10"
+         points="217.105,306.428                  222.614,306.428 228.117,306.428 "
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_T"
+         stroke-miterlimit="10"
+         x1="222.47"
+         y1="307.28601"
+         x2="222.47"
+         y2="322.15799"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <path
+         id="Letra_E"
+         stroke-miterlimit="10"
+         d="m 240.272,306.299 c 0,0 -7.438,-0.492 -7.436,0.987 0.003,2.718 0.142,3.003 0,9.438 -0.142,6.435 8.293,4.005 8.293,4.005"
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_E_raya"
+         stroke-miterlimit="10"
+         x1="238.271"
+         y1="312.93399"
+         x2="233.55099"
+         y2="312.93399"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <path
+         id="Letra_R"
+         stroke-miterlimit="10"
+         d="m 245.884,322.158 c -0.075,-1.587 -1.395,-14.001 -0.107,-15.938 1.287,-1.937 7.079,-0.865 6.649,3.104 -0.429,3.968 -4.29,4.611 -4.29,4.611 0,0 6.006,6.757 6.436,7.508"
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <path
+         id="Letra_A_2"
+         stroke-miterlimit="10"
+         d="m 258.855,322.158 c 0,0 -0.281,-16.431 3.151,-15.938 3.432,0.493 5.864,15.938 5.864,15.938"
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <line
+         id="Letra_A_2_raya"
+         stroke-miterlimit="10"
+         x1="258.85501"
+         y1="312.93399"
+         x2="265.94601"
+         y2="312.93399"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
+      <path
+         id="Letra_S"
+         stroke-miterlimit="10"
+         d="m 280.597,307.286 c 0,0 0.045,-3.762 -5.012,-2.79 -3.352,0.644 -3.363,3.286 -1.281,5.518 2.081,2.231 3.74,3.895 5.456,6.184 1.715,2.289 0.707,5.961 -3.165,5.961 -4.423,0 -3.885,-4.878 -3.885,-4.878"
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#ffffff;stroke-width:3;stroke-miterlimit:10" />
     </g>
     <g
        id="m0">
