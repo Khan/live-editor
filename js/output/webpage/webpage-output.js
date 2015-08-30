@@ -96,7 +96,10 @@ window.WebpageOutput = Backbone.View.extend({
         // same API as the pjs-output.js' lint method.
         var deferred = $.Deferred();
         if (skip) {
-            deferred.resolve([]);
+            deferred.resolve({
+                errors: [],
+                warnings: []
+            });
             return deferred;
         }
 
@@ -121,13 +124,13 @@ window.WebpageOutput = Backbone.View.extend({
 
         this.slowparseResults = results;
 
+        var error = [];
         if (results.error) {
-            var pos = results.error.cursor || 0;
-            var previous = userCode.slice(0, pos);
-            var column = pos - previous.lastIndexOf("\n") - 1;
-            var row = (previous.match(/\n/g) || []).length;
-
-            deferred.resolve([{
+            let pos = results.error.cursor || 0;
+            let previous = userCode.slice(0, pos);
+            let column = pos - previous.lastIndexOf("\n") - 1;
+            let row = (previous.match(/\n/g) || []).length;
+            error = [{
                 row: row,
                 column: column,
                 text: this.getLintMessage(results.error),
@@ -135,17 +138,16 @@ window.WebpageOutput = Backbone.View.extend({
                 source: "slowparse",
                 lint: results.error,
                 priority: 2
-            }]);
-            return deferred;
+            }];
         }
 
+        var warnings = [];
         if (results.warnings && results.warnings.length > 0) {
-            var warnings = [];
-            for (var i=0; i < results.warnings.length; i++) {
-                var pos = results.warnings[i].parseInfo.cursor || 0;
-                var previous = userCode.slice(0, pos);
-                var column = pos - previous.lastIndexOf("\n") - 1;
-                var row = (previous.match(/\n/g) || []).length;
+            for (let i = 0; i < results.warnings.length; i++) {
+                let pos = results.warnings[i].parseInfo.cursor || 0;
+                let previous = userCode.slice(0, pos);
+                let column = pos - previous.lastIndexOf("\n") - 1;
+                let row = (previous.match(/\n/g) || []).length;
 
                 warnings.push({
                     row: row,
@@ -155,12 +157,12 @@ window.WebpageOutput = Backbone.View.extend({
                     source: "slowparse",
                 });
             }
-
-            deferred.resolve(warnings);
-            return deferred;
         }
 
-        deferred.resolve([]);
+        deferred.resolve({
+            errors: error,
+            warnings: warnings
+        });
         return deferred;
     },
 

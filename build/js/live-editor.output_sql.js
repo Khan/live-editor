@@ -756,20 +756,26 @@ window.SQLOutput = Backbone.View.extend({
         // same API as the pjs-output.js' lint method.
         var deferred = $.Deferred();
         if (skip) {
-            deferred.resolve([]);
+            deferred.resolve({
+                errors: [],
+                warnings: []
+            });
             return deferred;
         }
 
         if (!window.SQLOutput.isSupported()) {
-            deferred.resolve([{
-                row: -1,
-                column: -1,
-                text: $._("Your browser is not recent enough to show " + "SQL output. Please upgrade your browser."),
-                type: "error",
-                source: "sqlite",
-                lint: undefined,
-                priority: 2
-            }]);
+            deferred.resolve({
+                errors: [{
+                    row: -1,
+                    column: -1,
+                    text: $._("Your browser is not recent enough to show " + "SQL output. Please upgrade your browser."),
+                    type: "error",
+                    source: "sqlite",
+                    lint: undefined,
+                    priority: 2
+                }],
+                warnings: []
+            });
             return deferred;
         }
 
@@ -824,15 +830,18 @@ window.SQLOutput = Backbone.View.extend({
                 return true;
             } catch (e) {
                 error = true;
-                deferred.resolve([{
-                    row: lineNumber,
-                    column: 0,
-                    text: this.getErrorMessage(e.message, statement),
-                    type: "error",
-                    source: "sqlite",
-                    lint: undefined,
-                    priority: 2
-                }]);
+                deferred.resolve({
+                    errors: [{
+                        row: lineNumber,
+                        column: 0,
+                        text: this.getErrorMessage(e.message, statement),
+                        type: "error",
+                        source: "sqlite",
+                        lint: undefined,
+                        priority: 2
+                    }],
+                    warnings: []
+                });
                 return false;
             }
         }).bind(this));
@@ -847,7 +856,10 @@ window.SQLOutput = Backbone.View.extend({
         };
 
         if (!error) {
-            deferred.resolve([]);
+            deferred.resolve({
+                errors: [],
+                warnings: []
+            });
         }
 
         return deferred;

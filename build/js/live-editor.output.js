@@ -317,6 +317,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     outputs: {},
     lintErrors: [],
     runtimeErrors: [],
+    lintWarnings: [],
 
     initialize: function initialize(options) {
         this.render();
@@ -341,6 +342,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // essentially a special subclass of Object.
         this.lintErrors.timestamp = 0;
         this.runtimeErrors.timestamp = 0;
+        this.lintWarnings.timestamp = 0;
 
         this.bind();
     },
@@ -534,12 +536,10 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Always lint the first time, so that PJS can populate its list of globals
         this.output.lint(userCode, skip).then((function (lintResults) {
-            if (lintResults.length > 0 && lintResults[0].type === "error") {
-                this.lintErrors = lintResults;
-                this.lintErrors.timestamp = timestamp;
-            } else if (lintResults.length > 0 && lintResults[0].type === "warning") {
-                this.lintWarnings = lintResults;
-            }
+            this.lintErrors = lintResults.errors;
+            this.lintErrors.timestamp = timestamp;
+            this.lintWarnings = lintResults.warnings;
+            this.lintWarnings.timestamp = timestamp;
             return this.lintDone(userCode, timestamp);
         }).bind(this)).then((function () {
             this.buildDone(userCode, callback);
@@ -588,6 +588,8 @@ window.LiveEditorOutput = Backbone.View.extend({
      */
     buildDone: function buildDone(userCode, callback) {
         var errors = [];
+        var warnings = [];
+
         // only use lint errors if the timestamp isn't stale
         if (this.results.timestamp === this.lintErrors.timestamp) {
             errors = errors.concat(this.lintErrors);
@@ -596,8 +598,12 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (this.results.timestamp === this.runtimeErrors.timestamp) {
             errors = errors.concat(this.runtimeErrors);
         }
+        // only use lint warnings if the timestamp isn't stale
+        if (this.results.timestamp === this.lintWarnings.timestamp) {
+            warnings = warnings.concat(this.lintWarnings);
+        }
+
         errors = this.cleanErrors(errors || []);
-        warnings = this.lintWarnings || [];
 
         if (!this.loaded) {
             this.postParent({ loaded: true });
