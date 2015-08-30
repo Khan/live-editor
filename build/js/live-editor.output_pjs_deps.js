@@ -1812,12 +1812,6 @@
     // Adding a programable avatar to live-editor -- (albertochiwas)
     // TODO - scale atrib
 
-    function defaultLimits() { //.2 if error or limits array file is missing
-      return [ // default joint ranges
-        [-180,180], [-180,180], [-180,180], [-180,180], [-180,180],
-        [-180,180], [-180,180], [-180,180], [-180,180], [-180,180]];
-    }
-
     function missingFile(url) //.2 Detects file (http://goo.gl/XkhrCu)
     {
       var http = new XMLHttpRequest();
@@ -1825,46 +1819,16 @@
       http.send();
       var notFound = (http.status === 404);
       if (notFound) {
-        p.println("Error: missing "+url+" file");
+        Processing.debug("Error: missing "+url+" file");
       }
       return notFound;
-    }
-
-    function loadLimits( fn, len ) //.2 load joint limits array from text file (albertochiwas)
-    {
-      if ( missingFile(fn) ) {
-        return defaultLimits();
-      }
-      var line = p.loadStrings(fn); // read int array from text file
-      var tam = line.length;
-      if ( tam < len ) {
-        p.println("Error: incomplete data inside "+fn+" file");
-        return defaultLimits();
-      }
-      var ini = 0;
-      if (line[0].charAt(0) === '%' && tam >= (len+1)) { // first line starts with %
-        ini = 1;
-      }
-      var r = new Array(len); // joint limits array
-      for ( var i=ini; i<=(ini+(len-1)); i++ ) { // for each limit (min,max)
-        var row = line[i].trim().split(',');
-        if ( row.length !== 2 ) {
-          p.println("Error: missing limit (pos="+i+") - "+ini);
-          return defaultLimits();
-        }
-        var idx = i - ini;
-        r[idx] = Array(2); // [min,max] range
-        r[idx][0] = parseInt(row[0].trim()); // string to int
-        r[idx][1] = parseInt(row[1].trim());
-      }
-      return r; // array[][] output
     }
 
     var Avatar = p.Avatar = (function() { // Avatar class ver. 0.2 (albertochiwas)
       function Avatar( fname ) {
         this.init(fname);
       }
-      // Avatar API TODO: Add to AST array functions
+      // Avatar API TODO: Add API to AST array functions
       Avatar.prototype = {
         set: function( fname ) {
           this.init(fname);
@@ -1892,7 +1856,9 @@
           this.RL   = this.PiernaDer  = 8;
           this.RK   = this.RodillaDer = 9;
           this.Joints = 10;
-          this.limits = loadLimits(path + fname +".txt", this.Joints);  //.2 Read Joint Angle Limits
+          this.limits = new Array(this.Joints); //.2 joint angle limits array
+          this._defaultLimits(); //.2 create this.limits
+          this._loadLimits(path + fname +".txt");  //.2 try to read limits text file
           this.puppet = this.shape.getChild("puppet");
           this.w0 = this.width = this.shape.width;
           this.cx = this.width / 2.0;
@@ -1910,7 +1876,69 @@
             this.angle[i] = 0;
           }
         },
-        scale: function( s ) {
+        _defaultLimits : function() { //.2 if error or limits array file is missing
+          this.limits = [ // default joint ranges
+            [-180,180], [-180,180], [-180,180], [-180,180], [-180,180],
+            [-180,180], [-180,180], [-180,180], [-180,180], [-180,180]];
+        },
+        _loadLimits: function(fn) //.2 load joint limits array from text file (albertochiwas)
+        {
+          if ( missingFile(fn) ) { // limits text file exists?
+            return; // file not found error message (do nothing)
+          }
+          var line = p.loadStrings(fn); // read int array from text file
+          var tam = line.length;
+          if ( tam < this.Joints ) {
+            Processing.debug("Error: incomplete data inside "+fn+" file");
+            return;
+          }
+          var ini = 0;
+          if (line[0].charAt(0) === '%' && tam >= (this.Joints+1)) { // first line starts with %
+            ini = 1; // skip first lime (commentary)
+          }
+          var r = new Array(this.Joints); // temporary joint limits array
+          for ( var i=ini; i<=(ini+this.Joints-1); i++ ) { // for each limit (min,max)
+            var row = line[i].trim().split(',');
+            if ( row.length !== 2 ) {
+              Processing.debug("Error: missing limit (pos="+i+") - "+ini);
+              return;
+            }
+            var idx = i - ini;
+            r[idx] = Array(2); // [min,max] range
+            try {
+              r[idx][0] = parseInt(row[0].trim()); // string to int
+              r[idx][1] = parseInt(row[1].trim());
+            } catch(e) {
+              Processing.debug("Avatar error at limits file "+fn+".\n"+e);
+            }
+          }
+          this.setLimits(r); // validate & set new limit array values
+        },
+        setLimit: function(i, mn, mx) { //.2 validate & add new limit range
+          if (arguments.length!=3 || i<0 || i>=this.Joints) { //.2 avoid out of index error
+            Processing.debug("Avatar.setLimit error: bad argument values.");
+            return;
+          }
+          if (mn >= mx) {
+            Processing.debug("Avatar.setLimits error: min > max range values.");
+            return;
+          }
+          this.limits[i] = [mn, mx];
+        },
+        setLimits: function(arr) { //.2 validate & add new limits array values
+          if (!arr || !Array.isArray(arr) || arr.length===0) {
+            Processing.debug("Error: Avatar.setLimits (not an array)");
+            return;
+          }
+          if (!this.limits) {
+            this._defaultLimits();
+          }
+          var sz = p.min(arr.length, this.Joints);
+          for (var i = 0; i < sz; i++) {
+            this.setLimit(i, arr[i][0], arr[i][1]);
+          }
+        },
+        scale: function( s ) { // TODO: scale attribute
           this.shape.scale( s );
           this.width = s * this.w0;
           this.cx = this.width / 2.0;
@@ -1923,8 +1951,9 @@
           this.puppet.translate( -this.cx, -this.cy );
         },
         _inRange: function( i, angle ) { //.2 angle within limits
-          var mn = this.limits[i][0];
-          var mx = this.limits[i][1];
+          var range = this.limits[i];
+          var mn = range[0];
+          var mx = range[1];
           if ( angle < mn ) {
             return mn;
           } else if ( angle > mx ) {
@@ -1932,8 +1961,11 @@
           }
           return angle;
         },
-        rotate: function( j, deg_param ) {
-          var i = Math.abs(j) % this.Joints; // avoid out of index error
+        rotate: function( i, deg_param ) {
+          if (arguments.length!= 2 || i<0 || i>=this.Joints) { //.2 avoid out of index error
+            Processing.debug("Avatar.rotate bad argument values");
+            return;
+          }
           var deg = deg_param % 360;
           var nextAng = this.angle[i] + deg;
           var newAngle = this._inRange(i, nextAng); //.2
@@ -1944,8 +1976,11 @@
             this.angle[i] = newAngle;
           }
         },
-        setAngle: function( j, deg ) {
-          var i = Math.abs(j) % this.Joints; // avoid out of index error
+        setAngle: function( i, deg ) {
+          if (arguments.length!= 2 || i<0 || i>=this.Joints) { //.2 avoid out of index error
+            Processing.debug("Avatar.setAngle bad argument values");
+            return;
+          }
           var newAngle = this._inRange(i, deg); //.2
           this.m[i].translate( this.p[i].x, this.p[i].y );
           this.m[i].rotate( newAngle - this.angle[i] );
