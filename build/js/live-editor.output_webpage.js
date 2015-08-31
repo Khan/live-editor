@@ -638,7 +638,10 @@ window.WebpageOutput = Backbone.View.extend({
         // same API as the pjs-output.js' lint method.
         var deferred = $.Deferred();
         if (skip) {
-            deferred.resolve([]);
+            deferred.resolve({
+                errors: [],
+                warnings: []
+            });
             return deferred;
         }
 
@@ -665,13 +668,13 @@ window.WebpageOutput = Backbone.View.extend({
 
         this.slowparseResults = results;
 
+        var error = [];
         if (results.error) {
             var pos = results.error.cursor || 0;
             var previous = userCode.slice(0, pos);
             var column = pos - previous.lastIndexOf("\n") - 1;
             var row = (previous.match(/\n/g) || []).length;
-
-            deferred.resolve([{
+            error = [{
                 row: row,
                 column: column,
                 text: this.getLintMessage(results.error),
@@ -679,11 +682,31 @@ window.WebpageOutput = Backbone.View.extend({
                 source: "slowparse",
                 lint: results.error,
                 priority: 2
-            }]);
-            return deferred;
+            }];
         }
 
-        deferred.resolve([]);
+        var warnings = [];
+        if (results.warnings && results.warnings.length > 0) {
+            for (var i = 0; i < results.warnings.length; i++) {
+                var pos = results.warnings[i].parseInfo.cursor || 0;
+                var previous = userCode.slice(0, pos);
+                var column = pos - previous.lastIndexOf("\n") - 1;
+                var row = (previous.match(/\n/g) || []).length;
+
+                warnings.push({
+                    row: row,
+                    column: column,
+                    text: this.getLintMessage(results.warnings[i].parseInfo),
+                    type: "warning",
+                    source: "slowparse"
+                });
+            }
+        }
+
+        deferred.resolve({
+            errors: error,
+            warnings: warnings
+        });
         return deferred;
     },
 
@@ -716,8 +739,8 @@ window.WebpageOutput = Backbone.View.extend({
             CSS_MIXED_ACTIVECONTENT: $._("You have a css property \"%(cssProperty_property)s\" with a \"url()\" value that currently points to an insecure resource.", error),
             EVENT_HANDLER_ATTR_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using the \"%(attribute_name_value)s\" JavaScript event handler attribute.", error),
             HTML_CODE_IN_CSS_BLOCK: $._("Did you put HTML code inside a CSS area?", error),
-            HTTP_LINK_FROM_HTTPS_PAGE: $._("The \"&lt;%(openTag_name)s&gt;\" tag's \"%(attribute_name_value)s\" attribute currently points to an insecure resource.", error),
-            INVALID_URL: $._("The \"&lt;%(openTag_name)s&gt;\" tag's \"%(attribute_name_value)s\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?", error),
+            HTTP_LINK_FROM_HTTPS_PAGE: $._("The <%(openTag_name)s> tag's \"%(attribute_name_value)s\" attribute currently points to an insecure resource.", error),
+            INVALID_URL: $._("The <%(openTag_name)s> tag's \"%(attribute_name_value)s\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?", error),
             INVALID_ATTR_NAME: $._("The attribute name \"%(attribute_name_value)s\" is not permitted under HTML5 naming conventions.", error),
             UNSUPPORTED_ATTR_NAMESPACE: $._("The attribute \"%(attribute_name_value)s\" uses an attribute namespace that is not permitted under HTML5 conventions.", error),
             MULTIPLE_ATTR_NAMESPACES: $._("The attribute \"%(attribute_name_value)s\" has multiple namespaces. Check your text and make sure there's only a single namespace prefix for the attribute.", error),
@@ -811,7 +834,7 @@ window.WebpageOutput = Backbone.View.extend({
         // Change external links to a redirecting proxy
         $(this.frameDoc).find("a").each((function (ind, a) {
             var url = $(a).attr("href");
-            if (url && url[0] !== "#") {
+            if (url && url[0] !== "#" && url.substring(0, 10) !== "javascript") {
                 $(a).attr("target", "_blank");
                 $(a).attr("href", this.transformUrl(url));
             }

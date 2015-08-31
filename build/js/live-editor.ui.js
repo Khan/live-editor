@@ -1879,7 +1879,7 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         // Testing/validation code is being set
-        if (data.validate != null) {
+        if (data.validate !== null) {
             this.validation = data.validate;
         }
 
@@ -1887,28 +1887,41 @@ window.LiveEditor = Backbone.View.extend({
             this.trigger("runDone");
         }
 
-        if (this.editorType.indexOf("ace_") === 0 && data.results && data.results.assertions) {
-
-            // Add gutter warning markers for assertions in the editor.
-            // E.g. Add `Program.assertEqual(2, 4);` to the live editor to see
-            // an example.
-            var annotations = [];
-            for (var i = 0; i < data.results.assertions.length; i++) {
-
-                var unitTest = data.results.assertions[i];
-                annotations.push({
-                    row: unitTest.row,
-                    column: unitTest.column,
-                    text: unitTest.text,
-                    type: "warning"
-                });
-                this.addUnderlineMarker(unitTest.row);
-            }
-
+        if (this.editorType.indexOf("ace_") === 0 && data.results) {
             // Remove previously added markers
             this.removeMarkers();
-            // Add new gutter markers
-            this.editor.editor.session.setAnnotations(annotations);
+            if (data.results.assertions || data.results.warnings) {
+                // Add gutter warning markers in the editor.
+                // E.g. Add `Program.assertEqual(2, 4);` to the live editor to see
+                // an example.
+                var annotations = [];
+                for (var i = 0; i < data.results.assertions.length; i++) {
+                    var assertion = data.results.assertions[i];
+                    annotations.push({
+                        row: assertion.row,
+                        column: assertion.column,
+                        text: assertion.text,
+                        type: "warning"
+                    });
+                    this.addUnderlineMarker(assertion.row);
+                }
+
+                for (var i = 0; i < data.results.warnings.length; i++) {
+                    var warning = data.results.warnings[i];
+                    annotations.push({
+                        row: warning.row,
+                        column: warning.column,
+                        text: warning.text,
+                        type: "warning"
+                    });
+                    this.addUnderlineMarker(warning.row);
+                }
+
+                // Add new gutter markers
+                this.editor.editor.session.setAnnotations(annotations);
+            } else {
+                this.editor.editor.session.setAnnotations([]);
+            }
         }
 
         if (this.newErrorExperience && this.errorState.length === 0) {
@@ -2004,7 +2017,7 @@ window.LiveEditor = Backbone.View.extend({
                 // Create a log of which row corresponds with which error
                 // message so that when the user clicks a gutter marker they
                 // are shown the relevant error message.
-                if (gutterDecorations[error.row + 1] == null) {
+                if (gutterDecorations[error.row + 1] === null) {
                     gutterDecorations[error.row + 1] = index;
                     session.addGutterDecoration(error.row, "ace_error");
                 }

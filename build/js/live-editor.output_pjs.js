@@ -1750,7 +1750,10 @@ window.PJSOutput = Backbone.View.extend({
     lint: function lint(userCode, skip) {
         var deferred = $.Deferred();
         if (skip) {
-            deferred.resolve([]);
+            deferred.resolve({
+                errors: [],
+                warnings: []
+            });
             return deferred;
         }
 
@@ -1773,7 +1776,10 @@ window.PJSOutput = Backbone.View.extend({
             this.extractGlobals(hintData);
             this.output.results.assertions = [];
             var lintErrors = this.mergeErrors(hintErrors, BabyHint.babyErrors(userCode, hintErrors));
-            deferred.resolve(lintErrors);
+            deferred.resolve({
+                errors: lintErrors,
+                warnings: []
+            });
         }).bind(this);
 
         // Don't run JSHint if there is no code to run

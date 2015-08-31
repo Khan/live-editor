@@ -53,6 +53,8 @@ var runTest = function(options) {
                             expect(errors[0].text)
                                 .to.be.equal(options.errors[0].text);
                         }
+                    } else if (options.warnings) {
+                        checkWarnings(options.warnings, output.results.warnings);
                     }
                 }
 
@@ -65,7 +67,7 @@ var runTest = function(options) {
                     }
                 } else {
                     done();
-                }   
+                }
             } catch (e) {
                 done(e);
             }
@@ -97,6 +99,21 @@ var failingTest = function(title, code, errors) {
     });
 };
 
+var warningTest = function(title, code, warnings) {
+    if (typeof code === "object") {
+        code.forEach(function(userCode, i) {
+            warningTest(title, userCode, warnings[i]);
+        });
+        return;
+    }
+
+    runTest({
+        title: title,
+        code: code,
+        warnings: warnings
+    });
+}
+
 var assertTest = function(options) {
     options.test = function(output, errors, testResults, callback) {
         if (!options.reason) {
@@ -122,6 +139,17 @@ var assertTest = function(options) {
         callback();
     };
     runTest(options);
+};
+
+// Used to check warnings
+var checkWarnings = function(expectedWarnings, outputWarnings) {
+    if (expectedWarnings !== undefined) {
+        expect(outputWarnings.length).to.be.equal(
+            expectedWarnings.length);
+        for (var i = 0; i < expectedWarnings.length; i++) {
+            expect(outputWarnings[i].text).to.be.equal(expectedWarnings[i]);
+        }
+    }
 };
 
 var isFirefox = function() {

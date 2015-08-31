@@ -4,6 +4,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     outputs: {},
     lintErrors: [],
     runtimeErrors: [],
+    lintWarnings: [],
 
     initialize: function(options) {
         this.render();
@@ -17,18 +18,19 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (options.outputType) {
             this.setOutput(options.outputType);
         }
-        
+
         // Add a timestamp property to the lintErrors and runtimeErrors arrays
         // to keep track of which version of the code the errors are for.  A
         // new timestamp is created when runCode is called and is assigned to
         // lintErrors and runtimeErrors (if there is no lint) when linting and
-        // running of the code complete.  The timestamps are used later to 
+        // running of the code complete.  The timestamps are used later to
         // ensure we're not report stale errors that have already been fixed
         // to the parent.  Adding properties to an array works because Array is
         // essentially a special subclass of Object.
         this.lintErrors.timestamp = 0;
         this.runtimeErrors.timestamp = 0;
-        
+        this.lintWarnings.timestamp = 0;
+
         this.bind();
     },
 
@@ -94,7 +96,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // filter out events that are objects
         // currently the only messages that contain objects are messages
         // being sent by Poster instances being used by the iframeOverlay
-        // in pjs-output.js and ui/debugger.js 
+        // in pjs-output.js and ui/debugger.js
         if (typeof event.data === "object") {
             return;
         }
@@ -201,42 +203,45 @@ window.LiveEditorOutput = Backbone.View.extend({
      * - actually run the code
      * - manage lint and runtime errors
      * - call the callback (via buildDone) to run tests
-     * 
+     *
      * @param userCode: code to run
      * @param callback: used by the tests
      * @param noLint: disables linting if true, first run still lints
-     * 
+     *
      * TODO(kevinb) return a Deferred and move test related code to test_utils
      */
     runCode: function(userCode, callback, noLint) {
         this.currentCode = userCode;
         var timestamp = Date.now();
-        
+
         this.results = {
             timestamp: timestamp,
             code: userCode,
             errors: [],
-            assertions: []
+            assertions: [],
+            warnings: []
         };
-        
+
         var skip = noLint && this.firstLint;
 
         // Always lint the first time, so that PJS can populate its list of globals
-        this.output.lint(userCode, skip).then(function (lintErrors) {
-            this.lintErrors = lintErrors;
+        this.output.lint(userCode, skip).then(function (lintResults) {
+            this.lintErrors = lintResults.errors;
             this.lintErrors.timestamp = timestamp;
+            this.lintWarnings = lintResults.warnings;
+            this.lintWarnings.timestamp = timestamp;
             return this.lintDone(userCode, timestamp);
         }.bind(this)).then(function () {
             this.buildDone(userCode, callback);
         }.bind(this));
-        
+
         this.firstLint = true;
     },
 
     /**
      * Runs the code and records runtime errors.  Returns immediately if there
      * are any lint errors.
-     * 
+     *
      * @param userCode
      * @param timestamp
      * @returns {$.Deferred}
@@ -266,14 +271,16 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     /**
-     * Posts results to the the parent frame and runs tests if a callback has 
+     * Posts results to the the parent frame and runs tests if a callback has
      * been provided or if the .validate property is set.
-     * 
+     *
      * @param userCode
      * @param callback
      */
     buildDone: function(userCode, callback) {
         var errors = [];
+        var warnings = [];
+
         // only use lint errors if the timestamp isn't stale
         if (this.results.timestamp === this.lintErrors.timestamp) {
             errors = errors.concat(this.lintErrors);
@@ -282,6 +289,11 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (this.results.timestamp === this.runtimeErrors.timestamp) {
             errors = errors.concat(this.runtimeErrors);
         }
+        // only use lint warnings if the timestamp isn't stale
+        if (this.results.timestamp === this.lintWarnings.timestamp) {
+            warnings = warnings.concat(this.lintWarnings);
+        }
+
         errors = this.cleanErrors(errors || []);
 
         if (!this.loaded) {
@@ -291,6 +303,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Update results
         this.results.errors = errors;
+        this.results.warnings = warnings;
         this.phoneHome();
 
         this.toggle(!errors.length);
@@ -371,7 +384,7 @@ window.LiveEditorOutput = Backbone.View.extend({
                     priority: 3
                 };
             }
-            
+
             let text = error.html ? this.prettify(error.html) :
                 this.prettify(this.clean(error.text || error.message || ""));
 
