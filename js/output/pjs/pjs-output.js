@@ -963,7 +963,7 @@ window.PJSOutput = Backbone.View.extend({
                 }
 
                 // Ignore drawLoopMethods.
-                if (drawLoopMethods.includes(prop)) {
+                if (this.drawLoopMethods.includes(prop)) {
                     return;
                 }
 
