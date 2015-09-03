@@ -1421,6 +1421,7 @@ window.PJSOutput = Backbone.View.extend({
             context: this.canvas
         });
 
+        this.enableLoopProtect = options.enableLoopProtect;
         this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this), 2000, 500, true);
 
         return this;
@@ -2505,7 +2506,12 @@ window.PJSOutput = Backbone.View.extend({
         // taking to run event loop and will throw if it's taking too long.
         // rewriteAssertEquals adds line and column arguments to calls to
         // Program.assertEquals.
-        walkAST(ast, null, [this.loopProtector, ASTTransforms.rewriteAssertEquals]);
+        var passes = [];
+        if (this.enableLoopProtect) {
+            passes.push(this.loopProtector);
+        }
+        passes.push(ASTTransforms.rewriteAssertEquals);
+        walkAST(ast, null, passes);
 
         // rewriteContextVariables has to be done separately because loopProtector
         // adds variable references which need to be rewritten.

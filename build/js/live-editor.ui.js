@@ -972,6 +972,12 @@ window.LiveEditor = Backbone.View.extend({
             this.newErrorExperience = true;
         }
 
+        if (options.enableLoopProtect != null) {
+            this.enableLoopProtect = options.enableLoopProtect;
+        } else {
+            this.enableLoopProtect = true;
+        }
+
         // Set up the editor
         this.editor = new this.editors[this.editorType]({
             el: this.dom.EDITOR,
@@ -2156,7 +2162,8 @@ window.LiveEditor = Backbone.View.extend({
             soundsDir: this.soundsDir,
             redirectUrl: this.redirectUrl,
             jshintFile: this.jshintFile,
-            outputType: this.outputType
+            outputType: this.outputType,
+            enableLoopProtect: this.enableLoopProtect
         };
 
         this.trigger("runCode", options);
