@@ -1097,6 +1097,8 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     bind: function bind() {
+        var _this = this;
+
         var self = this;
         var $el = this.$el;
         var dom = this.dom;
@@ -1113,21 +1115,21 @@ window.LiveEditor = Backbone.View.extend({
         this.handleMessagesBound = this.handleMessages.bind(this);
         $(window).on("message", this.handleMessagesBound);
 
-        $el.find("#output-frame").on("load", (function () {
-            this.outputState = "clean";
-            this.markDirty();
-        }).bind(this));
+        $el.find("#output-frame").on("load", function () {
+            _this.outputState = "clean";
+            _this.markDirty();
+        });
 
         // Whenever the user changes code, execute the code
-        this.editor.on("change", (function () {
-            this.markDirty();
-        }).bind(this));
+        this.editor.on("change", function () {
+            _this.markDirty();
+        });
 
-        this.editor.on("userChangedCode", (function () {
-            if (!this.record.recording && !this.record.playing) {
-                this.trigger("userChangedCode");
+        this.editor.on("userChangedCode", function () {
+            if (!_this.record.recording && !_this.record.playing) {
+                _this.trigger("userChangedCode");
             }
-        }).bind(this));
+        });
 
         this.on("runDone", this.runDone.bind(this));
 
@@ -1855,6 +1857,10 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
+        if (typeof data !== "object") {
+            return;
+        }
+
         if (data.type === "debugger") {
             // these messages are handled by ui/debugger.js:listenMessages
             return;
@@ -1879,7 +1885,7 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         // Testing/validation code is being set
-        if (data.validate !== null) {
+        if (data.validate !== undefined && data.validate !== null) {
             this.validation = data.validate;
         }
 
@@ -2159,6 +2165,8 @@ window.LiveEditor = Backbone.View.extend({
     }, 20),
 
     markDirty: function markDirty() {
+        var _this2 = this;
+
         // makeDirty is called when you type something in the editor. When this
         // happens, we want to run the code, but also want to throttle how often
         // we re-run so we can wait for the results of running it to come back.
@@ -2190,9 +2198,9 @@ window.LiveEditor = Backbone.View.extend({
             // 500ms is an arbitrary timeout. Hopefully long enough for
             // reasonable programs to execute, but short enough for editor to
             // not freeze.
-            this.runTimeout = setTimeout((function () {
-                this.trigger("runDone");
-            }).bind(this), 500);
+            this.runTimeout = setTimeout(function () {
+                _this2.trigger("runDone");
+            }, 500);
         } else {
             this.outputState = "dirty";
         }

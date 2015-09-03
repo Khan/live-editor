@@ -252,21 +252,21 @@ window.LiveEditor = Backbone.View.extend({
         this.handleMessagesBound = this.handleMessages.bind(this);
         $(window).on("message", this.handleMessagesBound);
 
-        $el.find("#output-frame").on("load", function() {
+        $el.find("#output-frame").on("load", () => {
             this.outputState = "clean";
             this.markDirty();
-        }.bind(this));
+        });
 
         // Whenever the user changes code, execute the code
-        this.editor.on("change", function() {
+        this.editor.on("change", () => {
             this.markDirty();
-        }.bind(this));
+        });
 
-        this.editor.on("userChangedCode", function() {
+        this.editor.on("userChangedCode", () => {
             if (!this.record.recording && !this.record.playing) {
               this.trigger("userChangedCode");
             }
-        }.bind(this));
+        });
 
         this.on("runDone", this.runDone.bind(this));
 
@@ -1022,6 +1022,10 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
+        if (typeof data !== "object") {
+            return;
+        }
+
         if (data.type === "debugger") {
             // these messages are handled by ui/debugger.js:listenMessages
             return;
@@ -1046,7 +1050,7 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         // Testing/validation code is being set
-        if (data.validate !== null) {
+        if (data.validate !== undefined && data.validate !== null) {
             this.validation = data.validate;
         }
 
@@ -1366,9 +1370,9 @@ window.LiveEditor = Backbone.View.extend({
             // 500ms is an arbitrary timeout. Hopefully long enough for
             // reasonable programs to execute, but short enough for editor to
             // not freeze.
-            this.runTimeout = setTimeout(function() {
+            this.runTimeout = setTimeout(() => {
                 this.trigger("runDone");
-            }.bind(this), 500);
+            }, 500);
         } else {
             this.outputState = "dirty";
         }
