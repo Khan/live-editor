@@ -316,3 +316,105 @@ describe("LoopProtector", function() {
         });
     });
 });
+
+describe("draw update tests", function() {
+    var output, ellipseSpy, backgroundSpy;
+    
+    beforeEach(function() {
+        output = createLiveEditorOutput();
+        sinon.spy(output.output.canvas, "ellipse");
+        ellipseSpy = output.output.canvas.ellipse;
+        sinon.spy(output.output.canvas, "background");
+        backgroundSpy = output.output.canvas.background;
+    });
+    
+    afterEach(function() {
+        output.output.canvas.ellipse.restore();
+        output.output.canvas.background.restore();
+        output.output.kill();
+    });
+    
+    it("should draw using updated global variables", function(done) {
+        var code1 = getCodeFromOptions(function () {
+            var diameter = 10;
+            var draw = function() {
+                ellipse(200, 200, diameter, diameter);
+            };
+        });
+
+        var code2 = getCodeFromOptions(function () {
+            var diameter = 20;
+            var draw = function() {
+                ellipse(200, 200, diameter, diameter);
+            };
+        });
+        
+        output.runCode(code1, function(errors, testResults) {
+            setTimeout(function() {
+                expect(ellipseSpy.calledWith(200, 200, 10, 10)).to.be(true);
+                output.runCode(code2, function(errors, testResults) {
+                    setTimeout(function() {
+                        expect(ellipseSpy.calledWith(200, 200, 20, 20)).to.be(true);
+                        done();
+                    }, 50);
+                });
+            }, 50);
+        });
+    });
+
+    it("should change the background when draw changes", function(done) {
+        var code1 = getCodeFromOptions(function () {
+            var draw = function() {
+                background(255,0,0);
+            };
+        });
+
+        var code2 = getCodeFromOptions(function () {
+            var draw = function() {
+                background(0,0,255);
+            };
+        });
+
+        output.runCode(code1, function(errors, testResults) {
+            setTimeout(function() {
+                expect(backgroundSpy.calledWith(255,0,0)).to.be(true);
+                output.runCode(code2, function(errors, testResults) {
+                    setTimeout(function() {
+                        expect(backgroundSpy.calledWith(0,0,255)).to.be(true);
+                        done();
+                    }, 50);
+                });
+            }, 50);
+        });
+    });
+
+    it("should re-run global calls when only global calls have been changed", function(done) {
+        var code1 = getCodeFromOptions(function () {
+            var diameter = 10;
+            background(255,0,0);
+            var draw = function() {
+                ellipse(200, 200, diameter, diameter);
+            };
+        });
+
+        var code2 = getCodeFromOptions(function () {
+            var diameter = 10;
+            background(0,0,255);
+            var draw = function() {
+                ellipse(200, 200, diameter, diameter);
+            };
+        });
+
+        output.runCode(code1, function(errors, testResults) {
+            setTimeout(function() {
+                expect(backgroundSpy.calledWith(255,0,0)).to.be(true);
+                output.runCode(code2, function(errors, testResults) {
+                    setTimeout(function() {
+                        expect(backgroundSpy.calledWith(0,0,255)).to.be(true);
+                        done();
+                    }, 0);
+                });
+            }, 0);
+        });
+    });
+});

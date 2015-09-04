@@ -1138,7 +1138,7 @@ window.PJSOutput = Backbone.View.extend({
             });
 
         // Otherwise if there is code to inject
-        } else if (inject) {
+        } else if (inject || calls.length > 0) {
             // Force a call to the draw function to force checks for instances
             // and to make sure that errors in the draw loop are caught.
             if (this.globals.draw) {
