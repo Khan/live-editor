@@ -2164,11 +2164,6 @@ window.PJSOutput = Backbone.View.extend({
                     return;
                 }
 
-                // Ignore drawLoopMethods.
-                if (this.drawLoopMethods.includes(prop)) {
-                    return;
-                }
-
                 // Turn the result of the extracted value into
                 // a nicely-formatted string
                 try {
@@ -2487,11 +2482,12 @@ window.PJSOutput = Backbone.View.extend({
         // like 'new' calls in comments to be replaced as well.
         context.PJSOutput = PJSOutput;
 
-        // this is kind of sort of supposed to fake a gensym that the user
-        // can't access but since we're limited to string manipulation, we
-        // can't guarantee this fo sho' so we just change the name to something
-        // long and random every time the code runs and hope for the best!
-        var envName = "__env__" + Math.floor(Math.random() * 1000000000);
+        // All references to global symbols, e.g. fill(...), draw, etc. are
+        // prefixed with __env__.  It's okay to re-used the same identifier for
+        // this prefix becuase if a user tries to reference '__env__' from their
+        // code it will either be replaced with an empty string or an exception
+        // will be thrown.
+        var envName = "__env__";
 
         // This is necessary because sometimes 'code' is code that we want to
         // inject.  This injected code can contain code obtained from calling
@@ -2499,19 +2495,38 @@ window.PJSOutput = Backbone.View.extend({
         // references to KAInfiniteLoopCount that have already been prefixed
         // with a previous __env__ string.
         // TODO(kevinb) figure out how to use the AST so we're not calling .toString() on functions
-        code = code.replace(/__env__[0-9]+\./g, "");
+        code = code.replace(/__env__\./g, "");
         var ast = esprima.parse(code, { loc: true });
+
+        var astTransformPasses = [];
+
+        // The 'calls' parameter is undefined only when we are injecting code.
+        // This is not perfect protection from users typing one of these banned
+        // properties, but it does guard against some cases.  The reason why
+        // we're allowing these props in this case is that code that injected
+        // is comes from calling .toString on functions which have already been
+        // transformed from a previous call to exec().
+        if (!calls) {
+            astTransformPasses.push(ASTTransforms.checkForBannedProps(["__env__", "KAInfiniteLoopCount", "KAInfiniteLoopProtect", "KAInfiniteLoopSetTimeout"]));
+        } else {
+            astTransformPasses.push(ASTTransforms.checkForBannedProps(["__env__"]));
+        }
 
         // loopProtector adds LoopProtector code which checks how long it's
         // taking to run event loop and will throw if it's taking too long.
+        if (this.enableLoopProtect && !calls) {
+            astTransformPasses.push(this.loopProtector);
+        }
+
         // rewriteAssertEquals adds line and column arguments to calls to
         // Program.assertEquals.
-        var passes = [];
-        if (this.enableLoopProtect) {
-            passes.push(this.loopProtector);
+        astTransformPasses.push(ASTTransforms.rewriteAssertEquals);
+
+        try {
+            walkAST(ast, null, astTransformPasses);
+        } catch (e) {
+            return e;
         }
-        passes.push(ASTTransforms.rewriteAssertEquals);
-        walkAST(ast, null, passes);
 
         // rewriteContextVariables has to be done separately because loopProtector
         // adds variable references which need to be rewritten.

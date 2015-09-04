@@ -56,6 +56,36 @@ describe("Scratchpad Output Exec", function() {
     [{column: 0}]);
 
     failingTest("JSHint Error", "ellipse(x, 100, 100, 100);");
+    
+    failingTest(
+        "KAInfiniteLoopCount is not allowed",
+        "KAInfiniteLoopCount = 0;"
+    );
+
+    failingTest(
+        "KAInfiniteLoopSetTimeout is not allowed",
+        "KAInfiniteLoopSetTimeout(1000);"
+    );
+
+    failingTest(
+        "KAInfiniteLoopProtect is not allowed",
+        "KAInfiniteLoopProtect();"
+    );
+    
+    failingTest(
+        "props on __env__ cannot be accessed directly",
+        "__env__.fill = function() { debug('foo'); }"
+    );
+
+    failingTest(
+        "__env__ cannot be replaced",
+        "__env__ = {};"
+    );
+
+    failingTest(
+        "__env__ cannot be declared",
+        "var __env__ = {};"
+    );
 
     test("Looping (with Processing.js Built-in Functions)", function() {
         var go = function() {

@@ -252,3 +252,16 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
         }
     };
 };
+
+ASTTransforms.checkForBannedProps = function(bannedProps) {
+    return {
+        leave(node, path) {
+            if (node.type === "Identifier" && bannedProps.includes(node.name)) {
+                throw {
+                    row: node.loc.start.line - 1,
+                    html: `Use of <code>${node.name}</code> as an identifier is prohibited.`
+                };
+            }
+        }
+    };
+};
