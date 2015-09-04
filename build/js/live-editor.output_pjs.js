@@ -2548,8 +2548,6 @@ window.PJSOutput = Backbone.View.extend({
 
         code += escodegen.generate(ast);
 
-        console.log(code);
-
         // the top-level 'this' is empty except for this.externals, which
         // throws this message this is how users were getting at everything
         // from playing sounds to displaying pop-ups
