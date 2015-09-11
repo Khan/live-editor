@@ -86,6 +86,11 @@ describe("Scratchpad Output Exec", function() {
         "__env__ cannot be declared",
         "var __env__ = {};"
     );
+    
+    failingTest(
+        "generates an error for numbers prefixed by a 0",
+        "ellipse(09,10,11,12);"
+    );
 
     test("Looping (with Processing.js Built-in Functions)", function() {
         var go = function() {

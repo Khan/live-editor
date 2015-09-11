@@ -717,11 +717,32 @@ window.PJSOutput = Backbone.View.extend({
 
     // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
     runCode: function(userCode, callback) {
-        this.ast = esprima.parse(userCode, { loc: true });
+        try {
+            let ast = esprima.parse(userCode, { loc: true });
+            this.resourceCache.cacheResources(ast).then(() => {
+                this.injectCode(userCode, callback);
+            });
+        } catch(e) {
+            let [line, text] = e.message.split(":");
 
-        this.resourceCache.cacheResources(this.ast).then(() => {
-            this.injectCode(userCode, callback);
-        });
+            if (text.trim() === "Unexpected token ILLEGAL") {
+                text = $._("Unexpected character.");
+            } else {
+                text = $._("Parser error.");
+            }
+
+            // JSHint isn't affected by numbers prefixed with 0s, but esprima
+            // is.  We display exceptions thrown by esprima as errors to the
+            // user.  Unfortunately, esprima doesn't provide that much
+            // information, but it's better than swallowing the error.
+            callback([{
+                type: "error",
+                source: "esprima",
+                column: 0,
+                row: parseInt(/[1-9][0-9]*/.exec(line), 10) - 1,
+                text: text
+            }]);
+        }
     },
 
     /*

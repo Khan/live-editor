@@ -1256,6 +1256,8 @@ PJSResourceCache.prototype.leave = function (node) {
         });
     }
 };
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })();
+
 window.PJSOutput = Backbone.View.extend({
     // Canvas mouse events to track
     // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
@@ -1932,11 +1934,37 @@ window.PJSOutput = Backbone.View.extend({
     runCode: function runCode(userCode, callback) {
         var _this = this;
 
-        this.ast = esprima.parse(userCode, { loc: true });
+        try {
+            var ast = esprima.parse(userCode, { loc: true });
+            this.resourceCache.cacheResources(ast).then(function () {
+                _this.injectCode(userCode, callback);
+            });
+        } catch (e) {
+            var _e$message$split = e.message.split(":");
 
-        this.resourceCache.cacheResources(this.ast).then(function () {
-            _this.injectCode(userCode, callback);
-        });
+            var _e$message$split2 = _slicedToArray(_e$message$split, 2);
+
+            var line = _e$message$split2[0];
+            var text = _e$message$split2[1];
+
+            if (text.trim() === "Unexpected token ILLEGAL") {
+                text = $._("Unexpected character.");
+            } else {
+                text = $._("Parser error.");
+            }
+
+            // JSHint isn't affected by numbers prefixed with 0s, but esprima
+            // is.  We display exceptions thrown by esprima as errors to the
+            // user.  Unfortunately, esprima doesn't provide that much
+            // information, but it's better than swallowing the error.
+            callback([{
+                type: "error",
+                source: "esprima",
+                column: 0,
+                row: parseInt(/[1-9][0-9]*/.exec(line), 10) - 1,
+                text: text
+            }]);
+        }
     },
 
     /*
