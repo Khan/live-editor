@@ -67,6 +67,68 @@ describe("Challenge Assertions - HTML Scripting", function() {
         fromTests: true,
         reason: "Did you set x to 4?"
     });
+
+    var jQueryTest = (function() {
+        var jQueryC = constraint(function($jQuery) {
+            return $jQuery.name === "$" || $jQuery.name === "jQuery";
+        });
+
+        staticTest($._("Animate the image"), function() {
+            var result = null;
+            var descrip = $._("This webpage displays an avatar's image and name (Aqualine!). In this first step, use jQuery's `animate` function to make Aqualine grow larger.\nTip: Try using a CSS 'descendant selector' to select the image.");
+            var displayP = "_.animate(...);";
+
+            var match1P = function() {
+                $jQuery($selector).animate({
+                    $prop: $propVal
+                }, $delay);
+            };
+
+            var match2P = function() {
+                $jQuery($selector).animate({
+                    $prop: $propVal
+                });
+            };
+
+            var selectorC = constraint(function($selector) {
+                return $selector.value === ".avatar img" || $selector.value === "img";
+            });
+
+            var usedIdC = constraint(function($selector) {
+                return $selector.value && $selector.value.indexOf('#') === 0;
+            });
+
+            var propC = constraint(function($prop) {
+                return ($prop.type === "Identifier" && ($prop.name === "width" || $prop.name === "height"))
+                    || ($prop.type === "Literal" &&  ($prop.value === "width" || $prop.value === "height"));
+            });
+
+            var propValC = constraint(function($propVal) {
+                return $propVal && $propVal.value && $propVal.value > 150;
+            });
+            var matchP = firstMatchingPattern([match1P, match2P]);
+            result = match(structure(matchP, jQueryC));
+
+            if (passes(result)) {
+                if (matches(structure(matchP, usedIdC))) {
+                    result = fail($._("It looks like you're selecting by ID. Can you try selecting using the parent element's class name and a descendant selector instead?"));
+                } else if (!matches(structure(matchP, selectorC))) {
+                    result = fail($._("Hm, how are you selecting the image? The selector doesn't look like what I expected."));
+                } else if (!matches(structure(matchP, propC))) {
+                    result = fail($._("What property are you animating? To change the size, you should animate the `width` or the `height`."));
+                } else if (!matches(structure(matchP, propValC))) {
+                    result = fail($._("Are you making it bigger than it started?"));
+                }
+            }
+            assertMatch(result, descrip, displayP);
+        });
+    }).toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
+
+    assertTest({
+        title: "jQuery scripting works",
+        code: '<div><script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script><script>$("img").animate({width:500});</script></div>',
+        validate: jQueryTest
+    });
 });
 
 describe("scriptTest tests", function() {

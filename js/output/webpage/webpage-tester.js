@@ -20,8 +20,12 @@
             this.exec(validate);
 
             this.testContext.allScripts = "";
-            _.each(this.testContext.$doc.find("script"), function($script) {
-                this.testContext.allScripts += $script.innerHTML;
+
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(userCode, "text/html");
+
+            $(doc).find("script").each(function (index, scriptElement) {
+                this.testContext.allScripts += scriptElement.innerHTML;
                 this.testContext.allScripts += "\n";
             }.bind(this));
 
@@ -83,7 +87,7 @@
                 };
                 test.results = [result];
 
-                callback(function(success, message) { 
+                callback(function(success, message) {
                     var state = success ? "pass" : "fail";
                     test.state = state;
                     result.state = state;
@@ -101,7 +105,7 @@
             }.bind(this);
             this.testContext.test(name, fn, "ui");
         },
-        
+
         constraintPartial: constraintPartial,
 
         /*
@@ -164,13 +168,13 @@
                 }
             }
 
-            return {success: true}; 
+            return {success: true};
         },
 
 
-        /* 
-         * Returns all of the rules from the user's code,  
-         * formatted as a map of selectors to properties and 
+        /*
+         * Returns all of the rules from the user's code,
+         * formatted as a map of selectors to properties and
          * property names to property values:
          *
          * {
@@ -250,7 +254,7 @@
 
         /*
          * Make it so that equivalent CSS selectors are equal strings.
-         * In particular this function targets odd spacing, and different ordered 
+         * In particular this function targets odd spacing, and different ordered
          * sets of "," delimitted selectors. It also forces modifiers to
          * be attached to their selector "div > p" -> "div >p" so that selectors
          * can be split by spaces
@@ -302,12 +306,12 @@
             for (var selector in css) {
                 // On each pass we propose a new set of wVars
                 // based on the specific set things we matched.
-                // If we end up rejecting a match we want to 
-                // discard the associated wVars as well. To facilitate 
+                // If we end up rejecting a match we want to
+                // discard the associated wVars as well. To facilitate
                 // this we isolate each group of proposed wVars in its
                 // own object on the prototype chain
-                wVars = Object.create(oldWVars); 
-                
+                wVars = Object.create(oldWVars);
+
                 // Match selector
                 if (!this.testContext.selectorMatch(testSelector, selector, wVars)) {
                     continue;
@@ -315,7 +319,7 @@
 
                 // Match properties
                 var doPropertiesMatch = _.every(testProperties, function(value, prop) {
-                    return (prop in css[selector]) && 
+                    return (prop in css[selector]) &&
                             this.testContext.wildcardMatch(value, css[selector][prop], wVars);
                 }.bind(this));
                 if (!doPropertiesMatch) {
@@ -464,9 +468,9 @@
                         isValidNum(vals[2]));
             }
 
-            // If they're trying to use a color name, it should be at least 
+            // If they're trying to use a color name, it should be at least
             //  three letters long and not equal to rgb
-            return /[a-zA-Z]+/.test(color) && 
+            return /[a-zA-Z]+/.test(color) &&
                 color.length >= 3 &&
                 color.indexOf("rgb") === -1;
         }),
@@ -477,8 +481,8 @@
 
         /**
          * The differences are that this assertMatch doesn't support syntaxChecks
-         * (deemed unnecessary for webpage JS testing, and that the hint text is 
-         * interpreted differently. 
+         * (deemed unnecessary for webpage JS testing, and that the hint text is
+         * interpreted differently.
          */
         assertMatch: function(result, description, hint, image) {
             var alternateMessage;
@@ -499,8 +503,8 @@
                 image: image
             });
         },
-        
-        
+
+
 
         /*
          * The difference here is that it tests against allScripts instead of userCode
@@ -513,17 +517,17 @@
                     message: $._("Syntax error!")
                 };
             }
-    
+
             // At the top, we take care of some "alternative" uses of this
             // function. For ease of challenge developing, we return a
             // failure() instead of disallowing these uses altogether
-    
+
             // If we don't see a pattern property, they probably passed in
             // a pattern itself, so we'll turn it into a structure
             if (structure && _.isUndefined(structure.pattern)) {
                 structure = {pattern: structure};
             }
-    
+
             // If nothing is passed in or the pattern is non-existent, return
             // failure
             if (!structure || ! structure.pattern) {
@@ -532,14 +536,14 @@
                     message: ""
                 };
             }
-    
+
             try {
                 var callbacks = structure.constraint;
                 var success = Structured.match(this.testContext.allScripts,
                     structure.pattern, {
                         varCallbacks: callbacks
                     });
-    
+
                 return {
                     success: success,
                     message: callbacks && callbacks.failure

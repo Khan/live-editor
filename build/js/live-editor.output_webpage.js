@@ -20,8 +20,12 @@
             this.exec(validate);
 
             this.testContext.allScripts = "";
-            _.each(this.testContext.$doc.find("script"), (function ($script) {
-                this.testContext.allScripts += $script.innerHTML;
+
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(userCode, "text/html");
+
+            $(doc).find("script").each((function (index, scriptElement) {
+                this.testContext.allScripts += scriptElement.innerHTML;
                 this.testContext.allScripts += "\n";
             }).bind(this));
 
@@ -165,9 +169,9 @@
             return { success: true };
         },
 
-        /* 
-         * Returns all of the rules from the user's code,  
-         * formatted as a map of selectors to properties and 
+        /*
+         * Returns all of the rules from the user's code,
+         * formatted as a map of selectors to properties and
          * property names to property values:
          *
          * {
@@ -247,7 +251,7 @@
 
         /*
          * Make it so that equivalent CSS selectors are equal strings.
-         * In particular this function targets odd spacing, and different ordered 
+         * In particular this function targets odd spacing, and different ordered
          * sets of "," delimitted selectors. It also forces modifiers to
          * be attached to their selector "div > p" -> "div >p" so that selectors
          * can be split by spaces
@@ -469,8 +473,8 @@
 
         /**
          * The differences are that this assertMatch doesn't support syntaxChecks
-         * (deemed unnecessary for webpage JS testing, and that the hint text is 
-         * interpreted differently. 
+         * (deemed unnecessary for webpage JS testing, and that the hint text is
+         * interpreted differently.
          */
         assertMatch: function assertMatch(result, description, hint, image) {
             var alternateMessage;
