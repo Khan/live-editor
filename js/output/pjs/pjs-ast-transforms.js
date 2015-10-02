@@ -131,7 +131,6 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
                     }
                 }
             } else if (node.type === "VariableDeclaration") {
-
                 if (node.declarations.length === 1) {
                     // Single VariableDeclarators
 
@@ -150,10 +149,13 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
                     // that appear in the global scope unless it's one of the draw loop
                     // methods.  In that case, always rewrite it.
                     if (scopes.length === 1 || drawLoopMethods.includes(decl.id.name)) {
-                        if (["Program", "BlockStatement"].includes(parent.type)) {
+                        if (["Program", "BlockStatement"].includes(parent.type)
+                                || ["FunctionExpression"].includes(decl.init.type)) {
                             return b.ExpressionStatement(
                                 b.AssignmentExpression(
-                                    b.MemberExpression(b.Identifier(envName),b.Identifier(decl.id.name)),
+                                    b.MemberExpression(
+                                        b.Identifier(envName),
+                                        b.Identifier(decl.id.name)),
                                     "=",
                                     decl.init
                                 )
