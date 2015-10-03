@@ -60,6 +60,17 @@ There are also a handful of [idea](https://github.com/Khan/live-editor/labels/id
 
 We have no full-time resource working on the editing environment right now, so we will do pull requests when we find ourselves with time between other projects. We thank you for your contribution, even if we may be slow to acknowledge it at times. :)
 
+## Pull Requests
+
+When submitting pull request please do the following:
+
+- link to an issue, if no issue exists please create one
+- write automated tests for new functionality or bug fixes
+- include build files
+- run the automated tests
+- squash your commits into a single a commit
+
+Before we can accept any pull requests you must sign our [CLA](https://www.khanacademy.org/r/cla).
 
 ## How it works
 
