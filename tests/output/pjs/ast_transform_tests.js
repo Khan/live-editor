@@ -13,7 +13,7 @@ var cleanupCode = function(code) {
 var transformCode = function(code) {
     var ast = esprima.parse(code);
     var envName = "__env__";
-    
+
     // The tests use ellipse(), console.log(), and print() so we need to make
     // sure they're defined in the context object otherwise the transform won't
     // prefix them when they're used inside of a function body.
@@ -36,16 +36,16 @@ describe("AST Transforms", function () {
                 ellipse(25 * i, 200, 50, 50);
             }
         }));
-        
+
         var expectedCode = cleanupCode(getCodeFromOptions(function() {
             for (__env__.i = 0; __env__.i < 10; __env__.i++) {
                 __env__.ellipse(25 * __env__.i, 200, 50, 50);
             }
         }));
-        
+
         expect(transformedCode).to.equal(expectedCode);
     });
-    
+
     it("should handle event handlers declared inside 'draw'", function () {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var draw = function() {
@@ -81,7 +81,7 @@ describe("AST Transforms", function () {
 
         expect(transformedCode).to.equal(expectedCode);
     });
-    
+
     it("should handle built-in identifiers", function () {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var x = undefined;
@@ -140,7 +140,7 @@ describe("AST Transforms", function () {
     it("should handle draw loop functions inside 'draw'", function () {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var draw = function() {
-                var x = 5, mouseClicked = function () {}, y = 10;  
+                var x = 5, mouseClicked = function () {}, y = 10;
             };
         }));
 
@@ -180,5 +180,37 @@ describe("AST Transforms", function () {
         }));
 
         expect(transformedCode).to.equal(expectedCode);
+    });
+
+    it("should prefix functions declared inside of 'switch/case' statements with '__env__'", function() {
+        var transformedCode = transformCode(getCodeFromOptions(function() {
+            var a = 0;
+            switch (a) {
+                case 0:
+                    var myFunc = function() {
+                        print("Hello, world!");
+                    };
+
+                    myFunc();
+                    break;
+                default:
+                    break;
+            }
+        }));
+
+        var expectedCode = cleanupCode(getCodeFromOptions(function() {
+            __env__.a = 0;
+            switch (__env_.a) {
+                case 0:
+                    __env__.myFunc = function() {
+                        __env__.print("Hello, world!");
+                    };
+
+                    __env__.myFunc();
+                    break;
+                default:
+                    break;
+            }
+        }));
     });
 });
