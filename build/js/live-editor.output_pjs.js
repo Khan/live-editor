@@ -1735,6 +1735,7 @@ window.PJSOutput = Backbone.View.extend({
         var propList = [];
 
         for (var prop in props) {
+            /* jhint forin:false */
             if (!bannedProps[prop]) {
                 propList.push(prop + ":" + props[prop]);
             }

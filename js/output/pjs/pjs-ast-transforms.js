@@ -149,8 +149,8 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
                     // that appear in the global scope unless it's one of the draw loop
                     // methods.  In that case, always rewrite it.
                     if (scopes.length === 1 || drawLoopMethods.includes(decl.id.name)) {
-                        if (["Program", "BlockStatement"].includes(parent.type)
-                                || ["FunctionExpression"].includes(decl.init.type)) {
+                        if (["Program", "BlockStatement"].includes(parent.type) ||
+                                ["FunctionExpression"].includes(decl.init.type)) {
                             return b.ExpressionStatement(
                                 b.AssignmentExpression(
                                     b.MemberExpression(

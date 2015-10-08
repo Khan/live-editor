@@ -404,7 +404,8 @@
                 var selector = selectors[key];
                 if (this.testContext.singleSelectorMatch(pattern, selector, wVars)) {
                     if (this.testContext.multiSelectorMatch(patterns, selectors.slice(0, key).concat(selectors.slice(key + 1)), wVars)) {
-                        for (key in wVars) { // Commit wildcard selections to parent wVars
+                        for (key in wVars) { /* jhint forin:false */ 
+                            // Commit wildcard selections to parent wVars
                             if (!(key in oldWVars)) {
                                 oldWVars[key] = wVars[key];
                             }
