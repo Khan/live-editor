@@ -187,8 +187,8 @@ describe("AST Transforms", function () {
             var a = 0;
             switch (a) {
                 case 0:
-                    var myFunc = function() {
-                        print("Hello, world!");
+                    var myFunc = function () {
+                        print('Hello, world!');
                     };
 
                     myFunc();
@@ -200,17 +200,19 @@ describe("AST Transforms", function () {
 
         var expectedCode = cleanupCode(getCodeFromOptions(function() {
             __env__.a = 0;
-            switch (__env_.a) {
-                case 0:
-                    __env__.myFunc = function() {
-                        __env__.print("Hello, world!");
-                    };
+            switch (__env__.a) {
+            case 0:
+                __env__.myFunc = function () {
+                    __env__.print('Hello, world!');
+                };
 
-                    __env__.myFunc();
-                    break;
-                default:
-                    break;
+                __env__.myFunc();
+                break;
+            default:
+                break;
             }
         }));
+
+        expect(expectedCode).to.equal(transformedCode);
     });
 });

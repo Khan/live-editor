@@ -795,14 +795,16 @@ describe("Scratchpad Output Exec", function() {
         assertions2: []
     });
 
+    // This test should not use a variable that is defined in another test
+    // TODO(kevinb) prevent persistent state between tests
     runTest({
         title: "hoisting should work",
         code: function() {
             var foo = function() {
                 var bar = function() {
-                    return a;
+                    return b;
                 };
-                var a = 5;
+                var b = 5;
                 return bar;
             };
 
