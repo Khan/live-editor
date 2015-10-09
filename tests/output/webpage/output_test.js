@@ -144,6 +144,16 @@ describe("Linting", function() {
     warningTest("javascript hrefs are not banned", '<a href="javascript:void(0)"></a>', []);
     warningTest("regular scripts are not banned", '<script src="http://google.com"></script>', []);
 
+    warningTest("obsolete HTML elements warned against", [
+        "<marquee></marquee>",
+        "<marquee>Some clever message</marquee>",
+        "<acronym title=\"World Wide Web\">WWW</acronym>"
+    ], [
+        ["The \"marquee\" tag is obsolete and may not function properly in modern browsers."],
+        ["The \"marquee\" tag is obsolete and may not function properly in modern browsers."],
+        ["The \"acronym\" tag is obsolete and may not function properly in modern browsers."]
+    ])
+
     failingTest("INVALID_TAG_NAME raised by < at EOF",
         '<', [
             {row: 0, column: 0, lint: {type: "INVALID_TAG_NAME"}}

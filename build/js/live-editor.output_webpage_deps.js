@@ -9783,6 +9783,15 @@ require("/tools/entry-point.js");
         cursor: openTag.start
       };
     },
+    OBSOLETE_HTML_TAG: function(tagName, token) {
+      var openTag = this._combine({
+          name: tagName
+        }, token.interval);
+      return {
+        openTag: openTag,
+        cursor: openTag.start
+      }
+    },
     ELEMENT_NOT_ALLOWED: function(tagName, token) {
       var openTag = this._combine({
             name: tagName
@@ -10936,8 +10945,9 @@ require("/tools/entry-point.js");
     // We also keep a list of HTML elements that are now obsolete, but
     // may still be encountered in the wild on popular sites.
     obsoleteHtmlElements: ["acronym", "applet", "basefont", "big", "center",
-                           "dir", "font", "isindex", "listing", "noframes",
-                           "plaintext", "s", "strike", "tt", "xmp"],
+                           "dir", "font", "isindex", "listing", "marquee",
+                           "noframes", "plaintext", "s", "strike", "tt",
+                           "xmp"],
 
     webComponentElements: ["template", "shadow", "content"],
 
@@ -10967,6 +10977,12 @@ require("/tools/entry-point.js");
     // is a void HTML element tag.
     _knownVoidHTMLElement: function(tagName) {
       return this.voidHtmlElements.indexOf(tagName) > -1;
+    },
+
+    // This is a helper function to determine whether a given string
+    // is an obsolete HTML element tag
+    _knownObsoleteHTMLElement: function(tagName) {
+      return this.obsoleteHtmlElements.indexOf(tagName) > -1;
     },
 
     // This is a helper function to determine whether a given string
@@ -11088,8 +11104,11 @@ require("/tools/entry-point.js");
         if (tagName) {
           var badSVG = this.parsingSVG && !this._knownSVGElement(tagName);
           var badHTML = !this.parsingSVG && !this._knownHTMLElement(tagName) && !this._isCustomElement(tagName);
+          var obsoleteHTML = this._knownObsoleteHTMLElement(tagName);
           if (badSVG || badHTML) {
             throw new ParseError("INVALID_TAG_NAME", tagName, token);
+          } else if (obsoleteHTML) {
+            this.warnings.push(new ParseError("OBSOLETE_HTML_TAG", tagName, token));
           } else if (this.options.noScript && tagName === "script") {
             throw new ParseError("SCRIPT_ELEMENT_NOT_ALLOWED", tagName, token);
           } else if (this.options.disableTags) {
