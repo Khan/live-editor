@@ -207,7 +207,7 @@ describe("LoopProtector", function() {
             };
         });
 
-        output.output.loopProtector = new LoopProtector(function (error) {
+        output.output.injector.loopProtector = new LoopProtector(function (error) {
             expect(error.html).to.contain("while");
             expect(error.row).to.equal(3);
             done();
@@ -259,7 +259,7 @@ describe("LoopProtector", function() {
             }
         });
 
-        output.output.loopProtector = new LoopProtector(function (error) {
+        output.output.injector.loopProtector = new LoopProtector(function (error) {
             // caught by the runCode callback
         }, 200, 50, true);
 
@@ -280,7 +280,7 @@ describe("LoopProtector", function() {
             }
         });
 
-        output.output.loopProtector = new LoopProtector(function (error) {
+        output.output.injector.loopProtector = new LoopProtector(function (error) {
             // caught by the runCode callback
         }, 200, 50, true);
 
@@ -304,7 +304,7 @@ describe("LoopProtector", function() {
             };
         });
 
-        output.output.loopProtector = new LoopProtector(function (error) {
+        output.output.injector.loopProtector = new LoopProtector(function (error) {
             expect(error.html).to.contain("while");
             expect(error.row).to.equal(3);
             done();
@@ -322,15 +322,15 @@ describe("draw update tests", function() {
     
     beforeEach(function() {
         output = createLiveEditorOutput();
-        sinon.spy(output.output.canvas, "ellipse");
-        ellipseSpy = output.output.canvas.ellipse;
-        sinon.spy(output.output.canvas, "background");
-        backgroundSpy = output.output.canvas.background;
+        sinon.spy(output.output.processing, "ellipse");
+        ellipseSpy = output.output.processing.ellipse;
+        sinon.spy(output.output.processing, "background");
+        backgroundSpy = output.output.processing.background;
     });
     
     afterEach(function() {
-        output.output.canvas.ellipse.restore();
-        output.output.canvas.background.restore();
+        output.output.processing.ellipse.restore();
+        output.output.processing.background.restore();
         output.output.kill();
     });
     
