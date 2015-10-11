@@ -1,7 +1,14 @@
+var _ = require("underscore");
+
+var ScratchpadAutosuggest = require("../autosuggest.js");
+var TooltipBase = require("../tooltip-base.js");
+var TooltipEngine = require("../tooltip-engine.js");
+var TooltipUtils = require("./tooltip-utils.js");
+
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.imagePicker = TooltipBase.extend({
     defaultImage: "cute/None",
-    
+
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;

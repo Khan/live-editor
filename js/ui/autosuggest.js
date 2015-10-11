@@ -2,7 +2,10 @@
  * Helper functionality for the Scratchpad auto suggest feature,
  * parameter information and live documentation.
  */
-window.ScratchpadAutosuggest = {
+
+var _ = require("underscore");
+
+var ScratchpadAutosuggest = {
     /**
      * Initializes the autosuggest functionality and adds/modifies the
      * completers to be applicable to KA.
@@ -297,3 +300,8 @@ window.ScratchpadAutosuggest = {
                            .append(autosuggestDescription);
     }
 };
+
+// TODO(kevinb) remove once tests use require
+window.ScratchpadAutosuggest = ScratchpadAutosuggest;
+
+module.exports = ScratchpadAutosuggest;

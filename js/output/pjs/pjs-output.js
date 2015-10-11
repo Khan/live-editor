@@ -1,4 +1,14 @@
-window.PJSOutput = Backbone.View.extend({
+var _ = require("underscore");
+var Backbone = require("backbone");
+var Processing = require("processing");
+
+var PJSResourceCache = require("./pjs-resource-cache.js");
+var PJSTester = require("./pjs-tester.js");
+var LiveEditorOutput = require("../shared/output.js");
+var LoopProtect = require("../shared/loop-protect.js");
+var BabyHint = require("./babyhint.js");
+
+var PJSOutput = Backbone.View.extend({
     // Canvas mouse events to track
     // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
     trackedMouseEvents: ["move", "over", "out", "down", "up"],
@@ -623,3 +633,8 @@ _.extend(PJSOutput, {
 });
 
 LiveEditorOutput.registerOutput("pjs", PJSOutput);
+
+// TODO(kevinb) remove after updating tests to deal with modules
+window.PJSOutput = PJSOutput;
+
+module.exports = PJSOutput;

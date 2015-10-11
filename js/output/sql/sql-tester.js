@@ -1,3 +1,7 @@
+var _ = require("underscore");
+
+var OutputTester = require("../shared/output-tester.js");
+
 var SQLTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
@@ -401,8 +405,8 @@ SQLTester.prototype.testMethods = {
 
         // This allows us to check Step 1 results even if
         //  Step 2 results are not correct, for example.
-        numResults = numResults || results.length; 
-        
+        numResults = numResults || results.length;
+
         // Make sure we have similar results
         for (var i = 0; i < numResults; i++) {
             var res = results[i];
@@ -426,7 +430,7 @@ SQLTester.prototype.testMethods = {
     moreResultsThan(num) {
         var dbInfo = this.userCode;
         var results = dbInfo.results;
-        return { success: (results.length > num) };            
+        return { success: (results.length > num) };
     },
 
     /*
@@ -452,4 +456,4 @@ SQLTester.prototype.testMethods = {
     },
 };
 
-
+module.exports = SQLTester;

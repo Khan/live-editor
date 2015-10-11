@@ -1,3 +1,5 @@
+var Backbone = require("backbone");
+
 /* Manages the audio chunks as we build up this recording. */
 window.ScratchpadAudioChunks = Backbone.Model.extend({
 

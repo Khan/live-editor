@@ -1,4 +1,7 @@
-window.LiveEditor = Backbone.View.extend({
+var _ = require("underscore");
+var Backbone = require("backbone");
+
+var LiveEditor = Backbone.View.extend({
     dom: {
         DRAW_CANVAS: ".scratchpad-draw-canvas",
         DRAW_COLOR_BUTTONS: "#draw-widgets a.draw-color-button",
@@ -1500,3 +1503,8 @@ window.LiveEditor = Backbone.View.extend({
 LiveEditor.registerEditor = function(name, editor) {
     LiveEditor.prototype.editors[name] = editor;
 };
+
+// globalize LiveEditor so that it can be instantiate in demos
+window.LiveEditor = LiveEditor;
+
+module.exports = LiveEditor;

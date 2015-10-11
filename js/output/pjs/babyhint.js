@@ -15,6 +15,8 @@
  * }
  */
 
+var _ = require("underscore");
+
 var BabyHint = {
 
     EDIT_DISTANCE_THRESHOLD: 2,
@@ -707,5 +709,5 @@ var BabyHint = {
         return errors;
     }
 };
-// TODO(jlfwong): Stop globalizing BabyHint
-window.BabyHint = BabyHint;
+
+module.exports = BabyHint;

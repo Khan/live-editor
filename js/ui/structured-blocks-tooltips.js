@@ -1,3 +1,5 @@
+var Backbone = require("backbone");
+
 (function() {
     var ESC = 27;
 

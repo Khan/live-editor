@@ -1,4 +1,9 @@
-window.StructuredBlocksEditor = Backbone.View.extend({
+var _ = require("underscore");
+var Backbone = require("backbone");
+
+var LiveEditor = require("../../live-editor.js");
+
+var StructuredBlocksEditor = Backbone.View.extend({
     initialize: function(options) {
         this.defaultCode = (options.code || "").trim();
         this.autoFocus = options.autoFocus;

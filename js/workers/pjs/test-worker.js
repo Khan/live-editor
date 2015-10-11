@@ -17,6 +17,28 @@ var date = (new Date()).toDateString();
 
 var tester;
 
+// The problem is that we're loading some scripts using importScript and they
+// have dependencies which they're loading with require now instead of depending
+// on a global. I set those dependencies up to also expose globals that's why
+// the code below works. I need to make this better. Also, there's this weird
+// situation where "pooled-worker.js" is being required in "output-tester.js"
+// even though it's not being used in side the worker itself. The "initialize"
+// method creates a PooledWorker instance, but "initialize" isn't called inside
+// the web worker.
+// TODO(kevinb) refactor so that we don't need this hack
+var module = {};
+var require = function(path) {
+    if (path === "./pooled-worker.js") {
+        return PooledWorker;
+    }
+    if (path === "../shared/output-tester.js") {
+        return OutputTester;
+    }
+    if (path === "structuredjs") {
+        return Structured;
+    }
+};
+
 self.onmessage = function(event) {
     if (!init) {
         init = true;

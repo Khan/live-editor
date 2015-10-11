@@ -226,3 +226,5 @@ Handlebars.template = Handlebars.VM.template;
 if (typeof module !== 'undefined') {
     module.exports = Handlebars;
 }
+
+window.Handlebars = Handlebars;

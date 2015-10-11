@@ -1,4 +1,11 @@
-window.AceEditor = Backbone.View.extend({
+var _ = require("underscore");
+var Backbone = require("backbone");
+
+var ScratchpadAutosuggest = require("../../ui/autosuggest.js");
+var TooltipEngine = require("../../ui/tooltip-engine.js");
+var LiveEditor = require("../../live-editor.js");
+
+var AceEditor = Backbone.View.extend({
     dom: {
         ACTIVE_LINE: ".ace_active_line",
         TEXT_INPUT: "textarea",
@@ -450,3 +457,6 @@ window.AceEditor = Backbone.View.extend({
 LiveEditor.registerEditor("ace_pjs", AceEditor);
 LiveEditor.registerEditor("ace_webpage", AceEditor);
 LiveEditor.registerEditor("ace_sql", AceEditor);
+
+// globalized so that demos can instantiate it
+window.AceEditor = AceEditor;

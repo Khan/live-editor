@@ -1,3 +1,11 @@
+var Backbone = require("backbone");
+var _ = require("underscore");
+
+var ScratchpadAutosuggest = require("../autosuggest.js");
+var TooltipBase = require("../tooltip-base.js");
+var TooltipEngine = require("../tooltip-engine.js");
+var TooltipUtils = require("./tooltip-utils.js");
+
 /* This file contains both the imageModal and soundModal tooltip, which share
  the same Modal() View, but have fairly different ways that they hook into
  the editor and replace the code.

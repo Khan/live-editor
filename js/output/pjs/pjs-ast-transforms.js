@@ -1,13 +1,11 @@
-window.ASTTransforms = {};
-
-let b = window.ASTBuilder;
+var b = require("../shared/ast-builder.js");
 
 /**
  * Visitor object which adds line and column information as additional args,
  * e.g. Program.assertEqual(a, b) => Program.assertEqual(a, b, <line>, <column>)
  * where <line> and <column> are number literals.
  */
-ASTTransforms.rewriteAssertEquals = {
+var rewriteAssertEquals = {
     leave(node, path) {
         if (node.type === "Identifier" && node.name === "Program") {
             let parent = path[path.length - 2];
@@ -51,7 +49,6 @@ var isReference = function(node, parent) {
     return !isMemberExpression || isComputedProperty || isObject;
 };
 
-
 let drawLoopMethods = ["draw", "mouseClicked", "mouseDragged", "mouseMoved",
     "mousePressed", "mouseReleased", "mouseScrolled", "mouseOver",
     "mouseOut", "touchStart", "touchEnd", "touchMove", "touchCancel",
@@ -68,7 +65,7 @@ let scopes = [{}];
  * @param {string} envName
  * @returns {Object}
  */
-ASTTransforms.rewriteContextVariables = function(envName, context) {
+var rewriteContextVariables = function(envName, context) {
     return {
         enter(node, path) {
             // Create a new scope whenever we encounter a function declaration/expression
@@ -254,7 +251,7 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
     };
 };
 
-ASTTransforms.checkForBannedProps = function(bannedProps) {
+var checkForBannedProps = function(bannedProps) {
     return {
         leave(node, path) {
             if (node.type === "Identifier" && bannedProps.includes(node.name)) {
@@ -274,7 +271,7 @@ ASTTransforms.checkForBannedProps = function(bannedProps) {
  * @param {Object} resources An empty Object.
  * @returns {Object} An AST Visitor.
  */
-ASTTransforms.findResources = function(resources) {
+var findResources = function(resources) {
     return {
         leave(node, path) {
             if (node.type === "Literal" && typeof(node.value) === "string") {
@@ -299,4 +296,11 @@ ASTTransforms.findResources = function(resources) {
             }
         }
     };
+};
+
+module.exports = {
+    rewriteAssertEquals,
+    rewriteContextVariables,
+    checkForBannedProps,
+    findResources
 };

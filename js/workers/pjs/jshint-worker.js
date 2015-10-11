@@ -12,9 +12,6 @@ self.onmessage = function(event) {
 
         importScripts(event.data.jshintFile +
             "?cachebust=" + (new Date()).toDateString());
-
-        importScripts(event.data.externalsDir +
-            "underscore/underscore.js?cachebust=" + (new Date()).toDateString());
     }
 
     // Evaluate the code using JSHint

@@ -1,3 +1,6 @@
+var Backbone = require("backbone");
+var Handlebars = require("handlebars");
+
 /**
  * This is called tipbar for historical reasons.
  * Originally, it appeared as a red bar sliding up from the bottom of the

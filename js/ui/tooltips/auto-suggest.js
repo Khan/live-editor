@@ -1,3 +1,9 @@
+var _ = require("underscore");
+
+var ScratchpadAutosuggest = require("../autosuggest.js");
+var TooltipBase = require("../tooltip-base.js");
+var TooltipEngine = require("../tooltip-engine.js");
+
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.autoSuggest = TooltipBase.extend({
     initialize: function(options) {
@@ -6,7 +12,7 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
         this.render();
         this.bind();
         this.mouse = false;
-        
+
         document.addEventListener("mousedown", () => {
             this.mouse = true;
         });

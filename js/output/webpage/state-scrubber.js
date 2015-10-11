@@ -3,7 +3,7 @@
  * Resets the global javascript state in the browser
  * (timeouts, intervals and global variables)
  */
-window.StateScrubber = function(target) {
+var StateScrubber = function(target) {
     this.target = target;
     this.firstTimeout = target.setTimeout(function() {}, 0);
 
@@ -40,7 +40,7 @@ window.StateScrubber = function(target) {
     Object.freeze(Object.getPrototypeOf(target));
 };
 
-window.StateScrubber.prototype = {
+StateScrubber.prototype = {
     clearGlobals: function() {
         for (var prop in this.target) {
             if (!this.globalVariables[prop] && this.target.hasOwnProperty(prop)) {
@@ -53,7 +53,7 @@ window.StateScrubber.prototype = {
     },
 
     clearTimeoutsAndIntervals: function() {
-    	// Intervals are acutally also timeouts under the hood, so clearing all the 
+    	// Intervals are acutally also timeouts under the hood, so clearing all the
     	// timeouts since last time is sufficient.
     	// (If you're interested intervals are timeouts with the repeat flag set to true:
     	// www.w3.org/TR/html5/webappapis.html#timers)
@@ -71,3 +71,5 @@ window.StateScrubber.prototype = {
     	this.clearTimeoutsAndIntervals();
     }
 };
+
+module.exports = StateScrubber;

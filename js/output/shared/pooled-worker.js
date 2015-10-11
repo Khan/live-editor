@@ -48,3 +48,5 @@ PooledWorker.prototype.kill = function() {
     }, this);
     this.pool = [];
 };
+
+module.exports = PooledWorker;

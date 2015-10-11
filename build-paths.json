@@ -3,17 +3,6 @@
         "tmpl/*.handlebars"
     ],
     "scripts": {
-        "core_deps": [
-            "bower_components/es5-shim/es5-shim.js",
-            "bower_components/jquery/dist/jquery.js",
-            "bower_components/jquery-ui/ui/jquery-ui.custom.js",
-            "external/handlebars/handlebars.runtime.js",
-            "bower_components/underscore/underscore.js",
-            "bower_components/backbone/backbone.js",
-            "bower_components/jed/jed.js",
-            "bower_components/bootstrap/js/bootstrap-tab.js",
-            "js/shared/i18n.js"
-        ],
         "editor_ace_deps": [
             "bower_components/ace-builds/src-noconflict/ace.js",
             "bower_components/ace-builds/src-noconflict/mode-javascript.js",
@@ -22,12 +11,6 @@
             "bower_components/ace-builds/src-noconflict/mode-sql.js",
             "bower_components/ace-builds/src-noconflict/ext-searchbox.js",
             "bower_components/ace-builds/src-noconflict/ext-language_tools.js"
-        ],
-        "editor_ace": [
-            "js/editors/ace/editor-ace.js"
-        ],
-        "editor_textarea": [
-            "js/editors/textarea/editor-textarea.js"
         ],
         "editor_structured_blocks_deps": [
             "external/structured-blocks/external/jquery.ui.touch-punch.min.js",
@@ -48,94 +31,16 @@
             "build/tmpl/dev-record.js",
             "js/ui/jquery.button.js"
         ],
-        "tooltips": [
-            "external/colorpicker/colorpicker.js",
-            "js/ui/autosuggest.js",
-            "js/ui/autosuggest-data.js",
-            "js/ui/tooltip-engine.js",
-            "js/ui/tooltips/*.js",
-            "build/tmpl/image-picker.js",
-            "build/tmpl/mediapicker-preview.js",
-            "build/tmpl/mediapicker-modal.js",
-            "js/ui/structured-blocks-tooltips.js"
-        ],
         "debugger": [
             "bower_components/iframe-overlay/dist/iframe-overlay.js",
             "js/ui/debugger.js",
             "build/tmpl/debugger.js"
-        ],
-        "shared": [
-            "js/shared/all-images.js",
-            "js/shared/images.js",
-            "js/shared/sounds.js",
-            "js/shared/record.js",
-            "js/shared/config.js",
-            "external/visibly/visibly.js",
-            "node_modules/babel-core/browser-polyfill.min.js"
-        ],
-        "output_pjs_deps": [
-            "external/processing-js/processing.js",
-            "external/jshint/jshint.js",
-            "external/structuredjs/external/esprima.js",
-            "external/structured-blocks/external/escodegen.browser.js",
-            "external/structuredjs/structured.js",
-            "js/output/shared/ast-builder.js",
-            "js/output/shared/ast-walker.js",
-            "js/output/shared/loop-protect.js",
-            "js/output/pjs/pjs-ast-transforms.js"
         ],
         "output_debugger_deps": [
             "bower_components/iframe-overlay/dist/iframe-overlay.js",
             "external/debugger/build/debugger.js",
             "external/debugger/build/processing-debugger.js",
             "js/output/pjs/pjs-debugger.js"
-        ],
-        "output_pjs": [
-            "js/output/pjs/pjs-utils.js",
-            "js/output/pjs/pjs-code-injector.js",
-            "js/output/pjs/pjs-tester.js",
-            "js/output/pjs/babyhint.js",
-            "js/output/pjs/pjs-resource-cache.js",
-            "js/output/pjs/pjs-output.js"
-        ],
-        "output_webpage_deps": [
-            "external/structuredjs/external/esprima.js",
-            "external/structured-blocks/external/escodegen.browser.js",
-            "external/html2canvas/html2canvas.js",
-            "external/slowparse/slowparse.js",
-            "js/output/shared/ast-builder.js",
-            "js/output/shared/ast-walker.js",
-            "js/output/shared/loop-protect.js",
-            "js/output/webpage/state-scrubber.js",
-            "external/structuredjs/structured.js",
-            "js/output/pjs/pjs-tester.js"
-        ],
-        "output_sql_deps": [
-            "external/html2canvas/html2canvas.js",
-            "external/sqlitejs/sql.js"
-        ],
-        "output_webpage": [
-            "js/output/webpage/webpage-tester.js",
-            "js/output/webpage/webpage-output.js"
-        ],
-        "output_sql": [
-            "build/tmpl/sql-results.js",
-            "js/output/sql/sql-tester.js",
-            "js/output/sql/sql-output.js"
-        ],
-        "output": [
-            "build/tmpl/output.js",
-            "js/output/shared/pooled-worker.js",
-            "js/output/shared/output-tester.js",
-            "js/output/shared/output.js"
-        ],
-        "ui": [
-            "build/tmpl/tipbar.js",
-            "js/ui/tipbar.js",
-            "build/tmpl/live-editor.js",
-            "js/ui/canvas.js",
-            "js/ui/record.js",
-            "js/live-editor.js"
         ]
     },
     "workers_pjs": [
@@ -182,9 +87,6 @@
         "ui": [
             "css/ui/tipbar.css",
             "css/ui/style.css"
-        ],
-        "output": [
-            "css/output/style.css"
         ],
         "debugger": [
             "css/ui/debugger.css"

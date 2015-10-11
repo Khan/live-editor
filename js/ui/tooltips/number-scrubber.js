@@ -1,3 +1,7 @@
+var ScratchpadAutosuggest = require("../autosuggest.js");
+var TooltipBase = require("../tooltip-base.js");
+var TooltipEngine = require("../tooltip-engine.js");
+
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.numberScrubber = TooltipBase.extend({
     initialize: function(options) {
@@ -241,4 +245,3 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
         return decIndex === -1 ? 0 : strNumber.length - (decIndex + 1);
     }
 });
-

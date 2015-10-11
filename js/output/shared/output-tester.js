@@ -1,4 +1,7 @@
-window.OutputTester = function() {};
+var _ = require("underscore");
+var PooledWorker = require("./pooled-worker.js");
+
+var OutputTester = function() {};
 
 OutputTester.prototype = {
     initialize: function(options) {
@@ -269,3 +272,5 @@ OutputTester.prototype = {
         }
     }
 };
+
+module.exports = OutputTester;

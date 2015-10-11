@@ -1,3 +1,5 @@
+var Backbone = require("backbone");
+
 // Maintain all of the configuration options and settings for the site.
 // Have them be versioned and attached to the ScratchpadRevision so that
 // later config changes don't break old code.
@@ -231,7 +233,7 @@ var ScratchpadConfig = Backbone.Model.extend({
             // Ace pjs editor configuration
             ace_pjs_editor: function(editor) {
                 var aceEditor = editor.editor;
-                
+
                 aceEditor.session.setOption("useWorker", false);
 
                 // Don't highlight the active line
@@ -446,15 +448,20 @@ var ScratchpadConfig = Backbone.Model.extend({
 
         {
             name: "version 4 placeholder"
-            
+
             // At one time live-editor.shared.js had a (version 4) entry that a
             // duplicate "Brace Autocompletion Changes" before it was disabled.
             // This duplicate was probably introduced by a merge. Unfortunately,
-            // many of the revisions in the datastore are version 4.  This 
+            // many of the revisions in the datastore are version 4.  This
             // placeholder version ensures that those revisions continue to work
             // without throwing exceptions.
         }
-        
+
         // NOTE: update version test in output_test.js
     ]
 });
+
+// TODO(kevinb) remove after tests start using require
+window.ScratchpadConfig = ScratchpadConfig;
+
+module.exports = ScratchpadConfig;

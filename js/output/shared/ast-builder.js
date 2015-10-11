@@ -1,4 +1,4 @@
-window.ASTBuilder = {
+var ASTBuilder = {
     /**
      * @param {Expression} left
      * @param {string} operator: "=", "+=", "-=", "*=", "/=", etc.
@@ -48,7 +48,7 @@ window.ASTBuilder = {
     /**
      * @param {Expression} expression
      */
-        ExpressionStatement(expression) {
+    ExpressionStatement(expression) {
         return {
             type: "ExpressionStatement",
             expression: expression
@@ -123,3 +123,5 @@ window.ASTBuilder = {
         };
     }
 };
+
+module.exports = ASTBuilder;

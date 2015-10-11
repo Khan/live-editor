@@ -1,3 +1,6 @@
+var TooltipBase = require("../tooltip-base.js");
+var TooltipEngine = require("../tooltip-engine.js");
+
 TooltipEngine.classes.numberScrubberClick = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;

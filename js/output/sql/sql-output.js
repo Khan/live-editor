@@ -1,5 +1,9 @@
+var LiveEditorOutput = require("../shared/output.js");
+
+var SQLTester = require("./sql-tester.js");
+
 /* global SQLTester */
-window.SQLOutput = Backbone.View.extend({
+var SQLOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
@@ -115,7 +119,7 @@ window.SQLOutput = Backbone.View.extend({
             return deferred;
         }
 
-        if (!window.SQLOutput.isSupported()) {
+        if (!SQLOutput.isSupported()) {
             deferred.resolve({
               errors: [{
                   row: -1,
@@ -278,7 +282,7 @@ window.SQLOutput = Backbone.View.extend({
     },
 
     runCode: function(userCode, callback) {
-        if (!window.SQLOutput.isSupported()) {
+        if (!SQLOutput.isSupported()) {
             return callback([], userCode);
         }
 
@@ -321,9 +325,11 @@ window.SQLOutput = Backbone.View.extend({
     }
 });
 
-window.SQLOutput.isSupported = function() {
+SQLOutput.isSupported = function() {
     // Check to make sure the typed arrays dependency is supported.
     return "Uint8ClampedArray" in window;
 };
 
 LiveEditorOutput.registerOutput("sql", SQLOutput);
+
+module.exports = SQLOutput;

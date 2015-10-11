@@ -1,3 +1,6 @@
+var _ = require("underscore");
+var Backbone = require("backbone");
+
 window.ScratchpadDrawCanvas = Backbone.View.extend({
     initialize: function(options) {
         this.record = options.record;

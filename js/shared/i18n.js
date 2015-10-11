@@ -1,3 +1,6 @@
+var _ = require("underscore");
+var Jed = require("jed");
+
 (function() {
     // If no language is specified, or if an unknown language is specified,
     // then fall back to using "en" as the base language
@@ -302,6 +305,7 @@
     };
 
     window.i18n = i18n;
+    $._ = i18n._;
 })();
 
 if (typeof Handlebars !== "undefined") {

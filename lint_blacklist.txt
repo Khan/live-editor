@@ -8,6 +8,7 @@ testutil/
 gulpfile.js
 # TODO(kevinb) fix the lint
 js/
+webpack.config.js
 
 # TODO(kevinb) fix the lint in this file (there's lots of it)
 js/workers/pjs/processing-stubs.js

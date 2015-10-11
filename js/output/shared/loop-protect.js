@@ -1,3 +1,9 @@
+var esprima = require("esprima");
+var visibly = require("visibly.js");
+
+var b = require("./ast-builder.js");
+var walkAST = require("./ast-walker.js");
+
 /**
  * Creates a new LoopProtector object.
  *
@@ -39,7 +45,7 @@ window.LoopProtector = function(callback, timeouts, reportLocation) {
     this.visible = !visibly.hidden();
 };
 
-window.LoopProtector.nodeMessages = {
+LoopProtector.nodeMessages = {
     "WhileStatement": i18n._("<code>while</code> loop"),
     "DoWhileStatement": i18n._("<code>do-while</code> loop"),
     "ForStatement": i18n._("<code>for</code> loop"),
@@ -47,7 +53,7 @@ window.LoopProtector.nodeMessages = {
     "FunctionExpression": i18n._("<code>function</code>")
 };
 
-window.LoopProtector.prototype = {
+LoopProtector.prototype = {
     /**
      * Throws 'KA_INFINITE_LOOP' if the difference between the current time
      * and this.brancStartTime is greater than this.timeout.
@@ -131,8 +137,6 @@ window.LoopProtector.prototype = {
 
     // Called by walkAST whenever it leaves a node so AST mutations are okay
     leave(node) {
-        let b = window.ASTBuilder;
-
         if (this.riskyStatements.indexOf(node.type) !== -1) {
             if (this.reportLocation) {
                 let location = {
@@ -216,3 +220,8 @@ window.LoopProtector.prototype = {
         return escodegen.generate(ast);
     }
 };
+
+// TODO(kevinb) remove after updating tests to deal with modules
+window.LoopProtector = LoopProtector;
+
+module.exports = LoopProtector;

@@ -1,4 +1,9 @@
-window.TextareaEditor = Backbone.View.extend({
+var _ = require("underscore");
+var Backbone = require("backbone");
+
+var LiveEditor = require("../../live-editor.js");
+
+var TextareaEditor = Backbone.View.extend({
     initialize: function(options) {
         this.defaultCode = options.code;
         this.autoFocus = options.autoFocus;
@@ -108,3 +113,6 @@ window.TextareaEditor = Backbone.View.extend({
 });
 
 LiveEditor.registerEditor("textarea_document", TextareaEditor);
+
+// globalized so that document.html can instantiate it
+window.TextareaEditor = TextareaEditor;

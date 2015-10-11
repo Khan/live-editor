@@ -1,3 +1,16 @@
+var _ = require("underscore");
+var esprima = require("esprima");
+var Processing = require("processing");
+
+var PooledWorker = require("../shared/pooled-worker.js");
+var LoopProtector = require("../shared/loop-protect.js");
+var walkAST = require("../shared/ast-walker.js");
+
+var PJSOutput = require("./pjs-output.js");
+var PJSResourceCache = require("./pjs-resource-cache.js");
+var PJSUtils = require("./pjs-utils.js");
+var ASTTransforms = require("./pjs-ast-transforms.js");
+
 /**
  * The CodeInjector object is responsible for running code, determining what
  * code to inject when the user code has been updated, and maintaining the

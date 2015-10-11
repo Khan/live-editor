@@ -1,4 +1,9 @@
-window.PJSTester = function(options) {
+var _ = require("underscore");
+var Structured = require("structuredjs");
+
+var OutputTester = require("../shared/output-tester.js");
+
+var PJSTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
 };
@@ -458,3 +463,5 @@ PJSTester.prototype.testMethods = {
         });
     }
 };
+
+module.exports = PJSTester;

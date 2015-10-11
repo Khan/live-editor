@@ -1,7 +1,14 @@
 // TODO(kevinb) remove after challenges have been converted to use i18n._
 $._ = i18n._;
 
-window.LiveEditorOutput = Backbone.View.extend({
+var _ = require("underscore");
+var Backbone = require("backbone");
+var esprima = require("esprima");
+
+var ScratchpadConfig = require("../../shared/config.js");
+var PooledWorker = require("./pooled-worker.js");
+
+var LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
@@ -450,3 +457,8 @@ window.LiveEditorOutput = Backbone.View.extend({
 LiveEditorOutput.registerOutput = function(name, output) {
     LiveEditorOutput.prototype.outputs[name] = output;
 };
+
+module.exports = LiveEditorOutput;
+
+// globalize this so that we can call this from our HTML
+window.LiveEditorOutput = LiveEditorOutput;

@@ -1,3 +1,11 @@
+var _ = require("underscore");
+var esprima = require("esprima");
+
+var walkAST = require("../shared/ast-walker.js");
+
+var ASTTransforms = require("./pjs-ast-transforms.js");
+
+// TODO(kevinb) convert this to class syntax
 function PJSResourceCache(options) {
     this.canvas = options.canvas;   // customized Processing instance
     this.output = options.output;   // LiveEditorOutput instance
@@ -150,3 +158,5 @@ PJSResourceCache.findResources = function(code) {
 
     return resources;
 };
+
+module.exports = PJSResourceCache;

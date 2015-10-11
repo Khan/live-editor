@@ -167,7 +167,7 @@ var runTest = function(fileName) {
 var pjs_tests = ["jshint", "output", "assert", "ast_transform"];
 
 pjs_tests.forEach(function(test) {
-    gulp.task("test_output_pjs_" + test, ["script_output_pjs"], function() {
+    gulp.task("test_output_pjs_" + test, function() {
         return gulp.src("tests/output/pjs/index.html")
             .pipe(mochaRunner({ test: test + "_test.js" }));
     });
@@ -182,7 +182,7 @@ gulp.task("test_output_pjs", function(callback) {
 });
 
 // TODO(kevinb) add this to test_output_pjs after adding try/catch to event handlers
-gulp.task("test_output_pjs_async", ["script_output_pjs"], function() {
+gulp.task("test_output_pjs_async", function() {
     return gulp.src("tests/output/pjs/index.html")
         .pipe(mochaRunner({ test: "async_test.js" }));
 });
@@ -190,13 +190,13 @@ gulp.task("test_output_pjs_async", ["script_output_pjs"], function() {
 var webpage_tests = ["assert", "output", "transform"];
 
 webpage_tests.forEach(function(test) {
-    gulp.task("test_output_webpage_" + test, ["script_output_pjs"], function() {
+    gulp.task("test_output_webpage_" + test, function() {
         return gulp.src("tests/output/webpage/index.html")
             .pipe(mochaRunner({ test: test + "_test.js" }));
     });
 });
 
-gulp.task("test_output_webpage", ["script_output_webpage"], function(callback) {
+gulp.task("test_output_webpage", function(callback) {
     var sequence = webpage_tests.map(function(test) {
         return "test_output_webpage_" + test;
     });
@@ -210,7 +210,7 @@ gulp.task("test_output_webpage", ["script_output_webpage"], function(callback) {
 //        .pipe(mochaRunner());
 //});
 
-gulp.task("test_tooltips", ["script_tooltips"], function() {
+gulp.task("test_tooltips", function() {
     return gulp.src("tests/tooltips/index.html")
         .pipe(mochaRunner());
 });

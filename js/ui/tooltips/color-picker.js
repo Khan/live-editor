@@ -1,3 +1,9 @@
+var _ = require("underscore");
+
+var ScratchpadAutosuggest = require("../autosuggest.js");
+var TooltipBase = require("../tooltip-base.js");
+var TooltipEngine = require("../tooltip-engine.js");
+
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.colorPicker = TooltipBase.extend({
     initialize: function(options) {
@@ -101,7 +107,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         };
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
 
-        if (event.source && event.source.action === "insertText" && 
+        if (event.source && event.source.action === "insertText" &&
             event.source.text.length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
@@ -122,7 +128,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 this.updateText(rgb);
             }
         }
-        
+
 
         this.updateTooltip(rgb);
         this.placeOnScreen();

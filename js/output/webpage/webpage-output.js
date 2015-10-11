@@ -1,3 +1,13 @@
+var _ = require("underscore");
+var Slowparse = require("slowparse");
+var html2canvas = require("html2canvas");
+
+var LiveEditorOutput = require("../shared/output.js");
+var LoopProtector = require("../shared/loop-protect.js");
+
+var StateScrubber = require("./state-scrubber.js");
+var WebpageTester = require("./webpage-tester.js");
+
 /**
  * WebpageOutput
  * It creates an iframe on the same domain, and uses
@@ -10,7 +20,7 @@
  * so that it can be sandboxed from the main domain,
  * it communicates via postMessage() with liveEditor.
  */
-window.WebpageOutput = Backbone.View.extend({
+var WebpageOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
@@ -365,3 +375,5 @@ window.WebpageOutput = Backbone.View.extend({
 });
 
 LiveEditorOutput.registerOutput("webpage", WebpageOutput);
+
+module.exports = WebpageOutput;
