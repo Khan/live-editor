@@ -9755,6 +9755,17 @@ require("/tools/entry-point.js");
       return obj;
     },
     // These are HTML errors.
+    NO_DOCTYPE_FOUND: function() {},
+    HTML_NOT_ROOT_ELEMENT: function(parser) {
+      var currentNode = parser.domBuilder.currentNode.firstElementChild,
+          openTag = this._combine({
+            name: currentNode.nodeName.toLowerCase()
+          }, currentNode.parseInfo.openTag);
+      return {
+        openTag: openTag,
+        cursor: openTag.start
+      };
+    },
     UNCLOSED_TAG: function(parser) {
       var currentNode = parser.domBuilder.currentNode,
           openTag = this._combine({
@@ -10122,6 +10133,16 @@ require("/tools/entry-point.js");
       };
     },
     UNFINISHED_CSS_VALUE: function(parser, start, end, value) {
+      return {
+        cssValue: {
+          start: start,
+          end: end,
+          value: value
+        },
+        cursor: start
+      };
+    },
+    IMPROPER_CSS_VALUE: function(parser, start, end, value) {
       return {
         cssValue: {
           start: start,
@@ -10795,7 +10816,6 @@ require("/tools/entry-point.js");
       if(token === null) {
         throw new ParseError("MISSING_CSS_VALUE", this, propertyStart, propertyStart+property.length, property);
       }
-
       var next = (!this.stream.end() ? this.stream.next() : "end of stream"),
           errorMsg = "[_parseValue] Expected }, <, or ;, instead found "+next;
 
@@ -10806,6 +10826,17 @@ require("/tools/entry-point.js");
 
       if (value === '') {
         throw new ParseError("MISSING_CSS_VALUE", this, this.stream.pos-1, this.stream.pos);
+      }
+
+      // If value has a newline, the tokenizer ate the next pair, so we're missing a ;
+      if (value.indexOf('\n') > -1) {
+        value = value.substr(0, value.indexOf('\n'));
+        this.warnings.push(new ParseError("UNFINISHED_CSS_VALUE", this, valueStart, valueEnd, value));
+      }
+
+      // if value matches this regex, then there's a space between
+      if (value.match(/(#|rgb|rgba|hsl|hsla)\s+\(/)) {
+        this.warnings.push(new ParseError("IMPROPER_CSS_VALUE", this, valueStart, valueEnd, value));
       }
 
       // At this point we can fill in the *value* part of the current
@@ -10837,6 +10868,7 @@ require("/tools/entry-point.js");
       }
       else if (next === '}') {
         // This is block level termination; try to read a new selector.
+        this.warnings.push(new ParseError("UNFINISHED_CSS_VALUE", this, valueStart, valueEnd, value));
         this.currentRule.declarations.end = this.stream.pos;
         this._bindCurrentRule();
         this.stream.markTokenStartAfterSpace();
@@ -11015,13 +11047,16 @@ require("/tools/entry-point.js");
       // First we check to see if the beginning of our stream is
       // an HTML5 doctype tag. We're currently quite strict and don't
       // parse XHTML or other doctypes.
-      if (this.stream.match(this.html5Doctype, true, true))
+      if (this.stream.match(this.html5Doctype, true, true)) {
         this.domBuilder.fragment.parseInfo = {
           doctype: {
             start: 0,
             end: this.stream.pos
           }
         };
+      } else {
+        this.warnings.push(new ParseError("NO_DOCTYPE_FOUND"));
+      }
 
       // Next, we parse "tag soup", creating text nodes and diving into
       // tags as we find them.
@@ -11039,6 +11074,11 @@ require("/tools/entry-point.js");
       // we test for that.
       if (this.domBuilder.currentNode != this.domBuilder.fragment)
         throw new ParseError("UNCLOSED_TAG", this);
+
+      if (this.domBuilder.currentNode.children &&
+        (this.domBuilder.currentNode.children.length !== 1 || this.domBuilder.currentNode.firstElementChild.tagName !== "HTML")) {
+        this.warnings.push(new ParseError("HTML_NOT_ROOT_ELEMENT", this));
+      }
 
       return {
         warnings: (this.warnings.length > 0 ? this.warnings : false)

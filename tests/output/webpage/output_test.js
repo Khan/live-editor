@@ -122,27 +122,45 @@ describe("Linting", function() {
         '<button type="submit">Submit</button>'
     ]);
 
-    warningTest('links with invalid protocols are banned', [
-        "<a href='www.google.com'></a>",
-        "<a href='google.com'></a>",
-        "<script src='www.google.com'></script>"
+    warningTest('links with invalid protocols throw warnings', [
+        "<!DOCTYPE html><html><a href='www.google.com'></a></html>",
+        "<!DOCTYPE html><html><a href='google.com'></a></html>",
+        "<!DOCTYPE html><html><script src='www.google.com'></script></html>"
     ], [
         ["The <a> tag's \"href\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?"],
         ["The <a> tag's \"href\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?"],
         ["The <script> tag's \"src\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?"]
     ]);
 
-    warningTest('links with invalid protocols are banned', [
-      '<a href="http://google.com"></a>',
-      '<a href="https://google.com"></a>',
-      '<script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script>',
-      '<a href="ftp://google.com"></a>',
-      '<a href="mailto:khan@ka.com"></a>'
+    warningTest('links with valid protocols do not throw warnings', [
+      '<!DOCTYPE html><html><a href="http://google.com"></a></html>',
+      '<!DOCTYPE html><html><a href="https://google.com"></a></html>',
+      '<!DOCTYPE html><html><script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script></html>',
+      '<!DOCTYPE html><html><a href="ftp://google.com"></a></html>',
+      '<!DOCTYPE html><html><a href="mailto:khan@ka.com"></a</html>>'
     ], [[], [], [], [], []]);
 
-    warningTest("in-page links are not banned", '<a href="#foobar"></a>', []);
-    warningTest("javascript hrefs are not banned", '<a href="javascript:void(0)"></a>', []);
-    warningTest("regular scripts are not banned", '<script src="http://google.com"></script>', []);
+    warningTest("in-page links are not banned", '<!DOCTYPE html><html><a href="#foobar"></a></html>', []);
+    warningTest("javascript hrefs are not banned", '<!DOCTYPE html><html><a href="javascript:void(0)"></a></html>', []);
+    warningTest("regular scripts are not banned", '<!DOCTYPE html><html><script src="http://google.com"></script></html>', []);
+
+    warningTest("missing DOCTYPE", "<html><body></body></html>",
+      ["A DOCTYPE declaration should be the first item on the page."]
+    );
+
+    warningTest("non-html root element", '<!DOCTYPE html><a href="#foobar"></a>',
+      ["The root element on the page should be an <html> element."]
+    );
+
+    warningTest("forgetting CSS values in a <style> block throw a warning",
+      '<!DOCTYPE html><html><style>.photo {\nborder: 2px, double, red;\nmargin-left:5px;\nwidth: 200px;\ncolor: blue\n}</style></html>',
+      ['The CSS value \"blue\" still needs to be finalized with \";\"']
+    );
+
+    warningTest("color values with a space throw a warning",
+      '<!DOCTYPE html><html><style>\n.photo {\ncolor: rgb (255, 255, 255);\n}\n</style></html>',
+      ['The CSS value \"rgb (255, 255, 255)\" is malformed.']
+    );
 
     warningTest("obsolete HTML elements warned against", [
         "<marquee></marquee>",
