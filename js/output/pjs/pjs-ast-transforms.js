@@ -300,3 +300,31 @@ ASTTransforms.findResources = function(resources) {
         }
     };
 };
+
+ASTTransforms.rewriteNewExpressions = function(envName) {
+    return {
+        leave(node, path) {
+            if (node.type === "NewExpression") {
+                return b.CallExpression(
+                    b.CallExpression(
+                        b.MemberExpression(
+                            b.MemberExpression(
+                                b.Identifier(envName),
+                                b.Identifier("PJSOutput")
+                            ),
+                            b.Identifier("applyInstance")
+                        ),
+                        [
+                            b.MemberExpression(
+                                b.Identifier(envName),
+                                b.Identifier(node.callee.name)
+                            ),
+                            b.Literal(node.callee.name)
+                        ]
+                    ),
+                    node.arguments
+                );
+            }
+        }
+    }
+};

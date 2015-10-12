@@ -6,7 +6,7 @@ describe("Version test", function() {
     it("should use version 4 or greater", function() {
         var config = new ScratchpadConfig({});
         expect(config.latestVersion()).to.be(4);
-    });  
+    });
 });
 
 // Test the lower level functions in Output
@@ -57,7 +57,7 @@ describe("Scratchpad Output Exec", function() {
     [{column: 0}]);
 
     failingTest("JSHint Error", "ellipse(x, 100, 100, 100);");
-    
+
     failingTest(
         "KAInfiniteLoopCount is not allowed",
         "KAInfiniteLoopCount = 0;"
@@ -72,7 +72,7 @@ describe("Scratchpad Output Exec", function() {
         "KAInfiniteLoopProtect is not allowed",
         "KAInfiniteLoopProtect();"
     );
-    
+
     failingTest(
         "props on __env__ cannot be accessed directly",
         "__env__.fill = function() { debug('foo'); }"
@@ -87,7 +87,7 @@ describe("Scratchpad Output Exec", function() {
         "__env__ cannot be declared",
         "var __env__ = {};"
     );
-    
+
     failingTest(
         "generates an error for numbers prefixed by a 0",
         "ellipse(09,10,11,12);"
@@ -120,7 +120,7 @@ describe("Scratchpad Output Exec", function() {
             debug(e);
         }
     });
-    
+
     test("arguments special object/array", function() {
         var foo = function() {
             var x = arguments[0];
@@ -533,7 +533,7 @@ describe("Scratchpad Output Exec", function() {
         };
 
     });
-    
+
     runTest({
         title: "Make sure methods on objects returned by createGraphics work",
         code: function() {
@@ -814,7 +814,7 @@ describe("Scratchpad Output Exec", function() {
         errors: [],
         assertions: []
     });
-    
+
     runTest({
         title: "local variables in closure of global draw should update",
         code: function() {
@@ -887,23 +887,6 @@ describe("Scratchpad Output Exec", function() {
             p.ellipse.restore();
         },
         wait: 500
-    });
-
-    runTest({
-        title: "should transform constructors with multiple capital letters",
-        code: function() {
-            var CommandQueue = function() {};
-            var commandQueue = new CommandQueue();
-        },
-        setup: function(output) {
-            sinon.spy(output.output.injector, "exec");
-        },
-        teardown: function(output) {
-            var code = output.output.injector.exec.getCall(0).args[0];
-            expect(code).to.contain("PJSOutput.applyInstance(CommandQueue,'CommandQueue')()");
-            expect(code).to.not.contain("new CommandQueue");
-            output.output.injector.exec.restore();
-        }
     });
 
     runTest({
