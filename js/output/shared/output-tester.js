@@ -13,7 +13,7 @@ OutputTester.prototype = {
             }
         }
 
-        for (var prop in this.defaultTestContext) { /* jhint forin:false */
+        for (var prop in this.defaultTestContext) { /* jshint forin:false */
             if (!(prop in this.testContext)) {
                 this.testContext[prop] = this.defaultTestContext[prop];
             }
