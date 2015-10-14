@@ -71,16 +71,15 @@
     font-size: 14px;
     font-weight: bold;
     position: absolute;
-    right: 7px;
+    left: 7px;
 }
 .tipbar .text-wrap .show-me a:hover {
     color: #678D00;
     text-decoration: underline;
 }
 .tipbar .tipnav {
+    right: 7px;
     position: absolute;
-    right: 10px;
-    top: 4px;
 }
 .tipbar .tipnav a {
     background: rgba(255, 255, 255, 0.2);
@@ -111,6 +110,13 @@
 }
 .tipbar .tipnav a .ui-icon.ui-icon-circle-triangle-e {
     background-position: -48px -192px;
+}
+.tipbar .close {
+    background-color: transparent;
+    border: none;
+    color: black;
+    float: right;
+    text-shadow: 0 1px 0 #CDCDCD;
 }
 .tipbar .text a {
     text-decoration: underline;

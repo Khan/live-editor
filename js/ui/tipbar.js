@@ -43,13 +43,19 @@ window.TipBar = Backbone.View.extend({
         });
 
         this.$el.on("click", ".tipbar .show-me a", function(e) {
-            var error = self.errors[self.pos];
+            e.preventDefault();
 
+            var error = self.errors[self.pos];
             self.liveEditor.editor.setCursor(error);
             self.liveEditor.editor.setErrorHighlight(true);
 
             return false;
         });
+
+        this.$el.on("click", ".tipbar .close", function(e) {
+            self.liveEditor.setThinkingState();
+        });
+
     },
 
     setErrors: function(errors) {

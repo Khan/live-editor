@@ -7,16 +7,31 @@ this["Handlebars"]["templates"]["tipbar"] = Handlebars.template(function (Handle
 function program1(depth0,data) {
   
   
-  return "Oh noes!";}
+  return "x";}
 
 function program3(depth0,data) {
   
   
+  return "Oh noes!";}
+
+function program5(depth0,data) {
+  
+  
   return "Show me where";}
 
-  buffer += "<div class=\"tipbar\">\n    <div class=\"speech-arrow\"></div>\n    <div class=\"error-buddy\"></div>\n    <div class=\"tipnav\">\n        <a href=\"\" class=\"prev\"><span class=\"ui-icon ui-icon-circle-triangle-w\"></span></a>\n        <span class=\"current-pos\"></span>\n        <a href=\"\" class=\"next\"><span class=\"ui-icon ui-icon-circle-triangle-e\"></span></a>\n    </div>\n    <div class=\"text-wrap\">\n        <div class=\"oh-no\">";
-  foundHelper = helpers['_'];
-  stack1 = foundHelper || depth0['_'];
+function program7(depth0,data) {
+  
+  
+  return "Previous error";}
+
+function program9(depth0,data) {
+  
+  
+  return "Next error";}
+
+  buffer += "<div class=\"tipbar\">\n    <div class=\"speech-arrow\"></div>\n    <div class=\"error-buddy\"></div>\n    \n    <div class=\"text-wrap\">\n        <button class=\"close\" type=\"button\" aria-label=\"Close\">";
+  foundHelper = helpers.i18nDoNotTranslate;
+  stack1 = foundHelper || depth0.i18nDoNotTranslate;
   tmp1 = self.program(1, program1, data);
   tmp1.hash = {};
   tmp1.fn = tmp1;
@@ -24,7 +39,7 @@ function program3(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</div>\n        <div class=\"message\"></div>\n        <div class=\"show-me\"><a href>";
+  buffer += "</button>\n        <div class=\"oh-no\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(3, program3, data);
@@ -34,7 +49,37 @@ function program3(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</a></div>\n    </div>\n</div>";
+  buffer += "</div>\n        <div class=\"message\"></div>\n        <div class=\"show-me\"><a href>";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(5, program5, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "</a></div>\n        <div class=\"tipnav\">\n            <a href=\"javascript:void(0);\" class=\"prev\" title=\"";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(7, program7, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\">\n                <span class=\"ui-icon ui-icon-circle-triangle-w\"></span>\n            </a>\n            <span class=\"current-pos\"></span>\n            <a href=\"javascript:void(0);\" class=\"next\" title=\"";
+  foundHelper = helpers['_'];
+  stack1 = foundHelper || depth0['_'];
+  tmp1 = self.program(9, program9, data);
+  tmp1.hash = {};
+  tmp1.fn = tmp1;
+  tmp1.inverse = self.noop;
+  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
+  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\">\n                <span class=\"ui-icon ui-icon-circle-triangle-e\"></span>\n            </a>\n        </div>\n    </div>\n</div>";
   return buffer;});;
 /**
  * This is called tipbar for historical reasons.
@@ -81,12 +126,17 @@ window.TipBar = Backbone.View.extend({
         });
 
         this.$el.on("click", ".tipbar .show-me a", function (e) {
-            var error = self.errors[self.pos];
+            e.preventDefault();
 
+            var error = self.errors[self.pos];
             self.liveEditor.editor.setCursor(error);
             self.liveEditor.editor.setErrorHighlight(true);
 
             return false;
+        });
+
+        this.$el.on("click", ".tipbar .close", function (e) {
+            self.liveEditor.setThinkingState();
         });
     },
 
@@ -258,7 +308,7 @@ function program21(depth0,data) {
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "/ohnoes-happy.png\"/>\n                </div>\n                <div class=\"error-buddy-thinking\" style=\"display:none;\">\n                    <img src=\"";
+  buffer += escapeExpression(stack1) + "/ohnoes-happy.png\"/>\n                </div>\n                <a class=\"error-buddy-thinking\" style=\"display:none;\" href=\"javascript:void()\">\n                    <img src=\"";
   foundHelper = helpers.imagesDir;
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
@@ -274,7 +324,7 @@ function program21(depth0,data) {
   if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
   else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
   if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n                </div>\n            </div>\n            <button id=\"restart-code\"\n                class=\"simple-button pull-right\">\n                <span class=\"icon-refresh\"></span>\n                ";
+  buffer += "\n                </a>\n            </div>\n            <button id=\"restart-code\"\n                class=\"simple-button pull-right\">\n                <span class=\"icon-refresh\"></span>\n                ";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(9, program9, data);
@@ -967,7 +1017,7 @@ window.LiveEditor = Backbone.View.extend({
         // TEMP: Set up a query param for testing the new error experience
         // Looks to see if "new_error_experience=yes" is in the url,
         //  if it is, then we use the new error buddy behaviour.
-        this.newErrorExperience = false;
+        this.newErrorExperience = options.newErrorExperience;
         if (window.location.search.indexOf("new_error_experience=yes") !== -1) {
             this.newErrorExperience = true;
         }
@@ -1306,7 +1356,8 @@ window.LiveEditor = Backbone.View.extend({
 
         // Handle the gutter errors
         $el.on("click", this.dom.GUTTER_ERROR, function () {
-            self.setErrorPosition(parseInt($(this).text(), 10));
+            var lineNum = parseInt($(this).text(), 10);
+            self.setErrorPosition(this.gutterDecorations[lineNum]);
         });
 
         // Handle clicks on the thinking Error Buddy
@@ -2090,7 +2141,7 @@ window.LiveEditor = Backbone.View.extend({
     },
     setErrorPosition: function setErrorPosition(errorPos) {
         this.setErrorState();
-        this.tipbar.setErrorPosition(this.gutterDecorations[errorPos]);
+        this.tipbar.setErrorPosition(errorPos);
     },
     setErrorState: function setErrorState() {
         this.errorState = "error";
@@ -2103,7 +2154,7 @@ window.LiveEditor = Backbone.View.extend({
             this.errorState = "thinking";
             this.tipbar.hide();
             this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();
-            this.$el.find(this.dom.ERROR_BUDDY_THINKING).show();
+            this.$el.find(this.dom.ERROR_BUDDY_THINKING).show().animate({ left: -2 }, { duration: 300, easing: "linear" }).animate({ left: 2 }, { duration: 300, easing: "linear" }).animate({ left: 0 }, { duration: 300, easing: "linear" });
         }
     },
     setHappyState: function setHappyState() {
