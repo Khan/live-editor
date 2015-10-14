@@ -318,7 +318,7 @@ describe("LoopProtector", function() {
 });
 
 describe("draw update tests", function() {
-    var output, ellipseSpy, backgroundSpy;
+    var output, ellipseSpy, backgroundSpy, noiseSpy;
     
     beforeEach(function() {
         output = createLiveEditorOutput();
@@ -326,11 +326,14 @@ describe("draw update tests", function() {
         ellipseSpy = output.output.processing.ellipse;
         sinon.spy(output.output.processing, "background");
         backgroundSpy = output.output.processing.background;
+        sinon.spy(output.output.processing, "noise");
+        noiseSpy = output.output.processing.noise;
     });
     
     afterEach(function() {
         output.output.processing.ellipse.restore();
         output.output.processing.background.restore();
+        output.output.processing.noise.restore();
         output.output.kill();
     });
     
@@ -350,15 +353,11 @@ describe("draw update tests", function() {
         });
         
         output.runCode(code1, function(errors, testResults) {
-            setTimeout(function() {
-                expect(ellipseSpy.calledWith(200, 200, 10, 10)).to.be(true);
-                output.runCode(code2, function(errors, testResults) {
-                    setTimeout(function() {
-                        expect(ellipseSpy.calledWith(200, 200, 20, 20)).to.be(true);
-                        done();
-                    }, 50);
-                });
-            }, 50);
+            expect(ellipseSpy.calledWith(200, 200, 10, 10)).to.be(true);
+            output.runCode(code2, function(errors, testResults) {
+                expect(ellipseSpy.calledWith(200, 200, 20, 20)).to.be(true);
+                done();
+            });
         });
     });
 
@@ -376,15 +375,11 @@ describe("draw update tests", function() {
         });
 
         output.runCode(code1, function(errors, testResults) {
-            setTimeout(function() {
-                expect(backgroundSpy.calledWith(255,0,0)).to.be(true);
-                output.runCode(code2, function(errors, testResults) {
-                    setTimeout(function() {
-                        expect(backgroundSpy.calledWith(0,0,255)).to.be(true);
-                        done();
-                    }, 50);
-                });
-            }, 50);
+            expect(backgroundSpy.calledWith(255,0,0)).to.be(true);
+            output.runCode(code2, function(errors, testResults) {
+                expect(backgroundSpy.calledWith(0,0,255)).to.be(true);
+                done();
+            });
         });
     });
 
@@ -406,15 +401,71 @@ describe("draw update tests", function() {
         });
 
         output.runCode(code1, function(errors, testResults) {
-            setTimeout(function() {
-                expect(backgroundSpy.calledWith(255,0,0)).to.be(true);
-                output.runCode(code2, function(errors, testResults) {
-                    setTimeout(function() {
-                        expect(backgroundSpy.calledWith(0,0,255)).to.be(true);
-                        done();
-                    }, 0);
-                });
-            }, 0);
+            expect(backgroundSpy.calledWith(255,0,0)).to.be(true);
+            output.runCode(code2, function(errors, testResults) {
+                expect(backgroundSpy.calledWith(0,0,255)).to.be(true);
+                done();
+            });
+        });
+    });
+
+
+    it("should re-run unsafe calls in the outermost scope", function(done) {
+        var code1 = getCodeFromOptions(function () {
+            var diameter = noise(50);
+            var draw = function() {
+                ellipse(200, 200, diameter, diameter);
+            };
+        });
+
+        var code2 = getCodeFromOptions(function () {
+            var diameter = noise(100);
+            var draw = function() {
+                ellipse(200, 200, diameter, diameter);
+            };
+        });
+
+        output.runCode(code1, function(errors, testResults) {
+            expect(noiseSpy.calledWith(50)).to.be(true);
+            expect(noiseSpy.callCount).to.be(1);
+            output.runCode(code2, function(errors, testResults) {
+                expect(noiseSpy.calledWith(100)).to.be(true);
+                expect(noiseSpy.callCount).to.be(2);
+                done();
+            });
+        });
+    });
+
+    it("should handle adding new methods", function(done) {
+        var code1 = getCodeFromOptions(function () {
+            var Dot = function(x, y) {
+                this.x = x;
+                this.y = y;
+            };
+            var dot = new Dot(200,200);
+            var draw = function() {
+            };
+        });
+
+        var code2 = getCodeFromOptions(function () {
+            var Dot = function(x, y) {
+                this.x = x;
+                this.y = y;
+            };
+            Dot.prototype.draw = function() {
+                ellipse(this.x, this.y, 100, 100);
+            };
+            var dot = new Dot(200,200);
+            var draw = function() {
+                dot.draw();
+            };
+        });
+
+        output.runCode(code1, function(errors, testResults) {
+            output.runCode(code2, function(errors, testResults) {
+                expect(ellipseSpy.called).to.be(true);
+                done();
+            });
         });
     });
 });
