@@ -124,7 +124,6 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
                     // loop functions.  Also, prefix any other identifers that
                     // exist at the global scope.
                     if ((node.name in context && scopeIndex === -1) ||
-                            drawLoopMethods.includes(node.name) ||
                             scopeIndex === 0) {
                         return b.MemberExpression(
                             b.Identifier(envName), b.Identifier(node.name));
