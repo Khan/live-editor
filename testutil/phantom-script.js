@@ -4,6 +4,7 @@
  */
 var system = require("system");
 var url = system.args[1];
+var test = system.args[2];
 var page = require("webpage").create();
 
 var pageHasUncaughtErrors = false;
@@ -28,6 +29,9 @@ page.onError = function(msg, trace) {
     }
 };
 
+if (test) {
+    url = url + "?tests=" + test
+}
 console.log("Loading " + url + "...");
 page.open(url, function(status) {
     if (status !== "success") {

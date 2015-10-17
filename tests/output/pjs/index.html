@@ -5,6 +5,27 @@
     <title></title>
 </head>
 <body>
-<iframe src="iframe.html" width="800" height="600"></iframe>
+<script>
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('width', 800);
+    iframe.setAttribute('height', 600);
+    
+    if (location.search) {
+        var params = {};
+        location.search.substring(1).split("&")
+                .forEach(function(param) {
+                    var parts = param.split("=");
+                    params[parts[0]] = parts[1];
+                });
+
+        if (params.tests) {
+            iframe.setAttribute('src', 'iframe.html?tests=' + params.tests);
+        }
+    } else {
+        iframe.setAttribute('src', 'iframe.html');
+    }
+ 
+    document.body.appendChild(iframe);
+</script>
 </body>
 </html>
