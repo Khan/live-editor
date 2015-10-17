@@ -148,10 +148,6 @@ describe("Linting", function() {
       ["A DOCTYPE declaration should be the first item on the page."]
     );
 
-    warningTest("non-html root element", '<!DOCTYPE html><a href="#foobar"></a>',
-      ["The root element on the page should be an <html> element."]
-    );
-
     warningTest("forgetting CSS values in a <style> block throw a warning",
       '<!DOCTYPE html><html><style>.photo {\nborder: 2px, double, red;\nmargin-left:5px;\nwidth: 200px;\ncolor: blue\n}</style></html>',
       ['The CSS value \"blue\" still needs to be finalized with \";\"']

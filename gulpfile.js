@@ -182,7 +182,7 @@ gulp.task("test_output_pjs", ["script_output_pjs"], function() {
 });
 
 gulp.task("test_output_webpage", ["script_output_webpage"], function() {
-    return gulp.src("tests/output/webpage/index.html")
+    return gulp.src("tests/output/webpage/ci-index.html")
         .pipe(mochaRunner());
 });
 

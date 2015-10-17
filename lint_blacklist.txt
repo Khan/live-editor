@@ -4,6 +4,7 @@ external/
 tests/
 bower_components/
 node_modules/
+gulpfile.js
 
 # TODO(kevinb) fix the lint in this file (there's lots of it)
 js/workers/pjs/processing-stubs.js
