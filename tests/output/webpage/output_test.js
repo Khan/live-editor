@@ -54,7 +54,7 @@ describe("Linting", function() {
         ]
     );
 
-    test("parsing of HTML comments", 'hi<!--testing-->there');
+    test("parsing of HTML comments", '<!DOCTYPE html><html>hi<!--testing-->there</html>');
 
     failingTest("UNQUOTED_ATTR_VALUE in <h2><span start=</h2>",
         '<h2><span start=</h2>', [
@@ -76,7 +76,7 @@ describe("Linting", function() {
     test("parsing of valid HTML", '<p class="foo">hello there</p>');
 
     test("parsing of HTML comments with '--' in them",
-        '<!-- allow\n--\nin comments plz -->');
+        '<!DOCTYPE html><html><!-- allow\n--\nin comments plz --></html>');
 
     var text = "\nThis is CDATA with <p>, <i> and" +
         " <script> in it.\nThis should not trigger errors.";
@@ -163,14 +163,14 @@ describe("Linting", function() {
     );
 
     warningTest("obsolete HTML elements warned against", [
-        "<marquee></marquee>",
-        "<marquee>Some clever message</marquee>",
-        "<acronym title=\"World Wide Web\">WWW</acronym>"
+        "<!DOCTYPE html><html><marquee></marquee></html>",
+        "<!DOCTYPE html><html><marquee>Some clever message</marquee></html>",
+        "<!DOCTYPE html><html><acronym title=\"World Wide Web\">WWW</acronym></html>"
     ], [
         ["The \"marquee\" tag is obsolete and may not function properly in modern browsers."],
         ["The \"marquee\" tag is obsolete and may not function properly in modern browsers."],
         ["The \"acronym\" tag is obsolete and may not function properly in modern browsers."]
-    ])
+    ]);
 
     failingTest("INVALID_TAG_NAME raised by < at EOF",
         '<', [
