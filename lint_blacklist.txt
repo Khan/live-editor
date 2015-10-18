@@ -4,6 +4,7 @@ external/
 tests/
 bower_components/
 node_modules/
+js/output/
 gulpfile.js
 
 # TODO(kevinb) fix the lint in this file (there's lots of it)
