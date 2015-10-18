@@ -145,7 +145,7 @@ describe("Scratchpad Output Exec", function() {
     });
 
     failingTest("Too Many Draw Operations", function() {
-        for (var i = 0; i < 17000; i++) {
+        for (var i = 0; i < 1000000; i++) {
             ellipse(100, 100, 100, 100);
         }
     });

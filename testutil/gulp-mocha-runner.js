@@ -52,6 +52,9 @@ var plugin = function (options) {
         }
 
         var args = [ __dirname + "/phantom-script.js", file.path ];
+        if (options.test) {
+            args.push(options.test);
+        }
         var phantom = spawn(require("phantomjs").path, args);
         
         phantom.stdout.setEncoding('utf8');

@@ -330,7 +330,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         });
 
         if (options.outputType) {
-            this.setOutput(options.outputType, true);
+            this.setOutput(options.outputType, true, options.loopProtectTimeouts);
         }
 
         // Add a timestamp property to the lintErrors and runtimeErrors arrays
@@ -357,14 +357,15 @@ window.LiveEditorOutput = Backbone.View.extend({
         window.addEventListener("message", this.handleMessage.bind(this), false);
     },
 
-    setOutput: function setOutput(outputType, enableLoopProtect) {
+    setOutput: function setOutput(outputType, enableLoopProtect, loopProtectTimeouts) {
         var OutputClass = this.outputs[outputType];
         this.output = new OutputClass({
             el: this.$el.find(".output"),
             config: this.config,
             output: this,
             type: outputType,
-            enableLoopProtect: enableLoopProtect
+            enableLoopProtect: enableLoopProtect,
+            loopProtectTimeouts: loopProtectTimeouts
         });
     },
 
@@ -426,7 +427,14 @@ window.LiveEditorOutput = Backbone.View.extend({
             if (data.enableLoopProtect != null) {
                 enableLoopProtect = data.enableLoopProtect;
             }
-            this.setOutput(outputType, enableLoopProtect);
+            var loopProtectTimeouts = {
+                initialTimeout: 2000,
+                frameTimeout: 500
+            };
+            if (data.loopProtectTimeouts != null) {
+                loopProtectTimeouts = data.loopProtectTimeouts;
+            }
+            this.setOutput(outputType, enableLoopProtect, loopProtectTimeouts);
         }
 
         // filter out debugger events

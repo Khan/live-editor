@@ -2,13 +2,15 @@
  * Creates a new LoopProtector object.
  *
  * @param callback: called whenever a loop takes more than <timeout>ms to complete.
- * @param mainTimeout: threshold time used while executing main program body
- * @param asyncTimeout: treshold time used during draw() and other callbacks
+ * @param timeouts: an object containing initialTimeout and frameTimeout used
+ *                  to control how long before the loop protector is triggered
+ *                  on initial run during draw functions (or when responding to
+ *                  user events)
  * @param reportLocation: true if the location of the long running loop should be
  *                        passed to the callback. TODO(kevinb) use this for webpages
  * @constructor
  */
-window.LoopProtector = function(callback, mainTimeout, asyncTimeout, reportLocation) {
+window.LoopProtector = function(callback, timeouts, reportLocation) {
     this.callback = callback || function () { };
     this.timeout = 200;
     this.branchStartTime = 0;
@@ -17,9 +19,10 @@ window.LoopProtector = function(callback, mainTimeout, asyncTimeout, reportLocat
 
     this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
 
-    // cache ASTs for function calls to KAInfiniteLoopSetTimeout
-    this.mainTimeout = mainTimeout;
-    this.asyncTimeout = asyncTimeout;
+    if (timeouts) {
+        this.mainTimeout = timeouts.initialTimeout;
+        this.asyncTimeout = timeouts.frameTimeout;
+    }
 
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
