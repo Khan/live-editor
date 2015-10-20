@@ -4,6 +4,7 @@ external/
 tests/
 bower_components/
 node_modules/
+testutil/
 js/output/
 gulpfile.js
 

@@ -14,6 +14,8 @@ class PJSCodeInjector {
      *      resourceCache: A ResourceCache instance.
      *      infiniteLoopCallback: A function that's when the loop protector is
      *                            triggered.
+     *      loopProtectTimeouts: An object defining initialTimeout and
+     *                           frameTimeout, see loop-protect.js for details.
      *      enabledLoopProtect: When true, loop protection code is injected.
      *      JSHint: An object containing the JSHint configuration.
      *      additionalMethods: An object containing methods that will be added
@@ -81,7 +83,7 @@ class PJSCodeInjector {
         }
 
         this.loopProtector = new LoopProtector(
-            infiniteLoopCallback, 2000, 500, true);
+            infiniteLoopCallback, options.loopProtectTimeouts, true);
 
         this.enableLoopProtect = enableLoopProtect;
 

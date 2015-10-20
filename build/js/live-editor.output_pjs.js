@@ -21,6 +21,8 @@ var PJSCodeInjector = (function () {
      *      resourceCache: A ResourceCache instance.
      *      infiniteLoopCallback: A function that's when the loop protector is
      *                            triggered.
+     *      loopProtectTimeouts: An object defining initialTimeout and
+     *                           frameTimeout, see loop-protect.js for details.
      *      enabledLoopProtect: When true, loop protection code is injected.
      *      JSHint: An object containing the JSHint configuration.
      *      additionalMethods: An object containing methods that will be added
@@ -84,7 +86,7 @@ var PJSCodeInjector = (function () {
             this.initializeProps();
         }
 
-        this.loopProtector = new LoopProtector(infiniteLoopCallback, 2000, 500, true);
+        this.loopProtector = new LoopProtector(infiniteLoopCallback, options.loopProtectTimeouts, true);
 
         this.enableLoopProtect = enableLoopProtect;
 
@@ -2347,7 +2349,7 @@ window.PJSOutput = Backbone.View.extend({
         this.render();
         this.bind();
 
-        this.build(this.$canvas[0], options.enableLoopProtect);
+        this.build(this.$canvas[0], options.enableLoopProtect, options.loopProtectTimeouts);
 
         if (this.config.useDebugger && PJSDebugger) {
             iframeOverlay.createRelay(this.$canvas[0]);
@@ -2486,8 +2488,9 @@ window.PJSOutput = Backbone.View.extend({
      *
      * @param {HTMLCanvasElement} canvas
      * @param {Boolean} enableLoopProtect
+     * @param {Object} loopProtectTimeouts
      */
-    build: function build(canvas, enableLoopProtect) {
+    build: function build(canvas, enableLoopProtect, loopProtectTimeouts) {
         var _this = this;
 
         this.processing = new Processing(canvas, function (instance) {
@@ -2518,7 +2521,8 @@ window.PJSOutput = Backbone.View.extend({
             infiniteLoopCallback: this.infiniteLoopCallback.bind(this),
             enableLoopProtect: enableLoopProtect,
             JSHint: this.JSHint,
-            additionalMethods: additionalMethods
+            additionalMethods: additionalMethods,
+            loopProtectTimeouts: loopProtectTimeouts
         });
 
         this.config.runCurVersion("processing", this.processing);

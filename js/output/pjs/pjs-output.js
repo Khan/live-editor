@@ -23,7 +23,10 @@ window.PJSOutput = Backbone.View.extend({
         this.render();
         this.bind();
 
-        this.build(this.$canvas[0], options.enableLoopProtect);
+        this.build(
+            this.$canvas[0],
+            options.enableLoopProtect,
+            options.loopProtectTimeouts);
 
         if (this.config.useDebugger && PJSDebugger) {
             iframeOverlay.createRelay(this.$canvas[0]);
@@ -175,8 +178,9 @@ window.PJSOutput = Backbone.View.extend({
      *
      * @param {HTMLCanvasElement} canvas
      * @param {Boolean} enableLoopProtect
+     * @param {Object} loopProtectTimeouts
      */
-    build: function(canvas, enableLoopProtect) {
+    build: function(canvas, enableLoopProtect, loopProtectTimeouts) {
         this.processing = new Processing(canvas, (instance) => {
             instance.draw = this.DUMMY;
         });
@@ -205,7 +209,8 @@ window.PJSOutput = Backbone.View.extend({
             infiniteLoopCallback: this.infiniteLoopCallback.bind(this),
             enableLoopProtect: enableLoopProtect,
             JSHint: this.JSHint,
-            additionalMethods: additionalMethods
+            additionalMethods: additionalMethods,
+            loopProtectTimeouts: loopProtectTimeouts,
         });
 
         this.config.runCurVersion("processing", this.processing);
