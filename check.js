@@ -1,16 +1,17 @@
 // Exports a function to check that all source files and dependencies exist.
-
+/* eslint-disable no-console */
 var fs = require("fs");
 
 module.exports = function() {
     var missing = [];
     var traverse = function(obj) {
         if (Array.isArray(obj)) {
-            obj.forEach(function (path) {
-                if (path.indexOf("*") === -1 && path.indexOf("build/tmpl") === -1) {
+            obj.forEach(function(path) {
+                if (path.indexOf("*") === -1 &&
+                    path.indexOf("build/tmpl") === -1) {
                     try {
                         fs.statSync(path);
-                    } catch(e) {
+                    } catch (e) {
                         missing.push(path);
                     }
                 }
@@ -30,8 +31,8 @@ module.exports = function() {
         var bower = false;
         var submodule = false;
         console.log("missing files:");
-        missing.forEach(function (path) {
-            console.log("  " + path);
+        missing.forEach(function(path) {
+            console.log(`${path}`);
             if (path.indexOf("bower_components") !== -1) {
                 bower = true;
             } else {
