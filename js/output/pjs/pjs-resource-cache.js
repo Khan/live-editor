@@ -4,8 +4,6 @@ function PJSResourceCache(options) {
     this.cache = {};
     this.imageHolder = null;
 
-    this.queue = [];
-
     // Insert the images into a hidden div to cause them to load
     // but not be visible to the user
     if (!this.imageHolder) {
@@ -28,41 +26,31 @@ function PJSResourceCache(options) {
  * is encountered in the source code and none of the resources have been loaded
  * yet.  Execution begins once all the resources have loaded.
  *
- * @param ast: The root node of the AST for the code we want to cache resources
- *             for.  The reason why we pass in an AST is because we'd like
- *             pjs-output.js to parse user code once and re-use the AST as many
- *             time as possible.
+ * @param {Object} resources A object whose keys are filenames
  * @returns {Promise}
  */
-PJSResourceCache.prototype.cacheResources = function(ast) {
-    walkAST(ast, null, [this]);
-    this.queue = _.uniq(this.queue);
-    var promises = this.queue.map((resource) => {
-        return this.loadResource(resource);
+PJSResourceCache.prototype.cacheResources = function(resources) {
+    var promises = Object.keys(resources).map((filename) => {
+        return this.loadResource(filename);
     });
-    this.queue = [];
     return $.when.apply($, promises);
 };
 
-PJSResourceCache.prototype.loadResource = function(resourceRecord) {
-    var filename = resourceRecord.filename;
-    switch (resourceRecord.type) {
-        case "image":
-            return this.loadImage(filename);
-        case "sound":
-            return this.loadSound(filename);
-        default:
-            break;
+PJSResourceCache.prototype.loadResource = function(filename) {
+    if (filename.endsWith(".png")) {
+        return this.loadImage(filename);
+    } else if (filename.endsWith(".mp3")) {
+        return this.loadSound(filename);
     }
 };
 
 PJSResourceCache.prototype.loadImage = function(filename) {
     var deferred = $.Deferred();
-    var path = this.output.imagesDir + filename + ".png";
+    var path = this.output.imagesDir + filename;
     var img = document.createElement("img");
 
     img.onload = function() {
-        this.cache[filename + ".png"] = img;
+        this.cache[filename] = img;
         deferred.resolve();
     }.bind(this);
     img.onerror = function() {
@@ -81,17 +69,18 @@ PJSResourceCache.prototype.loadSound = function(filename) {
     var parts = filename.split("/");
 
     var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
-    if (!group || group.sounds.indexOf(parts[1]) === -1) {
+    var hasSound = group && group.sounds.includes(parts[1].replace(".mp3", ""));
+    if (!hasSound) {
         deferred.resolve();
         return deferred;
     }
 
     audio.preload = "auto";
     audio.oncanplaythrough = function() {
-        this.cache[filename + ".mp3"] = {
+        this.cache[filename] = {
             audio: audio,
             __id: function () {
-                return "getSound('" + filename + "')";
+                return `getSound('${filename.replace(".mp3", "")}')`;
             }
         };
         deferred.resolve();
@@ -100,7 +89,7 @@ PJSResourceCache.prototype.loadSound = function(filename) {
         deferred.resolve();
     }.bind(this);
 
-    audio.src = this.output.soundsDir + filename + ".mp3";
+    audio.src = this.output.soundsDir + filename;
 
     return deferred;
 };
@@ -145,32 +134,19 @@ PJSResourceCache.prototype.getSound = function(filename) {
     return sound;
 };
 
-// AST visitor method called by walkAST in pjs-output.js' exec method
-PJSResourceCache.prototype.leave = function(node) {
-    if (node.type === "Literal" && typeof(node.value) === "string") {
+/**
+ * Searches for strings containing the name of any image or sound we providefor
+ * users and adds them to `resources` as a key.
+ *
+ * @param {string} code
+ * @returns {Object}
+ */
+PJSResourceCache.findResources = function(code) {
+    let ast = esprima.parse(code, { loc: true });
 
-        AllImages.forEach(group => {
-            group.images.forEach(image => {
-                if (node.value.indexOf(image) !== -1) {
-                    this.queue.push({
-                        filename: `${group.groupName}/${image}`,
-                        type: "image"
-                    });
-                }
-            });
-        });
+    let resources = {};
+    walkAST(ast, null,
+        [ASTTransforms.findResources(resources)]);
 
-        OutputSounds.forEach(cls => {
-            cls.groups.forEach(group => {
-                group.sounds.forEach(sound => {
-                    if (node.value.indexOf(sound) !== -1) {
-                        this.queue.push({
-                            filename: `${group.groupName}/${sound}`,
-                            type: "sound"
-                        });
-                    }
-                });
-            });
-        });
-    }
+    return resources;
 };

@@ -10,26 +10,22 @@ var cleanupCode = function(code) {
     }).join("\n").trim();
 };
 
-var transformCode = function(code) {
-    var ast = esprima.parse(code);
-    var envName = "__env__";
-
-    // The tests use ellipse(), console.log(), and print() so we need to make
-    // sure they're defined in the context object otherwise the transform won't
-    // prefix them when they're used inside of a function body.
-    var context = {
-        ellipse: function() {},
-        console: {
-            log: function() {}
-        },
-        print: function() {}
-    };
-    walkAST(ast, null, [ASTTransforms.rewriteContextVariables(envName, context)]);
-
-    return escodegen.generate(ast);
-};
-
 describe("AST Transforms", function () {
+    var transformCode = function(code) {
+        var context = {
+            ellipse: function() {},
+            console: {
+                log: function() {}
+            },
+            print: function() {},
+            draw: function() {}
+        };
+
+        var injector = new PJSCodeInjector({ processing: context });
+
+        return injector.transformCode(code, context);
+    };
+
     it("should handle 'for' loops with variable declarations", function () {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             for (var i = 0; i < 10; i++) {
@@ -214,5 +210,131 @@ describe("AST Transforms", function () {
         }));
 
         expect(expectedCode).to.equal(transformedCode);
+    });
+});
+
+describe("AST Transforms for exporting", function() {
+    var transformCode = function(code) {
+        var canvas = document.createElement('canvas');
+        var processing = new Processing(canvas);
+        var injector = new PJSCodeInjector({ processing, sandboxed: false });
+
+        return injector.transformCode(code, processing);
+    };
+    
+    var exportCode = function(code) {
+        var canvas = document.createElement('canvas');
+        var processing = new Processing(canvas);
+        var injector = new PJSCodeInjector({ 
+            processing,
+            sandboxed: false,
+            envName: "p"  // TODO(kevinb) make this an option to transformCode
+        });
+
+        var imageDir = "../../../build/images/";
+        var soundDir = "../../../sounds/";
+        return injector.exportCode(code, imageDir, soundDir);
+    };
+    
+    beforeEach(function() {
+        sinon.spy(console, "log");
+    });
+    
+    afterEach(function() {
+        console.log.restore();
+    });
+
+    it("should not prefix built-in globals'", function() {
+        var transformedCode = transformCode(getCodeFromOptions(function() {
+            var x = Math.cos(30);
+            var y = Math.sin(30);
+            var obj = Object.create(null);
+            var array = [];
+            if (Array.isArray(array)) {
+                array.push(obj);
+            }
+            var str = String.fromCharCode(65);
+        }));
+
+        var expectedCode = cleanupCode(getCodeFromOptions(function() {
+            __env__.x = Math.cos(30);
+            __env__.y = Math.sin(30);
+            __env__.obj = Object.create(null);
+            __env__.array = [];
+            if (Array.isArray(__env__.array)) {
+                __env__.array.push(__env__.obj);
+            }
+            __env__.str = String.fromCharCode(65);
+        }));
+
+        expect(expectedCode).to.equal(transformedCode);
+    });
+    
+    it("should work with code that uses images", function() {
+        var exportedCode = exportCode(getCodeFromOptions(function() {
+            background(0,128,255);
+            var img = getImage("avatars/leafers-seed");
+            image(img, 100, 100);
+        }));
+        
+        expect(function() {
+            var func = new Function(exportedCode);
+            func();
+        }).to.not.throwException();
+    });
+    
+    it("should work with code that uses sounds", function() {
+        var exportedCode = exportCode(getCodeFromOptions(function() {
+            var snd = getSound("rpg/metal-clink");
+            playSound(snd);
+        }));
+
+        expect(function() {
+            var func = new Function(exportedCode);
+            func();
+        }).to.not.throwException();
+    });
+
+    it("should automatically loop when a 'draw' method exists", function(done) {
+        var exportedCode = exportCode(getCodeFromOptions(function() {
+            var Dot = function(x,y) {
+                this.x = x;
+                this.y = y;
+                this.color = color(random(255), random(255), random(255));
+            };
+            Dot.prototype.draw = function() {
+                fill(this.color);
+                ellipse(this.x, this.y, 100, 100);
+            };
+            Dot.prototype.update = function() {
+                this.x += random(-1, 1);
+                this.y += random(-1, 1);
+            };
+            var dots = [];
+            for (var i = 0; i < 10; i++) {
+                dots.push(new Dot(random(400), random(400)));
+            }
+            var drawCount = 0;
+            draw = function() {
+                background(255);
+                for (var i = 0; i < dots.length; i++) {
+                    dots[i].update();
+                    dots[i].draw();
+                }
+                console.log('draw');
+                drawCount++;
+                if (drawCount > 5) {
+                    noLoop();
+                }
+            };
+        }));
+
+        var func = new Function(exportedCode);
+        func();
+
+        setTimeout(function() {
+            expect(console.log.callCount > 2).to.be(true);
+            done();
+        }, 100);
     });
 });

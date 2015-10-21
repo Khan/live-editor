@@ -87813,3 +87813,37 @@ ASTTransforms.checkForBannedProps = function (bannedProps) {
         }
     };
 };
+
+/**
+ * Searches for strings containing the name of any image or sound we provide for
+ * users and adds them to `resources` as a key.
+ *
+ * @param {Object} resources An empty Object.
+ * @returns {Object} An AST Visitor.
+ */
+ASTTransforms.findResources = function (resources) {
+    return {
+        leave: function leave(node, path) {
+            if (node.type === "Literal" && typeof node.value === "string") {
+
+                AllImages.forEach(function (group) {
+                    group.images.forEach(function (image) {
+                        if (node.value.indexOf(image) !== -1) {
+                            resources[group.groupName + "/" + image + ".png"] = true;
+                        }
+                    });
+                });
+
+                OutputSounds.forEach(function (cls) {
+                    cls.groups.forEach(function (group) {
+                        group.sounds.forEach(function (sound) {
+                            if (node.value.indexOf(sound) !== -1) {
+                                resources[group.groupName + "/" + sound + ".mp3"] = true;
+                            }
+                        });
+                    });
+                });
+            }
+        }
+    };
+};

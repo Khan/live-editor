@@ -20,6 +20,7 @@ describe("Scratchpad CanvasOutput functions", function() {
 
 });
 
+// TODO(kevinb) split into smaller subsuites
 describe("Scratchpad Output Exec", function() {
     test("Color modes", function() {
         color(255, 0, 0);

@@ -266,3 +266,37 @@ ASTTransforms.checkForBannedProps = function(bannedProps) {
         }
     };
 };
+
+/**
+ * Searches for strings containing the name of any image or sound we provide for
+ * users and adds them to `resources` as a key.
+ *
+ * @param {Object} resources An empty Object.
+ * @returns {Object} An AST Visitor.
+ */
+ASTTransforms.findResources = function(resources) {
+    return {
+        leave(node, path) {
+            if (node.type === "Literal" && typeof(node.value) === "string") {
+
+                AllImages.forEach(group => {
+                    group.images.forEach(image => {
+                        if (node.value.indexOf(image) !== -1) {
+                            resources[`${group.groupName}/${image}.png`] = true;
+                        }
+                    });
+                });
+
+                OutputSounds.forEach(cls => {
+                    cls.groups.forEach(group => {
+                        group.sounds.forEach(sound => {
+                            if (node.value.indexOf(sound) !== -1) {
+                                resources[`${group.groupName}/${sound}.mp3`] = true;
+                            }
+                        });
+                    });
+                });
+            }
+        }
+    };
+};

@@ -9,33 +9,34 @@ class PJSCodeInjector {
     /**
      * Create a new processing-js code injector.
      *
-     * @param {Object} options All values are required.
-     *      processing: A Processing instance.
-     *      resourceCache: A ResourceCache instance.
-     *      infiniteLoopCallback: A function that's when the loop protector is
-     *                            triggered.
-     *      loopProtectTimeouts: An object defining initialTimeout and
-     *                           frameTimeout, see loop-protect.js for details.
-     *      enabledLoopProtect: When true, loop protection code is injected.
-     *      JSHint: An object containing the JSHint configuration.
-     *      additionalMethods: An object containing methods that will be added
-     *                         to the Processing instance.
+     * @param {Object} options
+     * - processing: A Processing instance.
+     * - resourceCache: A ResourceCache instance.
+     * - infiniteLoopCallback: A function that's when the loop protector is
+     *   triggered.
+     * - enabledLoopProtect: When true, loop protection code is injected.
+     * - loopProtectTimeouts: An object defining initialTimeout and
+     *   frameTimeout, see loop-protect.js for details.
+     * - JSHint: An object containing the JSHint configuration.
+     * - additionalMethods: An object containing methods that will be added
+     *   to the Processing instance.
+     * - [sandboxed] A boolean specifying whether we're in the PJS sandbox or
+     *   this is an official CS program we're compiling for a read-only
+     *   environment.  Default is true.
+     * - [envName] All references to global symbols, e.g. fill(...), draw, etc.
+     *   are prefixed with this string which defaults to  "__env__".
      */
     constructor(options) {
-        let {
-            processing,
-            resourceCache,
-            infiniteLoopCallback,
-            enableLoopProtect,
-            JSHint,
-            additionalMethods
-        } = options;
-        this.processing = processing;
-        this.DUMMY = processing.draw;   // initially draw is a DUMMY method
-        this.resourceCache = resourceCache;
+        const defaultOptions = {
+            sandboxed: true,
+            envName: '__env__'
+        };
+
+        Object.assign(this, defaultOptions, options);
+        this.DUMMY = this.processing.draw;  // initially draw is a DUMMY method
         this.seed = null;
 
-        this.addMethods(additionalMethods);
+        this.addMethods(this.additionalMethods);
         this.reseedRandom();
 
         // Methods that trigger the draw loop
@@ -83,11 +84,7 @@ class PJSCodeInjector {
         }
 
         this.loopProtector = new LoopProtector(
-            infiniteLoopCallback, options.loopProtectTimeouts, true);
-
-        this.enableLoopProtect = enableLoopProtect;
-
-        this.JSHint = JSHint;
+            this.infiniteLoopCallback, 2000, 500, true);
 
         /*
          * The worker that analyzes the user's code.
@@ -126,12 +123,14 @@ class PJSCodeInjector {
     }
 
     addMethods(additionalMethods) {
-        this.processing.Object = window.Object;
-        this.processing.RegExp = window.RegExp;
-        this.processing.Math = window.Math;
-        this.processing.Array = window.Array;
-        this.processing.String = window.String;
-        this.processing.isNaN = window.isNaN;
+        if (this.sandboxed) {
+            this.processing.Object = window.Object;
+            this.processing.RegExp = window.RegExp;
+            this.processing.Math = window.Math;
+            this.processing.Array = window.Array;
+            this.processing.String = window.String;
+            this.processing.isNaN = window.isNaN;
+        }
 
         Object.assign(this.processing, {
             getImage: (filename) => {
@@ -480,8 +479,8 @@ class PJSCodeInjector {
 
     runCode(userCode, callback) {
         try {
-            let ast = esprima.parse(userCode, { loc: true });
-            this.resourceCache.cacheResources(ast).then(() => {
+            let resources = PJSResourceCache.findResources(userCode);
+            this.resourceCache.cacheResources(resources).then(() => {
                 this.injectCode(userCode, callback);
             });
         } catch(e) {
@@ -556,7 +555,7 @@ class PJSCodeInjector {
         var fnCalls = [];
 
         // Holds rendered code for each of the calls in fnCalls
-        var calls = [];
+        var mutatingCalls = [];
 
         // Is true if the code needs to be completely re-run
         // This is true when instantiated objects that need
@@ -697,7 +696,7 @@ class PJSCodeInjector {
                         return PJSOutput.stringify(arg);
                     }
                 });
-                calls.push(fnCalls[i][0] + "(" + results.join(", ") + ");");
+                mutatingCalls.push(fnCalls[i][0] + "(" + results.join(", ") + ");");
             }
 
             // We also look for newly-changed global variables to inject
@@ -790,16 +789,15 @@ class PJSCodeInjector {
                 }
             }.bind(this));
 
-            // Insertion of new object properties
+            // Insertion of new object properties or methods on a prototype
             _.each(this.grabObj, function(val, objProp) {
                 var baseName = /^[^.[]*/.exec(objProp)[0];
 
                 // If we haven't done an extraction before or if the value
                 // has changed, or if the function was reinitialized,
                 // insert the new value.
-                if (!this.lastGrabObj ||
-                    this.lastGrabObj[objProp] !== val ||
-                    reinit[baseName]) {
+                if (!this.lastGrabObj || this.lastGrabObj[objProp] !== val ||
+                        reinit[baseName]) {
                     inject += objProp + " = " + val + ";\n";
                 }
             }.bind(this));
@@ -887,7 +885,7 @@ class PJSCodeInjector {
             });
 
             // Otherwise if there is code to inject
-        } else if (inject || calls.length > 0) {
+        } else if (inject || mutatingCalls.length > 0) {
             // Force a call to the draw function to force checks for instances
             // and to make sure that errors in the draw loop are caught.
             if (this.globals.draw) {
@@ -895,7 +893,7 @@ class PJSCodeInjector {
             }
 
             // Execute the injected code
-            let error = this.exec(inject, this.processing, calls);
+            let error = this.exec(inject, this.processing, mutatingCalls);
             if (error) {
                 return callback([error]);
             }
@@ -926,21 +924,22 @@ class PJSCodeInjector {
     }
 
     /**
-     * Executes the user's code.
+     * Transform processing-js code so that it can be run in a sandboxed
+     * environment or exported so that it can run without live-editor (requires
+     * processing.js)
      *
-     * @param {string} code The user code to execute.
-     * @param {Object} context An object containing global object we'd like the user to
-     *                 have access to.  It's also used to capture objects that
-     *                 the user defines so that we can re-inject them into the
-     *                 execution context as users modify their programs.
-     * @param {Array} [calls] An array of strings containing all of the function calls
-     *                to be injected.
-     * @returns {Error}
+     * @param {String} code A string contain the code to transform.
+     * @param {Object} context An object which contains methods which should
+     * appear global to the code being run.  The code should be run using the
+     * same context, see PJSCodeInjector::exec.
+     * @param {String[]} [mutatingCalls] An array of strings containing calls
+     * that change state and must be re-run in order to put a Processing
+     * context back into a particular state.  This array is optional and is
+     * only used when injecting code into a running Processing instance.
+     * @returns {String} The transformed code.
      */
-    exec(code, context, calls) {
-        if (!code) {
-            return;
-        }
+    transformCode(code, context, mutatingCalls) {
+        let {envName, enableLoopProtect, loopProtector} = this;
 
         context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
@@ -952,31 +951,25 @@ class PJSCodeInjector {
         // like 'new' calls in comments to be replaced as well.
         context.PJSOutput = PJSOutput;
 
-        // All references to global symbols, e.g. fill(...), draw, etc. are
-        // prefixed with __env__.  It's okay to re-used the same identifier for
-        // this prefix becuase if a user tries to reference '__env__' from their
-        // code it will either be replaced with an empty string or an exception
-        // will be thrown.
-        let envName = "__env__";
-
         // This is necessary because sometimes 'code' is code that we want to
         // inject.  This injected code can contain code obtained from calling
         // .toString() on functions that were grabbed.  These may contain
         // references to KAInfiniteLoopCount that have already been prefixed
         // with a previous __env__ string.
         // TODO(kevinb) figure out how to use the AST so we're not calling .toString() on functions
-        code = code.replace( /__env__\./g, "");
-        let ast = esprima.parse(code, { loc: true });
+        let envNameRegex = new RegExp(`${envName}\\.`, "g");
+        let ast = esprima.parse(code.replace(envNameRegex, ""), { loc: true });
 
         let astTransformPasses = [];
 
-        // The 'calls' parameter is undefined only when we are injecting code.
+        // 'mutatingCalls' is undefined only when we are injecting code.
         // This is not perfect protection from users typing one of these banned
         // properties, but it does guard against some cases.  The reason why
         // we're allowing these props in this case is that code that injected
         // is comes from calling .toString on functions which have already been
         // transformed from a previous call to exec().
-        if (!calls) {
+
+        if (!mutatingCalls) {
             astTransformPasses.push(ASTTransforms.checkForBannedProps([
                 "__env__",
                 "KAInfiniteLoopCount",
@@ -991,8 +984,8 @@ class PJSCodeInjector {
 
         // loopProtector adds LoopProtector code which checks how long it's
         // taking to run event loop and will throw if it's taking too long.
-        if (this.enableLoopProtect && !calls) {
-            astTransformPasses.push(this.loopProtector);
+        if (enableLoopProtect && !mutatingCalls) {
+            astTransformPasses.push(loopProtector);
         }
 
         // rewriteAssertEquals adds line and column arguments to calls to
@@ -1009,21 +1002,163 @@ class PJSCodeInjector {
         // adds variable references which need to be rewritten.
         // Profile first before trying to combine these two passes.  It may be
         // that parsing is dominating
-        walkAST(ast, null, [ASTTransforms.rewriteContextVariables(envName, context)]);
+        walkAST(ast, null,
+            [ASTTransforms.rewriteContextVariables(envName, context)]);
 
         code = "";
-        if (calls) {
+        if (mutatingCalls) {
             // Prepend injected function calls with envName and any arguments
             // that are objects with envName as well.  This is a lot quicker
             // than parsing these and using rewriteContextVariables, especially
             // if there are a lot of inject function calls.
-            code += calls.map(call => {
+            code += mutatingCalls.map(call => {
                 call = call.replace(/__obj__/g, `${envName}.__obj__`);
                 return `${envName}.${call}`;
             }).join("\n");
         }
 
-        code += escodegen.generate(ast);
+        return code + escodegen.generate(ast);
+    }
+
+    /**
+     * Exports code so that it can be run without live-editor (requires
+     * processing.js)
+     *
+     * @param {string} code
+     * @param {string} imageDir
+     * @param {string} soundDir
+     * @returns {string}
+     */
+    exportCode(code, imageDir, soundDir) {
+        let transformedCode = this.transformCode(code, this.processing);
+        let helperCode = "";
+        let resources = PJSResourceCache.findResources(transformedCode);
+
+        // TODO(kevinb) generate this code once (once webpack is in place)
+        helperCode += `var resources = ${JSON.stringify(resources)};\n`;
+        helperCode += PJSUtils.cleanupCode(
+            PJSUtils.codeFromFunction(function () {
+                var resourceCache = [];
+                // __IMAGEDIR__
+                // __SOUNDDIR__
+
+                var imageHolder = document.createElement("div");
+
+                imageHolder.style.height = 0;
+                imageHolder.style.width = 0;
+                imageHolder.style.overflow = "hidden";
+                imageHolder.style.position = "absolute";
+
+                document.body.appendChild(imageHolder);
+
+                var loadImage = function(filename) {
+                    var deferred = $.Deferred();
+                    var img = document.createElement("img");
+                    img.onload = function() {
+                        resourceCache[filename] = img;
+                        deferred.resolve();
+                    }.bind(this);
+                    img.onerror = function() {
+                        deferred.resolve(); // always resolve
+                    }.bind(this);
+
+                    img.src = imageDir + filename;
+                    imageHolder.appendChild(img);
+                    resourceCache[filename] = img;
+
+                    return deferred.promise();
+                };
+
+                var loadSound = function(filename) {
+                    var deferred = $.Deferred();
+                    var audio = document.createElement("audio");
+                    var parts = filename.split("/");
+
+                    var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
+                    if (!group || group.sounds.indexOf(parts[1].replace(".mp3", "")) === -1) {
+                        deferred.resolve();
+                        return deferred;
+                    }
+
+                    audio.preload = "auto";
+                    audio.oncanplaythrough = function() {
+                        resourceCache[filename] = audio;
+                        deferred.resolve();
+                    }.bind(this);
+                    audio.onerror = function() {
+                        deferred.resolve();
+                    }.bind(this);
+
+                    audio.src = soundDir + filename;
+
+                    return deferred;
+                };
+
+                var promises = Object.keys(resources).map(function(filename) {
+                    if (filename.indexOf(".png") !== -1) {
+                        return loadImage(filename);
+                    } else if (filename.indexOf(".mp3") !== -1) {
+                        return loadSound(filename);
+                    }
+                });
+
+                $.when.apply($, promises).then(function() {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = 400;
+                    canvas.height = 400;
+
+                    var p = new Processing(canvas);
+
+                    p.width = 400;
+                    p.height = 400;
+
+                    p.getSound = function(sound) {
+                        return resourceCache[sound + ".mp3"];
+                    };
+
+                    p.playSound = function(sound) {
+                        if (sound && sound.play) {
+                            sound.currentTime = 0;
+                            sound.play();
+                        } else {
+                            throw new Error("No sound file provided.");
+                        }
+                    };
+
+                    p.getImage = function(image) {
+                        return new p.PImage(resourceCache[image + ".png"]);
+                    };
+
+                    // __USERCODE__
+
+                    if (p.draw) {
+                        p.loop();
+                    }
+                });
+            })) + '\n';
+
+        return helperCode
+            .replace(/\/\/ __USERCODE__/g, transformedCode)
+            .replace(/\/\/ __IMAGEDIR__/g, `var imageDir = "${imageDir}"`)
+            .replace(/\/\/ __SOUNDDIR__/g, `var soundDir = "${soundDir}"`);
+    }
+
+    /**
+     * Executes the user's code.
+     *
+     * @param {string} code The user code to execute.
+     * @param {Object} context An object containing global object we'd like the
+     * user to have access to.  It's also used to capture objects that the user
+     * defines so that we can re-inject them into the execution context as
+     * users modify their programs.
+     * @param {Array} [mutatingCalls] An array of strings containing all of the
+     * function calls to be injected.
+     * @returns {Error}
+     */
+    exec(code, context, mutatingCalls) {
+        if (!code) {
+            return;
+        }
 
         // the top-level 'this' is empty except for this.externals, which
         // throws this message this is how users were getting at everything
@@ -1034,19 +1169,17 @@ class PJSCodeInjector {
         let topLevelThis = "{ get externals() { throw { message: " +
             JSON.stringify(badProgram) + " } } }";
 
-        // if we pass in the env as a parameter, the user will be able to get
-        // at it through the 'arguments' binding, so we close over it instead
-        code = `var ${envName} = arguments[0];\n(function(){\n${code}\n}).apply(${topLevelThis});`;
-
         try {
-
             if (this.debugger) {
-                this.debugger.exec(originalCode);
+                this.debugger.exec(code);
             } else {
-                let func = new Function(code);
+                let transformedCode =
+                    this.transformCode(code, context, mutatingCalls);
+                let funcBody = `var ${this.envName} = context;\n` +
+                    `(function(){\n${transformedCode}\n}).apply(${topLevelThis});`;
+                let func = new Function("context", funcBody);
                 func(context);
             }
-
         } catch (e) {
             return e;
         }
