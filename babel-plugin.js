@@ -1,5 +1,5 @@
 /* globals require, module, Buffer, console */
-/* eslint-disable no-console */
+/* eslint-disable no-console, prefer-template */
 var gutil = require('gulp-util');
 var through = require('through2');
 var applySourceMap = require('vinyl-sourcemaps-apply');
@@ -17,7 +17,7 @@ module.exports = function(opts) {
 
         if (file.isStream()) {
             return cb(new gutil.PluginError('gulp-babel',
-		'Streaming not supported'));
+                'Streaming not supported'));
         }
 
         try {
@@ -37,7 +37,7 @@ module.exports = function(opts) {
             file.path = replaceExt(file.path, '.js');
             this.push(file);
         } catch (err) {
-            console.log(`[Babel] Syntax Error: ${file.path}`);
+            console.log('[Babel] Syntax Error: ' + file.path);
             console.log(err.codeFrame);
             this.emit('end');
         }
