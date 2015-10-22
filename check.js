@@ -32,7 +32,7 @@ module.exports = function() {
         var submodule = false;
         console.log("missing files:");
         missing.forEach(function(path) {
-            console.log(`${path}`);
+            console.log(path);
             if (path.indexOf("bower_components") !== -1) {
                 bower = true;
             } else {
