@@ -26,7 +26,7 @@ PJSTester.prototype.testMethods = {
         }
 
         this.testContext.assert(false,
-            $._("Expected function call to '%(name)s' was not made.",
+            i18n._("Expected function call to '%(name)s' was not made.",
             {name: name}));
     },
 
@@ -48,7 +48,7 @@ PJSTester.prototype.testMethods = {
         }
 
         this.testContext.assert(false,
-            $._("Expected function call to '%(name)s' was not made.",
+            i18n._("Expected function call to '%(name)s' was not made.",
             {name: calls[callPos][0]}));
     },
 
@@ -78,7 +78,7 @@ PJSTester.prototype.testMethods = {
 
         if (pass) {
             this.testContext.assert(true,
-                $._("Correct function call made to %(name)s.",
+                i18n._("Correct function call made to %(name)s.",
                 {name: name}));
         }
 
@@ -92,7 +92,7 @@ PJSTester.prototype.testMethods = {
     _assertVarName: function(str) {
         if (!this.testContext._isVarName(str)) {
             throw new Error(
-                $._("Expected '%(name)s' to be a valid variable name.",
+                i18n._("Expected '%(name)s' to be a valid variable name.",
                     {name: str}));
         }
     },
@@ -177,7 +177,7 @@ PJSTester.prototype.testMethods = {
                     predicate(first, b.value));
             };
         } else {
-            throw new Error($._("Expected either '%(first)s' or '%(second)s'" +
+            throw new Error(i18n._("Expected either '%(first)s' or '%(second)s'" +
                 " to be a valid variable name.",
                 {first: first, second: second}));
         }
@@ -338,7 +338,7 @@ PJSTester.prototype.testMethods = {
         if (this.errors.length) {
             return {
                 success: false,
-                message: $._("Syntax error!")
+                message: i18n._("Syntax error!")
             };
         }
 
@@ -378,7 +378,7 @@ PJSTester.prototype.testMethods = {
             }
             return {
                 success: true,
-                message: $._("Hm, we're having some trouble " +
+                message: i18n._("Hm, we're having some trouble " +
                     "verifying your answer for this step, so we'll give " +
                     "you the benefit of the doubt as we work to fix it. " +
                     "Please click \"Report a problem\" to notify us.")

@@ -741,19 +741,19 @@ window.SQLOutput = Backbone.View.extend({
 
         // Possible SELECT with missing FROM
         if (errorMessage.indexOf("no such column:") !== -1 && statement.indexOf("SELECT") !== -1 && statement.indexOf("FROM") === -1) {
-            errorMessage += ". " + $._("Are you missing a FROM clause?");
+            errorMessage += ". " + i18n._("Are you missing a FROM clause?");
             // Possible INSERT with missing INTO
         } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("INSERT") !== -1 && statement.indexOf("VALUES") !== -1 && statement.indexOf("INTO") === -1) {
-            errorMessage += ". " + $._("Are you missing the INTO keyword?");
+            errorMessage += ". " + i18n._("Are you missing the INTO keyword?");
             // Possible INSERT INTO with missing VALUES
         } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("INSERT") !== -1 && statement.indexOf("INTO") !== -1 && statement.indexOf("VALUES") === -1) {
-            errorMessage += ". " + $._("Are you missing the VALUES keyword?");
+            errorMessage += ". " + i18n._("Are you missing the VALUES keyword?");
             // Possible CREATE with missing what to create
         } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("CREATE") !== -1 && (statement.indexOf("INDEX") === -1 || statement.indexOf("TABLE") === -1 || statement.indexOf("TRIGGER") === -1 || statement.indexOf("VIEW") === -1)) {
-            errorMessage += ". " + $._("You may be missing what to create. For " + "example CREATE TABLE...");
+            errorMessage += ". " + i18n._("You may be missing what to create. For " + "example CREATE TABLE...");
             // Possible UPDATE without SET
         } else if (errorMessage.indexOf(": syntax error") !== -1 && statement.indexOf("UPDATE") !== -1 && statement.indexOf("SET") === -1) {
-            errorMessage += ". " + $._("Are you missing the SET keyword?");
+            errorMessage += ". " + i18n._("Are you missing the SET keyword?");
         }
         return errorMessage;
     },
@@ -775,7 +775,7 @@ window.SQLOutput = Backbone.View.extend({
                 errors: [{
                     row: -1,
                     column: -1,
-                    text: $._("Your browser is not recent enough to show " + "SQL output. Please upgrade your browser."),
+                    text: i18n._("Your browser is not recent enough to show " + "SQL output. Please upgrade your browser."),
                     type: "error",
                     source: "sqlite",
                     lint: undefined,
@@ -796,7 +796,7 @@ window.SQLOutput = Backbone.View.extend({
         SQLTester.Util.forEachStatement(userCode, (function (statement, lineNumber) {
             try {
                 if (!statement) {
-                    throw new Error($._("It looks like you have an " + "unnecessary semicolon."));
+                    throw new Error(i18n._("It looks like you have an " + "unnecessary semicolon."));
                 }
                 var result = SQLTester.Util.execSingleStatementWithResults(db, statement);
                 if (result) {
@@ -814,7 +814,7 @@ window.SQLOutput = Backbone.View.extend({
                         var type = column.type.toUpperCase();
                         var allowedTypes = ["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE"];
                         if (allowedTypes.indexOf(type) === -1) {
-                            throw new Error($._("Please use one of the valid column " + "types when creating a table: ") + allowedTypes.join(", "));
+                            throw new Error(i18n._("Please use one of the valid column " + "types when creating a table: ") + allowedTypes.join(", "));
                         }
                     });
                 });
@@ -893,10 +893,10 @@ window.SQLOutput = Backbone.View.extend({
                 // Note: Scratchpad challenge checks against the exact
                 // translated text "A critical problem occurred..." to
                 // figure out whether we hit this case.
-                var message = $._("Error: %(message)s", { message: errors[errors.length - 1].message });
+                var message = i18n._("Error: %(message)s", { message: errors[errors.length - 1].message });
                 // TODO(jeresig): Find a better way to show this
                 this.output.$el.find(".test-errors").text(message).show();
-                this.tester.testContext.assert(false, message, $._("A critical problem occurred in your program " + "making it unable to run."));
+                this.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
             }
 
             callback(errors, testResults);

@@ -29774,15 +29774,15 @@ return parser;
     /**
      * Simple i18n method with sprintf-like %(name)s replacement
      * To be used like so:
-     *   $._("Some string")
-     *   $._("Hello %(name)s", {name: "John"})
+     *   i18n._("Some string")
+     *   i18n._("Hello %(name)s", {name: "John"})
      */
-    jQuery._ = function (str, options) {
+    i18n._ = function (str, options) {
         // Sometimes we're given an argument that's meant for ngettext().  This
-        // happens if the same string is used in both $._() and $.ngettext()
-        // (.g. a = $._(foo); b = $.ngettext("foo", "bar", count);
+        // happens if the same string is used in both i18n._() and i18n.ngettext()
+        // (.g. a = i18n._(foo); b = i18n.ngettext("foo", "bar", count);
         // In such cases, only the plural form ends up in the .po file, and
-        // then it gets sent to us for the $._() case too.  No problem, though:
+        // then it gets sent to us for the i18n._() case too.  No problem, though:
         // we'll just take the singular arg.
         if (typeof str === "object" && str.messages) {
             str = str.messages[0];
@@ -29819,7 +29819,7 @@ return parser;
      * other things added to props, such as this.props.ref and
      * this.props.children
      */
-    window.$_ = function (options, str) {
+    i18n.$_ = function (options, str) {
         if (arguments.length !== 2 || !_.isString(str)) {
             return "<$_> must have exactly one child, which must be a string";
         }
@@ -29829,18 +29829,18 @@ return parser;
     /**
      * Simple ngettext method with sprintf-like %(name)s replacement
      * To be used like so:
-     *   $.ngettext("Singular", "Plural", 3)
-     *   $.ngettext("1 Cat", "%(num)s Cats", 3)
-     *   $.ngettext("1 %(type)s", "%(num)s %(type)s", 3, {type: "Cat"})
+     *   i18n.ngettext("Singular", "Plural", 3)
+     *   i18n.ngettext("1 Cat", "%(num)s Cats", 3)
+     *   i18n.ngettext("1 %(type)s", "%(num)s %(type)s", 3, {type: "Cat"})
      * This method is also meant to be used when injecting for other
      * non-English languages, like so (taking an array of plural messages,
      * which varies based upon the language):
-     *   $.ngettext({
+     *   i18n.ngettext({
      *     lang: "ja",
      *     messages: ["%(num)s 猫 %(username)s"]
      *   }, 3, {username: "John"});
      */
-    jQuery.ngettext = function (singular, plural, num, options) {
+    i18n.ngettext = function (singular, plural, num, options) {
         var message_info = singular;
 
         // Fall back to the default lang
@@ -29892,7 +29892,7 @@ return parser;
      *  - num: The number upon which to toggle the plural forms.
      *  - lang: The language to use as the basis for the pluralization.
      */
-    jQuery.ngetpos = function (num, lang) {
+    i18n.ngetpos = function (num, lang) {
         lang = lang || "en";
 
         // Generate a function which will give the position of the message
@@ -29908,8 +29908,8 @@ return parser;
      *  - num: The number upon which to toggle the plural forms.
      *  - lang: The language to use as the basis for the pluralization.
      */
-    jQuery.isSingular = function (num, lang) {
-        return jQuery.ngetpos(num, lang) === 0;
+    i18n.isSingular = function (num, lang) {
+        return i18n.ngetpos(num, lang) === 0;
     };
 
     /*
@@ -29920,7 +29920,7 @@ return parser;
      * they shouldn't complain that this text isn't translated.)
      * Use it like so: 'tag.author = i18n.i18nDoNotTranslate("Jim");'
      */
-    jQuery.i18nDoNotTranslate = jQuery._;
+    i18n.i18nDoNotTranslate = i18n._;
 
     /**
      * Dummy Handlebars _ function. Is a noop.
@@ -29979,7 +29979,7 @@ return parser;
         // If the result of the plural form function given the specified
         // number matches the expected position then we give the first
         // result, otherwise we give the inverse result.
-        return jQuery.ngetpos(num) === pos ? options.fn(this) : options.inverse(this);
+        return i18n.ngetpos(num) === pos ? options.fn(this) : options.inverse(this);
     };
 
     window.i18n = i18n;

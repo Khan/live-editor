@@ -110,7 +110,7 @@ PJSResourceCache.prototype.getImage = function(filename) {
 
     if (!image) {
         throw {message:
-            $._("Image '%(file)s' was not found.", {file: filename})};
+            i18n._("Image '%(file)s' was not found.", {file: filename})};
     }
 
     // cache <img> instead of PImage until we investigate how caching
@@ -128,7 +128,7 @@ PJSResourceCache.prototype.getSound = function(filename) {
 
     if (!sound) {
         throw {message:
-            $._("Sound '%(file)s' was not found.", {file: filename})};
+            i18n._("Sound '%(file)s' was not found.", {file: filename})};
     }
 
     return sound;

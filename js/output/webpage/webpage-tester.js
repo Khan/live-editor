@@ -404,7 +404,7 @@
                 var selector = selectors[key];
                 if (this.testContext.singleSelectorMatch(pattern, selector, wVars)) {
                     if (this.testContext.multiSelectorMatch(patterns, selectors.slice(0, key).concat(selectors.slice(key + 1)), wVars)) {
-                        for (key in wVars) { /* jshint forin:false */ 
+                        for (key in wVars) { /* jshint forin:false */
                             // Commit wildcard selections to parent wVars
                             if (!(key in oldWVars)) {
                                 oldWVars[key] = wVars[key];
@@ -515,7 +515,7 @@
             if (this.errors.length) {
                 return {
                     success: false,
-                    message: $._("Syntax error!")
+                    message: i18n._("Syntax error!")
                 };
             }
 
@@ -555,7 +555,7 @@
                 }
                 return {
                     success: true,
-                    message: $._("Hm, we're having some trouble " +
+                    message: i18n._("Hm, we're having some trouble " +
                         "verifying your answer for this step, so we'll give " +
                         "you the benefit of the doubt as we work to fix it. " +
                         "Please click \"Report a problem\" to notify us.")

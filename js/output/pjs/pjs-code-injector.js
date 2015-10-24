@@ -152,7 +152,7 @@ class PJSCodeInjector {
 
             // Disable link method
             link: () => {
-                throw {message: $._("link() method is disabled.")};
+                throw {message: i18n._("link() method is disabled.")};
             },
 
             getSound: (filename) => {
@@ -164,7 +164,7 @@ class PJSCodeInjector {
                     sound.audio.currentTime = 0;
                     sound.audio.play();
                 } else {
-                    throw {message: $._("No sound file provided.")};
+                    throw {message: i18n._("No sound file provided.")};
                 }
             },
 
@@ -492,9 +492,9 @@ class PJSCodeInjector {
             let [line, text] = e.message.split(":");
 
             if (text.trim() === "Unexpected token ILLEGAL") {
-                text = $._("Unexpected character.");
+                text = i18n._("Unexpected character.");
             } else {
-                text = $._("Parser error.");
+                text = i18n._("Parser error.");
             }
 
             // JSHint isn't affected by numbers prefixed with 0s, but esprima
@@ -1168,7 +1168,7 @@ class PJSCodeInjector {
         // the top-level 'this' is empty except for this.externals, which
         // throws this message this is how users were getting at everything
         // from playing sounds to displaying pop-ups
-        let badProgram = $._("This program uses capabilities we've turned " +
+        let badProgram = i18n._("This program uses capabilities we've turned " +
             "off for security reasons. Khan Academy prohibits showing " +
             "external images, playing external sounds, or displaying pop-ups.");
         let topLevelThis = "{ get externals() { throw { message: " +

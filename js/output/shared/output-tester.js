@@ -149,7 +149,7 @@ OutputTester.prototype = {
         test: function(name, fn, type) {
             if (!fn) {
                 fn = name;
-                name = $._("Test Case");
+                name = i18n._("Test Case");
             }
 
             this.tests.push({

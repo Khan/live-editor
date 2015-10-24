@@ -40,11 +40,11 @@ window.LoopProtector = function(callback, timeouts, reportLocation) {
 };
 
 window.LoopProtector.nodeMessages = {
-    "WhileStatement": $._("<code>while</code> loop"),
-    "DoWhileStatement": $._("<code>do-while</code> loop"),
-    "ForStatement": $._("<code>for</code> loop"),
-    "FunctionDeclaration": $._("<code>function</code>"),
-    "FunctionExpression": $._("<code>function</code>")
+    "WhileStatement": i18n._("<code>while</code> loop"),
+    "DoWhileStatement": i18n._("<code>do-while</code> loop"),
+    "ForStatement": i18n._("<code>for</code> loop"),
+    "FunctionDeclaration": i18n._("<code>function</code>"),
+    "FunctionExpression": i18n._("<code>function</code>")
 };
 
 window.LoopProtector.prototype = {
@@ -97,7 +97,7 @@ window.LoopProtector.prototype = {
 
                 hotLocation = JSON.parse(hotLocation);
 
-                let html = $._(
+                let html = i18n._(
                     "A %(type)s is taking too long to run. " +
                     "Perhaps you have a mistake in your code?", {
                         type: LoopProtector.nodeMessages[hotLocation.type]

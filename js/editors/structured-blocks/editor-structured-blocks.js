@@ -10,7 +10,7 @@ window.StructuredBlocksEditor = Backbone.View.extend({
 
         var toolbox = {};
 
-        toolbox[$._("Shapes")] = [
+        toolbox[i18n._("Shapes")] = [
             function() {
                 rect(10, 10, 50, 50);
             },
@@ -29,7 +29,7 @@ window.StructuredBlocksEditor = Backbone.View.extend({
             {type: "Line", value: ""}
         ];
 
-        toolbox[$._("Colors")] = [
+        toolbox[i18n._("Colors")] = [
             function() {
                 fill(255, 0, 0);
             },
@@ -84,10 +84,10 @@ window.StructuredBlocksEditor = Backbone.View.extend({
             this.$el.append(
                 "<div class='empty-help'>" +
                     "<span>" +
-                        $._("Drag a block from the toolbox") +
+                        i18n._("Drag a block from the toolbox") +
                     " <strong>→</strong></span>" +
                     "<span><strong>↑</strong> " +
-                        $._("And put it up here to get started!") +
+                        i18n._("And put it up here to get started!") +
                     "</span>" +
                 "</div>"
             );
@@ -100,7 +100,7 @@ window.StructuredBlocksEditor = Backbone.View.extend({
                     "<div class='lidcap'></div>" +
                     "<div class='bin'></div>" +
                 "</div>" +
-                "<span>" + $._("Drag block here to remove.") + "</span>" +
+                "<span>" + i18n._("Drag block here to remove.") + "</span>" +
             "</div>"
         );
     },

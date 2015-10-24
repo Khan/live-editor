@@ -11916,11 +11916,11 @@ window.LoopProtector = function (callback, timeouts, reportLocation) {
 };
 
 window.LoopProtector.nodeMessages = {
-    "WhileStatement": $._("<code>while</code> loop"),
-    "DoWhileStatement": $._("<code>do-while</code> loop"),
-    "ForStatement": $._("<code>for</code> loop"),
-    "FunctionDeclaration": $._("<code>function</code>"),
-    "FunctionExpression": $._("<code>function</code>")
+    "WhileStatement": i18n._("<code>while</code> loop"),
+    "DoWhileStatement": i18n._("<code>do-while</code> loop"),
+    "ForStatement": i18n._("<code>for</code> loop"),
+    "FunctionDeclaration": i18n._("<code>function</code>"),
+    "FunctionExpression": i18n._("<code>function</code>")
 };
 
 window.LoopProtector.prototype = {
@@ -11976,7 +11976,7 @@ window.LoopProtector.prototype = {
 
                     hotLocation = JSON.parse(hotLocation);
 
-                    var html = $._("A %(type)s is taking too long to run. " + "Perhaps you have a mistake in your code?", {
+                    var html = i18n._("A %(type)s is taking too long to run. " + "Perhaps you have a mistake in your code?", {
                         type: LoopProtector.nodeMessages[hotLocation.type]
                     });
 
@@ -13101,7 +13101,7 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false, $._("Expected function call to '%(name)s' was not made.", { name: name }));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: name }));
     },
 
     orderedFnCalls: function orderedFnCalls(calls) {
@@ -13119,7 +13119,7 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false, $._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
     },
 
     checkFn: function checkFn(fnCall, name, check) {
@@ -13144,7 +13144,7 @@ PJSTester.prototype.testMethods = {
         }
 
         if (pass) {
-            this.testContext.assert(true, $._("Correct function call made to %(name)s.", { name: name }));
+            this.testContext.assert(true, i18n._("Correct function call made to %(name)s.", { name: name }));
         }
 
         return pass;
@@ -13156,7 +13156,7 @@ PJSTester.prototype.testMethods = {
 
     _assertVarName: function _assertVarName(str) {
         if (!this.testContext._isVarName(str)) {
-            throw new Error($._("Expected '%(name)s' to be a valid variable name.", { name: str }));
+            throw new Error(i18n._("Expected '%(name)s' to be a valid variable name.", { name: str }));
         }
     },
 
@@ -13235,7 +13235,7 @@ PJSTester.prototype.testMethods = {
                 return !!(b && !_.isUndefined(b.value) && predicate(first, b.value));
             };
         } else {
-            throw new Error($._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
+            throw new Error(i18n._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
         }
 
         return this.testContext.constraint(variables, fn);
@@ -13391,7 +13391,7 @@ PJSTester.prototype.testMethods = {
         if (this.errors.length) {
             return {
                 success: false,
-                message: $._("Syntax error!")
+                message: i18n._("Syntax error!")
             };
         }
 
@@ -13430,7 +13430,7 @@ PJSTester.prototype.testMethods = {
             }
             return {
                 success: true,
-                message: $._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
+                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
             };
         }
     },

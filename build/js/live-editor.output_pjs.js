@@ -189,7 +189,7 @@ var PJSCodeInjector = (function () {
 
                 // Disable link method
                 link: function link() {
-                    throw { message: $._("link() method is disabled.") };
+                    throw { message: i18n._("link() method is disabled.") };
                 },
 
                 getSound: function getSound(filename) {
@@ -201,7 +201,7 @@ var PJSCodeInjector = (function () {
                         sound.audio.currentTime = 0;
                         sound.audio.play();
                     } else {
-                        throw { message: $._("No sound file provided.") };
+                        throw { message: i18n._("No sound file provided.") };
                     }
                 },
 
@@ -549,9 +549,9 @@ var PJSCodeInjector = (function () {
                 var text = _e$message$split2[1];
 
                 if (text.trim() === "Unexpected token ILLEGAL") {
-                    text = $._("Unexpected character.");
+                    text = i18n._("Unexpected character.");
                 } else {
-                    text = $._("Parser error.");
+                    text = i18n._("Parser error.");
                 }
 
                 // JSHint isn't affected by numbers prefixed with 0s, but esprima
@@ -1206,7 +1206,7 @@ var PJSCodeInjector = (function () {
             // the top-level 'this' is empty except for this.externals, which
             // throws this message this is how users were getting at everything
             // from playing sounds to displaying pop-ups
-            var badProgram = $._("This program uses capabilities we've turned " + "off for security reasons. Khan Academy prohibits showing " + "external images, playing external sounds, or displaying pop-ups.");
+            var badProgram = i18n._("This program uses capabilities we've turned " + "off for security reasons. Khan Academy prohibits showing " + "external images, playing external sounds, or displaying pop-ups.");
             var topLevelThis = "{ get externals() { throw { message: " + JSON.stringify(badProgram) + " } } }";
 
             try {
@@ -1263,7 +1263,7 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false, $._("Expected function call to '%(name)s' was not made.", { name: name }));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: name }));
     },
 
     orderedFnCalls: function orderedFnCalls(calls) {
@@ -1281,7 +1281,7 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false, $._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
     },
 
     checkFn: function checkFn(fnCall, name, check) {
@@ -1306,7 +1306,7 @@ PJSTester.prototype.testMethods = {
         }
 
         if (pass) {
-            this.testContext.assert(true, $._("Correct function call made to %(name)s.", { name: name }));
+            this.testContext.assert(true, i18n._("Correct function call made to %(name)s.", { name: name }));
         }
 
         return pass;
@@ -1318,7 +1318,7 @@ PJSTester.prototype.testMethods = {
 
     _assertVarName: function _assertVarName(str) {
         if (!this.testContext._isVarName(str)) {
-            throw new Error($._("Expected '%(name)s' to be a valid variable name.", { name: str }));
+            throw new Error(i18n._("Expected '%(name)s' to be a valid variable name.", { name: str }));
         }
     },
 
@@ -1397,7 +1397,7 @@ PJSTester.prototype.testMethods = {
                 return !!(b && !_.isUndefined(b.value) && predicate(first, b.value));
             };
         } else {
-            throw new Error($._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
+            throw new Error(i18n._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
         }
 
         return this.testContext.constraint(variables, fn);
@@ -1553,7 +1553,7 @@ PJSTester.prototype.testMethods = {
         if (this.errors.length) {
             return {
                 success: false,
-                message: $._("Syntax error!")
+                message: i18n._("Syntax error!")
             };
         }
 
@@ -1592,7 +1592,7 @@ PJSTester.prototype.testMethods = {
             }
             return {
                 success: true,
-                message: $._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
+                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
             };
         }
     },
@@ -1949,7 +1949,7 @@ var BabyHint = {
             var error = {
                 row: lineNumber,
                 column: line.indexOf(fun),
-                text: $._("If you want to define a function, you should use \"var %(name)s = function() {}; \" instead!", { name: name }),
+                text: i18n._("If you want to define a function, you should use \"var %(name)s = function() {}; \" instead!", { name: name }),
                 breaksCode: true,
                 source: "funcdeclaration",
                 context: { name: name }
@@ -1967,7 +1967,7 @@ var BabyHint = {
                 var error = {
                     row: lineNumber,
                     column: line.indexOf(word),
-                    text: $._("%(word)s is a reserved word.", { word: word }),
+                    text: i18n._("%(word)s is a reserved word.", { word: word }),
                     breaksCode: true,
                     source: "bannedwords",
                     context: { word: word }
@@ -1996,7 +1996,7 @@ var BabyHint = {
                     var error = {
                         row: lineNumber,
                         column: checkedChar,
-                        text: $._("Did you mean to type \"%(keyword)s\" instead of \"%(word)s\"?", { keyword: keyword, word: word }),
+                        text: i18n._("Did you mean to type \"%(keyword)s\" instead of \"%(word)s\"?", { keyword: keyword, word: word }),
                         breaksCode: false,
                         source: "spellcheck",
                         context: { keyword: keyword, word: word }
@@ -2004,7 +2004,7 @@ var BabyHint = {
 
                     // if we have usage forms, display them as well.
                     if (BabyHint.functionFormSuggestion[keyword]) {
-                        error.text += " " + $._("In case you forgot, you can use it like \"%(usage)s\"", { usage: BabyHint.functionFormSuggestion[keyword] });
+                        error.text += " " + i18n._("In case you forgot, you can use it like \"%(usage)s\"", { usage: BabyHint.functionFormSuggestion[keyword] });
                     }
 
                     errors.push(error);
@@ -2108,7 +2108,7 @@ var BabyHint = {
             var error = {
                 row: lineNumber,
                 column: line.search(regex) + 3,
-                text: $._("Did you forget a space between \"var\" and \"%(variable)s\"?", { variable: variableName }),
+                text: i18n._("Did you forget a space between \"var\" and \"%(variable)s\"?", { variable: variableName }),
                 breaksCode: false
             };
             errors.push(error);
@@ -2127,7 +2127,7 @@ var BabyHint = {
             var error = {
                 row: lineNumber,
                 column: i,
-                text: $._("You can't end a line with \"=\""),
+                text: i18n._("You can't end a line with \"=\""),
                 breaksCode: true
             };
             errors.push(error);
@@ -2178,7 +2178,7 @@ var BabyHint = {
                     var error = {
                         row: lineNumber,
                         column: i,
-                        text: $._("It looks like you have an extra \")\""),
+                        text: i18n._("It looks like you have an extra \")\""),
                         breaksCode: false,
                         source: "paramschecker",
                         context: {}
@@ -2197,7 +2197,7 @@ var BabyHint = {
             var error = {
                 row: lineNumber,
                 column: stack.pop(),
-                text: $._("It looks like you are missing a \")\" - does every \"(\" have a corresponding closing \")\"?"),
+                text: i18n._("It looks like you are missing a \")\" - does every \"(\" have a corresponding closing \")\"?"),
                 breaksCode: false,
                 source: "paramschecker",
                 context: {}
@@ -2244,7 +2244,7 @@ var BabyHint = {
                 var error = {
                     row: lineNumber,
                     column: col,
-                    text: $._("Did you forget to add a comma between two parameters?"),
+                    text: i18n._("Did you forget to add a comma between two parameters?"),
                     breaksCode: false, // JSHINT should break on these lines,
                     source: "paramschecker",
                     context: {}
@@ -2277,7 +2277,7 @@ var BabyHint = {
 
                     if (typeof expectedParams === "number" && numParams !== expectedParams) {
 
-                        text = $.ngettext("%(name)s takes 1 parameter, not %(given)s!", "%(name)s takes %(num)s parameters, not %(given)s!", expectedParams, { name: functionCall, given: numParams });
+                        text = i18n.ngettext("%(name)s takes 1 parameter, not %(given)s!", "%(name)s takes %(num)s parameters, not %(given)s!", expectedParams, { name: functionCall, given: numParams });
                     } else if (typeof expectedParams !== "number" && !_.include(expectedParams, numParams)) {
 
                         var listOfParams = "" + expectedParams[0];
@@ -2286,16 +2286,16 @@ var BabyHint = {
                             listOfParams += ", " + expectedParams[j];
                         }
 
-                        listOfParams += " " + $._("or") + " " + expectedParams[expectedParams.length - 1];
+                        listOfParams += " " + i18n._("or") + " " + expectedParams[expectedParams.length - 1];
 
-                        text = $._("%(name)s takes %(list)s parameters, not %(given)s!", { name: functionCall, list: listOfParams, given: numParams });
+                        text = i18n._("%(name)s takes %(list)s parameters, not %(given)s!", { name: functionCall, list: listOfParams, given: numParams });
                     }
                 }
 
                 if (text) {
                     var functionForm = BabyHint.functionFormSuggestion[functionName];
                     if (functionForm) {
-                        text = $._("It looks like you're trying to use %(name)s. In case you forgot, you can use it like: %(usage)s", { name: functionCall, usage: "\"" + functionForm + "\"" });
+                        text = i18n._("It looks like you're trying to use %(name)s. In case you forgot, you can use it like: %(usage)s", { name: functionCall, usage: "\"" + functionForm + "\"" });
                     }
                 }
 
@@ -2430,7 +2430,7 @@ PJSResourceCache.prototype.getImage = function (filename) {
     var image = this.cache[filename + ".png"];
 
     if (!image) {
-        throw { message: $._("Image '%(file)s' was not found.", { file: filename }) };
+        throw { message: i18n._("Image '%(file)s' was not found.", { file: filename }) };
     }
 
     // cache <img> instead of PImage until we investigate how caching
@@ -2447,7 +2447,7 @@ PJSResourceCache.prototype.getSound = function (filename) {
     var sound = this.cache[filename + ".mp3"];
 
     if (!sound) {
-        throw { message: $._("Sound '%(file)s' was not found.", { file: filename }) };
+        throw { message: i18n._("Sound '%(file)s' was not found.", { file: filename }) };
     }
 
     return sound;
@@ -2746,7 +2746,7 @@ window.PJSOutput = Backbone.View.extend({
                 return;
             }
 
-            var msg = $._("Assertion failed: " + "%(actual)s is not equal to %(expected)s.", {
+            var msg = i18n._("Assertion failed: " + "%(actual)s is not equal to %(expected)s.", {
                 actual: JSON.stringify(actual),
                 expected: JSON.stringify(expected)
             });
@@ -2847,7 +2847,7 @@ window.PJSOutput = Backbone.View.extend({
                     // Merge if JSLint error says a variable is undefined and
                     // BabyLint has spelling suggestion.
                     if (jsError.lint.code === "W117" && babyError.source === "spellcheck") {
-                        babyError.text = $._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " + "or you're using a variable you didn't define.", { word: jsError.lint.a, keyword: babyError.context.keyword });
+                        babyError.text = i18n._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " + "or you're using a variable you didn't define.", { word: jsError.lint.a, keyword: babyError.context.keyword });
                     }
                 }
             });
@@ -2890,10 +2890,10 @@ window.PJSOutput = Backbone.View.extend({
                 // Note: Scratchpad challenge checks against the exact
                 // translated text "A critical problem occurred..." to
                 // figure out whether we hit this case.
-                var message = $._("Error: %(message)s", { message: errors[errors.length - 1].message });
+                var message = i18n._("Error: %(message)s", { message: errors[errors.length - 1].message });
                 // TODO(jeresig): Find a better way to show this
                 this.output.$el.find(".test-errors").text(message).show();
-                this.tester.testContext.assert(false, message, $._("A critical problem occurred in your program " + "making it unable to run."));
+                this.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
             }
 
             callback(errors, testResults);

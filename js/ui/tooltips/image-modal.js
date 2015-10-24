@@ -84,8 +84,8 @@
             }
         },
 
-        // Normally we could just listen to the show event on the modal, 
-        // but an indistinguishable "show" event also bubbles from the tab. 
+        // Normally we could just listen to the show event on the modal,
+        // but an indistinguishable "show" event also bubbles from the tab.
         // Instead we call this show() event ourselves when the button is clicked.
         show: function() {
             this.$el.modal();
@@ -173,7 +173,7 @@
             this.bindToRequestTooltip();
             _.extend(this.options.record.handlers, {
                 "imagemodal.show": this.modal.show.bind(this.modal),
-                "imagemodal.hide": function(){ 
+                "imagemodal.hide": function(){
                     this.modal.$el.modal("hide");
                 }.bind(this),
                 "imagemodal.selectImg": this.modal.selectImg.bind(this.modal)
@@ -198,14 +198,14 @@
             event.stopPropagation();
             ScratchpadAutosuggest.enableLiveCompletion(false);
         },
-        
+
         updateTooltip: function(url) {
             if (url !== this.currentUrl) {
                 this.currentUrl = url.trim();
                 if (url === "") {
                     this.$(".thumb").hide();
                     this.$(".thumb-throbber").hide();
-                    this.$(".thumb-error").text($._("Enter an image URL.")).show();
+                    this.$(".thumb-error").text(i18n._("Enter an image URL.")).show();
                     return;
                 }
                 var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|ka-perseus-images\.s3\.amazonaws\.com|wikimedia\.org|localhost:\d+)$/i;
@@ -223,7 +223,7 @@
                 } else {
                     this.$(".thumb").hide();
                     this.$(".thumb-error")
-                        .text($._("Sorry! That server is not permitted."))
+                        .text(i18n._("Sorry! That server is not permitted."))
                         .addClass("domainError").show();
                     this.$(".thumb-throbber").hide();
                 }
@@ -247,7 +247,7 @@
                         return;
                     }
                     $(this).closest(".thumb-shell").find(".thumb-error")
-                        .text($._("That is not a valid image URL.")).show();
+                        .text(i18n._("That is not a valid image URL.")).show();
                     $(this).hide();
                     self.$(".thumb-throbber").hide();
                 });
@@ -285,13 +285,13 @@
                 return;
             }
             // This is quite similar to code in image-picker.js,
-            //  but my attempts to abstract it were thwarted by 
+            //  but my attempts to abstract it were thwarted by
             //  PhantomJS's inability to pass around RegEx objects in tests.
             //  That should be fixed in PhantomJS2.0, so we are eagerly
             //  awaiting the upgrade of gulp-mocha-phantomjs to that.
             var functionStart = event.col - RegExp.lastMatch.length;
             var paramsStart = functionStart + RegExp.$1.length;
-            
+
             var pieces = /^(\s*)(["']?[^\)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
             var leading = pieces[1];
             var pathStart = paramsStart + leading.length;
@@ -322,19 +322,19 @@
             };
             this.aceLocation.tooltipCursor = this.aceLocation.start +
                 this.aceLocation.length + closing.length;
-            
+
             this.updateTooltip(path);
             this.placeOnScreen();
             event.stopPropagation();
             ScratchpadAutosuggest.enableLiveCompletion(false);
         },
-        
+
         updateTooltip: function(partialPath) {
             if (partialPath !== this.currentUrl) {
                 partialPath = partialPath.replace(/\"/g, "");
                 this.currentUrl = this.options.soundsDir + partialPath + ".mp3";
                 if (partialPath === "") {
-                    this.$(".thumb-error").text($._("Invalid sound file.")).show();
+                    this.$(".thumb-error").text(i18n._("Invalid sound file.")).show();
                     return;
                 } else {
                     this.$(".thumb-error").hide();

@@ -294,7 +294,7 @@ window.PJSOutput = Backbone.View.extend({
                 return;
             }
 
-            var msg = $._("Assertion failed: " +
+            var msg = i18n._("Assertion failed: " +
                 "%(actual)s is not equal to %(expected)s.", {
                     actual: JSON.stringify(actual),
                     expected: JSON.stringify(expected)
@@ -401,7 +401,7 @@ window.PJSOutput = Backbone.View.extend({
                     // BabyLint has spelling suggestion.
                     if (jsError.lint.code === "W117" &&
                         babyError.source === "spellcheck") {
-                        babyError.text = $._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " +
+                        babyError.text = i18n._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " +
                             "or you're using a variable you didn't define.",
                             {word: jsError.lint.a, keyword: babyError.context.keyword});
                     }
@@ -443,12 +443,12 @@ window.PJSOutput = Backbone.View.extend({
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
                     // figure out whether we hit this case.
-                    var message = $._("Error: %(message)s",
+                    var message = i18n._("Error: %(message)s",
                         {message: errors[errors.length - 1].message});
                     // TODO(jeresig): Find a better way to show this
                     this.output.$el.find(".test-errors").text(message).show();
                     this.tester.testContext.assert(false, message,
-                        $._("A critical problem occurred in your program " +
+                        i18n._("A critical problem occurred in your program " +
                             "making it unable to run."));
                 }
 
