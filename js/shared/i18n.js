@@ -199,7 +199,7 @@
         options.num = options.num || num;
 
         // Then pass into $._ for the actual substitution
-        return jQuery._(i18n.dngettext(lang, singular, plural, num), options);
+        return i18n._(i18n.dngettext(lang, singular, plural, num), options);
     };
 
     /*

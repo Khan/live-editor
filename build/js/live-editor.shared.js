@@ -33,8 +33,8 @@ window.AllImages = [{
     "groupName": "space",
     "images": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "background", "beetleship", "collisioncircle", "girl1", "girl2", "girl3", "girl4", "girl5", "healthheart", "minus", "octopus", "planet", "plus", "rocketship", "star"]
 }];
-if (!$._) {
-    $._ = function (msg) {
+if (!i18n._) {
+    i18n._ = function (msg) {
         return msg;
     };
 }
@@ -85,8 +85,8 @@ window.ExtendedOutputImages = [{
         images: "fireworks-2015 fireworks-in-sky fireworks-over-harbor fireworks-scattered gingerbread-family gingerbread-house gingerbread-houses gingerbread-man hannukah-dreidel hannukah-menorah house-with-lights reindeer snow-crystal1 snow-crystal2 snow-crystal3 snowy-slope-with-trees stocking-empty xmas-cookies xmas-ornament-boat xmas-ornament-on-tree xmas-ornaments xmas-presents xmas-scene-holly-border xmas-tree-with-presents xmas-tree xmas-wreath".split(" ")
     }]
 }];
-if (!$._) {
-    $._ = function (msg) {
+if (!i18n._) {
+    i18n._ = function (msg) {
         return msg;
     };
 }

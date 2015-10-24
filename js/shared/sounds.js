@@ -1,5 +1,5 @@
-if (!$._) {
-    $._ = function(msg) {
+if (!i18n._) {
+    i18n._ = function(msg) {
         return msg;
     };
 }
