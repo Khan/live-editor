@@ -48,7 +48,11 @@ var runTest = function(options) {
             imagesDir: "../../../build/images/",
             soundsDir: "../../../sounds/",
             jshintFile: "../../../build/external/jshint/jshint.js",
-            useDebugger: useDebugger
+            useDebugger: useDebugger,
+            loopProtectTimeouts: {
+                initialTimeout: 1000,
+                frameTimeout: 500
+            },
         });
 
         // Switch to the Scratchpad's version

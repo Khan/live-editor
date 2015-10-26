@@ -131,7 +131,6 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
                     }
                 }
             } else if (node.type === "VariableDeclaration") {
-
                 if (node.declarations.length === 1) {
                     // Single VariableDeclarators
 
@@ -150,10 +149,12 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
                     // that appear in the global scope unless it's one of the draw loop
                     // methods.  In that case, always rewrite it.
                     if (scopes.length === 1 || drawLoopMethods.includes(decl.id.name)) {
-                        if (["Program", "BlockStatement"].includes(parent.type)) {
+                        if (["Program", "BlockStatement", "SwitchCase"].includes(parent.type)) {
                             return b.ExpressionStatement(
                                 b.AssignmentExpression(
-                                    b.MemberExpression(b.Identifier(envName),b.Identifier(decl.id.name)),
+                                    b.MemberExpression(
+                                        b.Identifier(envName),
+                                        b.Identifier(decl.id.name)),
                                     "=",
                                     decl.init
                                 )
@@ -261,6 +262,40 @@ ASTTransforms.checkForBannedProps = function(bannedProps) {
                     row: node.loc.start.line - 1,
                     html: `Use of <code>${node.name}</code> as an identifier is prohibited.`
                 };
+            }
+        }
+    };
+};
+
+/**
+ * Searches for strings containing the name of any image or sound we provide for
+ * users and adds them to `resources` as a key.
+ *
+ * @param {Object} resources An empty Object.
+ * @returns {Object} An AST Visitor.
+ */
+ASTTransforms.findResources = function(resources) {
+    return {
+        leave(node, path) {
+            if (node.type === "Literal" && typeof(node.value) === "string") {
+
+                AllImages.forEach(group => {
+                    group.images.forEach(image => {
+                        if (node.value.indexOf(image) !== -1) {
+                            resources[`${group.groupName}/${image}.png`] = true;
+                        }
+                    });
+                });
+
+                OutputSounds.forEach(cls => {
+                    cls.groups.forEach(group => {
+                        group.sounds.forEach(sound => {
+                            if (node.value.indexOf(sound) !== -1) {
+                                resources[`${group.groupName}/${sound}.mp3`] = true;
+                            }
+                        });
+                    });
+                });
             }
         }
     };

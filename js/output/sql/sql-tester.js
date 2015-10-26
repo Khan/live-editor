@@ -423,10 +423,17 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
+    moreResultsThan(num) {
+        var dbInfo = this.userCode;
+        var results = dbInfo.results;
+        return { success: (results.length > num) };            
+    },
+
     /*
      * Creates a new test result (i.e. new challenge tab)
      */
     assertMatch: function(result, description, hint, image) {
+
         var alternateMessage;
         var alsoMessage;
 

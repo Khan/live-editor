@@ -33,8 +33,8 @@ window.AllImages = [{
     "groupName": "space",
     "images": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "background", "beetleship", "collisioncircle", "girl1", "girl2", "girl3", "girl4", "girl5", "healthheart", "minus", "octopus", "planet", "plus", "rocketship", "star"]
 }];
-if (!$._) {
-    $._ = function (msg) {
+if (!i18n._) {
+    i18n._ = function (msg) {
         return msg;
     };
 }
@@ -50,12 +50,12 @@ window.OutputImages = [{
 }, {
     groupName: "cute",
     images: "Blank BrownBlock CharacterBoy CharacterCatGirl CharacterHornGirl CharacterPinkGirl CharacterPrincessGirl ChestClosed ChestLid ChestOpen DirtBlock DoorTallClosed DoorTallOpen EnemyBug GemBlue GemGreen GemOrange GrassBlock Heart Key PlainBlock RampEast RampNorth RampSouth RampWest Rock RoofEast RoofNorth RoofNorthEast RoofNorthWest RoofSouth RoofSouthEast RoofSouthWest RoofWest Selector ShadowEast ShadowNorth ShadowNorthEast ShadowNorthWest ShadowSideWest ShadowSouth ShadowSouthEast ShadowSouthWest ShadowWest Star StoneBlock StoneBlockTall TreeShort TreeTall TreeUgly WallBlock WallBlockTall WaterBlock WindowTall WoodBlock".split(" "),
-    cite: $._("'Planet Cute' art by Daniel Cook (Lostgarden.com)"),
+    cite: i18n._("'Planet Cute' art by Daniel Cook (Lostgarden.com)"),
     citeLink: "http://lostgarden.com/2007/05/dancs-miraculously-flexible-game.html"
 }, {
     groupName: "space",
     images: "background beetleship collisioncircle girl1 girl2 girl3 girl4 girl5 healthheart minus octopus planet plus rocketship star 0 1 2 3 4 5 6 7 8 9".split(" "),
-    cite: $._("'Space Cute' art by Daniel Cook (Lostgarden.com)"),
+    cite: i18n._("'Space Cute' art by Daniel Cook (Lostgarden.com)"),
     citeLink: "http://lostgarden.com/2007/03/spacecute-prototyping-challenge.html"
 }];
 
@@ -85,8 +85,8 @@ window.ExtendedOutputImages = [{
         images: "fireworks-2015 fireworks-in-sky fireworks-over-harbor fireworks-scattered gingerbread-family gingerbread-house gingerbread-houses gingerbread-man hannukah-dreidel hannukah-menorah house-with-lights reindeer snow-crystal1 snow-crystal2 snow-crystal3 snowy-slope-with-trees stocking-empty xmas-cookies xmas-ornament-boat xmas-ornament-on-tree xmas-ornaments xmas-presents xmas-scene-holly-border xmas-tree-with-presents xmas-tree xmas-wreath".split(" ")
     }]
 }];
-if (!$._) {
-    $._ = function (msg) {
+if (!i18n._) {
+    i18n._ = function (msg) {
         return msg;
     };
 }
@@ -99,12 +99,12 @@ window.OutputSounds = [{
     groups: [{
         groupName: "rpg",
         sounds: "battle-magic battle-spell battle-swing coin-jingle door-open giant-hyah giant-no giant-yah hit-clop hit-splat hit-thud hit-whack metal-chime metal-clink step-heavy water-bubble water-slosh".split(" "),
-        cite: $._("'RPG Sound Effects' sounds by artisticdude"),
+        cite: i18n._("'RPG Sound Effects' sounds by artisticdude"),
         citeLink: "http://opengameart.org/content/rpg-sound-pack"
     }, {
         groupName: "retro",
         sounds: "boom1 boom2 coin hit1 hit2 jump1 jump2 laser1 laser2 laser3 laser4 rumble thruster-short thruster-long whistle1 whistle2".split(" "),
-        cite: $._("'Retro Game Sounds' sounds by spongejr"),
+        cite: i18n._("'Retro Game Sounds' sounds by spongejr"),
         citeLink: "https://www.khanacademy.org/profile/spongejr/"
     }]
 }];

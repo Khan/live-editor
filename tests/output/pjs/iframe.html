@@ -38,24 +38,16 @@
         <script src="../../../node_modules/expect.js/index.js"></script>
         <script src="../../../node_modules/sinon/pkg/sinon.js"></script>
         <script src="../../../testutil/json-reporter.js"></script>
-        <script>
-            var isPhantomJS = /PhantomJS/.test(navigator.userAgent);
-            
-            mocha.setup({
-                ui: 'bdd',
-                reporter: isPhantomJS ? jsonReporter : 'html'
-            });
-        </script>
         <script src="test_utils.js"></script>
-        <script src="ast_transform_tests.js"></script>
-        <script src="output_test.js"></script>
-        <script src="assert_test.js"></script>
-        <script src="jshint_test.js"></script>
-        <script src="async_test.js"></script>
+        <script src="../../shared_utils.js"></script>
         <script>
-            onload = function(){
-                mocha.run();
-            };
+            runTestFiles([
+                "assert_test.js",
+                "ast_transform_test.js",
+                "async_test.js",
+                "jshint_test.js",
+                "output_test.js",
+            ]);
         </script>
     </body>
 </html>

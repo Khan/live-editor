@@ -91,6 +91,8 @@
             "js/output/pjs/pjs-debugger.js"
         ],
         "output_pjs": [
+            "js/output/pjs/pjs-utils.js",
+            "js/output/pjs/pjs-code-injector.js",
             "js/output/pjs/pjs-tester.js",
             "js/output/pjs/babyhint.js",
             "js/output/pjs/pjs-resource-cache.js",

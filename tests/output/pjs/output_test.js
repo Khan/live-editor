@@ -20,6 +20,7 @@ describe("Scratchpad CanvasOutput functions", function() {
 
 });
 
+// TODO(kevinb) split into smaller subsuites
 describe("Scratchpad Output Exec", function() {
     test("Color modes", function() {
         color(255, 0, 0);
@@ -145,7 +146,7 @@ describe("Scratchpad Output Exec", function() {
     });
 
     failingTest("Too Many Draw Operations", function() {
-        for (var i = 0; i < 17000; i++) {
+        for (var i = 0; i < 1000000; i++) {
             ellipse(100, 100, 100, 100);
         }
     });
@@ -267,16 +268,16 @@ describe("Scratchpad Output Exec", function() {
     });
 
     failingTest(".ownerDocument disabled", function() {
-        var document = externals.canvas.ownerDocument;
+        var document = externals.processing.ownerDocument;
         document.getElementsByTagName("div");
     });
 
     failingTest(".createElement disabled", function() {
-        externals.canvas.ownerDocument.createElement("img");
+        externals.processing.ownerDocument.createElement("img");
     });
 
     failingTest("externals disabled", function() {
-        var d = externals.canvas.ownerDocument;
+        var d = externals.processing.ownerDocument;
         var a = d.createElement("audio");
         a.src = "http://www.w3schools.com/html5/horse.ogg";
         a.autoplay = 'true';
@@ -746,13 +747,13 @@ describe("Scratchpad Output Exec", function() {
         // test code to be run in an infinite loop after the it() block had
         // completed.
         setup: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             sinon.stub(p.Program, "settings");
             sinon.stub(p.Program, "restart");
             sinon.stub(p.Program, "runTests");
         },
         teardown: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             expect(p.Program.settings.calledWith()).to.be(true);
             expect(p.Program.restart.calledWith()).to.be(true);
             expect(p.Program.runTests.calledWith()).to.be(true);
@@ -795,14 +796,16 @@ describe("Scratchpad Output Exec", function() {
         assertions2: []
     });
 
+    // This test should not use a variable that is defined in another test
+    // TODO(kevinb) prevent persistent state between tests
     runTest({
         title: "hoisting should work",
         code: function() {
             var foo = function() {
                 var bar = function() {
-                    return a;
+                    return b;
                 };
-                var a = 5;
+                var b = 5;
                 return bar;
             };
 
@@ -867,12 +870,12 @@ describe("Scratchpad Output Exec", function() {
             };
         },
         setup: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             sinon.stub(p, "fill");
             sinon.stub(p, "ellipse");
         },
         teardown: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             var red = p.color(255,0,0);
             var yellow = p.color(255,255,0);
             expect(p.fill.calledWith(red)).to.be(true);
@@ -893,13 +896,13 @@ describe("Scratchpad Output Exec", function() {
             var commandQueue = new CommandQueue();
         },
         setup: function(output) {
-            sinon.spy(output.output, "exec");
+            sinon.spy(output.output.injector, "exec");
         },
         teardown: function(output) {
-            var code = output.output.exec.getCall(0).args[0];
+            var code = output.output.injector.exec.getCall(0).args[0];
             expect(code).to.contain("PJSOutput.applyInstance(CommandQueue,'CommandQueue')()");
             expect(code).to.not.contain("new CommandQueue");
-            output.output.exec.restore();
+            output.output.injector.exec.restore();
         }
     });
 
@@ -923,12 +926,12 @@ describe("Scratchpad Output Exec", function() {
             };
         },
         setup: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             sinon.stub(p, "fill");
             sinon.stub(p, "ellipse");
         },
         teardown: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             var red = p.color(255,0,0);
             expect(p.fill.calledWith(red)).to.be(true);
             expect(p.fill.calledWith(0)).to.be(false);
@@ -954,7 +957,7 @@ describe("Scratchpad Output Exec", function() {
             var foo = { c:color(255, 0, 0), r:200 };
         },
         teardown: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             expect(p.draw).to.be(output.output.DUMMY);
         },
         wait: 100

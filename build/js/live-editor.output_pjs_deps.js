@@ -87404,13 +87404,15 @@ window.walkAST = function (node, path, visitors) {
  * Creates a new LoopProtector object.
  *
  * @param callback: called whenever a loop takes more than <timeout>ms to complete.
- * @param mainTimeout: threshold time used while executing main program body
- * @param asyncTimeout: treshold time used during draw() and other callbacks
+ * @param timeouts: an object containing initialTimeout and frameTimeout used
+ *                  to control how long before the loop protector is triggered
+ *                  on initial run during draw functions (or when responding to
+ *                  user events)
  * @param reportLocation: true if the location of the long running loop should be
  *                        passed to the callback. TODO(kevinb) use this for webpages
  * @constructor
  */
-window.LoopProtector = function (callback, mainTimeout, asyncTimeout, reportLocation) {
+window.LoopProtector = function (callback, timeouts, reportLocation) {
     this.callback = callback || function () {};
     this.timeout = 200;
     this.branchStartTime = 0;
@@ -87419,9 +87421,10 @@ window.LoopProtector = function (callback, mainTimeout, asyncTimeout, reportLoca
 
     this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
 
-    // cache ASTs for function calls to KAInfiniteLoopSetTimeout
-    this.mainTimeout = mainTimeout;
-    this.asyncTimeout = asyncTimeout;
+    if (timeouts) {
+        this.mainTimeout = timeouts.initialTimeout;
+        this.asyncTimeout = timeouts.frameTimeout;
+    }
 
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
@@ -87439,11 +87442,11 @@ window.LoopProtector = function (callback, mainTimeout, asyncTimeout, reportLoca
 };
 
 window.LoopProtector.nodeMessages = {
-    "WhileStatement": $._("<code>while</code> loop"),
-    "DoWhileStatement": $._("<code>do-while</code> loop"),
-    "ForStatement": $._("<code>for</code> loop"),
-    "FunctionDeclaration": $._("<code>function</code>"),
-    "FunctionExpression": $._("<code>function</code>")
+    "WhileStatement": i18n._("<code>while</code> loop"),
+    "DoWhileStatement": i18n._("<code>do-while</code> loop"),
+    "ForStatement": i18n._("<code>for</code> loop"),
+    "FunctionDeclaration": i18n._("<code>function</code>"),
+    "FunctionExpression": i18n._("<code>function</code>")
 };
 
 window.LoopProtector.prototype = {
@@ -87499,7 +87502,7 @@ window.LoopProtector.prototype = {
 
                     hotLocation = JSON.parse(hotLocation);
 
-                    var html = $._("A %(type)s is taking too long to run. " + "Perhaps you have a mistake in your code?", {
+                    var html = i18n._("A %(type)s is taking too long to run. " + "Perhaps you have a mistake in your code?", {
                         type: LoopProtector.nodeMessages[hotLocation.type]
                     });
 
@@ -87701,7 +87704,6 @@ ASTTransforms.rewriteContextVariables = function (envName, context) {
                     }
                 }
             } else if (node.type === "VariableDeclaration") {
-
                 if (node.declarations.length === 1) {
                     // Single VariableDeclarators
 
@@ -87720,7 +87722,7 @@ ASTTransforms.rewriteContextVariables = function (envName, context) {
                     // that appear in the global scope unless it's one of the draw loop
                     // methods.  In that case, always rewrite it.
                     if (scopes.length === 1 || drawLoopMethods.includes(decl.id.name)) {
-                        if (["Program", "BlockStatement"].includes(parent.type)) {
+                        if (["Program", "BlockStatement", "SwitchCase"].includes(parent.type)) {
                             return b.ExpressionStatement(b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init));
                         } else {
                             if (["ForStatement"].includes(parent.type)) {
@@ -87807,6 +87809,40 @@ ASTTransforms.checkForBannedProps = function (bannedProps) {
                     row: node.loc.start.line - 1,
                     html: "Use of <code>" + node.name + "</code> as an identifier is prohibited."
                 };
+            }
+        }
+    };
+};
+
+/**
+ * Searches for strings containing the name of any image or sound we provide for
+ * users and adds them to `resources` as a key.
+ *
+ * @param {Object} resources An empty Object.
+ * @returns {Object} An AST Visitor.
+ */
+ASTTransforms.findResources = function (resources) {
+    return {
+        leave: function leave(node, path) {
+            if (node.type === "Literal" && typeof node.value === "string") {
+
+                AllImages.forEach(function (group) {
+                    group.images.forEach(function (image) {
+                        if (node.value.indexOf(image) !== -1) {
+                            resources[group.groupName + "/" + image + ".png"] = true;
+                        }
+                    });
+                });
+
+                OutputSounds.forEach(function (cls) {
+                    cls.groups.forEach(function (group) {
+                        group.sounds.forEach(function (sound) {
+                            if (node.value.indexOf(sound) !== -1) {
+                                resources[group.groupName + "/" + sound + ".mp3"] = true;
+                            }
+                        });
+                    });
+                });
             }
         }
     };

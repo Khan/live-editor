@@ -104,7 +104,7 @@ window.LiveEditor = Backbone.View.extend({
         // TEMP: Set up a query param for testing the new error experience
         // Looks to see if "new_error_experience=yes" is in the url,
         //  if it is, then we use the new error buddy behaviour.
-        this.newErrorExperience = false;
+        this.newErrorExperience = options.newErrorExperience;
         if (window.location.search.indexOf("new_error_experience=yes") !== -1) {
             this.newErrorExperience = true;
         }
@@ -448,7 +448,8 @@ window.LiveEditor = Backbone.View.extend({
 
         // Handle the gutter errors
         $el.on("click", this.dom.GUTTER_ERROR, function() {
-            self.setErrorPosition(parseInt($(this).text(), 10));
+            var lineNum = parseInt($(this).text(), 10);
+            self.setErrorPosition(this.gutterDecorations[lineNum]);
         });
 
         // Handle clicks on the thinking Error Buddy
@@ -1260,7 +1261,7 @@ window.LiveEditor = Backbone.View.extend({
     },
     setErrorPosition: function(errorPos) {
         this.setErrorState();
-        this.tipbar.setErrorPosition(this.gutterDecorations[errorPos]);
+        this.tipbar.setErrorPosition(errorPos);
     },
     setErrorState: function() {
         this.errorState = "error";
@@ -1273,7 +1274,10 @@ window.LiveEditor = Backbone.View.extend({
             this.errorState = "thinking";
             this.tipbar.hide();
             this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();
-            this.$el.find(this.dom.ERROR_BUDDY_THINKING).show();
+            this.$el.find(this.dom.ERROR_BUDDY_THINKING).show()
+                .animate({ left: -2 }, {duration: 300, easing: 'linear'})
+                .animate({ left: 2 }, {duration: 300, easing: 'linear'})
+                .animate({ left: 0 }, {duration: 300, easing: 'linear'});
         }
     },
     setHappyState: function() {

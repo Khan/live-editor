@@ -17,6 +17,7 @@ window.TipBar = Backbone.View.extend({
     render: function() {
         this.$overlay = $("<div class=\"overlay error-overlay\" style=\"display: none\"></div>").appendTo(this.$el);
         this.$el.append(Handlebars.templates["tipbar"]());
+        this.$bar = this.$el.find(".tipbar");
     },
 
     bind: function() {
@@ -43,13 +44,19 @@ window.TipBar = Backbone.View.extend({
         });
 
         this.$el.on("click", ".tipbar .show-me a", function(e) {
-            var error = self.errors[self.pos];
+            e.preventDefault();
 
+            var error = self.errors[self.pos];
             self.liveEditor.editor.setCursor(error);
             self.liveEditor.editor.setErrorHighlight(true);
 
             return false;
         });
+
+        this.$el.on("click", ".tipbar .close", function(e) {
+            self.liveEditor.setThinkingState();
+        });
+
     },
 
     setErrors: function(errors) {
@@ -60,10 +67,9 @@ window.TipBar = Backbone.View.extend({
     update: function(show) {
         var errors = this.errors;
         var pos = errors[this.pos] == null ? 0 : this.pos;
-        var bar = this.$el.find(".tipbar");
 
         // Inject current text
-        bar
+        this.$bar
             .find(".current-pos").text(errors.length > 1 ? (pos + 1) + "/" + errors.length : "").end()
             .find(".message").html(errors[pos].text || errors[pos] || "").end()
             .find("a.prev").toggleClass("ui-state-disabled", pos === 0).end()
@@ -72,28 +78,27 @@ window.TipBar = Backbone.View.extend({
         // it could be undefined, null, or -1
         this.$el.find(".show-me").toggle(errors[pos].row > -1);
 
-        bar.find(".tipnav").toggle(errors.length > 1);
+        this.$bar.find(".tipnav").toggle(errors.length > 1);
         if (show) {
-            bar.show();
+            this.$overlay.show();
+            this.$bar.show();
         }
     },
 
     hide: function() {
-        var bar = this.$el.find(".tipbar");
-        bar.hide();
+        this.$bar.hide();
+        this.$overlay.hide();
         clearTimeout(this.errorDelay);
     },
 
     toggleErrors: function(errors, delay) {
         var hasErrors = errors.length > 0;
-
-        this.$overlay.toggle(hasErrors);
-
         if (!hasErrors) {
             this.hide();
             return;
         }
 
+        this.$overlay.show();
         this.setErrors(errors);
 
         clearTimeout(this.errorDelay);

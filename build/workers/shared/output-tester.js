@@ -13,7 +13,7 @@ OutputTester.prototype = {
             }
         }
 
-        for (var prop in this.defaultTestContext) {
+        for (var prop in this.defaultTestContext) { /* jshint forin:false */
             if (!(prop in this.testContext)) {
                 this.testContext[prop] = this.defaultTestContext[prop];
             }
@@ -149,7 +149,7 @@ OutputTester.prototype = {
         test: function(name, fn, type) {
             if (!fn) {
                 fn = name;
-                name = $._("Test Case");
+                name = i18n._("Test Case");
             }
 
             this.tests.push({

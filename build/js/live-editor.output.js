@@ -63,6 +63,7 @@ OutputTester.prototype = {
         }
 
         for (var prop in this.defaultTestContext) {
+            /* jshint forin:false */
             if (!(prop in this.testContext)) {
                 this.testContext[prop] = this.defaultTestContext[prop];
             }
@@ -195,7 +196,7 @@ OutputTester.prototype = {
         test: function test(name, _fn, type) {
             if (!_fn) {
                 _fn = name;
-                name = $._("Test Case");
+                name = i18n._("Test Case");
             }
 
             this.tests.push({
@@ -311,6 +312,9 @@ OutputTester.prototype = {
         }
     }
 };
+// TODO(kevinb) remove after challenges have been converted to use i18n._
+$._ = i18n._;
+
 window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
@@ -329,7 +333,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         });
 
         if (options.outputType) {
-            this.setOutput(options.outputType, true);
+            this.setOutput(options.outputType, true, options.loopProtectTimeouts);
         }
 
         // Add a timestamp property to the lintErrors and runtimeErrors arrays
@@ -356,14 +360,15 @@ window.LiveEditorOutput = Backbone.View.extend({
         window.addEventListener("message", this.handleMessage.bind(this), false);
     },
 
-    setOutput: function setOutput(outputType, enableLoopProtect) {
+    setOutput: function setOutput(outputType, enableLoopProtect, loopProtectTimeouts) {
         var OutputClass = this.outputs[outputType];
         this.output = new OutputClass({
             el: this.$el.find(".output"),
             config: this.config,
             output: this,
             type: outputType,
-            enableLoopProtect: enableLoopProtect
+            enableLoopProtect: enableLoopProtect,
+            loopProtectTimeouts: loopProtectTimeouts
         });
     },
 
@@ -425,7 +430,14 @@ window.LiveEditorOutput = Backbone.View.extend({
             if (data.enableLoopProtect != null) {
                 enableLoopProtect = data.enableLoopProtect;
             }
-            this.setOutput(outputType, enableLoopProtect);
+            var loopProtectTimeouts = {
+                initialTimeout: 2000,
+                frameTimeout: 500
+            };
+            if (data.loopProtectTimeouts != null) {
+                loopProtectTimeouts = data.loopProtectTimeouts;
+            }
+            this.setOutput(outputType, enableLoopProtect, loopProtectTimeouts);
         }
 
         // filter out debugger events

@@ -121,19 +121,6 @@ gulp.task("watch", function() {
         gulp.watch(paths.scripts[type], ["script_" + type]);
     });
 
-    // Run output tests when the output code changes
-    // TODO(kevinb): uncomment once running tests is rock solid
-    //gulp.watch(paths.scripts.output, ["test"]);
-    //gulp.watch(paths.scripts.output_pjs
-    //    .concat(["tests/output/pjs/*"]), ["test_output_pjs"]);
-    //gulp.watch(paths.scripts.output_webpage
-    //    .concat(["tests/output/webpage/*"]), ["test_output_webpage"]);
-    // TODO(bbondy): Uncomment when PhantomJS has support for typed arrays
-    // gulp.watch(paths.scripts.output_sql
-    //    .concat(["tests/output/sql/*"]), ["test_output_sql"]);
-    //gulp.watch(paths.scripts.tooltips
-    //    .concat(["tests/tooltips/*"]), ["test_tooltips"]);
-
     styleTypes.forEach(function(type) {
         gulp.watch(paths.styles[type], ["style_" + type]);
     });
@@ -175,15 +162,46 @@ var runTest = function(fileName) {
     };
 };
 
+// We run tests in groups so that we don't require as much memory to run them 
+// in Travis-CI.
+var pjs_tests = ["jshint", "output", "assert", "ast_transform"];
 
-gulp.task("test_output_pjs", ["script_output_pjs"], function() {
-    return gulp.src("tests/output/pjs/index.html")
-        .pipe(mochaRunner());
+pjs_tests.forEach(function(test) {
+    gulp.task("test_output_pjs_" + test, ["script_output_pjs"], function() {
+        return gulp.src("tests/output/pjs/index.html")
+            .pipe(mochaRunner({ test: test + "_test.js" }));
+    });
 });
 
-gulp.task("test_output_webpage", ["script_output_webpage"], function() {
-    return gulp.src("tests/output/webpage/index.html")
-        .pipe(mochaRunner());
+gulp.task("test_output_pjs", function(callback) {
+    var sequence = pjs_tests.map(function(test) {
+        return "test_output_pjs_" + test;
+    });
+    sequence.push(callback);
+    runSequence.apply(null, sequence);
+});
+
+// TODO(kevinb) add this to test_output_pjs after adding try/catch to event handlers
+gulp.task("test_output_pjs_async", ["script_output_pjs"], function() {
+    return gulp.src("tests/output/pjs/index.html")
+        .pipe(mochaRunner({ test: "async_test.js" }));
+});
+
+var webpage_tests = ["assert", "output", "transform"];
+
+webpage_tests.forEach(function(test) {
+    gulp.task("test_output_webpage_" + test, ["script_output_pjs"], function() {
+        return gulp.src("tests/output/webpage/index.html")
+            .pipe(mochaRunner({ test: test + "_test.js" }));
+    });
+});
+
+gulp.task("test_output_webpage", ["script_output_webpage"], function(callback) {
+    var sequence = webpage_tests.map(function(test) {
+        return "test_output_webpage_" + test;
+    });
+    sequence.push(callback);
+    runSequence.apply(null, sequence);
 });
 
 // TODO(kevinb): Uncomment when phantomJS has been upgraded to 2.0

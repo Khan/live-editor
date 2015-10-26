@@ -9755,6 +9755,17 @@ require("/tools/entry-point.js");
       return obj;
     },
     // These are HTML errors.
+    NO_DOCTYPE_FOUND: function() {},
+    HTML_NOT_ROOT_ELEMENT: function(parser) {
+      var currentNode = parser.domBuilder.currentNode.firstElementChild,
+          openTag = this._combine({
+            name: currentNode.nodeName.toLowerCase()
+          }, currentNode.parseInfo.openTag);
+      return {
+        openTag: openTag,
+        cursor: openTag.start
+      };
+    },
     UNCLOSED_TAG: function(parser) {
       var currentNode = parser.domBuilder.currentNode,
           openTag = this._combine({
@@ -9782,6 +9793,15 @@ require("/tools/entry-point.js");
         openTag: openTag,
         cursor: openTag.start
       };
+    },
+    OBSOLETE_HTML_TAG: function(tagName, token) {
+      var openTag = this._combine({
+          name: tagName
+        }, token.interval);
+      return {
+        openTag: openTag,
+        cursor: openTag.start
+      }
     },
     ELEMENT_NOT_ALLOWED: function(tagName, token) {
       var openTag = this._combine({
@@ -10113,6 +10133,16 @@ require("/tools/entry-point.js");
       };
     },
     UNFINISHED_CSS_VALUE: function(parser, start, end, value) {
+      return {
+        cssValue: {
+          start: start,
+          end: end,
+          value: value
+        },
+        cursor: start
+      };
+    },
+    IMPROPER_CSS_VALUE: function(parser, start, end, value) {
       return {
         cssValue: {
           start: start,
@@ -10786,7 +10816,6 @@ require("/tools/entry-point.js");
       if(token === null) {
         throw new ParseError("MISSING_CSS_VALUE", this, propertyStart, propertyStart+property.length, property);
       }
-
       var next = (!this.stream.end() ? this.stream.next() : "end of stream"),
           errorMsg = "[_parseValue] Expected }, <, or ;, instead found "+next;
 
@@ -10797,6 +10826,17 @@ require("/tools/entry-point.js");
 
       if (value === '') {
         throw new ParseError("MISSING_CSS_VALUE", this, this.stream.pos-1, this.stream.pos);
+      }
+
+      // If value has a newline, the tokenizer ate the next pair, so we're missing a ;
+      if (value.indexOf('\n') > -1) {
+        value = value.substr(0, value.indexOf('\n'));
+        this.warnings.push(new ParseError("UNFINISHED_CSS_VALUE", this, valueStart, valueEnd, value));
+      }
+
+      // if value matches this regex, then there's a space between
+      if (value.match(/(#|rgb|rgba|hsl|hsla)\s+\(/)) {
+        this.warnings.push(new ParseError("IMPROPER_CSS_VALUE", this, valueStart, valueEnd, value));
       }
 
       // At this point we can fill in the *value* part of the current
@@ -10828,6 +10868,7 @@ require("/tools/entry-point.js");
       }
       else if (next === '}') {
         // This is block level termination; try to read a new selector.
+        this.warnings.push(new ParseError("UNFINISHED_CSS_VALUE", this, valueStart, valueEnd, value));
         this.currentRule.declarations.end = this.stream.pos;
         this._bindCurrentRule();
         this.stream.markTokenStartAfterSpace();
@@ -10936,8 +10977,9 @@ require("/tools/entry-point.js");
     // We also keep a list of HTML elements that are now obsolete, but
     // may still be encountered in the wild on popular sites.
     obsoleteHtmlElements: ["acronym", "applet", "basefont", "big", "center",
-                           "dir", "font", "isindex", "listing", "noframes",
-                           "plaintext", "s", "strike", "tt", "xmp"],
+                           "dir", "font", "isindex", "listing", "marquee",
+                           "noframes", "plaintext", "s", "strike", "tt",
+                           "xmp"],
 
     webComponentElements: ["template", "shadow", "content"],
 
@@ -10970,6 +11012,12 @@ require("/tools/entry-point.js");
     },
 
     // This is a helper function to determine whether a given string
+    // is an obsolete HTML element tag
+    _knownObsoleteHTMLElement: function(tagName) {
+      return this.obsoleteHtmlElements.indexOf(tagName) > -1;
+    },
+
+    // This is a helper function to determine whether a given string
     // is a HTML element tag which can optional omit its close tag.
     _knownOmittableCloseTagHtmlElement: function(tagName) {
       return this.omittableCloseTagHtmlElements.indexOf(tagName) > -1;
@@ -10999,13 +11047,16 @@ require("/tools/entry-point.js");
       // First we check to see if the beginning of our stream is
       // an HTML5 doctype tag. We're currently quite strict and don't
       // parse XHTML or other doctypes.
-      if (this.stream.match(this.html5Doctype, true, true))
+      if (this.stream.match(this.html5Doctype, true, true)) {
         this.domBuilder.fragment.parseInfo = {
           doctype: {
             start: 0,
             end: this.stream.pos
           }
         };
+      } else {
+        this.warnings.push(new ParseError("NO_DOCTYPE_FOUND"));
+      }
 
       // Next, we parse "tag soup", creating text nodes and diving into
       // tags as we find them.
@@ -11023,6 +11074,11 @@ require("/tools/entry-point.js");
       // we test for that.
       if (this.domBuilder.currentNode != this.domBuilder.fragment)
         throw new ParseError("UNCLOSED_TAG", this);
+
+      if (this.domBuilder.currentNode.children &&
+        (this.domBuilder.currentNode.children.length !== 1 || this.domBuilder.currentNode.firstElementChild.tagName !== "HTML")) {
+        this.warnings.push(new ParseError("HTML_NOT_ROOT_ELEMENT", this));
+      }
 
       return {
         warnings: (this.warnings.length > 0 ? this.warnings : false)
@@ -11088,8 +11144,11 @@ require("/tools/entry-point.js");
         if (tagName) {
           var badSVG = this.parsingSVG && !this._knownSVGElement(tagName);
           var badHTML = !this.parsingSVG && !this._knownHTMLElement(tagName) && !this._isCustomElement(tagName);
+          var obsoleteHTML = this._knownObsoleteHTMLElement(tagName);
           if (badSVG || badHTML) {
             throw new ParseError("INVALID_TAG_NAME", tagName, token);
+          } else if (obsoleteHTML) {
+            this.warnings.push(new ParseError("OBSOLETE_HTML_TAG", tagName, token));
           } else if (this.options.noScript && tagName === "script") {
             throw new ParseError("SCRIPT_ELEMENT_NOT_ALLOWED", tagName, token);
           } else if (this.options.disableTags) {
@@ -11819,13 +11878,15 @@ window.walkAST = function (node, path, visitors) {
  * Creates a new LoopProtector object.
  *
  * @param callback: called whenever a loop takes more than <timeout>ms to complete.
- * @param mainTimeout: threshold time used while executing main program body
- * @param asyncTimeout: treshold time used during draw() and other callbacks
+ * @param timeouts: an object containing initialTimeout and frameTimeout used
+ *                  to control how long before the loop protector is triggered
+ *                  on initial run during draw functions (or when responding to
+ *                  user events)
  * @param reportLocation: true if the location of the long running loop should be
  *                        passed to the callback. TODO(kevinb) use this for webpages
  * @constructor
  */
-window.LoopProtector = function (callback, mainTimeout, asyncTimeout, reportLocation) {
+window.LoopProtector = function (callback, timeouts, reportLocation) {
     this.callback = callback || function () {};
     this.timeout = 200;
     this.branchStartTime = 0;
@@ -11834,9 +11895,10 @@ window.LoopProtector = function (callback, mainTimeout, asyncTimeout, reportLoca
 
     this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
 
-    // cache ASTs for function calls to KAInfiniteLoopSetTimeout
-    this.mainTimeout = mainTimeout;
-    this.asyncTimeout = asyncTimeout;
+    if (timeouts) {
+        this.mainTimeout = timeouts.initialTimeout;
+        this.asyncTimeout = timeouts.frameTimeout;
+    }
 
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
@@ -11854,11 +11916,11 @@ window.LoopProtector = function (callback, mainTimeout, asyncTimeout, reportLoca
 };
 
 window.LoopProtector.nodeMessages = {
-    "WhileStatement": $._("<code>while</code> loop"),
-    "DoWhileStatement": $._("<code>do-while</code> loop"),
-    "ForStatement": $._("<code>for</code> loop"),
-    "FunctionDeclaration": $._("<code>function</code>"),
-    "FunctionExpression": $._("<code>function</code>")
+    "WhileStatement": i18n._("<code>while</code> loop"),
+    "DoWhileStatement": i18n._("<code>do-while</code> loop"),
+    "ForStatement": i18n._("<code>for</code> loop"),
+    "FunctionDeclaration": i18n._("<code>function</code>"),
+    "FunctionExpression": i18n._("<code>function</code>")
 };
 
 window.LoopProtector.prototype = {
@@ -11914,7 +11976,7 @@ window.LoopProtector.prototype = {
 
                     hotLocation = JSON.parse(hotLocation);
 
-                    var html = $._("A %(type)s is taking too long to run. " + "Perhaps you have a mistake in your code?", {
+                    var html = i18n._("A %(type)s is taking too long to run. " + "Perhaps you have a mistake in your code?", {
                         type: LoopProtector.nodeMessages[hotLocation.type]
                     });
 
@@ -13039,7 +13101,7 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false, $._("Expected function call to '%(name)s' was not made.", { name: name }));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: name }));
     },
 
     orderedFnCalls: function orderedFnCalls(calls) {
@@ -13057,7 +13119,7 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false, $._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
     },
 
     checkFn: function checkFn(fnCall, name, check) {
@@ -13082,7 +13144,7 @@ PJSTester.prototype.testMethods = {
         }
 
         if (pass) {
-            this.testContext.assert(true, $._("Correct function call made to %(name)s.", { name: name }));
+            this.testContext.assert(true, i18n._("Correct function call made to %(name)s.", { name: name }));
         }
 
         return pass;
@@ -13094,7 +13156,7 @@ PJSTester.prototype.testMethods = {
 
     _assertVarName: function _assertVarName(str) {
         if (!this.testContext._isVarName(str)) {
-            throw new Error($._("Expected '%(name)s' to be a valid variable name.", { name: str }));
+            throw new Error(i18n._("Expected '%(name)s' to be a valid variable name.", { name: str }));
         }
     },
 
@@ -13173,7 +13235,7 @@ PJSTester.prototype.testMethods = {
                 return !!(b && !_.isUndefined(b.value) && predicate(first, b.value));
             };
         } else {
-            throw new Error($._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
+            throw new Error(i18n._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
         }
 
         return this.testContext.constraint(variables, fn);
@@ -13329,7 +13391,7 @@ PJSTester.prototype.testMethods = {
         if (this.errors.length) {
             return {
                 success: false,
-                message: $._("Syntax error!")
+                message: i18n._("Syntax error!")
             };
         }
 
@@ -13368,7 +13430,7 @@ PJSTester.prototype.testMethods = {
             }
             return {
                 success: true,
-                message: $._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
+                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
             };
         }
     },

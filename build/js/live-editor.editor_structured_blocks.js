@@ -10,7 +10,7 @@ window.StructuredBlocksEditor = Backbone.View.extend({
 
         var toolbox = {};
 
-        toolbox[$._("Shapes")] = [function () {
+        toolbox[i18n._("Shapes")] = [function () {
             rect(10, 10, 50, 50);
         }, function () {
             ellipse(120, 120, 100, 100);
@@ -22,7 +22,7 @@ window.StructuredBlocksEditor = Backbone.View.extend({
             arc(150, 150, 100, 100, 0, 360);
         }, { type: "Line", value: "" }];
 
-        toolbox[$._("Colors")] = [function () {
+        toolbox[i18n._("Colors")] = [function () {
             fill(255, 0, 0);
         }, function () {
             background(255, 0, 0);
@@ -67,10 +67,10 @@ window.StructuredBlocksEditor = Backbone.View.extend({
 
     render: function render() {
         if (!this.defaultCode) {
-            this.$el.append("<div class='empty-help'>" + "<span>" + $._("Drag a block from the toolbox") + " <strong>→</strong></span>" + "<span><strong>↑</strong> " + $._("And put it up here to get started!") + "</span>" + "</div>");
+            this.$el.append("<div class='empty-help'>" + "<span>" + i18n._("Drag a block from the toolbox") + " <strong>→</strong></span>" + "<span><strong>↑</strong> " + i18n._("And put it up here to get started!") + "</span>" + "</div>");
         }
 
-        this.$el.find(".block-trash").html("<div class='text-out'>" + "<div class='trash-icon'>" + "<div class='lid'></div>" + "<div class='lidcap'></div>" + "<div class='bin'></div>" + "</div>" + "<span>" + $._("Drag block here to remove.") + "</span>" + "</div>");
+        this.$el.find(".block-trash").html("<div class='text-out'>" + "<div class='trash-icon'>" + "<div class='lid'></div>" + "<div class='lidcap'></div>" + "<div class='bin'></div>" + "</div>" + "<span>" + i18n._("Drag block here to remove.") + "</span>" + "</div>");
     },
 
     getAllFolds: function getAllFolds() {

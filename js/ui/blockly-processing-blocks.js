@@ -611,7 +611,7 @@ Blockly.JavaScript["image_picker"] = function(block) {
 Object.keys(Blockly.p5js).forEach(function(catName) {
     var vars = Blockly.p5js[catName];
 
-    
+
     Object.keys(vars).forEach(function(name) {
         var props = vars[name];
 
@@ -623,7 +623,7 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
                 if (props.type === "Event") {
                     this.setColour(typeColors[props.type]);
                     this.appendStatementInput("DO")
-                    .appendField($._("Run"));
+                    .appendField(i18n._("Run"));
                 } else if (props.type) {
                     this.setColour(typeColors[props.type]);
                     this.setOutput(true, props.type);
@@ -854,7 +854,7 @@ Blockly.util.registerBlockSignature(
                 body: patternMatch.var("body"),
             },
         }
-        
+
     },
     functionBlockTemplate
 );
@@ -922,16 +922,16 @@ Blockly.util.registerBlockSignature(
             },
             arguments: patternMatch.var("params"),
         }
-        
+
     },
     function(node, matchedProps) {
         var output = '';
         output += '<block type="procedures_callnoreturn">';
 
-        
+
         output += '<mutation name="'+matchedProps.name+'">';
         var proc = Blockly.getUserDefinedFunction(matchedProps.name);
-        
+
         matchedProps.params.forEach(function(param,index) {
             var label;
             // try to use the recorded method's arg names
@@ -983,7 +983,7 @@ Blockly.util.registerBlockSignature(
 
         var callBlock = "";
         callBlock += "<block type='p5js_" + matchedProps.callee_name + "'>";
-        
+
         var processArgs = function(startInd) {
             // We should still add other values
             matchedProps.arguments.forEach(function(arg, i) {
@@ -1195,7 +1195,7 @@ Blockly.util.registerBlockSignature(
     function(node, matchedProps) {
         var opString = matchedProps.test.operator;
         var name, from;
-        
+
         var by = matchedProps.update.operator === "++" ? 1 :
             matchedProps.update.operator === "--" ? -1 :
             matchedProps.update.operator === "+=" ? matchedProps.update.right :

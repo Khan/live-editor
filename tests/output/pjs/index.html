@@ -5,6 +5,18 @@
     <title></title>
 </head>
 <body>
-<iframe src="iframe.html" width="800" height="600"></iframe>
+<script>
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('width', 800);
+    iframe.setAttribute('height', 600);
+    
+    if (location.search) {
+        iframe.setAttribute('src', 'iframe.html' + location.search);
+    } else {
+        iframe.setAttribute('src', 'iframe.html');
+    }
+ 
+    document.body.appendChild(iframe);
+</script>
 </body>
 </html>

@@ -64,6 +64,7 @@
 .scratchpad-wrap .error-buddy-resting .error-buddy-happy,
 .scratchpad-wrap .error-buddy-resting .error-buddy-thinking {
     position: absolute;
+    text-decoration: none;
 }
 .scratchpad-wrap .error-buddy-resting img {
     height: 35px;

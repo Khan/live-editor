@@ -1,4 +1,4 @@
-[![Code Climate](https://codeclimate.com/github/Khan/live-editor/badges/gpa.svg)](https://codeclimate.com/github/Khan/live-editor)
+[![Build Status](https://travis-ci.org/Khan/live-editor.svg?branch=master)](https://travis-ci.org/Khan/live-editor) [![Code Climate](https://codeclimate.com/github/Khan/live-editor/badges/gpa.svg)](https://codeclimate.com/github/Khan/live-editor)
 # Live Code Editor
 
 [![Join the chat at https://gitter.im/Khan/live-editor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Khan/live-editor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -60,6 +60,17 @@ There are also a handful of [idea](https://github.com/Khan/live-editor/labels/id
 
 We have no full-time resource working on the editing environment right now, so we will do pull requests when we find ourselves with time between other projects. We thank you for your contribution, even if we may be slow to acknowledge it at times. :)
 
+## Pull Requests
+
+When submitting pull request please do the following:
+
+- link to an issue, if no issue exists please create one
+- write automated tests for new functionality or bug fixes
+- include build files
+- run the automated tests
+- squash your commits into a single a commit
+
+Before we can accept any pull requests you must sign our [CLA](https://www.khanacademy.org/r/cla).
 
 ## How it works
 
