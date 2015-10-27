@@ -54,11 +54,11 @@ describe("Challenge Assertions", function() {
         var syntaxChecks = [
             {
                 re: /^\((\s*\d+\s*,){3}\s*\d+\);*.*/,
-                msg: $._("Make sure you specify the command name, rect! Check the hint code.")
+                msg: i18n._("Make sure you specify the command name, rect! Check the hint code.")
             },
             {
                 re: /rect\s*\((\s*\d+\s*,\s*){4}\)/,
-                msg: $._("You have an extra comma after your last parameter.")
+                msg: i18n._("You have an extra comma after your last parameter.")
             }
         ];
 
