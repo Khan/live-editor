@@ -169,8 +169,8 @@ class PJSCodeInjector {
             },
 
             // Basic console logging
-            debug: () => {
-                console.log.apply(console, arguments);
+            debug: (...args) => {
+                console.log(...args);
             }
         });
 

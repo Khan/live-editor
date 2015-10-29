@@ -192,6 +192,22 @@ describe("Code Injection", function() {
             });
         });
     });
+    
+    it("should call console.log with the correct args", function(done) {
+        var output = createLiveEditorOutput();
+
+        var code = getCodeFromOptions(function() {
+            debug("hello");
+        });
+
+        sinon.spy(console, "log");
+
+        output.runCode(code, function(errors) {
+            expect(errors.length).to.be(0);
+            expect(console.log.calledWith("hello")).to.be(true);
+            done();
+        });
+    });
 });
 
 describe("LoopProtector", function() {

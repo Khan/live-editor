@@ -162,8 +162,7 @@ var PJSCodeInjector = (function () {
     _createClass(PJSCodeInjector, [{
         key: "addMethods",
         value: function addMethods(additionalMethods) {
-            var _this = this,
-                _arguments = arguments;
+            var _this = this;
 
             if (this.sandboxed) {
                 this.processing.Object = window.Object;
@@ -207,7 +206,7 @@ var PJSCodeInjector = (function () {
 
                 // Basic console logging
                 debug: function debug() {
-                    console.log.apply(console, _arguments);
+                    console.log.apply(console, arguments);
                 }
             });
 
