@@ -163,7 +163,8 @@ window.TooltipEngine = Backbone.View.extend({
             return false;
         }
         if (this.isWithinComment(params.pre)){
-            return false;
+            // if within comment, emit default event to hide existing tooltip
+            params = this.requestTooltipDefaultCallback;
         }
         this.last = params;
 
