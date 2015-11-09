@@ -975,6 +975,10 @@ html.playing .tooltip.hide-while-playing {
     -o-transform: scaleX(-1.0);
 }
 
+.scrubber-handle span[role=button] {
+    cursor: pointer;
+}
+
 .block .tooltip:not(.picker) {
     margin-left: -35px;
     margin-top: 5px;
