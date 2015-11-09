@@ -132,7 +132,12 @@ var plugin = function (options) {
                     );
                     
                     phantom.kill(); // kill the process or gulp won't exit
-                    done();
+                    
+                    if (params.failures > 0) {
+                        return done(new PluginError(PluginName, params.failures));
+                    } else {
+                        done();
+                    }
                 }
             } else {
                 messages.push(msgStr);

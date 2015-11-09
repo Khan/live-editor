@@ -235,7 +235,9 @@ describe("AST Transforms for exporting", function() {
     var transformCode = function(code) {
         var canvas = document.createElement('canvas');
         var processing = new Processing(canvas);
-        var injector = new PJSCodeInjector({ processing, sandboxed: false });
+        var injector = new PJSCodeInjector({ 
+            processing: processing, 
+            sandboxed: false });
 
         return injector.transformCode(code, processing);
     };
@@ -244,7 +246,7 @@ describe("AST Transforms for exporting", function() {
         var canvas = document.createElement('canvas');
         var processing = new Processing(canvas);
         var injector = new PJSCodeInjector({ 
-            processing,
+            processing: processing,
             sandboxed: false,
             envName: "p"  // TODO(kevinb) make this an option to transformCode
         });
@@ -261,7 +263,7 @@ describe("AST Transforms for exporting", function() {
     afterEach(function() {
         console.log.restore();
     });
-
+    
     it("should not prefix built-in globals'", function() {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var x = Math.cos(30);
@@ -273,7 +275,7 @@ describe("AST Transforms for exporting", function() {
             }
             var str = String.fromCharCode(65);
         }));
-
+    
         var expectedCode = cleanupCode(getCodeFromOptions(function() {
             __env__.x = Math.cos(30);
             __env__.y = Math.sin(30);
@@ -284,7 +286,7 @@ describe("AST Transforms for exporting", function() {
             }
             __env__.str = String.fromCharCode(65);
         }));
-
+    
         expect(expectedCode).to.equal(transformedCode);
     });
     
@@ -306,13 +308,13 @@ describe("AST Transforms for exporting", function() {
             var snd = getSound("rpg/metal-clink");
             playSound(snd);
         }));
-
+    
         expect(function() {
             var func = new Function(exportedCode);
             func();
         }).to.not.throwException();
     });
-
+    
     it("should automatically loop when a 'draw' method exists", function(done) {
         var exportedCode = exportCode(getCodeFromOptions(function() {
             var Dot = function(x,y) {
@@ -346,13 +348,13 @@ describe("AST Transforms for exporting", function() {
                 }
             };
         }));
-
+    
         var func = new Function(exportedCode);
         func();
-
+    
         setTimeout(function() {
             expect(console.log.callCount > 2).to.be(true);
             done();
-        }, 100);
+        }, 1000);
     });
 });

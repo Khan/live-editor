@@ -162,6 +162,8 @@ var runTest = function(fileName) {
     };
 };
 
+var failureCount = 0;
+
 // We run tests in groups so that we don't require as much memory to run them 
 // in Travis-CI.
 var pjs_tests = ["jshint", "output", "assert", "ast_transform"];
@@ -169,7 +171,11 @@ var pjs_tests = ["jshint", "output", "assert", "ast_transform"];
 pjs_tests.forEach(function(test) {
     gulp.task("test_output_pjs_" + test, ["script_output_pjs"], function() {
         return gulp.src("tests/output/pjs/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js" }));
+            .pipe(mochaRunner({ test: test + "_test.js" }))
+            .on('error', function (err) {
+                failureCount += parseInt(err.message);
+                this.emit('end');
+            });
     });
 });
 
@@ -184,7 +190,11 @@ gulp.task("test_output_pjs", function(callback) {
 // TODO(kevinb) add this to test_output_pjs after adding try/catch to event handlers
 gulp.task("test_output_pjs_async", ["script_output_pjs"], function() {
     return gulp.src("tests/output/pjs/index.html")
-        .pipe(mochaRunner({ test: "async_test.js" }));
+        .pipe(mochaRunner({ test: "async_test.js" }))
+        .on('error', function (err) {
+            failureCount += parseInt(err.message);
+            this.emit('end');
+        });
 });
 
 var webpage_tests = ["assert", "output", "transform"];
@@ -192,7 +202,11 @@ var webpage_tests = ["assert", "output", "transform"];
 webpage_tests.forEach(function(test) {
     gulp.task("test_output_webpage_" + test, ["script_output_pjs"], function() {
         return gulp.src("tests/output/webpage/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js" }));
+            .pipe(mochaRunner({ test: test + "_test.js" }))
+            .on('error', function (err) {
+                failureCount += parseInt(err.message);
+                this.emit('end');
+            });
     });
 });
 
@@ -213,6 +227,10 @@ gulp.task("test_output_webpage", ["script_output_webpage"], function(callback) {
 gulp.task("test_tooltips", ["script_tooltips"], function() {
     return gulp.src("tests/tooltips/index.html")
         .pipe(mochaRunner());
+});
+
+gulp.task("check_errors", [], function() {
+    process.exit(failureCount);
 });
 
 // TODO(kevinb7): Add task for debugger tests once ES5 is supported
@@ -242,7 +260,7 @@ gulp.task("test_record", ["test_record_data"],
 gulp.task("test", function(callback) {
     // test_output_sql is intentionally left out for now until
     // phantomJS has support for typed arrays
-    runSequence("test_output_pjs", "test_output_webpage", "test_tooltips", callback);
+    runSequence("test_output_pjs", "test_output_webpage", "test_tooltips", "check_errors", callback);
 });
 
 // Check to make sure all source files and dependencies exist before building.
