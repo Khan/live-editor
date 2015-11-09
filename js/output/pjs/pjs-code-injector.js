@@ -83,13 +83,8 @@ class PJSCodeInjector {
             this.initializeProps();
         }
 
-        const defaultTimeouts = {
-            initialTimeout: 2000,
-            frameTimeout: 500
-        };
-
         this.loopProtector = new LoopProtector(
-            this.infiniteLoopCallback, defaultTimeouts, true);
+            this.infiniteLoopCallback, this.loopProtectTimeouts, true);
 
         /*
          * The worker that analyzes the user's code.
