@@ -211,6 +211,24 @@ describe("AST Transforms", function () {
 
         expect(expectedCode).to.equal(transformedCode);
     });
+
+    it("should substitute all 'NewExpression's with 'CallExpression's to '__env__.PJSOutput.applyInstance'", function() {
+        var transformedCode = transformCode(getCodeFromOptions(function() {
+            var Obj = function (prop) {
+                this.prop = prop;
+            };
+
+            var myInstance = new Obj(1);
+        }));
+
+        var expectedCode = cleanupCode(getCodeFromOptions(function() {
+            __env__.Obj = function (prop) {
+                this.prop = prop;
+            };
+
+            __env__.myInstance = __env__.PJSOutput.applyInstance(__env__.Obj, 'Obj')(1);
+        }));
+    });
 });
 
 describe("AST Transforms for exporting", function() {

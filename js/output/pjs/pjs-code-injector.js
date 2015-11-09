@@ -588,18 +588,6 @@ class PJSCodeInjector {
         // Extract a list of instances that were created using applyInstance
         PJSOutput.instances = [];
 
-        // Replace all calls to 'new Something' with
-        // this.newInstance(Something)()
-        // Used for keeping track of unique instances
-        if (!this.debugger) {
-            userCode = userCode && userCode.replace(
-                    /\bnew[\s\n]+([A-Z]{1,2}[a-zA-Z0-9_]+)([\s\n]*\()/g,
-                    "PJSOutput.applyInstance($1,'$1')$2");
-        } else {
-            // we'll use the debugger's newCallback delegate method to
-            // keep track of object instances
-        }
-
         // If we have a draw function then we need to do injection
         // If we had a draw function then we still need to do injection
         // to clean up any live variables.
@@ -996,6 +984,10 @@ class PJSCodeInjector {
         // rewriteAssertEquals adds line and column arguments to calls to
         // Program.assertEquals.
         astTransformPasses.push(ASTTransforms.rewriteAssertEquals);
+
+        // rewriteNewExpressions transforms 'NewExpression's into
+        //  'CallExpression's.
+        astTransformPasses.push(ASTTransforms.rewriteNewExpressions(envName, context));
 
         try {
             walkAST(ast, null, astTransformPasses);

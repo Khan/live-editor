@@ -648,13 +648,6 @@ var PJSCodeInjector = (function () {
             // Extract a list of instances that were created using applyInstance
             PJSOutput.instances = [];
 
-            // Replace all calls to 'new Something' with
-            // this.newInstance(Something)()
-            // Used for keeping track of unique instances
-            if (!this["debugger"]) {
-                userCode = userCode && userCode.replace(/\bnew[\s\n]+([A-Z]{1,2}[a-zA-Z0-9_]+)([\s\n]*\()/g, "PJSOutput.applyInstance($1,'$1')$2");
-            } else {}
-
             // If we have a draw function then we need to do injection
             // If we had a draw function then we still need to do injection
             // to clean up any live variables.
@@ -1035,6 +1028,10 @@ var PJSCodeInjector = (function () {
             // Program.assertEquals.
             astTransformPasses.push(ASTTransforms.rewriteAssertEquals);
 
+            // rewriteNewExpressions transforms 'NewExpression's into
+            //  'CallExpression's.
+            astTransformPasses.push(ASTTransforms.rewriteNewExpressions(envName, context));
+
             try {
                 walkAST(ast, null, astTransformPasses);
             } catch (e) {
@@ -1228,9 +1225,6 @@ var PJSCodeInjector = (function () {
 
 // TODO(kevinb) convert to a commonjs module at somepoint in the future
 window.PJSCodeInjector = PJSCodeInjector;
-
-// we'll use the debugger's newCallback delegate method to
-// keep track of object instances
 
 // Ignore any errors that were generated in the callback
 // NOTE(jeresig): This is needed because Mocha throws errors
