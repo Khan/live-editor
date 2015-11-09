@@ -18,7 +18,8 @@ describe("AST Transforms", function () {
                 log: function() {}
             },
             print: function() {},
-            draw: function() {}
+            draw: function() {},
+            mouseClicked: function() {}
         };
 
         var injector = new PJSCodeInjector({ processing: context });
@@ -42,7 +43,7 @@ describe("AST Transforms", function () {
         expect(transformedCode).to.equal(expectedCode);
     });
 
-    it("should handle event handlers declared inside 'draw'", function () {
+    it("should handle event handlers declared inside 'draw' properly", function () {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var draw = function() {
                 var mouseClicked = function() {
@@ -52,7 +53,7 @@ describe("AST Transforms", function () {
 
         var expectedCode = cleanupCode(getCodeFromOptions(function() {
             __env__.draw = function () {
-                __env__.mouseClicked = function () {
+                var mouseClicked = function () {
                 };
             };
         }));
@@ -133,7 +134,7 @@ describe("AST Transforms", function () {
         expect(transformedCode).to.equal(expectedCode);
     });
 
-    it("should handle draw loop functions inside 'draw'", function () {
+    it("should handle draw loop functions inside 'draw' properly", function () {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var draw = function() {
                 var x = 5, mouseClicked = function () {}, y = 10;
@@ -143,9 +144,38 @@ describe("AST Transforms", function () {
         var expectedCode = cleanupCode(getCodeFromOptions(function() {
             __env__.draw = function () {
                 var x = 5;
-                __env__.mouseClicked = function () {
+                var mouseClicked = function () {
                 };
                 var y = 10;
+            };
+        }));
+
+        expect(transformedCode).to.equal(expectedCode);
+    });
+    
+    it("should handle methods in local scopes with the same names event handlers", function() {
+        var transformedCode = transformCode(getCodeFromOptions(function() {
+            var draw = function() {
+                var mouseClicked = function() {
+                    
+                };
+                var test = function() {
+                    mouseClicked = function() {
+                        println('If this ever prints: Bad times!');
+                    };
+                };
+            };
+        }));
+
+        var expectedCode = cleanupCode(getCodeFromOptions(function() {
+            __env__.draw = function () {
+                var mouseClicked = function () {
+                };
+                var test = function () {
+                    mouseClicked = function () {
+                        println('If this ever prints: Bad times!');
+                    };
+                };
             };
         }));
 
