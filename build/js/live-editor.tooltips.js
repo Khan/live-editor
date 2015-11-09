@@ -2297,7 +2297,9 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         }).on("click", ".image", function () {
             $(this).parents(".mediapicker").find(".active").removeClass("active");
             $(this).addClass("active");
-            self.updateText($(this).attr("data-path"));
+            var path = $(this).attr("data-path");
+            self.updateText(path);
+            self.updateTooltip("\"" + path + "\"");
         }).on("mouseleave", function () {
             self.options.editor.clearSelection();
             self.options.editor.focus();
