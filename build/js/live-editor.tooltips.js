@@ -1483,6 +1483,11 @@ window.TooltipEngine = Backbone.View.extend({
             return false;
         }
         if (this.isWithinComment(params.pre)) {
+            // if selected text is within a comment, hide current tooltip (if any) and return
+            if (this.currentTooltip) {
+                this.currentTooltip.$el.hide();
+                this.currentTooltip = undefined;
+            }
             return false;
         }
         this.last = params;
@@ -1676,7 +1681,13 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
     },
 
     detector: function detector(event) {
-        if (!/(\b[^\d\W][\w]*)\s*\(\s*([^\)]*)$/.test(event.pre) || this.parent.options.record.playing) {
+        // TODO: update this to support auto-suggest tooltip for inner functions passed as params
+        // this currently only allows displaying of the tooltip for the outside function, except in cases
+        // where the inner function uses one of the other tooltips (e.g. image-picker)
+        if (!/(\b[^\d\W][\w]*)\s*(\({1}\s*\){1})*\s*([^\]]*)$/.test(event.pre) || this.parent.options.record.playing) {
+            return;
+        }
+        if (!this.isInParenthesis(RegExp.$3)) {
             return;
         }
         if (event.source && event.source.type === "changeCursor" && this.mouse) {
@@ -1684,7 +1695,7 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
             return;
         }
         var functionCall = RegExp.$1;
-        var paramsToCursor = RegExp.$2;
+        var paramsToCursor = RegExp.$3;
         var lookupParams = ScratchpadAutosuggest.lookupParamsSafeHTML(functionCall, paramsToCursor);
         if (lookupParams) {
             this.aceLocation = {
