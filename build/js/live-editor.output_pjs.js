@@ -972,12 +972,21 @@ var PJSCodeInjector = (function () {
          * that change state and must be re-run in order to put a Processing
          * context back into a particular state.  This array is optional and is
          * only used when injecting code into a running Processing instance.
+         * @param {Object} [options] Currently the only option supported is the
+         * `rewriteNewExpression` property which controls whether or not to rewrite
+         * `new` expressions as calls to PJSOutput.applyInstance.
          * @returns {String} The transformed code.
          */
         value: function transformCode(code, context, mutatingCalls) {
+            var options = arguments.length <= 3 || arguments[3] === undefined ? {} : arguments[3];
             var envName = this.envName;
             var enableLoopProtect = this.enableLoopProtect;
             var loopProtector = this.loopProtector;
+
+            var rewriteNewExpression = true;
+            if (options.hasOwnProperty("rewriteNewExpression")) {
+                rewriteNewExpression = options.rewriteNewExpression;
+            }
 
             context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
             context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
@@ -1023,9 +1032,10 @@ var PJSCodeInjector = (function () {
             // Program.assertEquals.
             astTransformPasses.push(ASTTransforms.rewriteAssertEquals);
 
-            // rewriteNewExpressions transforms 'NewExpression's into
-            //  'CallExpression's.
-            astTransformPasses.push(ASTTransforms.rewriteNewExpressions(envName, context));
+            // rewriteNewExpressions transforms NewExpressions into CallExpressions.
+            if (rewriteNewExpression) {
+                astTransformPasses.push(ASTTransforms.rewriteNewExpressions(envName, context));
+            }
 
             try {
                 walkAST(ast, null, astTransformPasses);
@@ -1066,7 +1076,10 @@ var PJSCodeInjector = (function () {
          * @returns {string}
          */
         value: function exportCode(code, imageDir, soundDir) {
-            var transformedCode = this.transformCode(code, this.processing);
+            var options = {
+                rewriteNewExpression: false
+            };
+            var transformedCode = this.transformCode(code, this.processing, null, options);
             var helperCode = "";
             var resources = PJSResourceCache.findResources(transformedCode);
 

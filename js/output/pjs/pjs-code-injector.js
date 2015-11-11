@@ -924,10 +924,17 @@ class PJSCodeInjector {
      * that change state and must be re-run in order to put a Processing
      * context back into a particular state.  This array is optional and is
      * only used when injecting code into a running Processing instance.
+     * @param {Object} [options] Currently the only option supported is the
+     * `rewriteNewExpression` property which controls whether or not to rewrite
+     * `new` expressions as calls to PJSOutput.applyInstance.
      * @returns {String} The transformed code.
      */
-    transformCode(code, context, mutatingCalls) {
+    transformCode(code, context, mutatingCalls, options = {}) {
         let {envName, enableLoopProtect, loopProtector} = this;
+        let rewriteNewExpression = true;
+        if (options.hasOwnProperty("rewriteNewExpression")) {
+            rewriteNewExpression = options.rewriteNewExpression;
+        }
 
         context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
@@ -980,9 +987,10 @@ class PJSCodeInjector {
         // Program.assertEquals.
         astTransformPasses.push(ASTTransforms.rewriteAssertEquals);
 
-        // rewriteNewExpressions transforms 'NewExpression's into
-        //  'CallExpression's.
-        astTransformPasses.push(ASTTransforms.rewriteNewExpressions(envName, context));
+        // rewriteNewExpressions transforms NewExpressions into CallExpressions.
+        if (rewriteNewExpression) {
+            astTransformPasses.push(ASTTransforms.rewriteNewExpressions(envName, context));
+        }
 
         try {
             walkAST(ast, null, astTransformPasses);
@@ -1022,7 +1030,11 @@ class PJSCodeInjector {
      * @returns {string}
      */
     exportCode(code, imageDir, soundDir) {
-        let transformedCode = this.transformCode(code, this.processing);
+        let options = {
+            rewriteNewExpression: false
+        };
+        let transformedCode = this.transformCode(
+            code, this.processing, null, options);
         let helperCode = "";
         let resources = PJSResourceCache.findResources(transformedCode);
 
