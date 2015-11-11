@@ -49,6 +49,8 @@ The tests are in the `/tests` folder. They use Mocha/Chai/Sinon. Gulp typically 
 
     node_modules/gulp/bin/gulp.js test
 
+[TravisCI](https://travis-ci.org/Khan/live-editor/) also runs those tests when new commits are made.
+
 Please add tests whenever possible for any change that you make or propose.
 
 ## How you can help
