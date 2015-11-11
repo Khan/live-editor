@@ -481,11 +481,12 @@
         ///////////////////////////////////////////////////////
 
         /**
-         * The differences are that this assertMatch doesn't support syntaxChecks
-         * (deemed unnecessary for webpage JS testing, and that the hint text is
+         * The difference is that the hint text is
          * interpreted differently.
          */
-        assertMatch: function(result, description, hint, image) {
+        assertMatch: function(result, description, hint, image, syntaxChecks) {
+            this.testContext._checkSyntaxErrors(syntaxChecks);
+
             var alternateMessage;
             var alsoMessage;
 
@@ -504,8 +505,6 @@
                 image: image
             });
         },
-
-
 
         /*
          * The difference here is that it tests against allScripts instead of userCode

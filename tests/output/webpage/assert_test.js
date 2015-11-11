@@ -1,5 +1,11 @@
 describe("Challenge Assertions - HTML", function() {
     var divTest = (function() {
+
+        var syntaxChecks = [{
+            re: /<p>\w*<h1>\w*<\/h1>\w*<\/p>/,
+            msg: "No h1 inside p!"
+        }];
+
         staticTest("Put a div in your page.", function() {
             var pattern = "#foo div";
             var result = htmlMatch(pattern);
@@ -9,7 +15,7 @@ describe("Challenge Assertions - HTML", function() {
                 }
             }
             var descrip = "Add a div element to your page. Put it inside the element with an id of 'foo'.";
-            assertMatch(result, descrip, pattern);
+            assertMatch(result, descrip, pattern, syntaxChecks);
         });
     }).toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
 
@@ -19,6 +25,21 @@ describe("Challenge Assertions - HTML", function() {
         validate: divTest,
         fromTests: true,
         reason: "Looks like you put the div in the wrong place! Be sure to put it inside the element with an id of 'foo'."
+    });
+
+    assertTest({
+        title: "Failing to complete any step",
+        code: "<span></span>",
+        validate: divTest,
+        fromTests: true
+    });
+
+    assertTest({
+        title: "Getting a syntax error",
+        code: "<p><h1>hi</h1></p>",
+        validate: divTest,
+        fromTests: true,
+        reason: "No h1 inside p!"
     });
 
     assertTest({
