@@ -87697,10 +87697,10 @@ ASTTransforms.rewriteContextVariables = function (envName, context) {
                     }
 
                     // Prefix identifiers that exist in the context object and
-                    // have not been defined in any scope or are one of the draw
-                    // loop functions.  Also, prefix any other identifers that
+                    // have not been defined in any scope.
+                    // Also, prefix any other identifers that
                     // exist at the global scope.
-                    if (node.name in context && scopeIndex === -1 || drawLoopMethods.includes(node.name) || scopeIndex === 0) {
+                    if (node.name in context && scopeIndex === -1 || scopeIndex === 0) {
                         return b.MemberExpression(b.Identifier(envName), b.Identifier(node.name));
                     }
                 }
@@ -87720,9 +87720,9 @@ ASTTransforms.rewriteContextVariables = function (envName, context) {
 
                     // Rewrite all function declarations, e.g.
                     // var foo = function () {} => __env__.foo = function () {}
-                    // that appear in the global scope unless it's one of the draw loop
-                    // methods.  In that case, always rewrite it.
-                    if (scopes.length === 1 || drawLoopMethods.includes(decl.id.name)) {
+                    // that appear in the global scope. Draw loop methods aren't
+                    // special, they should be treated in the exact same way.
+                    if (scopes.length === 1) {
                         if (["Program", "BlockStatement", "SwitchCase"].includes(parent.type)) {
                             return b.ExpressionStatement(b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init));
                         } else {
@@ -87778,18 +87778,14 @@ ASTTransforms.rewriteContextVariables = function (envName, context) {
                         // It should convert them to something like this:
                         // __env__.draw = function() {
                         //     var x = 5;
-                        //     __env__.mouseClicked = function () { ... };
+                        //     var mouseClicked = function () { ... };
                         //     var y = 10;
                         // };
 
                         return node.declarations.filter(function (decl) {
                             return decl.init !== null;
                         }).map(function (decl) {
-                            if (drawLoopMethods.includes(decl.id.name)) {
-                                return b.ExpressionStatement(b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init));
-                            } else {
-                                return b.VariableDeclaration([decl], node.kind);
-                            }
+                            return b.VariableDeclaration([decl], node.kind);
                         });
                     }
                 }
