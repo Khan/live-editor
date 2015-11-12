@@ -15,9 +15,17 @@ describe("Challenge Assertions - HTML", function() {
                 }
             }
             var descrip = "Add a div element to your page. Put it inside the element with an id of 'foo'.";
-            assertMatch(result, descrip, pattern, syntaxChecks);
+            assertMatch(result, descrip, pattern, null, syntaxChecks);
         });
     }).toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
+
+    assertTest({
+        title: "Getting a syntax error",
+        code: "<div id='foo'><div><p><h1>hi</h1></p></div></div>",
+        validate: divTest,
+        fromTests: false,
+        reason: "No h1 inside p!"
+    });
 
     assertTest({
         title: "Checking a div in the wrong place",
@@ -32,14 +40,6 @@ describe("Challenge Assertions - HTML", function() {
         code: "<span></span>",
         validate: divTest,
         fromTests: true
-    });
-
-    assertTest({
-        title: "Getting a syntax error",
-        code: "<p><h1>hi</h1></p>",
-        validate: divTest,
-        fromTests: true,
-        reason: "No h1 inside p!"
     });
 
     assertTest({
