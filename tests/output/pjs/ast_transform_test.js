@@ -259,6 +259,32 @@ describe("AST Transforms", function () {
             __env__.myInstance = __env__.PJSOutput.applyInstance(__env__.Obj, 'Obj')(1);
         }));
     });
+
+    it("should not prefix function parameters when substituting 'NewExpression's with 'CallExpression's", function() {
+        var transformedCode = transformCode(getCodeFromOptions(function() {
+            var myObj = function () {
+
+            };
+
+            var makeObj = function (obj) {
+                return new obj();
+            };
+
+            var myInstance = makeObj(myObj);
+        }));
+
+        var expectedCode = cleanupCode(getCodeFromOptions(function() {
+            __env__.myObj = function () {
+
+            };
+
+            __env__.makeObj = function (obj) {
+                return __env__.PJSOutput.applyInstance(obj, 'obj')();
+            };
+
+            __env__.myInstance = __env__.makeObj(__env__.myObj);
+        }));
+    });
 });
 
 describe("AST Transforms for exporting", function() {

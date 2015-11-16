@@ -304,10 +304,7 @@ ASTTransforms.rewriteNewExpressions = function(envName) {
                             b.Identifier("applyInstance")
                         ),
                         [
-                            b.MemberExpression(
-                                b.Identifier(envName),
-                                b.Identifier(node.callee.name)
-                            ),
+                            node.callee,
                             b.Literal(node.callee.name)
                         ]
                     ),
