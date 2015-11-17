@@ -87849,7 +87849,7 @@ ASTTransforms.rewriteNewExpressions = function (envName) {
     return {
         leave: function leave(node, path) {
             if (node.type === "NewExpression") {
-                return b.CallExpression(b.CallExpression(b.MemberExpression(b.MemberExpression(b.Identifier(envName), b.Identifier("PJSOutput")), b.Identifier("applyInstance")), [b.MemberExpression(b.Identifier(envName), b.Identifier(node.callee.name)), b.Literal(node.callee.name)]), node.arguments);
+                return b.CallExpression(b.CallExpression(b.MemberExpression(b.MemberExpression(b.Identifier(envName), b.Identifier("PJSOutput")), b.Identifier("applyInstance")), [node.callee, b.Literal(node.callee.name)]), node.arguments);
             }
         }
     };
