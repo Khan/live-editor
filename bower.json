@@ -18,7 +18,7 @@
   "dependencies": {
     "jquery": "2.1.1",
     "underscore": "1.4.4",
-    "ace-builds": "1.1.4",
+    "ace-builds": "1.2.0",
     "soundmanager": "V2.97a.20140901",
     "backbone": "1.0.0",
     "jquery-ui": "1.10.1",
