@@ -163,6 +163,11 @@ window.TooltipEngine = Backbone.View.extend({
             return false;
         }
         if (this.isWithinComment(params.pre)){
+            // if selected text is within a comment, hide current tooltip (if any) and return
+            if (this.currentTooltip) {
+                this.currentTooltip.$el.hide();
+                this.currentTooltip = undefined;
+            }
             return false;
         }
         this.last = params;
