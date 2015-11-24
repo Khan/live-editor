@@ -392,7 +392,7 @@ window.AceEditor = Backbone.View.extend({
         if (_text != null) {
             this.editor.getSession().setValue(_text);
         } else {
-            return this.editor.getSession().getValue().replace(/\r/g, "\n");
+            return this.editor.getSession().getValue().replace(/\r\n/g, "\n");
         }
 
         return this;
