@@ -78622,7 +78622,8 @@ var warnings = {
 	W101: i18n._("Line is too long."),
 	W102: i18n._("Trailing whitespace."),
 	W103: i18n._("The '{a}' property is deprecated."),
-	W104: i18n._("'{a}' is only available in JavaScript 1.7."),
+	W104: i18n._("'{a}' is only available in ES6 which is not supported by " + 
+        "this environment."),
 	W105: i18n._("Unexpected {a} in '{b}'."),
 	W106: i18n._("Identifier '{a}' is not in camel case."),
 	W107: i18n._("Script URL."),
@@ -78637,7 +78638,8 @@ var warnings = {
 	W117: i18n._("\"{a}\" is not defined. Make sure you're spelling it correctly " +
 		"and that you declared it."),
 	W118: i18n._("'{a}' is only available in Mozilla JavaScript extensions (use moz option)."),
-	W119: i18n._("'{a}' is only available in ES6 (use esnext option)."),
+	W119: i18n._("'{a}' is only available in ES6 which is not supported by " + 
+        "this environment."),
 	W120: i18n._("You might be leaking a variable ({a}) here."),
 	W121: i18n._("Extending prototype of native object: '{a}'."),
 	W122: i18n._("Invalid typeof value '{a}'"),
