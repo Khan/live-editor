@@ -277,6 +277,10 @@ var PJSCodeInjector = (function () {
             // contain the string "return" so it fails.
             safeCalls.color = true;
 
+            // arc fails the test because it calls convertToRadians,
+            // but that doesn't produce a side effect
+            safeCalls.arc = true;
+
             // It doesn't affect the main Processing instance.  It fails the
             // above test because it calls "new Processing();".
             safeCalls.createGraphics = true;
