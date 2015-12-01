@@ -576,6 +576,135 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
+    /**
+     * @param resultIndex: The index of the result to check
+     * @param templateDBOrCount: Either a template DB to match rows against
+     *  or an integer of the amount to match against
+     */
+    matchResultRowCount: function matchResultRowCount(resultIndex, templateDBOrCount) {
+        if (this.errors.length) {
+            return { success: false };
+        }
+
+        var dbInfo = this.userCode;
+        var results = dbInfo.results;
+
+        if (results.length < resultIndex + 1) {
+            return { success: false };
+        }
+        if (templateDBOrCount.results && !templateDBOrCount.results[resultIndex]) {
+            return { success: false };
+        }
+
+        var res = results[resultIndex];
+        var targetCount;
+        if (templateDBOrCount.results) {
+            targetCount = templateDBOrCount.results[resultIndex].values.length;
+        } else {
+            targetCount = templateDBOrCount;
+        }
+
+        if (res.values.length !== targetCount) {
+            return { success: false };
+        }
+        return { success: true };
+    },
+
+    /**
+     * @param resultIndex: The index of the result to check
+     * @param templateDBOrCount: Either a template DB to match columns against
+     *  or an integer of the amount to match against
+     */
+    matchResultColumnCount: function matchResultColumnCount(resultIndex, templateDBOrCount) {
+        if (this.errors.length) {
+            return { success: false };
+        }
+
+        var dbInfo = this.userCode;
+        var results = dbInfo.results;
+
+        if (results.length < resultIndex + 1) {
+            return { success: false };
+        }
+        if (templateDBOrCount.results && !templateDBOrCount.results[resultIndex]) {
+            return { success: false };
+        }
+
+        var res = results[resultIndex];
+        var targetCount;
+        if (templateDBOrCount.results) {
+            targetCount = templateDBOrCount.results[resultIndex].columns.length;
+        } else {
+            targetCount = templateDBOrCount;
+        }
+
+        if (res.columns.length !== targetCount) {
+            return { success: false };
+        }
+        return { success: true };
+    },
+
+    /**
+     * @param resultIndex: The index of the result to check
+     * @param templateDB: The templateDB to match row values against
+     */
+    matchResultRowValues: function matchResultRowValues(resultIndex, templateDB) {
+        if (this.errors.length) {
+            return { success: false };
+        }
+
+        var dbInfo = this.userCode;
+        var results = dbInfo.results;
+
+        if (results.length < resultIndex + 1) {
+            return { success: false };
+        }
+        if (templateDB.results && !templateDB.results[resultIndex]) {
+            return { success: false };
+        }
+        var result = results[resultIndex];
+        var templateResult = templateDB.results[resultIndex];
+        for (var i = 0; i < result.values.length; i++) {
+            if (!_.isEqual(result.values[i], templateResult.values[i])) {
+                return { success: false };
+            }
+        }
+        return { success: true };
+    },
+
+    /**
+     * @param resultIndex: The index of the result to check
+     * @param templateDB: The templateDB to match column names against
+     */
+    matchResultColumnNames: function matchResultColumnNames(resultIndex, templateDB) {
+        // If there were errors from linting, don't even try to match it
+        if (this.errors.length) {
+            return { success: false };
+        }
+
+        var dbInfo = this.userCode;
+        var results = dbInfo.results;
+        var templateResults = templateDB.results;
+
+        if (results.length < templateResults.length) {
+            return { success: false };
+        }
+
+        var result = results[resultIndex];
+        var templateResult = templateResults[resultIndex];
+        if (result.columns.length !== templateResult.columns.length) {
+            return { success: false };
+        }
+        for (var c = 0; c < result.columns.length; c++) {
+            var col = result.columns[c].toLowerCase().replace(/ /g, "");
+            var templateCol = templateResult.columns[c].toLowerCase().replace(/ /g, "");
+            if (col !== templateCol) {
+                return { success: false };
+            }
+        }
+        return { success: true };
+    },
+
     matchResultColumns: function matchResultColumns(templateDBInfo, numResults) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
