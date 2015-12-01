@@ -48,7 +48,15 @@ If you have an issue with "this.merge" is undefined, then `rm -rf node_modules/g
 The tests are in the `/tests` folder. They use Mocha/Chai/Sinon. Gulp typically runs the tests when relevant files change, but you can explicitly run the tests with:
 
     node_modules/gulp/bin/gulp.js test
+    
+You can also run single test suites at a time - see gulpfile.js for what suites are available:
 
+    gulp test_output_pjs_assert
+
+You can run the tests in the browser runner by opening the relevant webpage:
+    
+    open tests/output/sql/index.html
+    
 [TravisCI](https://travis-ci.org/Khan/live-editor/) also runs those tests when new commits are made.
 
 Please add tests whenever possible for any change that you make or propose.
