@@ -1432,7 +1432,10 @@ window.TooltipEngine = Backbone.View.extend({
 
         this.requestTooltipDefaultCallback = (function () {
             //Fallback to hiding
-            ScratchpadAutosuggest.enableLiveCompletion(this.enabled);
+            // We are disabling autosuggest for now until issue #408 is fixed
+            // We may also consider doing A/B tests with partial lists of
+            // commands in the autocomplete to new programmers
+            ScratchpadAutosuggest.enableLiveCompletion(false);
             if (this.currentTooltip && this.currentTooltip.$el) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
