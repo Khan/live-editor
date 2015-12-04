@@ -725,7 +725,7 @@ SQLTester.prototype.testMethods = {
         for (var i = 0; i < numResults; i++) {
             var res = results[i];
             var templateRes = templateResults[i];
-            if (res.columns.length !== templateRes.columns.length) {
+            if (!templateRes || res.columns.length !== templateRes.columns.length) {
                 return { success: false };
             }
             for (var c = 0; c < res.columns.length; c++) {
@@ -761,8 +761,7 @@ SQLTester.prototype.testMethods = {
         for (var i = 0; i < numResults; i++) {
             var res = results[i];
             var templateRes = templateResults[i];
-
-            if (res.values.length !== templateRes.values.length) {
+            if (!templateRes || res.values.length !== templateRes.values.length) {
                 return { success: false };
             }
             if (exactValues) {
