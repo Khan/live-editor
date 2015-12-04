@@ -147,4 +147,37 @@ describe("Linting", function() {
         "CREATE TABLE characters (name TEXT);" +
         "SELECT name WHERE name = 3;",
         ["Are you missing a FROM clause?"]);
+
+    // This one results in generic syntax error message
+    failingTest("Testing for bad CREATE",
+        "CREATE TABLE books(id INTEGER PRIMARY KEY name TEXT);",
+        ["There's a syntax error near "]);
+    // This one results in a more specific one
+    failingTest("Testing for bad CREATE",
+        "CREATE books(id INTEGER PRIMARY KEY name TEXT);",
+        ["You may be missing what to create. For example, CREATE TABLE..."]);
+
+    // Test that a space in a table name generates an error
+    failingTest("Testing for bad table name",
+        "CREATE TABLE favorite books (name TEXT);" +
+        "SELECT name WHERE name = 3;",
+        ["You can't have a space in your table name."]);
+
+    // Test that multiple statements without semi-colons generates an error
+    failingTest("Testing for missing semi-colon",
+        "CREATE TABLE books (name TEXT)" +
+        "INSERT INTO books VALUES (1, 'book a', 100)" + 
+        "INSERT INTO books VALUES (2, 'book b', 110)" + 
+        "INSERT INTO books VALUES (3, 'book c', 1)",
+        ["Do you have a semi-colon after each statement?"]);
+    failingTest("Testing for missing semi-colon",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY, bookname TEXT, ratingoutof5 INTEGER);\n" +
+        "INSERT INTO books VALUES (1, 'Harry Potter', 5)\n" + 
+        "INSERT INTO books VALUES (2, 'Percy Jackson and the Olympians', 5)\n" + 
+        "INSERT INTO books VALUES (3, 'The Hunger Games', 5)\n",
+        ["Do you have a semi-colon after each statement?"]);
+    failingTest("Testing for missing semi-colon",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY, name TEXT, rating INTEGER)" + 
+        "INSERT INTO books VALUES (1 , 'Rumo', 5);",
+        ["Do you have a semi-colon after each statement?"]);
 });

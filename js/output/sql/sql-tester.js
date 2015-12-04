@@ -273,7 +273,9 @@ SQLTester.prototype.testMethods = {
     },
 
     /*
-     * Returns the result of matching a structure against the user's SQL
+     *
+     * @return {success} if the user DB has at least as many tables as
+     *  the comparison DB
      */
     matchTableCount: function(templateDBInfo) {
         // If there were errors from linting, don't even try to match it
@@ -291,7 +293,12 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
-    matchTableRowCount: function(templateDBInfo) {
+    /**
+     * @param templateDBOrCount: Either a template DB to match rows against
+     *  or an integer of the amount to match against
+     * @return {success} if user table contains same # of rows
+     */
+    matchTableRowCount: function(templateDBOrCount) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
             return {success: false};
@@ -299,22 +306,76 @@ SQLTester.prototype.testMethods = {
 
         var dbInfo = this.userCode;
         var tables = dbInfo.tables;
-        var templateTables = templateDBInfo.tables;
 
-        // Make sure we have similar table info
-        for (var i = 0; i < tables.length; i++) {
-            var table = tables[i];
-            var templateTable = templateTables[i];
-            // This checks the actual row count of the whole table which
-            // may be different from the result set rows.
-            if (table.rowCount !== templateTable.rowCount) {
-                return { success: false };
+        if (templateDBOrCount.tables) {
+            var templateTables = templateDBOrCount.tables;
+            // Make sure we have similar table info
+            for (var i = 0; i < tables.length; i++) {
+                var table = tables[i];
+                var templateTable = templateTables[i];
+                // This checks the actual row count of the whole table which
+                // may be different from the result set rows.
+                if (templateTable && table.rowCount !== templateTable.rowCount) {
+                    return { success: false };
+                }
+            }
+        } else {
+            for (var i = 0; i < tables.length; i++) {
+                var table = tables[i];
+                if (table.rowCount !== templateDBOrCount) {
+                    return { success: false };
+                }
             }
         }
         return { success: true };
     },
 
-    matchTableColumnCount: function(templateDBInfo) {
+    /**
+     * @param templateDBOrCount: Either a template DB to match rows against
+     *  or an integer of the amount to match against
+     * @return {success} if user table contains same # of columns
+     */
+    matchTableColumnCount: function(templateDBOrCount) {
+        // If there were errors from linting, don't even try to match it
+        if (this.errors.length) {
+            return {success: false};
+        }
+
+        var dbInfo = this.userCode;
+        var tables = dbInfo.tables;
+
+        if (templateDBOrCount.tables) {
+            var templateTables = templateDBOrCount.tables;
+
+            for (var i = 0; i < tables.length; i++) {
+                var table = tables[i];
+                var templateTable = templateTables[i];
+
+                if (templateTable &&
+                    table.columns.length !== templateTable.columns.length) {
+                    return { success: false };
+                }
+            }
+        } else {
+            for (var i = 0; i < tables.length; i++) {
+                var table = tables[i];
+                if (table.columns.length !== templateDBOrCount) {
+                    return { success: false };
+                }
+            }
+        }
+        
+        return { success: true };
+    },
+
+    /**
+     * @param templateDBOrCount: Either a template DB to match rows against
+     *  or an integer of the amount to match against
+     * @return {success} if user table contains same column names
+     *   Note - it could also contain other names,
+     *   use matchTableColumnCount if you need to be exact.
+     */
+    matchTableColumnNames: function(templateDBInfo) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
             return {success: false};
@@ -324,11 +385,16 @@ SQLTester.prototype.testMethods = {
         var tables = dbInfo.tables;
         var templateTables = templateDBInfo.tables;
 
+        if (!tables.length) {
+            return { success: false };
+        }
         for (var i = 0; i < tables.length; i++) {
             var table = tables[i];
             var templateTable = templateTables[i];
-            if (table.columns.length !== templateTable.columns.length) {
-                return { success: false };
+            for (var c = 0; c < templateTable.columns.length; c++) {
+                if (!table.columns.includes(templateTable.columns[c])) {
+                    return { success: false };
+                }
             }
         }
         return { success: true };

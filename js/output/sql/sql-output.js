@@ -65,36 +65,51 @@ window.SQLOutput = Backbone.View.extend({
         statement = statement || "";
         statement = statement.toUpperCase();
 
+        var isSyntaxError = errorMessage.indexOf(": syntax error") > -1;
+        if (isSyntaxError) {
+            errorMessage = i18n._("There's a syntax error " +
+                errorMessage.split(":")[0]);
+        }
+
         // Possible SELECT with missing FROM
         if (errorMessage.indexOf("no such column:") !== -1 &&
                 statement.indexOf("SELECT") !== -1 &&
                 statement.indexOf("FROM") === -1) {
             errorMessage += ". " + i18n._("Are you missing a FROM clause?");
         // Possible INSERT with missing INTO
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
+        } else if (isSyntaxError &&
                 statement.indexOf("INSERT") !== -1 &&
                 statement.indexOf("VALUES") !== -1 &&
                 statement.indexOf("INTO") === -1) {
             errorMessage += ". " + i18n._("Are you missing the INTO keyword?");
         // Possible INSERT INTO with missing VALUES
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
+        } else if (isSyntaxError &&
                 statement.indexOf("INSERT") !== -1 &&
                 statement.indexOf("INTO") !== -1 &&
                 statement.indexOf("VALUES") === -1) {
             errorMessage += ". " +
                 i18n._("Are you missing the VALUES keyword?");
+        } else if (isSyntaxError &&
+                statement.search(/CREATE TABLE \w+\s\w+/) > -1) {
+            errorMessage += ". " +
+                i18n._("You can't have a space in your table name.");
+        // Multiple statements without semi-colons separating them
+        } else if (isSyntaxError &&
+                statement.search(/\)\n*\w+/) > -1) {
+            errorMessage += ". " +
+                i18n._("Do you have a semi-colon after each statement?");
         // Possible CREATE with missing what to create
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
-                statement.indexOf("CREATE") !== -1 && (
+        } else if (isSyntaxError &&
+                statement.indexOf("CREATE") !== -1 && 
+                statement.indexOf("TABLE") === -1 && (
                     statement.indexOf("INDEX") === -1 ||
-                    statement.indexOf("TABLE") === -1 ||
                     statement.indexOf("TRIGGER") === -1 ||
                     statement.indexOf("VIEW") === -1)) {
             errorMessage += ". " +
                 i18n._("You may be missing what to create. For " +
-                    "example CREATE TABLE...");
+                    "example, CREATE TABLE...");
         // Possible UPDATE without SET
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
+        } else if (isSyntaxError &&
                 statement.indexOf("UPDATE") !== -1 &&
                 statement.indexOf("SET") === -1) {
             errorMessage += ". " +
