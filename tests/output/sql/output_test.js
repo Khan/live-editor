@@ -148,6 +148,16 @@ describe("Linting", function() {
         "SELECT name WHERE name = 3;",
         ["Are you missing a FROM clause?"]);
 
+    // Test for common misspelling
+    failingTest("Testing for misspelling INTEGER",
+        "CREATE TABLE books(id INTERGER PRIMARY KEY, name TEXT);",
+        ["Is INTEGER spelled correctly?"]);
+
+
+    failingTest("Testing for extra comma at end",
+        "CREATE TABLE books(id INTEGER PRIMARY KEY, name TEXT, );",
+        ["Do you have an extra comma?"]);
+
     // This one results in generic syntax error message
     failingTest("Testing for bad CREATE",
         "CREATE TABLE books(id INTEGER PRIMARY KEY name TEXT);",
@@ -162,6 +172,26 @@ describe("Linting", function() {
         "CREATE TABLE favorite books (name TEXT);" +
         "SELECT name WHERE name = 3;",
         ["You can't have a space in your table name."]);
+    // That that a missing table name generates an error
+    failingTest("Testing for missing table name",
+        "CREATE TABLE (name TEXT);",
+        ["Are you missing the table name?"]);
+
+    // Tests for extra commas in column types
+    failingTest("Testing for extra commas in column types",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY,name,TEXT,rating INTEGER);",
+        ["Do you have an extra comma between the name and type?"]);
+    failingTest("Testing for extra commas in column types",
+        "CREATE TABLE booklist (id, INTEGER PRIMARY KEY, name TEXT, rating INTEGER);",
+        ["Do you have an extra comma between the name and type?"]);
+
+    // Tests for missing quotes
+    failingTest("Testing for missing quotes",
+        "INSERT INTO FavBooks VALUES (1, Beautiful Creatures, 10);",
+        ["Are you missing quotes around text values?"]);
+    failingTest("Testing for missing quotes",
+        "insert into Books VALUES(1,\"Harry Potter\",5 star); ",
+        ["Are you missing quotes around text values?"]);
 
     // Test that multiple statements without semi-colons generates an error
     failingTest("Testing for missing semi-colon",
@@ -179,5 +209,13 @@ describe("Linting", function() {
     failingTest("Testing for missing semi-colon",
         "CREATE TABLE books (id INTEGER PRIMARY KEY, name TEXT, rating INTEGER)" + 
         "INSERT INTO books VALUES (1 , 'Rumo', 5);",
+        ["Do you have a semi-colon after each statement?"]);
+    failingTest("Testing for missing semi-colon",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY, name TEXT, rating INTEGER)\n" + 
+        "     INSERT INTO books VALUES (1 , 'Rumo', 5);",
+        ["Do you have a semi-colon after each statement?"]);
+    failingTest("Testing for missing semi-colon",
+        "SELECT * FROM movies\n" + 
+        " SELECT * FROM movies WHERE release_year > 1999;",
         ["Do you have a semi-colon after each statement?"]);
 });

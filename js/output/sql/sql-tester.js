@@ -390,9 +390,12 @@ SQLTester.prototype.testMethods = {
         }
         for (var i = 0; i < tables.length; i++) {
             var table = tables[i];
+            var tableColumns = table.columns.map(function(obj) {
+                return obj.name;
+            });
             var templateTable = templateTables[i];
             for (var c = 0; c < templateTable.columns.length; c++) {
-                if (!table.columns.includes(templateTable.columns[c])) {
+                if (!tableColumns.includes(templateTable.columns[c].name)) {
                     return { success: false };
                 }
             }

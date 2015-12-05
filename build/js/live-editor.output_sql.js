@@ -615,9 +615,12 @@ SQLTester.prototype.testMethods = {
         }
         for (var i = 0; i < tables.length; i++) {
             var table = tables[i];
+            var tableColumns = table.columns.map(function (obj) {
+                return obj.name;
+            });
             var templateTable = templateTables[i];
             for (var c = 0; c < templateTable.columns.length; c++) {
-                if (!table.columns.includes(templateTable.columns[c])) {
+                if (!tableColumns.includes(templateTable.columns[c].name)) {
                     return { success: false };
                 }
             }
@@ -946,10 +949,16 @@ window.SQLOutput = Backbone.View.extend({
             // Possible INSERT INTO with missing VALUES
         } else if (isSyntaxError && statement.indexOf("INSERT") !== -1 && statement.indexOf("INTO") !== -1 && statement.indexOf("VALUES") === -1) {
             errorMessage += ". " + i18n._("Are you missing the VALUES keyword?");
+        } else if (statement.indexOf("INTERGER") !== -1) {
+            errorMessage += ". " + i18n._(" Is INTEGER spelled correctly?");
+        } else if (statement.search(/,\s*\)/) > -1) {
+            errorMessage += ". " + i18n._(" Do you have an extra comma?");
         } else if (isSyntaxError && statement.search(/CREATE TABLE \w+\s\w+/) > -1) {
             errorMessage += ". " + i18n._("You can't have a space in your table name.");
+        } else if (isSyntaxError && statement.indexOf("CREATE TABLE (") > -1) {
+            errorMessage += ". " + i18n._("Are you missing the table name?");
             // Multiple statements without semi-colons separating them
-        } else if (isSyntaxError && statement.search(/\)\n*\w+/) > -1) {
+        } else if (isSyntaxError && statement.search(/\)\n*\s*\w+/) > -1 || statement.search(/\n+\s*SELECT/) > -1) {
             errorMessage += ". " + i18n._("Do you have a semi-colon after each statement?");
             // Possible CREATE with missing what to create
         } else if (isSyntaxError && statement.indexOf("CREATE") !== -1 && statement.indexOf("TABLE") === -1 && (statement.indexOf("INDEX") === -1 || statement.indexOf("TRIGGER") === -1 || statement.indexOf("VIEW") === -1)) {
@@ -957,6 +966,10 @@ window.SQLOutput = Backbone.View.extend({
             // Possible UPDATE without SET
         } else if (isSyntaxError && statement.indexOf("UPDATE") !== -1 && statement.indexOf("SET") === -1) {
             errorMessage += ". " + i18n._("Are you missing the SET keyword?");
+        } else if (isSyntaxError && statement.search(/,\d*\s*[a-zA-Z]+/) > -1) {
+            errorMessage += ". " + i18n._("Are you missing quotes around text values?");
+        } else if (errorMessage.indexOf("column types") > -1 && statement.search(/(\w+\s*,\s*((TEXT)|(INTEGER))+)/) > -1) {
+            errorMessage += ". " + i18n._("Do you have an extra comma between the name and type?");
         }
         return errorMessage;
     },

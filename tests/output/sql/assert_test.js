@@ -24,10 +24,10 @@ describe("Challenge Assertions - SQL Tables", function() {
                 result = fail("You only have 1 column, add 2 more!");
             } else if (!passes(matchTableColumnCount(templateDB))) {
                 result = fail("Not enough columns!");
-            }  else if (!passes(matchTableColumnNames(templateDB))) {
+            } else if (!passes(matchTableColumnNames(templateDB))) {
                 result = fail("Not the right column names!");
             } else {
-                result = pass();
+                result = matchTableColumnNames(templateDB)
             }
 
             assertMatch(result, description, "INSERT INTO _ VALUES (...);");
