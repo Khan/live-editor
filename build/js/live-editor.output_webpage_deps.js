@@ -11887,6 +11887,10 @@ window.walkAST = function (node, path, visitors) {
  * @constructor
  */
 window.LoopProtector = function (callback, timeouts, reportLocation) {
+    // protectorKey is used to check if a call to KAInfiniteLoopSetTimeout is
+    // by our own code, or if the call is just a users code trying to mess with
+    // things.
+    this.protectorKey = Math.random();
     this.callback = callback || function () {};
     this.timeout = 200;
     this.branchStartTime = 0;
@@ -11982,9 +11986,18 @@ window.LoopProtector.prototype = {
         }
     },
 
-    _KAInfiniteLoopSetTimeout: function _KAInfiniteLoopSetTimeout(timeout) {
-        this.timeout = timeout;
-        this.branchStartTime = 0;
+    _KAInfiniteLoopSetTimeout: function _KAInfiniteLoopSetTimeout(timeout, protectorKey) {
+        // Make sure that the key we've been provided matches the one on this
+        // LoopProtector
+        if (protectorKey === this.protectorKey) {
+            this.timeout = timeout;
+            this.branchStartTime = 0;
+        } else {
+            // Let the user know that what they're trying to do is a bad idea
+            throw {
+                html: "Messing with the loop protector is dangerous!"
+            };
+        }
     },
 
     riskyStatements: ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration"],
@@ -12022,7 +12035,7 @@ window.LoopProtector.prototype = {
             // the timeout to mainTimeout just to reset the value when the program
             // is re-run.
             if (this.mainTimeout) {
-                node.body.unshift(b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopSetTimeout"), [b.Literal(this.mainTimeout)])));
+                node.body.unshift(b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopSetTimeout"), [b.Literal(this.mainTimeout), b.Literal(this.protectorKey)])));
             }
 
             // Any asynchronous calls such as mouseClicked() or calls to draw()
@@ -12030,7 +12043,7 @@ window.LoopProtector.prototype = {
             // responsive as the app is running so we call KAInfiniteLoopSetTimeout
             // at the end of main and set timeout to be asyncTimeout
             if (this.asyncTimeout) {
-                node.body.push(b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopSetTimeout"), [b.Literal(this.asyncTimeout)])));
+                node.body.push(b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopSetTimeout"), [b.Literal(this.asyncTimeout), b.Literal(this.protectorKey)])));
             }
         }
     },
