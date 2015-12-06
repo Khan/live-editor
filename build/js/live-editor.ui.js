@@ -1209,9 +1209,7 @@ window.LiveEditor = Backbone.View.extend({
             // This makes sure that we pop up the error
             // if the user changed the cursor to a new line
             setTimeout(function () {
-                if (self.errorState === "thinking") {
-                    self.maybeShowErrors();
-                }
+                self.maybeShowErrors();
             }, 0);
         };
         this.editor.once("changeCursor", cursorDirty);
@@ -1446,7 +1444,7 @@ window.LiveEditor = Backbone.View.extend({
                     // Clear flashblocker divs
                     self.$el.find("#sm2-container div").remove();
                     soundManager.reboot();
-                }, 3000);
+                }, 6000);
             }
         });
         soundManager.beginDelayedInit();
@@ -2109,6 +2107,8 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     maybeShowErrors: function maybeShowErrors() {
+        if (!this.hasErrors()) return;
+
         var currentRow = this.editor.getCursor().row;
         var onlyErrorsOnThisLine = this.errorCursorRow === null || this.errorCursorRow === currentRow;
         if (this.errorCursorRow === null) {
@@ -2145,6 +2145,9 @@ window.LiveEditor = Backbone.View.extend({
     //             typer is currently typing)
     // - error (there is an error that we want to display prominently)
     errorState: "",
+    hasErrors: function hasErrors() {
+        return this.tipbar.errors.length;
+    },
     setErrors: function setErrors(errors) {
         this.tipbar.setErrors(errors);
     },
