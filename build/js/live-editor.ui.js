@@ -1206,6 +1206,13 @@ window.LiveEditor = Backbone.View.extend({
                     self.editor.once("changeCursor", cursorDirty);
                 }, 0);
             }
+            // This makes sure that we pop up the error
+            // if the user changed the cursor to a new line
+            setTimeout(function () {
+                if (self.errorState === "thinking") {
+                    self.maybeShowErrors();
+                }
+            }, 0);
         };
         this.editor.once("changeCursor", cursorDirty);
 
@@ -2060,8 +2067,6 @@ window.LiveEditor = Backbone.View.extend({
         //   you the error so you have a chance to finish what you're doing.
         //  -if it is not, we show the error right away.
 
-        var currentRow = this.editor.getCursor().row;
-
         // Reset the timer
         window.clearInterval(this.errorTimeout);
 
@@ -2092,32 +2097,7 @@ window.LiveEditor = Backbone.View.extend({
             // Set the errors
             this.setErrors(errors);
 
-            var onlyErrorsOnThisLine = this.errorCursorRow === null || this.errorCursorRow === currentRow;
-            if (this.errorCursorRow === null) {
-                this.errorCursorRow = currentRow;
-            }
-
-            // If we were already planning to show the error, or if there are
-            // errors on more than the current line, or we have errors and the
-            // program was just loaded (i.e. this.showError is null) then we
-            // should show the error now. Otherwise we'll delay showing the
-            // error message to give them time to type.
-            this.showError = this.showError || !onlyErrorsOnThisLine || this.showError === null;
-
-            if (this.showError) {
-                // We've already timed out or moved to another line, so show
-                // the error.
-                this.setErrorState();
-            } else if (onlyErrorsOnThisLine) {
-                // There are new errors caused by typing on this line, so let's
-                // give the typer time to finish what they were writing. We'll
-                // show the tipbar if a full minute has gone by without typing.
-                this.setThinkingState();
-
-                this.errorTimeout = setTimeout((function () {
-                    this.setErrorState();
-                }).bind(this), 60000);
-            }
+            this.maybeShowErrors();
         } else {
             // If there are no errors, remove the gutter decorations that marked
             // the errors and reset our state.
@@ -2125,6 +2105,36 @@ window.LiveEditor = Backbone.View.extend({
             this.setHappyState();
             this.showError = false;
             this.errorCursorRow = null;
+        }
+    },
+
+    maybeShowErrors: function maybeShowErrors() {
+        var currentRow = this.editor.getCursor().row;
+        var onlyErrorsOnThisLine = this.errorCursorRow === null || this.errorCursorRow === currentRow;
+        if (this.errorCursorRow === null) {
+            this.errorCursorRow = currentRow;
+        }
+
+        // If we were already planning to show the error, or if there are
+        // errors on more than the current line, or we have errors and the
+        // program was just loaded (i.e. this.showError is null) then we
+        // should show the error now. Otherwise we'll delay showing the
+        // error message to give them time to type.
+        this.showError = this.showError || !onlyErrorsOnThisLine || this.showError === null;
+
+        if (this.showError) {
+            // We've already timed out or moved to another line, so show
+            // the error.
+            this.setErrorState();
+        } else if (onlyErrorsOnThisLine) {
+            // There are new errors caused by typing on this line, so let's
+            // give the typer time to finish what they were writing. We'll
+            // show the tipbar if 30 seconds has gone by without typing.
+            this.setThinkingState();
+
+            this.errorTimeout = setTimeout((function () {
+                this.setErrorState();
+            }).bind(this), 30000);
         }
     },
 
