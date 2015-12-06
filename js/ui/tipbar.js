@@ -65,6 +65,8 @@ window.TipBar = Backbone.View.extend({
     },
 
     update: function(show) {
+        if (!this.errors.length) return;
+
         var errors = this.errors;
         var pos = errors[this.pos] == null ? 0 : this.pos;
 

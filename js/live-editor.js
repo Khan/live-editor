@@ -1219,6 +1219,7 @@ window.LiveEditor = Backbone.View.extend({
             // If there are no errors, remove the gutter decorations that marked
             // the errors and reset our state.
             this.removeGutterDecorations();
+            this.setErrors([]);
             this.setHappyState();
             this.showError = false;
             this.errorCursorRow = null;
@@ -1227,7 +1228,7 @@ window.LiveEditor = Backbone.View.extend({
 
     maybeShowErrors: function() {
         if (!this.hasErrors()) return;
-        
+
         var currentRow = this.editor.getCursor().row;
         var onlyErrorsOnThisLine = this.errorCursorRow === null ||
                                    this.errorCursorRow === currentRow;
@@ -1295,12 +1296,10 @@ window.LiveEditor = Backbone.View.extend({
         }
     },
     setHappyState: function() {
-        if (this.errorState !== "happy") {
-            this.errorState = "happy";
-            this.tipbar.hide();
-            this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
-            this.$el.find(this.dom.ERROR_BUDDY_HAPPY).show();
-        }
+        this.errorState = "happy";
+        this.tipbar.hide();
+        this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
+        this.$el.find(this.dom.ERROR_BUDDY_HAPPY).show();
     },
 
     // Extract the origin from the embedded frame location

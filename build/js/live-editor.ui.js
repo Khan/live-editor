@@ -147,6 +147,8 @@ window.TipBar = Backbone.View.extend({
     },
 
     update: function update(show) {
+        if (!this.errors.length) return;
+
         var errors = this.errors;
         var pos = errors[this.pos] == null ? 0 : this.pos;
 
@@ -2100,6 +2102,7 @@ window.LiveEditor = Backbone.View.extend({
             // If there are no errors, remove the gutter decorations that marked
             // the errors and reset our state.
             this.removeGutterDecorations();
+            this.setErrors([]);
             this.setHappyState();
             this.showError = false;
             this.errorCursorRow = null;
@@ -2170,12 +2173,10 @@ window.LiveEditor = Backbone.View.extend({
         }
     },
     setHappyState: function setHappyState() {
-        if (this.errorState !== "happy") {
-            this.errorState = "happy";
-            this.tipbar.hide();
-            this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
-            this.$el.find(this.dom.ERROR_BUDDY_HAPPY).show();
-        }
+        this.errorState = "happy";
+        this.tipbar.hide();
+        this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
+        this.$el.find(this.dom.ERROR_BUDDY_HAPPY).show();
     },
 
     // Extract the origin from the embedded frame location
