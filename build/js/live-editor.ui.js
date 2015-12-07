@@ -1446,7 +1446,7 @@ window.LiveEditor = Backbone.View.extend({
                     // Clear flashblocker divs
                     self.$el.find("#sm2-container div").remove();
                     soundManager.reboot();
-                }, 6000);
+                }, 3000);
             }
         });
         soundManager.beginDelayedInit();
@@ -2132,12 +2132,12 @@ window.LiveEditor = Backbone.View.extend({
         } else if (onlyErrorsOnThisLine) {
             // There are new errors caused by typing on this line, so let's
             // give the typer time to finish what they were writing. We'll
-            // show the tipbar if 30 seconds has gone by without typing.
+            // show the tipbar if 1 minute has gone by without typing.
             this.setThinkingState();
 
             this.errorTimeout = setTimeout((function () {
                 this.setErrorState();
-            }).bind(this), 30000);
+            }).bind(this), 60000);
         }
     },
 
