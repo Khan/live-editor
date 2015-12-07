@@ -92,25 +92,24 @@ window.SQLOutput = Backbone.View.extend({
         } else if (statement.indexOf("INTERGER") !== -1) {
             errorMessage += ". " +
                 i18n._(" Is INTEGER spelled correctly?");
-        } else if (statement.search(/,\s*\)/) > -1) {
-            errorMessage += ". " +
-                i18n._(" Do you have an extra comma?");
         } else if (isSyntaxError &&
+                statement.indexOf("CREATE") !== -1 &&
                 statement.search(/CREATE TABLE \w+\s\w+/) > -1) {
             errorMessage += ". " +
                 i18n._("You can't have a space in your table name.");
-        }  else if (isSyntaxError &&
+        } else if (isSyntaxError &&
                 statement.indexOf("CREATE TABLE (") > -1) {
             errorMessage += ". " +
                 i18n._("Are you missing the table name?");
-        // Multiple statements without semi-colons separating them
-        }else if (isSyntaxError &&
-                statement.search(/\)\n*\s*\w+/) > -1 ||
-                statement.search(/\n+\s*SELECT/) > -1
-                ) {
+        } else if (isSyntaxError &&
+                statement.indexOf("PRIMARY KEY INTEGER") !== -1) {
             errorMessage += ". " +
-                i18n._("Do you have a semi-colon after each statement?");
-        // Possible CREATE with missing what to create
+                i18n._("Did you mean to put PRIMARY KEY after INTEGER?");
+        } else if (isSyntaxError &&
+                statement.indexOf("(") !== -1 &&
+                statement.indexOf(")") === -1) {
+            errorMessage += ". " +
+                i18n._("Are you missing a parenthesis?");
         } else if (isSyntaxError &&
                 statement.indexOf("CREATE") !== -1 && 
                 statement.indexOf("TABLE") === -1 && (
@@ -120,22 +119,38 @@ window.SQLOutput = Backbone.View.extend({
             errorMessage += ". " +
                 i18n._("You may be missing what to create. For " +
                     "example, CREATE TABLE...");
-        // Possible UPDATE without SET
         } else if (isSyntaxError &&
                 statement.indexOf("UPDATE") !== -1 &&
                 statement.indexOf("SET") === -1) {
             errorMessage += ". " +
                 i18n._("Are you missing the SET keyword?");
         } else if (isSyntaxError &&
+                statement.search(/[^SUM]\s*\(.*\)\n*\s*\w+/) > -1 ||
+                statement.search(/\n+\s*SELECT/) > -1
+                ) {
+            errorMessage += ". " +
+                i18n._("Do you have a semi-colon after each statement?");
+        } else if (isSyntaxError &&
+            statement.indexOf("INSERT") !== -1 &&
             statement.search(/,\d*\s*[a-zA-Z]+/) > -1 
             ) {
             errorMessage += ". " +
                 i18n._("Are you missing quotes around text values?");
+        } else if (isSyntaxError &&
+            statement.search(/,\s*\)/) > -1) {
+            errorMessage += ". " +
+                i18n._(" Do you have an extra comma?");
         } else if (errorMessage.indexOf("column types") > -1 &&
             statement.search(/(\w+\s*,\s*((TEXT)|(INTEGER))+)/) > -1) {
             errorMessage += ". " +
                 i18n._("Do you have an extra comma between the name and type?");
-        }
+        } else if (errorMessage.indexOf("column types") > -1 &&
+            statement.search(/(\w+\s+\w+\s*((TEXT)|(INTEGER)|(REAL))+)/) > -1) {
+            errorMessage = i18n._("You can't have a space in your column name.");
+        } else if (errorMessage.indexOf("UNIQUE constraint failed") !== -1) {
+            errorMessage += ". " +
+                i18n._("Are you specifying a different value for each row?");
+        } 
         return errorMessage;
     },
 

@@ -153,6 +153,15 @@ describe("Linting", function() {
         "CREATE TABLE books(id INTERGER PRIMARY KEY, name TEXT);",
         ["Is INTEGER spelled correctly?"]);
 
+    // Test for common wrong ordering
+    failingTest("Testing for missing quotes",
+        "CREATE TABLE books (id PRIMARY KEY INTEGER,name TEXT,rating INTEGER );",
+        ["Did you mean to put PRIMARY KEY after INTEGER?"]);
+
+    // Test for missing parenthesis
+    failingTest("Testing for missing quotes",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY, name TEXT, rating INTEGER; ",
+        ["Are you missing a parenthesis?"]);
 
     failingTest("Testing for extra comma at end",
         "CREATE TABLE books(id INTEGER PRIMARY KEY, name TEXT, );",
@@ -185,6 +194,11 @@ describe("Linting", function() {
         "CREATE TABLE booklist (id, INTEGER PRIMARY KEY, name TEXT, rating INTEGER);",
         ["Do you have an extra comma between the name and type?"]);
 
+    // Test for space in column name
+    failingTest("Testing for space in column name",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY, title TEXT, rating out of ten INTEGER);",
+        ["You can't have a space in your column name."]);
+ 
     // Tests for missing quotes
     failingTest("Testing for missing quotes",
         "INSERT INTO FavBooks VALUES (1, Beautiful Creatures, 10);",
@@ -218,4 +232,18 @@ describe("Linting", function() {
         "SELECT * FROM movies\n" + 
         " SELECT * FROM movies WHERE release_year > 1999;",
         ["Do you have a semi-colon after each statement?"]);
+    /* TODO(pamela): Add tests to make sure the following *don't* generate the message
+        SELECT SUM(minutes INTEGER) FROM todo_list; 
+        SELECT minutes SUM(quantity) FROM todo_list ORDER BY minutes;
+        SELECT minutes SUM(item) FROM todo_list GROUP BY minutes;
+        SELECT minutes SUM(quantity), FROM todo_list;
+    */
+
+    // Test for more helpful UNIQUE error
+    failingTest("Testing for UNIQUE constraint",
+        "CREATE TABLE customers (id INTEGER PRIMARY KEY);\n" + 
+        "INSERT INTO customers VALUES (1);" +
+        "INSERT INTO customers VALUES (1);",
+        ["Are you specifying a different value for each row?"]);
+
 });
