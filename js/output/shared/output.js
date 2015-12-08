@@ -272,7 +272,32 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Then run the user's code
         try {
             this.output.runCode(userCode, function(runtimeErrors) {
-                this.runtimeErrors = runtimeErrors;
+                var loopProtectMessages = {
+                    "WhileStatement": i18n._("<code>while</code> loop"),
+                    "DoWhileStatement": i18n._("<code>do-while</code> loop"),
+                    "ForStatement": i18n._("<code>for</code> loop"),
+                    "FunctionDeclaration": i18n._("<code>function</code>"),
+                    "FunctionExpression": i18n._("<code>function</code>")
+                };
+                this.runtimeErrors = runtimeErrors.map(function(err) {
+                    // Protect against user code like this:
+                    //
+                    // throw {html:"<script>document.title='x'</script>"};
+                    //
+                    // See https://hackerone.com/reports/103989
+                    delete err.html;
+
+                    var loopNodeType = err.infiniteLoopNodeType;
+                    if (loopNodeType) {
+                        err.html = i18n._(
+                            "A %(type)s is taking too long to run. " +
+                            "Perhaps you have a mistake in your code?", {
+                                type: loopProtectMessages[loopNodeType]
+                        });
+                    }
+
+                    return err;
+                });
                 this.runtimeErrors.timestamp = timestamp;
                 deferred.resolve();
             }.bind(this));

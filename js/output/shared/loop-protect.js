@@ -39,14 +39,6 @@ window.LoopProtector = function(callback, timeouts, reportLocation) {
     this.visible = !visibly.hidden();
 };
 
-window.LoopProtector.nodeMessages = {
-    "WhileStatement": i18n._("<code>while</code> loop"),
-    "DoWhileStatement": i18n._("<code>do-while</code> loop"),
-    "ForStatement": i18n._("<code>for</code> loop"),
-    "FunctionDeclaration": i18n._("<code>function</code>"),
-    "FunctionExpression": i18n._("<code>function</code>")
-};
-
 window.LoopProtector.prototype = {
     /**
      * Throws 'KA_INFINITE_LOOP' if the difference between the current time
@@ -97,14 +89,8 @@ window.LoopProtector.prototype = {
 
                 hotLocation = JSON.parse(hotLocation);
 
-                let html = i18n._(
-                    "A %(type)s is taking too long to run. " +
-                    "Perhaps you have a mistake in your code?", {
-                        type: LoopProtector.nodeMessages[hotLocation.type]
-                    });
-
                 let error = {
-                    html: html,
+                    infiniteLoopNodeType: hotLocation.type,
                     row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
                 };
 
