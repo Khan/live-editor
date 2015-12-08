@@ -2052,7 +2052,6 @@ window.LiveEditor = Backbone.View.extend({
             this.tipbar.toggleErrors(errors, 1500);
             return;
         }
-
         // New Error Experience:
 
         // We want to check if the errors we see are caused by the line the
@@ -2068,7 +2067,7 @@ window.LiveEditor = Backbone.View.extend({
         //  -if it is not, we show the error right away.
 
         // Reset the timer
-        window.clearInterval(this.errorTimeout);
+        window.clearTimeout(this.errorTimeout);
 
         if (errors.length) {
             // There is an error
@@ -2110,7 +2109,10 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     maybeShowErrors: function maybeShowErrors() {
-        if (!this.hasErrors()) return;
+
+        if (!this.hasErrors() || !this.editor || !this.editor.getCursor()) {
+            return;
+        }
 
         var currentRow = this.editor.getCursor().row;
         var onlyErrorsOnThisLine = this.errorCursorRow === null || this.errorCursorRow === currentRow;
@@ -2134,9 +2136,12 @@ window.LiveEditor = Backbone.View.extend({
             // give the typer time to finish what they were writing. We'll
             // show the tipbar if 1 minute has gone by without typing.
             this.setThinkingState();
-
+            // Make doubly sure that we clear the timeout
+            window.clearTimeout(this.errorTimeout);
             this.errorTimeout = setTimeout((function () {
-                this.setErrorState();
+                if (this.hasErrors()) {
+                    this.setErrorState();
+                }
             }).bind(this), 60000);
         }
     },
