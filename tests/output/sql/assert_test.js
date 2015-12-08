@@ -27,7 +27,7 @@ describe("Challenge Assertions - SQL Tables", function() {
             } else if (!passes(matchTableColumnNames(templateDB))) {
                 result = fail("Not the right column names!");
             } else {
-                result = matchTableColumnNames(templateDB)
+                result = matchTableColumnNames(templateDB);
             }
 
             assertMatch(result, description, "INSERT INTO _ VALUES (...);");
