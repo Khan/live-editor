@@ -491,13 +491,14 @@ SQLTester.prototype.testMethods = {
      * @param resultIndex: The index of the result to check
      * @param templateDB: The templateDB to match row values against
      */
-    matchResultRowValues: function(resultIndex, templateDB) {
+    matchResultRowValues: function(resultIndex, templateDB, options) {
         if (this.errors.length) {
             return {success: false};
         }
 
         var dbInfo = this.userCode;
         var results = dbInfo.results;
+        options = options || {};
 
         if (results.length < (resultIndex + 1)) {
             return {success: false};
@@ -507,11 +508,27 @@ SQLTester.prototype.testMethods = {
         }
         var result = results[resultIndex];
         var templateResult = templateDB.results[resultIndex];
-        for (var i = 0; i < result.values.length; i++) {
-            if (!_.isEqual(result.values[i], templateResult.values[i])) {
+        if (options.ignoreOrder) {
+            // To compare rows while ignoring order,
+            // we stringify each row and sort the array of rows,
+            // then do an equality check.
+            var resultStringified = result.values.map(function(value) {
+                return JSON.stringify(value);
+            }).sort();
+            var templateStringified = templateResult.values.map(function(value) {
+                return JSON.stringify(value);
+            }).sort();
+            if (!_.isEqual(resultStringified, templateStringified)) {
                 return { success: false };
             }
+        } else {
+            for (var i = 0; i < result.values.length; i++) {
+                if (!_.isEqual(result.values[i], templateResult.values[i])) {
+                    return { success: false };
+                }
+            }
         }
+
         return {success: true};
     },
 

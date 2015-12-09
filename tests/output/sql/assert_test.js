@@ -151,6 +151,8 @@ describe("Challenge Assertions - SQL Results", function() {
                 result = fail("Not matching row values!");
             } else if (!passes(matchResultColumnNames(0, templateDB))) {
                 result = fail("Not matching column names!");
+            } else if (passes(matchResultRowValues(0, templateDB, {ignoreOrder: true}))) {
+                result = fail("You got the row values but in wrong order!");
             } else {
                 result = pass();
             }
@@ -205,6 +207,23 @@ describe("Challenge Assertions - SQL Results", function() {
         validate: basicTest,
         fromTests: true,
         reason: "Not matching columns!",
+        errors: [{}]
+    });
+
+    // Not matching row values
+    userCode = "CREATE TABLE books (id INTEGER, name TEXT, rating " +
+            "INTEGER);" +
+            "INSERT INTO books VALUES(1, \"book1\", 5);" +
+            "INSERT INTO books VALUES(2, \"book2\", 4);" +
+            "INSERT INTO books VALUES(3, \"book3\", 5);" + 
+            "SELECT name FROM books ORDER BY name ASC";
+    assertTest({
+        title: "It should show that you got values but in wrong order ",
+        code: userCode,
+        pass: false,
+        validate: basicTest,
+        fromTests: true,
+        reason: "You got the row values but in wrong order!",
         errors: [{}]
     });
 
