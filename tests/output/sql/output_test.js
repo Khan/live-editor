@@ -249,4 +249,8 @@ describe("Linting", function() {
         "INSERT INTO customers VALUES (1);",
         ["Are you specifying a different value for each row?"]);
 
+    failingTest("Testing for duplicate column name",
+        "CREATE TABLE customers (id INTEGER PRIMARY KEY, id TEXT);",
+        ["You have multiple columns named `id` - column names must be unique."]);
+
 });

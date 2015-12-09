@@ -994,6 +994,8 @@ window.SQLOutput = Backbone.View.extend({
             errorMessage = i18n._("You can't have a space in your column name.");
         } else if (errorMessage.indexOf("UNIQUE constraint failed") !== -1) {
             errorMessage += ". " + i18n._("Are you specifying a different value for each row?");
+        } else if (errorMessage.indexOf("duplicate column name:") !== -1) {
+            errorMessage = i18n._("You have multiple columns named `%(name)s` - " + "column names must be unique.", { name: errorMessage.split(":")[1].trim() });
         }
         return errorMessage;
     },
