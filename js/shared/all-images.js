@@ -308,6 +308,7 @@ window.AllImages = [
             "gingerbread-man",
             "hannukah-dreidel",
             "hannukah-menorah",
+            "hopper-elfer",
             "hopper-partying",
             "hopper-reindeer",
             "house-with-lights",

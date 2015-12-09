@@ -28,7 +28,7 @@ window.AllImages = [{
     "images": ["colorpicker_background", "colorpicker_hex", "colorpicker_hsb_b", "colorpicker_hsb_h", "colorpicker_hsb_s", "colorpicker_indic", "colorpicker_overlay", "colorpicker_rgb_b", "colorpicker_rgb_g", "colorpicker_rgb_r", "colorpicker_select", "colorpicker_submit", "cool-critter", "error-buddy", "happy-critter", "jumping-critter", "leaf-green", "leaf-orange", "leaf-red", "leaf-yellow", "select", "simple-button-green-loader.gif", "speech-arrow", "topic-animation", "topic-drawing", "topic-programming-basics", "topic-user-interaction", "ui-icons_808080_256x240"]
 }, {
     "groupName": "seasonal",
-    "images": ["disco-ball", "father-winston", "fireworks-2015", "fireworks-in-sky", "fireworks-over-harbor", "fireworks-scattered", "gingerbread-family", "gingerbread-house", "gingerbread-houses", "gingerbread-man", "hannukah-dreidel", "hannukah-menorah", "hopper-partying", "hopper-reindeer", "house-with-lights", "penguin-with-presents", "red-nosed-winston", "reindeer-with-hat", "reindeer", "santa-with-bag", "snow-crystal1", "snow-crystal2", "snow-crystal3", "snowman", "snownoes", "snowy-slope-with-trees", "stocking-empty", "xmas-cookies", "xmas-ornament-boat", "xmas-ornament-on-tree", "xmas-ornaments", "xmas-presents", "xmas-scene-holly-border", "xmas-tree-with-presents", "xmas-tree", "xmas-wreath"]
+    "images": ["disco-ball", "father-winston", "fireworks-2015", "fireworks-in-sky", "fireworks-over-harbor", "fireworks-scattered", "gingerbread-family", "gingerbread-house", "gingerbread-houses", "gingerbread-man", "hannukah-dreidel", "hannukah-menorah", "hopper-elfer", "hopper-partying", "hopper-reindeer", "house-with-lights", "penguin-with-presents", "red-nosed-winston", "reindeer-with-hat", "reindeer", "santa-with-bag", "snow-crystal1", "snow-crystal2", "snow-crystal3", "snowman", "snownoes", "snowy-slope-with-trees", "stocking-empty", "xmas-cookies", "xmas-ornament-boat", "xmas-ornament-on-tree", "xmas-ornaments", "xmas-presents", "xmas-scene-holly-border", "xmas-tree-with-presents", "xmas-tree", "xmas-wreath"]
 }, {
     "groupName": "space",
     "images": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "background", "beetleship", "collisioncircle", "girl1", "girl2", "girl3", "girl4", "girl5", "healthheart", "minus", "octopus", "planet", "plus", "rocketship", "star"]
@@ -82,7 +82,7 @@ window.ExtendedOutputImages = [{
     groups: [{
         groupName: "seasonal",
         thumbsDir: "/thumbs",
-        images: "fireworks-2015 fireworks-in-sky fireworks-over-harbor fireworks-scattered gingerbread-family gingerbread-house gingerbread-houses gingerbread-man hannukah-dreidel hannukah-menorah house-with-lights reindeer snow-crystal1 snow-crystal2 snow-crystal3 snowy-slope-with-trees stocking-empty xmas-cookies xmas-ornament-boat xmas-ornament-on-tree xmas-ornaments xmas-presents xmas-scene-holly-border xmas-tree-with-presents xmas-tree xmas-wreath".split(" ")
+        images: "father-winston fireworks-2015 fireworks-in-sky fireworks-over-harbor fireworks-scattered gingerbread-family gingerbread-house gingerbread-houses gingerbread-man hannukah-dreidel hannukah-menorah hopper-elfer hopper-partying hopper-reindeer house-with-lights reindeer snow-crystal1 snow-crystal2 snow-crystal3 snownoes snowy-slope-with-trees stocking-empty xmas-cookies xmas-ornament-boat xmas-ornament-on-tree xmas-ornaments xmas-presents xmas-scene-holly-border xmas-tree-with-presents xmas-tree xmas-wreath".split(" ")
     }]
 }];
 if (!i18n._) {
