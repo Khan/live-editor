@@ -225,12 +225,23 @@ describe("Linting", function() {
         "SELECT * FROM movies\n" + 
         " SELECT * FROM movies WHERE release_year > 1999;",
         ["Do you have a semi-colon after each statement?"]);
+    failingTest("Testing for missing semi-colon #6",
+        "CREATE TABLE customers (id INTEGER\n" +
+        "PRIMARY KEY, name TEXT, rating INTEGER)\n" +
+        "INSERT INTO customers VALUES (73, \"Brian\", 33);",
+        ["Do you have a semi-colon after each statement?"]);
     /* TODO(pamela): Add tests to make sure the following *don't* generate the message
         SELECT SUM(minutes INTEGER) FROM todo_list; 
         SELECT minutes SUM(quantity) FROM todo_list ORDER BY minutes;
         SELECT minutes SUM(item) FROM todo_list GROUP BY minutes;
         SELECT minutes SUM(quantity), FROM todo_list;
     */
+
+    failingTest("Testing for extra comma",
+        "CREATE TABLE books (id INTEGER, name TEXT, rating INTEGER);" +
+        "INSERT, INTO books VALUES (1, \"gone with the wind\", 1)",
+        ["There shouldn't be a comma after INSERT."]);
+
 
     failingTest("Testing for UNIQUE constraint",
         "CREATE TABLE customers (id INTEGER PRIMARY KEY);\n" + 

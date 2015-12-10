@@ -126,20 +126,25 @@ window.SQLOutput = Backbone.View.extend({
                 i18n._("Are you missing the SET keyword?");
         } else if (isSyntaxError &&
                 statement.search(/[^SUM]\s*\(.*\)\n*\s*\w+/) > -1 ||
-                statement.search(/\n+\s*SELECT/) > -1
+                statement.search(/\n+\s*SELECT/) > -1 ||
+                statement.search(/\)\n+\s*INSERT/) > -1
                 ) {
             errorMessage += ". " +
                 i18n._("Do you have a semi-colon after each statement?");
         } else if (isSyntaxError &&
             statement.indexOf("INSERT") !== -1 &&
-            statement.search(/,\d*\s*[a-zA-Z]+/) > -1 
+            statement.search(/[^INSERT],\d*\s*[a-zA-Z]+/) > -1 
             ) {
             errorMessage += ". " +
                 i18n._("Are you missing quotes around text values?");
         } else if (isSyntaxError &&
             statement.search(/,\s*\)/) > -1) {
             errorMessage += ". " +
-                i18n._(" Do you have an extra comma?");
+                i18n._("Do you have an extra comma?");
+        } else if (isSyntaxError &&
+            statement.indexOf("INSERT,") > -1 ) {
+            errorMessage += ". " +
+                i18n._("There shouldn't be a comma after INSERT.");
         } else if (errorMessage.indexOf("column types") > -1 &&
             statement.search(/(\w+\s*,\s*((TEXT)|(INTEGER))+)/) > -1) {
             errorMessage += ". " +
