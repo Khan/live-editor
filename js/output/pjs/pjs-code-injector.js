@@ -797,7 +797,7 @@ class PJSCodeInjector {
             // Deletion of old object properties
             for (var objProp in this.lastGrabObj) {
                 if (!(objProp in this.grabObj)) {
-                    inject += "delete ${objProp};\n";
+                    inject += `delete ${objProp};\n`;
                 }
             }
 
