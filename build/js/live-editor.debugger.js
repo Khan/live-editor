@@ -853,6 +853,11 @@ window.ScratchpadDebugger = Backbone.View.extend({
     },
 
     listenMessages: function listenMessages(e) {
+        // DANGER!  The data coming in from the iframe could be anything,
+        // because with some cleverness the author of the program can send an
+        // arbitrary message up to us.  We need to be careful to sanitize it
+        // before doing anything with it, to avoid XSS attacks.  For more
+        // information, see the comment in handleMessages in live-editor.js.
         var event = e.originalEvent;
         var data;
 
@@ -874,9 +879,10 @@ window.ScratchpadDebugger = Backbone.View.extend({
             this.disableButtons();
             editor.setHighlightActiveLine(false);
         } else if (data.action === "step") {
-            if (data.line > 0) {
+            // Coerce to number just in case
+            if (+data.line > 0) {
                 this.enableButtons();
-                editor.gotoLine(data.line);
+                editor.gotoLine(+data.line);
                 editor.setHighlightActiveLine(true);
                 this.overlay.pause();
             } else {

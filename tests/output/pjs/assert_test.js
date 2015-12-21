@@ -31,7 +31,7 @@ describe("Challenge Assertions", function() {
         title: "Getting a BabyHint syntax error",
         code: "reect(20, 20, 10, 20);",
         validate: hopperTest,
-        reason: "reect is not defined. Maybe you meant to type rect, or you\'re using a variable you didn\'t define.",
+        reason: "\"reect\" is not defined. Maybe you meant to type \"rect\", or you\'re using a variable you didn\'t define.",
         babyhint: true
     }); 
 

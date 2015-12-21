@@ -488,10 +488,7 @@ window.PJSOutput = Backbone.View.extend({
         this.output.postParent({
             results: {
                 code: this.output.currentCode,
-                errors: [{
-                    infiniteLoopNodeType: error.infiniteLoopNodeType,
-                    row: error.row
-                }]
+                errors: [error],
             }
         });
         this.KA_INFINITE_LOOP = true;

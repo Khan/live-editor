@@ -1,3 +1,6 @@
+// TODO(kevinb) remove after challenges have been converted to use i18n._
+$._ = i18n._;
+
 window.LiveEditor = Backbone.View.extend({
     dom: {
         DRAW_CANVAS: ".scratchpad-draw-canvas",
@@ -1021,6 +1024,20 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     handleMessages: function(e) {
+        // DANGER!  The data coming in from the iframe could be anything,
+        // because with some cleverness the author of the program can send an
+        // arbitrary message up to us.  We need to be careful to sanitize it
+        // before doing anything with it, to avoid XSS attacks.  For some
+        // examples, see https://hackerone.com/reports/103989 or
+        // https://app.asana.com/0/44063710579000/71736430394249.
+        // TODO(benkraft): Right now that sanitization is spread over a number
+        // of different places; some things get sanitized here, while others
+        // get passed around and sanitized elsewhere.  Put all the sanitization
+        // in one place so it's easier to reason about its correctness, since
+        // any gap leaves us open to XSS attacks.
+        // TODO(benkraft): Write some tests that send arbitrary messages up
+        // from the iframe, and assert that they don't end up displaying
+        // arbitrary HTML to the user outside the iframe.
         var event = e.originalEvent;
         var data;
 
@@ -1056,6 +1073,11 @@ window.LiveEditor = Backbone.View.extend({
 
         // Set the code in the editor
         if (data.code !== undefined) {
+            // TODO(benkraft): This is technically not unsafe, in that
+            // this.editor.text() does not render its argument as HTML, but it
+            // does mean that a user can write a program which modifies its own
+            // code (perhaps on another user's computer).  Not directly a
+            // security risk, but it would be nice if it weren't possible.
             this.editor.text(data.code);
             this.editor.originalCode = data.code;
             this.restartCode();
@@ -1081,23 +1103,29 @@ window.LiveEditor = Backbone.View.extend({
                 for (let i = 0; i < data.results.assertions.length; i++) {
                     let assertion = data.results.assertions[i];
                     annotations.push({
-                        row: assertion.row,
-                        column: assertion.column,
-                        text: assertion.text,
+                        // Coerce to the expected type
+                        row: +assertion.row,
+                        column: +assertion.column,
+                        // This is escaped by the gutter annotation display
+                        // code, so we don't need to escape it here.
+                        text: assertion.text.toString(),
                         type: "warning"
                     });
-                    this.addUnderlineMarker(assertion.row);
+                    this.addUnderlineMarker(+assertion.row);
                 }
 
                 for (let i = 0; i < data.results.warnings.length; i++) {
                     let warning = data.results.warnings[i];
                     annotations.push({
-                        row: warning.row,
-                        column: warning.column,
-                        text: warning.text,
+                        // Coerce to the expected type
+                        row: +warning.row,
+                        column: +warning.column,
+                        // This is escaped by the gutter annotation display
+                        // code, so we don't need to escape it here.
+                        text: warning.text.toString(),
                         type: "warning"
                     });
-                    this.addUnderlineMarker(warning.row);
+                    this.addUnderlineMarker(+warning.row);
                 }
 
                 // Add new gutter markers
@@ -1112,12 +1140,13 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         if (data.results && _.isArray(data.results.errors)) {
-            this.handleErrors(data.results.errors);
+            this.handleErrors(this.cleanErrors(data.results.errors));
         }
 
         // Set the line visibility in the editor
         if (data.lines !== undefined) {
-            this.editor.toggleGutter(data.lines);
+            // Coerce to the expected type
+            this.editor.toggleGutter(data.lines.map(x => +x));
         }
 
         // Restart the execution
@@ -1127,6 +1156,11 @@ window.LiveEditor = Backbone.View.extend({
 
         // Log the recorded action
         if (data.log) {
+            // TODO(benkraft): I think passing unsanitized data to any of our
+            // record handlers is currently safe, but it would be nice to not
+            // depend on that always being true.  Do something to sanitize
+            // this, or at least make it more clear that the data coming in may
+            // be unsanitized.
             this.record.log.apply(this.record, data.log);
         }
     },
@@ -1512,7 +1546,113 @@ window.LiveEditor = Backbone.View.extend({
         var a = document.createElement("a");
         a.href = url;
         return a.href;
-    }
+    },
+
+    cleanErrors: function(errors) {
+        var loopProtectMessages = {
+            "WhileStatement": i18n._("<code>while</code> loop"),
+            "DoWhileStatement": i18n._("<code>do-while</code> loop"),
+            "ForStatement": i18n._("<code>for</code> loop"),
+            "FunctionDeclaration": i18n._("<code>function</code>"),
+            "FunctionExpression": i18n._("<code>function</code>"),
+        };
+
+        errors = errors.map(function(error) {
+            // These errors come from the user, so we can't trust them.  They
+            // get decoded from JSON, so they will just be plain objects, not
+            // arbitrary classes, but they're still potentially full of HTML
+            // that we need to escape.  So any HTML we want to put in needs to
+            // get put in here, rather than somewhere inside the iframe.
+            delete error.html;
+            // TODO(benkraft): This is a kind of ugly place to put this
+            // processing.  Refactor so that we don't have to do something
+            // quite so ad-hoc here, while still keeping any user input
+            // appropriately sanitized.
+            var loopNodeType = error.infiniteLoopNodeType;
+            if (loopNodeType) {
+                error.html = i18n._(
+                    "A %(type)s is taking too long to run. " +
+                    "Perhaps you have a mistake in your code?", {
+                        type: loopProtectMessages[loopNodeType]
+                });
+            }
+
+            const newError = {};
+
+            // error.html was cleared above, so if it exists it's because we
+            // reset it, and it's safe.
+            newError.text = error.html ? this.prettify(error.html) :
+                this.prettify(this.clean(error.text || error.message || ""));
+
+            // Coerce anything from the user to the expected types before
+            // copying over
+            if (error.lint !== undefined) {
+                newError.lint = {
+                    // TODO(benkraft): Coerce this in a less ad-hoc way, or at
+                    // least only pass through the things we'll actually use.
+                    // Also, get a stronger guarantee that none of these
+                    // strings ever get used unescaped.
+                    character: +error.lint.character,
+                    code: error.lint.code.toString(),
+                    evidence: error.lint.evidence.toString(),
+                    id: error.lint.id.toString(),
+                    line: +error.lint.line,
+                    raw: error.lint.raw.toString(),
+                    reason: error.lint.reason.toString(),
+                    scope: error.lint.scope.toString(),
+                };
+            }
+
+            if (error.row !== undefined) {
+                newError.row = +error.row;
+            }
+
+            if (error.column !== undefined) {
+                newError.column = +error.column;
+            }
+
+            if (error.type !== undefined) {
+                newError.type = error.type.toString();
+            }
+
+            if (error.source !== undefined) {
+                newError.source = error.source.toString();
+            }
+
+            return newError;
+        }.bind(this));
+
+        errors = errors.sort(function(a, b) {
+            var diff = a.row - b.row;
+            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
+        });
+
+        return errors;
+    },
+
+    // This adds html tags around quoted lines so they can be formatted
+    prettify: function(str) {
+        str = str.split("\"");
+        var htmlString = "";
+        for (var i = 0; i < str.length; i++) {
+            if (str[i].length === 0) {
+                continue;
+            }
+
+            if (i % 2 === 0) {
+                //regular text
+                htmlString += "<span class=\"text\">" + str[i] + "</span>";
+            } else {
+                // text in quotes
+                htmlString += "<span class=\"quote\">" + str[i] + "</span>";
+            }
+        }
+        return htmlString;
+    },
+
+    clean: function(str) {
+        return String(str).replace(/</g, "&lt;");
+    },
 });
 
 LiveEditor.registerEditor = function(name, editor) {

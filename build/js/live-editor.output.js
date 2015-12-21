@@ -312,9 +312,6 @@ OutputTester.prototype = {
         }
     }
 };
-// TODO(kevinb) remove after challenges have been converted to use i18n._
-$._ = i18n._;
-
 window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
@@ -525,6 +522,35 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     /**
+     * Converts an error to something that will JSONify usefully
+     *
+     * JS error objects JSONify to an empty object, so we need to convert them
+     * to a plain object ourselves first.  Since we'll end up doing some
+     * conversion of the format to better match jshint errors anyway, we'll
+     * just do that here too.  But sanitization will happen outside the iframe,
+     * since any code here can be bypassed by the user.
+     *
+     * @param {*} error: the error to JSONify
+     * @returns {*}
+     */
+    jsonifyError: function jsonifyError(error) {
+        if (typeof error !== "object" || $.isPlainObject(error)) {
+            // If we're not an object, or we're a plain object, we don't need
+            // to do anything.
+            return error;
+        } else {
+            return {
+                row: error.lineno ? error.lineno - 2 : -1,
+                column: 0,
+                text: error.message,
+                type: "error",
+                source: "native",
+                priority: 3
+            };
+        }
+    },
+
+    /**
      * Performs all steps necessary to run code.
      * - lint
      * - actually run the code
@@ -583,30 +609,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Then run the user's code
         try {
             this.output.runCode(userCode, (function (runtimeErrors) {
-                var loopProtectMessages = {
-                    "WhileStatement": i18n._("<code>while</code> loop"),
-                    "DoWhileStatement": i18n._("<code>do-while</code> loop"),
-                    "ForStatement": i18n._("<code>for</code> loop"),
-                    "FunctionDeclaration": i18n._("<code>function</code>"),
-                    "FunctionExpression": i18n._("<code>function</code>")
-                };
-                this.runtimeErrors = runtimeErrors.map(function (err) {
-                    // Protect against user code like this:
-                    //
-                    // throw {html:"<script>document.title='x'</script>"};
-                    //
-                    // See https://hackerone.com/reports/103989
-                    delete err.html;
-
-                    var loopNodeType = err.infiniteLoopNodeType;
-                    if (loopNodeType) {
-                        err.html = i18n._("A %(type)s is taking too long to run. " + "Perhaps you have a mistake in your code?", {
-                            type: loopProtectMessages[loopNodeType]
-                        });
-                    }
-
-                    return err;
-                });
+                this.runtimeErrors = runtimeErrors;
                 this.runtimeErrors.timestamp = timestamp;
                 deferred.resolve();
             }).bind(this));
@@ -643,7 +646,8 @@ window.LiveEditorOutput = Backbone.View.extend({
             warnings = warnings.concat(this.lintWarnings);
         }
 
-        errors = this.cleanErrors(errors || []);
+        errors = errors || [];
+        errors = errors.map(this.jsonifyError);
 
         if (!this.loaded) {
             this.postParent({ loaded: true });
@@ -718,63 +722,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
 
         this.runCode(this.getUserCode());
-    },
-
-    cleanErrors: function cleanErrors(errors) {
-        errors = errors.map((function (error) {
-            if (!$.isPlainObject(error)) {
-                return {
-                    row: error.lineno ? error.lineno - 2 : -1,
-                    column: 0,
-                    text: this.clean(error.message),
-                    type: "error",
-                    source: "native",
-                    priority: 3
-                };
-            }
-
-            var text = error.html ? this.prettify(error.html) : this.prettify(this.clean(error.text || error.message || ""));
-
-            return {
-                row: error.row,
-                column: error.column,
-                text: text,
-                type: error.type,
-                lint: error.lint,
-                source: error.source
-            };
-        }).bind(this));
-
-        errors = errors.sort(function (a, b) {
-            var diff = a.row - b.row;
-            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
-        });
-
-        return errors;
-    },
-
-    // This adds html tags around quoted lines so they can be formatted
-    prettify: function prettify(str) {
-        str = str.split("\"");
-        var htmlString = "";
-        for (var i = 0; i < str.length; i++) {
-            if (str[i].length === 0) {
-                continue;
-            }
-
-            if (i % 2 === 0) {
-                //regular text
-                htmlString += "<span class=\"text\">" + str[i] + "</span>";
-            } else {
-                // text in quotes
-                htmlString += "<span class=\"quote\">" + str[i] + "</span>";
-            }
-        }
-        return htmlString;
-    },
-
-    clean: function clean(str) {
-        return String(str).replace(/</g, "&lt;");
     }
 });
 

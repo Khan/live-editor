@@ -1,3 +1,6 @@
+// TODO(kevinb) remove after challenges have been converted to use i18n._
+$._ = i18n._;
+
 describe("Challenge Assertions - HTML", function() {
     var divTest = (function() {
 
@@ -53,7 +56,7 @@ describe("Challenge Assertions - HTML", function() {
         title: "Getting a Slowparse syntax error",
         code: "<div></div",
         validate: divTest,
-        reason: "It looks like your closing </div> tag doesn\'t end with a >."
+        reason: "It looks like your closing \"</div>\" tag doesn\'t end with a \">\"."
     });
 
     assertTest({

@@ -15,11 +15,6 @@ describe("async error order tests", function () {
 
     beforeEach(function () {
         output = createLiveEditorOutput();
-
-        // have cleanErrors pass through errors so that they're easy to verify
-        sinon.stub(output, "cleanErrors", function (errors) {
-            return errors;
-        });
     });
 
     it("should work without any errors", function (done) {
@@ -280,7 +275,8 @@ describe("LoopProtector", function() {
         }, 200, 50, true);
 
         output.runCode(code, function (errors, testResults) {
-            expect(errors[0].text).to.contain("while");
+            console.log(errors);
+            expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
             expect(errors[0].row).to.equal(2);
             done();
         });
@@ -301,7 +297,7 @@ describe("LoopProtector", function() {
         }, 200, 50, true);
 
         output.runCode(code, function (errors, testResults) {
-            expect(errors[0].text).to.contain("while");
+            expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
             expect(errors[0].row).to.equal(2);
             done();
         });
@@ -321,14 +317,13 @@ describe("LoopProtector", function() {
         });
 
         output.output.injector.loopProtector = new LoopProtector(function (error) {
-            expect(error.infiniteLoopNodeType).to.equal("WhileStatement");
-            expect(error.row).to.equal(3);
-            done();
+            // caught by the runCode callback
         }, 200, 50, true);
 
         output.runCode(code, function (errors, testResults) {
-            expect(errors[0].text).to.contain("while");
+            expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
             expect(errors[0].row).to.equal(3);
+            done();
         });
     });
 });
