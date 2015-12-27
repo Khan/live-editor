@@ -11995,7 +11995,7 @@ window.LoopProtector.prototype = {
         } else {
             // Let the user know that what they're trying to do is a bad idea
             throw {
-                html: "Messing with the loop protector is dangerous!"
+                html: i18n._("Messing with the loop protector is dangerous!")
             };
         }
     },
