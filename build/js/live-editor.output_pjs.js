@@ -2941,7 +2941,7 @@ window.PJSOutput = Backbone.View.extend({
             results: {
                 code: this.output.currentCode,
                 errors: [{
-                    text: error.html,
+                    infiniteLoopNodeType: error.infiniteLoopNodeType,
                     row: error.row
                 }]
             }

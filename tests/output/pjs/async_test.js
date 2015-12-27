@@ -188,11 +188,11 @@ describe("Code Injection", function() {
                     if (!error) {
                         done();
                     }
-                }, 1000);
+                }, 100);
             });
         });
     });
-    
+
     it("should call console.log with the correct args", function(done) {
         var output = createLiveEditorOutput();
 
@@ -224,7 +224,7 @@ describe("LoopProtector", function() {
         });
 
         output.output.injector.loopProtector = new LoopProtector(function (error) {
-            expect(error.html).to.contain("while");
+            expect(error.infiniteLoopNodeType).to.equal("WhileStatement");
             expect(error.row).to.equal(3);
             done();
         }, 200, 50, true);
@@ -321,7 +321,7 @@ describe("LoopProtector", function() {
         });
 
         output.output.injector.loopProtector = new LoopProtector(function (error) {
-            expect(error.html).to.contain("while");
+            expect(error.infiniteLoopNodeType).to.equal("WhileStatement");
             expect(error.row).to.equal(3);
             done();
         }, 200, 50, true);
@@ -335,7 +335,7 @@ describe("LoopProtector", function() {
 
 describe("draw update tests", function() {
     var output, ellipseSpy, backgroundSpy, noiseSpy;
-    
+
     beforeEach(function() {
         output = createLiveEditorOutput();
         sinon.spy(output.output.processing, "ellipse");
@@ -345,14 +345,14 @@ describe("draw update tests", function() {
         sinon.spy(output.output.processing, "noise");
         noiseSpy = output.output.processing.noise;
     });
-    
+
     afterEach(function() {
         output.output.processing.ellipse.restore();
         output.output.processing.background.restore();
         output.output.processing.noise.restore();
         output.output.kill();
     });
-    
+
     it("should draw using updated global variables", function(done) {
         var code1 = getCodeFromOptions(function () {
             var diameter = 10;
@@ -367,7 +367,7 @@ describe("draw update tests", function() {
                 ellipse(200, 200, diameter, diameter);
             };
         });
-        
+
         output.runCode(code1, function(errors, testResults) {
             expect(ellipseSpy.calledWith(200, 200, 10, 10)).to.be(true);
             output.runCode(code2, function(errors, testResults) {
