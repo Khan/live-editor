@@ -225,7 +225,7 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
                         //     var mouseClicked = function () { ... };
                         //     var y = 10;
                         // };
-                        
+
                         return node.declarations
                             .filter(decl => decl.init !== null)
                             .map(decl => {
@@ -290,10 +290,24 @@ ASTTransforms.findResources = function(resources) {
     };
 };
 
+/**
+ * Converts a MemberExpression to a String, e.g. given an AST for a.b.c will
+ * return the string "a.b.c".
+ */
+const memberExpressionToString = function(node) {
+    if (node.type === "Identifier") {
+        return node.name;
+    } else if (node.type === "MemberExpression") {
+        return `${memberExpressionToString(node.object)}.${node.property.name}`;
+    }
+};
+
 ASTTransforms.rewriteNewExpressions = function(envName) {
     return {
         leave(node, path) {
             if (node.type === "NewExpression") {
+                const name = memberExpressionToString(node.callee);
+
                 return b.CallExpression(
                     b.CallExpression(
                         b.MemberExpression(
@@ -305,7 +319,7 @@ ASTTransforms.rewriteNewExpressions = function(envName) {
                         ),
                         [
                             node.callee,
-                            b.Literal(node.callee.name)
+                            b.Literal(name)
                         ]
                     ),
                     node.arguments

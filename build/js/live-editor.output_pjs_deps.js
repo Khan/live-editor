@@ -87835,11 +87835,25 @@ ASTTransforms.findResources = function (resources) {
     };
 };
 
+/**
+ * Converts a MemberExpression to a String, e.g. given an AST for a.b.c will
+ * return the string "a.b.c".
+ */
+var memberExpressionToString = function memberExpressionToString(node) {
+    if (node.type === "Identifier") {
+        return node.name;
+    } else if (node.type === "MemberExpression") {
+        return memberExpressionToString(node.object) + "." + node.property.name;
+    }
+};
+
 ASTTransforms.rewriteNewExpressions = function (envName) {
     return {
         leave: function leave(node, path) {
             if (node.type === "NewExpression") {
-                return b.CallExpression(b.CallExpression(b.MemberExpression(b.MemberExpression(b.Identifier(envName), b.Identifier("PJSOutput")), b.Identifier("applyInstance")), [node.callee, b.Literal(node.callee.name)]), node.arguments);
+                var _name = memberExpressionToString(node.callee);
+
+                return b.CallExpression(b.CallExpression(b.MemberExpression(b.MemberExpression(b.Identifier(envName), b.Identifier("PJSOutput")), b.Identifier("applyInstance")), [node.callee, b.Literal(_name)]), node.arguments);
             }
         }
     };

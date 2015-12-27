@@ -22,6 +22,13 @@ describe("Scratchpad CanvasOutput functions", function() {
 
 // TODO(kevinb) split into smaller subsuites
 describe("Scratchpad Output Exec", function() {
+    test("Make sure instances are serialized properly", function() {
+        var myObj = { innerObj: {} };
+        myObj.innerObj.myConstructor = function() {};
+
+        var myInstance = new myObj.innerObj.myConstructor();
+    });
+
     test("Color modes", function() {
         color(255, 0, 0);
     });
