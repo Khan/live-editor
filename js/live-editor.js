@@ -1247,7 +1247,7 @@ window.LiveEditor = Backbone.View.extend({
             this.setErrors(errors);
 
             this.maybeShowErrors();
-            
+
         } else {
             // If there are no errors, remove the gutter decorations that marked
             // the errors and reset our state.
@@ -1587,36 +1587,55 @@ window.LiveEditor = Backbone.View.extend({
             // Coerce anything from the user to the expected types before
             // copying over
             if (error.lint !== undefined) {
-                newError.lint = {
-                    // TODO(benkraft): Coerce this in a less ad-hoc way, or at
-                    // least only pass through the things we'll actually use.
-                    // Also, get a stronger guarantee that none of these
-                    // strings ever get used unescaped.
-                    character: +error.lint.character,
-                    code: error.lint.code.toString(),
-                    evidence: error.lint.evidence.toString(),
-                    id: error.lint.id.toString(),
-                    line: +error.lint.line,
-                    raw: error.lint.raw.toString(),
-                    reason: error.lint.reason.toString(),
-                    scope: error.lint.scope.toString(),
-                };
+                newError.lint = {};
+
+                // TODO(benkraft): Coerce this in a less ad-hoc way, or at
+                // least only pass through the things we'll actually use.
+                // Also, get a stronger guarantee that none of these
+                // strings ever get used unescaped.
+                const numberProps = ["character", "line"];
+                const stringProps = [
+                    "code", "evidence", "id", "raw", "reason", "scope", "type"
+                ];
+                const objectProps = ["openTag"];
+
+                numberProps.forEach(prop => {
+                    if (error.lint[prop] != undefined) {
+                        newError.lint[prop] = +error.lint[prop];
+                    }
+                });
+
+                stringProps.forEach(prop => {
+                    if (error.lint[prop] != undefined) {
+                        newError.lint[prop] = error.lint[prop].toString();
+                    }
+                });
+
+                objectProps.forEach(prop => {
+                    if (error.lint[prop] != undefined) {
+                        newError.lint[prop] = error.lint[prop];
+                    }
+                });
             }
 
-            if (error.row !== undefined) {
+            if (error.row != undefined) {
                 newError.row = +error.row;
             }
 
-            if (error.column !== undefined) {
+            if (error.column != undefined) {
                 newError.column = +error.column;
             }
 
-            if (error.type !== undefined) {
+            if (error.type != undefined) {
                 newError.type = error.type.toString();
             }
 
-            if (error.source !== undefined) {
+            if (error.source != undefined) {
                 newError.source = error.source.toString();
+            }
+
+            if (error.priority != undefined) {
+                newError.priority = +error.priority;
             }
 
             return newError;
