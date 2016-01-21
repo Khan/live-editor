@@ -183,7 +183,12 @@ class PJSCodeInjector {
         // this.safeCalls holds the names of the properties
         // which are functions which appear to not have any
         // side effects when called.
-        safeCalls = this.safeCalls = {};
+        safeCalls = this.safeCalls = {
+            "triangle": true,
+            "arc": true,
+            "print": true,
+            "println": true
+        };
 
         // Make sure that only certain properties can be manipulated
         for (var processingProp in this.processing) {
@@ -701,6 +706,14 @@ class PJSCodeInjector {
                 // Ignore PJSOuput so that we can still access 'test', 'lint'
                 // and other methods in our tests.
                 if (/^PJSOutput/.test(prop)) {
+                    return;
+                }
+
+                // We don't want to striginify externalProps which are methods
+                // defined on the processing object but we do want to stringify
+                // drawLoopMethods because those are user defined and might be
+                // the subject of code injection.
+                if (prop in externalProps && !this.drawLoopMethods.includes(prop)) {
                     return;
                 }
 
