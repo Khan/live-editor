@@ -650,7 +650,7 @@ var PJSCodeInjector = (function () {
             this.grabObj = {};
 
             // Extract a list of instances that were created using applyInstance
-            PJSOutput.instances = [];
+            this.instances = [];
 
             // If we have a draw function then we need to do injection
             // If we had a draw function then we still need to do injection
@@ -699,13 +699,13 @@ var PJSCodeInjector = (function () {
 
                 // Keep track of all the constructor functions that may
                 // have to be reinitialized
-                for (var i = 0, l = PJSOutput.instances.length; i < l; i++) {
-                    constructors[PJSOutput.instances[i].constructor.__name] = true;
+                for (var i = 0, l = this.instances.length; i < l; i++) {
+                    constructors[this.instances[i].constructor.__name] = true;
                 }
 
                 // The instantiated instances have changed, which means that
                 // we need to re-run everything.
-                if (this.oldInstances && PJSOutput.stringifyArray(this.oldInstances) !== PJSOutput.stringifyArray(PJSOutput.instances)) {
+                if (this.oldInstances && PJSOutput.stringifyArray(this.oldInstances) !== PJSOutput.stringifyArray(this.instances)) {
                     rerun = true;
                 }
 
@@ -727,8 +727,8 @@ var PJSCodeInjector = (function () {
                 }
 
                 // Reset the instances list
-                this.oldInstances = PJSOutput.instances;
-                PJSOutput.instances = [];
+                this.oldInstances = this.instances;
+                this.instances = [];
 
                 var _loop = function (i) {
                     // Reconstruction the function call
@@ -2962,7 +2962,6 @@ window.PJSOutput = Backbone.View.extend({
 
 // Add in some static helper methods
 _.extend(PJSOutput, {
-    instances: [],
 
     // Turn a JavaScript object into a form that can be executed
     // (Note: The form will not necessarily be able to pass a JSON linter)

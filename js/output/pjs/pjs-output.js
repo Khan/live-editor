@@ -497,7 +497,6 @@ window.PJSOutput = Backbone.View.extend({
 
 // Add in some static helper methods
 _.extend(PJSOutput, {
-    instances: [],
 
     // Turn a JavaScript object into a form that can be executed
     // (Note: The form will not necessarily be able to pass a JSON linter)
