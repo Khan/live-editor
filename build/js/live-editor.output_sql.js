@@ -594,8 +594,7 @@ SQLTester.prototype.testMethods = {
     },
 
     /**
-     * @param templateDBOrCount: Either a template DB to match rows against
-     *  or an integer of the amount to match against
+     * @param templateDBInfo: A template DB to match column names 
      * @return {success} if user table contains same column names
      *   Note - it could also contain other names,
      *   use matchTableColumnCount if you need to be exact.
