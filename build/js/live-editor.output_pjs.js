@@ -221,12 +221,7 @@ var PJSCodeInjector = (function () {
             // this.safeCalls holds the names of the properties
             // which are functions which appear to not have any
             // side effects when called.
-            safeCalls = this.safeCalls = {
-                "triangle": true,
-                "arc": true,
-                "print": true,
-                "println": true
-            };
+            safeCalls = this.safeCalls = {};
 
             // Make sure that only certain properties can be manipulated
             for (var processingProp in this.processing) {
@@ -635,6 +630,10 @@ var PJSCodeInjector = (function () {
             // reinitialized after the constructor has been changed
             var reinit = {};
 
+            // A map of all global constructors (used for later
+            // reinitialization of instances upon a constructor change)
+            var constructors = {};
+
             // The properties exposed by the Processing.js object
             var externalProps = this.props;
 
@@ -644,6 +643,9 @@ var PJSCodeInjector = (function () {
             // Grab all object properties and prototype properties from
             // all objects and function prototypes
             this.grabObj = {};
+
+            // Extract a list of instances that were created using applyInstance
+            PJSOutput.instances = [];
 
             // If we have a draw function then we need to do injection
             // If we had a draw function then we still need to do injection
@@ -690,6 +692,18 @@ var PJSCodeInjector = (function () {
                     }
                 });
 
+                // Keep track of all the constructor functions that may
+                // have to be reinitialized
+                for (var i = 0, l = PJSOutput.instances.length; i < l; i++) {
+                    constructors[PJSOutput.instances[i].constructor.__name] = true;
+                }
+
+                // The instantiated instances have changed, which means that
+                // we need to re-run everything.
+                if (this.oldInstances && PJSOutput.stringifyArray(this.oldInstances) !== PJSOutput.stringifyArray(PJSOutput.instances)) {
+                    rerun = true;
+                }
+
                 // TODO(kevinb) cache instances returned by createGraphics.
                 // Rerun if there are any uses of createGraphics.  The problem is
                 // not actually createGraphics, but rather calls that render stuff
@@ -706,6 +720,10 @@ var PJSCodeInjector = (function () {
                 if (/createGraphics[\s\n]*\(/.test(userCode)) {
                     rerun = true;
                 }
+
+                // Reset the instances list
+                this.oldInstances = PJSOutput.instances;
+                PJSOutput.instances = [];
 
                 var _loop = function (i) {
                     // Reconstruction the function call
@@ -748,14 +766,6 @@ var PJSCodeInjector = (function () {
                         return;
                     }
 
-                    // We don't want to striginify externalProps which are methods
-                    // defined on the processing object but we do want to stringify
-                    // drawLoopMethods because those are user defined and might be
-                    // the subject of code injection.
-                    if (prop in externalProps && !this.drawLoopMethods.includes(prop)) {
-                        return;
-                    }
-
                     // Turn the result of the extracted value into
                     // a nicely-formatted string
                     try {
@@ -771,6 +781,13 @@ var PJSCodeInjector = (function () {
                             // If we hit a function we need to re-execute the code
                             // by injecting it. Preserves the closure.
                             if (typeof val === "function") {
+                                // If the constructor function was changed and an
+                                // instance of the function exists, then we need to
+                                // re-run all the code from start
+                                if (constructors[prop]) {
+                                    rerun = true;
+                                }
+
                                 // Remember that this function has been
                                 // reinitialized for later (in case it has
                                 // properties that need to be re-injected)
@@ -2932,6 +2949,7 @@ window.PJSOutput = Backbone.View.extend({
 
 // Add in some static helper methods
 _.extend(PJSOutput, {
+    instances: [],
 
     // Turn a JavaScript object into a form that can be executed
     // (Note: The form will not necessarily be able to pass a JSON linter)

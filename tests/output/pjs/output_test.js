@@ -152,13 +152,11 @@ describe("Scratchpad Output Exec", function() {
         assertions: []
     });
 
-    // Disabling this test b/c it causes Chrome to lock when running it b/c
-    // Chrome batches canvas draw calls and processes them in another thread.
-    //failingTest("Too Many Draw Operations", function() {
-    //    for (var i = 0; i < 1000000; i++) {
-    //        ellipse(100, 100, 100, 100);
-    //    }
-    //});
+    failingTest("Too Many Draw Operations", function() {
+        for (var i = 0; i < 1000000; i++) {
+            ellipse(100, 100, 100, 100);
+        }
+    });
 
     test("getImage with wonky spacing", function() {
         var img = getImage( "cute/Blank" );

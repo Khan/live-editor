@@ -329,7 +329,7 @@ describe("LoopProtector", function() {
 });
 
 describe("draw update tests", function() {
-    var output, ellipseSpy, triangleSpy, arcSpy, backgroundSpy, noiseSpy;
+    var output, ellipseSpy, backgroundSpy, noiseSpy;
 
     beforeEach(function() {
         output = createLiveEditorOutput();
@@ -339,10 +339,6 @@ describe("draw update tests", function() {
         backgroundSpy = output.output.processing.background;
         sinon.spy(output.output.processing, "noise");
         noiseSpy = output.output.processing.noise;
-        sinon.spy(output.output.processing, "triangle");
-        triangleSpy = output.output.processing.triangle;
-        sinon.spy(output.output.processing, "arc");
-        arcSpy = output.output.processing.arc;
     });
 
     afterEach(function() {
@@ -369,88 +365,10 @@ describe("draw update tests", function() {
 
         output.runCode(code1, function(errors, testResults) {
             expect(ellipseSpy.calledWith(200, 200, 10, 10)).to.be(true);
-            setTimeout(function () {
-                output.runCode(code2, function(errors, testResults) {
-                    setTimeout(function () {
-                        expect(ellipseSpy.calledWith(200, 200, 20, 20)).to.be(true);
-                        done();
-                    }, 100);
-                });
-            }, 100);
-        });
-    });
-
-    it("should update correctly with triangle and arc", function(done) {
-        var code1 = getCodeFromOptions(function () {
-            mouseClicked = function() {};
-            background(255);
-            triangle(100,100,200,100,100,200);
-            arc(0, 0, 100, 100, 0, 180);
-        });
-
-        var code2 = getCodeFromOptions(function () {
-            mouseClicked = function() {};
-            background(255);
-            triangle(100,100,200,100,100,300);
-            arc(0, 0, 100, 100, 0, 270);
-        });
-
-        output.runCode(code1, function(errors, testResults) {
-            expect(triangleSpy.calledWith(100,100,200,100,100,200)).to.be(true);
-            expect(arcSpy.calledWith(0, 0, 100, 100, 0, 180)).to.be(true);
-            setTimeout(function () {
-                output.runCode(code2, function(errors, testResults) {
-                    setTimeout(function () {
-                        expect(triangleSpy.calledWith(100,100,200,100,100,300)).to.be(true);
-                        expect(arcSpy.calledWith(0, 0, 100, 100, 0, 270)).to.be(true);
-
-                        done();
-                    }, 100);
-                });
-            }, 100);
-        });
-    });
-
-    it("should update when modifying other variables within an object", function(done) {
-        var code1 = getCodeFromOptions(function () {
-            var object = {
-                otherVariable: 100,
-                method: function() {
-                    ellipse(0, 0, 200, 200);
-                }
-            };
-
-            var draw = function() {
-                background(255);
-                object.method();
-            };
-        });
-
-        var code2 = getCodeFromOptions(function () {
-            var object = {
-                otherVariable: 200,
-                method: function() {
-                    ellipse(0, 0, 300, 300);
-                }
-            };
-
-            var draw = function() {
-                background(255);
-                object.method();
-            };
-        });
-
-        output.runCode(code1, function(errors, testResults) {
-            expect(ellipseSpy.calledWith(0, 0, 200, 200)).to.be(true);
-            setTimeout(function () {
-                output.runCode(code2, function(errors, testResults) {
-                    setTimeout(function () {
-                        expect(ellipseSpy.calledWith(0, 0, 300, 300)).to.be(true);
-
-                        done();
-                    }, 100);
-                });
-            }, 100);
+            output.runCode(code2, function(errors, testResults) {
+                expect(ellipseSpy.calledWith(200, 200, 20, 20)).to.be(true);
+                done();
+            });
         });
     });
 
