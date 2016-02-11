@@ -575,6 +575,10 @@ class PJSCodeInjector {
         // reinitialized after the constructor has been changed
         var reinit = {};
 
+        // A map of all global constructors (used for later
+        // reinitialization of instances upon a constructor change)
+        var constructors = {};
+
         // The properties exposed by the Processing.js object
         var externalProps = this.props;
 
@@ -584,6 +588,9 @@ class PJSCodeInjector {
         // Grab all object properties and prototype properties from
         // all objects and function prototypes
         this.grabObj = {};
+
+        // Extract a list of instances that were created using applyInstance
+        this.instances = [];
 
         // If we have a draw function then we need to do injection
         // If we had a draw function then we still need to do injection
@@ -633,6 +640,20 @@ class PJSCodeInjector {
                 }
             });
 
+            // Keep track of all the constructor functions that may
+            // have to be reinitialized
+            for (let i = 0, l = this.instances.length; i < l; i++) {
+                constructors[this.instances[i].constructor.__name] = true;
+            }
+
+            // The instantiated instances have changed, which means that
+            // we need to re-run everything.
+            if (this.oldInstances &&
+                PJSOutput.stringifyArray(this.oldInstances) !==
+                PJSOutput.stringifyArray(this.instances)) {
+                rerun = true;
+            }
+
             // TODO(kevinb) cache instances returned by createGraphics.
             // Rerun if there are any uses of createGraphics.  The problem is
             // not actually createGraphics, but rather calls that render stuff
@@ -649,6 +670,10 @@ class PJSCodeInjector {
             if (/createGraphics[\s\n]*\(/.test(userCode)) {
                 rerun = true;
             }
+
+            // Reset the instances list
+            this.oldInstances = this.instances;
+            this.instances = [];
 
             // Look for new top-level function calls to inject
             for (let i = 0; i < fnCalls.length; i++) {
@@ -710,6 +735,13 @@ class PJSCodeInjector {
                         // If we hit a function we need to re-execute the code
                         // by injecting it. Preserves the closure.
                         if (typeof val === "function") {
+                            // If the constructor function was changed and an
+                            // instance of the function exists, then we need to
+                            // re-run all the code from start
+                            if (constructors[prop]) {
+                                rerun = true;
+                            }
+
                             // Remember that this function has been
                             // reinitialized for later (in case it has
                             // properties that need to be re-injected)
