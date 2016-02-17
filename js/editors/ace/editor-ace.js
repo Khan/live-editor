@@ -108,6 +108,10 @@ window.AceEditor = Backbone.View.extend({
         // location bar, but ace wants to use it for go-to-line.
         this.editor.commands.removeCommand("gotoline");
 
+        // On Windows, the "fold all" hotkey conflicts with close curly brace
+        // "}" on EU keyboards. Unbind this in case we're on an EU keyboard.
+        this.editor.commands.bindKey("Alt-0", null);
+
         // Stop highlighting lines on cursor change
         this.editor.selection.addEventListener("changeCursor", function() {
             self.setErrorHighlight(false);
