@@ -24,6 +24,16 @@ describe("Output Methods", function() {
         title: "transformUrl",
         code: "<!DOCTYPE html><html><body></body></html>",
         test: function(output, errors, testResults) {
+            expect(output.output.transformUrl("http://khanacademy.org.mn"))
+                .to.be.equal(
+                    "http://ka.org/r?url=http%3A%2F%2Fkhanacademy.org.mn");
+        }
+    });
+
+    runTest({
+        title: "transformUrl",
+        code: "<!DOCTYPE html><html><body></body></html>",
+        test: function(output, errors, testResults) {
             expect(output.output.transformUrl("http://www.khanacademy.org/m"))
                 .to.be.equal("http://www.khanacademy.org/m");
         }

@@ -828,7 +828,7 @@ window.WebpageOutput = Backbone.View.extend({
     // Prefixes a URL with the URL of a redirecting proxy,
     //  if one has been specified.
     transformUrl: function transformUrl(url) {
-        if (url.match(/^https?:\/\/([\w\d]+\.)?khanacademy\.org/)) {
+        if (url.match(/^https?:\/\/([\w\d]+\.)?khanacademy\.org(\/|$)/)) {
             return url;
         }
         var redirectUrl = this.output.redirectUrl;
