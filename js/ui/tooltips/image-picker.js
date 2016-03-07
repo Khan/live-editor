@@ -34,7 +34,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         if (leadingPadding.length === 0 && path.length === 0 && this.closing.length === 0 &&
             event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.autofill) {
 
-            this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");
+            this.closing = ")" + (this.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
             this.insert({
                 row: event.row,
                 column: pathStart
