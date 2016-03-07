@@ -331,6 +331,11 @@ window.TooltipBase = Backbone.View.extend({
         return parenStack.length > 0;
     },
 
+    // Returns true if we're after an `=` assignment
+    isAfterAssignment: function(text) {
+        return /(?:^|[^!=])=\s*$/.test(text);
+    },
+
     // Returns true if we're inside a string
     isWithinString: function(text) {
         var withinString = false;

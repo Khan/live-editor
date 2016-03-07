@@ -105,7 +105,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             event.source.text.length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
-                this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");
+                this.closing = ")" + (this.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
                 this.insert({
                     row: event.row,
                     column: functionEnd

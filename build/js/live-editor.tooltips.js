@@ -1649,6 +1649,11 @@ window.TooltipBase = Backbone.View.extend({
         return parenStack.length > 0;
     },
 
+    // Returns true if we're after an `=` assignment
+    isAfterAssignment: function isAfterAssignment(text) {
+        return /(?:^|[^!=])=\s*$/.test(text);
+    },
+
     // Returns true if we're inside a string
     isWithinString: function isWithinString(text) {
         var withinString = false;
@@ -1843,7 +1848,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         if (event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
-                this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");
+                this.closing = ")" + (this.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
                 this.insert({
                     row: event.row,
                     column: functionEnd
@@ -2268,7 +2273,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         // TODO(kevinb) extract this into a method on TooltipBase
         if (leadingPadding.length === 0 && path.length === 0 && this.closing.length === 0 && event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.autofill) {
 
-            this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");
+            this.closing = ")" + (this.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
             this.insert({
                 row: event.row,
                 column: pathStart
