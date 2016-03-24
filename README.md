@@ -37,9 +37,9 @@ You can use the pre-built copies of everything inside the `build/` directory. If
 
 At this point you can make a fresh build, using [Gulp](http://gulpjs.com/):
 
-    gulp
+    gulp build
     # Or if not installed globally:
-    node_modules/gulp/bin/gulp.js
+    node_modules/gulp/bin/gulp.js build
 
 If you have an issue with "this.merge" is undefined, then `rm -rf node_modules/gulp-handlebars/node_modules/handlebars`.
 
