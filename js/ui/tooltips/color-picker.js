@@ -101,11 +101,18 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         };
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
 
-        if (event.source && event.source.action === "insertText" && 
+        var name = event.line.substring(functionStart, paramsStart - 1);
+        var addSemicolon =
+            this.isAfterAssignment(event.pre.slice(0, functionStart));
+        if (['fill', 'stroke'].includes(name)) {
+            addSemicolon = true;
+        }
+
+        if (event.source && event.source.action === "insertText" &&
             event.source.text.length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
-                this.closing = ")" + (this.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
+                this.closing = ")" + (addSemicolon ? ";" : "");
                 this.insert({
                     row: event.row,
                     column: functionEnd
@@ -122,7 +129,6 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
                 this.updateText(rgb);
             }
         }
-        
 
         this.updateTooltip(rgb);
         this.placeOnScreen();
