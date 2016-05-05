@@ -52,6 +52,21 @@ describe("Scratchpad Output Exec", function() {
         test("getSound with computed string", function() {
             getSound('rpg/' + 'giant-no');
         });
+
+        test("stopSound with different fadeOuts", function() {
+            var s1 = getSound("rpg/giant-no"),
+                s2 = getSound("rpg/giant-no"),
+                s3 = getSound("rpg/giant-no");
+
+            playSound(s1);
+            stopSound(s1, 0);
+
+            playSound(s2);
+            stopSound(s2, 1);
+
+            playSound(s3);
+            stopSound(s3, -1);
+        });
     }
 
     // Check the actual contents of error message
@@ -249,10 +264,16 @@ describe("Scratchpad Output Exec", function() {
         image(rock, 0, 0);
     });
 
-    failingTest("getSound with no string", function () {
+    failingTest("playSound with no string", function () {
         var s = getSound("");
 
         playSound(s);
+    });
+
+    failingTest("stopSound with no string", function () {
+        var s = getSound("");
+
+        stopSound(s, 0);
     });
 
     failingTest("link method disabled", function() {
