@@ -104,7 +104,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         var name = event.line.substring(functionStart, paramsStart - 1);
         var addSemicolon =
             this.isAfterAssignment(event.pre.slice(0, functionStart));
-        if (['fill', 'stroke'].includes(name)) {
+        if (['fill', 'stroke', 'background'].includes(name)) {
             addSemicolon = true;
         }
 
