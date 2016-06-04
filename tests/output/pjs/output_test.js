@@ -433,7 +433,15 @@ describe("Scratchpad Output Exec", function() {
     test("String object works", function() {
         var letter = String.fromCharCode(65);
     });
-
+    
+    test("Number object works", function() {
+        var newVal = Number.isFinite(1/0);
+    });
+    
+    test("Date object works", function() {
+        var newDate = Date.now();
+    });
+    
     test("Processing's parseFloat, parseInt work", function() {
         var settings = {};
         var val = parseInt(settings.val, 10) || 13;
