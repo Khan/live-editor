@@ -112,7 +112,8 @@ var BabyHint = {
         "textAlign": [1, 2],
         "textFont": [1, 2],
         "translate": [2, 3],
-        "vertex": [2, 4]
+        "vertex": [2, 4],
+        "Date": [0, 1, 2, 3, 4, 5, 6, 7],
     },
 
     // A mapping from function name to an example usage of the function
