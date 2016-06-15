@@ -340,13 +340,6 @@ var PJSCodeInjector = (function () {
             // Reset frameCount variable on restart
             this.processing.frameCount = 0;
 
-            for (var i = 0; i < this.drawLoopMethods.length; i++) {
-                this.processing[this.drawLoopMethods[i]] = undefined;
-            }
-            this.processing.keyPressed = function () {};
-            this.processing.keyReleased = function () {};
-            this.processing.draw = this.DUMMY;
-
             // Clear Processing logs
             this.processing._clearLogs();
         }
