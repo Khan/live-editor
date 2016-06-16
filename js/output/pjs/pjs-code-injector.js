@@ -130,6 +130,8 @@ class PJSCodeInjector {
             this.processing.Array = window.Array;
             this.processing.String = window.String;
             this.processing.isNaN = window.isNaN;
+            this.processing.Number = window.Number;
+            this.processing.Date = window.Date;
         }
 
         Object.assign(this.processing, {

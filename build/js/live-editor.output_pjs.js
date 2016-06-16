@@ -166,6 +166,8 @@ var PJSCodeInjector = (function () {
                 this.processing.Array = window.Array;
                 this.processing.String = window.String;
                 this.processing.isNaN = window.isNaN;
+                this.processing.Number = window.Number;
+                this.processing.Date = window.Date;
             }
 
             Object.assign(this.processing, {
@@ -1754,7 +1756,8 @@ var BabyHint = {
         "textAlign": [1, 2],
         "textFont": [1, 2],
         "translate": [2, 3],
-        "vertex": [2, 4]
+        "vertex": [2, 4],
+        "Date": [0, 1, 2, 3, 4, 5, 6, 7]
     },
 
     // A mapping from function name to an example usage of the function
