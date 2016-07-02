@@ -2415,9 +2415,11 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
             return exp;
         }
 
-        var leftArrow = clickOnly ? "-" : "◄";
-        var rightArrow = clickOnly ? "+" : "◄";
-        var center = clickOnly ? "" : " ◆ ";
+        var baseSvg = "<svg width='12px' viewBox='-25, -25, 150, 150'>";
+
+        var leftArrow = clickOnly ? "-" : baseSvg + "<polygon points='0,50 100,0 100, 100' fill='white'/></svg>";
+        var rightArrow = clickOnly ? "+" : baseSvg + "<polygon points='0,50 100,0 100, 100' fill='white'/></svg>";
+        var center = clickOnly ? "" : baseSvg + "<polygon points='50,0 100,50 50,100 0,50' fill='white'/></svg>";
 
         var $leftButton = $("<span role='button'>" + leftArrow + "</span>");
         var $rightButton = $("<span role='button' class='flipped-arrow'>" + rightArrow + "</span>");
