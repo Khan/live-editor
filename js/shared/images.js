@@ -44,7 +44,22 @@ window.OutputImages = [
             "robot_male_1",
             "robot_male_2",
             "robot_male_3",
-            "spunky-sam"
+            "spunky-sam",
+            "duskpin-sapling",
+            "duskpin-seed",
+            "duskpin-seedling",
+            "duskpin-tree",
+            "duskpin-ultimate",
+            "primosaur-sapling",
+            "primosaur-seed",
+            "primosaur-seedling",
+            "primosaur-tree",
+            "primosaur-ultimate",
+            "starky-sapling",
+            "starky-seed",
+            "starky-seedling",
+            "starky-tree",
+            "starky-ultimate"
         ],
     },
     {
