@@ -992,10 +992,10 @@ window.ScratchpadAutosuggestData = {
             description: i18n._("Calculates a color or colors between two color at a specific increment. The amount parameter is the amount to interpolate between the two values where 0.0 equal to the first point, 0.1 is very near the first point, 0.5 is half-way in between, etc."),
             params: [i18n._("c1: Interpolate from this color"), i18n._("c2: Interpolate to this color")]
         }, {
-            name: "colorMode(MODE)",
+            name: "colorMode(MODE, *range)",
             exampleURL: "/cs/colormode/5833774306689024",
             description: i18n._("Changes the way that color values are interpreted when set by fill()/stroke()/background()."),
-            params: [i18n._("MODE: Either RGB or HSB. The default is RGB.")]
+            params: [i18n._("MODE: Either RGB or HSB. The default is RGB."), i18n._("range (Optional): int or float: range for all color elements")]
         }, {
             name: "red(color)",
             exampleURL: "/cs/redcolor/5102159326609408",

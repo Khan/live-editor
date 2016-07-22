@@ -379,11 +379,12 @@ window.ScratchpadAutosuggestData = {
                 ]
             },
             {
-                name: "colorMode(MODE)",
+                name: "colorMode(MODE, *range)",
                 exampleURL: "/cs/colormode/5833774306689024",
                 description: i18n._("Changes the way that color values are interpreted when set by fill()/stroke()/background()."),
                 params: [
-                    i18n._("MODE: Either RGB or HSB. The default is RGB.")
+                    i18n._("MODE: Either RGB or HSB. The default is RGB."),
+                    i18n._("range (Optional): int or float: range for all color elements")
                 ]
             },
             {
