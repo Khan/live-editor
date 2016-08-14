@@ -2651,6 +2651,8 @@ window.PJSOutput = Backbone.View.extend({
 
         this.processing = new Processing(canvas, function (instance) {
             instance.draw = _this.DUMMY;
+
+            instance.parseInt = parseInt;
         });
 
         // The reason why we're passing the whole "output" object instead of
