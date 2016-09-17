@@ -2578,8 +2578,6 @@ window.PJSOutput = Backbone.View.extend({
             if (/chrome/.test(userAgent)) {
                 Object.freeze(window.location);
                 Object.freeze(window);
-            } else if (/safari/.test(userAgent)) {
-                Object.seal(window);
             } else {
                 // On other browsers only freeze if we can, on Firefox it
                 // causes an error because window is not configurable.
