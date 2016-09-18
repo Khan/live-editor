@@ -290,23 +290,11 @@ ASTTransforms.findResources = function(resources) {
     };
 };
 
-/**
- * Converts a MemberExpression to a String, e.g. given an AST for a.b.c will
- * return the string "a.b.c".
- */
-const memberExpressionToString = function(node) {
-    if (node.type === "Identifier") {
-        return node.name;
-    } else if (node.type === "MemberExpression") {
-        return `${memberExpressionToString(node.object)}.${node.property.name}`;
-    }
-};
-
 ASTTransforms.rewriteNewExpressions = function(envName) {
     return {
         leave(node, path) {
             if (node.type === "NewExpression") {
-                const name = memberExpressionToString(node.callee);
+                const name = escodegen.generate(node.callee);
 
                 return b.CallExpression(
                     b.CallExpression(

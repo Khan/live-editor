@@ -7,7 +7,7 @@ this["Handlebars"]["templates"]["tipbar"] = Handlebars.template(function (Handle
 function program1(depth0,data) {
   
   
-  return "x";}
+  return "&times;";}
 
 function program3(depth0,data) {
   
