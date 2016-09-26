@@ -340,7 +340,10 @@
             "floorplanes",
             "ham",
             "lamp",
-            "luxoball"
+            "luxoball",
+            "rat_1",
+            "rat_2",
+            "rat_3"
         ]
     },
     {

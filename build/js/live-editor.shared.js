@@ -27,7 +27,7 @@ window.AllImages = [{
     "images": ["boxmodel", "tim-berners-lee-webpage", "tim-berners-lee"]
 }, {
     "groupName": "pixar",
-    "images": ["army1", "army2", "bedspread", "bopeep", "buzz", "floorplanes", "ham", "lamp", "luxoball"]
+    "images": ["army1", "army2", "bedspread", "bopeep", "buzz", "floorplanes", "ham", "lamp", "luxoball", "rat_1", "rat_2", "rat_3"]
 }, {
     "groupName": "scratchpads",
     "images": ["colorpicker_background", "colorpicker_hex", "colorpicker_hsb_b", "colorpicker_hsb_h", "colorpicker_hsb_s", "colorpicker_indic", "colorpicker_overlay", "colorpicker_rgb_b", "colorpicker_rgb_g", "colorpicker_rgb_r", "colorpicker_select", "colorpicker_submit", "cool-critter", "error-buddy", "happy-critter", "jumping-critter", "leaf-green", "leaf-orange", "leaf-red", "leaf-yellow", "select", "simple-button-green-loader.gif", "speech-arrow", "topic-animation", "topic-drawing", "topic-programming-basics", "topic-user-interaction", "ui-icons_808080_256x240"]
