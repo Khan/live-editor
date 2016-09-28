@@ -48,7 +48,7 @@ if (!i18n._) {
 // Build a list of all the available images
 window.OutputImages = [{
     groupName: "avatars",
-    images: "leaf-blue leaf-green leaf-grey leaf-orange leaf-red leaf-yellow leafers-seed leafers-seedling leafers-sapling leafers-tree leafers-ultimate marcimus mr-pants mr-pink piceratops-seed piceratops-seedling piceratops-sapling piceratops-tree piceratops-ultimate old-spice-man orange-juice-squid aqualine-seed aqualine-seedling aqualine-sapling aqualine-tree aqualine-ultimate purple-pi questionmark robot_female_1 robot_female_2 robot_female_3 robot_male_1 robot_male_2 robot_male_3 spunky-sam".split(" ")
+    images: "aqualine-sapling aqualine-seed aqualine-seedling aqualine-tree aqualine-ultimate leaf-blue leaf-green leaf-grey leaf-orange leaf-red leaf-yellow leafers-sapling leafers-seed leafers-seedling leafers-tree leafers-ultimate marcimus mr-pants mr-pink old-spice-man orange-juice-squid piceratops-sapling piceratops-seed piceratops-seedling piceratops-tree piceratops-ultimate purple-pi questionmark robot_female_1 robot_female_2 robot_female_3 robot_male_1 robot_male_2 robot_male_3 spunky-sam".split(" ")
 }, {
     groupName: "creatures",
     images: "Hopper-Happy Hopper-Cool Hopper-Jumping OhNoes BabyWinston Winston".split(" ")
