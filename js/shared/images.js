@@ -13,7 +13,7 @@ window.OutputImages = [
     },
     {
         groupName: "creatures",
-        images: "Hopper-Happy Hopper-Cool Hopper-Jumping OhNoes BabyWinston Winston".split(" ")
+        images: "Hopper-Happy Hopper-Cool Hopper-Jumping OhNoes OhNoes-Happy OhNoes-Hmm BabyWinston Winston".split(" ")
     },
     {
         groupName: "cute",
