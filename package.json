@@ -6,7 +6,7 @@
   "scripts": {
     "build": "gulp build",
     "test": "gulp test",
-    "install": "rm -rf node_modules/gulp-handlebars/node_modules/handlebars"
+    "install": "rimraf node_modules/gulp-handlebars/node_modules/handlebars"
   },
   "repository": {
     "type": "git",
@@ -45,6 +45,7 @@
     "phantomjs": "^1.9.17",
     "replace-ext": "0.0.1",
     "request": "^2.44.0",
+    "rimraf": "^2.5.4",
     "run-sequence": "^0.3.6",
     "sinon": "^1.10.3",
     "through2": "^2.0.0",
