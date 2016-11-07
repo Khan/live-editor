@@ -120,6 +120,8 @@
             "Hopper-Cool",
             "Hopper-Happy",
             "Hopper-Jumping",
+            "OhNoes-Happy",
+            "OhNoes-Hmm",
             "OhNoes",
             "Winston"
         ]
