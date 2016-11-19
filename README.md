@@ -37,9 +37,7 @@ You can use the pre-built copies of everything inside the `build/` directory. If
 
 At this point you can make a fresh build, using [Gulp](http://gulpjs.com/):
 
-    gulp build
-    # Or if not installed globally:
-    node_modules/gulp/bin/gulp.js build
+    npm run build
 
 If you have an issue with "this.merge" is undefined, then `rm -rf node_modules/gulp-handlebars/node_modules/handlebars`.
 
@@ -47,7 +45,7 @@ If you have an issue with "this.merge" is undefined, then `rm -rf node_modules/g
 
 The tests are in the `/tests` folder. They use Mocha/Chai/Sinon. Gulp typically runs the tests when relevant files change, but you can explicitly run the tests with:
 
-    node_modules/gulp/bin/gulp.js test
+    npm test
     
 You can also run single test suites at a time - see gulpfile.js for what suites are available:
 
