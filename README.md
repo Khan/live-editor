@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/Khan/live-editor.svg?branch=master)](https://travis-ci.org/Khan/live-editor) [![Code Climate](https://codeclimate.com/github/Khan/live-editor/badges/gpa.svg)](https://codeclimate.com/github/Khan/live-editor)
-# Live Code Editor
+# Live Code Editor (in maintence mode)
+
+**WARNING:** This project is currently in maintenance mode.  Please feel free to file bug reports.  If determine that the issue is serious enough we will fix it.
 
 [![Join the chat at https://gitter.im/Khan/live-editor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Khan/live-editor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
