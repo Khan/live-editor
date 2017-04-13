@@ -363,7 +363,7 @@
 }
 
 .scratchpad-playbar .loading-msg {
-    background: url(../images/throbber.gif) no-repeat 7px center;
+    background: url(../images/spinner.gif) no-repeat 7px center;
     line-height: 30px;
     padding-left: 30px;
 }

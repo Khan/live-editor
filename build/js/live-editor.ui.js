@@ -294,7 +294,7 @@ function program21(depth0,data) {
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "/throbber-full.gif\">\n                <span class=\"hide-text\">";
+  buffer += escapeExpression(stack1) + "/spinner-large.gif\">\n                <span class=\"hide-text\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(5, program5, data);
@@ -360,7 +360,7 @@ function program21(depth0,data) {
   stack1 = foundHelper || depth0.imagesDir;
   if(typeof stack1 === functionType) { stack1 = stack1.call(depth0, { hash: {} }); }
   else if(stack1=== undef) { stack1 = helperMissing.call(depth0, "imagesDir", { hash: {} }); }
-  buffer += escapeExpression(stack1) + "/throbber-full.gif\">\n                <span class=\"hide-text\">";
+  buffer += escapeExpression(stack1) + "/spinner-large.gif\">\n                <span class=\"hide-text\">";
   foundHelper = helpers['_'];
   stack1 = foundHelper || depth0['_'];
   tmp1 = self.program(15, program15, data);

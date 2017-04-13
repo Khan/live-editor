@@ -22,7 +22,7 @@ function program5(depth0,data) {
 function program7(depth0,data) {
   
   
-  return "\n		<img src=\"/images/throbber.gif\" class=\"thumb-throbber\" />\n		<div class=\"thumb-shell\">\n			<img class=\"thumb\" />\n			<div class=\"thumb-error\"></div>\n		</div> \n		";}
+  return "\n		<img src=\"/images/spinner.gif\" class=\"thumb-throbber\" />\n		<div class=\"thumb-shell\">\n			<img class=\"thumb\" />\n			<div class=\"thumb-error\"></div>\n		</div> \n		";}
 
 function program9(depth0,data) {
   
