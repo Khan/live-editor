@@ -2572,19 +2572,13 @@ window.PJSOutput = Backbone.View.extend({
                 }
             }
 
-            // Prevent further changes to property descriptors and prevent
-            // extensibility on window.
-            var userAgent = navigator.userAgent.toLowerCase();
-            if (/chrome/.test(userAgent)) {
-                Object.freeze(window.location);
+            // If possible, prevent further changes to property descriptors and
+            // prevent extensibility on window. Most browsers don't support
+            // this, unfortunately.
+            // TODO(charlie): Look into enforcing this via an AST transform.
+            var propDescriptor = Object.getOwnPropertyDescriptor(window);
+            if (!propDescriptor || propDescriptor.configurable) {
                 Object.freeze(window);
-            } else {
-                // On other browsers only freeze if we can, on Firefox it
-                // causes an error because window is not configurable.
-                var propDescriptor = Object.getOwnPropertyDescriptor(window);
-                if (!propDescriptor || propDescriptor.configurable) {
-                    Object.freeze(window);
-                }
             }
 
             // Completely lock down window's prototype chain
