@@ -2083,7 +2083,6 @@ window.LiveEditor = Backbone.View.extend({
     showError: null,
 
     handleErrors: function handleErrors(errors) {
-
         if (!this.newErrorExperience) {
             this.tipbar.toggleErrors(errors, 1500);
             return;
@@ -2456,7 +2455,13 @@ window.LiveEditor = Backbone.View.extend({
 
             // error.html was cleared above, so if it exists it's because we
             // reset it, and it's safe.
-            newError.text = error.html ? this.prettify(error.html) : this.prettify(this.clean(error.text || error.message || ""));
+            if (typeof error === "string") {
+                newError.text = this.clean(this.prettify(error));
+            } else if (error.html) {
+                newError.text = this.prettify(error.html);
+            } else {
+                newError.text = this.prettify(this.clean(error.text || error.message || ""));
+            }
 
             // Coerce anything from the user to the expected types before
             // copying over
