@@ -99,6 +99,16 @@ describe("Scratchpad Output Exec", function() {
         "generates an error for numbers prefixed by a 0",
         "ellipse(09,10,11,12);"
     );
+    
+    failingTest(
+        "user calls to KAInfiniteLoopSetTimeout generate an error",
+        function() {
+            var begin = function() {
+                this[["KAInfiniteLoopSetTimeout"][0]](40000);
+            };
+            begin();
+        }
+    );
 
     test("Looping (with Processing.js Built-in Functions)", function() {
         var go = function() {

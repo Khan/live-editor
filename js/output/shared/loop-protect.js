@@ -11,6 +11,10 @@
  * @constructor
  */
 window.LoopProtector = function(callback, timeouts, reportLocation) {
+    // protectorKey is used to check if a call to KAInfiniteLoopSetTimeout is
+    // by our own code, or if the call is just a users code trying to mess with
+    // things.
+    this.protectorKey = Math.random();
     this.callback = callback || function () { };
     this.timeout = 200;
     this.branchStartTime = 0;
@@ -102,9 +106,18 @@ window.LoopProtector.prototype = {
         }
     },
 
-    _KAInfiniteLoopSetTimeout: function (timeout) {
-        this.timeout = timeout;
-        this.branchStartTime = 0;
+    _KAInfiniteLoopSetTimeout: function (timeout, protectorKey) {
+        // Make sure that the key we've been provided matches the one on this
+        // LoopProtector
+        if (protectorKey === this.protectorKey) {
+            this.timeout = timeout;
+            this.branchStartTime = 0;
+        } else {
+            // Let the user know that what they're trying to do is a bad idea
+            throw {
+                html: i18n._("Messing with the loop protector is dangerous!")
+            };
+        }
     },
 
     riskyStatements: [
@@ -173,7 +186,7 @@ window.LoopProtector.prototype = {
                 node.body.unshift(
                     b.ExpressionStatement(b.CallExpression(
                         b.Identifier("KAInfiniteLoopSetTimeout"),
-                        [b.Literal(this.mainTimeout)]
+                        [b.Literal(this.mainTimeout), b.Literal(this.protectorKey)]
                     ))
                 );
             }
@@ -186,7 +199,7 @@ window.LoopProtector.prototype = {
                 node.body.push(
                     b.ExpressionStatement(b.CallExpression(
                         b.Identifier("KAInfiniteLoopSetTimeout"),
-                        [b.Literal(this.asyncTimeout)]
+                        [b.Literal(this.asyncTimeout), b.Literal(this.protectorKey)]
                     ))
                 );
             }
