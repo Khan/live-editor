@@ -140,6 +140,15 @@ window.ScratchpadAutosuggestData = {
                 ]
             },
             {
+                name: "stopSound(sound)",
+                exampleURL: "", // to be done
+                description: i18n._("Stops a sound, started with playSound(). You can choose the fade out time. "),
+                params: [
+                    i18n._("sound: a sound returned by getSound()"),
+                    i18n._("fadeout: fade out time in seconds.")
+                ]
+            },
+            {
                 name: "rectMode(MODE)",
                 exampleURL: "/cs/rectmodemode/4556457341091840",
                 description: i18n._("Modifies the location from which rectangles draw."),

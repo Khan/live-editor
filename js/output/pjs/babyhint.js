@@ -106,6 +106,7 @@ var BabyHint = {
         "scale": [1, 2],
         "set": [3, 4],
         "sin": 1,
+		"stopSound": [1,2],
         "stroke": [1, 3, 4],
         "tan": 1,
         "text": [3, 5],

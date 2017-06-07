@@ -158,8 +158,45 @@ class PJSCodeInjector {
 
             playSound: (sound) => {
                 if (sound && sound.audio && sound.audio.play) {
+                    if( sound.audio.fadeOutInterval ) {
+                        sound.audio.fadeOutStopInterval();                                    
+                    }
                     sound.audio.currentTime = 0;
                     sound.audio.play();
+                } else {
+                    throw {message: i18n._("No sound file provided.")};
+                }
+            },
+
+            stopSound: (sound, fadeOut) => {
+                if (sound && sound.audio && sound.audio.volume) {
+
+                    if( !fadeOut || fadeOut < 0.020 ) {
+                        if( sound.audio.fadeOutInterval ) sound.audio.fadeOutStopInterval();
+                        else sound.audio.pause();
+                    } else {
+                        if( sound.audio.fadeOutInterval ) return;
+
+                        var volume = sound.audio.volume;
+                        var orgVolume = volume;
+						var stepCount = 20;
+
+                        sound.audio.fadeOutInterval = setInterval( function() {
+                            volume -= orgVolume / stepCount;
+                            if( volume > 0 ) {
+                                sound.audio.volume = volume;
+                            } else {
+                                sound.audio.fadeOutStopInterval();                                    
+                            }
+                        }, fadeOut * 1000 / stepCount );
+
+                        sound.audio.fadeOutStopInterval = function() {
+                            clearInterval( sound.audio.fadeOutInterval );
+                            sound.audio.fadeOutInterval = null;
+                            sound.audio.pause();
+                            sound.audio.volume = orgVolume;
+                        };
+                    }
                 } else {
                     throw {message: i18n._("No sound file provided.")};
                 }
