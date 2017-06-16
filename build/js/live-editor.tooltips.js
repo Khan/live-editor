@@ -2415,7 +2415,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
             return exp;
         }
 
-        var baseSvg = "<svg width='12px' viewBox='-25, -25, 150, 150'>";
+        var baseSvg = "<svg width='12px' height='12px' viewBox='-25, -25, 150, 150'>";
 
         var leftArrow = clickOnly ? "-" : baseSvg + "<polygon points='0,50 100,0 100, 100' fill='white'/></svg>";
         var rightArrow = clickOnly ? "+" : baseSvg + "<polygon points='0,50 100,0 100, 100' fill='white'/></svg>";
