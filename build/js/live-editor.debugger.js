@@ -849,6 +849,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.editor.session.getBreakpoints().forEach(function (value, index) {
             breakpoints[index + 1] = true;
         });
+        console.log(breakpoints);
         return breakpoints;
     },
 

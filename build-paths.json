@@ -135,6 +135,9 @@
             "build/tmpl/live-editor.js",
             "js/ui/canvas.js",
             "js/ui/record.js",
+            "bower_components/iframe-overlay/dist/iframe-overlay.js",
+            "js/ui/debugger.js",
+            "build/tmpl/debugger.js",
             "js/live-editor.js"
         ]
     },
