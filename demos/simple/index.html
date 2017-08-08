@@ -38,10 +38,10 @@
     var outputUrl = "output.html";
     var useDebugger = false;
     // TODO(kevinb7) conditionally load live-editor.debugger.js
-//    if (location.search.indexOf("debugger=true") !== -1) {
-//        outputUrl += "?debugger=true";
-//        useDebugger = true;
-//    }
+   if (location.search.indexOf("debugger=true") !== -1) {
+       outputUrl += "?debugger=true";
+       useDebugger = true;
+   }
 
     var code = window.localStorage["test-code"] || "rect(10, 10, 100, 100);";
 

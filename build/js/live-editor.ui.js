@@ -1101,8 +1101,6 @@ function createRelay(element) {
         });
     });
 }
-debugger;
-window.iframeOverlay = {createOverlay: createOverlay};
 
 exports.createOverlay = createOverlay;
 exports.createRelay = createRelay;
