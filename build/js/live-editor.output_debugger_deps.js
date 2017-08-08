@@ -185,7 +185,8 @@ function createRelay(element) {
         });
     });
 }
-
+debugger;
+window.iframeOverlay = {createOverlay: createOverlay};
 
 exports.createOverlay = createOverlay;
 exports.createRelay = createRelay;
@@ -624,6 +625,7 @@ module.exports = Poster;
 
 },{}]},{},[1])(1)
 });
+
 /**
  * Copyright (c) 2014, Facebook, Inc.
  * All rights reserved.

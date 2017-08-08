@@ -36,8 +36,6 @@ window.LiveEditor = Backbone.View.extend({
     editors: {},
 
     initialize: function(options) {
-        options.useDebugger = true;
-
         this.workersDir = this._qualifyURL(options.workersDir);
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);

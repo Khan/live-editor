@@ -185,7 +185,8 @@ function createRelay(element) {
         });
     });
 }
-
+debugger;
+window.iframeOverlay = {createOverlay: createOverlay};
 
 exports.createOverlay = createOverlay;
 exports.createRelay = createRelay;
@@ -624,6 +625,7 @@ module.exports = Poster;
 
 },{}]},{},[1])(1)
 });
+
 /* Provides debugging support for live-editor */
 
 window.ScratchpadDebugger = Backbone.View.extend({
