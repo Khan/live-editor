@@ -32,7 +32,7 @@
     <script src="../../build/js/live-editor.tooltips.js"></script>
     <script src="../../build/js/live-editor.ui.js"></script>
     <script src="../../build/js/live-editor.editor_ace.js"></script>
-    <!--<script src="../../build/js/live-editor.debugger.js"></script>-->
+    <script src="../../build/js/live-editor.debugger.js"></script>
 
     <script>
     var outputUrl = "output.html";
@@ -80,9 +80,6 @@
         jshintFile: "../../build/external/jshint/jshint.js",
         useDebugger: useDebugger,
         newErrorExperience: true,
-    });
-    liveEditor.editor.on("change", function() {
-        window.localStorage["test-code"] = liveEditor.editor.text();
     });
     ScratchpadAutosuggest.init(liveEditor.editor.editor);
     </script>

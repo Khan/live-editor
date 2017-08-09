@@ -40,10 +40,9 @@ window.PJSDebugger = Backbone.View.extend({
 
     handleMessage: function(event) {
         var data;
-
         this.frameSource = event.source;
         this.frameOrigin = event.origin;
-        
+
         if (typeof event.data === "object") {
             return;
         }
@@ -53,7 +52,9 @@ window.PJSDebugger = Backbone.View.extend({
         } catch (err) {
             return;
         }
-        
+
+        console.log(data);
+
         if (data.type !== "debugger") {
             return;
         }
@@ -69,8 +70,9 @@ window.PJSDebugger = Backbone.View.extend({
         }
 
         if (data.action === "start") {
-            this.output.clear();
+            this.output.injector.clear();
             this.debugger.breakpoints = data.breakpoints;
+            this.debugger.load(window.localStorage["test-code"]);
             this.debugger.start(data.paused);
         }
 

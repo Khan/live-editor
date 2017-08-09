@@ -175,6 +175,10 @@ window.LiveEditor = Backbone.View.extend({
             this.editor.on("scrubbingEnded", function() {
                 this.noLint = false;
             }.bind(this));
+
+            // this.editor.on("change", function() {
+            //     window.localStorage["test-code"] = this.editor.text();
+            // }.bind(this));
         }
 
         this.tipbar = new TipBar({
