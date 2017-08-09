@@ -1089,10 +1089,6 @@ window.LiveEditor = Backbone.View.extend({
             this.editor.on("scrubbingEnded", (function () {
                 this.noLint = false;
             }).bind(this));
-
-            // this.editor.on("change", function() {
-            //     window.localStorage["test-code"] = this.editor.text();
-            // }.bind(this));
         }
 
         this.tipbar = new TipBar({
@@ -1104,7 +1100,7 @@ window.LiveEditor = Backbone.View.extend({
         if (options.useDebugger) {
             this["debugger"] = new ScratchpadDebugger({
                 liveEditor: this,
-                editor: this.editor.editor
+                editor: this.editor
             });
             this["debugger"].on("enabled", function (enabled) {
                 if (enabled) {

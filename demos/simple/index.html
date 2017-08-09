@@ -81,6 +81,9 @@
         useDebugger: useDebugger,
         newErrorExperience: true,
     });
+    liveEditor.editor.on("change", function() {
+        window.localStorage["test-code"] = liveEditor.editor.text();
+    });
     ScratchpadAutosuggest.init(liveEditor.editor.editor);
     </script>
 </body>

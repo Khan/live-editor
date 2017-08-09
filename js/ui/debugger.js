@@ -5,7 +5,8 @@ window.ScratchpadDebugger = Backbone.View.extend({
     el: ".scratchpad-debugger",
 
     initialize: function(options) {
-        this.editor = options.editor;
+        this.fullEditor = options.editor;
+        this.editor = options.editor.editor;
         this.liveEditor = options.liveEditor;
 
         this.render();
@@ -66,7 +67,8 @@ window.ScratchpadDebugger = Backbone.View.extend({
             self.postFrame({
                 type: "debugger",
                 action: "debug",
-                state: this.checked ? "on": "off"
+                state: this.checked ? "on": "off",
+                code: this.checked ? self.fullEditor.text() : ""
             });
         });
 
@@ -223,7 +225,6 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.editor.session.getBreakpoints().forEach(function(value, index) {
             breakpoints[index + 1] = true;
         });
-        console.log(breakpoints);
         return breakpoints;
     },
 
@@ -235,7 +236,6 @@ window.ScratchpadDebugger = Backbone.View.extend({
         // information, see the comment in handleMessages in live-editor.js.
         var event = e.originalEvent;
         var data;
-        console.log('listenMessage: %o', event);
 
         try {
             data = JSON.parse(event.data);
@@ -246,8 +246,6 @@ window.ScratchpadDebugger = Backbone.View.extend({
         if (!data) {
             return;
         }
-
-        console.log('listenMessages: %o', data);
 
         if (data.type !== "debugger") {
             return;
