@@ -228,6 +228,37 @@ window.ScratchpadDebugger = Backbone.View.extend({
         return breakpoints;
     },
 
+    reconstruct: function(descontructedObjects) {
+        if (descontructedObjects === null || descontructedObjects === undefined) {
+            return null;
+        }
+        var originalObjects = [];
+
+        var recurse = function (obj, id) {
+            var isArray = arguments[2] === undefined ? false : arguments[2];
+            var result = isArray ? [] : Object.create(null);
+            originalObjects[id] = result;
+
+            return Object.keys(obj).reduce(function (acc, key) {
+                var val = obj[key];
+
+                if (val == null) {
+                    acc[key] = val;
+                } else if (typeof val === "object") {
+                    var id = val.id;
+                    var isArray = val.isArray;
+                    acc[key] = originalObjects[id] || recurse(descontructedObjects[id], id, isArray);
+                } else {
+                    acc[key] = val;
+                }
+
+                return acc;
+            }, result);
+        };
+
+        return recurse(descontructedObjects[0], 0); // root object's id is always 0
+    },
+
     listenMessages: function(e) {
         // DANGER!  The data coming in from the iframe could be anything,
         // because with some cleverness the author of the program can send an
@@ -281,13 +312,16 @@ window.ScratchpadDebugger = Backbone.View.extend({
             if (data.scope) {
                 console.log("VARIABLES:");
                 var numVars = 0;
-                var scope = data.scope[0];
-                for (var key in scope) {
-                    console.log("Variable: " + key + ", Value: " + scope[key]);
+                var obj = this.reconstruct(data.scope);
+                var keys = Object.keys(obj);
+                for (var i = 0; i < keys.length; i++) {
+                    var key = keys[i];
+                    console.log("  Variable: " + key);
+                    console.log(obj[key])
                     numVars++;
                 }
                 if (numVars === 0) {
-                    console.log("No variables in the current scope.")
+                    console.log("No variables in the current scope.");
                 }
                 hasStackOrScope = true;
             }

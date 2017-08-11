@@ -40,7 +40,7 @@ window.PJSDebugger = Backbone.View.extend({
         }.bind(this);
     },
 
-    deconstruct: function deconstruct(root) {
+    deconstruct: function(root) {
         if (root === null || root === undefined) {
             return null;
         }
