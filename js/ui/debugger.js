@@ -268,6 +268,32 @@ window.ScratchpadDebugger = Backbone.View.extend({
                 editor.setHighlightActiveLine(false);
                 this.overlay.resume();
             }
+            var hasStackOrScope = false;
+            if (data.stack && data.stack.length > 0 && data.stack[0].line !== -1) {
+                console.log("STACK:");
+                for (var i = data.stack.length - 1; i >= 0; i--) {
+                    var currLoc = data.stack[i];
+                    var name = currLoc.name.replace(/context[0-9]+./, "");
+                    console.log("Function: " + name + ", Line: " + currLoc.line);
+                }
+                hasStackOrScope = true;
+            }
+            if (data.scope) {
+                console.log("VARIABLES:");
+                var numVars = 0;
+                var scope = data.scope[0];
+                for (var key in scope) {
+                    console.log("Variable: " + key + ", Value: " + scope[key]);
+                    numVars++;
+                }
+                if (numVars === 0) {
+                    console.log("No variables in the current scope.")
+                }
+                hasStackOrScope = true;
+            }
+            if (hasStackOrScope) {
+                console.log("-------------------------");
+            }
         } else if (data.action === "done") {
             editor.setHighlightActiveLine(false);
             this.disableButtons();

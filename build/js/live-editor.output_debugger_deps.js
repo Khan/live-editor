@@ -49339,7 +49339,9 @@ window.PJSDebugger = Backbone.View.extend({
             this.postParent({
                 type: "debugger",
                 action: "step",
-                line: this["debugger"].currentLine
+                line: this["debugger"].currentLine,
+                scope: this.deconstruct(this["debugger"].currentScope),
+                stack: this["debugger"].currentStack
             });
         }).bind(this);
 
@@ -49349,6 +49351,50 @@ window.PJSDebugger = Backbone.View.extend({
                 action: "done"
             });
         }).bind(this);
+    },
+
+    deconstruct: function deconstruct(root) {
+        if (root === null || root === undefined) {
+            return null;
+        }
+        var originalObjects = [];
+        var descontructedObjects = [];
+        var index = 0;
+        var traverse = function traverse(obj, isArray) {
+            var result = isArray ? [] : {};
+
+            if (originalObjects.indexOf(obj) === -1) {
+                originalObjects[index] = obj;
+                descontructedObjects[index] = result;
+
+                index++;
+            }
+
+            return Object.keys(obj).reduce(function (acc, key) {
+                var val = obj[key];
+
+                if (val == null) {
+                    acc[key] = val;
+                } else if (typeof val === "object") {
+                    if (originalObjects.indexOf(val) === -1) {
+                        traverse(val, val instanceof Array);
+                    }
+                    acc[key] = {
+                        id: originalObjects.indexOf(val),
+                        isArray: val instanceof Array
+                    };
+                } else if (typeof val === "function") {
+                    acc[key] = "[function]";
+                } else {
+                    acc[key] = val;
+                }
+
+                return acc;
+            }, result);
+        };
+
+        traverse(root);
+        return descontructedObjects;
     },
 
     handleMessage: function handleMessage(event) {
@@ -49396,7 +49442,9 @@ window.PJSDebugger = Backbone.View.extend({
             this.postParent({
                 type: "debugger",
                 action: "step",
-                line: this["debugger"].currentLine
+                line: this["debugger"].currentLine,
+                scope: this.deconstruct(this["debugger"].currentScope),
+                stack: this["debugger"].currentStack
             });
         }
 
@@ -49405,7 +49453,9 @@ window.PJSDebugger = Backbone.View.extend({
             this.postParent({
                 type: "debugger",
                 action: "step",
-                line: this["debugger"].currentLine
+                line: this["debugger"].currentLine,
+                scope: this.deconstruct(this["debugger"].currentScope),
+                stack: this["debugger"].currentStack
             });
         }
 
@@ -49414,7 +49464,9 @@ window.PJSDebugger = Backbone.View.extend({
             this.postParent({
                 type: "debugger",
                 action: "step",
-                line: this["debugger"].currentLine
+                line: this["debugger"].currentLine,
+                scope: this.deconstruct(this["debugger"].currentScope),
+                stack: this["debugger"].currentStack
             });
         }
 
