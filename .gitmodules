@@ -21,7 +21,7 @@
 	url = https://github.com/Khan/escodegen
 [submodule "external/debugger"]
 	path = external/debugger
-	url = https://github.com/kevinb7/debugger
+	url = https://github.com/Khan/debugger
 [submodule "external/visibly"]
 	path = external/visibly
 	url = https://github.com/Khan/visibly.js
