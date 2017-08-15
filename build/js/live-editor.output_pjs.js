@@ -1746,7 +1746,7 @@ var BabyHint = {
         "PVector": [0, 2, 3],
         "random": [0, 1, 2],
         "RegExp": [1, 2],
-        "rect": [4, 5],
+        "rect": [4, 5, 8],
         "scale": [1, 2],
         "set": [3, 4],
         "sin": 1,
