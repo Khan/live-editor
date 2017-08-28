@@ -191,7 +191,18 @@ window.LiveEditorOutput = Backbone.View.extend({
         // If there is no frameSource (e.g. we're not embedded in another page)
         // Then we don't need to care about sending the messages anywhere!
         if (this.frameSource) {
-            this.frameSource.postMessage(
+            let parentWindow = this.frameSource;
+            // In Chrome on dev when postFrame is called from webapp's
+            // scratchpad package it is somehow executed from the iframe
+            // instead, so frameSource is not really the parent frame.  We
+            // detect that here and fix it.
+            // TODO(james): Figure out why this is and if there is a better
+            // place to put a fix.
+            if (this.frameSource === window) {
+                parentWindow = this.frameSource.parent;
+            }
+
+            parentWindow.postMessage(
                 typeof data === "string" ? data : JSON.stringify(data),
                 this.frameOrigin);
         }
