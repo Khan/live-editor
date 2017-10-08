@@ -87741,7 +87741,6 @@ ASTTransforms.rewriteContextVariables = function (envName, context) {
                         if (["Program", "BlockStatement"].includes(parent.type)) {
                             // Before: var x = 5, y = 10, z;
                             // After: __env__.x = 5; __env__.y = 10;
-
                             return node.declarations.filter(function (decl) {
                                 return decl.init !== null;
                             }).map(function (decl) {
@@ -87750,10 +87749,11 @@ ASTTransforms.rewriteContextVariables = function (envName, context) {
                         } else {
                             // Before: for (var i = 0, j = 0; i * j < 100; i++, j++) { ... }
                             // After: for (__env__.i = 0, __env__.j = 0; __env__.i * __env__.j < 100; ...) { ... }
-
                             return {
                                 type: "SequenceExpression",
-                                expressions: node.declarations.map(function (decl) {
+                                expressions: node.declarations.filter(function (decl) {
+                                    return decl.init !== null;
+                                }).map(function (decl) {
                                     return b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init);
                                 })
                             };
