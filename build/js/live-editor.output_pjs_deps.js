@@ -155,6 +155,7 @@
     HALF_PI:    Math.PI / 2,
     THIRD_PI:   Math.PI / 3,
     QUARTER_PI: Math.PI / 4,
+    TAU:        2 * Math.PI,
 
     DEG_TO_RAD: Math.PI / 180,
     RAD_TO_DEG: 180 / Math.PI,
@@ -1712,7 +1713,7 @@
 
       // set up the template element
       var element = document.createElement("span");
-      element.style.cssText = 'position: absolute; top: 0; left: 0; opacity: 0; font-family: "PjsEmptyFont", fantasy;';
+      element.style.cssText = 'position: absolute; top: 0; left: 0; opacity: 0; font-family: "PjsEmptyFont", fantasy; pointer-events: none;';
       element.innerHTML = "AAAAAAAA";
       document.body.appendChild(element);
       this.template = element;
@@ -1784,7 +1785,7 @@
 
       // also create the element to load and compare the new font
       var element = document.createElement("span");
-      element.style.cssText = "position: absolute; top: 0; left: 0; opacity: 0;";
+      element.style.cssText = "position: absolute; top: 0; left: 0; opacity: 0; pointer-events: none;";
       element.style.fontFamily = '"' + fontName + '", "PjsEmptyFont", fantasy';
       element.innerHTML = "AAAAAAAA";
       document.body.appendChild(element);
@@ -2132,7 +2133,7 @@
       }
 
       // Create the static methods of PVector automatically
-      // We don't do toString because it causes a TypeError 
+      // We don't do toString because it causes a TypeError
       //  when attempting to stringify PVector
       for (var method in PVector.prototype) {
         if (PVector.prototype.hasOwnProperty(method) && !PVector.hasOwnProperty(method) &&
@@ -17493,7 +17494,7 @@
     // by a "mousemove".  Unfortunately, both events have the same coordinates
     // which causes (pmouseX, pmouseY) === (mouseX, mouseY) when the cursor
     // re-enters the iframe which results in a gap in the line in the paint
-    // test program.  The reason why this bug ddoesn't appear when using just 
+    // test program.  The reason why this bug ddoesn't appear when using just
     // the canvas is that the canvas doesn't get "mousemove" events which occur
     // outside the canvas.
     // TODO(kevinb7): verify that this solution works with just the canvas
@@ -17669,10 +17670,10 @@
       if (!p.__usingDebugger) {
         p.keyCode = 0;
         // When the debugger is in use all callbacks are queued and thus not
-        // run synchronously therefore, setting keyCode = 0; immediatedly as 
+        // run synchronously therefore, setting keyCode = 0; immediatedly as
         // it is without this check results keyCode being 0 when keyPressed()
         // is finally run which is not the behaviour we want.
-        // The ProcessingDebugger sets keyCode to 0 right before it calls 
+        // The ProcessingDebugger sets keyCode to 0 right before it calls
         // keyTyped().
         // https://github.com/kevinb7/stepper/blob/master/src/processing-debugger.ts#L41-L43
       }

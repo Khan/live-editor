@@ -26,6 +26,9 @@ Open up a browser and navigate to http://0.0.0.0:8000/demos/simple.
 
 ## Building
 
+**WARNING:** This project requires node ~6 and npm ~3 in order for `npm install`
+to work correctly.
+
 You can use the pre-built copies of everything inside the `build/` directory. If you wish to make some changes and re-build the library from scratch you'll need to install some dependencies:
 
     git submodule update --init --recursive
@@ -48,15 +51,15 @@ If you have an issue with "this.merge" is undefined, then `rm -rf node_modules/g
 The tests are in the `/tests` folder. They use Mocha/Chai/Sinon. Gulp typically runs the tests when relevant files change, but you can explicitly run the tests with:
 
     npm test
-    
+
 You can also run single test suites at a time - see gulpfile.js for what suites are available:
 
     gulp test_output_pjs_assert
 
 You can run the tests in the browser runner by opening the relevant webpage:
-    
+
     open tests/output/sql/index.html
-    
+
 [TravisCI](https://travis-ci.org/Khan/live-editor/) also runs those tests when new commits are made.
 
 Please add tests whenever possible for any change that you make or propose.
