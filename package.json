@@ -5,8 +5,7 @@
   "main": "dist/live-editor.js",
   "scripts": {
     "build": "gulp build",
-    "test": "gulp test",
-    "install": "rimraf node_modules/gulp-handlebars/node_modules/handlebars"
+    "test": "gulp test"
   },
   "repository": {
     "type": "git",
@@ -23,7 +22,7 @@
     "babel-core": "5.6.18",
     "eslint": "3.10.2",
     "expect.js": "^0.3.1",
-    "gulp": "^3.8.6",
+    "gulp": "3.9.1",
     "gulp-bower": "0.0.7",
     "gulp-changed": "^0.4.1",
     "gulp-chmod": "^1.2.0",
@@ -31,14 +30,14 @@
     "gulp-declare": "^0.2.0",
     "gulp-define-module": "^0.1.1",
     "gulp-eol": "^0.1.1",
-    "gulp-handlebars": "~2.1.0",
+    "gulp-handlebars": "3.0.0",
     "gulp-if": "^1.2.5",
     "gulp-mocha-phantomjs": "^0.5.0",
     "gulp-newer": "^0.3.0",
     "gulp-symlink": "^2.0.1",
     "gulp-uglify": "^0.3.1",
     "gulp-util": "^3.0.6",
-    "handlebars": "1.0.5-beta",
+    "handlebars": "2.0.0",
     "mocha": "^1.21.4",
     "node-static": "^0.7.4",
     "object-assign": "^3.0.0",

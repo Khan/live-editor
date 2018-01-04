@@ -1,63 +1,25 @@
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["mediapicker-preview"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
-  helpers = helpers || Handlebars.helpers;
-  var buffer = "", stack1, stack2, foundHelper, tmp1, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
-
-function program1(depth0,data) {
-  
-  
-  return "mediapicker__sound";}
-
-function program3(depth0,data) {
-  
-  
-  return "mediapicker__image";}
-
-function program5(depth0,data) {
-  
-  
-  return "\n		<audio controls class=\"mediapicker-preview-file\"></audio>\n		<div class=\"thumb-error\"></div>\n		";}
-
-function program7(depth0,data) {
-  
-  
-  return "\n		<img src=\"/images/spinner.gif\" class=\"thumb-throbber\" />\n		<div class=\"thumb-shell\">\n			<img class=\"thumb\" />\n			<div class=\"thumb-error\"></div>\n		</div> \n		";}
-
-function program9(depth0,data) {
-  
-  
-  return "Pick file:";}
-
-  buffer += "<div class=\"tooltip mediapicker-preview ";
-  foundHelper = helpers.isAudio;
-  stack1 = foundHelper || depth0.isAudio;
-  stack2 = helpers['if'];
-  tmp1 = self.program(1, program1, data);
-  tmp1.hash = {};
-  tmp1.fn = tmp1;
-  tmp1.inverse = self.program(3, program3, data);
-  stack1 = stack2.call(depth0, stack1, tmp1);
-  if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\">\n	<div class=\"mediapicker-preview-content\">\n		\n		";
-  foundHelper = helpers.isAudio;
-  stack1 = foundHelper || depth0.isAudio;
-  stack2 = helpers['if'];
-  tmp1 = self.program(5, program5, data);
-  tmp1.hash = {};
-  tmp1.fn = tmp1;
-  tmp1.inverse = self.program(7, program7, data);
-  stack1 = stack2.call(depth0, stack1, tmp1);
-  if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n\n		<button class=\"kui-button kui-button-submit kui-button-primary\" style=\"padding: 5px; width: 100%; margin: 0 auto;\" >\n			";
-  foundHelper = helpers['_'];
-  stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(9, program9, data);
-  tmp1.hash = {};
-  tmp1.fn = tmp1;
-  tmp1.inverse = self.noop;
-  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
-  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
-  if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n		</button> \n	</div>\n	<div class=\"arrow\"></div>\n</div>";
-  return buffer;});;
+this["Handlebars"]["templates"]["mediapicker-preview"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
+  return "mediapicker__sound";
+  },"3":function(depth0,helpers,partials,data) {
+  return "mediapicker__image";
+  },"5":function(depth0,helpers,partials,data) {
+  return "		<audio controls class=\"mediapicker-preview-file\"></audio>\n		<div class=\"thumb-error\"></div>\n";
+  },"7":function(depth0,helpers,partials,data) {
+  return "		<img src=\"/images/spinner.gif\" class=\"thumb-throbber\" />\n		<div class=\"thumb-shell\">\n			<img class=\"thumb\" />\n			<div class=\"thumb-error\"></div>\n		</div> \n";
+  },"9":function(depth0,helpers,partials,data) {
+  return "Pick file:";
+  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
+  var stack1, helper, options, functionType="function", helperMissing=helpers.helperMissing, blockHelperMissing=helpers.blockHelperMissing, buffer = "<div class=\"tooltip mediapicker-preview ";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.isAudio : depth0), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.program(3, data),"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += "\">\n	<div class=\"mediapicker-preview-content\">\n		\n";
+  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.isAudio : depth0), {"name":"if","hash":{},"fn":this.program(5, data),"inverse":this.program(7, data),"data":data});
+  if (stack1 != null) { buffer += stack1; }
+  buffer += "\n		<button class=\"kui-button kui-button-submit kui-button-primary\" style=\"padding: 5px; width: 100%; margin: 0 auto;\" >\n			";
+  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : helperMissing),(options={"name":"_","hash":{},"fn":this.program(9, data),"inverse":this.noop,"data":data}),(typeof helper === functionType ? helper.call(depth0, options) : helper));
+  if (!helpers._) { stack1 = blockHelperMissing.call(depth0, stack1, options); }
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "\n		</button> \n	</div>\n	<div class=\"arrow\"></div>\n</div>";
+},"useData":true});;
