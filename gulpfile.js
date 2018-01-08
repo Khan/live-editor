@@ -51,7 +51,7 @@ scriptTypes.forEach(function(type) {
             .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
             .pipe(gulpIf(function (file) {
                 // transform source files but not dependencies
-                return file.path.indexOf(srcPath) === 0;   
+                return file.path.indexOf(srcPath) === 0;
             }, babel({ blacklist: ["strict"] })))
             .pipe(concat(outputFileName))
             .pipe(chmod(644))
@@ -164,7 +164,7 @@ var runTest = function(fileName) {
 
 var failureCount = 0;
 
-// We run tests in groups so that we don't require as much memory to run them 
+// We run tests in groups so that we don't require as much memory to run them
 // in Travis-CI.
 var pjs_tests = ["jshint", "output", "assert", "ast_transform"];
 

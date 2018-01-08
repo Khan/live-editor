@@ -2737,206 +2737,211 @@ window.TooltipUtils = {
 };
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["image-picker"] = Handlebars.template({"1":function(depth0,helpers,partials,data,depths) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "        <div class=\"media-group\">\n            <h3>"
-    + escapeExpression(((helper = (helper = helpers.groupName || (depth0 != null ? depth0.groupName : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"groupName","hash":{},"data":data}) : helper)))
-    + "</h3>\n";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.cite : depth0), {"name":"if","hash":{},"fn":this.program(2, data, depths),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.images : depth0), {"name":"each","hash":{},"fn":this.program(4, data, depths),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "        </div>\n";
-},"2":function(depth0,helpers,partials,data) {
-  var helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+this["Handlebars"]["templates"]["image-picker"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data,blockParams,depths) {
+    var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {});
+
+  return "        <div class=\"media-group\">\n            <h3>"
+    + container.escapeExpression(((helper = (helper = helpers.groupName || (depth0 != null ? depth0.groupName : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(alias1,{"name":"groupName","hash":{},"data":data}) : helper)))
+    + "</h3>\n"
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.cite : depth0),{"name":"if","hash":{},"fn":container.program(2, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + ((stack1 = helpers.each.call(alias1,(depth0 != null ? depth0.images : depth0),{"name":"each","hash":{},"fn":container.program(4, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "        </div>\n";
+},"2":function(container,depth0,helpers,partials,data) {
+    var helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=container.escapeExpression;
+
   return "                <p><a href=\""
-    + escapeExpression(((helper = (helper = helpers.citeLink || (depth0 != null ? depth0.citeLink : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"citeLink","hash":{},"data":data}) : helper)))
+    + alias4(((helper = (helper = helpers.citeLink || (depth0 != null ? depth0.citeLink : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"citeLink","hash":{},"data":data}) : helper)))
     + "\" target=\"_blank\">"
-    + escapeExpression(((helper = (helper = helpers.cite || (depth0 != null ? depth0.cite : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"cite","hash":{},"data":data}) : helper)))
+    + alias4(((helper = (helper = helpers.cite || (depth0 != null ? depth0.cite : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"cite","hash":{},"data":data}) : helper)))
     + "</a></p>\n";
-},"4":function(depth0,helpers,partials,data,depths) {
-  var lambda=this.lambda, escapeExpression=this.escapeExpression;
+},"4":function(container,depth0,helpers,partials,data,blockParams,depths) {
+    var alias1=container.lambda, alias2=container.escapeExpression;
+
   return "            <div class=\"image\" data-path=\""
-    + escapeExpression(lambda((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
     + "/"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + "\">\n                <img src=\""
-    + escapeExpression(lambda((depths[1] != null ? depths[1].imagesDir : depths[1]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].imagesDir : depths[1]), depth0))
     + "spinner.gif\" data-lazy-src=\""
-    + escapeExpression(lambda((depths[1] != null ? depths[1].imagesDir : depths[1]), depth0))
-    + escapeExpression(lambda((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].imagesDir : depths[1]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
     + "/"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + ".png\"/>\n                <span class=\"name\">"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + "</span>\n            </div>\n";
-},"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data,depths) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<div class=\"current-media\"><img src=\""
-    + escapeExpression(((helper = (helper = helpers.imagesDir || (depth0 != null ? depth0.imagesDir : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"imagesDir","hash":{},"data":data}) : helper)))
-    + "cute/Blank.png\"/></div>\n<div class=\"media-groups\">\n    <div style=\"position: relative;\">\n";
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.groups : depth0), {"name":"each","hash":{},"fn":this.program(1, data, depths),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "    </div>\n</div>";
+},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data,blockParams,depths) {
+    var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {});
+
+  return "<div class=\"current-media\"><img src=\""
+    + container.escapeExpression(((helper = (helper = helpers.imagesDir || (depth0 != null ? depth0.imagesDir : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(alias1,{"name":"imagesDir","hash":{},"data":data}) : helper)))
+    + "cute/Blank.png\"/></div>\n<div class=\"media-groups\">\n    <div style=\"position: relative;\">\n"
+    + ((stack1 = helpers.each.call(alias1,(depth0 != null ? depth0.groups : depth0),{"name":"each","hash":{},"fn":container.program(1, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "    </div>\n</div>";
 },"useData":true,"useDepths":true});;
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["mediapicker-preview"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  return "mediapicker__sound";
-  },"3":function(depth0,helpers,partials,data) {
-  return "mediapicker__image";
-  },"5":function(depth0,helpers,partials,data) {
-  return "		<audio controls class=\"mediapicker-preview-file\"></audio>\n		<div class=\"thumb-error\"></div>\n";
-  },"7":function(depth0,helpers,partials,data) {
-  return "		<img src=\"/images/spinner.gif\" class=\"thumb-throbber\" />\n		<div class=\"thumb-shell\">\n			<img class=\"thumb\" />\n			<div class=\"thumb-error\"></div>\n		</div> \n";
-  },"9":function(depth0,helpers,partials,data) {
-  return "Pick file:";
-  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helper, options, functionType="function", helperMissing=helpers.helperMissing, blockHelperMissing=helpers.blockHelperMissing, buffer = "<div class=\"tooltip mediapicker-preview ";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.isAudio : depth0), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.program(3, data),"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "\">\n	<div class=\"mediapicker-preview-content\">\n		\n";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.isAudio : depth0), {"name":"if","hash":{},"fn":this.program(5, data),"inverse":this.program(7, data),"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "\n		<button class=\"kui-button kui-button-submit kui-button-primary\" style=\"padding: 5px; width: 100%; margin: 0 auto;\" >\n			";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : helperMissing),(options={"name":"_","hash":{},"fn":this.program(9, data),"inverse":this.noop,"data":data}),(typeof helper === functionType ? helper.call(depth0, options) : helper));
-  if (!helpers._) { stack1 = blockHelperMissing.call(depth0, stack1, options); }
+this["Handlebars"]["templates"]["mediapicker-preview"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
+    return "mediapicker__sound";
+},"3":function(container,depth0,helpers,partials,data) {
+    return "mediapicker__image";
+},"5":function(container,depth0,helpers,partials,data) {
+    return "		<audio controls class=\"mediapicker-preview-file\"></audio>\n		<div class=\"thumb-error\"></div>\n";
+},"7":function(container,depth0,helpers,partials,data) {
+    return "		<img src=\"/images/spinner.gif\" class=\"thumb-throbber\" />\n		<div class=\"thumb-shell\">\n			<img class=\"thumb\" />\n			<div class=\"thumb-error\"></div>\n		</div> \n";
+},"9":function(container,depth0,helpers,partials,data) {
+    return "Pick file:";
+},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1, helper, options, alias1=depth0 != null ? depth0 : (container.nullContext || {}), buffer = 
+  "<div class=\"tooltip mediapicker-preview "
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.isAudio : depth0),{"name":"if","hash":{},"fn":container.program(1, data, 0),"inverse":container.program(3, data, 0),"data":data})) != null ? stack1 : "")
+    + "\">\n	<div class=\"mediapicker-preview-content\">\n		\n"
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.isAudio : depth0),{"name":"if","hash":{},"fn":container.program(5, data, 0),"inverse":container.program(7, data, 0),"data":data})) != null ? stack1 : "")
+    + "\n		<button class=\"kui-button kui-button-submit kui-button-primary\" style=\"padding: 5px; width: 100%; margin: 0 auto;\" >\n			";
+  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : helpers.helperMissing),(options={"name":"_","hash":{},"fn":container.program(9, data, 0),"inverse":container.noop,"data":data}),(typeof helper === "function" ? helper.call(alias1,options) : helper));
+  if (!helpers._) { stack1 = helpers.blockHelperMissing.call(depth0,stack1,options)}
   if (stack1 != null) { buffer += stack1; }
   return buffer + "\n		</button> \n	</div>\n	<div class=\"arrow\"></div>\n</div>";
 },"useData":true});;
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["mediapicker-modal"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
-  var stack1, helper, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", buffer = "      <li ";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.$first : depth0), {"name":"if","hash":{},"fn":this.program(2, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "><a href=\"#im-class-"
-    + escapeExpression(((helpers.slugify || (depth0 && depth0.slugify) || helperMissing).call(depth0, (depth0 != null ? depth0.className : depth0), {"name":"slugify","hash":{},"data":data})))
+this["Handlebars"]["templates"]["mediapicker-modal"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
+    var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3=container.escapeExpression;
+
+  return "      <li "
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.$first : depth0),{"name":"if","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "><a href=\"#im-class-"
+    + alias3((helpers.slugify || (depth0 && depth0.slugify) || alias2).call(alias1,(depth0 != null ? depth0.className : depth0),{"name":"slugify","hash":{},"data":data}))
     + "\">"
-    + escapeExpression(((helper = (helper = helpers.className || (depth0 != null ? depth0.className : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"className","hash":{},"data":data}) : helper)))
+    + alias3(((helper = (helper = helpers.className || (depth0 != null ? depth0.className : depth0)) != null ? helper : alias2),(typeof helper === "function" ? helper.call(alias1,{"name":"className","hash":{},"data":data}) : helper)))
     + "</a></li>\n";
-},"2":function(depth0,helpers,partials,data) {
-  return "class=\"active\"";
-  },"4":function(depth0,helpers,partials,data,depths) {
-  var stack1, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "      <div class=\"tab-pane ";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.$first : depth0), {"name":"if","hash":{},"fn":this.program(5, data, depths),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "\" id=\"im-class-"
-    + escapeExpression(((helpers.slugify || (depth0 && depth0.slugify) || helperMissing).call(depth0, (depth0 != null ? depth0.className : depth0), {"name":"slugify","hash":{},"data":data})))
-    + "\">\n        <div class=\"mediapicker-modal-content\">\n        <div style=\"position: relative;\">\n";
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.groups : depth0), {"name":"each","hash":{},"fn":this.program(7, data, depths),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "        </div>\n        </div>\n\n        <div class=\"right\">\n";
-  stack1 = ((helpers.hasMultipleItems || (depth0 && depth0.hasMultipleItems) || helperMissing).call(depth0, (depth0 != null ? depth0.groups : depth0), {"name":"hasMultipleItems","hash":{},"fn":this.program(16, data, depths),"inverse":this.noop,"data":data}));
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "        </div>\n\n        <div style=\"clear: both;\"></div>\n      </div>\n";
-},"5":function(depth0,helpers,partials,data) {
-  return "active";
-  },"7":function(depth0,helpers,partials,data,depths) {
-  var stack1, helperMissing=helpers.helperMissing, buffer = "            <div class=\"mediapicker-modal-group\">\n";
-  stack1 = ((helpers.hasMultipleItems || (depth0 && depth0.hasMultipleItems) || helperMissing).call(depth0, (depths[1] != null ? depths[1].groups : depths[1]), {"name":"hasMultipleItems","hash":{},"fn":this.program(8, data, depths),"inverse":this.noop,"data":data}));
-  if (stack1 != null) { buffer += stack1; }
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.cite : depth0), {"name":"if","hash":{},"fn":this.program(10, data, depths),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.images : depth0), {"name":"each","hash":{},"fn":this.program(12, data, depths),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  stack1 = helpers.each.call(depth0, (depth0 != null ? depth0.sounds : depth0), {"name":"each","hash":{},"fn":this.program(14, data, depths),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "            </div>\n";
-},"8":function(depth0,helpers,partials,data) {
-  var helper, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function";
+},"2":function(container,depth0,helpers,partials,data) {
+    return "class=\"active\"";
+},"4":function(container,depth0,helpers,partials,data,blockParams,depths) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing;
+
+  return "      <div class=\"tab-pane "
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.$first : depth0),{"name":"if","hash":{},"fn":container.program(5, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "\" id=\"im-class-"
+    + container.escapeExpression((helpers.slugify || (depth0 && depth0.slugify) || alias2).call(alias1,(depth0 != null ? depth0.className : depth0),{"name":"slugify","hash":{},"data":data}))
+    + "\">\n        <div class=\"mediapicker-modal-content\">\n        <div style=\"position: relative;\">\n"
+    + ((stack1 = helpers.each.call(alias1,(depth0 != null ? depth0.groups : depth0),{"name":"each","hash":{},"fn":container.program(7, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "        </div>\n        </div>\n\n        <div class=\"right\">\n"
+    + ((stack1 = (helpers.hasMultipleItems || (depth0 && depth0.hasMultipleItems) || alias2).call(alias1,(depth0 != null ? depth0.groups : depth0),{"name":"hasMultipleItems","hash":{},"fn":container.program(16, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "        </div>\n\n        <div style=\"clear: both;\"></div>\n      </div>\n";
+},"5":function(container,depth0,helpers,partials,data) {
+    return "active";
+},"7":function(container,depth0,helpers,partials,data,blockParams,depths) {
+    var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {});
+
+  return "            <div class=\"mediapicker-modal-group\">\n"
+    + ((stack1 = (helpers.hasMultipleItems || (depth0 && depth0.hasMultipleItems) || helpers.helperMissing).call(alias1,(depths[1] != null ? depths[1].groups : depths[1]),{"name":"hasMultipleItems","hash":{},"fn":container.program(8, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.cite : depth0),{"name":"if","hash":{},"fn":container.program(10, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + ((stack1 = helpers.each.call(alias1,(depth0 != null ? depth0.images : depth0),{"name":"each","hash":{},"fn":container.program(12, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + ((stack1 = helpers.each.call(alias1,(depth0 != null ? depth0.sounds : depth0),{"name":"each","hash":{},"fn":container.program(14, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "            </div>\n";
+},"8":function(container,depth0,helpers,partials,data) {
+    var helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3=container.escapeExpression;
+
   return "                <h3 id=\"im-group-"
-    + escapeExpression(((helpers.slugify || (depth0 && depth0.slugify) || helperMissing).call(depth0, (depth0 != null ? depth0.groupName : depth0), {"name":"slugify","hash":{},"data":data})))
+    + alias3((helpers.slugify || (depth0 && depth0.slugify) || alias2).call(alias1,(depth0 != null ? depth0.groupName : depth0),{"name":"slugify","hash":{},"data":data}))
     + "\">"
-    + escapeExpression(((helper = (helper = helpers.groupName || (depth0 != null ? depth0.groupName : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"groupName","hash":{},"data":data}) : helper)))
+    + alias3(((helper = (helper = helpers.groupName || (depth0 != null ? depth0.groupName : depth0)) != null ? helper : alias2),(typeof helper === "function" ? helper.call(alias1,{"name":"groupName","hash":{},"data":data}) : helper)))
     + "</h3>\n";
-},"10":function(depth0,helpers,partials,data) {
-  var helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
+},"10":function(container,depth0,helpers,partials,data) {
+    var helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=container.escapeExpression;
+
   return "                    <p><a href=\""
-    + escapeExpression(((helper = (helper = helpers.citeLink || (depth0 != null ? depth0.citeLink : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"citeLink","hash":{},"data":data}) : helper)))
+    + alias4(((helper = (helper = helpers.citeLink || (depth0 != null ? depth0.citeLink : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"citeLink","hash":{},"data":data}) : helper)))
     + "\" target=\"_blank\">"
-    + escapeExpression(((helper = (helper = helpers.cite || (depth0 != null ? depth0.cite : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"cite","hash":{},"data":data}) : helper)))
+    + alias4(((helper = (helper = helpers.cite || (depth0 != null ? depth0.cite : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"cite","hash":{},"data":data}) : helper)))
     + "</a></p>\n";
-},"12":function(depth0,helpers,partials,data,depths) {
-  var lambda=this.lambda, escapeExpression=this.escapeExpression;
+},"12":function(container,depth0,helpers,partials,data,blockParams,depths) {
+    var alias1=container.lambda, alias2=container.escapeExpression;
+
   return "                <div class=\"image mediapicker-modal-file\"\n                    data-update-path=\""
-    + escapeExpression(lambda((depths[3] != null ? depths[3].imagesDir : depths[3]), depth0))
-    + escapeExpression(lambda((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
+    + alias2(alias1((depths[3] != null ? depths[3].imagesDir : depths[3]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
     + "/"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + ".png\"\n                    data-preview-path=\""
-    + escapeExpression(lambda((depths[3] != null ? depths[3].imagesDir : depths[3]), depth0))
-    + escapeExpression(lambda((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
-    + escapeExpression(lambda((depths[1] != null ? depths[1].thumbsDir : depths[1]), depth0))
+    + alias2(alias1((depths[3] != null ? depths[3].imagesDir : depths[3]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].thumbsDir : depths[1]), depth0))
     + "/"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + ".png\"\n                    data-path=\""
-    + escapeExpression(lambda((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
     + "/"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + "\">\n                    <div class=\"thumb-shell\"><img src=\""
-    + escapeExpression(lambda((depths[3] != null ? depths[3].imagesDir : depths[3]), depth0))
+    + alias2(alias1((depths[3] != null ? depths[3].imagesDir : depths[3]), depth0))
     + "spinner.gif\" data-lazy-src=\""
-    + escapeExpression(lambda((depths[3] != null ? depths[3].imagesDir : depths[3]), depth0))
-    + escapeExpression(lambda((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
-    + escapeExpression(lambda((depths[1] != null ? depths[1].thumbsDir : depths[1]), depth0))
+    + alias2(alias1((depths[3] != null ? depths[3].imagesDir : depths[3]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].thumbsDir : depths[1]), depth0))
     + "/"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + ".png\"/></div>\n                    <span>"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + "</span>\n                </div>\n";
-},"14":function(depth0,helpers,partials,data,depths) {
-  var lambda=this.lambda, escapeExpression=this.escapeExpression;
+},"14":function(container,depth0,helpers,partials,data,blockParams,depths) {
+    var alias1=container.lambda, alias2=container.escapeExpression;
+
   return "                <div class=\"sound mediapicker-modal-file\"\n                    data-update-path='\""
-    + escapeExpression(lambda((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
     + "/"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + "\"'\n                    data-preview-path=\""
-    + escapeExpression(lambda((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
     + "/"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + "\"\n                    data-path=\""
-    + escapeExpression(lambda((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
     + "/"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + "\">\n                    <audio data-lazy-src=\""
-    + escapeExpression(lambda((depths[3] != null ? depths[3].soundsDir : depths[3]), depth0))
-    + escapeExpression(lambda((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
+    + alias2(alias1((depths[3] != null ? depths[3].soundsDir : depths[3]), depth0))
+    + alias2(alias1((depths[1] != null ? depths[1].groupName : depths[1]), depth0))
     + "/"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + ".mp3\" controls/>\n                    <span>"
-    + escapeExpression(lambda(depth0, depth0))
+    + alias2(alias1(depth0, depth0))
     + "</span>\n                </div>\n";
-},"16":function(depth0,helpers,partials,data) {
-  var stack1, helperMissing=helpers.helperMissing, buffer = "        <ul class=\"nav nav-pills nav-stackable\">\n";
-  stack1 = ((helpers.patchedEach || (depth0 && depth0.patchedEach) || helperMissing).call(depth0, (depth0 != null ? depth0.groups : depth0), {"name":"patchedEach","hash":{},"fn":this.program(17, data),"inverse":this.noop,"data":data}));
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "        </ul>\n";
-},"17":function(depth0,helpers,partials,data) {
-  var stack1, helper, helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, functionType="function", buffer = "            <li ";
-  stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.$first : depth0), {"name":"if","hash":{},"fn":this.program(2, data),"inverse":this.noop,"data":data});
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "><a href=\"#im-group-"
-    + escapeExpression(((helpers.slugify || (depth0 && depth0.slugify) || helperMissing).call(depth0, (depth0 != null ? depth0.groupName : depth0), {"name":"slugify","hash":{},"data":data})))
+},"16":function(container,depth0,helpers,partials,data) {
+    var stack1;
+
+  return "        <ul class=\"nav nav-pills nav-stackable\">\n"
+    + ((stack1 = (helpers.patchedEach || (depth0 && depth0.patchedEach) || helpers.helperMissing).call(depth0 != null ? depth0 : (container.nullContext || {}),(depth0 != null ? depth0.groups : depth0),{"name":"patchedEach","hash":{},"fn":container.program(17, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "        </ul>\n";
+},"17":function(container,depth0,helpers,partials,data) {
+    var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3=container.escapeExpression;
+
+  return "            <li "
+    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.$first : depth0),{"name":"if","hash":{},"fn":container.program(2, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "><a href=\"#im-group-"
+    + alias3((helpers.slugify || (depth0 && depth0.slugify) || alias2).call(alias1,(depth0 != null ? depth0.groupName : depth0),{"name":"slugify","hash":{},"data":data}))
     + "\">"
-    + escapeExpression(((helper = (helper = helpers.groupName || (depth0 != null ? depth0.groupName : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"groupName","hash":{},"data":data}) : helper)))
+    + alias3(((helper = (helper = helpers.groupName || (depth0 != null ? depth0.groupName : depth0)) != null ? helper : alias2),(typeof helper === "function" ? helper.call(alias1,{"name":"groupName","hash":{},"data":data}) : helper)))
     + "</a></li>\n";
-},"19":function(depth0,helpers,partials,data) {
-  return "Close";
-  },"21":function(depth0,helpers,partials,data) {
-  return "Ok";
-  },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data,depths) {
-  var stack1, helper, options, helperMissing=helpers.helperMissing, functionType="function", blockHelperMissing=helpers.blockHelperMissing, buffer = "<div class=\"modal mediapicker-modal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n";
-  stack1 = ((helpers.patchedEach || (depth0 && depth0.patchedEach) || helperMissing).call(depth0, (depth0 != null ? depth0.classes : depth0), {"name":"patchedEach","hash":{},"fn":this.program(1, data, depths),"inverse":this.noop,"data":data}));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "    </ul>\n\n    <div class=\"tab-content\">\n";
-  stack1 = ((helpers.patchedEach || (depth0 && depth0.patchedEach) || helperMissing).call(depth0, (depth0 != null ? depth0.classes : depth0), {"name":"patchedEach","hash":{},"fn":this.program(4, data, depths),"inverse":this.noop,"data":data}));
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "    </div>\n\n    <div class=\"mediapicker-modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : helperMissing),(options={"name":"_","hash":{},"fn":this.program(19, data, depths),"inverse":this.noop,"data":data}),(typeof helper === functionType ? helper.call(depth0, options) : helper));
-  if (!helpers._) { stack1 = blockHelperMissing.call(depth0, stack1, options); }
+},"19":function(container,depth0,helpers,partials,data) {
+    return "Close";
+},"21":function(container,depth0,helpers,partials,data) {
+    return "Ok";
+},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data,blockParams,depths) {
+    var stack1, helper, options, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=helpers.blockHelperMissing, buffer = 
+  "<div class=\"modal mediapicker-modal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n"
+    + ((stack1 = (helpers.patchedEach || (depth0 && depth0.patchedEach) || alias2).call(alias1,(depth0 != null ? depth0.classes : depth0),{"name":"patchedEach","hash":{},"fn":container.program(1, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "    </ul>\n\n    <div class=\"tab-content\">\n"
+    + ((stack1 = (helpers.patchedEach || (depth0 && depth0.patchedEach) || alias2).call(alias1,(depth0 != null ? depth0.classes : depth0),{"name":"patchedEach","hash":{},"fn":container.program(4, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
+    + "    </div>\n\n    <div class=\"mediapicker-modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">";
+  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(19, data, 0, blockParams, depths),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
+  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}
   if (stack1 != null) { buffer += stack1; }
   buffer += "</button>\n      <button type=\"button\" class=\"simple-button green mediapicker-modal-submit\" data-dismiss=\"modal\">";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : helperMissing),(options={"name":"_","hash":{},"fn":this.program(21, data, depths),"inverse":this.noop,"data":data}),(typeof helper === functionType ? helper.call(depth0, options) : helper));
-  if (!helpers._) { stack1 = blockHelperMissing.call(depth0, stack1, options); }
+  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(21, data, 0, blockParams, depths),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
+  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}
   if (stack1 != null) { buffer += stack1; }
   return buffer + "</button>\n    </div>\n</div>";
 },"useData":true,"useDepths":true});;
