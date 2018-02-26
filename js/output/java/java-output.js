@@ -16,6 +16,12 @@ window.JavaOutput = Backbone.View.extend({
 
     lint: function lint(userCode, skip) {
         // TODO(hannah): Implement!
+        var deferred = $.Deferred();
+        deferred.resolve({
+        	errors: [],
+        	warnings: [],
+       	});
+        return deferred;
     },
 
     flattenError: function flattenError(plainError, error, base) {
@@ -36,6 +42,7 @@ window.JavaOutput = Backbone.View.extend({
 
     runCode: function runCode(codeObj, callback) {
         // TODO(hannah): Implement!
+        console.log("[Debug] Running code: " + codeObj);
     },
 
     clear: function clear() {},

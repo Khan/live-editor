@@ -941,14 +941,10 @@ window.LiveEditor = Backbone.View.extend({
             }, this);
         }
 
-        console.log(options);
-        if (options.showRunButton != undefined && options.showRunButton) {
-            console.log("showing!");
-            console.log(this.$el.find(this.dom.RUN_BUTTON));
+        this.isCompiled = options.isCompiled != undefined && options.isCompiled;
+        if (this.isCompiled) {
             this.$el.find(this.dom.RUN_BUTTON).show();
         } else {
-            console.log("hiding!");
-            console.log(this.$el.find(this.dom.RUN_BUTTON));
             this.$el.find(this.dom.RUN_BUTTON).hide();
         }
 
@@ -1018,13 +1014,24 @@ window.LiveEditor = Backbone.View.extend({
 
         $el.find("#output-frame").on("load", function () {
             _this.outputState = "clean";
-            _this.markDirty();
+            if (!_this.isCompiled) {
+                _this.markDirty();
+            }
         });
 
-        // Whenever the user changes code, execute the code
-        this.editor.on("change", function () {
-            _this.markDirty();
-        });
+        if (this.isCompiled) {
+            // This makes the "live-editor" no longer live; the code is only
+            // run when the user hits the "run" button. This branching is a bit
+            // hacky...
+            this.$el.find(this.dom.RUN_BUTTON).click(function () {
+                return _this.markDirty();
+            });
+        } else {
+            // Whenever the user changes code, execute the code.
+            this.editor.on("change", function () {
+                _this.markDirty();
+            });
+        }
 
         this.editor.on("userChangedCode", function () {
             if (!_this.record.recording && !_this.record.playing) {

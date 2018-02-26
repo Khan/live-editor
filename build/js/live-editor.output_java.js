@@ -14,7 +14,15 @@ window.JavaOutput = Backbone.View.extend({
 
     getScreenshot: function getScreenshot(screenshotSize, callback) {},
 
-    lint: function lint(userCode, skip) {},
+    lint: function lint(userCode, skip) {
+        // TODO(hannah): Implement!
+        var deferred = $.Deferred();
+        deferred.resolve({
+            errors: [],
+            warnings: []
+        });
+        return deferred;
+    },
 
     flattenError: function flattenError(plainError, error, base) {
         return "";
@@ -32,7 +40,10 @@ window.JavaOutput = Backbone.View.extend({
 
     postProcessing: function postProcessing(oldPageTitle) {},
 
-    runCode: function runCode(codeObj, callback) {},
+    runCode: function runCode(codeObj, callback) {
+        // TODO(hannah): Implement!
+        console.log("[Debug] Running code: " + codeObj);
+    },
 
     clear: function clear() {},
 
@@ -40,7 +51,3 @@ window.JavaOutput = Backbone.View.extend({
 });
 
 LiveEditorOutput.registerOutput("java", JavaOutput);
-
-// TODO(hannah): Implement!
-
-// TODO(hannah): Implement!
