@@ -32,10 +32,7 @@ window.JavaOutput = Backbone.View.extend({
 
     postProcessing: function postProcessing(oldPageTitle) {},
 
-    runCode: function runCode(codeObj, callback) {
-        // TODO(hannah): Implement!
-        callback([]);
-    },
+    runCode: function runCode(codeObj, callback) {},
 
     clear: function clear() {},
 
@@ -43,5 +40,7 @@ window.JavaOutput = Backbone.View.extend({
 });
 
 LiveEditorOutput.registerOutput("java", JavaOutput);
+
+// TODO(hannah): Implement!
 
 // TODO(hannah): Implement!

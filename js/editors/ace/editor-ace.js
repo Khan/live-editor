@@ -23,6 +23,9 @@ window.AceEditor = Backbone.View.extend({
         ],
         ace_sql: [
             "numberScrubber"
+        ],
+        ace_java: [
+            "numberScrubber"
         ]
     },
 
@@ -454,3 +457,4 @@ window.AceEditor = Backbone.View.extend({
 LiveEditor.registerEditor("ace_pjs", AceEditor);
 LiveEditor.registerEditor("ace_webpage", AceEditor);
 LiveEditor.registerEditor("ace_sql", AceEditor);
+LiveEditor.registerEditor("ace_java", AceEditor);

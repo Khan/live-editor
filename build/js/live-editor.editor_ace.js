@@ -10,7 +10,8 @@ window.AceEditor = Backbone.View.extend({
         // the higher priority it gets.
         ace_pjs: ["imagePicker", "soundModal", "colorPicker", "numberScrubberClick", "autoSuggest", "numberScrubber"],
         ace_webpage: ["imageModal", "colorPicker", "numberScrubber"],
-        ace_sql: ["numberScrubber"]
+        ace_sql: ["numberScrubber"],
+        ace_java: ["numberScrubber"]
     },
 
     initialize: function initialize(options) {
@@ -428,3 +429,4 @@ window.AceEditor = Backbone.View.extend({
 LiveEditor.registerEditor("ace_pjs", AceEditor);
 LiveEditor.registerEditor("ace_webpage", AceEditor);
 LiveEditor.registerEditor("ace_sql", AceEditor);
+LiveEditor.registerEditor("ace_java", AceEditor);
