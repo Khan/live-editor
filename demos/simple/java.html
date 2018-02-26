@@ -1,0 +1,86 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Live Editor Simple Java Demo</title>
+    <link rel="stylesheet" href="../../build/css/live-editor.core_deps.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.tooltips.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.debugger.css"/>
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        h1 {
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+        #sample-live-editor {
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Editor Example</h1>
+    <div id="sample-live-editor"></div>
+
+    <script src="../../build/js/live-editor.core_deps.js"></script>
+    <script src="../../build/js/live-editor.editor_ace_deps.js"></script>
+    <script src="../../build/js/live-editor.audio.js"></script>
+    <script src="../../build/js/live-editor.shared.js"></script>
+    <script src="../../build/js/live-editor.tooltips.js"></script>
+    <script src="../../build/js/live-editor.ui.js"></script>
+    <script src="../../build/js/live-editor.editor_ace.js"></script>
+
+    <script>
+    var outputUrl = "output_java.html";
+    var useDebugger = false;
+
+    var code = window.localStorage["test-code"] || 
+`public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, world!");
+    }
+}`;
+
+    var search = location.search.substring(1);
+    var params = {};
+    search.split("&").forEach(function(param) {
+        var tokens = param.split("=");
+        params[tokens[0]] = tokens[1];
+    });
+
+    if (params.scratchpad) {
+        var xhr = new XMLHttpRequest();
+        var baseUrl = "https://www.khanacademy.org/api/internal/scratchpads/";
+        xhr.open("GET", baseUrl + params.scratchpad, false);
+        xhr.addEventListener("load", function() {
+            var scratchpad = JSON.parse(this.responseText);
+            code = scratchpad.revision.code;
+            var h1 = document.querySelector('h1');
+            h1.innerText = scratchpad.title;
+        });
+        xhr.send();
+    }
+
+    window.liveEditor = new LiveEditor({
+        el: $("#sample-live-editor"),
+        code: code,
+        width: 400,
+        height: 400,
+        editorHeight: "80%",
+        autoFocus: true,
+        workersDir: "../../build/workers/",
+        externalsDir: "../../build/external/",
+        imagesDir: "../../build/images/",
+        soundsDir: "../../sounds/",
+        execFile: outputUrl,
+        jshintFile: "../../build/external/jshint/jshint.js",
+        useDebugger: useDebugger,
+        newErrorExperience: true,
+    });
+    ScratchpadAutosuggest.init(liveEditor.editor.editor);
+    </script>
+</body>
+</html>

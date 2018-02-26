@@ -123,6 +123,9 @@
             "js/output/sql/sql-tester.js",
             "js/output/sql/sql-output.js"
         ],
+        "output_java": [
+            "js/output/java/java-output.js"
+        ],
         "output": [
             "build/tmpl/output.js",
             "js/output/shared/pooled-worker.js",
