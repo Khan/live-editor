@@ -21,6 +21,7 @@ window.LiveEditor = Backbone.View.extend({
         OUTPUT_FRAME: "#output-frame",
         OUTPUT_DIV: "#output",
         ALL_OUTPUT: "#output, #output-frame",
+        RUN_BUTTON: "#run-code",
         RESTART_BUTTON: "#restart-code",
         GUTTER_ERROR: ".ace_error",
         ERROR_BUDDY_HAPPY: ".error-buddy-happy",
@@ -195,6 +196,12 @@ window.LiveEditor = Backbone.View.extend({
                     this.$el.find(this.dom.RESTART_BUTTON).removeAttr("disabled");
                 }
             }, this);
+        }
+
+        if (options.showRunButton != undefined && options.showRunButton) {
+            this.$el.find(this.dom.RUN_BUTTON).show();
+        } else {
+            this.$el.find(this.dom.RUN_BUTTON).hide();
         }
 
         var code = options.code;
