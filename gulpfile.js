@@ -88,6 +88,9 @@ gulp.task("workers", function() {
 
     gulp.src(paths.workers_shared)
         .pipe(gulp.dest("build/workers/shared"));
+
+    gulp.src(paths.workers_java)
+        .pipe(gulp.dest("build/workers/java"));
 });
 
 gulp.task("externals", function() {

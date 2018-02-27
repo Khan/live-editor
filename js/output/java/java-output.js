@@ -1,8 +1,12 @@
 window.JavaOutput = Backbone.View.extend({
     initialize: function initialize(options) {
+        this.initPromise = window.javaEngine.init()
+            .then(() => this.engineInitialized = true);
+
         this.config = options.config;
         this.output = options.output;
         this.tester = null;
+        this.engineInitialized = false;
         this.render();
     },
 
@@ -41,8 +45,14 @@ window.JavaOutput = Backbone.View.extend({
     postProcessing: function postProcessing(oldPageTitle) {},
 
     runCode: function runCode(codeObj, callback) {
-        // TODO(hannah): Implement!
-        console.log("[Debug] Running code: " + codeObj);
+        console.log("[Debug] Compiling Code", codeObj);
+
+        this.initPromise.then(() => {
+            window.javaEngine.compile(codeObj)
+                .then(transpiled => {
+                    console.log(transpiled);
+                });
+        });
     },
 
     clear: function clear() {},

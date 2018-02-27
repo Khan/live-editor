@@ -125,6 +125,7 @@
             "js/output/sql/sql-output.js"
         ],
         "output_java": [
+            "js/output/java/engine.js",
             "js/output/java/java-output.js"
         ],
         "output": [
@@ -153,6 +154,12 @@
     "workers_shared": [
         "js/output/shared/output-tester.js",
         "external/multirecorderjs/multirecorder-worker.js"
+    ],
+    "workers_java": [
+        "external/teavm/classes.js",
+        "external/teavm/runtime.js",
+        "external/teavm/worker.js",
+        "external/teavm/classlib.txt"
     ],
     "externals": [
         "bower_components/es5-shim/es5-shim.js",
