@@ -50,7 +50,9 @@ window.JavaOutput = Backbone.View.extend({
         this.initPromise.then(() => {
             window.javaEngine.compile(codeObj)
                 .then(transpiled => {
-                    console.log(transpiled);
+                    console.log("[Debug] Executing code");
+
+                    window.javaEngine.execute(transpiled);
                 });
         });
     },

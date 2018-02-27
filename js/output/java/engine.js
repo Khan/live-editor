@@ -186,6 +186,15 @@
 
                     return result.script;
                 });
+        },
+
+        execute: function(transpiled) {
+            const codeCommand = {
+                command: "code",
+                codeToExecute: transpiled
+            };
+
+            window.postMessage(JSON.stringify(codeCommand), "*");
         }
     };
 
