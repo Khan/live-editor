@@ -1224,6 +1224,7 @@ var PJSCodeInjector = (function () {
                     this["debugger"].exec(code);
                 } else {
                     var transformedCode = this.transformCode(code, context, mutatingCalls);
+                    debugger;
                     var funcBody = "var " + this.envName + " = context;\n" + ("(function(){\n" + transformedCode + "\n}).apply(" + topLevelThis + ");");
                     var func = new Function("context", funcBody);
                     func(context);
@@ -2888,7 +2889,6 @@ window.PJSOutput = Backbone.View.extend({
 
     test: function test(userCode, tests, errors, callback) {
         var errorCount = errors.length;
-
         this.tester.testWorker.exec(userCode, tests, errors, (function (errors, testResults) {
             if (errorCount !== errors.length) {
                 // Note: Scratchpad challenge checks against the exact
@@ -2906,6 +2906,7 @@ window.PJSOutput = Backbone.View.extend({
 
     // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
     runCode: function runCode(userCode, callback) {
+        console.log("RUN CODE;");
         this.injector.runCode(userCode, callback);
     },
 

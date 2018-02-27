@@ -428,7 +428,6 @@ window.PJSOutput = Backbone.View.extend({
 
     test: function(userCode, tests, errors, callback) {
         var errorCount = errors.length;
-
         this.tester.testWorker.exec(userCode, tests, errors,
             function(errors, testResults) {
                 if (errorCount !== errors.length) {
@@ -450,6 +449,7 @@ window.PJSOutput = Backbone.View.extend({
 
     // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
     runCode: function(userCode, callback) {
+        console.log("RUN CODE;")
         this.injector.runCode(userCode, callback);
     },
 

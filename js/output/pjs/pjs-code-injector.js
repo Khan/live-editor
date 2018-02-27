@@ -1185,6 +1185,7 @@ class PJSCodeInjector {
             } else {
                 let transformedCode =
                     this.transformCode(code, context, mutatingCalls);
+                debugger;
                 let funcBody = `var ${this.envName} = context;\n` +
                     `(function(){\n${transformedCode}\n}).apply(${topLevelThis});`;
                 let func = new Function("context", funcBody);

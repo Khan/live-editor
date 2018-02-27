@@ -128,7 +128,8 @@
             "js/output/java/engine.js",
             "js/output/java/executor.js",
             "js/output/java/java-output.js",
-            "external/teavm/runtime.js"
+            "external/teavm/runtime.js",
+            "external/teavm/client-classes.js"
         ],
         "output": [
             "build/tmpl/output.js",

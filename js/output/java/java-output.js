@@ -11,9 +11,9 @@ window.JavaOutput = Backbone.View.extend({
     },
 
     render: function render() {
-        this.$el.empty();
-        this.$frame = $("<iframe id='output_iframe'>").css({ width: "100%", height: "100%", border: "0" }).appendTo(this.el).show()[0];
-        this.frameDoc = this.$frame.contentDocument;
+        //this.$el.empty();
+        //this.$frame = $("<iframe id='output_iframe'>").css({ width: "100%", height: "100%", border: "0" }).appendTo(this.el).show()[0];
+        //this.frameDoc = this.$frame.contentDocument;
     },
 
     getScreenshot: function getScreenshot(screenshotSize, callback) {},
