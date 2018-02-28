@@ -269,6 +269,7 @@ window.JavaOutput = Backbone.View.extend({
 
         this.initPromise = window.javaEngine.init().then(function () {
             _this.engineInitialized = true;
+            window.javaExecutor.init();
             _this.output.postParent({ loaded: true });
         });
 
@@ -281,7 +282,20 @@ window.JavaOutput = Backbone.View.extend({
         return this;
     },
 
-    render: function render() {},
+    render: function render() {
+        if (!this.$canvas) {
+            this.$el.empty();
+            this.$canvas = $("<canvas>").attr("id", "output-canvas").appendTo(this.el).show();
+            window.processing = new Processing(this.$canvas[0]);
+            window.processing.size(400, 400);
+        }
+
+        this.clearCanvas();
+    },
+
+    clearCanvas: function clearCanvas() {
+        window.processing.background(255, 255, 255);
+    },
 
     getScreenshot: function getScreenshot(screenshotSize, callback) {},
 
@@ -312,6 +326,7 @@ window.JavaOutput = Backbone.View.extend({
     postProcessing: function postProcessing(oldPageTitle) {},
 
     runCode: function runCode(codeObj, callback) {
+        this.clearCanvas();
         console.log("[Debug] Compiling Code", codeObj);
 
         this.initPromise.then(function () {
@@ -329,10 +344,6 @@ window.JavaOutput = Backbone.View.extend({
 });
 
 LiveEditorOutput.registerOutput("java", JavaOutput);
-
-//this.$el.empty();
-//this.$frame = $("<iframe id='output_iframe'>").css({ width: "100%", height: "100%", border: "0" }).appendTo(this.el).show()[0];
-//this.frameDoc = this.$frame.contentDocument;
 /*
  *  Copyright 2013 Alexey Andreev.
  *
