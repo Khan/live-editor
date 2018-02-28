@@ -264,6 +264,7 @@ window.JavaOutput = Backbone.View.extend({
         this.initPromise = window.javaEngine.init().then(function () {
             _this.engineInitialized = true;
             window.javaExecutor.init();
+            _this.output.postParent({ readyToRun: true });
             _this.output.postParent({ loaded: true });
         });
 
@@ -320,7 +321,10 @@ window.JavaOutput = Backbone.View.extend({
     postProcessing: function postProcessing(oldPageTitle) {},
 
     runCode: function runCode(codeObj, callback) {
+        var _this2 = this;
+
         this.clearCanvas();
+        this.output.postParent({ readyToRun: false });
         console.log("[Debug] Compiling Code");
 
         this.initPromise.then(function () {
@@ -328,8 +332,10 @@ window.JavaOutput = Backbone.View.extend({
                 console.log("[Debug] Executing code");
 
                 window.javaEngine.execute(transpiled);
+                _this2.output.postParent({ readyToRun: true });
             })["catch"](function () {
-                return console.log("[Debug] Failed to compile!");
+                console.log("[Debug] Failed to compile!");
+                _this2.output.postParent({ readyToRun: true });
             });
         });
     },

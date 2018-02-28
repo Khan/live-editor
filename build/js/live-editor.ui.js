@@ -943,7 +943,7 @@ window.LiveEditor = Backbone.View.extend({
 
         this.isCompiled = options.isCompiled != undefined && options.isCompiled;
         if (this.isCompiled) {
-            this.$el.find(this.dom.RUN_BUTTON).show();
+            this.$el.find(this.dom.RUN_BUTTON).prop("disabled", true).show();
         } else {
             this.$el.find(this.dom.RUN_BUTTON).hide();
         }
@@ -1900,6 +1900,11 @@ window.LiveEditor = Backbone.View.extend({
             // this, or at least make it more clear that the data coming in may
             // be unsanitized.
             this.record.log.apply(this.record, data.log);
+        }
+
+        if ("readyToRun" in data) {
+
+            this.$el.find(this.dom.RUN_BUTTON).prop("disabled", !data.readyToRun);
         }
     },
 
