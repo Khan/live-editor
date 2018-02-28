@@ -8,6 +8,12 @@ window.JavaOutput = Backbone.View.extend({
         this.tester = null;
         this.engineInitialized = false;
         this.render();
+
+        this.output.postParent({
+            loaded: true
+        });
+
+        return this;
     },
 
     render: function render() {

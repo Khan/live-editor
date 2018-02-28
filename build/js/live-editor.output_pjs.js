@@ -1224,7 +1224,7 @@ var PJSCodeInjector = (function () {
                     this["debugger"].exec(code);
                 } else {
                     var transformedCode = this.transformCode(code, context, mutatingCalls);
-                    debugger;
+
                     var funcBody = "var " + this.envName + " = context;\n" + ("(function(){\n" + transformedCode + "\n}).apply(" + topLevelThis + ");");
                     var func = new Function("context", funcBody);
                     func(context);

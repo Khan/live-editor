@@ -38,18 +38,13 @@
     var useDebugger = false;
 
     var code = window.localStorage["test-code"] ||
-`import org.teavm.jso.browser.*;
-import org.teavm.jso.dom.html.*;
-import org.teavm.jso.dom.events.*;
+`import org.khanacademy.cs.Drawing;
 
 public class Main {
-    @JSBody(params = {"x", "y", "width", "height"}, script = "rect(x, y, width, height);")
-    public static native void rect(int x, int y, int width, int height);
-
     public static void main(String[] args) {
         System.out.println("Hello, world!");
 
-        rect(10, 10, 100, 100);
+        Drawing.rect(10, 10, 100, 100);
     }
 }`;
 
