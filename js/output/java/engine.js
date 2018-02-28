@@ -167,7 +167,8 @@
                 return;
             }
 
-            worker = new Worker("/build/workers/java/worker.js");
+            const workersDir = this.workersDir || "/build/workers/";
+            worker = new Worker(workersDir + "java/worker.js");
 
             worker.addEventListener("message", receiveMessageFromWorker);
             window.addEventListener("message", receiveMessageFromWindow);

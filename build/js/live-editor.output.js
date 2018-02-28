@@ -376,6 +376,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (data.workersDir) {
             this.workersDir = this._qualifyURL(data.workersDir);
             PooledWorker.prototype.workersDir = this.workersDir;
+            window.javaEngine.workersDir = this.workersDir;
         }
         if (data.externalsDir) {
             this.externalsDir = this._qualifyURL(data.externalsDir);
@@ -424,6 +425,10 @@ window.LiveEditorOutput = Backbone.View.extend({
         } catch (err) {
             return;
         }
+
+        // Set the paths from the incoming data, if they exist
+        this.setPaths(data);
+
         if (!this.output) {
             var outputType = data.outputType || _.keys(this.outputs)[0];
             var enableLoopProtect = true;
@@ -445,9 +450,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (data.type === "debugger") {
             return;
         }
-
-        // Set the paths from the incoming data, if they exist
-        this.setPaths(data);
 
         // Validation code to run
         if (data.validate != null) {

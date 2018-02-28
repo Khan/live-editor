@@ -1017,7 +1017,10 @@ window.LiveEditor = Backbone.View.extend({
             if (!_this.isCompiled) {
                 _this.markDirty();
             } else {
-                _this.postFrame({ init: true });
+                _this.postFrame({
+                    init: true,
+                    workersDir: _this.options.workersDir
+                });
             }
         });
 
