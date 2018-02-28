@@ -268,7 +268,8 @@ window.JavaOutput = Backbone.View.extend({
         var _this = this;
 
         this.initPromise = window.javaEngine.init().then(function () {
-            return _this.engineInitialized = true;
+            _this.engineInitialized = true;
+            _this.output.postParent({ loaded: true });
         });
 
         this.config = options.config;
@@ -276,10 +277,6 @@ window.JavaOutput = Backbone.View.extend({
         this.tester = null;
         this.engineInitialized = false;
         this.render();
-
-        this.output.postParent({
-            loaded: true
-        });
 
         return this;
     },

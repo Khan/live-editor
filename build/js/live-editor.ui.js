@@ -1016,6 +1016,8 @@ window.LiveEditor = Backbone.View.extend({
             _this.outputState = "clean";
             if (!_this.isCompiled) {
                 _this.markDirty();
+            } else {
+                _this.postFrame({ init: true });
             }
         });
 

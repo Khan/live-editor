@@ -1,17 +1,16 @@
 window.JavaOutput = Backbone.View.extend({
     initialize: function initialize(options) {
         this.initPromise = window.javaEngine.init()
-            .then(() => this.engineInitialized = true);
+            .then(() => {
+                this.engineInitialized = true
+                this.output.postParent({loaded: true});
+            });
 
         this.config = options.config;
         this.output = options.output;
         this.tester = null;
         this.engineInitialized = false;
         this.render();
-
-        this.output.postParent({
-            loaded: true
-        });
 
         return this;
     },
