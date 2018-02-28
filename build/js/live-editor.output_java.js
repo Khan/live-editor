@@ -220,6 +220,9 @@
     window.$rt_putStdout = function (ch) {
         if (ch === 0xA) {
             console.log("[System.out] " + $rt_stdoutBuffer);
+            if (window.processing) {
+                window.processing.println($rt_stdoutBuffer);
+            }
             $rt_stdoutBuffer = "";
         } else {
             $rt_stdoutBuffer += String.fromCharCode(ch);
