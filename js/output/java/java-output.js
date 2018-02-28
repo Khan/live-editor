@@ -61,7 +61,7 @@ window.JavaOutput = Backbone.View.extend({
 
     runCode: function runCode(codeObj, callback) {
         this.clearCanvas();
-        console.log("[Debug] Compiling Code", codeObj);
+        console.log("[Debug] Compiling Code");
 
         this.initPromise.then(() => {
             window.javaEngine.compile(codeObj)
@@ -69,7 +69,8 @@ window.JavaOutput = Backbone.View.extend({
                     console.log("[Debug] Executing code");
 
                     window.javaEngine.execute(transpiled);
-                });
+                })
+                .catch(() => console.log("[Debug] Failed to compile!"));
         });
     },
 

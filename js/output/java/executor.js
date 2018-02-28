@@ -1,22 +1,15 @@
-// Use this if we want to send the console back to the live editor.
-// For the time being, it will just use console.log by default
-/*
-var $stdoutBuffer = "";
-function $rt_putStdout(ch) {
-    if (ch === 0xA) {
-        window.parent.postMessage(JSON.stringify({ command: "stdout", line: $rt_stdoutBuffer }), "*");
-        $rt_stdoutBuffer = "";
-    } else {
-        $rt_stdoutBuffer += String.fromCharCode(ch);
-    }
-}
-*/
-
 (function() {
+    var $stdoutBuffer = "";
+    window.$rt_putStdout = function(ch) {
+        if (ch === 0xA) {
+            console.log(`[System.out] ${$rt_stdoutBuffer}`);
+            $rt_stdoutBuffer = "";
+        } else {
+            $rt_stdoutBuffer += String.fromCharCode(ch);
+        }
+    };
 
     function appendFile(file, callback, errorCallback) {
-        console.log("Adding Script File...");
-
         var script = document.createElement("script");
         script.onload = function () {
             callback();
@@ -25,6 +18,7 @@ function $rt_putStdout(ch) {
             errorCallback("failed to load script" + fileName);
         };
         script.text = file;
+
         document.body.appendChild(script);
     }
 

@@ -79,9 +79,7 @@
             case "phase":
                 // the phase of compilation...
                 // eg DEPENDENCY_ANALYSIS, LINKING, OPTIMIZATION
-                console.log("");
-                console.log("*********************************");
-                console.log("Compile Phase: " + data.phase);
+                console.log("[Compiler] Compile Phase: " + data.phase);
                 break;
 
             case "compilation-complete":
@@ -125,14 +123,15 @@
         }
 
         if (data.object) {
-            detail = `at ${data.object.name}`;
+            detail = `  ${data.object.name}`;
 
             if (data.lineNumber >= 0) {
-                detail += `(${data.lineNumber + 1}:${data.columnNumber + 1})`;
+                detail += `(${data.lineNumber}:${data.columnNumber})`;
             }
         }
 
-        console.log(`${errorPrefix} ${detail} ${data.message}`);
+        console.log(`[COMPILER DIAGNOSTIC] ${errorPrefix}`)
+        console.error(`${detail} ${data.message}`);
     }
 
     function reportDiagnostic(data: any) {
@@ -146,7 +145,8 @@
             }
         }
 
-        console.log(`${diagnosticMessage} ${data.text}`);
+        console.log(`[DIAGNOSTIC]`);
+        console.error(`${diagnosticMessage} ${data.text}`);
     }
 
     const engine = {
@@ -171,7 +171,7 @@
                         throw new Error("Could not load standard library");
                     }
 
-                    console.log("Standard library initialized!!!");
+                    return result;
                 });
         },
 

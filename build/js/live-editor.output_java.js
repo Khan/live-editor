@@ -80,9 +80,7 @@
             case 'phase':
                 // the phase of compilation...
                 // eg DEPENDENCY_ANALYSIS, LINKING, OPTIMIZATION
-                console.log('');
-                console.log('*********************************');
-                console.log('Compile Phase: ' + data.phase);
+                console.log('[Compiler] Compile Phase: ' + data.phase);
                 break;
 
             case 'compilation-complete':
@@ -126,14 +124,15 @@
         }
 
         if (data.object) {
-            detail = 'at ' + data.object.name;
+            detail = '  ' + data.object.name;
 
             if (data.lineNumber >= 0) {
-                detail += '(' + (data.lineNumber + 1) + ':' + (data.columnNumber + 1) + ')';
+                detail += '(' + data.lineNumber + ':' + data.columnNumber + ')';
             }
         }
 
-        console.log(errorPrefix + ' ' + detail + ' ' + data.message);
+        console.log('[COMPILER DIAGNOSTIC] ' + errorPrefix);
+        console.error(detail + ' ' + data.message);
     }
 
     function reportDiagnostic(data) {
@@ -147,7 +146,8 @@
             }
         }
 
-        console.log(diagnosticMessage + ' ' + data.text);
+        console.log('[DIAGNOSTIC]');
+        console.error(diagnosticMessage + ' ' + data.text);
     }
 
     var engine = {
@@ -171,7 +171,7 @@
                     throw new Error('Could not load standard library');
                 }
 
-                console.log('Standard library initialized!!!');
+                return result;
             });
         },
 
@@ -199,25 +199,18 @@
 
     window.javaEngine = engine;
 })();
-// Use this if we want to send the console back to the live editor.
-// For the time being, it will just use console.log by default
-/*
-var $stdoutBuffer = "";
-function $rt_putStdout(ch) {
-    if (ch === 0xA) {
-        window.parent.postMessage(JSON.stringify({ command: "stdout", line: $rt_stdoutBuffer }), "*");
-        $rt_stdoutBuffer = "";
-    } else {
-        $rt_stdoutBuffer += String.fromCharCode(ch);
-    }
-}
-*/
-
 (function () {
+    var $stdoutBuffer = "";
+    window.$rt_putStdout = function (ch) {
+        if (ch === 0xA) {
+            console.log("[System.out] " + $rt_stdoutBuffer);
+            $rt_stdoutBuffer = "";
+        } else {
+            $rt_stdoutBuffer += String.fromCharCode(ch);
+        }
+    };
 
     function appendFile(file, callback, errorCallback) {
-        console.log("Adding Script File...");
-
         var script = document.createElement("script");
         script.onload = function () {
             callback();
@@ -226,6 +219,7 @@ function $rt_putStdout(ch) {
             errorCallback("failed to load script" + fileName);
         };
         script.text = file;
+
         document.body.appendChild(script);
     }
 
@@ -327,13 +321,15 @@ window.JavaOutput = Backbone.View.extend({
 
     runCode: function runCode(codeObj, callback) {
         this.clearCanvas();
-        console.log("[Debug] Compiling Code", codeObj);
+        console.log("[Debug] Compiling Code");
 
         this.initPromise.then(function () {
             window.javaEngine.compile(codeObj).then(function (transpiled) {
                 console.log("[Debug] Executing code");
 
                 window.javaEngine.execute(transpiled);
+            })["catch"](function () {
+                return console.log("[Debug] Failed to compile!");
             });
         });
     },

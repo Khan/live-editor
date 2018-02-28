@@ -4,7 +4,7 @@ This code comes from the [TeaVM](http://teavm.org) project.  Specifically, it is
 ## Notable files
 - runtime.js: this is used both to compile AND execute.  It is the TeaVM runtime support for any transpiled code to execute.
 - worker.js: this is a Web Worker process to transpile Java code.  We host it for our compile step
-- classes.js: Class information which the compiler worker utilizes
+- classes.js: The transpiled compiler
 - classlib.txt: Actually a zip file, I think?  Includes Java bytecode for all of the classes for the compiler worker to link against.
 
 ## Compiling these files
