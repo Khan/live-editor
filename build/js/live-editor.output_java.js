@@ -3,6 +3,8 @@
     var worker = undefined;
     var incrementalId = 1;
     var pendingResponses = [];
+    var warnings = [];
+    var errors = [];
 
     function postMessage(command, props) {
         var message = Object.assign({}, {
@@ -107,32 +109,37 @@
 
     function reportCompilerDiagnostic(data) {
         var errorPrefix = '';
-        var detail = '';
+        var detail = {};
+
+        if (data.object) {
+            detail.text = '' + data.object.name;
+
+            if (data.lineNumber >= 0) {
+                detail.text += '(' + data.lineNumber + ':' + data.columnNumber + ')';
+                detail.row = data.lineNumber - 1;
+                detail.column = data.columnNumber;
+            }
+
+            detail.text += ' ' + data.message;
+        }
 
         switch (data.kind) {
             case 'ERROR':
-                errorPrefix = 'ERROR';
+                console.log('[COMPILER DIAGNOSTIC] ERROR');
+                console.error(detail.text);
+                errors.push(detail);
                 break;
             case 'WARNING':
             case 'MANDATORY_WARNING':
-                errorPrefix = 'WARNING';
+                console.log('[COMPILER DIAGNOSTIC] WARNING');
+                console.warn(detail.text);
+                warnings.push(detail);
                 break;
 
             default:
-                errorPrefix = 'UNKNOWN(' + data.kind + ')';
+                console.log('[COMPILER DIAGNOSTIC] UNKNOWN (' + data.kind + ')');
                 break;
         }
-
-        if (data.object) {
-            detail = '  ' + data.object.name;
-
-            if (data.lineNumber >= 0) {
-                detail += '(' + data.lineNumber + ':' + data.columnNumber + ')';
-            }
-        }
-
-        console.log('[COMPILER DIAGNOSTIC] ' + errorPrefix);
-        console.error(detail + ' ' + data.message);
     }
 
     function reportDiagnostic(data) {
@@ -146,8 +153,11 @@
             }
         }
 
+        diagnosticMessage += '' + data.text;
+
+        errors.push({ text: diagnosticMessage });
         console.log('[DIAGNOSTIC]');
-        console.error(diagnosticMessage + ' ' + data.text);
+        console.error(diagnosticMessage);
     }
 
     var engine = {
@@ -176,11 +186,17 @@
         },
 
         compile: function compile(code) {
+            warnings = [];
+            errors = [];
             var message = postMessage('compile', { text: code });
 
             return waitForResponse(message, 'compilation-complete', reportProgress).then(function (result) {
                 if (result.status !== 'successful') {
-                    throw new Error('Failed to compile');
+                    return Promise.reject({
+                        message: 'Failed to compile',
+                        errors: errors,
+                        warnings: warnings
+                    });
                 }
 
                 return result.script;
@@ -324,7 +340,10 @@ window.JavaOutput = Backbone.View.extend({
         var _this2 = this;
 
         this.clearCanvas();
-        this.output.postParent({ readyToRun: false });
+        this.output.postParent({
+            readyToRun: false,
+            clearErrors: true
+        });
         console.log("[Debug] Compiling Code");
 
         this.initPromise.then(function () {
@@ -333,9 +352,19 @@ window.JavaOutput = Backbone.View.extend({
 
                 window.javaEngine.execute(transpiled);
                 _this2.output.postParent({ readyToRun: true });
-            })["catch"](function () {
-                console.log("[Debug] Failed to compile!");
+                _this2.output.postParent({
+                    results: {}
+                });
+            })["catch"](function (error) {
+                console.log("[Debug] " + error.message);
                 _this2.output.postParent({ readyToRun: true });
+                _this2.output.postParent({
+                    results: {
+                        assertions: [],
+                        errors: error.errors,
+                        warnings: error.warnings
+                    }
+                });
             });
         });
     },

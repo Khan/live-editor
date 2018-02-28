@@ -1186,9 +1186,14 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         if ("readyToRun" in data) {
-
             this.$el.find(this.dom.RUN_BUTTON)
                 .prop("disabled", !data.readyToRun);
+        }
+
+        if (data.clearErrors) {
+            this.removeGutterDecorations();
+            this.setErrors([]);
+            this.setHappyState();
         }
     },
 

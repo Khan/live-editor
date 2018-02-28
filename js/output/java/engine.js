@@ -3,6 +3,8 @@
     let worker = undefined;
     let incrementalId = 1;
     let pendingResponses = [];
+    let warnings = [];
+    let errors = [];
 
     function postMessage(command: string, props: any): Message {
         const message = Object.assign({}, {
@@ -104,34 +106,41 @@
         }
     }
 
+
+
     function reportCompilerDiagnostic(data: any) {
         let errorPrefix = "";
-        let detail = "";
+        let detail = {};
+
+        if (data.object) {
+            detail.text = `${data.object.name}`;
+
+            if (data.lineNumber >= 0) {
+                detail.text += `(${data.lineNumber}:${data.columnNumber})`;
+                detail.row = data.lineNumber - 1;
+                detail.column = data.columnNumber;
+            }
+
+            detail.text += ` ${data.message}`;
+        }
 
         switch (data.kind) {
             case "ERROR":
-                errorPrefix = "ERROR";
+                console.log(`[COMPILER DIAGNOSTIC] ERROR`);
+                console.error(detail.text);
+                errors.push(detail);
                 break;
             case "WARNING":
             case "MANDATORY_WARNING":
-                errorPrefix = "WARNING";
+                console.log(`[COMPILER DIAGNOSTIC] WARNING`);
+                console.warn(detail.text);
+                warnings.push(detail);
                 break;
 
             default:
-                errorPrefix = `UNKNOWN(${data.kind})`
+                console.log(`[COMPILER DIAGNOSTIC] UNKNOWN (${data.kind})`);
                 break;
         }
-
-        if (data.object) {
-            detail = `  ${data.object.name}`;
-
-            if (data.lineNumber >= 0) {
-                detail += `(${data.lineNumber}:${data.columnNumber})`;
-            }
-        }
-
-        console.log(`[COMPILER DIAGNOSTIC] ${errorPrefix}`)
-        console.error(`${detail} ${data.message}`);
     }
 
     function reportDiagnostic(data: any) {
@@ -145,8 +154,11 @@
             }
         }
 
+        diagnosticMessage += `${data.text}`;
+
+        errors.push({text: diagnosticMessage});
         console.log(`[DIAGNOSTIC]`);
-        console.error(`${diagnosticMessage} ${data.text}`);
+        console.error(diagnosticMessage);
     }
 
     const engine = {
@@ -176,12 +188,18 @@
         },
 
         compile: function(code) {
+            warnings = [];
+            errors = [];
             const message = postMessage("compile", { text: code });
 
             return waitForResponse(message, "compilation-complete", reportProgress)
                 .then(result => {
                     if (result.status !== "successful") {
-                        throw new Error("Failed to compile");
+                        return Promise.reject({
+                            message: "Failed to compile",
+                            errors,
+                            warnings
+                        });
                     }
 
                     return result.script;
