@@ -294,12 +294,11 @@ window.JavaOutput = Backbone.View.extend({
     },
 
     render: function render() {
-        if (!this.$canvas) {
-            this.$el.empty();
-            this.$canvas = $("<canvas>").attr("id", "output-canvas").appendTo(this.el).show();
-            window.processing = new Processing(this.$canvas[0]);
-            window.processing.size(400, 400);
-        }
+        this.$el.empty();
+        this.$canvas = $("<canvas>").attr("id", "output-canvas").appendTo(this.el).show();
+
+        window.processing = new Processing(this.$canvas[0]);
+        window.processing.size(400, 400);
 
         this.clearCanvas();
     },
@@ -339,7 +338,7 @@ window.JavaOutput = Backbone.View.extend({
     runCode: function runCode(codeObj, callback) {
         var _this2 = this;
 
-        this.clearCanvas();
+        this.render();
         this.output.postParent({
             readyToRun: false,
             clearErrors: true
