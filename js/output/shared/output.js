@@ -63,7 +63,9 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (data.workersDir) {
             this.workersDir = this._qualifyURL(data.workersDir);
             PooledWorker.prototype.workersDir = this.workersDir;
-            window.javaEngine.workersDir = this.workersDir;
+            if (window.javaEngine) {
+                window.javaEngine.workersDir = this.workersDir;
+            }
         }
         if (data.externalsDir) {
             this.externalsDir = this._qualifyURL(data.externalsDir);
