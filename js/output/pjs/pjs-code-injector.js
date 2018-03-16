@@ -52,6 +52,7 @@ class PJSCodeInjector {
         this.liveReset = {
             background: [255, 255, 255],
             colorMode: [1],
+            cursor: ["auto"],
             ellipseMode: [3],
             fill: [255, 255, 255],
             frameRate: [60],
