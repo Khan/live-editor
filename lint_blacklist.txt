@@ -5,6 +5,7 @@ tests/
 bower_components/
 node_modules/
 testutil/
+utils/
 gulpfile.js
 # TODO(kevinb) fix the lint
 js/
@@ -14,3 +15,5 @@ js/workers/pjs/processing-stubs.js
 
 # TODO(kevinb) i18n-ize
 tmpl/sql-results.handlebars
+
+*.js

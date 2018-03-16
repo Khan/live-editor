@@ -111,7 +111,7 @@ window.WebpageOutput = Backbone.View.extend({
         try {
             results = Slowparse.HTML(document, userCode, {
                 scriptPreprocessor: (code) => this.loopProtector.protect(code),
-                disableTags: ["iframe", "embed", "object"]
+                disableTags: ["iframe", "embed", "object", "frameset", "frame"]
             });
         } catch (e) {
             if (window.console) {

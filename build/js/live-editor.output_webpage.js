@@ -661,7 +661,7 @@ window.WebpageOutput = Backbone.View.extend({
                 scriptPreprocessor: function scriptPreprocessor(code) {
                     return _this.loopProtector.protect(code);
                 },
-                disableTags: ["iframe", "embed", "object"]
+                disableTags: ["iframe", "embed", "object", "frameset", "frame"]
             });
         } catch (e) {
             if (window.console) {
