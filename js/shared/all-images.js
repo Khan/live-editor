@@ -334,6 +334,18 @@
     {
         "groupName": "pixar",
         "images": [
+            "Incredibles_a_fill",
+            "Incredibles_a_fill_wFog",
+            "Incredibles_a_key",
+            "Incredibles_a_key_wFog",
+            "Incredibles_bnc",
+            "Incredibles_fillExt",
+            "Incredibles_fillInt",
+            "Incredibles_fill_wFog",
+            "Incredibles_kck",
+            "Incredibles_key",
+            "Incredibles_key_wFog",
+            "Incredibles_target",
             "army1",
             "army2",
             "bedspread",
