@@ -168,11 +168,6 @@ describe("Linting", function() {
       ['The CSS value \"rgb (255, 255, 255)\" is malformed.']
     );
 
-    warningTest("non-standard CSS properties throw a warning",
-      '<!DOCTYPE html><html><style>\n.photo {\nbackground-blend-mode: screen;\n}\n</style></html>',
-      ['"background-blend-mode" is non-standard, check browser compatibility.']
-    );
-
     warningTest("obsolete HTML elements warned against", [
         "<!DOCTYPE html><html><marquee></marquee></html>",
         "<!DOCTYPE html><html><marquee>Some clever message</marquee></html>",

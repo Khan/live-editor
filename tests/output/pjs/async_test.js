@@ -206,7 +206,6 @@ describe("Code Injection", function() {
 });
 
 describe("LoopProtector", function() {
-
     it("should stop Infinite Loops in event handlers", function (done) {
         var output = createLiveEditorOutput();
 

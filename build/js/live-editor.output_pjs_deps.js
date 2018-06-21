@@ -87416,7 +87416,7 @@ window.walkAST = function (node, path, visitors) {
  *                        passed to the callback. TODO(kevinb) use this for webpages
  * @constructor
  */
-window.LoopProtector = function (callback, timeouts, reportLocation, dontThrow) {
+window.LoopProtector = function (callback, timeouts, reportLocation) {
     this.callback = callback || function () {};
     this.timeout = 200;
     this.branchStartTime = 0;
