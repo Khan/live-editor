@@ -173,7 +173,6 @@ pjs_tests.forEach(function(test) {
         return gulp.src("tests/output/pjs/index.html")
             .pipe(mochaRunner({ test: test + "_test.js", showMessages: true}))
             .on("error", function (err) {
-                console.log(err.message)
                 failureCount += parseInt(err.message);
                 this.emit("end");
             });
@@ -248,8 +247,8 @@ gulp.task("test_record", ["test_record_data"],
     runTest("record/index.html"));
 
 gulp.task("test", function(callback) {
-    //runSequence("test_output_pjs", "test_output_webpage", "test_output_sql", "test_tooltips", "check_errors", callback);
-    runSequence("test_output_pjs", "check_errors", callback);
+    runSequence("test_output_pjs", "test_output_webpage", "test_output_sql",
+        "test_tooltips", "check_errors", callback);
 });
 
 // Check to make sure all source files and dependencies exist before building.
