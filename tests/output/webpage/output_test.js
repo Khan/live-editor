@@ -170,7 +170,7 @@ describe("Linting", function() {
 
     warningTest("non-standard CSS properties throw a warning",
       '<!DOCTYPE html><html><style>\n.photo {\nbackground-blend-mode: screen;\n}\n</style></html>',
-      ['The CSS value \"rgb (255, 255, 255)\" is malformed.']
+      ['"background-blend-mode" is non-standard, check browser compatibility.']
     );
 
     warningTest("obsolete HTML elements warned against", [
@@ -270,8 +270,8 @@ describe("Linting", function() {
     );
 
     failingTest("Runtime errors",
-        "<script> bla(x);</script>", [
-            // Infinite loops dont give a location for their error message
+        "<script> testingRuntimeErrors(x);</script>", [
+            // Runtime errors dont give a location for their error message
             {row: undefined, column: undefined, text:
                 'Your javascript encountered a runtime error. ' +
                 'Check your console for more information.'}

@@ -206,6 +206,7 @@ describe("Code Injection", function() {
 });
 
 describe("LoopProtector", function() {
+
     it("should stop Infinite Loops in event handlers", function (done) {
         var output = createLiveEditorOutput();
 
@@ -218,15 +219,19 @@ describe("LoopProtector", function() {
             };
         });
 
+        var code2 = getCodeFromOptions(function() {
+            mouseClicked();
+        });
+
         output.output.injector.loopProtector = new LoopProtector(function (error) {
             expect(error.infiniteLoopNodeType).to.equal("WhileStatement");
             expect(error.row).to.equal(3);
             done();
-        }, 200, 50, true);
+        }, {initialTimeout: 200, frameTimeout: 50}, true);
 
         output.runCode(code, function(errors, testResults) {
             expect(errors.length).to.be(0);
-            simulateClick(output);
+            output.runCode(code2);
         });
     });
 
@@ -272,10 +277,9 @@ describe("LoopProtector", function() {
 
         output.output.injector.loopProtector = new LoopProtector(function (error) {
             // caught by the runCode callback
-        }, 200, 50, true);
+        }, {initialTimeout: 200, frameTimeout: 50}, true);
 
         output.runCode(code, function (errors, testResults) {
-            console.log(errors);
             expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
             expect(errors[0].row).to.equal(2);
             done();
@@ -294,7 +298,7 @@ describe("LoopProtector", function() {
 
         output.output.injector.loopProtector = new LoopProtector(function (error) {
             // caught by the runCode callback
-        }, 200, 50, true);
+        }, {initialTimeout: 200, frameTimeout: 50}, true);
 
         output.runCode(code, function (errors, testResults) {
             expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
@@ -318,7 +322,7 @@ describe("LoopProtector", function() {
 
         output.output.injector.loopProtector = new LoopProtector(function (error) {
             // caught by the runCode callback
-        }, 200, 50, true);
+        }, {initialTimeout: 200, frameTimeout: 50}, true);
 
         output.runCode(code, function (errors, testResults) {
             expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
@@ -366,8 +370,11 @@ describe("draw update tests", function() {
         output.runCode(code1, function(errors, testResults) {
             expect(ellipseSpy.calledWith(200, 200, 10, 10)).to.be(true);
             output.runCode(code2, function(errors, testResults) {
-                expect(ellipseSpy.calledWith(200, 200, 20, 20)).to.be(true);
-                done();
+                // Wait for it to tick forward a frame
+                setTimeout(() => {
+                    expect(ellipseSpy.calledWith(200, 200, 20, 20)).to.be(true);
+                    done();
+                }, 50);
             });
         });
     });

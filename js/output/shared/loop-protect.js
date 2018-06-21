@@ -10,7 +10,7 @@
  *                        passed to the callback. TODO(kevinb) use this for webpages
  * @constructor
  */
-window.LoopProtector = function(callback, timeouts, reportLocation) {
+window.LoopProtector = function(callback, timeouts, reportLocation, dontThrow) {
     this.callback = callback || function () { };
     this.timeout = 200;
     this.branchStartTime = 0;
