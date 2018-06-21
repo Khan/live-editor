@@ -173,6 +173,7 @@ pjs_tests.forEach(function(test) {
         return gulp.src("tests/output/pjs/index.html")
             .pipe(mochaRunner({ test: test + "_test.js" }))
             .on('error', function (err) {
+                console.log(err.message)
                 failureCount += parseInt(err.message);
                 this.emit('end');
             });
