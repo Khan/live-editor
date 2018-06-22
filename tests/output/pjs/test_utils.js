@@ -39,7 +39,7 @@ var runTest = function(options) {
     } else if (options.only) {
         itFunc = it.only;
     }
- 
+
     itFunc(displayTitle, function(done) {
         var output = new LiveEditorOutput({
             outputType: "pjs",
@@ -254,19 +254,8 @@ var getCodeFromOptions = function(code) {
     return code;
 };
 
-// Theoretically, jQuery.mouseup should work, but it wasn't working
-//  for me across PhantomJS/browser, and this does.
 var simulateClick = function(output) {
-    var ev = document.createEvent("MouseEvent");
-    ev.initMouseEvent(
-        "mouseup",
-        true, true,
-        window, null,
-        0, 0, 0, 0,
-        false, false, false, false,
-        0, null
-    );
-    output.output.$canvas[0].dispatchEvent(ev);
+    output.output.$canvas.mouseup();
 };
 
 var createLiveEditorOutput = function() {
