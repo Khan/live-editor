@@ -3,15 +3,15 @@
  * Report test results to the console in JSON encoded strings.
  * This is a modified version of mocha's provided json stream reporter.
  */
-    
+
 var Base = Mocha.reporters.Base;
 
-function clean(test) {
+function clean(test, err) {
     return {
         title: test.title,
         fullTitle: test.fullTitle(),
         duration: test.duration,
-        error: test.err
+        error: err && {message: err.message, stack: err.stack}
     };
 }
 
@@ -30,7 +30,7 @@ var jsonReporter = function(runner) {
     });
 
     runner.on('fail', function(test, err) {
-        console.log(JSON.stringify(['fail', clean(test)]));
+        console.log(JSON.stringify(['fail', clean(test, err)]));
     });
 
     runner.on('end', function() {

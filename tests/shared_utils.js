@@ -1,9 +1,9 @@
 var runTestFiles = function(defaultFiles) {
-    var isPhantomJS = /PhantomJS/.test(navigator.userAgent);
+    var isHeadless = /HeadlessChrome/.test(navigator.userAgent);
 
     mocha.setup({
         ui: 'bdd',
-        reporter: isPhantomJS ? jsonReporter : 'html'
+        reporter: isHeadless ? jsonReporter : 'html'
     });
 
     if (location.search.substring) {

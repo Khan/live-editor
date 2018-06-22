@@ -265,8 +265,8 @@ describe("Linting", function() {
     );
 
     failingTest("Runtime errors",
-        "<script> bla(x);</script>", [
-            // Infinite loops dont give a location for their error message
+        "<script> testingRuntimeErrors(x);</script>", [
+            // Runtime errors dont give a location for their error message
             {row: undefined, column: undefined, text:
                 'Your javascript encountered a runtime error. ' +
                 'Check your console for more information.'}

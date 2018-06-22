@@ -1,12 +1,14 @@
 /**
  * A gulp plugin that runs mocha tests in phantomjs.
- * 
+ *
  * Supports running tests in an iframe inside phantomjs because the test
  * results are passed back to the plugin using stdout via console.log().
  */
-var PluginError = require("gulp-util").PluginError;
-var spawn = require("child_process").spawn;
-var through2 = require("through2");
+const PluginError = require("gulp-util").PluginError;
+const through2 = require("through2");
+const chromeLauncher = require("chrome-launcher");
+const CDP = require("chrome-remote-interface");
+const unmirror = require('chrome-unmirror');
 
 var plugin = function (options) {
     options = options || {};
@@ -23,7 +25,7 @@ var plugin = function (options) {
             return;
         }
 
-        error.stackArray.filter(function(stackFrame) { 
+        error.stackArray.filter(function(stackFrame) {
             if (!stackFrame.url) {
                 return false;
             } else if (stackFrame.url && stackFrame.url.indexOf("mocha.js") !== -1) {
@@ -44,6 +46,7 @@ var plugin = function (options) {
     }
 
     function transform(file, enc, done) {
+
         if (file.isNull()) {
             return done(null, file);
         }
@@ -51,35 +54,77 @@ var plugin = function (options) {
             return done(new PluginError(PluginName, "Streaming not supported"));
         }
 
-        var args = [ __dirname + "/phantom-script.js", file.path ];
-        if (options.test) {
-            args.push(options.test);
-        }
-        var phantom = spawn(require("phantomjs").path, args);
-        
-        phantom.stdout.setEncoding('utf8');
-        phantom.stdout.on('data', function(data) {
-            var msgStr = data.toString().trim();
-            
-            if (msgStr.charAt(0) === "[") {
-                var msgObj;
-                try {
-                    msgObj = JSON.parse(msgStr);
-                } catch(e) {
-                    // sometimes we get malformed JSON, just ignore it
-                    if (msgStr.indexOf("pass") > 0) {
-                        process.stdout.write("\x1b[32m.\x1b[0m"); // green
-                    } else if (msgStr.indexOf("fail") > 0) {
-                        process.stdout.write("\x1b[31mF\x1b[0m"); // red
-                        failures.push({
-                            fullTitle: "unknown",
-                            message: "unknown"
-                        });
-                    }
+        (async function() {
+            async function launchChrome() {
+                return await chromeLauncher.launch({
+                    chromeFlags: [
+                        "--headless",
+                        // Flags based off gulp-mocha-chrome
+                        "--no-default-browser-check",
+                        "--no-first-run",
+                        "--disable-background-timer-throttling",
+                        "--disable-default-apps",
+                        "--disable-device-discovery-notifications",
+                        "--disable-gpu",
+                        "--disable-popup-blocking",
+                        "--disable-renderer-backgrounding",
+                        "--disable-translate",
+                        // Without this flag, autoplaying audio outputs error
+                        "--autoplay-policy=no-user-gesture-required",
+                        // Without this flag, worker JS files can't be loaded
+                        "--allow-file-access-from-files"
+                    ]
+                });
+            }
+
+            const chrome = await launchChrome();
+            const protocol = await CDP({port: chrome.port});
+            const {
+                DOM,
+                Page,
+                Runtime,
+                Console
+            } = protocol;
+            await Promise.all([
+                DOM.enable(),
+                Page.enable(),
+                Runtime.enable(),
+                Console.enable()
+            ]);
+
+            Runtime.exceptionThrown((exception) => {
+                let message = exception.exceptionDetails.exception.description;
+                // Don't log infinite loop exceptions,
+                // those indicate the system is working correctly
+                if (message.indexOf("KA_INFINITE_LOOP") !== -1 ||
+                    message.indexOf("testingRuntimeErrors") !== -1) {
                     return;
                 }
-                var type = msgObj[0];
-                var params = msgObj[1];
+                errors.push(message);
+            });
+
+            Runtime.consoleAPICalled(({logType, args}) => {
+
+                // Our mocha JSONReporter console.log()s strings of JSON for
+                // testing status and results (start/pass/fail/end)
+                // In that case, the logType is "log" and the args look like
+                // {type: "string", value: '["pass", {..}]'}
+                // This code tries to parse the test results from the value:
+                var logMessage = args[0].value;
+                var logMessageObj;
+                try {
+                    logMessageObj = JSON.parse(logMessage);
+                } catch(e) {
+                    // If it wasn't a string of JSON, it's likely a console.log
+                    // from one of the tests or test code.
+                    // Chrome stores log()s as complex "mirror" objects,
+                    // where each data type has a different set of properties,
+                    // so the best way to represent any log is to "unmirror":
+                    messages.push(unmirror(args[0]));
+                    return;
+                }
+                var type = logMessageObj[0];
+                var params = logMessageObj[1];
 
                 if (type === "start") {
                     testsHaveStarted = true;
@@ -107,12 +152,9 @@ var plugin = function (options) {
 
                     // errors
                     if (errors.length > 0) {
-                        console.log("The following errors occurred:");
+                        console.log("The following runtime errors occurred:");
                         errors.forEach(function(error) {
-                            console.log(indent + error.msg);
-                            error.trace.forEach(function(line) {
-                                console.log(indent + indent + line);
-                            });
+                            console.log(error);
                         });
                     }
 
@@ -130,30 +172,29 @@ var plugin = function (options) {
                         params.passes + " passes and " +
                         params.failures + " failures."
                     );
-                    
-                    phantom.kill(); // kill the process or gulp won't exit
-                    
+
+                    protocol.close();
+                    chrome.kill();
+
                     if (params.failures > 0) {
                         return done(new PluginError(PluginName, params.failures));
                     } else {
                         done();
                     }
                 }
-            } else {
-                messages.push(msgStr);
-            }
-        });
-        phantom.stderr.on("data", function(data) {
-            var error = JSON.parse(data.toString("utf-8"));
+            });
 
-            // skip infinite loop exceptions, these indicate that the system is
-            // is working correctly
-            if (error.msg === "KA_INFINITE_LOOP") {
-                return;
-            }
 
-            errors.push(error);
-        });
+            Page.loadEventFired(() => {
+                console.log("Test page successfully loaded");
+            });
+
+            var fileUrl = "file:///" + file.path;
+            if (options.test) {
+                fileUrl += "?tests=" + options.test
+            }
+            Page.navigate({url: fileUrl});
+        })();
     }
 
     return through2.obj(transform);

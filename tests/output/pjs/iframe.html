@@ -12,19 +12,6 @@
         <div id="output-area"></div>
         <script src="../../../build/js/live-editor.core_deps.js"></script>
         <script>
-        // Works around this issue in PhantomJS:
-        // https://github.com/ariya/phantomjs/pull/12307
-        // Remove once PhantomJS pushes out a new release that fixes this!
-        (function() {
-            var oldSplice = Array.prototype.splice;
-            Array.prototype.splice = function(num) {
-                if (arguments.length === 1) {
-                    return Array.prototype.slice.call(this, num);
-                }
-                return oldSplice.apply(this, arguments);
-            };
-        })();
-
         // used to skip some of the tests that aren't applicable
         // should be false
         var useDebugger = location.search.indexOf("debugger=true") !== -1;
