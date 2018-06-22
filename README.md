@@ -62,6 +62,10 @@ You can run the tests in the browser runner by opening the relevant webpage:
 
 [TravisCI](https://travis-ci.org/Khan/live-editor/) also runs those tests when new commits are made.
 
+In order to run the tests that create Worker threads, you'll need to run Chrome with a flag:
+
+    /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --allow-file-access-from-files
+
 Please add tests whenever possible for any change that you make or propose.
 
 ## How you can help
