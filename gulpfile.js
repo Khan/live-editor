@@ -171,7 +171,7 @@ var pjs_tests = ["jshint", "output", "assert", "ast_transform", "async"];
 pjs_tests.forEach(function(test) {
     gulp.task("test_output_pjs_" + test, ["script_output_pjs"], function() {
         return gulp.src("tests/output/pjs/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js", showMessages: true}))
+            .pipe(mochaRunner({ test: test + "_test.js"}))
             .on("error", function (err) {
                 failureCount += parseInt(err.message);
                 this.emit("end");

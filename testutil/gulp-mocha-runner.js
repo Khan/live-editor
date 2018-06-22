@@ -58,6 +58,10 @@ var plugin = function (options) {
             async function launchChrome() {
                 return await chromeLauncher.launch({
                     chromeFlags: [
+                        "--headless",
+                        // Flags based off gulp-mocha-chrome
+                        "--no-default-browser-check",
+                        "--no-first-run",
                         "--disable-background-timer-throttling",
                         "--disable-default-apps",
                         "--disable-device-discovery-notifications",
@@ -65,13 +69,11 @@ var plugin = function (options) {
                         "--disable-popup-blocking",
                         "--disable-renderer-backgrounding",
                         "--disable-translate",
-                        "--headless",
-                        "--no-default-browser-check",
-                        "--no-first-run",
+                        // Without this flag, autoplaying audio outputs error
                         "--autoplay-policy=no-user-gesture-required",
+                        // Without this flag, worker JS files can't be loaded
                         "--allow-file-access-from-files"
-                    ],
-                    logLevel: "error"
+                    ]
                 });
             }
 
@@ -103,11 +105,21 @@ var plugin = function (options) {
 
             Runtime.consoleAPICalled(({logType, args}) => {
 
+                // Our mocha JSONReporter console.log()s strings of JSON for
+                // testing status and results (start/pass/fail/end)
+                // In that case, the logType is "log" and the args look like
+                // {type: "string", value: '["pass", {..}]'}
+                // This code tries to parse the test results from the value:
                 var logMessage = args[0].value;
                 var logMessageObj;
                 try {
                     logMessageObj = JSON.parse(logMessage);
                 } catch(e) {
+                    // If it wasn't a string of JSON, it's likely a console.log
+                    // from one of the tests or test code.
+                    // Chrome stores log()s as complex "mirror" objects,
+                    // where each data type has a different set of properties,
+                    // so the best way to represent any log is to "unmirror":
                     messages.push(unmirror(args[0]));
                     return;
                 }
