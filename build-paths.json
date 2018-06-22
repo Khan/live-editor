@@ -5,6 +5,7 @@
     "scripts": {
         "core_deps": [
             "bower_components/es5-shim/es5-shim.js",
+            "node_modules/babel-core/browser-polyfill.min.js",
             "bower_components/jquery/dist/jquery.js",
             "bower_components/jquery-ui/ui/jquery-ui.custom.js",
             "external/handlebars/handlebars.runtime.js",
@@ -70,8 +71,7 @@
             "js/shared/sounds.js",
             "js/shared/record.js",
             "js/shared/config.js",
-            "external/visibly/visibly.js",
-            "node_modules/babel-core/browser-polyfill.min.js"
+            "external/visibly/visibly.js"
         ],
         "output_pjs_deps": [
             "external/processing-js/processing.js",
