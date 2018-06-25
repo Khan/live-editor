@@ -112,7 +112,6 @@
 
 .scratchpad-ace-editor .ace_tooltip {
     max-width: 550px; /* Ensures tooltip isn't cut off */
-    white-space: normal; /* Allows multi-lines to wrap */
 }
 
 .scratchpad-ace-editor .ace_problem_line {
