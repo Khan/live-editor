@@ -504,7 +504,7 @@
         cursor: start
       };
     },
-    NONSTANDARD_CSS_PROPERTY_NAME: function(parser, start, end, property) {
+    UNKNOWN_CSS_PROPERTY_NAME: function(parser, start, end, property) {
       return {
         cssProperty: {
           start: start,
@@ -872,46 +872,11 @@
       "align-content", "align-items", "align-self", "flex", "flex-basis",
       "flex-direction", "flex-flow", "flex-grow", "flex-shrink", "flex-wrap",
       "justify-content"],
-      nonstandardCssProperties: [
-        "animation-fill-mode",
-        "background-blend-mode",
-        "clip-path",
-        "font-feature-settings",
-        "font-kerning",
-        "isolation",
-        "mask",
-        "mask-clip",
-        "mask-image",
-        "mask-origin",
-        "mask-position",
-        "mask-repeat",
-        "mix-blend-mode",
-        "object-fit",
-        "object-position",
-        "order",
-        "scroll-behavior",
-        "shape-image-threshold",
-        "shape-margin",
-        "shape-outside",
-        "text-combine-upright",
-        "text-orientation",
-        "text-overflow",
-        "text-rendering",
-        "touch-action",
-        "will-change",
-        "writing-mode"
-    ],
     // This helper verifies that a specific string is a known CSS property.
     // We include vendor-prefixed known CSS properties, like `-o-transition`.
     _knownCSSProperty: function(propertyName) {
       propertyName = propertyName.replace(/^-.+?-/,'');
       return this.cssProperties.indexOf(propertyName) > -1;
-    },
-    // This helper returns true if the CSS property is new and not
-    // supported in all browsers.
-    _nonstandardCSSProperty: function(propertyName) {
-      propertyName = propertyName.replace(/^-.+?-/,'');
-      return this.nonstandardCssProperties.indexOf(propertyName) > -1;
     },
     // #### The CSS Master Parse Function
     //
@@ -1246,12 +1211,12 @@
         // Before we continue, we must make sure the string we found is a real
         // CSS property.
         var isValidName = property && property.match(/^[a-z\-]+$/);
-        if (isValidName && this._nonstandardCSSProperty(property)) {
-          this.warnings.push(new ParseError("NONSTANDARD_CSS_PROPERTY_NAME",
-              this, propertyStart, propertyEnd, property));
-        } else if (isValidName && !this._knownCSSProperty(property)) {
+        if (!isValidName) {
           throw new ParseError("INVALID_CSS_PROPERTY_NAME",
               this, propertyStart, propertyEnd, property);
+        } else if (!this._knownCSSProperty(property)) {
+          this.warnings.push(new ParseError("UNKNOWN_CSS_PROPERTY_NAME",
+              this, propertyStart, propertyEnd, property));
         }
         this.stream.markTokenStartAfterSpace();
         this._parseValue(selector, selectorStart, property, propertyStart);
