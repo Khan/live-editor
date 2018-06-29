@@ -113,6 +113,7 @@
 /* Otherwise, the tooltip (for assertEqual) is cut off */
 .scratchpad-ace-editor .ace_tooltip {
     max-width: 550px;
+    white-space: normal; /* Allows multi-lines to wrap */
 }
 
 .scratchpad-ace-editor .ace_problem_line {
