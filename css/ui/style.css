@@ -110,9 +110,8 @@
     background: #F5F3E5;
 }
 
-/* Otherwise, the tooltip (for assertEqual) is cut off */
 .scratchpad-ace-editor .ace_tooltip {
-    max-width: 550px;
+    max-width: 550px; /* Ensures tooltip isn't cut off */
     white-space: normal; /* Allows multi-lines to wrap */
 }
 
