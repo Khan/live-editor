@@ -132,6 +132,12 @@ describe("Linting", function() {
         '<button type="submit">Submit</button>'
     ]);
 
+    failingTest("INVALID_CSS_PROPERTY_NAME in CSS style",
+        '<style>p { background color: red;}</style>', [
+            {row: 0, column: 11, lint: {type: "INVALID_CSS_PROPERTY_NAME"}}
+        ]
+    );
+
     warningTest('links with invalid protocols throw warnings', [
         "<!DOCTYPE html><html><a href='www.google.com'></a></html>",
         "<!DOCTYPE html><html><a href='google.com'></a></html>",
@@ -166,6 +172,11 @@ describe("Linting", function() {
     warningTest("color values with a space throw a warning",
       '<!DOCTYPE html><html><style>\n.photo {\ncolor: rgb (255, 255, 255);\n}\n</style></html>',
       ['The CSS value \"rgb (255, 255, 255)\" is malformed.']
+    );
+
+    warningTest("non-standard CSS properties throw a warning",
+      '<!DOCTYPE html><html><style>\n.photo {\nbackground-blend-mode: screen;\n}\n</style></html>',
+      ['The CSS property "background-blend-mode" is non-standard or non-existent. Check spelling and browser compatibility.']
     );
 
     warningTest("obsolete HTML elements warned against", [
