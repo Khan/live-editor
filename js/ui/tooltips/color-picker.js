@@ -108,8 +108,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             addSemicolon = true;
         }
 
-        if (event.source && event.source.action === "insertText" &&
-            event.source.text.length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
+        if (event.source && event.source.action === "insert" &&
+            event.source.lines[0].length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
                 this.closing = ")" + (addSemicolon ? ";" : "");

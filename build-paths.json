@@ -4,24 +4,24 @@
     ],
     "scripts": {
         "core_deps": [
-            "bower_components/es5-shim/es5-shim.js",
-            "bower_components/jquery/dist/jquery.js",
-            "bower_components/jquery-ui/ui/jquery-ui.custom.js",
+            "node_modules/es5-shim/es5-shim.js",
+            "node_modules/jquery/dist/jquery.js",
+            "node_modules/jquery-ui-dist/jquery-ui.js",
             "external/handlebars/handlebars.runtime.js",
-            "bower_components/underscore/underscore.js",
-            "bower_components/backbone/backbone.js",
-            "bower_components/jed/jed.js",
-            "bower_components/bootstrap/js/bootstrap-tab.js",
+            "node_modules/underscore/underscore.js",
+            "node_modules/backbone/backbone.js",
+            "node_modules/jed/jed.js",
+            "node_modules/bootstrap/dist/js/bootstrap.js",
             "js/shared/i18n.js"
         ],
         "editor_ace_deps": [
-            "bower_components/ace-builds/src-noconflict/ace.js",
-            "bower_components/ace-builds/src-noconflict/mode-javascript.js",
-            "bower_components/ace-builds/src-noconflict/mode-html.js",
-            "bower_components/ace-builds/src-noconflict/ext-static_highlight.js",
-            "bower_components/ace-builds/src-noconflict/mode-sql.js",
-            "bower_components/ace-builds/src-noconflict/ext-searchbox.js",
-            "bower_components/ace-builds/src-noconflict/ext-language_tools.js"
+            "node_modules/ace-builds/src-noconflict/ace.js",
+            "node_modules/ace-builds/src-noconflict/mode-javascript.js",
+            "node_modules/ace-builds/src-noconflict/mode-html.js",
+            "node_modules/ace-builds/src-noconflict/ext-static_highlight.js",
+            "node_modules/ace-builds/src-noconflict/mode-sql.js",
+            "node_modules/ace-builds/src-noconflict/ext-searchbox.js",
+            "node_modules/ace-builds/src-noconflict/ext-language_tools.js"
         ],
         "editor_ace": [
             "js/editors/ace/editor-ace.js"
@@ -42,11 +42,10 @@
             "js/editors/structured-blocks/editor-structured-blocks.js"
         ],
         "audio": [
-            "bower_components/soundmanager/script/soundmanager2.js",
+            "node_modules/soundmanager2/script/soundmanager2.js",
             "external/multirecorderjs/multirecorder.js",
             "external/transloaditxhr/transloadit_xhr.js",
-            "build/tmpl/dev-record.js",
-            "js/ui/jquery.button.js"
+            "build/tmpl/dev-record.js"
         ],
         "tooltips": [
             "external/colorpicker/colorpicker.js",
@@ -60,7 +59,7 @@
             "js/ui/structured-blocks-tooltips.js"
         ],
         "debugger": [
-            "bower_components/iframe-overlay/dist/iframe-overlay.js",
+            "node_modules/iframe-overlay/dist/iframe-overlay.js",
             "js/ui/debugger.js",
             "build/tmpl/debugger.js"
         ],
@@ -85,7 +84,7 @@
             "js/output/pjs/pjs-ast-transforms.js"
         ],
         "output_debugger_deps": [
-            "bower_components/iframe-overlay/dist/iframe-overlay.js",
+            "node_modules/iframe-overlay/dist/iframe-overlay.js",
             "external/debugger/build/debugger.js",
             "external/debugger/build/processing-debugger.js",
             "js/output/pjs/pjs-debugger.js"
@@ -144,23 +143,23 @@
         "js/output/pjs/pjs-tester.js"
     ],
     "workers_webpage": [
-        "bower_components/ace-builds/src-noconflict/worker-html.js"
+        "node_modules/ace-builds/src-noconflict/worker-html.js"
     ],
     "workers_shared": [
         "js/output/shared/output-tester.js",
         "external/multirecorderjs/multirecorder-worker.js"
     ],
     "externals": [
-        "bower_components/es5-shim/es5-shim.js",
+        "node_modules/es5-shim/es5-shim.js",
         "external/jshint/jshint.js",
         "external/structuredjs/external/esprima.js",
         "external/structuredjs/structured.js",
-        "bower_components/underscore/underscore.js",
-        "bower_components/soundmanager/swf/**"
+        "node_modules/underscore/underscore.js",
+        "node_modules/soundmanager/swf/**"
     ],
     "styles": {
         "core_deps": [
-            "bower_components/jquery-ui/themes/ui-lightness/jquery-ui.css"
+            "node_modules/jquery-ui-dist/jquery-ui.theme.css"
         ],
         "editor_structured_blocks": [
             "external/structured-blocks/css/style.css",
@@ -182,9 +181,6 @@
         "ui": [
             "css/ui/tipbar.css",
             "css/ui/style.css"
-        ],
-        "output": [
-            "css/output/style.css"
         ],
         "debugger": [
             "css/ui/debugger.css"

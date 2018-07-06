@@ -1397,7 +1397,7 @@ window.TooltipEngine = Backbone.View.extend({
             event: "change",
             fn: (function (e) {
                 if (this.enabled) {
-                    this.doRequestTooltip(e.data);
+                    this.doRequestTooltip(e);
                 }
             }).bind(this)
         }, {
@@ -1851,7 +1851,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             addSemicolon = true;
         }
 
-        if (event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
+        if (event.source && event.source.action === "insert" && event.source.lines[0].length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
                 this.closing = ")" + (addSemicolon ? ";" : "");
@@ -2186,7 +2186,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             var path = pieces[2];
             var closing = pieces[3];
 
-            if (leading.length === 0 && path.length === 0 && closing.length === 0 && event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.autofill) {
+            if (leading.length === 0 && path.length === 0 && closing.length === 0 && event.source && event.source.action === "insert" && event.source.lines[0].length === 1 && this.autofill) {
                 closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");
                 this.insert({
                     row: event.row,
@@ -2277,7 +2277,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
 
         // TODO(kevinb) extract this into a method on TooltipBase
-        if (leadingPadding.length === 0 && path.length === 0 && this.closing.length === 0 && event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.autofill) {
+        if (leadingPadding.length === 0 && path.length === 0 && this.closing.length === 0 && event.source && event.source.action === "insert" && event.source.lines[0].length === 1 && this.autofill) {
 
             this.closing = ")" + (this.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
             this.insert({

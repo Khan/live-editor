@@ -302,8 +302,8 @@
                 path.length === 0 &&
                 closing.length === 0 &&
                 event.source &&
-                event.source.action === "insertText" &&
-                event.source.text.length === 1 && this.autofill) {
+                event.source.action === "insert" &&
+                event.source.lines[0].length === 1 && this.autofill) {
                 closing = ")" + (this.isInParenthesis(
                     event.pre.slice(0, functionStart)) ? "" : ";");
                 this.insert({

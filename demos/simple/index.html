@@ -78,8 +78,7 @@
         soundsDir: "../../sounds/",
         execFile: outputUrl,
         jshintFile: "../../build/external/jshint/jshint.js",
-        useDebugger: useDebugger,
-        newErrorExperience: true,
+        useDebugger: useDebugger
     });
     liveEditor.editor.on("change", function() {
         window.localStorage["test-code"] = liveEditor.editor.text();

@@ -155,16 +155,16 @@ window.AceEditor = Backbone.View.extend({
         var doc = editor.session.doc;
 
         // Track text change events
-        doc.on("change", function(e) {
-            var start = e.data.range.start;
-            var end = e.data.range.end;
+        doc.on("change", function(eventInfo) {
+            var start = eventInfo.start;
+            var end = eventInfo.end;
 
-            if (e.data.action.indexOf("insert") === 0) {
-                var insert = e.data.lines || e.data.text;
-                self.record.log(e.data.action,
+            if (eventInfo.action.indexOf("insert") === 0) {
+                var insert = eventInfo.lines || eventInfo.text;
+                self.record.log(eventInfo.lines.action,
                     start.row, start.column, end.row, end.column, insert);
             } else {
-                self.record.log(e.data.action,
+                self.record.log(eventInfo.lines.action,
                     start.row, start.column, end.row, end.column);
             }
         }, true);

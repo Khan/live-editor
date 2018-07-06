@@ -841,14 +841,6 @@ window.LiveEditor = Backbone.View.extend({
             }).bind(this)
         });
 
-        // TEMP: Set up a query param for testing the new error experience
-        // Looks to see if "new_error_experience=yes" is in the url,
-        //  if it is, then we use the new error buddy behaviour.
-        this.newErrorExperience = options.newErrorExperience;
-        if (window.location.search.indexOf("new_error_experience=yes") !== -1) {
-            this.newErrorExperience = true;
-        }
-
         if (options.enableLoopProtect != null) {
             this.enableLoopProtect = options.enableLoopProtect;
         } else {
@@ -1844,7 +1836,7 @@ window.LiveEditor = Backbone.View.extend({
             }
         }
 
-        if (this.newErrorExperience && this.errorState.length === 0) {
+        if (this.errorState.length === 0) {
             this.setHappyState();
         }
 
@@ -1906,12 +1898,7 @@ window.LiveEditor = Backbone.View.extend({
     showError: null,
 
     handleErrors: function handleErrors(errors) {
-        if (!this.newErrorExperience) {
-            this.tipbar.toggleErrors(errors, 1500);
-            return;
-        }
-        // New Error Experience:
-
+        // Our new, less-aggressive way of handling errors:
         // We want to check if the errors we see are caused by the line the
         // user is currently on, and that they have just typed them, and if so
         // give the user some time to finish what they were typing.
@@ -2117,10 +2104,6 @@ window.LiveEditor = Backbone.View.extend({
         // the state was dirty.
         // If runCode takes more than 500ms then runDone will be called and we
         // set the state back to "clean".
-
-        if (!this.newErrorExperience) {
-            this.tipbar.hide();
-        }
 
         if (this.outputState === "clean") {
             // We will run at the end of this code block

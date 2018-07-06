@@ -76,7 +76,7 @@ window.TooltipEngine = Backbone.View.extend({
             event: "change",
             fn: function(e) {
                 if (this.enabled) {
-                    this.doRequestTooltip(e.data);
+                    this.doRequestTooltip(e);
                 }
             }.bind(this)
         }, {

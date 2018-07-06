@@ -361,6 +361,7 @@ window.LiveEditorOutput = Backbone.View.extend({
     },
 
     setOutput: function setOutput(outputType, enableLoopProtect, loopProtectTimeouts) {
+        console.log(this.outputs);
         var OutputClass = this.outputs[outputType];
         this.output = new OutputClass({
             el: this.$el.find(".output"),

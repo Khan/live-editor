@@ -28,20 +28,20 @@ module.exports = function() {
     traverse(require("./build-paths.json"));
 
     if (missing.length > 0) {
-        var bower = false;
+        var npm = false;
         var submodule = false;
         console.log("missing files:");
         missing.forEach(function(path) {
             console.log(path);
-            if (path.indexOf("bower_components") !== -1) {
-                bower = true;
+            if (path.indexOf("node_modules") !== -1) {
+                npm = true;
             } else {
                 submodule = true;
             }
         });
         console.log("make sure to run:");
-        if (bower) {
-            console.log("  bower install");
+        if (npm) {
+            console.log("  npm install");
         }
         if (submodule) {
             console.log("  git submodule update --init --recursive");

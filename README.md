@@ -33,12 +33,6 @@ You can use the pre-built copies of everything inside the `build/` directory. If
 
     git submodule update --init --recursive
     npm install
-    bower install
-
-    # Build the Ace editor files (This is usually *not* needed)
-    cd bower_components/ace
-    npm install
-    node Makefile.dryice.js -nc
 
 At this point you can make a fresh build, using [Gulp](http://gulpjs.com/):
 

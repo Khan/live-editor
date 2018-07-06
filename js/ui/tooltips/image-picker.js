@@ -1,7 +1,7 @@
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.imagePicker = TooltipBase.extend({
     defaultImage: "cute/None",
-    
+
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
@@ -32,7 +32,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
 
         // TODO(kevinb) extract this into a method on TooltipBase
         if (leadingPadding.length === 0 && path.length === 0 && this.closing.length === 0 &&
-            event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.autofill) {
+            event.source && event.source.action === "insert" && event.source.lines[0].length === 1 && this.autofill) {
 
             this.closing = ")" + (this.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
             this.insert({
