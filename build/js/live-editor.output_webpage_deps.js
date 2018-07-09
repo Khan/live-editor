@@ -11217,7 +11217,7 @@ require("/tools/entry-point.js");
     // passed the beginning `<tagname` of an HTML element.
     _parseCDATA: function(tagname) {
       var token,
-           matchString = '</'+tagname+'>',
+           matchString = `</${tagname}>`,
            text,
            textInterval = { start: 0, end: 0 },
            openTagEnd = this.domBuilder.currentNode.parseInfo.openTag.end,
@@ -11225,7 +11225,7 @@ require("/tools/entry-point.js");
 
       this.stream.makeToken();
       while (!this.stream.end()) {
-        if (this.stream.match(matchString, true)) {
+        if (this.stream.match(matchString, true, true)) {
           token = this.stream.makeToken();
           text = token.value.slice(0, -matchString.length);
           closeTagInterval = {
@@ -11234,7 +11234,8 @@ require("/tools/entry-point.js");
           };
           this.domBuilder.currentNode.parseInfo.closeTag = closeTagInterval;
           textInterval.start = token.interval.start;
-          textInterval.end = token.interval.end - (closeTagInterval.end - closeTagInterval.start);
+          textInterval.end = token.interval.end -
+            (closeTagInterval.end - closeTagInterval.start);
           this.domBuilder.text(text, textInterval);
           this.domBuilder.popElement();
           return;
@@ -11313,23 +11314,24 @@ require("/tools/entry-point.js");
             this.domBuilder.text(cssBlock.value, cssBlock.parseInfo);
           }
 
-          // If the opening tag represents a `<textarea>` element, we need
+          // If the opening tag represents a `<script>` element, we need
           // to parse all its contents as CDATA (unparsed character data)
-          if (tagName && tagName === "script") {
+          if (tagName && tagName.toLowerCase() === "script") {
             this.domBuilder.pushContext("javascript", this.stream.pos);
-            this._parseCDATA("script");
+            this._parseCDATA(tagName);
             this.domBuilder.pushContext("html", this.stream.pos);
           }
 
           // If the opening tag represents a `<textarea>` element, we need
           // to parse all its contents as CDATA (unparsed character data)
-          if (tagName && tagName === "textarea") {
+          if (tagName && tagName.toLowerCase() === "textarea") {
             this.domBuilder.pushContext("text", this.stream.pos);
-            this._parseCDATA("textarea");
+            this._parseCDATA(tagName);
             this.domBuilder.pushContext("html", this.stream.pos);
           }
 
-          // if there is no more content in the parent element, we tell DOM builder that we're done.
+          // if there is no more content in the parent element,
+          // we tell DOM builder that we're done.
           if(parentTagNode && parentTagNode != this.domBuilder.fragment) {
             var parentTagName = parentTagNode.nodeName.toLowerCase(),
                 nextIsParent = isNextTagParent(this.stream, parentTagName),
