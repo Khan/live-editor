@@ -1,4 +1,14 @@
-window.PJSOutput = Backbone.View.extend({
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const PJSCodeInjector = require("./pjs-code-injector.js");
+const PJSDebugger = require("./pjs-debugger.js");
+const PJSResourceCache = require("./pjs-resource-cache.js");
+const PJSTester = require("./pjs-tester.js");
+const BabyHint = require("./babyhint.js");
+
+const PJSOutput = Backbone.View.extend({
     // Canvas mouse events to track
     // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
     trackedMouseEvents: ["move", "over", "out", "down", "up"],
@@ -16,6 +26,9 @@ window.PJSOutput = Backbone.View.extend({
         this.config = options.config;
         this.output = options.output;
 
+        this.workersDir = options.workersDir;
+        this.externalsDir = options.externalsDir;
+        this.jshintFile = options.jshintFile;
         this.tester = new PJSTester(_.extend(options, {
             workerFile: "pjs/test-worker.js"
         }));
@@ -203,6 +216,9 @@ window.PJSOutput = Backbone.View.extend({
             JSHint: this.JSHint,
             additionalMethods: additionalMethods,
             loopProtectTimeouts: loopProtectTimeouts,
+            workersDir: this.workersDir,
+            externalsDir: this.externalsDir,
+            jshintFile: this.jshintFile
         });
 
         this.config.runCurVersion("processing", this.processing);
@@ -324,7 +340,9 @@ window.PJSOutput = Backbone.View.extend({
 
     lint: function(userCode, skip) {
         return this.injector.lint(userCode, skip).then((hintErrors) => {
+            console.log("Linted", hintErrors);
             let babyErrors = BabyHint.babyErrors(userCode, hintErrors);
+            console.log("baby errors", babyErrors);
             return {
                 errors: this.mergeErrors(hintErrors, babyErrors),
                 warnings: []
@@ -450,6 +468,7 @@ window.PJSOutput = Backbone.View.extend({
 
     // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
     runCode: function(userCode, callback) {
+        console.log("Running code", userCode);
         this.injector.runCode(userCode, callback);
     },
 
@@ -487,128 +506,6 @@ window.PJSOutput = Backbone.View.extend({
     }
 });
 
-// Add in some static helper methods
-_.extend(PJSOutput, {
-    instances: [],
-
-    // Turn a JavaScript object into a form that can be executed
-    // (Note: The form will not necessarily be able to pass a JSON linter)
-    // (Note: JSON.stringify might throw an exception. We don't capture it
-    //        here as we'll want to deal with it later.)
-    stringify: function(obj) {
-        // Use toString on functions
-        if (typeof obj === "function") {
-            return obj.toString();
-
-        // If we're dealing with an instantiated object just
-        // use its generated ID
-        } else if (obj && obj.__id) {
-            return obj.__id();
-
-        // Check if we're dealing with an array
-        } else if (obj &&
-                Object.prototype.toString.call(obj) === "[object Array]") {
-            return this.stringifyArray(obj);
-
-        // JSON.stringify returns undefined, not as a string, so we specially
-        // handle that
-        } else if (typeof obj === "undefined") {
-                return "undefined";
-        }
-
-        // If all else fails, attempt to JSON-ify the string
-        // TODO(jeresig): We should probably do recursion to better handle
-        // complex objects that might hold instances.
-        return JSON.stringify(obj, function(k, v) {
-            // Don't jsonify the canvas or its context because it can lead
-            // to circular jsonification errors on chrome.
-            if (v && (v.id !== undefined && v.id === "output-canvas" ||
-                    typeof CanvasRenderingContext2D !== "undefined" &&
-                    v instanceof CanvasRenderingContext2D)) {
-                return undefined;
-            }
-            return v;
-        });
-    },
-
-    // Turn an array into a string list
-    // (Especially useful for serializing a list of arguments)
-    stringifyArray: function(array) {
-        var results = [];
-
-        for (var i = 0, l = array.length; i < l; i++) {
-            results.push(this.stringify(array[i]));
-        }
-
-        return results.join(", ");
-    },
-
-    // Defer a 'new' on a function for later
-    // Makes it possible to generate a unique signature for the
-    // instance (see: .__id())
-    // Meant to translate:
-    // new Foo(a, b, c) into: applyInstance(Foo)(a, b, c)
-    applyInstance: function(classFn, className) {
-        // Don't wrap it if we're dealing with a built-in object (like RegExp)
-        try {
-            var funcName = (/^function\s*(\w+)/.exec(classFn) || [])[1];
-            if (funcName && window[funcName] === classFn) {
-                return classFn;
-            }
-        } catch(e) {}
-
-        // Return a function for later execution.
-        return function() {
-            var args = arguments;
-
-            // Create a temporary constructor function
-            function Class() {
-                classFn.apply(this, args);
-            }
-
-            // Copy the prototype
-            Class.prototype = classFn.prototype;
-
-            // Instantiate the dummy function
-            var obj = new Class();
-
-            this.newCallback(classFn, className, obj, args);
-
-            // Return the new instance
-            return obj;
-        }.bind(this);
-    },
-
-    // called whenever a user defined class is called to instantiate an object.
-    // adds metadata to the class and the object to keep track of it and to
-    // serialize it.
-    // Called in PJSOutput.applyInstance and the Debugger's context.__instantiate__
-    newCallback: function (classFn, className, obj, args) {
-        // Make sure a name is set for the class if one has not been
-        // set already
-        if (!classFn.__name && className) {
-            classFn.__name = className;
-        }
-
-        // Point back to the original function
-        obj.constructor = classFn;
-
-        // Generate a semi-unique ID for the instance
-        obj.__id = function() {
-            return "new " + classFn.__name + "(" +
-                this.stringifyArray(args) + ")";
-        }.bind(this);
-
-        // Keep track of the instances that have been instantiated
-        // Note: this.instances here is actually PJSOutput.instances which is
-        // a singleton.  This means that multiple instances of PJSOutput will
-        // shared the same instances array.  Since each PJSOutput lives in its
-        // own iframe with its own execution context, each should have its own
-        // copy of PJSOutput.instances.
-        if (this.instances) {
-            this.instances.push(obj);
-        }
-    }
-});
-
 LiveEditorOutput.registerOutput("pjs", PJSOutput);
+
+module.exports = PJSOutput;

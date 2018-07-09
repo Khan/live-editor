@@ -1,3 +1,13 @@
+const esprima = require("esprima");
+const escodegen = require("escodegen");
+
+const ASTTransforms = require("./pjs-ast-transforms.js");
+const LoopProtector = require("../shared/loop-protect.js");
+const PJSResourceCache = require("./pjs-resource-cache.js");
+const PJSUtils = require("./pjs-utils.js");
+const PooledWorker = require("../shared/pooled-worker.js");
+const walkAST = require("../shared/ast-walker.js");
+
 /**
  * The CodeInjector object is responsible for running code, determining what
  * code to inject when the user code has been updated, and maintaining the
@@ -91,6 +101,7 @@ class PJSCodeInjector {
          */
         this.hintWorker = new PooledWorker(
             "pjs/jshint-worker.js",
+            options.workersDir,
             function(hintCode, callback) {
                 // Fallback in case of no worker support
                 if (!window.Worker) {
@@ -102,6 +113,7 @@ class PJSCodeInjector {
                 var worker = this.getWorkerFromPool();
 
                 worker.onmessage = function(event) {
+                    console.log("Got message back", event);
                     if (event.data.type === "jshint") {
                         // If a new request has come in since the worker started
                         // then we just ignore the results and don't fire the callback
@@ -112,11 +124,11 @@ class PJSCodeInjector {
                         this.addWorkerToPool(worker);
                     }
                 }.bind(this);
-
+                console.log("Posting message", options);
                 worker.postMessage({
                     code: hintCode,
-                    externalsDir: this.externalsDir,
-                    jshintFile: this.jshintFile
+                    externalsDir: options.externalsDir,
+                    jshintFile: options.jshintFile
                 });
             }
         );
@@ -361,6 +373,7 @@ class PJSCodeInjector {
         this.hintWorker.exec(hintCode, (hintData, hintErrors) => {
             this.globals = this.extractGlobals(hintData);
             deferred.resolve(hintErrors);
+            console.log("Got results of hint worker", hintErrors);
         });
 
         return deferred;
@@ -432,7 +445,7 @@ class PJSCodeInjector {
                 if (typeof obj[objProp] === "function") {
                     this.grabObj[name + (proto ? "." + proto : "") +
                     "['" + objProp + "']"] =
-                        PJSOutput.stringify(obj[objProp]);
+                        PJSCodeInjector.stringify(obj[objProp]);
 
                     // Otherwise we should probably just inject the value directly
                 } else {
@@ -484,6 +497,7 @@ class PJSCodeInjector {
     }
 
     runCode(userCode, callback) {
+
         try {
             let resources = PJSResourceCache.findResources(userCode);
             this.resourceCache.cacheResources(resources).then(() => {
@@ -587,7 +601,7 @@ class PJSCodeInjector {
         this.grabObj = {};
 
         // Extract a list of instances that were created using applyInstance
-        PJSOutput.instances = [];
+        PJSCodeInjector.instances = [];
 
         // If we have a draw function then we need to do injection
         // If we had a draw function then we still need to do injection
@@ -639,15 +653,15 @@ class PJSCodeInjector {
 
             // Keep track of all the constructor functions that may
             // have to be reinitialized
-            for (let i = 0, l = PJSOutput.instances.length; i < l; i++) {
-                constructors[PJSOutput.instances[i].constructor.__name] = true;
+            for (let i = 0, l = PJSCodeInjector.instances.length; i < l; i++) {
+                constructors[PJSCodeInjector.instances[i].constructor.__name] = true;
             }
 
             // The instantiated instances have changed, which means that
             // we need to re-run everything.
             if (this.oldInstances &&
-                PJSOutput.stringifyArray(this.oldInstances) !==
-                PJSOutput.stringifyArray(PJSOutput.instances)) {
+                PJSCodeInjector.stringifyArray(this.oldInstances) !==
+                PJSCodeInjector.stringifyArray(PJSCodeInjector.instances)) {
                 rerun = true;
             }
 
@@ -669,8 +683,8 @@ class PJSCodeInjector {
             }
 
             // Reset the instances list
-            this.oldInstances = PJSOutput.instances;
-            PJSOutput.instances = [];
+            this.oldInstances = PJSCodeInjector.instances;
+            PJSCodeInjector.instances = [];
 
             // Look for new top-level function calls to inject
             for (let i = 0; i < fnCalls.length; i++) {
@@ -687,7 +701,7 @@ class PJSCodeInjector {
                         this.processing[varName] = arg;
                         return varName;
                     } else {
-                        return PJSOutput.stringify(arg);
+                        return PJSCodeInjector.stringify(arg);
                     }
                 });
                 mutatingCalls.push(fnCalls[i][0] + "(" + results.join(", ") + ");");
@@ -709,7 +723,7 @@ class PJSCodeInjector {
                 // Turn the result of the extracted value into
                 // a nicely-formatted string
                 try {
-                    grabAll[prop] = PJSOutput.stringify(grabAll[prop]);
+                    grabAll[prop] = PJSCodeInjector.stringify(grabAll[prop]);
 
                     // Check to see that we've done an inject before and that
                     // the property wasn't one that shouldn't have been
@@ -932,7 +946,7 @@ class PJSCodeInjector {
      * only used when injecting code into a running Processing instance.
      * @param {Object} [options] Currently the only option supported is the
      * `rewriteNewExpression` property which controls whether or not to rewrite
-     * `new` expressions as calls to PJSOutput.applyInstance.
+     * `new` expressions as calls to PJSCodeInjector.applyInstance.
      * @returns {String} The transformed code.
      */
     transformCode(code, context, mutatingCalls, options = {}) {
@@ -950,7 +964,7 @@ class PJSCodeInjector {
         // TODO(kevinb) We should change how we're rewriting constructor calls.
         // Currently we're doing a global replace which causes things that look
         // like 'new' calls in comments to be replaced as well.
-        context.PJSOutput = PJSOutput;
+        context.PJSCodeInjector = PJSCodeInjector;
 
         // This is necessary because sometimes 'code' is code that we want to
         // inject.  This injected code can contain code obtained from calling
@@ -1194,7 +1208,127 @@ class PJSCodeInjector {
             return e;
         }
     }
+
+    // Turn a JavaScript object into a form that can be executed
+    // (Note: The form will not necessarily be able to pass a JSON linter)
+    // (Note: JSON.stringify might throw an exception. We don't capture it
+    //        here as we'll want to deal with it later.)
+    static stringify(obj) {
+        // Use toString on functions
+        if (typeof obj === "function") {
+            return obj.toString();
+
+        // If we're dealing with an instantiated object just
+        // use its generated ID
+        } else if (obj && obj.__id) {
+            return obj.__id();
+
+        // Check if we're dealing with an array
+        } else if (obj &&
+                Object.prototype.toString.call(obj) === "[object Array]") {
+            return this.stringifyArray(obj);
+
+        // JSON.stringify returns undefined, not as a string, so we specially
+        // handle that
+        } else if (typeof obj === "undefined") {
+                return "undefined";
+        }
+
+        // If all else fails, attempt to JSON-ify the string
+        // TODO(jeresig): We should probably do recursion to better handle
+        // complex objects that might hold instances.
+        return JSON.stringify(obj, function(k, v) {
+            // Don't jsonify the canvas or its context because it can lead
+            // to circular jsonification errors on chrome.
+            if (v && (v.id !== undefined && v.id === "output-canvas" ||
+                    typeof CanvasRenderingContext2D !== "undefined" &&
+                    v instanceof CanvasRenderingContext2D)) {
+                return undefined;
+            }
+            return v;
+        });
+    }
+
+    // Turn an array into a string list
+    // (Especially useful for serializing a list of arguments)
+    static stringifyArray(array) {
+        var results = [];
+
+        for (var i = 0, l = array.length; i < l; i++) {
+            results.push(this.stringify(array[i]));
+        }
+
+        return results.join(", ");
+    }
+
+    // Defer a 'new' on a function for later
+    // Makes it possible to generate a unique signature for the
+    // instance (see: .__id())
+    // Meant to translate:
+    // new Foo(a, b, c) into: applyInstance(Foo)(a, b, c)
+    static applyInstance(classFn, className) {
+        // Don't wrap it if we're dealing with a built-in object (like RegExp)
+        try {
+            var funcName = (/^function\s*(\w+)/.exec(classFn) || [])[1];
+            if (funcName && window[funcName] === classFn) {
+                return classFn;
+            }
+        } catch(e) {}
+
+        // Return a function for later execution.
+        return function() {
+            var args = arguments;
+
+            // Create a temporary constructor function
+            function Class() {
+                classFn.apply(this, args);
+            }
+
+            // Copy the prototype
+            Class.prototype = classFn.prototype;
+
+            // Instantiate the dummy function
+            var obj = new Class();
+
+            this.newCallback(classFn, className, obj, args);
+
+            // Return the new instance
+            return obj;
+        }.bind(this);
+    }
+
+    // called whenever a user defined class is called to instantiate an object.
+    // adds metadata to the class and the object to keep track of it and to
+    // serialize it.
+    // Called in PJSCodeInjector.applyInstance and the Debugger's context.__instantiate__
+    static newCallback(classFn, className, obj, args) {
+        // Make sure a name is set for the class if one has not been
+        // set already
+        if (!classFn.__name && className) {
+            classFn.__name = className;
+        }
+
+        // Point back to the original function
+        obj.constructor = classFn;
+
+        // Generate a semi-unique ID for the instance
+        obj.__id = function() {
+            return "new " + classFn.__name + "(" +
+                this.stringifyArray(args) + ")";
+        }.bind(this);
+
+        // Keep track of the instances that have been instantiated
+        // Note: this.instances is actually PJSCodeInjector.instances which is
+        // a singleton.  This means that multiple instances of PJSCodeInjector
+        // will shared the same instances array.  Since each PJSCodeInjector
+        // lives in its own iframe with its own execution context, each should
+        // have its own copy of PJSCodeInjector.instances.
+        if (this.instances) {
+            this.instances.push(obj);
+        }
+    }
 }
 
-// TODO(kevinb) convert to a commonjs module at somepoint in the future
-window.PJSCodeInjector = PJSCodeInjector;
+PJSCodeInjector.instances = [];
+
+module.exports = PJSCodeInjector;

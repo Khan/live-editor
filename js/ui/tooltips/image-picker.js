@@ -1,5 +1,13 @@
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const imagePickerTemplate = require("../../../tmpl/image-picker.handlebars");
+const TooltipBase = require("../../ui/tooltip-base.js");
+const TooltipEngine = require("../../ui/tooltip-engine.js");
+
 // A description of general tooltip flow can be found in tooltip-engine.js
-TooltipEngine.classes.imagePicker = TooltipBase.extend({
+const ImagePicker = TooltipBase.extend({
     defaultImage: "cute/None",
 
     initialize: function(options) {
@@ -52,7 +60,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
     render: function() {
         var imagesDir = this.options.imagesDir;
 
-        var results = Handlebars.templates["image-picker"]({
+        var results = imagePickerTemplate({
             imagesDir: imagesDir,
             groups: _.map(OutputImages, function(data) {
                 data.imagesDir = imagesDir;
@@ -127,3 +135,5 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }
 });
+
+TooltipEngine.registerTooltip("imagePicker", ImagePicker);

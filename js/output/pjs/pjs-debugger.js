@@ -1,22 +1,27 @@
 /* global ProcessingDebugger */
-window.PJSDebugger = Backbone.View.extend({
-    
+
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const PJSDebugger = Backbone.View.extend({
+
     initialize: function(options) {
         this.output = options.output;
-        
-        this.debugger = new ProcessingDebugger({ 
-            context: options.context 
+
+        this.debugger = new ProcessingDebugger({
+            context: options.context
         });
         this.debugger.breakpointsEnabled = false;
-        
+
         this.bind();
     },
-    
+
     exec: function(code) {
         this.debugger.load(code);
         this.debugger.start();
     },
-    
+
     bind: function() {
         window.addEventListener("message", this.handleMessage.bind(this), false);
 
@@ -43,7 +48,7 @@ window.PJSDebugger = Backbone.View.extend({
 
         this.frameSource = event.source;
         this.frameOrigin = event.origin;
-        
+
         if (typeof event.data === "object") {
             return;
         }
@@ -53,7 +58,7 @@ window.PJSDebugger = Backbone.View.extend({
         } catch (err) {
             return;
         }
-        
+
         if (data.type !== "debugger") {
             return;
         }
@@ -125,3 +130,5 @@ window.PJSDebugger = Backbone.View.extend({
         }
     }
 });
+
+module.exports = PJSDebugger;

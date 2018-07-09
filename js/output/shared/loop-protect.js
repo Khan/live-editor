@@ -1,3 +1,10 @@
+const esprima = require("esprima");
+const escodegen = require("escodegen");
+
+const ASTBuilder = require("./ast-builder.js");
+const walkAST = require("./ast-walker.js");
+let b = require("./ast-builder.js");
+
 /**
  * Creates a new LoopProtector object.
  *
@@ -10,7 +17,7 @@
  *                        passed to the callback. TODO(kevinb) use this for webpages
  * @constructor
  */
-window.LoopProtector = function(callback, timeouts, reportLocation) {
+const LoopProtector = function(callback, timeouts, reportLocation) {
     this.callback = callback || function () { };
     this.timeout = 200;
     this.branchStartTime = 0;
@@ -27,19 +34,19 @@ window.LoopProtector = function(callback, timeouts, reportLocation) {
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
 
-    visibly.onVisible(function () {
-        this.visible = true;
-        this.branchStartTime = 0;
-    }.bind(this));
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            this.visible = true;
+            this.branchStartTime = 0;
+        } else {
+            this.visible = false;
+        }
+    });
 
-    visibly.onHidden(function () {
-        this.visible = false;
-    }.bind(this));
-
-    this.visible = !visibly.hidden();
+    this.visible = !document.hidden;
 };
 
-window.LoopProtector.prototype = {
+LoopProtector.prototype = {
     /**
      * Throws 'KA_INFINITE_LOOP' if the difference between the current time
      * and this.brancStartTime is greater than this.timeout.
@@ -117,7 +124,7 @@ window.LoopProtector.prototype = {
 
     // Called by walkAST whenever it leaves a node so AST mutations are okay
     leave(node) {
-        let b = window.ASTBuilder;
+        let b = ASTBuilder;
 
         if (this.riskyStatements.indexOf(node.type) !== -1) {
             if (this.reportLocation) {
@@ -202,3 +209,5 @@ window.LoopProtector.prototype = {
         return escodegen.generate(ast);
     }
 };
+
+module.exports = LoopProtector;

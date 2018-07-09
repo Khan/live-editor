@@ -1,6 +1,8 @@
-window.ASTTransforms = {};
+const escodegen = require("escodegen");
 
-let b = window.ASTBuilder;
+const ASTTransforms = {};
+
+let b = require("../shared/ast-builder.js");
 
 /**
  * Visitor object which adds line and column information as additional args,
@@ -316,3 +318,5 @@ ASTTransforms.rewriteNewExpressions = function(envName) {
         }
     }
 };
+
+module.exports = ASTTransforms;

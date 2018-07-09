@@ -1,3 +1,12 @@
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const mediaPickerModalTemplate = require("../../../tmpl/mediapicker-modal.handlebars");
+const mediaPickerPreviewTemplate = require("../../../tmpl/mediapicker-preview.handlebars");
+const TooltipBase = require("../../ui/tooltip-base.js");
+const TooltipEngine = require("../../ui/tooltip-engine.js");
+
 /* This file contains both the imageModal and soundModal tooltip, which share
  the same Modal() View, but have fairly different ways that they hook into
  the editor and replace the code.
@@ -123,47 +132,16 @@
         },
 
         render: function() {
-            Handlebars.registerHelper("hasMultipleItems",
-                this.hasMultipleItems);
-            Handlebars.registerHelper("slugify",
-                this.slugify);
-            Handlebars.registerHelper("patchedEach",
-                this.handlebarsPatchedEach);
-            this.$el = $(Handlebars.templates["mediapicker-modal"]({
+            this.$el = $(mediaPickerModalTemplate({
                 imagesDir: this.options.imagesDir,
                 soundsDir: this.options.soundsDir,
                 classes: this.options.files
             }));
             this.$el.appendTo("body").hide();
-        },
-
-        hasMultipleItems: function(arr, options) {
-            if(arr && arr.length > 1) {
-                return options.fn(this);
-            }
-            return options.inverse(this);
-        },
-
-        slugify: function(text) {
-            return text.toLowerCase().match(/[a-z0-9_]+/g).join("-");
-        },
-
-        // This patches our super old version of Handlebars to
-        // give us access to the iteration index inside an each loop.
-        // This is exactly how it works in Handlebars 1.3+
-        // except that they use @<value> instead of $<value>
-        // when we upgrade Handlebars we can get rid of this.
-        handlebarsPatchedEach: function(arr, options) {
-            return _.map(arr, function(item, index) {
-                item.$index = index;
-                item.$first = index === 0;
-                item.$last = index === arr.length - 1;
-                return options.fn(item);
-            }).join("");
         }
     });
 
-    TooltipEngine.classes.imageModal = TooltipBase.extend({
+    const ImageModal = TooltipBase.extend({
         initialize: function(options) {
             this.options = options;
             this.options.files = ExtendedOutputImages;
@@ -171,13 +149,16 @@
             this.autofill = true;
             this.render();
             this.bindToRequestTooltip();
-            _.extend(this.options.record.handlers, {
-                "imagemodal.show": this.modal.show.bind(this.modal),
-                "imagemodal.hide": function(){
-                    this.modal.$el.modal("hide");
-                }.bind(this),
-                "imagemodal.selectImg": this.modal.selectImg.bind(this.modal)
-            });
+            if (this.options.record) {
+                Object.assign(this.options.record.handlers, {
+                    "imagemodal.show": this.modal.show.bind(this.modal),
+                    "imagemodal.hide": function(){
+                        this.modal.$el.modal("hide");
+                    }.bind(this),
+                    "imagemodal.selectImg": this.modal.selectImg.bind(this.modal)
+                });
+            }
+
         },
 
         detector: function(event) {
@@ -232,7 +213,7 @@
 
         render: function() {
             var self = this;
-            this.$el = $(Handlebars.templates["mediapicker-preview"](
+            this.$el = $(mediaPickerPreviewTemplate(
                             {isAudio: false}))
                             .appendTo("body").hide();
 
@@ -269,7 +250,7 @@
         }
     });
 
-    TooltipEngine.classes.soundModal = TooltipBase.extend({
+    const SoundModal = TooltipBase.extend({
         defaultFile: "\"rpg/metal-clink\"",
         initialize: function(options) {
             this.options = options;
@@ -345,7 +326,7 @@
 
         render: function() {
             var self = this;
-            this.$el = $(Handlebars.templates["mediapicker-preview"](
+            this.$el = $(mediaPickerPreviewTemplate(
                             {isAudio: true}))
                             .appendTo("body").hide();
 
@@ -364,4 +345,7 @@
             this.unbindFromRequestTooltip();
         }
     });
+
+    TooltipEngine.registerTooltip("imageModal", ImageModal);
+    TooltipEngine.registerTooltip("soundModal", SoundModal);
 })();

@@ -1,4 +1,11 @@
-TooltipEngine.classes.numberScrubberClick = TooltipBase.extend({
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const TooltipBase = require("../../ui/tooltip-base.js");
+const TooltipEngine = require("../../ui/tooltip-engine.js");
+
+const NumberScrubberClick = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
@@ -19,3 +26,5 @@ TooltipEngine.classes.numberScrubberClick = TooltipBase.extend({
         }
     },
 });
+
+TooltipEngine.registerTooltip("numberScrubberClick", NumberScrubberClick);

@@ -1,4 +1,11 @@
-window.AceEditor = Backbone.View.extend({
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const LiveEditor = require("../../live-editor.js");
+const TooltipEngine = require("../../ui/tooltip-engine.js");
+
+const AceEditor = Backbone.View.extend({
     dom: {
         ACTIVE_LINE: ".ace_active_line",
         TEXT_INPUT: "textarea",
@@ -454,3 +461,5 @@ window.AceEditor = Backbone.View.extend({
 LiveEditor.registerEditor("ace_pjs", AceEditor);
 LiveEditor.registerEditor("ace_webpage", AceEditor);
 LiveEditor.registerEditor("ace_sql", AceEditor);
+
+module.exports = AceEditor;

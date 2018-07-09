@@ -1,12 +1,12 @@
 <div class="modal mediapicker-modal">
     <ul class="nav nav-tabs" role="tablist">
-    {{#patchedEach classes}}
+    {{#each classes}}
       <li {{#if $first}}class="active"{{/if}}><a href="#im-class-{{slugify className}}">{{className}}</a></li>
-    {{/patchedEach}}
+    {{/each}}
     </ul>
 
     <div class="tab-content">
-    {{#patchedEach classes}}
+    {{#each classes}}
       <div class="tab-pane {{#if $first}}active{{/if}}" id="im-class-{{slugify className}}">
         <div class="mediapicker-modal-content">
         <div style="position: relative;">
@@ -44,16 +44,16 @@
         <div class="right">
         {{#hasMultipleItems groups}}
         <ul class="nav nav-pills nav-stackable">
-        {{#patchedEach groups}}
+        {{#each groups}}
             <li {{#if $first}}class="active"{{/if}}><a href="#im-group-{{slugify groupName}}">{{groupName}}</a></li>
-        {{/patchedEach}}
+        {{/each}}
         </ul>
         {{/hasMultipleItems}}
         </div>
 
         <div style="clear: both;"></div>
       </div>
-    {{/patchedEach}}
+    {{/each}}
     </div>
 
     <div class="mediapicker-modal-footer">

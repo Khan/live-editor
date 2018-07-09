@@ -1,745 +1,181 @@
-var PooledWorker = function PooledWorker(filename, onExec) {
-    this.pool = [];
-    this.curID = 0;
-    this.filename = filename;
-    this.onExec = onExec || function () {};
-};
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 16);
+/******/ })
+/************************************************************************/
+/******/ ({
+
+/***/ "./js/output/shared/output-tester.js":
+/*!*******************************************!*\
+  !*** ./js/output/shared/output-tester.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("/* WEBPACK VAR INJECTION */(function(_) {\n\nvar _typeof = typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol && obj !== Symbol.prototype ? \"symbol\" : typeof obj; };\n\nvar PooledWorker = __webpack_require__(/*! ./pooled-worker.js */ \"./js/output/shared/pooled-worker.js\");\n\nvar OutputTester = function OutputTester() {};\n\nOutputTester.prototype = {\n    initialize: function initialize(options) {\n        var tester = this;\n\n        this.tests = [];\n        this.testContext = {};\n        this.externalsDir = options.externalsDir;\n\n        for (var prop in this.testMethods) {\n            if (this.testMethods.hasOwnProperty(prop)) {\n                this.testContext[prop] = this.testMethods[prop];\n            }\n        }\n\n        for (var prop in this.defaultTestContext) {\n            /* jshint forin:false */\n            if (!(prop in this.testContext)) {\n                this.testContext[prop] = this.defaultTestContext[prop];\n            }\n        }\n\n        // This won't be defined inside a web worker itself (that's ok)\n        if (typeof PooledWorker === \"undefined\") {\n            return;\n        }\n\n        /*\n         * The worker that runs the tests in the background, if possible.\n         */\n        this.testWorker = new PooledWorker(options.workerFile, options.workersDir, function (code, validate, errors, callback) {\n            var self = this;\n\n            // If there are syntax errors in the tests themselves,\n            //  then we ignore the request to test.\n            try {\n                tester.exec(validate);\n            } catch (e) {\n                if (window.console) {\n                    console.warn(e.message);\n                }\n                return;\n            }\n\n            // If there's no Worker support *or* there\n            //  are syntax errors in user code, we do the testing in\n            //  the browser instead.\n            // We do it in-browser in the latter case as\n            //  the code is often in a syntax-error state,\n            //  and the browser doesn't like creating that many workers,\n            //  and the syntax error tests that we have are fast.\n            if (!window.Worker || errors.length > 0) {\n                return tester.test(code, validate, errors, callback);\n            }\n\n            var worker = this.getWorkerFromPool();\n\n            worker.onmessage = function (event) {\n                if (event.data.type === \"test\") {\n                    // PJSOutput.prototype.kill() is called synchronously\n                    // from callback so if we want test workers to be\n                    // cleaned up properly we need to add them back to the\n                    // pool first.\n                    // TODO(kevinb) track workers that have been removed\n                    // from the PooledWorker's pool so we don't have to\n                    // worry about returning workers to the pool before\n                    // calling kill()\n                    self.addWorkerToPool(worker);\n                    if (self.isCurrentWorker(worker)) {\n                        var data = event.data.message;\n                        callback(data.errors, data.testResults);\n                    }\n                }\n            };\n            console.log(\"externalDir\", this.externalsDir);\n            worker.postMessage({\n                code: code,\n                validate: validate,\n                errors: errors,\n                externalsDir: this.externalsDir\n            });\n        });\n    },\n\n    bindTestContext: function bindTestContext(obj) {\n        obj = obj || this.testContext;\n\n        /* jshint forin:false */\n        for (var prop in obj) {\n            if (_typeof(obj[prop]) === \"object\") {\n                this.bindTestContext(obj[prop]);\n            } else if (typeof obj[prop] === \"function\") {\n                obj[prop] = obj[prop].bind(this);\n            }\n        }\n    },\n\n    test: function test(userCode, validate, errors, callback) {\n        var testResults = [];\n        errors = this.errors = errors || [];\n        this.userCode = userCode;\n        this.tests = [];\n\n        // This will also fill in tests, as it will end up\n        // referencing functions like staticTest and that\n        // function will fill in this.tests\n        this.exec(validate);\n\n        this.curTask = null;\n        this.curTest = null;\n\n        for (var i = 0; i < this.tests.length; i++) {\n            testResults.push(this.runTest(this.tests[i], i));\n        }\n\n        callback(errors, testResults);\n    },\n\n    runTest: function runTest(test, i) {\n        var result = {\n            name: test.name,\n            state: \"pass\",\n            results: []\n        };\n\n        this.curTest = result;\n\n        test.fn.call(this);\n\n        this.curTest = null;\n\n        return result;\n    },\n\n    exec: function exec(code) {\n        if (!code) {\n            return true;\n        }\n\n        code = \"with(arguments[0]){\\n\" + code + \"\\n}\";\n        new Function(code).call({}, this.testContext);\n\n        return true;\n    },\n\n    defaultTestContext: {\n        test: function test(name, _fn, type) {\n            if (!_fn) {\n                _fn = name;\n                name = i18n._(\"Test Case\");\n            }\n\n            this.tests.push({\n                name: name,\n\n                type: type || \"default\",\n\n                fn: function fn() {\n                    try {\n                        return _fn.apply(this, arguments);\n                    } catch (e) {\n                        if (window.console) {\n                            console.warn(e);\n                        }\n                    }\n                }\n            });\n        },\n\n        staticTest: function staticTest(name, fn) {\n            this.testContext.test(name, fn, \"static\");\n        },\n\n        log: function log(msg, state, expected, type, meta) {\n            type = type || \"info\";\n\n            var item = {\n                type: type,\n                msg: msg,\n                state: state,\n                expected: expected,\n                meta: meta || {}\n            };\n\n            if (this.curTest) {\n                if (state !== \"pass\") {\n                    this.curTest.state = state;\n                }\n\n                this.curTest.results.push(item);\n            }\n\n            return item;\n        },\n\n        task: function task(msg, tip) {\n            this.curTask = this.testContext.log(msg, \"pass\", tip, \"task\");\n            this.curTask.results = [];\n        },\n\n        endTask: function endTask() {\n            this.curTask = null;\n        },\n\n        assert: function assert(pass, msg, expected, meta) {\n            pass = !!pass;\n            this.testContext.log(msg, pass ? \"pass\" : \"fail\", expected, \"assertion\", meta);\n            return pass;\n        },\n\n        isEqual: function isEqual(a, b, msg) {\n            return this.testContext.assert(a === b, msg, [a, b]);\n        },\n\n        /*\n         * Returns a pass result with an optional message\n         */\n        pass: function pass(message) {\n            return {\n                success: true,\n                message: message\n            };\n        },\n\n        /*\n         * Returns a fail result with an optional message\n         */\n        fail: function fail(message) {\n            return {\n                success: false,\n                message: message\n            };\n        },\n\n        /*\n         * If any of results passes, returns the first pass. Otherwise, returns\n         * the first fail.\n         */\n        anyPass: function anyPass() {\n            return _.find(arguments, this.testContext.passes) || arguments[0] || this.testContext.fail();\n        },\n\n        /*\n         * If any of results fails, returns the first fail. Otherwise, returns\n         * the first pass.\n         */\n        allPass: function allPass() {\n            return _.find(arguments, this.testContext.fails) || arguments[0] || this.testContext.pass();\n        },\n\n        /*\n         * Returns true if the result represents a pass.\n         */\n        passes: function passes(result) {\n            return result.success;\n        },\n\n        /*\n         * Returns true if the result represents a fail.\n         */\n        fails: function fails(result) {\n            return !result.success;\n        }\n    }\n};\n\nmodule.exports = OutputTester;\n/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! underscore */ \"./node_modules/underscore/underscore.js\")))\n\n//# sourceURL=webpack:///./js/output/shared/output-tester.js?");
+
+/***/ }),
+
+/***/ "./js/output/shared/output.js":
+/*!************************************!*\
+  !*** ./js/output/shared/output.js ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-PooledWorker.prototype.getURL = function () {
-    return this.workersDir + this.filename + "?cachebust=G" + new Date().toDateString();
-};
+"use strict";
+eval("/* WEBPACK VAR INJECTION */(function(_) {\n\nvar _typeof = typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol && obj !== Symbol.prototype ? \"symbol\" : typeof obj; };\n\nvar $ = __webpack_require__(/*! jquery */ \"jquery\");\nvar Backbone = __webpack_require__(/*! backbone */ \"./node_modules/backbone/backbone.js\");\nBackbone.$ = __webpack_require__(/*! jquery */ \"jquery\");\n\nvar PooledWorker = __webpack_require__(/*! ./pooled-worker.js */ \"./js/output/shared/pooled-worker.js\");\nvar ScratchpadConfig = __webpack_require__(/*! ../../shared/config.js */ \"./js/shared/config.js\");\n\n// TODO(kevinb) remove after challenges have been converted to use i18n._\n$._ = i18n._;\n\nvar LiveEditorOutput = Backbone.View.extend({\n    recording: false,\n    loaded: false,\n    outputs: {},\n    lintErrors: [],\n    runtimeErrors: [],\n    lintWarnings: [],\n\n    initialize: function initialize(options) {\n        this.render();\n\n        this.setPaths(options);\n\n        this.config = new ScratchpadConfig({\n            useDebugger: options.useDebugger\n        });\n\n        if (options.outputType) {\n            console.log(\"In initialize\");\n            this.setOutput(options);\n        }\n\n        // Add a timestamp property to the lintErrors and runtimeErrors arrays\n        // to keep track of which version of the code the errors are for.  A\n        // new timestamp is created when runCode is called and is assigned to\n        // lintErrors and runtimeErrors (if there is no lint) when linting and\n        // running of the code complete.  The timestamps are used later to\n        // ensure we're not report stale errors that have already been fixed\n        // to the parent.  Adding properties to an array works because Array is\n        // essentially a special subclass of Object.\n        this.lintErrors.timestamp = 0;\n        this.runtimeErrors.timestamp = 0;\n        this.lintWarnings.timestamp = 0;\n\n        this.bind();\n    },\n\n    render: function render() {\n        this.$el.html(\"<div class=\\\"output\\\"></div>\");\n    },\n\n    bind: function bind() {\n        // Handle messages coming in from the parent frame\n        window.addEventListener(\"message\", this.handleMessage.bind(this), false);\n    },\n\n    setOutput: function setOutput(options) {\n        var OutputClass = this.outputs[options.outputType];\n        var classOptions = {\n            el: this.$el.find(\".output\"),\n            config: this.config,\n            output: this,\n            type: options.outputType,\n            enableLoopProtect: options.enableLoopProtect !== false,\n            loopProtectTimeouts: options.loopProtectTimeouts\n        };\n        if (options.workersDir) {\n            classOptions.workersDir = this._qualifyURL(options.workersDir);\n        }\n        if (options.externalsDir) {\n            classOptions.externalsDir = this._qualifyURL(options.externalsDir);\n        }\n        if (options.jshintFile) {\n            classOptions.jshintFile = this._qualifyURL(options.jshintFile);\n        }\n        console.log(\"Options\");\n        console.log(options);\n        console.log(\"classOptions\");\n        console.log(classOptions);\n        this.output = new OutputClass(classOptions);\n    },\n\n    setPaths: function setPaths(data) {\n        if (data.workersDir) {\n            this.workersDir = this._qualifyURL(data.workersDir);\n        }\n        if (data.externalsDir) {\n            this.externalsDir = this._qualifyURL(data.externalsDir);\n        }\n        if (data.imagesDir) {\n            this.imagesDir = this._qualifyURL(data.imagesDir);\n        }\n        if (data.soundsDir) {\n            this.soundsDir = this._qualifyURL(data.soundsDir);\n        }\n        if (data.redirectUrl) {\n            this.redirectUrl = data.redirectUrl;\n        }\n        if (data.jshintFile) {\n            this.jshintFile = this._qualifyURL(data.jshintFile);\n        }\n    },\n\n    _qualifyURL: function _qualifyURL(url) {\n        var a = document.createElement(\"a\");\n        a.href = url;\n        return a.href;\n    },\n\n    handleMessage: function handleMessage(event) {\n        var data;\n\n        this.frameSource = event.source;\n        this.frameOrigin = event.origin;\n\n        // let the parent know we're up and running\n        this.notifyActive();\n\n        // filter out events that are objects\n        // currently the only messages that contain objects are messages\n        // being sent by Poster instances being used by the iframeOverlay\n        // in pjs-output.js and ui/debugger.js\n        if (_typeof(event.data) === \"object\") {\n            return;\n        }\n\n        try {\n            data = JSON.parse(event.data);\n        } catch (err) {\n            return;\n        }\n        if (!this.output) {\n            var outputType = data.outputType || _.keys(this.outputs)[0];\n            var enableLoopProtect = true;\n            if (data.enableLoopProtect != null) {\n                enableLoopProtect = data.enableLoopProtect;\n            }\n            var loopProtectTimeouts = {\n                initialTimeout: 2000,\n                frameTimeout: 500\n            };\n            if (data.loopProtectTimeouts != null) {\n                loopProtectTimeouts = data.loopProtectTimeouts;\n            }\n            this.setOutput({\n                outputType: outputType,\n                enableLoopProtect: enableLoopProtect,\n                loopProtectTimeouts: loopProtectTimeouts,\n                workersDir: data.workersDir,\n                externalsDir: data.externalsDir,\n                jshintFile: data.jshintFile\n            });\n        }\n\n        // filter out debugger events\n        // handled by pjs-debugger.js::handleMessage\n        if (data.type === \"debugger\") {\n            return;\n        }\n\n        // Set the paths from the incoming data, if they exist\n        this.setPaths(data);\n\n        // Validation code to run\n        if (data.validate != null) {\n            this.initTests(data.validate);\n        }\n\n        // Settings to initialize\n        if (data.settings != null) {\n            this.settings = data.settings;\n        }\n\n        // Code to be executed\n        if (data.code != null) {\n            this.config.switchVersion(data.version);\n            this.runCode(data.code, undefined, data.noLint);\n        }\n\n        if (data.onlyRunTests != null) {\n            this.onlyRunTests = !!data.onlyRunTests;\n        } else {\n            this.onlyRunTests = false;\n        }\n\n        // Restart the output\n        if (data.restart) {\n            this.restart();\n        }\n\n        // Keep track of recording state\n        if (data.recording != null) {\n            this.recording = data.recording;\n        }\n\n        // Take a screenshot of the output\n        if (data.screenshot != null) {\n            var screenshotSize = data.screenshotSize || 200;\n            this.output.getScreenshot(screenshotSize, function (data) {\n                // Send back the screenshot data\n                this.postParent(data);\n            }.bind(this));\n        }\n\n        if (this.output.messageHandlers) {\n            for (var prop in data) {\n                if (prop in this.output.messageHandlers) {\n                    this.output.messageHandlers[prop].call(this.output, data);\n                }\n            }\n        }\n    },\n\n    // Send a message back to the parent frame\n    postParent: function postParent(data) {\n        // If there is no frameSource (e.g. we're not embedded in another page)\n        // Then we don't need to care about sending the messages anywhere!\n        if (this.frameSource) {\n            var parentWindow = this.frameSource;\n            // In Chrome on dev when postFrame is called from webapp's\n            // scratchpad package it is somehow executed from the iframe\n            // instead, so frameSource is not really the parent frame.  We\n            // detect that here and fix it.\n            // TODO(james): Figure out why this is and if there is a better\n            // place to put a fix.\n            if (this.frameSource === window) {\n                parentWindow = this.frameSource.parent;\n            }\n\n            parentWindow.postMessage(typeof data === \"string\" ? data : JSON.stringify(data), this.frameOrigin);\n        }\n    },\n\n    notifyActive: _.once(function () {\n        this.postParent({ active: true });\n    }),\n\n    // This function stores the new tests on the validate property\n    //  and it executes the test code to see if its valid\n    initTests: function initTests(validate) {\n        // Only update the tests if they have changed\n        if (this.validate === validate) {\n            return;\n        }\n\n        // Prime the test queue\n        this.validate = validate;\n    },\n\n    /**\n     * Converts an error to something that will JSONify usefully\n     *\n     * JS error objects JSONify to an empty object, so we need to convert them\n     * to a plain object ourselves first.  Since we'll end up doing some\n     * conversion of the format to better match jshint errors anyway, we'll\n     * just do that here too.  But sanitization will happen outside the iframe,\n     * since any code here can be bypassed by the user.\n     *\n     * @param {*} error: the error to JSONify\n     * @returns {*}\n     */\n    jsonifyError: function jsonifyError(error) {\n        if ((typeof error === \"undefined\" ? \"undefined\" : _typeof(error)) !== \"object\" || $.isPlainObject(error)) {\n            // If we're not an object, or we're a plain object, we don't need\n            // to do anything.\n            return error;\n        } else {\n            return {\n                row: error.lineno ? error.lineno - 2 : -1,\n                column: 0,\n                text: error.message,\n                type: \"error\",\n                source: \"native\",\n                priority: 3\n            };\n        }\n    },\n\n    /**\n     * Performs all steps necessary to run code.\n     * - lint\n     * - actually run the code\n     * - manage lint and runtime errors\n     * - call the callback (via buildDone) to run tests\n     *\n     * @param userCode: code to run\n     * @param callback: used by the tests\n     * @param noLint: disables linting if true, first run still lints\n     *\n     * TODO(kevinb) return a Deferred and move test related code to test_utils\n     */\n    runCode: function runCode(userCode, callback, noLint) {\n        this.currentCode = userCode;\n        var timestamp = Date.now();\n\n        this.results = {\n            timestamp: timestamp,\n            code: userCode,\n            errors: [],\n            assertions: [],\n            warnings: []\n        };\n\n        var skip = noLint && this.firstLint;\n\n        // Always lint the first time, so that PJS can populate its list of globals\n        this.output.lint(userCode, skip).then(function (lintResults) {\n            console.log(\"All lint done\", lintResults);\n            this.lintErrors = lintResults.errors;\n            this.lintErrors.timestamp = timestamp;\n            this.lintWarnings = lintResults.warnings;\n            this.lintWarnings.timestamp = timestamp;\n            return this.lintDone(userCode, timestamp);\n        }.bind(this)).then(function () {\n            console.log(\"Build done\", userCode);\n            this.buildDone(userCode, callback);\n        }.bind(this));\n\n        this.firstLint = true;\n    },\n\n    /**\n     * Runs the code and records runtime errors.  Returns immediately if there\n     * are any lint errors.\n     *\n     * @param userCode\n     * @param timestamp\n     * @returns {$.Deferred}\n     */\n    lintDone: function lintDone(userCode, timestamp) {\n        var deferred = $.Deferred();\n        if (this.lintErrors.length > 0 || this.onlyRunTests) {\n            deferred.resolve();\n            return deferred;\n        }\n\n        // Then run the user's code\n        try {\n            this.output.runCode(userCode, function (runtimeErrors) {\n                this.runtimeErrors = runtimeErrors;\n                this.runtimeErrors.timestamp = timestamp;\n                deferred.resolve();\n            }.bind(this));\n        } catch (e) {\n            if (this.outputs.hasOwnProperty('pjs')) {\n                this.runtimeErrors = [e];\n            }\n            deferred.resolve();\n        }\n        return deferred;\n    },\n\n    /**\n     * Posts results to the the parent frame and runs tests if a callback has\n     * been provided or if the .validate property is set.\n     *\n     * @param userCode\n     * @param callback\n     */\n    buildDone: function buildDone(userCode, callback) {\n        var errors = [];\n        var warnings = [];\n\n        // only use lint errors if the timestamp isn't stale\n        if (this.results.timestamp === this.lintErrors.timestamp) {\n            errors = errors.concat(this.lintErrors);\n        }\n        // only use runtime errors if the timestamp isn't stale\n        if (this.results.timestamp === this.runtimeErrors.timestamp) {\n            errors = errors.concat(this.runtimeErrors);\n        }\n        // only use lint warnings if the timestamp isn't stale\n        if (this.results.timestamp === this.lintWarnings.timestamp) {\n            warnings = warnings.concat(this.lintWarnings);\n        }\n\n        errors = errors || [];\n        errors = errors.map(this.jsonifyError);\n\n        if (!this.loaded) {\n            this.postParent({ loaded: true });\n            this.loaded = true;\n        }\n\n        // Update results\n        this.results.errors = errors;\n        this.results.warnings = warnings;\n        this.phoneHome();\n\n        this.toggle(!errors.length);\n\n        // A callback for working with a test suite\n        if (callback) {\n            //This is synchronous\n            this._test(userCode, this.validate, errors, function (errors, testResults) {\n                callback(errors, testResults);\n            });\n            // Normal case\n        } else {\n            // This is debounced (async)\n            if (this.validate !== \"\") {\n                this.test(userCode, this.validate, errors, function (errors, testResults) {\n                    this.results.errors = errors;\n                    this.results.tests = testResults;\n                    this.phoneHome();\n                }.bind(this));\n            }\n        }\n    },\n\n    /**\n     * Send the most up to date errors/test results to the parent frame.\n     */\n    phoneHome: function phoneHome() {\n        this.postParent({\n            results: this.results\n        });\n    },\n\n    test: _.throttle(function () {\n        this._test.apply(this, arguments);\n    }, 200),\n    _test: function _test(userCode, validate, errors, callback) {\n        this.output.test(userCode, validate, errors, callback);\n    },\n\n    lint: function lint(userCode, callback) {\n        this.output.lint(userCode, callback);\n    },\n\n    getUserCode: function getUserCode() {\n        return this.currentCode || \"\";\n    },\n\n    toggle: function toggle(_toggle) {\n        if (this.output.toggle) {\n            this.output.toggle(_toggle);\n        }\n    },\n\n    restart: function restart() {\n        // This is called on load and it's possible that the output\n        // hasn't been set yet.\n        if (!this.output) {\n            return;\n        }\n\n        if (this.output.restart) {\n            this.output.restart();\n        }\n\n        this.runCode(this.getUserCode());\n    }\n});\n\nLiveEditorOutput.registerOutput = function (name, output) {\n    LiveEditorOutput.prototype.outputs[name] = output;\n};\n\nwindow.LiveEditorOutput = LiveEditorOutput;\n\nmodule.exports = LiveEditorOutput;\n/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! underscore */ \"./node_modules/underscore/underscore.js\")))\n\n//# sourceURL=webpack:///./js/output/shared/output.js?");
 
-PooledWorker.prototype.getWorkerFromPool = function () {
-    // NOTE(jeresig): This pool of workers is used to cut down on the
-    // number of new web workers that we need to create. If the user
-    // is typing really fast, or scrubbing numbers, it has the
-    // potential to use a lot of workers. We want to re-use as many of
-    // them as possible as their creation can be expensive. (Chrome
-    // seems to freak out, use lots of memory, and sometimes crash.)
-    var worker = this.pool.shift();
-    if (!worker) {
-        worker = new window.Worker(this.getURL());
-    }
-    // Keep track of what number worker we're running so that we know
-    // if any new hint workers have been started after this one
-    this.curID += 1;
-    worker.id = this.curID;
-    return worker;
-};
+/***/ }),
 
-/* Returns true if the passed in worker is the most recently created */
-PooledWorker.prototype.isCurrentWorker = function (worker) {
-    return this.curID === worker.id;
-};
+/***/ "./js/output/shared/pooled-worker.js":
+/*!*******************************************!*\
+  !*** ./js/output/shared/pooled-worker.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-PooledWorker.prototype.addWorkerToPool = function (worker) {
-    // Return the worker back to the pool
-    this.pool.push(worker);
-};
+"use strict";
+eval("\n\nvar PooledWorker = function PooledWorker(filename, workersDir, onExec) {\n    this.pool = [];\n    this.curID = 0;\n    this.filename = filename;\n    this.workersDir = workersDir;\n    this.onExec = onExec || function () {};\n};\n\nPooledWorker.prototype.getURL = function () {\n    return this.workersDir + this.filename + \"?cachebust=G\" + new Date().toDateString();\n};\n\nPooledWorker.prototype.getWorkerFromPool = function () {\n    // NOTE(jeresig): This pool of workers is used to cut down on the\n    // number of new web workers that we need to create. If the user\n    // is typing really fast, or scrubbing numbers, it has the\n    // potential to use a lot of workers. We want to re-use as many of\n    // them as possible as their creation can be expensive. (Chrome\n    // seems to freak out, use lots of memory, and sometimes crash.)\n    var worker = this.pool.shift();\n    if (!worker) {\n        worker = new window.Worker(this.getURL());\n    }\n    // Keep track of what number worker we're running so that we know\n    // if any new hint workers have been started after this one\n    this.curID += 1;\n    worker.id = this.curID;\n    return worker;\n};\n\n/* Returns true if the passed in worker is the most recently created */\nPooledWorker.prototype.isCurrentWorker = function (worker) {\n    return this.curID === worker.id;\n};\n\nPooledWorker.prototype.addWorkerToPool = function (worker) {\n    // Return the worker back to the pool\n    this.pool.push(worker);\n};\n\nPooledWorker.prototype.exec = function () {\n    this.onExec.apply(this, arguments);\n};\n\nPooledWorker.prototype.kill = function () {\n    this.pool.forEach(function (worker) {\n        worker.terminate();\n    }, this);\n    this.pool = [];\n};\n\nmodule.exports = PooledWorker;\n\n//# sourceURL=webpack:///./js/output/shared/pooled-worker.js?");
 
-PooledWorker.prototype.exec = function () {
-    this.onExec.apply(this, arguments);
-};
+/***/ }),
 
-PooledWorker.prototype.kill = function () {
-    this.pool.forEach(function (worker) {
-        worker.terminate();
-    }, this);
-    this.pool = [];
-};
-window.OutputTester = function () {};
+/***/ "./js/shared/config.js":
+/*!*****************************!*\
+  !*** ./js/shared/config.js ***!
+  \*****************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-OutputTester.prototype = {
-    initialize: function initialize(options) {
-        var tester = this;
+"use strict";
+eval("\n\n// Maintain all of the configuration options and settings for the site.\n// Have them be versioned and attached to the ScratchpadRevision so that\n// later config changes don't break old code.\n/* jshint unused:false */\nvar Backbone = __webpack_require__(/*! backbone */ \"./node_modules/backbone/backbone.js\");\n\nvar ScratchpadConfig = Backbone.Model.extend({\n    version: null,\n\n    initialize: function initialize(options) {\n        this.version = options.version;\n        this.useDebugger = options.useDebugger;\n\n        if (this.version != null) {\n            this.version = this.latestVersion();\n        }\n    },\n\n    // Run the configuration functions for a particular namespace\n    // of functionality. Can optionally take any number of\n    // additional arguments.\n    runCurVersion: function runCurVersion(type) {\n        var args = Array.prototype.slice.call(arguments, 0);\n        args.unshift(this.curVersion());\n        return this.runVersion.apply(this, args);\n    },\n\n    // Run the configuration functions for a particular namespace\n    // of functionality, for a particular config version. Can optionally\n    // take any number of additional arguments.\n    runVersion: function runVersion(version, type) {\n        var args = Array.prototype.slice.call(arguments, 2);\n\n        for (var i = 0; i <= version; i++) {\n            var configFn = this.versions[i][type];\n\n            if (configFn) {\n                configFn.apply(this, args);\n            }\n        }\n    },\n\n    switchVersion: function switchVersion(version) {\n        // Make sure we're switching to a new version\n        if (version !== this.curVersion()) {\n            // Set the new version\n            this.version = version;\n\n            // Run the inits for all bound handlers\n            this.trigger(\"versionSwitched\", version);\n        }\n    },\n\n    // Get the current config version\n    curVersion: function curVersion() {\n        if (this.version != null) {\n            return this.version;\n        }\n\n        return this.latestVersion();\n    },\n\n    // Get the latest config version\n    latestVersion: function latestVersion() {\n        return this.versions.length - 1;\n    },\n\n    autoCompleteBehavior: {\n        autoBrace: false,\n        braceIndent: true,\n        equalsInsert: true\n    },\n\n    bindAutoComplete: function bindAutoComplete(editor, autoCompleteBehavior) {\n        autoCompleteBehavior = autoCompleteBehavior || this.autoCompleteBehavior;\n\n        // When a { is typed, an endline, indentation, and another endline\n        // are inserted. The cursor is set after the indentation.\n        // Additionally make it so that if \"var draw =\" is typed then\n        // the associated \"function() { ... }; are inserted as well.\n        var behavior = editor.getSession().getMode().$behaviour;\n\n        // Reset auto-complete for parentheses and quotes\n        // (matches earlier Ace behavior)\n        behavior.add(\"parens\", \"insertion\", function () {});\n        behavior.add(\"parens\", \"deletion\", function () {});\n        behavior.add(\"brackets\", \"insertion\", function () {});\n        behavior.add(\"brackets\", \"deletion\", function () {});\n        behavior.add(\"string_dquotes\", \"insertion\", function () {});\n        behavior.add(\"string_dquotes\", \"deletion\", function () {});\n\n        // Auto-completion code based on code from\n        // Ace Editor file: ace-mode-javascript.js\n        behavior.add(\"braces\", \"insertion\", function (state, action, editor, session, text) {\n            var cursor = editor.getCursorPosition();\n            var line = session.doc.getLine(cursor.row);\n\n            if (text === \"{\") {\n                var selection = editor.getSelectionRange();\n                var selected = session.doc.getTextRange(selection);\n\n                // Old auto-completion logic\n                if (autoCompleteBehavior.autoBrace) {\n                    if (selected !== \"\") {\n                        return {\n                            text: \"{\" + selected + \"}\",\n                            selection: false\n                        };\n                    } else {\n                        return {\n                            text: \"{}\",\n                            selection: [1, 1]\n                        };\n                    }\n                } else if (autoCompleteBehavior.braceIndent) {\n                    // This is the one section of the code that's been\n                    // modified, everything else was left as-is.\n                    // Endlines and indentation were added to brace\n                    // autocompletion.\n\n                    // Insert a semicolon after the brace if there's\n                    // an assignment occurring on the same line\n                    // (e.g. if you're doing var draw = function(){...})\n                    var maybeSemicolon = /=\\s*function/.test(line) ? \";\" : \"\";\n\n                    var indent = this.getNextLineIndent(state, line.substring(0, line.length - 1), session.getTabString());\n                    var nextIndent = this.$getIndent(session.doc.getLine(cursor.row));\n\n                    // The case of if (EXPR) { doesn't indent properly\n                    // as the if (EXPR) line doesn't trigger an additional\n                    // indentation level, so we force it to work.\n                    if (indent === nextIndent) {\n                        indent += session.getTabString();\n                    }\n\n                    return {\n                        text: \"{\\n\" + indent + selected + \"\\n\" + nextIndent + \"}\" + maybeSemicolon,\n                        // Format:\n                        // [ rowStartSelection, colStartSelection,\n                        //   rowEndSelection, colEndSelection ]\n                        selection: [1, indent.length, 1, indent.length]\n                    };\n                }\n            } else if (text === \"}\") {\n                var rightChar = line.substring(cursor.column, cursor.column + 1);\n                if (rightChar === \"}\") {\n                    var matching = session.$findOpeningBracket(\"}\", { column: cursor.column + 1, row: cursor.row });\n                    if (matching !== null) {\n                        return {\n                            text: \"\",\n                            selection: [1, 1]\n                        };\n                    }\n                }\n            } else if (text === \"\\n\") {\n                var rightChar = line.substring(cursor.column, cursor.column + 1);\n                if (rightChar === \"}\") {\n                    var openBracePos = session.findMatchingBracket({ row: cursor.row, column: cursor.column + 1 });\n                    if (!openBracePos) {\n                        return null;\n                    }\n\n                    var indent = this.getNextLineIndent(state, line.substring(0, line.length - 1), session.getTabString());\n                    var nextIndent = this.$getIndent(session.doc.getLine(openBracePos.row));\n\n                    return {\n                        text: \"\\n\" + indent + \"\\n\" + nextIndent,\n                        selection: [1, indent.length, 1, indent.length]\n                    };\n                }\n            }\n        });\n\n        // Auto-completion code based on code from\n        // Ace Editor file: ace-mode-javascript.js\n        behavior.add(\"equals\", \"insertion\", function (state, action, editor, session, text) {\n\n            if (!autoCompleteBehavior.equalsInsert) {\n                return;\n            }\n\n            var cursor = editor.getCursorPosition();\n            var line = session.doc.getLine(cursor.row);\n\n            if (text === \"=\" && /\\bdraw\\s*$/.test(line)) {\n                var selection = editor.getSelectionRange();\n                var selected = session.doc.getTextRange(selection);\n\n                var indent = this.getNextLineIndent(state, line.substring(0, line.length - 1), session.getTabString());\n                var nextIndent = this.$getIndent(session.doc.getLine(cursor.row));\n\n                // The case of if (EXPR) { doesn't indent properly\n                // as the if (EXPR) line doesn't trigger an additional\n                // indentation level, so we force it to work.\n                if (indent === nextIndent) {\n                    indent += session.getTabString();\n                }\n\n                return {\n                    text: \"= function() {\\n\" + indent + selected + \"\\n\" + nextIndent + \"};\",\n                    selection: [1, indent.length, 1, indent.length]\n                };\n            }\n        });\n    },\n\n    // The configuration options\n    // All configuration options are namespaced and versioned\n    versions: [{\n        name: \"Initial Configuration\",\n\n        // Ace pjs editor configuration\n        ace_pjs_editor: function ace_pjs_editor(editor) {\n            var aceEditor = editor.editor;\n\n            aceEditor.session.setOption(\"useWorker\", false);\n\n            // Don't highlight the active line\n            aceEditor.setHighlightActiveLine(false);\n\n            // Stop bracket highlighting\n            aceEditor.$highlightBrackets = function () {};\n\n            // Make sure no horizontal scrollbars are shown\n            aceEditor.renderer.setHScrollBarAlwaysVisible(false);\n\n            var session = aceEditor.getSession();\n\n            // Use word wrap\n            session.setUseWrapMode(true);\n\n            // Use soft tabs\n            session.setUseSoftTabs(true);\n\n            // Stop automatic JSHINT warnings\n            session.setUseWorker(false);\n\n            // Set the font size\n            aceEditor.setFontSize(\"14px\");\n\n            // Disable highlighting the selected word\n            aceEditor.setHighlightSelectedWord(false);\n\n            // Show line numbers and enable code collapsing\n            aceEditor.renderer.setShowGutter(true);\n\n            // Don't show print margin\n            aceEditor.renderer.setShowPrintMargin(false);\n\n            // Use JavaScript Mode\n            session.setMode(\"ace/mode/javascript\");\n\n            // Set the editor theme\n            aceEditor.setTheme(\"ace/theme/textmate\");\n\n            // Attach the auto-complete for the editor\n            // (must be re-done every time the mode is set)\n            this.bindAutoComplete(editor.editor, {\n                autoBrace: false,\n                braceIndent: false,\n                equalsInsert: true\n            });\n        },\n\n        // Ace HTML editor configuration\n        ace_webpage_editor: function ace_webpage_editor(editor) {\n            var aceEditor = editor.editor;\n\n            aceEditor.session.setOption(\"useWorker\", false);\n\n            // Don't highlight the active line\n            aceEditor.setHighlightActiveLine(false);\n\n            // Make sure no horizontal scrollbars are shown\n            aceEditor.renderer.setHScrollBarAlwaysVisible(false);\n\n            var session = aceEditor.getSession();\n\n            // Use word wrap\n            session.setUseWrapMode(true);\n\n            // Use soft tabs\n            session.setUseSoftTabs(true);\n\n            // Set the font size\n            aceEditor.setFontSize(\"14px\");\n\n            // Disable highlighting the selected word\n            aceEditor.setHighlightSelectedWord(false);\n\n            // Show line numbers and enable code collapsing\n            aceEditor.renderer.setShowGutter(true);\n\n            // Don't show print margin\n            aceEditor.renderer.setShowPrintMargin(false);\n\n            // Use HTML Mode\n            session.setMode(\"ace/mode/html\");\n\n            // modify auto-complete to be less agressive.\n            // Do not autoclose tags if there is other text after the cursor on the line.\n            var behaviours = session.getMode().$behaviour.getBehaviours();\n            var autoclosingFN = behaviours.autoclosing.insertion;\n            behaviours.autoclosing.insertion = function (state, action, editor, session, text) {\n                var pos = editor.getCursorPosition();\n                var line = session.getLine(pos.row);\n                if (line.slice(pos.column).trim() === \"\") {\n                    return autoclosingFN.apply(this, arguments);\n                }\n            };\n\n            // Set the editor theme\n            aceEditor.setTheme(\"ace/theme/textmate\");\n        },\n\n        // Ace SQL editor configuration\n        ace_sql_editor: function ace_sql_editor(editor) {\n            var aceEditor = editor.editor;\n\n            // Don't highlight the active line\n            aceEditor.setHighlightActiveLine(false);\n\n            // Make sure no horizontal scrollbars are shown\n            aceEditor.renderer.setHScrollBarAlwaysVisible(false);\n\n            var session = aceEditor.getSession();\n\n            // Use word wrap\n            session.setUseWrapMode(true);\n\n            // Use soft tabs\n            session.setUseSoftTabs(true);\n\n            // Set the font size\n            aceEditor.setFontSize(\"14px\");\n\n            // Disable highlighting the selected word\n            aceEditor.setHighlightSelectedWord(false);\n\n            // Show line numbers and enable code collapsing\n            aceEditor.renderer.setShowGutter(true);\n\n            // Don't show print margin\n            aceEditor.renderer.setShowPrintMargin(false);\n\n            // Use SQL Mode\n            session.setMode(\"ace/mode/sql\");\n\n            // Set the editor theme\n            aceEditor.setTheme(\"ace/theme/textmate\");\n        },\n\n        // JSHint configuration\n        // See: http://www.jshint.com/options/\n        jshint: function jshint(output) {\n            output.JSHint = {\n                // Prohibit explicitly undefined variables\n                undef: true,\n\n                // No empty code blocks\n                noempty: true,\n\n                // Prohibits the use of ++ and --\n                plusplus: true,\n\n                // Prohibits the use of arguments.callee and caller\n                noarg: true,\n\n                // Prohibit the use of variables before they were defined\n                latedef: true,\n\n                // Requires the use of === instead of ==\n                eqeqeq: true,\n\n                // Requires you to specify curly braces on loops\n                // and conditionals\n                curly: true,\n\n                // Allow variable shadowing. Declaring a var multiple times\n                // is allowed.\n                shadow: true,\n\n                // Allow mixing spaces and tabs. We can add a prettify one day\n                // if we want to fix things up.\n                smarttabs: true\n            };\n        },\n\n        // Processing.js configuration\n        processing: function processing(canvas) {\n            canvas.size(400, 400);\n            canvas.frameRate(30);\n            canvas.angleMode = \"radians\";\n        }\n    }, {\n        name: \"Switch to Degress from Radians\",\n\n        processing: function processing(canvas) {\n            canvas.angleMode = \"degrees\";\n        }\n    }, {\n        name: \"Brace Autocompletion Changes\",\n\n        ace_pjs_editor: function ace_pjs_editor(editor) {\n            // We no longer version editor changes,\n            // since we made talkie recording more robust.\n            // We still version jshint changes however,\n            // so we keep this one around as a null change.\n        }\n    }, {\n        name: \"Disable Un-needed JSHint Rules\",\n\n        jshint: function jshint(output) {\n            // Re-allow empty braces\n            delete output.JSHint.noempty;\n\n            // Re-allow ++ and --\n            delete output.JSHint.plusplus;\n        }\n    }, {\n        name: \"version 4 placeholder\"\n\n        // At one time live-editor.shared.js had a (version 4) entry that a\n        // duplicate \"Brace Autocompletion Changes\" before it was disabled.\n        // This duplicate was probably introduced by a merge. Unfortunately,\n        // many of the revisions in the datastore are version 4.  This\n        // placeholder version ensures that those revisions continue to work\n        // without throwing exceptions.\n\n\n        // NOTE: update version test in output_test.js\n    }]\n});\n\nmodule.exports = ScratchpadConfig;\n\n//# sourceURL=webpack:///./js/shared/config.js?");
 
-        this.tests = [];
-        this.testContext = {};
+/***/ }),
 
-        for (var prop in this.testMethods) {
-            if (this.testMethods.hasOwnProperty(prop)) {
-                this.testContext[prop] = this.testMethods[prop];
-            }
-        }
+/***/ "./node_modules/backbone/backbone.js":
+/*!*******************************************!*\
+  !*** ./node_modules/backbone/backbone.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-        for (var prop in this.defaultTestContext) {
-            /* jshint forin:false */
-            if (!(prop in this.testContext)) {
-                this.testContext[prop] = this.defaultTestContext[prop];
-            }
-        }
+eval("//     Backbone.js 1.0.0\n\n//     (c) 2010-2013 Jeremy Ashkenas, DocumentCloud Inc.\n//     Backbone may be freely distributed under the MIT license.\n//     For all details and documentation:\n//     http://backbonejs.org\n\n(function(){\n\n  // Initial Setup\n  // -------------\n\n  // Save a reference to the global object (`window` in the browser, `exports`\n  // on the server).\n  var root = this;\n\n  // Save the previous value of the `Backbone` variable, so that it can be\n  // restored later on, if `noConflict` is used.\n  var previousBackbone = root.Backbone;\n\n  // Create local references to array methods we'll want to use later.\n  var array = [];\n  var push = array.push;\n  var slice = array.slice;\n  var splice = array.splice;\n\n  // The top-level namespace. All public Backbone classes and modules will\n  // be attached to this. Exported for both the browser and the server.\n  var Backbone;\n  if (true) {\n    Backbone = exports;\n  } else {}\n\n  // Current version of the library. Keep in sync with `package.json`.\n  Backbone.VERSION = '1.0.0';\n\n  // Require Underscore, if we're on the server, and it's not already present.\n  var _ = root._;\n  if (!_ && (\"function\" !== 'undefined')) _ = __webpack_require__(/*! underscore */ \"./node_modules/underscore/underscore.js\");\n\n  // For Backbone's purposes, jQuery, Zepto, Ender, or My Library (kidding) owns\n  // the `$` variable.\n  Backbone.$ = root.jQuery || root.Zepto || root.ender || root.$;\n\n  // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable\n  // to its previous owner. Returns a reference to this Backbone object.\n  Backbone.noConflict = function() {\n    root.Backbone = previousBackbone;\n    return this;\n  };\n\n  // Turn on `emulateHTTP` to support legacy HTTP servers. Setting this option\n  // will fake `\"PUT\"` and `\"DELETE\"` requests via the `_method` parameter and\n  // set a `X-Http-Method-Override` header.\n  Backbone.emulateHTTP = false;\n\n  // Turn on `emulateJSON` to support legacy servers that can't deal with direct\n  // `application/json` requests ... will encode the body as\n  // `application/x-www-form-urlencoded` instead and will send the model in a\n  // form param named `model`.\n  Backbone.emulateJSON = false;\n\n  // Backbone.Events\n  // ---------------\n\n  // A module that can be mixed in to *any object* in order to provide it with\n  // custom events. You may bind with `on` or remove with `off` callback\n  // functions to an event; `trigger`-ing an event fires all callbacks in\n  // succession.\n  //\n  //     var object = {};\n  //     _.extend(object, Backbone.Events);\n  //     object.on('expand', function(){ alert('expanded'); });\n  //     object.trigger('expand');\n  //\n  var Events = Backbone.Events = {\n\n    // Bind an event to a `callback` function. Passing `\"all\"` will bind\n    // the callback to all events fired.\n    on: function(name, callback, context) {\n      if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;\n      this._events || (this._events = {});\n      var events = this._events[name] || (this._events[name] = []);\n      events.push({callback: callback, context: context, ctx: context || this});\n      return this;\n    },\n\n    // Bind an event to only be triggered a single time. After the first time\n    // the callback is invoked, it will be removed.\n    once: function(name, callback, context) {\n      if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;\n      var self = this;\n      var once = _.once(function() {\n        self.off(name, once);\n        callback.apply(this, arguments);\n      });\n      once._callback = callback;\n      return this.on(name, once, context);\n    },\n\n    // Remove one or many callbacks. If `context` is null, removes all\n    // callbacks with that function. If `callback` is null, removes all\n    // callbacks for the event. If `name` is null, removes all bound\n    // callbacks for all events.\n    off: function(name, callback, context) {\n      var retain, ev, events, names, i, l, j, k;\n      if (!this._events || !eventsApi(this, 'off', name, [callback, context])) return this;\n      if (!name && !callback && !context) {\n        this._events = {};\n        return this;\n      }\n\n      names = name ? [name] : _.keys(this._events);\n      for (i = 0, l = names.length; i < l; i++) {\n        name = names[i];\n        if (events = this._events[name]) {\n          this._events[name] = retain = [];\n          if (callback || context) {\n            for (j = 0, k = events.length; j < k; j++) {\n              ev = events[j];\n              if ((callback && callback !== ev.callback && callback !== ev.callback._callback) ||\n                  (context && context !== ev.context)) {\n                retain.push(ev);\n              }\n            }\n          }\n          if (!retain.length) delete this._events[name];\n        }\n      }\n\n      return this;\n    },\n\n    // Trigger one or many events, firing all bound callbacks. Callbacks are\n    // passed the same arguments as `trigger` is, apart from the event name\n    // (unless you're listening on `\"all\"`, which will cause your callback to\n    // receive the true name of the event as the first argument).\n    trigger: function(name) {\n      if (!this._events) return this;\n      var args = slice.call(arguments, 1);\n      if (!eventsApi(this, 'trigger', name, args)) return this;\n      var events = this._events[name];\n      var allEvents = this._events.all;\n      if (events) triggerEvents(events, args);\n      if (allEvents) triggerEvents(allEvents, arguments);\n      return this;\n    },\n\n    // Tell this object to stop listening to either specific events ... or\n    // to every object it's currently listening to.\n    stopListening: function(obj, name, callback) {\n      var listeners = this._listeners;\n      if (!listeners) return this;\n      var deleteListener = !name && !callback;\n      if (typeof name === 'object') callback = this;\n      if (obj) (listeners = {})[obj._listenerId] = obj;\n      for (var id in listeners) {\n        listeners[id].off(name, callback, this);\n        if (deleteListener) delete this._listeners[id];\n      }\n      return this;\n    }\n\n  };\n\n  // Regular expression used to split event strings.\n  var eventSplitter = /\\s+/;\n\n  // Implement fancy features of the Events API such as multiple event\n  // names `\"change blur\"` and jQuery-style event maps `{change: action}`\n  // in terms of the existing API.\n  var eventsApi = function(obj, action, name, rest) {\n    if (!name) return true;\n\n    // Handle event maps.\n    if (typeof name === 'object') {\n      for (var key in name) {\n        obj[action].apply(obj, [key, name[key]].concat(rest));\n      }\n      return false;\n    }\n\n    // Handle space separated event names.\n    if (eventSplitter.test(name)) {\n      var names = name.split(eventSplitter);\n      for (var i = 0, l = names.length; i < l; i++) {\n        obj[action].apply(obj, [names[i]].concat(rest));\n      }\n      return false;\n    }\n\n    return true;\n  };\n\n  // A difficult-to-believe, but optimized internal dispatch function for\n  // triggering events. Tries to keep the usual cases speedy (most internal\n  // Backbone events have 3 arguments).\n  var triggerEvents = function(events, args) {\n    var ev, i = -1, l = events.length, a1 = args[0], a2 = args[1], a3 = args[2];\n    switch (args.length) {\n      case 0: while (++i < l) (ev = events[i]).callback.call(ev.ctx); return;\n      case 1: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1); return;\n      case 2: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2); return;\n      case 3: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2, a3); return;\n      default: while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args);\n    }\n  };\n\n  var listenMethods = {listenTo: 'on', listenToOnce: 'once'};\n\n  // Inversion-of-control versions of `on` and `once`. Tell *this* object to\n  // listen to an event in another object ... keeping track of what it's\n  // listening to.\n  _.each(listenMethods, function(implementation, method) {\n    Events[method] = function(obj, name, callback) {\n      var listeners = this._listeners || (this._listeners = {});\n      var id = obj._listenerId || (obj._listenerId = _.uniqueId('l'));\n      listeners[id] = obj;\n      if (typeof name === 'object') callback = this;\n      obj[implementation](name, callback, this);\n      return this;\n    };\n  });\n\n  // Aliases for backwards compatibility.\n  Events.bind   = Events.on;\n  Events.unbind = Events.off;\n\n  // Allow the `Backbone` object to serve as a global event bus, for folks who\n  // want global \"pubsub\" in a convenient place.\n  _.extend(Backbone, Events);\n\n  // Backbone.Model\n  // --------------\n\n  // Backbone **Models** are the basic data object in the framework --\n  // frequently representing a row in a table in a database on your server.\n  // A discrete chunk of data and a bunch of useful, related methods for\n  // performing computations and transformations on that data.\n\n  // Create a new model with the specified attributes. A client id (`cid`)\n  // is automatically generated and assigned for you.\n  var Model = Backbone.Model = function(attributes, options) {\n    var defaults;\n    var attrs = attributes || {};\n    options || (options = {});\n    this.cid = _.uniqueId('c');\n    this.attributes = {};\n    _.extend(this, _.pick(options, modelOptions));\n    if (options.parse) attrs = this.parse(attrs, options) || {};\n    if (defaults = _.result(this, 'defaults')) {\n      attrs = _.defaults({}, attrs, defaults);\n    }\n    this.set(attrs, options);\n    this.changed = {};\n    this.initialize.apply(this, arguments);\n  };\n\n  // A list of options to be attached directly to the model, if provided.\n  var modelOptions = ['url', 'urlRoot', 'collection'];\n\n  // Attach all inheritable methods to the Model prototype.\n  _.extend(Model.prototype, Events, {\n\n    // A hash of attributes whose current and previous value differ.\n    changed: null,\n\n    // The value returned during the last failed validation.\n    validationError: null,\n\n    // The default name for the JSON `id` attribute is `\"id\"`. MongoDB and\n    // CouchDB users may want to set this to `\"_id\"`.\n    idAttribute: 'id',\n\n    // Initialize is an empty function by default. Override it with your own\n    // initialization logic.\n    initialize: function(){},\n\n    // Return a copy of the model's `attributes` object.\n    toJSON: function(options) {\n      return _.clone(this.attributes);\n    },\n\n    // Proxy `Backbone.sync` by default -- but override this if you need\n    // custom syncing semantics for *this* particular model.\n    sync: function() {\n      return Backbone.sync.apply(this, arguments);\n    },\n\n    // Get the value of an attribute.\n    get: function(attr) {\n      return this.attributes[attr];\n    },\n\n    // Get the HTML-escaped value of an attribute.\n    escape: function(attr) {\n      return _.escape(this.get(attr));\n    },\n\n    // Returns `true` if the attribute contains a value that is not null\n    // or undefined.\n    has: function(attr) {\n      return this.get(attr) != null;\n    },\n\n    // Set a hash of model attributes on the object, firing `\"change\"`. This is\n    // the core primitive operation of a model, updating the data and notifying\n    // anyone who needs to know about the change in state. The heart of the beast.\n    set: function(key, val, options) {\n      var attr, attrs, unset, changes, silent, changing, prev, current;\n      if (key == null) return this;\n\n      // Handle both `\"key\", value` and `{key: value}` -style arguments.\n      if (typeof key === 'object') {\n        attrs = key;\n        options = val;\n      } else {\n        (attrs = {})[key] = val;\n      }\n\n      options || (options = {});\n\n      // Run validation.\n      if (!this._validate(attrs, options)) return false;\n\n      // Extract attributes and options.\n      unset           = options.unset;\n      silent          = options.silent;\n      changes         = [];\n      changing        = this._changing;\n      this._changing  = true;\n\n      if (!changing) {\n        this._previousAttributes = _.clone(this.attributes);\n        this.changed = {};\n      }\n      current = this.attributes, prev = this._previousAttributes;\n\n      // Check for changes of `id`.\n      if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];\n\n      // For each `set` attribute, update or delete the current value.\n      for (attr in attrs) {\n        val = attrs[attr];\n        if (!_.isEqual(current[attr], val)) changes.push(attr);\n        if (!_.isEqual(prev[attr], val)) {\n          this.changed[attr] = val;\n        } else {\n          delete this.changed[attr];\n        }\n        unset ? delete current[attr] : current[attr] = val;\n      }\n\n      // Trigger all relevant attribute changes.\n      if (!silent) {\n        if (changes.length) this._pending = true;\n        for (var i = 0, l = changes.length; i < l; i++) {\n          this.trigger('change:' + changes[i], this, current[changes[i]], options);\n        }\n      }\n\n      // You might be wondering why there's a `while` loop here. Changes can\n      // be recursively nested within `\"change\"` events.\n      if (changing) return this;\n      if (!silent) {\n        while (this._pending) {\n          this._pending = false;\n          this.trigger('change', this, options);\n        }\n      }\n      this._pending = false;\n      this._changing = false;\n      return this;\n    },\n\n    // Remove an attribute from the model, firing `\"change\"`. `unset` is a noop\n    // if the attribute doesn't exist.\n    unset: function(attr, options) {\n      return this.set(attr, void 0, _.extend({}, options, {unset: true}));\n    },\n\n    // Clear all attributes on the model, firing `\"change\"`.\n    clear: function(options) {\n      var attrs = {};\n      for (var key in this.attributes) attrs[key] = void 0;\n      return this.set(attrs, _.extend({}, options, {unset: true}));\n    },\n\n    // Determine if the model has changed since the last `\"change\"` event.\n    // If you specify an attribute name, determine if that attribute has changed.\n    hasChanged: function(attr) {\n      if (attr == null) return !_.isEmpty(this.changed);\n      return _.has(this.changed, attr);\n    },\n\n    // Return an object containing all the attributes that have changed, or\n    // false if there are no changed attributes. Useful for determining what\n    // parts of a view need to be updated and/or what attributes need to be\n    // persisted to the server. Unset attributes will be set to undefined.\n    // You can also pass an attributes object to diff against the model,\n    // determining if there *would be* a change.\n    changedAttributes: function(diff) {\n      if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;\n      var val, changed = false;\n      var old = this._changing ? this._previousAttributes : this.attributes;\n      for (var attr in diff) {\n        if (_.isEqual(old[attr], (val = diff[attr]))) continue;\n        (changed || (changed = {}))[attr] = val;\n      }\n      return changed;\n    },\n\n    // Get the previous value of an attribute, recorded at the time the last\n    // `\"change\"` event was fired.\n    previous: function(attr) {\n      if (attr == null || !this._previousAttributes) return null;\n      return this._previousAttributes[attr];\n    },\n\n    // Get all of the attributes of the model at the time of the previous\n    // `\"change\"` event.\n    previousAttributes: function() {\n      return _.clone(this._previousAttributes);\n    },\n\n    // Fetch the model from the server. If the server's representation of the\n    // model differs from its current attributes, they will be overridden,\n    // triggering a `\"change\"` event.\n    fetch: function(options) {\n      options = options ? _.clone(options) : {};\n      if (options.parse === void 0) options.parse = true;\n      var model = this;\n      var success = options.success;\n      options.success = function(resp) {\n        if (!model.set(model.parse(resp, options), options)) return false;\n        if (success) success(model, resp, options);\n        model.trigger('sync', model, resp, options);\n      };\n      wrapError(this, options);\n      return this.sync('read', this, options);\n    },\n\n    // Set a hash of model attributes, and sync the model to the server.\n    // If the server returns an attributes hash that differs, the model's\n    // state will be `set` again.\n    save: function(key, val, options) {\n      var attrs, method, xhr, attributes = this.attributes;\n\n      // Handle both `\"key\", value` and `{key: value}` -style arguments.\n      if (key == null || typeof key === 'object') {\n        attrs = key;\n        options = val;\n      } else {\n        (attrs = {})[key] = val;\n      }\n\n      // If we're not waiting and attributes exist, save acts as `set(attr).save(null, opts)`.\n      if (attrs && (!options || !options.wait) && !this.set(attrs, options)) return false;\n\n      options = _.extend({validate: true}, options);\n\n      // Do not persist invalid models.\n      if (!this._validate(attrs, options)) return false;\n\n      // Set temporary attributes if `{wait: true}`.\n      if (attrs && options.wait) {\n        this.attributes = _.extend({}, attributes, attrs);\n      }\n\n      // After a successful server-side save, the client is (optionally)\n      // updated with the server-side state.\n      if (options.parse === void 0) options.parse = true;\n      var model = this;\n      var success = options.success;\n      options.success = function(resp) {\n        // Ensure attributes are restored during synchronous saves.\n        model.attributes = attributes;\n        var serverAttrs = model.parse(resp, options);\n        if (options.wait) serverAttrs = _.extend(attrs || {}, serverAttrs);\n        if (_.isObject(serverAttrs) && !model.set(serverAttrs, options)) {\n          return false;\n        }\n        if (success) success(model, resp, options);\n        model.trigger('sync', model, resp, options);\n      };\n      wrapError(this, options);\n\n      method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');\n      if (method === 'patch') options.attrs = attrs;\n      xhr = this.sync(method, this, options);\n\n      // Restore attributes.\n      if (attrs && options.wait) this.attributes = attributes;\n\n      return xhr;\n    },\n\n    // Destroy this model on the server if it was already persisted.\n    // Optimistically removes the model from its collection, if it has one.\n    // If `wait: true` is passed, waits for the server to respond before removal.\n    destroy: function(options) {\n      options = options ? _.clone(options) : {};\n      var model = this;\n      var success = options.success;\n\n      var destroy = function() {\n        model.trigger('destroy', model, model.collection, options);\n      };\n\n      options.success = function(resp) {\n        if (options.wait || model.isNew()) destroy();\n        if (success) success(model, resp, options);\n        if (!model.isNew()) model.trigger('sync', model, resp, options);\n      };\n\n      if (this.isNew()) {\n        options.success();\n        return false;\n      }\n      wrapError(this, options);\n\n      var xhr = this.sync('delete', this, options);\n      if (!options.wait) destroy();\n      return xhr;\n    },\n\n    // Default URL for the model's representation on the server -- if you're\n    // using Backbone's restful methods, override this to change the endpoint\n    // that will be called.\n    url: function() {\n      var base = _.result(this, 'urlRoot') || _.result(this.collection, 'url') || urlError();\n      if (this.isNew()) return base;\n      return base + (base.charAt(base.length - 1) === '/' ? '' : '/') + encodeURIComponent(this.id);\n    },\n\n    // **parse** converts a response into the hash of attributes to be `set` on\n    // the model. The default implementation is just to pass the response along.\n    parse: function(resp, options) {\n      return resp;\n    },\n\n    // Create a new model with identical attributes to this one.\n    clone: function() {\n      return new this.constructor(this.attributes);\n    },\n\n    // A model is new if it has never been saved to the server, and lacks an id.\n    isNew: function() {\n      return this.id == null;\n    },\n\n    // Check if the model is currently in a valid state.\n    isValid: function(options) {\n      return this._validate({}, _.extend(options || {}, { validate: true }));\n    },\n\n    // Run validation against the next complete set of model attributes,\n    // returning `true` if all is well. Otherwise, fire an `\"invalid\"` event.\n    _validate: function(attrs, options) {\n      if (!options.validate || !this.validate) return true;\n      attrs = _.extend({}, this.attributes, attrs);\n      var error = this.validationError = this.validate(attrs, options) || null;\n      if (!error) return true;\n      this.trigger('invalid', this, error, _.extend(options || {}, {validationError: error}));\n      return false;\n    }\n\n  });\n\n  // Underscore methods that we want to implement on the Model.\n  var modelMethods = ['keys', 'values', 'pairs', 'invert', 'pick', 'omit'];\n\n  // Mix in each Underscore method as a proxy to `Model#attributes`.\n  _.each(modelMethods, function(method) {\n    Model.prototype[method] = function() {\n      var args = slice.call(arguments);\n      args.unshift(this.attributes);\n      return _[method].apply(_, args);\n    };\n  });\n\n  // Backbone.Collection\n  // -------------------\n\n  // If models tend to represent a single row of data, a Backbone Collection is\n  // more analagous to a table full of data ... or a small slice or page of that\n  // table, or a collection of rows that belong together for a particular reason\n  // -- all of the messages in this particular folder, all of the documents\n  // belonging to this particular author, and so on. Collections maintain\n  // indexes of their models, both in order, and for lookup by `id`.\n\n  // Create a new **Collection**, perhaps to contain a specific type of `model`.\n  // If a `comparator` is specified, the Collection will maintain\n  // its models in sort order, as they're added and removed.\n  var Collection = Backbone.Collection = function(models, options) {\n    options || (options = {});\n    if (options.url) this.url = options.url;\n    if (options.model) this.model = options.model;\n    if (options.comparator !== void 0) this.comparator = options.comparator;\n    this._reset();\n    this.initialize.apply(this, arguments);\n    if (models) this.reset(models, _.extend({silent: true}, options));\n  };\n\n  // Default options for `Collection#set`.\n  var setOptions = {add: true, remove: true, merge: true};\n  var addOptions = {add: true, merge: false, remove: false};\n\n  // Define the Collection's inheritable methods.\n  _.extend(Collection.prototype, Events, {\n\n    // The default model for a collection is just a **Backbone.Model**.\n    // This should be overridden in most cases.\n    model: Model,\n\n    // Initialize is an empty function by default. Override it with your own\n    // initialization logic.\n    initialize: function(){},\n\n    // The JSON representation of a Collection is an array of the\n    // models' attributes.\n    toJSON: function(options) {\n      return this.map(function(model){ return model.toJSON(options); });\n    },\n\n    // Proxy `Backbone.sync` by default.\n    sync: function() {\n      return Backbone.sync.apply(this, arguments);\n    },\n\n    // Add a model, or list of models to the set.\n    add: function(models, options) {\n      return this.set(models, _.defaults(options || {}, addOptions));\n    },\n\n    // Remove a model, or a list of models from the set.\n    remove: function(models, options) {\n      models = _.isArray(models) ? models.slice() : [models];\n      options || (options = {});\n      var i, l, index, model;\n      for (i = 0, l = models.length; i < l; i++) {\n        model = this.get(models[i]);\n        if (!model) continue;\n        delete this._byId[model.id];\n        delete this._byId[model.cid];\n        index = this.indexOf(model);\n        this.models.splice(index, 1);\n        this.length--;\n        if (!options.silent) {\n          options.index = index;\n          model.trigger('remove', model, this, options);\n        }\n        this._removeReference(model);\n      }\n      return this;\n    },\n\n    // Update a collection by `set`-ing a new list of models, adding new ones,\n    // removing models that are no longer present, and merging models that\n    // already exist in the collection, as necessary. Similar to **Model#set**,\n    // the core operation for updating the data contained by the collection.\n    set: function(models, options) {\n      options = _.defaults(options || {}, setOptions);\n      if (options.parse) models = this.parse(models, options);\n      if (!_.isArray(models)) models = models ? [models] : [];\n      var i, l, model, attrs, existing, sort;\n      var at = options.at;\n      var sortable = this.comparator && (at == null) && options.sort !== false;\n      var sortAttr = _.isString(this.comparator) ? this.comparator : null;\n      var toAdd = [], toRemove = [], modelMap = {};\n\n      // Turn bare objects into model references, and prevent invalid models\n      // from being added.\n      for (i = 0, l = models.length; i < l; i++) {\n        if (!(model = this._prepareModel(models[i], options))) continue;\n\n        // If a duplicate is found, prevent it from being added and\n        // optionally merge it into the existing model.\n        if (existing = this.get(model)) {\n          if (options.remove) modelMap[existing.cid] = true;\n          if (options.merge) {\n            existing.set(model.attributes, options);\n            if (sortable && !sort && existing.hasChanged(sortAttr)) sort = true;\n          }\n\n        // This is a new model, push it to the `toAdd` list.\n        } else if (options.add) {\n          toAdd.push(model);\n\n          // Listen to added models' events, and index models for lookup by\n          // `id` and by `cid`.\n          model.on('all', this._onModelEvent, this);\n          this._byId[model.cid] = model;\n          if (model.id != null) this._byId[model.id] = model;\n        }\n      }\n\n      // Remove nonexistent models if appropriate.\n      if (options.remove) {\n        for (i = 0, l = this.length; i < l; ++i) {\n          if (!modelMap[(model = this.models[i]).cid]) toRemove.push(model);\n        }\n        if (toRemove.length) this.remove(toRemove, options);\n      }\n\n      // See if sorting is needed, update `length` and splice in new models.\n      if (toAdd.length) {\n        if (sortable) sort = true;\n        this.length += toAdd.length;\n        if (at != null) {\n          splice.apply(this.models, [at, 0].concat(toAdd));\n        } else {\n          push.apply(this.models, toAdd);\n        }\n      }\n\n      // Silently sort the collection if appropriate.\n      if (sort) this.sort({silent: true});\n\n      if (options.silent) return this;\n\n      // Trigger `add` events.\n      for (i = 0, l = toAdd.length; i < l; i++) {\n        (model = toAdd[i]).trigger('add', model, this, options);\n      }\n\n      // Trigger `sort` if the collection was sorted.\n      if (sort) this.trigger('sort', this, options);\n      return this;\n    },\n\n    // When you have more items than you want to add or remove individually,\n    // you can reset the entire set with a new list of models, without firing\n    // any granular `add` or `remove` events. Fires `reset` when finished.\n    // Useful for bulk operations and optimizations.\n    reset: function(models, options) {\n      options || (options = {});\n      for (var i = 0, l = this.models.length; i < l; i++) {\n        this._removeReference(this.models[i]);\n      }\n      options.previousModels = this.models;\n      this._reset();\n      this.add(models, _.extend({silent: true}, options));\n      if (!options.silent) this.trigger('reset', this, options);\n      return this;\n    },\n\n    // Add a model to the end of the collection.\n    push: function(model, options) {\n      model = this._prepareModel(model, options);\n      this.add(model, _.extend({at: this.length}, options));\n      return model;\n    },\n\n    // Remove a model from the end of the collection.\n    pop: function(options) {\n      var model = this.at(this.length - 1);\n      this.remove(model, options);\n      return model;\n    },\n\n    // Add a model to the beginning of the collection.\n    unshift: function(model, options) {\n      model = this._prepareModel(model, options);\n      this.add(model, _.extend({at: 0}, options));\n      return model;\n    },\n\n    // Remove a model from the beginning of the collection.\n    shift: function(options) {\n      var model = this.at(0);\n      this.remove(model, options);\n      return model;\n    },\n\n    // Slice out a sub-array of models from the collection.\n    slice: function(begin, end) {\n      return this.models.slice(begin, end);\n    },\n\n    // Get a model from the set by id.\n    get: function(obj) {\n      if (obj == null) return void 0;\n      return this._byId[obj.id != null ? obj.id : obj.cid || obj];\n    },\n\n    // Get the model at the given index.\n    at: function(index) {\n      return this.models[index];\n    },\n\n    // Return models with matching attributes. Useful for simple cases of\n    // `filter`.\n    where: function(attrs, first) {\n      if (_.isEmpty(attrs)) return first ? void 0 : [];\n      return this[first ? 'find' : 'filter'](function(model) {\n        for (var key in attrs) {\n          if (attrs[key] !== model.get(key)) return false;\n        }\n        return true;\n      });\n    },\n\n    // Return the first model with matching attributes. Useful for simple cases\n    // of `find`.\n    findWhere: function(attrs) {\n      return this.where(attrs, true);\n    },\n\n    // Force the collection to re-sort itself. You don't need to call this under\n    // normal circumstances, as the set will maintain sort order as each item\n    // is added.\n    sort: function(options) {\n      if (!this.comparator) throw new Error('Cannot sort a set without a comparator');\n      options || (options = {});\n\n      // Run sort based on type of `comparator`.\n      if (_.isString(this.comparator) || this.comparator.length === 1) {\n        this.models = this.sortBy(this.comparator, this);\n      } else {\n        this.models.sort(_.bind(this.comparator, this));\n      }\n\n      if (!options.silent) this.trigger('sort', this, options);\n      return this;\n    },\n\n    // Figure out the smallest index at which a model should be inserted so as\n    // to maintain order.\n    sortedIndex: function(model, value, context) {\n      value || (value = this.comparator);\n      var iterator = _.isFunction(value) ? value : function(model) {\n        return model.get(value);\n      };\n      return _.sortedIndex(this.models, model, iterator, context);\n    },\n\n    // Pluck an attribute from each model in the collection.\n    pluck: function(attr) {\n      return _.invoke(this.models, 'get', attr);\n    },\n\n    // Fetch the default set of models for this collection, resetting the\n    // collection when they arrive. If `reset: true` is passed, the response\n    // data will be passed through the `reset` method instead of `set`.\n    fetch: function(options) {\n      options = options ? _.clone(options) : {};\n      if (options.parse === void 0) options.parse = true;\n      var success = options.success;\n      var collection = this;\n      options.success = function(resp) {\n        var method = options.reset ? 'reset' : 'set';\n        collection[method](resp, options);\n        if (success) success(collection, resp, options);\n        collection.trigger('sync', collection, resp, options);\n      };\n      wrapError(this, options);\n      return this.sync('read', this, options);\n    },\n\n    // Create a new instance of a model in this collection. Add the model to the\n    // collection immediately, unless `wait: true` is passed, in which case we\n    // wait for the server to agree.\n    create: function(model, options) {\n      options = options ? _.clone(options) : {};\n      if (!(model = this._prepareModel(model, options))) return false;\n      if (!options.wait) this.add(model, options);\n      var collection = this;\n      var success = options.success;\n      options.success = function(resp) {\n        if (options.wait) collection.add(model, options);\n        if (success) success(model, resp, options);\n      };\n      model.save(null, options);\n      return model;\n    },\n\n    // **parse** converts a response into a list of models to be added to the\n    // collection. The default implementation is just to pass it through.\n    parse: function(resp, options) {\n      return resp;\n    },\n\n    // Create a new collection with an identical list of models as this one.\n    clone: function() {\n      return new this.constructor(this.models);\n    },\n\n    // Private method to reset all internal state. Called when the collection\n    // is first initialized or reset.\n    _reset: function() {\n      this.length = 0;\n      this.models = [];\n      this._byId  = {};\n    },\n\n    // Prepare a hash of attributes (or other model) to be added to this\n    // collection.\n    _prepareModel: function(attrs, options) {\n      if (attrs instanceof Model) {\n        if (!attrs.collection) attrs.collection = this;\n        return attrs;\n      }\n      options || (options = {});\n      options.collection = this;\n      var model = new this.model(attrs, options);\n      if (!model._validate(attrs, options)) {\n        this.trigger('invalid', this, attrs, options);\n        return false;\n      }\n      return model;\n    },\n\n    // Internal method to sever a model's ties to a collection.\n    _removeReference: function(model) {\n      if (this === model.collection) delete model.collection;\n      model.off('all', this._onModelEvent, this);\n    },\n\n    // Internal method called every time a model in the set fires an event.\n    // Sets need to update their indexes when models change ids. All other\n    // events simply proxy through. \"add\" and \"remove\" events that originate\n    // in other collections are ignored.\n    _onModelEvent: function(event, model, collection, options) {\n      if ((event === 'add' || event === 'remove') && collection !== this) return;\n      if (event === 'destroy') this.remove(model, options);\n      if (model && event === 'change:' + model.idAttribute) {\n        delete this._byId[model.previous(model.idAttribute)];\n        if (model.id != null) this._byId[model.id] = model;\n      }\n      this.trigger.apply(this, arguments);\n    }\n\n  });\n\n  // Underscore methods that we want to implement on the Collection.\n  // 90% of the core usefulness of Backbone Collections is actually implemented\n  // right here:\n  var methods = ['forEach', 'each', 'map', 'collect', 'reduce', 'foldl',\n    'inject', 'reduceRight', 'foldr', 'find', 'detect', 'filter', 'select',\n    'reject', 'every', 'all', 'some', 'any', 'include', 'contains', 'invoke',\n    'max', 'min', 'toArray', 'size', 'first', 'head', 'take', 'initial', 'rest',\n    'tail', 'drop', 'last', 'without', 'indexOf', 'shuffle', 'lastIndexOf',\n    'isEmpty', 'chain'];\n\n  // Mix in each Underscore method as a proxy to `Collection#models`.\n  _.each(methods, function(method) {\n    Collection.prototype[method] = function() {\n      var args = slice.call(arguments);\n      args.unshift(this.models);\n      return _[method].apply(_, args);\n    };\n  });\n\n  // Underscore methods that take a property name as an argument.\n  var attributeMethods = ['groupBy', 'countBy', 'sortBy'];\n\n  // Use attributes instead of properties.\n  _.each(attributeMethods, function(method) {\n    Collection.prototype[method] = function(value, context) {\n      var iterator = _.isFunction(value) ? value : function(model) {\n        return model.get(value);\n      };\n      return _[method](this.models, iterator, context);\n    };\n  });\n\n  // Backbone.View\n  // -------------\n\n  // Backbone Views are almost more convention than they are actual code. A View\n  // is simply a JavaScript object that represents a logical chunk of UI in the\n  // DOM. This might be a single item, an entire list, a sidebar or panel, or\n  // even the surrounding frame which wraps your whole app. Defining a chunk of\n  // UI as a **View** allows you to define your DOM events declaratively, without\n  // having to worry about render order ... and makes it easy for the view to\n  // react to specific changes in the state of your models.\n\n  // Creating a Backbone.View creates its initial element outside of the DOM,\n  // if an existing element is not provided...\n  var View = Backbone.View = function(options) {\n    this.cid = _.uniqueId('view');\n    this._configure(options || {});\n    this._ensureElement();\n    this.initialize.apply(this, arguments);\n    this.delegateEvents();\n  };\n\n  // Cached regex to split keys for `delegate`.\n  var delegateEventSplitter = /^(\\S+)\\s*(.*)$/;\n\n  // List of view options to be merged as properties.\n  var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];\n\n  // Set up all inheritable **Backbone.View** properties and methods.\n  _.extend(View.prototype, Events, {\n\n    // The default `tagName` of a View's element is `\"div\"`.\n    tagName: 'div',\n\n    // jQuery delegate for element lookup, scoped to DOM elements within the\n    // current view. This should be prefered to global lookups where possible.\n    $: function(selector) {\n      return this.$el.find(selector);\n    },\n\n    // Initialize is an empty function by default. Override it with your own\n    // initialization logic.\n    initialize: function(){},\n\n    // **render** is the core function that your view should override, in order\n    // to populate its element (`this.el`), with the appropriate HTML. The\n    // convention is for **render** to always return `this`.\n    render: function() {\n      return this;\n    },\n\n    // Remove this view by taking the element out of the DOM, and removing any\n    // applicable Backbone.Events listeners.\n    remove: function() {\n      this.$el.remove();\n      this.stopListening();\n      return this;\n    },\n\n    // Change the view's element (`this.el` property), including event\n    // re-delegation.\n    setElement: function(element, delegate) {\n      if (this.$el) this.undelegateEvents();\n      this.$el = element instanceof Backbone.$ ? element : Backbone.$(element);\n      this.el = this.$el[0];\n      if (delegate !== false) this.delegateEvents();\n      return this;\n    },\n\n    // Set callbacks, where `this.events` is a hash of\n    //\n    // *{\"event selector\": \"callback\"}*\n    //\n    //     {\n    //       'mousedown .title':  'edit',\n    //       'click .button':     'save'\n    //       'click .open':       function(e) { ... }\n    //     }\n    //\n    // pairs. Callbacks will be bound to the view, with `this` set properly.\n    // Uses event delegation for efficiency.\n    // Omitting the selector binds the event to `this.el`.\n    // This only works for delegate-able events: not `focus`, `blur`, and\n    // not `change`, `submit`, and `reset` in Internet Explorer.\n    delegateEvents: function(events) {\n      if (!(events || (events = _.result(this, 'events')))) return this;\n      this.undelegateEvents();\n      for (var key in events) {\n        var method = events[key];\n        if (!_.isFunction(method)) method = this[events[key]];\n        if (!method) continue;\n\n        var match = key.match(delegateEventSplitter);\n        var eventName = match[1], selector = match[2];\n        method = _.bind(method, this);\n        eventName += '.delegateEvents' + this.cid;\n        if (selector === '') {\n          this.$el.on(eventName, method);\n        } else {\n          this.$el.on(eventName, selector, method);\n        }\n      }\n      return this;\n    },\n\n    // Clears all callbacks previously bound to the view with `delegateEvents`.\n    // You usually don't need to use this, but may wish to if you have multiple\n    // Backbone views attached to the same DOM element.\n    undelegateEvents: function() {\n      this.$el.off('.delegateEvents' + this.cid);\n      return this;\n    },\n\n    // Performs the initial configuration of a View with a set of options.\n    // Keys with special meaning *(e.g. model, collection, id, className)* are\n    // attached directly to the view.  See `viewOptions` for an exhaustive\n    // list.\n    _configure: function(options) {\n      if (this.options) options = _.extend({}, _.result(this, 'options'), options);\n      _.extend(this, _.pick(options, viewOptions));\n      this.options = options;\n    },\n\n    // Ensure that the View has a DOM element to render into.\n    // If `this.el` is a string, pass it through `$()`, take the first\n    // matching element, and re-assign it to `el`. Otherwise, create\n    // an element from the `id`, `className` and `tagName` properties.\n    _ensureElement: function() {\n      if (!this.el) {\n        var attrs = _.extend({}, _.result(this, 'attributes'));\n        if (this.id) attrs.id = _.result(this, 'id');\n        if (this.className) attrs['class'] = _.result(this, 'className');\n        var $el = Backbone.$('<' + _.result(this, 'tagName') + '>').attr(attrs);\n        this.setElement($el, false);\n      } else {\n        this.setElement(_.result(this, 'el'), false);\n      }\n    }\n\n  });\n\n  // Backbone.sync\n  // -------------\n\n  // Override this function to change the manner in which Backbone persists\n  // models to the server. You will be passed the type of request, and the\n  // model in question. By default, makes a RESTful Ajax request\n  // to the model's `url()`. Some possible customizations could be:\n  //\n  // * Use `setTimeout` to batch rapid-fire updates into a single request.\n  // * Send up the models as XML instead of JSON.\n  // * Persist models via WebSockets instead of Ajax.\n  //\n  // Turn on `Backbone.emulateHTTP` in order to send `PUT` and `DELETE` requests\n  // as `POST`, with a `_method` parameter containing the true HTTP method,\n  // as well as all requests with the body as `application/x-www-form-urlencoded`\n  // instead of `application/json` with the model in a param named `model`.\n  // Useful when interfacing with server-side languages like **PHP** that make\n  // it difficult to read the body of `PUT` requests.\n  Backbone.sync = function(method, model, options) {\n    var type = methodMap[method];\n\n    // Default options, unless specified.\n    _.defaults(options || (options = {}), {\n      emulateHTTP: Backbone.emulateHTTP,\n      emulateJSON: Backbone.emulateJSON\n    });\n\n    // Default JSON-request options.\n    var params = {type: type, dataType: 'json'};\n\n    // Ensure that we have a URL.\n    if (!options.url) {\n      params.url = _.result(model, 'url') || urlError();\n    }\n\n    // Ensure that we have the appropriate request data.\n    if (options.data == null && model && (method === 'create' || method === 'update' || method === 'patch')) {\n      params.contentType = 'application/json';\n      params.data = JSON.stringify(options.attrs || model.toJSON(options));\n    }\n\n    // For older servers, emulate JSON by encoding the request into an HTML-form.\n    if (options.emulateJSON) {\n      params.contentType = 'application/x-www-form-urlencoded';\n      params.data = params.data ? {model: params.data} : {};\n    }\n\n    // For older servers, emulate HTTP by mimicking the HTTP method with `_method`\n    // And an `X-HTTP-Method-Override` header.\n    if (options.emulateHTTP && (type === 'PUT' || type === 'DELETE' || type === 'PATCH')) {\n      params.type = 'POST';\n      if (options.emulateJSON) params.data._method = type;\n      var beforeSend = options.beforeSend;\n      options.beforeSend = function(xhr) {\n        xhr.setRequestHeader('X-HTTP-Method-Override', type);\n        if (beforeSend) return beforeSend.apply(this, arguments);\n      };\n    }\n\n    // Don't process data on a non-GET request.\n    if (params.type !== 'GET' && !options.emulateJSON) {\n      params.processData = false;\n    }\n\n    // If we're sending a `PATCH` request, and we're in an old Internet Explorer\n    // that still has ActiveX enabled by default, override jQuery to use that\n    // for XHR instead. Remove this line when jQuery supports `PATCH` on IE8.\n    if (params.type === 'PATCH' && window.ActiveXObject &&\n          !(window.external && window.external.msActiveXFilteringEnabled)) {\n      params.xhr = function() {\n        return new ActiveXObject(\"Microsoft.XMLHTTP\");\n      };\n    }\n\n    // Make the request, allowing the user to override any Ajax options.\n    var xhr = options.xhr = Backbone.ajax(_.extend(params, options));\n    model.trigger('request', model, xhr, options);\n    return xhr;\n  };\n\n  // Map from CRUD to HTTP for our default `Backbone.sync` implementation.\n  var methodMap = {\n    'create': 'POST',\n    'update': 'PUT',\n    'patch':  'PATCH',\n    'delete': 'DELETE',\n    'read':   'GET'\n  };\n\n  // Set the default implementation of `Backbone.ajax` to proxy through to `$`.\n  // Override this if you'd like to use a different library.\n  Backbone.ajax = function() {\n    return Backbone.$.ajax.apply(Backbone.$, arguments);\n  };\n\n  // Backbone.Router\n  // ---------------\n\n  // Routers map faux-URLs to actions, and fire events when routes are\n  // matched. Creating a new one sets its `routes` hash, if not set statically.\n  var Router = Backbone.Router = function(options) {\n    options || (options = {});\n    if (options.routes) this.routes = options.routes;\n    this._bindRoutes();\n    this.initialize.apply(this, arguments);\n  };\n\n  // Cached regular expressions for matching named param parts and splatted\n  // parts of route strings.\n  var optionalParam = /\\((.*?)\\)/g;\n  var namedParam    = /(\\(\\?)?:\\w+/g;\n  var splatParam    = /\\*\\w+/g;\n  var escapeRegExp  = /[\\-{}\\[\\]+?.,\\\\\\^$|#\\s]/g;\n\n  // Set up all inheritable **Backbone.Router** properties and methods.\n  _.extend(Router.prototype, Events, {\n\n    // Initialize is an empty function by default. Override it with your own\n    // initialization logic.\n    initialize: function(){},\n\n    // Manually bind a single named route to a callback. For example:\n    //\n    //     this.route('search/:query/p:num', 'search', function(query, num) {\n    //       ...\n    //     });\n    //\n    route: function(route, name, callback) {\n      if (!_.isRegExp(route)) route = this._routeToRegExp(route);\n      if (_.isFunction(name)) {\n        callback = name;\n        name = '';\n      }\n      if (!callback) callback = this[name];\n      var router = this;\n      Backbone.history.route(route, function(fragment) {\n        var args = router._extractParameters(route, fragment);\n        callback && callback.apply(router, args);\n        router.trigger.apply(router, ['route:' + name].concat(args));\n        router.trigger('route', name, args);\n        Backbone.history.trigger('route', router, name, args);\n      });\n      return this;\n    },\n\n    // Simple proxy to `Backbone.history` to save a fragment into the history.\n    navigate: function(fragment, options) {\n      Backbone.history.navigate(fragment, options);\n      return this;\n    },\n\n    // Bind all defined routes to `Backbone.history`. We have to reverse the\n    // order of the routes here to support behavior where the most general\n    // routes can be defined at the bottom of the route map.\n    _bindRoutes: function() {\n      if (!this.routes) return;\n      this.routes = _.result(this, 'routes');\n      var route, routes = _.keys(this.routes);\n      while ((route = routes.pop()) != null) {\n        this.route(route, this.routes[route]);\n      }\n    },\n\n    // Convert a route string into a regular expression, suitable for matching\n    // against the current location hash.\n    _routeToRegExp: function(route) {\n      route = route.replace(escapeRegExp, '\\\\$&')\n                   .replace(optionalParam, '(?:$1)?')\n                   .replace(namedParam, function(match, optional){\n                     return optional ? match : '([^\\/]+)';\n                   })\n                   .replace(splatParam, '(.*?)');\n      return new RegExp('^' + route + '$');\n    },\n\n    // Given a route, and a URL fragment that it matches, return the array of\n    // extracted decoded parameters. Empty or unmatched parameters will be\n    // treated as `null` to normalize cross-browser behavior.\n    _extractParameters: function(route, fragment) {\n      var params = route.exec(fragment).slice(1);\n      return _.map(params, function(param) {\n        return param ? decodeURIComponent(param) : null;\n      });\n    }\n\n  });\n\n  // Backbone.History\n  // ----------------\n\n  // Handles cross-browser history management, based on either\n  // [pushState](http://diveintohtml5.info/history.html) and real URLs, or\n  // [onhashchange](https://developer.mozilla.org/en-US/docs/DOM/window.onhashchange)\n  // and URL fragments. If the browser supports neither (old IE, natch),\n  // falls back to polling.\n  var History = Backbone.History = function() {\n    this.handlers = [];\n    _.bindAll(this, 'checkUrl');\n\n    // Ensure that `History` can be used outside of the browser.\n    if (typeof window !== 'undefined') {\n      this.location = window.location;\n      this.history = window.history;\n    }\n  };\n\n  // Cached regex for stripping a leading hash/slash and trailing space.\n  var routeStripper = /^[#\\/]|\\s+$/g;\n\n  // Cached regex for stripping leading and trailing slashes.\n  var rootStripper = /^\\/+|\\/+$/g;\n\n  // Cached regex for detecting MSIE.\n  var isExplorer = /msie [\\w.]+/;\n\n  // Cached regex for removing a trailing slash.\n  var trailingSlash = /\\/$/;\n\n  // Has the history handling already been started?\n  History.started = false;\n\n  // Set up all inheritable **Backbone.History** properties and methods.\n  _.extend(History.prototype, Events, {\n\n    // The default interval to poll for hash changes, if necessary, is\n    // twenty times a second.\n    interval: 50,\n\n    // Gets the true hash value. Cannot use location.hash directly due to bug\n    // in Firefox where location.hash will always be decoded.\n    getHash: function(window) {\n      var match = (window || this).location.href.match(/#(.*)$/);\n      return match ? match[1] : '';\n    },\n\n    // Get the cross-browser normalized URL fragment, either from the URL,\n    // the hash, or the override.\n    getFragment: function(fragment, forcePushState) {\n      if (fragment == null) {\n        if (this._hasPushState || !this._wantsHashChange || forcePushState) {\n          fragment = this.location.pathname;\n          var root = this.root.replace(trailingSlash, '');\n          if (!fragment.indexOf(root)) fragment = fragment.substr(root.length);\n        } else {\n          fragment = this.getHash();\n        }\n      }\n      return fragment.replace(routeStripper, '');\n    },\n\n    // Start the hash change handling, returning `true` if the current URL matches\n    // an existing route, and `false` otherwise.\n    start: function(options) {\n      if (History.started) throw new Error(\"Backbone.history has already been started\");\n      History.started = true;\n\n      // Figure out the initial configuration. Do we need an iframe?\n      // Is pushState desired ... is it available?\n      this.options          = _.extend({}, {root: '/'}, this.options, options);\n      this.root             = this.options.root;\n      this._wantsHashChange = this.options.hashChange !== false;\n      this._wantsPushState  = !!this.options.pushState;\n      this._hasPushState    = !!(this.options.pushState && this.history && this.history.pushState);\n      var fragment          = this.getFragment();\n      var docMode           = document.documentMode;\n      var oldIE             = (isExplorer.exec(navigator.userAgent.toLowerCase()) && (!docMode || docMode <= 7));\n\n      // Normalize root to always include a leading and trailing slash.\n      this.root = ('/' + this.root + '/').replace(rootStripper, '/');\n\n      if (oldIE && this._wantsHashChange) {\n        this.iframe = Backbone.$('<iframe src=\"javascript:0\" tabindex=\"-1\" />').hide().appendTo('body')[0].contentWindow;\n        this.navigate(fragment);\n      }\n\n      // Depending on whether we're using pushState or hashes, and whether\n      // 'onhashchange' is supported, determine how we check the URL state.\n      if (this._hasPushState) {\n        Backbone.$(window).on('popstate', this.checkUrl);\n      } else if (this._wantsHashChange && ('onhashchange' in window) && !oldIE) {\n        Backbone.$(window).on('hashchange', this.checkUrl);\n      } else if (this._wantsHashChange) {\n        this._checkUrlInterval = setInterval(this.checkUrl, this.interval);\n      }\n\n      // Determine if we need to change the base url, for a pushState link\n      // opened by a non-pushState browser.\n      this.fragment = fragment;\n      var loc = this.location;\n      var atRoot = loc.pathname.replace(/[^\\/]$/, '$&/') === this.root;\n\n      // If we've started off with a route from a `pushState`-enabled browser,\n      // but we're currently in a browser that doesn't support it...\n      if (this._wantsHashChange && this._wantsPushState && !this._hasPushState && !atRoot) {\n        this.fragment = this.getFragment(null, true);\n        this.location.replace(this.root + this.location.search + '#' + this.fragment);\n        // Return immediately as browser will do redirect to new url\n        return true;\n\n      // Or if we've started out with a hash-based route, but we're currently\n      // in a browser where it could be `pushState`-based instead...\n      } else if (this._wantsPushState && this._hasPushState && atRoot && loc.hash) {\n        this.fragment = this.getHash().replace(routeStripper, '');\n        this.history.replaceState({}, document.title, this.root + this.fragment + loc.search);\n      }\n\n      if (!this.options.silent) return this.loadUrl();\n    },\n\n    // Disable Backbone.history, perhaps temporarily. Not useful in a real app,\n    // but possibly useful for unit testing Routers.\n    stop: function() {\n      Backbone.$(window).off('popstate', this.checkUrl).off('hashchange', this.checkUrl);\n      clearInterval(this._checkUrlInterval);\n      History.started = false;\n    },\n\n    // Add a route to be tested when the fragment changes. Routes added later\n    // may override previous routes.\n    route: function(route, callback) {\n      this.handlers.unshift({route: route, callback: callback});\n    },\n\n    // Checks the current URL to see if it has changed, and if it has,\n    // calls `loadUrl`, normalizing across the hidden iframe.\n    checkUrl: function(e) {\n      var current = this.getFragment();\n      if (current === this.fragment && this.iframe) {\n        current = this.getFragment(this.getHash(this.iframe));\n      }\n      if (current === this.fragment) return false;\n      if (this.iframe) this.navigate(current);\n      this.loadUrl() || this.loadUrl(this.getHash());\n    },\n\n    // Attempt to load the current URL fragment. If a route succeeds with a\n    // match, returns `true`. If no defined routes matches the fragment,\n    // returns `false`.\n    loadUrl: function(fragmentOverride) {\n      var fragment = this.fragment = this.getFragment(fragmentOverride);\n      var matched = _.any(this.handlers, function(handler) {\n        if (handler.route.test(fragment)) {\n          handler.callback(fragment);\n          return true;\n        }\n      });\n      return matched;\n    },\n\n    // Save a fragment into the hash history, or replace the URL state if the\n    // 'replace' option is passed. You are responsible for properly URL-encoding\n    // the fragment in advance.\n    //\n    // The options object can contain `trigger: true` if you wish to have the\n    // route callback be fired (not usually desirable), or `replace: true`, if\n    // you wish to modify the current URL without adding an entry to the history.\n    navigate: function(fragment, options) {\n      if (!History.started) return false;\n      if (!options || options === true) options = {trigger: options};\n      fragment = this.getFragment(fragment || '');\n      if (this.fragment === fragment) return;\n      this.fragment = fragment;\n      var url = this.root + fragment;\n\n      // If pushState is available, we use it to set the fragment as a real URL.\n      if (this._hasPushState) {\n        this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);\n\n      // If hash changes haven't been explicitly disabled, update the hash\n      // fragment to store history.\n      } else if (this._wantsHashChange) {\n        this._updateHash(this.location, fragment, options.replace);\n        if (this.iframe && (fragment !== this.getFragment(this.getHash(this.iframe)))) {\n          // Opening and closing the iframe tricks IE7 and earlier to push a\n          // history entry on hash-tag change.  When replace is true, we don't\n          // want this.\n          if(!options.replace) this.iframe.document.open().close();\n          this._updateHash(this.iframe.location, fragment, options.replace);\n        }\n\n      // If you've told us that you explicitly don't want fallback hashchange-\n      // based history, then `navigate` becomes a page refresh.\n      } else {\n        return this.location.assign(url);\n      }\n      if (options.trigger) this.loadUrl(fragment);\n    },\n\n    // Update the hash location, either replacing the current entry, or adding\n    // a new one to the browser history.\n    _updateHash: function(location, fragment, replace) {\n      if (replace) {\n        var href = location.href.replace(/(javascript:|#).*$/, '');\n        location.replace(href + '#' + fragment);\n      } else {\n        // Some browsers require that `hash` contains a leading #.\n        location.hash = '#' + fragment;\n      }\n    }\n\n  });\n\n  // Create the default Backbone.history.\n  Backbone.history = new History;\n\n  // Helpers\n  // -------\n\n  // Helper function to correctly set up the prototype chain, for subclasses.\n  // Similar to `goog.inherits`, but uses a hash of prototype properties and\n  // class properties to be extended.\n  var extend = function(protoProps, staticProps) {\n    var parent = this;\n    var child;\n\n    // The constructor function for the new subclass is either defined by you\n    // (the \"constructor\" property in your `extend` definition), or defaulted\n    // by us to simply call the parent's constructor.\n    if (protoProps && _.has(protoProps, 'constructor')) {\n      child = protoProps.constructor;\n    } else {\n      child = function(){ return parent.apply(this, arguments); };\n    }\n\n    // Add static properties to the constructor function, if supplied.\n    _.extend(child, parent, staticProps);\n\n    // Set the prototype chain to inherit from `parent`, without calling\n    // `parent`'s constructor function.\n    var Surrogate = function(){ this.constructor = child; };\n    Surrogate.prototype = parent.prototype;\n    child.prototype = new Surrogate;\n\n    // Add prototype properties (instance properties) to the subclass,\n    // if supplied.\n    if (protoProps) _.extend(child.prototype, protoProps);\n\n    // Set a convenience property in case the parent's prototype is needed\n    // later.\n    child.__super__ = parent.prototype;\n\n    return child;\n  };\n\n  // Set up inheritance for the model, collection, router, view and history.\n  Model.extend = Collection.extend = Router.extend = View.extend = History.extend = extend;\n\n  // Throw an error when a URL is needed, and none is supplied.\n  var urlError = function() {\n    throw new Error('A \"url\" property or function must be specified');\n  };\n\n  // Wrap an optional error callback with a fallback error event.\n  var wrapError = function (model, options) {\n    var error = options.error;\n    options.error = function(resp) {\n      if (error) error(model, resp, options);\n      model.trigger('error', model, resp, options);\n    };\n  };\n\n}).call(this);\n\n\n//# sourceURL=webpack:///./node_modules/backbone/backbone.js?");
 
-        // This won't be defined inside a web worker itself (that's ok)
-        if (typeof PooledWorker === "undefined") {
-            return;
-        }
+/***/ }),
 
-        /*
-         * The worker that runs the tests in the background, if possible.
-         */
-        this.testWorker = new PooledWorker(options.workerFile, function (code, validate, errors, callback) {
-            var self = this;
+/***/ "./node_modules/underscore/underscore.js":
+/*!***********************************************!*\
+  !*** ./node_modules/underscore/underscore.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-            // If there are syntax errors in the tests themselves,
-            //  then we ignore the request to test.
-            try {
-                tester.exec(validate);
-            } catch (e) {
-                if (window.console) {
-                    console.warn(e.message);
-                }
-                return;
-            }
+eval("//     Underscore.js 1.4.4\n//     http://underscorejs.org\n//     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.\n//     Underscore may be freely distributed under the MIT license.\n\n(function() {\n\n  // Baseline setup\n  // --------------\n\n  // Establish the root object, `window` in the browser, or `global` on the server.\n  var root = this;\n\n  // Save the previous value of the `_` variable.\n  var previousUnderscore = root._;\n\n  // Establish the object that gets returned to break out of a loop iteration.\n  var breaker = {};\n\n  // Save bytes in the minified (but not gzipped) version:\n  var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;\n\n  // Create quick reference variables for speed access to core prototypes.\n  var push             = ArrayProto.push,\n      slice            = ArrayProto.slice,\n      concat           = ArrayProto.concat,\n      toString         = ObjProto.toString,\n      hasOwnProperty   = ObjProto.hasOwnProperty;\n\n  // All **ECMAScript 5** native function implementations that we hope to use\n  // are declared here.\n  var\n    nativeForEach      = ArrayProto.forEach,\n    nativeMap          = ArrayProto.map,\n    nativeReduce       = ArrayProto.reduce,\n    nativeReduceRight  = ArrayProto.reduceRight,\n    nativeFilter       = ArrayProto.filter,\n    nativeEvery        = ArrayProto.every,\n    nativeSome         = ArrayProto.some,\n    nativeIndexOf      = ArrayProto.indexOf,\n    nativeLastIndexOf  = ArrayProto.lastIndexOf,\n    nativeIsArray      = Array.isArray,\n    nativeKeys         = Object.keys,\n    nativeBind         = FuncProto.bind;\n\n  // Create a safe reference to the Underscore object for use below.\n  var _ = function(obj) {\n    if (obj instanceof _) return obj;\n    if (!(this instanceof _)) return new _(obj);\n    this._wrapped = obj;\n  };\n\n  // Export the Underscore object for **Node.js**, with\n  // backwards-compatibility for the old `require()` API. If we're in\n  // the browser, add `_` as a global object via a string identifier,\n  // for Closure Compiler \"advanced\" mode.\n  if (true) {\n    if (typeof module !== 'undefined' && module.exports) {\n      exports = module.exports = _;\n    }\n    exports._ = _;\n  } else {}\n\n  // Current version.\n  _.VERSION = '1.4.4';\n\n  // Collection Functions\n  // --------------------\n\n  // The cornerstone, an `each` implementation, aka `forEach`.\n  // Handles objects with the built-in `forEach`, arrays, and raw objects.\n  // Delegates to **ECMAScript 5**'s native `forEach` if available.\n  var each = _.each = _.forEach = function(obj, iterator, context) {\n    if (obj == null) return;\n    if (nativeForEach && obj.forEach === nativeForEach) {\n      obj.forEach(iterator, context);\n    } else if (obj.length === +obj.length) {\n      for (var i = 0, l = obj.length; i < l; i++) {\n        if (iterator.call(context, obj[i], i, obj) === breaker) return;\n      }\n    } else {\n      for (var key in obj) {\n        if (_.has(obj, key)) {\n          if (iterator.call(context, obj[key], key, obj) === breaker) return;\n        }\n      }\n    }\n  };\n\n  // Return the results of applying the iterator to each element.\n  // Delegates to **ECMAScript 5**'s native `map` if available.\n  _.map = _.collect = function(obj, iterator, context) {\n    var results = [];\n    if (obj == null) return results;\n    if (nativeMap && obj.map === nativeMap) return obj.map(iterator, context);\n    each(obj, function(value, index, list) {\n      results[results.length] = iterator.call(context, value, index, list);\n    });\n    return results;\n  };\n\n  var reduceError = 'Reduce of empty array with no initial value';\n\n  // **Reduce** builds up a single result from a list of values, aka `inject`,\n  // or `foldl`. Delegates to **ECMAScript 5**'s native `reduce` if available.\n  _.reduce = _.foldl = _.inject = function(obj, iterator, memo, context) {\n    var initial = arguments.length > 2;\n    if (obj == null) obj = [];\n    if (nativeReduce && obj.reduce === nativeReduce) {\n      if (context) iterator = _.bind(iterator, context);\n      return initial ? obj.reduce(iterator, memo) : obj.reduce(iterator);\n    }\n    each(obj, function(value, index, list) {\n      if (!initial) {\n        memo = value;\n        initial = true;\n      } else {\n        memo = iterator.call(context, memo, value, index, list);\n      }\n    });\n    if (!initial) throw new TypeError(reduceError);\n    return memo;\n  };\n\n  // The right-associative version of reduce, also known as `foldr`.\n  // Delegates to **ECMAScript 5**'s native `reduceRight` if available.\n  _.reduceRight = _.foldr = function(obj, iterator, memo, context) {\n    var initial = arguments.length > 2;\n    if (obj == null) obj = [];\n    if (nativeReduceRight && obj.reduceRight === nativeReduceRight) {\n      if (context) iterator = _.bind(iterator, context);\n      return initial ? obj.reduceRight(iterator, memo) : obj.reduceRight(iterator);\n    }\n    var length = obj.length;\n    if (length !== +length) {\n      var keys = _.keys(obj);\n      length = keys.length;\n    }\n    each(obj, function(value, index, list) {\n      index = keys ? keys[--length] : --length;\n      if (!initial) {\n        memo = obj[index];\n        initial = true;\n      } else {\n        memo = iterator.call(context, memo, obj[index], index, list);\n      }\n    });\n    if (!initial) throw new TypeError(reduceError);\n    return memo;\n  };\n\n  // Return the first value which passes a truth test. Aliased as `detect`.\n  _.find = _.detect = function(obj, iterator, context) {\n    var result;\n    any(obj, function(value, index, list) {\n      if (iterator.call(context, value, index, list)) {\n        result = value;\n        return true;\n      }\n    });\n    return result;\n  };\n\n  // Return all the elements that pass a truth test.\n  // Delegates to **ECMAScript 5**'s native `filter` if available.\n  // Aliased as `select`.\n  _.filter = _.select = function(obj, iterator, context) {\n    var results = [];\n    if (obj == null) return results;\n    if (nativeFilter && obj.filter === nativeFilter) return obj.filter(iterator, context);\n    each(obj, function(value, index, list) {\n      if (iterator.call(context, value, index, list)) results[results.length] = value;\n    });\n    return results;\n  };\n\n  // Return all the elements for which a truth test fails.\n  _.reject = function(obj, iterator, context) {\n    return _.filter(obj, function(value, index, list) {\n      return !iterator.call(context, value, index, list);\n    }, context);\n  };\n\n  // Determine whether all of the elements match a truth test.\n  // Delegates to **ECMAScript 5**'s native `every` if available.\n  // Aliased as `all`.\n  _.every = _.all = function(obj, iterator, context) {\n    iterator || (iterator = _.identity);\n    var result = true;\n    if (obj == null) return result;\n    if (nativeEvery && obj.every === nativeEvery) return obj.every(iterator, context);\n    each(obj, function(value, index, list) {\n      if (!(result = result && iterator.call(context, value, index, list))) return breaker;\n    });\n    return !!result;\n  };\n\n  // Determine if at least one element in the object matches a truth test.\n  // Delegates to **ECMAScript 5**'s native `some` if available.\n  // Aliased as `any`.\n  var any = _.some = _.any = function(obj, iterator, context) {\n    iterator || (iterator = _.identity);\n    var result = false;\n    if (obj == null) return result;\n    if (nativeSome && obj.some === nativeSome) return obj.some(iterator, context);\n    each(obj, function(value, index, list) {\n      if (result || (result = iterator.call(context, value, index, list))) return breaker;\n    });\n    return !!result;\n  };\n\n  // Determine if the array or object contains a given value (using `===`).\n  // Aliased as `include`.\n  _.contains = _.include = function(obj, target) {\n    if (obj == null) return false;\n    if (nativeIndexOf && obj.indexOf === nativeIndexOf) return obj.indexOf(target) != -1;\n    return any(obj, function(value) {\n      return value === target;\n    });\n  };\n\n  // Invoke a method (with arguments) on every item in a collection.\n  _.invoke = function(obj, method) {\n    var args = slice.call(arguments, 2);\n    var isFunc = _.isFunction(method);\n    return _.map(obj, function(value) {\n      return (isFunc ? method : value[method]).apply(value, args);\n    });\n  };\n\n  // Convenience version of a common use case of `map`: fetching a property.\n  _.pluck = function(obj, key) {\n    return _.map(obj, function(value){ return value[key]; });\n  };\n\n  // Convenience version of a common use case of `filter`: selecting only objects\n  // containing specific `key:value` pairs.\n  _.where = function(obj, attrs, first) {\n    if (_.isEmpty(attrs)) return first ? null : [];\n    return _[first ? 'find' : 'filter'](obj, function(value) {\n      for (var key in attrs) {\n        if (attrs[key] !== value[key]) return false;\n      }\n      return true;\n    });\n  };\n\n  // Convenience version of a common use case of `find`: getting the first object\n  // containing specific `key:value` pairs.\n  _.findWhere = function(obj, attrs) {\n    return _.where(obj, attrs, true);\n  };\n\n  // Return the maximum element or (element-based computation).\n  // Can't optimize arrays of integers longer than 65,535 elements.\n  // See: https://bugs.webkit.org/show_bug.cgi?id=80797\n  _.max = function(obj, iterator, context) {\n    if (!iterator && _.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {\n      return Math.max.apply(Math, obj);\n    }\n    if (!iterator && _.isEmpty(obj)) return -Infinity;\n    var result = {computed : -Infinity, value: -Infinity};\n    each(obj, function(value, index, list) {\n      var computed = iterator ? iterator.call(context, value, index, list) : value;\n      computed >= result.computed && (result = {value : value, computed : computed});\n    });\n    return result.value;\n  };\n\n  // Return the minimum element (or element-based computation).\n  _.min = function(obj, iterator, context) {\n    if (!iterator && _.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {\n      return Math.min.apply(Math, obj);\n    }\n    if (!iterator && _.isEmpty(obj)) return Infinity;\n    var result = {computed : Infinity, value: Infinity};\n    each(obj, function(value, index, list) {\n      var computed = iterator ? iterator.call(context, value, index, list) : value;\n      computed < result.computed && (result = {value : value, computed : computed});\n    });\n    return result.value;\n  };\n\n  // Shuffle an array.\n  _.shuffle = function(obj) {\n    var rand;\n    var index = 0;\n    var shuffled = [];\n    each(obj, function(value) {\n      rand = _.random(index++);\n      shuffled[index - 1] = shuffled[rand];\n      shuffled[rand] = value;\n    });\n    return shuffled;\n  };\n\n  // An internal function to generate lookup iterators.\n  var lookupIterator = function(value) {\n    return _.isFunction(value) ? value : function(obj){ return obj[value]; };\n  };\n\n  // Sort the object's values by a criterion produced by an iterator.\n  _.sortBy = function(obj, value, context) {\n    var iterator = lookupIterator(value);\n    return _.pluck(_.map(obj, function(value, index, list) {\n      return {\n        value : value,\n        index : index,\n        criteria : iterator.call(context, value, index, list)\n      };\n    }).sort(function(left, right) {\n      var a = left.criteria;\n      var b = right.criteria;\n      if (a !== b) {\n        if (a > b || a === void 0) return 1;\n        if (a < b || b === void 0) return -1;\n      }\n      return left.index < right.index ? -1 : 1;\n    }), 'value');\n  };\n\n  // An internal function used for aggregate \"group by\" operations.\n  var group = function(obj, value, context, behavior) {\n    var result = {};\n    var iterator = lookupIterator(value || _.identity);\n    each(obj, function(value, index) {\n      var key = iterator.call(context, value, index, obj);\n      behavior(result, key, value);\n    });\n    return result;\n  };\n\n  // Groups the object's values by a criterion. Pass either a string attribute\n  // to group by, or a function that returns the criterion.\n  _.groupBy = function(obj, value, context) {\n    return group(obj, value, context, function(result, key, value) {\n      (_.has(result, key) ? result[key] : (result[key] = [])).push(value);\n    });\n  };\n\n  // Counts instances of an object that group by a certain criterion. Pass\n  // either a string attribute to count by, or a function that returns the\n  // criterion.\n  _.countBy = function(obj, value, context) {\n    return group(obj, value, context, function(result, key) {\n      if (!_.has(result, key)) result[key] = 0;\n      result[key]++;\n    });\n  };\n\n  // Use a comparator function to figure out the smallest index at which\n  // an object should be inserted so as to maintain order. Uses binary search.\n  _.sortedIndex = function(array, obj, iterator, context) {\n    iterator = iterator == null ? _.identity : lookupIterator(iterator);\n    var value = iterator.call(context, obj);\n    var low = 0, high = array.length;\n    while (low < high) {\n      var mid = (low + high) >>> 1;\n      iterator.call(context, array[mid]) < value ? low = mid + 1 : high = mid;\n    }\n    return low;\n  };\n\n  // Safely convert anything iterable into a real, live array.\n  _.toArray = function(obj) {\n    if (!obj) return [];\n    if (_.isArray(obj)) return slice.call(obj);\n    if (obj.length === +obj.length) return _.map(obj, _.identity);\n    return _.values(obj);\n  };\n\n  // Return the number of elements in an object.\n  _.size = function(obj) {\n    if (obj == null) return 0;\n    return (obj.length === +obj.length) ? obj.length : _.keys(obj).length;\n  };\n\n  // Array Functions\n  // ---------------\n\n  // Get the first element of an array. Passing **n** will return the first N\n  // values in the array. Aliased as `head` and `take`. The **guard** check\n  // allows it to work with `_.map`.\n  _.first = _.head = _.take = function(array, n, guard) {\n    if (array == null) return void 0;\n    return (n != null) && !guard ? slice.call(array, 0, n) : array[0];\n  };\n\n  // Returns everything but the last entry of the array. Especially useful on\n  // the arguments object. Passing **n** will return all the values in\n  // the array, excluding the last N. The **guard** check allows it to work with\n  // `_.map`.\n  _.initial = function(array, n, guard) {\n    return slice.call(array, 0, array.length - ((n == null) || guard ? 1 : n));\n  };\n\n  // Get the last element of an array. Passing **n** will return the last N\n  // values in the array. The **guard** check allows it to work with `_.map`.\n  _.last = function(array, n, guard) {\n    if (array == null) return void 0;\n    if ((n != null) && !guard) {\n      return slice.call(array, Math.max(array.length - n, 0));\n    } else {\n      return array[array.length - 1];\n    }\n  };\n\n  // Returns everything but the first entry of the array. Aliased as `tail` and `drop`.\n  // Especially useful on the arguments object. Passing an **n** will return\n  // the rest N values in the array. The **guard**\n  // check allows it to work with `_.map`.\n  _.rest = _.tail = _.drop = function(array, n, guard) {\n    return slice.call(array, (n == null) || guard ? 1 : n);\n  };\n\n  // Trim out all falsy values from an array.\n  _.compact = function(array) {\n    return _.filter(array, _.identity);\n  };\n\n  // Internal implementation of a recursive `flatten` function.\n  var flatten = function(input, shallow, output) {\n    each(input, function(value) {\n      if (_.isArray(value)) {\n        shallow ? push.apply(output, value) : flatten(value, shallow, output);\n      } else {\n        output.push(value);\n      }\n    });\n    return output;\n  };\n\n  // Return a completely flattened version of an array.\n  _.flatten = function(array, shallow) {\n    return flatten(array, shallow, []);\n  };\n\n  // Return a version of the array that does not contain the specified value(s).\n  _.without = function(array) {\n    return _.difference(array, slice.call(arguments, 1));\n  };\n\n  // Produce a duplicate-free version of the array. If the array has already\n  // been sorted, you have the option of using a faster algorithm.\n  // Aliased as `unique`.\n  _.uniq = _.unique = function(array, isSorted, iterator, context) {\n    if (_.isFunction(isSorted)) {\n      context = iterator;\n      iterator = isSorted;\n      isSorted = false;\n    }\n    var initial = iterator ? _.map(array, iterator, context) : array;\n    var results = [];\n    var seen = [];\n    each(initial, function(value, index) {\n      if (isSorted ? (!index || seen[seen.length - 1] !== value) : !_.contains(seen, value)) {\n        seen.push(value);\n        results.push(array[index]);\n      }\n    });\n    return results;\n  };\n\n  // Produce an array that contains the union: each distinct element from all of\n  // the passed-in arrays.\n  _.union = function() {\n    return _.uniq(concat.apply(ArrayProto, arguments));\n  };\n\n  // Produce an array that contains every item shared between all the\n  // passed-in arrays.\n  _.intersection = function(array) {\n    var rest = slice.call(arguments, 1);\n    return _.filter(_.uniq(array), function(item) {\n      return _.every(rest, function(other) {\n        return _.indexOf(other, item) >= 0;\n      });\n    });\n  };\n\n  // Take the difference between one array and a number of other arrays.\n  // Only the elements present in just the first array will remain.\n  _.difference = function(array) {\n    var rest = concat.apply(ArrayProto, slice.call(arguments, 1));\n    return _.filter(array, function(value){ return !_.contains(rest, value); });\n  };\n\n  // Zip together multiple lists into a single array -- elements that share\n  // an index go together.\n  _.zip = function() {\n    var args = slice.call(arguments);\n    var length = _.max(_.pluck(args, 'length'));\n    var results = new Array(length);\n    for (var i = 0; i < length; i++) {\n      results[i] = _.pluck(args, \"\" + i);\n    }\n    return results;\n  };\n\n  // Converts lists into objects. Pass either a single array of `[key, value]`\n  // pairs, or two parallel arrays of the same length -- one of keys, and one of\n  // the corresponding values.\n  _.object = function(list, values) {\n    if (list == null) return {};\n    var result = {};\n    for (var i = 0, l = list.length; i < l; i++) {\n      if (values) {\n        result[list[i]] = values[i];\n      } else {\n        result[list[i][0]] = list[i][1];\n      }\n    }\n    return result;\n  };\n\n  // If the browser doesn't supply us with indexOf (I'm looking at you, **MSIE**),\n  // we need this function. Return the position of the first occurrence of an\n  // item in an array, or -1 if the item is not included in the array.\n  // Delegates to **ECMAScript 5**'s native `indexOf` if available.\n  // If the array is large and already in sort order, pass `true`\n  // for **isSorted** to use binary search.\n  _.indexOf = function(array, item, isSorted) {\n    if (array == null) return -1;\n    var i = 0, l = array.length;\n    if (isSorted) {\n      if (typeof isSorted == 'number') {\n        i = (isSorted < 0 ? Math.max(0, l + isSorted) : isSorted);\n      } else {\n        i = _.sortedIndex(array, item);\n        return array[i] === item ? i : -1;\n      }\n    }\n    if (nativeIndexOf && array.indexOf === nativeIndexOf) return array.indexOf(item, isSorted);\n    for (; i < l; i++) if (array[i] === item) return i;\n    return -1;\n  };\n\n  // Delegates to **ECMAScript 5**'s native `lastIndexOf` if available.\n  _.lastIndexOf = function(array, item, from) {\n    if (array == null) return -1;\n    var hasIndex = from != null;\n    if (nativeLastIndexOf && array.lastIndexOf === nativeLastIndexOf) {\n      return hasIndex ? array.lastIndexOf(item, from) : array.lastIndexOf(item);\n    }\n    var i = (hasIndex ? from : array.length);\n    while (i--) if (array[i] === item) return i;\n    return -1;\n  };\n\n  // Generate an integer Array containing an arithmetic progression. A port of\n  // the native Python `range()` function. See\n  // [the Python documentation](http://docs.python.org/library/functions.html#range).\n  _.range = function(start, stop, step) {\n    if (arguments.length <= 1) {\n      stop = start || 0;\n      start = 0;\n    }\n    step = arguments[2] || 1;\n\n    var len = Math.max(Math.ceil((stop - start) / step), 0);\n    var idx = 0;\n    var range = new Array(len);\n\n    while(idx < len) {\n      range[idx++] = start;\n      start += step;\n    }\n\n    return range;\n  };\n\n  // Function (ahem) Functions\n  // ------------------\n\n  // Create a function bound to a given object (assigning `this`, and arguments,\n  // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if\n  // available.\n  _.bind = function(func, context) {\n    if (func.bind === nativeBind && nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));\n    var args = slice.call(arguments, 2);\n    return function() {\n      return func.apply(context, args.concat(slice.call(arguments)));\n    };\n  };\n\n  // Partially apply a function by creating a version that has had some of its\n  // arguments pre-filled, without changing its dynamic `this` context.\n  _.partial = function(func) {\n    var args = slice.call(arguments, 1);\n    return function() {\n      return func.apply(this, args.concat(slice.call(arguments)));\n    };\n  };\n\n  // Bind all of an object's methods to that object. Useful for ensuring that\n  // all callbacks defined on an object belong to it.\n  _.bindAll = function(obj) {\n    var funcs = slice.call(arguments, 1);\n    if (funcs.length === 0) funcs = _.functions(obj);\n    each(funcs, function(f) { obj[f] = _.bind(obj[f], obj); });\n    return obj;\n  };\n\n  // Memoize an expensive function by storing its results.\n  _.memoize = function(func, hasher) {\n    var memo = {};\n    hasher || (hasher = _.identity);\n    return function() {\n      var key = hasher.apply(this, arguments);\n      return _.has(memo, key) ? memo[key] : (memo[key] = func.apply(this, arguments));\n    };\n  };\n\n  // Delays a function for the given number of milliseconds, and then calls\n  // it with the arguments supplied.\n  _.delay = function(func, wait) {\n    var args = slice.call(arguments, 2);\n    return setTimeout(function(){ return func.apply(null, args); }, wait);\n  };\n\n  // Defers a function, scheduling it to run after the current call stack has\n  // cleared.\n  _.defer = function(func) {\n    return _.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));\n  };\n\n  // Returns a function, that, when invoked, will only be triggered at most once\n  // during a given window of time.\n  _.throttle = function(func, wait) {\n    var context, args, timeout, result;\n    var previous = 0;\n    var later = function() {\n      previous = new Date;\n      timeout = null;\n      result = func.apply(context, args);\n    };\n    return function() {\n      var now = new Date;\n      var remaining = wait - (now - previous);\n      context = this;\n      args = arguments;\n      if (remaining <= 0) {\n        clearTimeout(timeout);\n        timeout = null;\n        previous = now;\n        result = func.apply(context, args);\n      } else if (!timeout) {\n        timeout = setTimeout(later, remaining);\n      }\n      return result;\n    };\n  };\n\n  // Returns a function, that, as long as it continues to be invoked, will not\n  // be triggered. The function will be called after it stops being called for\n  // N milliseconds. If `immediate` is passed, trigger the function on the\n  // leading edge, instead of the trailing.\n  _.debounce = function(func, wait, immediate) {\n    var timeout, result;\n    return function() {\n      var context = this, args = arguments;\n      var later = function() {\n        timeout = null;\n        if (!immediate) result = func.apply(context, args);\n      };\n      var callNow = immediate && !timeout;\n      clearTimeout(timeout);\n      timeout = setTimeout(later, wait);\n      if (callNow) result = func.apply(context, args);\n      return result;\n    };\n  };\n\n  // Returns a function that will be executed at most one time, no matter how\n  // often you call it. Useful for lazy initialization.\n  _.once = function(func) {\n    var ran = false, memo;\n    return function() {\n      if (ran) return memo;\n      ran = true;\n      memo = func.apply(this, arguments);\n      func = null;\n      return memo;\n    };\n  };\n\n  // Returns the first function passed as an argument to the second,\n  // allowing you to adjust arguments, run code before and after, and\n  // conditionally execute the original function.\n  _.wrap = function(func, wrapper) {\n    return function() {\n      var args = [func];\n      push.apply(args, arguments);\n      return wrapper.apply(this, args);\n    };\n  };\n\n  // Returns a function that is the composition of a list of functions, each\n  // consuming the return value of the function that follows.\n  _.compose = function() {\n    var funcs = arguments;\n    return function() {\n      var args = arguments;\n      for (var i = funcs.length - 1; i >= 0; i--) {\n        args = [funcs[i].apply(this, args)];\n      }\n      return args[0];\n    };\n  };\n\n  // Returns a function that will only be executed after being called N times.\n  _.after = function(times, func) {\n    if (times <= 0) return func();\n    return function() {\n      if (--times < 1) {\n        return func.apply(this, arguments);\n      }\n    };\n  };\n\n  // Object Functions\n  // ----------------\n\n  // Retrieve the names of an object's properties.\n  // Delegates to **ECMAScript 5**'s native `Object.keys`\n  _.keys = nativeKeys || function(obj) {\n    if (obj !== Object(obj)) throw new TypeError('Invalid object');\n    var keys = [];\n    for (var key in obj) if (_.has(obj, key)) keys[keys.length] = key;\n    return keys;\n  };\n\n  // Retrieve the values of an object's properties.\n  _.values = function(obj) {\n    var values = [];\n    for (var key in obj) if (_.has(obj, key)) values.push(obj[key]);\n    return values;\n  };\n\n  // Convert an object into a list of `[key, value]` pairs.\n  _.pairs = function(obj) {\n    var pairs = [];\n    for (var key in obj) if (_.has(obj, key)) pairs.push([key, obj[key]]);\n    return pairs;\n  };\n\n  // Invert the keys and values of an object. The values must be serializable.\n  _.invert = function(obj) {\n    var result = {};\n    for (var key in obj) if (_.has(obj, key)) result[obj[key]] = key;\n    return result;\n  };\n\n  // Return a sorted list of the function names available on the object.\n  // Aliased as `methods`\n  _.functions = _.methods = function(obj) {\n    var names = [];\n    for (var key in obj) {\n      if (_.isFunction(obj[key])) names.push(key);\n    }\n    return names.sort();\n  };\n\n  // Extend a given object with all the properties in passed-in object(s).\n  _.extend = function(obj) {\n    each(slice.call(arguments, 1), function(source) {\n      if (source) {\n        for (var prop in source) {\n          obj[prop] = source[prop];\n        }\n      }\n    });\n    return obj;\n  };\n\n  // Return a copy of the object only containing the whitelisted properties.\n  _.pick = function(obj) {\n    var copy = {};\n    var keys = concat.apply(ArrayProto, slice.call(arguments, 1));\n    each(keys, function(key) {\n      if (key in obj) copy[key] = obj[key];\n    });\n    return copy;\n  };\n\n   // Return a copy of the object without the blacklisted properties.\n  _.omit = function(obj) {\n    var copy = {};\n    var keys = concat.apply(ArrayProto, slice.call(arguments, 1));\n    for (var key in obj) {\n      if (!_.contains(keys, key)) copy[key] = obj[key];\n    }\n    return copy;\n  };\n\n  // Fill in a given object with default properties.\n  _.defaults = function(obj) {\n    each(slice.call(arguments, 1), function(source) {\n      if (source) {\n        for (var prop in source) {\n          if (obj[prop] == null) obj[prop] = source[prop];\n        }\n      }\n    });\n    return obj;\n  };\n\n  // Create a (shallow-cloned) duplicate of an object.\n  _.clone = function(obj) {\n    if (!_.isObject(obj)) return obj;\n    return _.isArray(obj) ? obj.slice() : _.extend({}, obj);\n  };\n\n  // Invokes interceptor with the obj, and then returns obj.\n  // The primary purpose of this method is to \"tap into\" a method chain, in\n  // order to perform operations on intermediate results within the chain.\n  _.tap = function(obj, interceptor) {\n    interceptor(obj);\n    return obj;\n  };\n\n  // Internal recursive comparison function for `isEqual`.\n  var eq = function(a, b, aStack, bStack) {\n    // Identical objects are equal. `0 === -0`, but they aren't identical.\n    // See the Harmony `egal` proposal: http://wiki.ecmascript.org/doku.php?id=harmony:egal.\n    if (a === b) return a !== 0 || 1 / a == 1 / b;\n    // A strict comparison is necessary because `null == undefined`.\n    if (a == null || b == null) return a === b;\n    // Unwrap any wrapped objects.\n    if (a instanceof _) a = a._wrapped;\n    if (b instanceof _) b = b._wrapped;\n    // Compare `[[Class]]` names.\n    var className = toString.call(a);\n    if (className != toString.call(b)) return false;\n    switch (className) {\n      // Strings, numbers, dates, and booleans are compared by value.\n      case '[object String]':\n        // Primitives and their corresponding object wrappers are equivalent; thus, `\"5\"` is\n        // equivalent to `new String(\"5\")`.\n        return a == String(b);\n      case '[object Number]':\n        // `NaN`s are equivalent, but non-reflexive. An `egal` comparison is performed for\n        // other numeric values.\n        return a != +a ? b != +b : (a == 0 ? 1 / a == 1 / b : a == +b);\n      case '[object Date]':\n      case '[object Boolean]':\n        // Coerce dates and booleans to numeric primitive values. Dates are compared by their\n        // millisecond representations. Note that invalid dates with millisecond representations\n        // of `NaN` are not equivalent.\n        return +a == +b;\n      // RegExps are compared by their source patterns and flags.\n      case '[object RegExp]':\n        return a.source == b.source &&\n               a.global == b.global &&\n               a.multiline == b.multiline &&\n               a.ignoreCase == b.ignoreCase;\n    }\n    if (typeof a != 'object' || typeof b != 'object') return false;\n    // Assume equality for cyclic structures. The algorithm for detecting cyclic\n    // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.\n    var length = aStack.length;\n    while (length--) {\n      // Linear search. Performance is inversely proportional to the number of\n      // unique nested structures.\n      if (aStack[length] == a) return bStack[length] == b;\n    }\n    // Add the first object to the stack of traversed objects.\n    aStack.push(a);\n    bStack.push(b);\n    var size = 0, result = true;\n    // Recursively compare objects and arrays.\n    if (className == '[object Array]') {\n      // Compare array lengths to determine if a deep comparison is necessary.\n      size = a.length;\n      result = size == b.length;\n      if (result) {\n        // Deep compare the contents, ignoring non-numeric properties.\n        while (size--) {\n          if (!(result = eq(a[size], b[size], aStack, bStack))) break;\n        }\n      }\n    } else {\n      // Objects with different constructors are not equivalent, but `Object`s\n      // from different frames are.\n      var aCtor = a.constructor, bCtor = b.constructor;\n      if (aCtor !== bCtor && !(_.isFunction(aCtor) && (aCtor instanceof aCtor) &&\n                               _.isFunction(bCtor) && (bCtor instanceof bCtor))) {\n        return false;\n      }\n      // Deep compare objects.\n      for (var key in a) {\n        if (_.has(a, key)) {\n          // Count the expected number of properties.\n          size++;\n          // Deep compare each member.\n          if (!(result = _.has(b, key) && eq(a[key], b[key], aStack, bStack))) break;\n        }\n      }\n      // Ensure that both objects contain the same number of properties.\n      if (result) {\n        for (key in b) {\n          if (_.has(b, key) && !(size--)) break;\n        }\n        result = !size;\n      }\n    }\n    // Remove the first object from the stack of traversed objects.\n    aStack.pop();\n    bStack.pop();\n    return result;\n  };\n\n  // Perform a deep comparison to check if two objects are equal.\n  _.isEqual = function(a, b) {\n    return eq(a, b, [], []);\n  };\n\n  // Is a given array, string, or object empty?\n  // An \"empty\" object has no enumerable own-properties.\n  _.isEmpty = function(obj) {\n    if (obj == null) return true;\n    if (_.isArray(obj) || _.isString(obj)) return obj.length === 0;\n    for (var key in obj) if (_.has(obj, key)) return false;\n    return true;\n  };\n\n  // Is a given value a DOM element?\n  _.isElement = function(obj) {\n    return !!(obj && obj.nodeType === 1);\n  };\n\n  // Is a given value an array?\n  // Delegates to ECMA5's native Array.isArray\n  _.isArray = nativeIsArray || function(obj) {\n    return toString.call(obj) == '[object Array]';\n  };\n\n  // Is a given variable an object?\n  _.isObject = function(obj) {\n    return obj === Object(obj);\n  };\n\n  // Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp.\n  each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'], function(name) {\n    _['is' + name] = function(obj) {\n      return toString.call(obj) == '[object ' + name + ']';\n    };\n  });\n\n  // Define a fallback version of the method in browsers (ahem, IE), where\n  // there isn't any inspectable \"Arguments\" type.\n  if (!_.isArguments(arguments)) {\n    _.isArguments = function(obj) {\n      return !!(obj && _.has(obj, 'callee'));\n    };\n  }\n\n  // Optimize `isFunction` if appropriate.\n  if (true) {\n    _.isFunction = function(obj) {\n      return typeof obj === 'function';\n    };\n  }\n\n  // Is a given object a finite number?\n  _.isFinite = function(obj) {\n    return isFinite(obj) && !isNaN(parseFloat(obj));\n  };\n\n  // Is the given value `NaN`? (NaN is the only number which does not equal itself).\n  _.isNaN = function(obj) {\n    return _.isNumber(obj) && obj != +obj;\n  };\n\n  // Is a given value a boolean?\n  _.isBoolean = function(obj) {\n    return obj === true || obj === false || toString.call(obj) == '[object Boolean]';\n  };\n\n  // Is a given value equal to null?\n  _.isNull = function(obj) {\n    return obj === null;\n  };\n\n  // Is a given variable undefined?\n  _.isUndefined = function(obj) {\n    return obj === void 0;\n  };\n\n  // Shortcut function for checking if an object has a given property directly\n  // on itself (in other words, not on a prototype).\n  _.has = function(obj, key) {\n    return hasOwnProperty.call(obj, key);\n  };\n\n  // Utility Functions\n  // -----------------\n\n  // Run Underscore.js in *noConflict* mode, returning the `_` variable to its\n  // previous owner. Returns a reference to the Underscore object.\n  _.noConflict = function() {\n    root._ = previousUnderscore;\n    return this;\n  };\n\n  // Keep the identity function around for default iterators.\n  _.identity = function(value) {\n    return value;\n  };\n\n  // Run a function **n** times.\n  _.times = function(n, iterator, context) {\n    var accum = Array(n);\n    for (var i = 0; i < n; i++) accum[i] = iterator.call(context, i);\n    return accum;\n  };\n\n  // Return a random integer between min and max (inclusive).\n  _.random = function(min, max) {\n    if (max == null) {\n      max = min;\n      min = 0;\n    }\n    return min + Math.floor(Math.random() * (max - min + 1));\n  };\n\n  // List of HTML entities for escaping.\n  var entityMap = {\n    escape: {\n      '&': '&amp;',\n      '<': '&lt;',\n      '>': '&gt;',\n      '\"': '&quot;',\n      \"'\": '&#x27;',\n      '/': '&#x2F;'\n    }\n  };\n  entityMap.unescape = _.invert(entityMap.escape);\n\n  // Regexes containing the keys and values listed immediately above.\n  var entityRegexes = {\n    escape:   new RegExp('[' + _.keys(entityMap.escape).join('') + ']', 'g'),\n    unescape: new RegExp('(' + _.keys(entityMap.unescape).join('|') + ')', 'g')\n  };\n\n  // Functions for escaping and unescaping strings to/from HTML interpolation.\n  _.each(['escape', 'unescape'], function(method) {\n    _[method] = function(string) {\n      if (string == null) return '';\n      return ('' + string).replace(entityRegexes[method], function(match) {\n        return entityMap[method][match];\n      });\n    };\n  });\n\n  // If the value of the named property is a function then invoke it;\n  // otherwise, return it.\n  _.result = function(object, property) {\n    if (object == null) return null;\n    var value = object[property];\n    return _.isFunction(value) ? value.call(object) : value;\n  };\n\n  // Add your own custom functions to the Underscore object.\n  _.mixin = function(obj) {\n    each(_.functions(obj), function(name){\n      var func = _[name] = obj[name];\n      _.prototype[name] = function() {\n        var args = [this._wrapped];\n        push.apply(args, arguments);\n        return result.call(this, func.apply(_, args));\n      };\n    });\n  };\n\n  // Generate a unique integer id (unique within the entire client session).\n  // Useful for temporary DOM ids.\n  var idCounter = 0;\n  _.uniqueId = function(prefix) {\n    var id = ++idCounter + '';\n    return prefix ? prefix + id : id;\n  };\n\n  // By default, Underscore uses ERB-style template delimiters, change the\n  // following template settings to use alternative delimiters.\n  _.templateSettings = {\n    evaluate    : /<%([\\s\\S]+?)%>/g,\n    interpolate : /<%=([\\s\\S]+?)%>/g,\n    escape      : /<%-([\\s\\S]+?)%>/g\n  };\n\n  // When customizing `templateSettings`, if you don't want to define an\n  // interpolation, evaluation or escaping regex, we need one that is\n  // guaranteed not to match.\n  var noMatch = /(.)^/;\n\n  // Certain characters need to be escaped so that they can be put into a\n  // string literal.\n  var escapes = {\n    \"'\":      \"'\",\n    '\\\\':     '\\\\',\n    '\\r':     'r',\n    '\\n':     'n',\n    '\\t':     't',\n    '\\u2028': 'u2028',\n    '\\u2029': 'u2029'\n  };\n\n  var escaper = /\\\\|'|\\r|\\n|\\t|\\u2028|\\u2029/g;\n\n  // JavaScript micro-templating, similar to John Resig's implementation.\n  // Underscore templating handles arbitrary delimiters, preserves whitespace,\n  // and correctly escapes quotes within interpolated code.\n  _.template = function(text, data, settings) {\n    var render;\n    settings = _.defaults({}, settings, _.templateSettings);\n\n    // Combine delimiters into one regular expression via alternation.\n    var matcher = new RegExp([\n      (settings.escape || noMatch).source,\n      (settings.interpolate || noMatch).source,\n      (settings.evaluate || noMatch).source\n    ].join('|') + '|$', 'g');\n\n    // Compile the template source, escaping string literals appropriately.\n    var index = 0;\n    var source = \"__p+='\";\n    text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {\n      source += text.slice(index, offset)\n        .replace(escaper, function(match) { return '\\\\' + escapes[match]; });\n\n      if (escape) {\n        source += \"'+\\n((__t=(\" + escape + \"))==null?'':_.escape(__t))+\\n'\";\n      }\n      if (interpolate) {\n        source += \"'+\\n((__t=(\" + interpolate + \"))==null?'':__t)+\\n'\";\n      }\n      if (evaluate) {\n        source += \"';\\n\" + evaluate + \"\\n__p+='\";\n      }\n      index = offset + match.length;\n      return match;\n    });\n    source += \"';\\n\";\n\n    // If a variable is not specified, place data values in local scope.\n    if (!settings.variable) source = 'with(obj||{}){\\n' + source + '}\\n';\n\n    source = \"var __t,__p='',__j=Array.prototype.join,\" +\n      \"print=function(){__p+=__j.call(arguments,'');};\\n\" +\n      source + \"return __p;\\n\";\n\n    try {\n      render = new Function(settings.variable || 'obj', '_', source);\n    } catch (e) {\n      e.source = source;\n      throw e;\n    }\n\n    if (data) return render(data, _);\n    var template = function(data) {\n      return render.call(this, data, _);\n    };\n\n    // Provide the compiled function source as a convenience for precompilation.\n    template.source = 'function(' + (settings.variable || 'obj') + '){\\n' + source + '}';\n\n    return template;\n  };\n\n  // Add a \"chain\" function, which will delegate to the wrapper.\n  _.chain = function(obj) {\n    return _(obj).chain();\n  };\n\n  // OOP\n  // ---------------\n  // If Underscore is called as a function, it returns a wrapped object that\n  // can be used OO-style. This wrapper holds altered versions of all the\n  // underscore functions. Wrapped objects may be chained.\n\n  // Helper function to continue chaining intermediate results.\n  var result = function(obj) {\n    return this._chain ? _(obj).chain() : obj;\n  };\n\n  // Add all of the Underscore functions to the wrapper object.\n  _.mixin(_);\n\n  // Add all mutator Array functions to the wrapper.\n  each(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(name) {\n    var method = ArrayProto[name];\n    _.prototype[name] = function() {\n      var obj = this._wrapped;\n      method.apply(obj, arguments);\n      if ((name == 'shift' || name == 'splice') && obj.length === 0) delete obj[0];\n      return result.call(this, obj);\n    };\n  });\n\n  // Add all accessor Array functions to the wrapper.\n  each(['concat', 'join', 'slice'], function(name) {\n    var method = ArrayProto[name];\n    _.prototype[name] = function() {\n      return result.call(this, method.apply(this._wrapped, arguments));\n    };\n  });\n\n  _.extend(_.prototype, {\n\n    // Start chaining a wrapped Underscore object.\n    chain: function() {\n      this._chain = true;\n      return this;\n    },\n\n    // Extracts the result from a wrapped and chained object.\n    value: function() {\n      return this._wrapped;\n    }\n\n  });\n\n}).call(this);\n\n\n//# sourceURL=webpack:///./node_modules/underscore/underscore.js?");
 
-            // If there's no Worker support *or* there
-            //  are syntax errors in user code, we do the testing in
-            //  the browser instead.
-            // We do it in-browser in the latter case as
-            //  the code is often in a syntax-error state,
-            //  and the browser doesn't like creating that many workers,
-            //  and the syntax error tests that we have are fast.
-            if (!window.Worker || errors.length > 0) {
-                return tester.test(code, validate, errors, callback);
-            }
+/***/ }),
 
-            var worker = this.getWorkerFromPool();
+/***/ 16:
+/*!******************************************************************************************************************!*\
+  !*** multi ./js/output/shared/pooled-worker.js ./js/output/shared/output-tester.js ./js/output/shared/output.js ***!
+  \******************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-            worker.onmessage = function (event) {
-                if (event.data.type === "test") {
-                    // PJSOutput.prototype.kill() is called synchronously
-                    // from callback so if we want test workers to be
-                    // cleaned up properly we need to add them back to the
-                    // pool first.
-                    // TODO(kevinb) track workers that have been removed
-                    // from the PooledWorker's pool so we don't have to
-                    // worry about returning workers to the pool before
-                    // calling kill()
-                    self.addWorkerToPool(worker);
-                    if (self.isCurrentWorker(worker)) {
-                        var data = event.data.message;
-                        callback(data.errors, data.testResults);
-                    }
-                }
-            };
+eval("__webpack_require__(/*! ./js/output/shared/pooled-worker.js */\"./js/output/shared/pooled-worker.js\");\n__webpack_require__(/*! ./js/output/shared/output-tester.js */\"./js/output/shared/output-tester.js\");\nmodule.exports = __webpack_require__(/*! ./js/output/shared/output.js */\"./js/output/shared/output.js\");\n\n\n//# sourceURL=webpack:///multi_./js/output/shared/pooled-worker.js_./js/output/shared/output-tester.js_./js/output/shared/output.js?");
 
-            worker.postMessage({
-                code: code,
-                validate: validate,
-                errors: errors,
-                externalsDir: this.externalsDir
-            });
-        });
-    },
+/***/ }),
 
-    bindTestContext: function bindTestContext(obj) {
-        obj = obj || this.testContext;
+/***/ "jquery":
+/*!*************************!*\
+  !*** external "jQuery" ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-        /* jshint forin:false */
-        for (var prop in obj) {
-            if (typeof obj[prop] === "object") {
-                this.bindTestContext(obj[prop]);
-            } else if (typeof obj[prop] === "function") {
-                obj[prop] = obj[prop].bind(this);
-            }
-        }
-    },
+eval("module.exports = jQuery;\n\n//# sourceURL=webpack:///external_%22jQuery%22?");
 
-    test: function test(userCode, validate, errors, callback) {
-        var testResults = [];
-        errors = this.errors = errors || [];
-        this.userCode = userCode;
-        this.tests = [];
+/***/ })
 
-        // This will also fill in tests, as it will end up
-        // referencing functions like staticTest and that
-        // function will fill in this.tests
-        this.exec(validate);
-
-        this.curTask = null;
-        this.curTest = null;
-
-        for (var i = 0; i < this.tests.length; i++) {
-            testResults.push(this.runTest(this.tests[i], i));
-        }
-
-        callback(errors, testResults);
-    },
-
-    runTest: function runTest(test, i) {
-        var result = {
-            name: test.name,
-            state: "pass",
-            results: []
-        };
-
-        this.curTest = result;
-
-        test.fn.call(this);
-
-        this.curTest = null;
-
-        return result;
-    },
-
-    exec: function exec(code) {
-        if (!code) {
-            return true;
-        }
-
-        code = "with(arguments[0]){\n" + code + "\n}";
-        new Function(code).call({}, this.testContext);
-
-        return true;
-    },
-
-    defaultTestContext: {
-        test: function test(name, _fn, type) {
-            if (!_fn) {
-                _fn = name;
-                name = i18n._("Test Case");
-            }
-
-            this.tests.push({
-                name: name,
-
-                type: type || "default",
-
-                fn: function fn() {
-                    try {
-                        return _fn.apply(this, arguments);
-                    } catch (e) {
-                        if (window.console) {
-                            console.warn(e);
-                        }
-                    }
-                }
-            });
-        },
-
-        staticTest: function staticTest(name, fn) {
-            this.testContext.test(name, fn, "static");
-        },
-
-        log: function log(msg, state, expected, type, meta) {
-            type = type || "info";
-
-            var item = {
-                type: type,
-                msg: msg,
-                state: state,
-                expected: expected,
-                meta: meta || {}
-            };
-
-            if (this.curTest) {
-                if (state !== "pass") {
-                    this.curTest.state = state;
-                }
-
-                this.curTest.results.push(item);
-            }
-
-            return item;
-        },
-
-        task: function task(msg, tip) {
-            this.curTask = this.testContext.log(msg, "pass", tip, "task");
-            this.curTask.results = [];
-        },
-
-        endTask: function endTask() {
-            this.curTask = null;
-        },
-
-        assert: function assert(pass, msg, expected, meta) {
-            pass = !!pass;
-            this.testContext.log(msg, pass ? "pass" : "fail", expected, "assertion", meta);
-            return pass;
-        },
-
-        isEqual: function isEqual(a, b, msg) {
-            return this.testContext.assert(a === b, msg, [a, b]);
-        },
-
-        /*
-         * Returns a pass result with an optional message
-         */
-        pass: function pass(message) {
-            return {
-                success: true,
-                message: message
-            };
-        },
-
-        /*
-         * Returns a fail result with an optional message
-         */
-        fail: function fail(message) {
-            return {
-                success: false,
-                message: message
-            };
-        },
-
-        /*
-         * If any of results passes, returns the first pass. Otherwise, returns
-         * the first fail.
-         */
-        anyPass: function anyPass() {
-            return _.find(arguments, this.testContext.passes) || arguments[0] || this.testContext.fail();
-        },
-
-        /*
-         * If any of results fails, returns the first fail. Otherwise, returns
-         * the first pass.
-         */
-        allPass: function allPass() {
-            return _.find(arguments, this.testContext.fails) || arguments[0] || this.testContext.pass();
-        },
-
-        /*
-         * Returns true if the result represents a pass.
-         */
-        passes: function passes(result) {
-            return result.success;
-        },
-
-        /*
-         * Returns true if the result represents a fail.
-         */
-        fails: function fails(result) {
-            return !result.success;
-        }
-    }
-};
-// TODO(kevinb) remove after challenges have been converted to use i18n._
-$._ = i18n._;
-
-window.LiveEditorOutput = Backbone.View.extend({
-    recording: false,
-    loaded: false,
-    outputs: {},
-    lintErrors: [],
-    runtimeErrors: [],
-    lintWarnings: [],
-
-    initialize: function initialize(options) {
-        this.render();
-
-        this.setPaths(options);
-
-        this.config = new ScratchpadConfig({
-            useDebugger: options.useDebugger
-        });
-
-        if (options.outputType) {
-            this.setOutput(options.outputType, true, options.loopProtectTimeouts);
-        }
-
-        // Add a timestamp property to the lintErrors and runtimeErrors arrays
-        // to keep track of which version of the code the errors are for.  A
-        // new timestamp is created when runCode is called and is assigned to
-        // lintErrors and runtimeErrors (if there is no lint) when linting and
-        // running of the code complete.  The timestamps are used later to
-        // ensure we're not report stale errors that have already been fixed
-        // to the parent.  Adding properties to an array works because Array is
-        // essentially a special subclass of Object.
-        this.lintErrors.timestamp = 0;
-        this.runtimeErrors.timestamp = 0;
-        this.lintWarnings.timestamp = 0;
-
-        this.bind();
-    },
-
-    render: function render() {
-        this.$el.html("<div class=\"output\"></div>");
-    },
-
-    bind: function bind() {
-        // Handle messages coming in from the parent frame
-        window.addEventListener("message", this.handleMessage.bind(this), false);
-    },
-
-    setOutput: function setOutput(outputType, enableLoopProtect, loopProtectTimeouts) {
-        console.log(this.outputs);
-        var OutputClass = this.outputs[outputType];
-        this.output = new OutputClass({
-            el: this.$el.find(".output"),
-            config: this.config,
-            output: this,
-            type: outputType,
-            enableLoopProtect: enableLoopProtect,
-            loopProtectTimeouts: loopProtectTimeouts
-        });
-    },
-
-    setPaths: function setPaths(data) {
-        if (data.workersDir) {
-            this.workersDir = this._qualifyURL(data.workersDir);
-            PooledWorker.prototype.workersDir = this.workersDir;
-        }
-        if (data.externalsDir) {
-            this.externalsDir = this._qualifyURL(data.externalsDir);
-            PooledWorker.prototype.externalsDir = this.externalsDir;
-        }
-        if (data.imagesDir) {
-            this.imagesDir = this._qualifyURL(data.imagesDir);
-        }
-        if (data.soundsDir) {
-            this.soundsDir = this._qualifyURL(data.soundsDir);
-        }
-        if (data.redirectUrl) {
-            this.redirectUrl = data.redirectUrl;
-        }
-        if (data.jshintFile) {
-            this.jshintFile = this._qualifyURL(data.jshintFile);
-            PooledWorker.prototype.jshintFile = this.jshintFile;
-        }
-    },
-
-    _qualifyURL: function _qualifyURL(url) {
-        var a = document.createElement("a");
-        a.href = url;
-        return a.href;
-    },
-
-    handleMessage: function handleMessage(event) {
-        var data;
-
-        this.frameSource = event.source;
-        this.frameOrigin = event.origin;
-
-        // let the parent know we're up and running
-        this.notifyActive();
-
-        // filter out events that are objects
-        // currently the only messages that contain objects are messages
-        // being sent by Poster instances being used by the iframeOverlay
-        // in pjs-output.js and ui/debugger.js
-        if (typeof event.data === "object") {
-            return;
-        }
-
-        try {
-            data = JSON.parse(event.data);
-        } catch (err) {
-            return;
-        }
-        if (!this.output) {
-            var outputType = data.outputType || _.keys(this.outputs)[0];
-            var enableLoopProtect = true;
-            if (data.enableLoopProtect != null) {
-                enableLoopProtect = data.enableLoopProtect;
-            }
-            var loopProtectTimeouts = {
-                initialTimeout: 2000,
-                frameTimeout: 500
-            };
-            if (data.loopProtectTimeouts != null) {
-                loopProtectTimeouts = data.loopProtectTimeouts;
-            }
-            this.setOutput(outputType, enableLoopProtect, loopProtectTimeouts);
-        }
-
-        // filter out debugger events
-        // handled by pjs-debugger.js::handleMessage
-        if (data.type === "debugger") {
-            return;
-        }
-
-        // Set the paths from the incoming data, if they exist
-        this.setPaths(data);
-
-        // Validation code to run
-        if (data.validate != null) {
-            this.initTests(data.validate);
-        }
-
-        // Settings to initialize
-        if (data.settings != null) {
-            this.settings = data.settings;
-        }
-
-        // Code to be executed
-        if (data.code != null) {
-            this.config.switchVersion(data.version);
-            this.runCode(data.code, undefined, data.noLint);
-        }
-
-        if (data.onlyRunTests != null) {
-            this.onlyRunTests = !!data.onlyRunTests;
-        } else {
-            this.onlyRunTests = false;
-        }
-
-        // Restart the output
-        if (data.restart) {
-            this.restart();
-        }
-
-        // Keep track of recording state
-        if (data.recording != null) {
-            this.recording = data.recording;
-        }
-
-        // Take a screenshot of the output
-        if (data.screenshot != null) {
-            var screenshotSize = data.screenshotSize || 200;
-            this.output.getScreenshot(screenshotSize, (function (data) {
-                // Send back the screenshot data
-                this.postParent(data);
-            }).bind(this));
-        }
-
-        if (this.output.messageHandlers) {
-            for (var prop in data) {
-                if (prop in this.output.messageHandlers) {
-                    this.output.messageHandlers[prop].call(this.output, data);
-                }
-            }
-        }
-    },
-
-    // Send a message back to the parent frame
-    postParent: function postParent(data) {
-        // If there is no frameSource (e.g. we're not embedded in another page)
-        // Then we don't need to care about sending the messages anywhere!
-        if (this.frameSource) {
-            var parentWindow = this.frameSource;
-            // In Chrome on dev when postFrame is called from webapp's
-            // scratchpad package it is somehow executed from the iframe
-            // instead, so frameSource is not really the parent frame.  We
-            // detect that here and fix it.
-            // TODO(james): Figure out why this is and if there is a better
-            // place to put a fix.
-            if (this.frameSource === window) {
-                parentWindow = this.frameSource.parent;
-            }
-
-            parentWindow.postMessage(typeof data === "string" ? data : JSON.stringify(data), this.frameOrigin);
-        }
-    },
-
-    notifyActive: _.once(function () {
-        this.postParent({ active: true });
-    }),
-
-    // This function stores the new tests on the validate property
-    //  and it executes the test code to see if its valid
-    initTests: function initTests(validate) {
-        // Only update the tests if they have changed
-        if (this.validate === validate) {
-            return;
-        }
-
-        // Prime the test queue
-        this.validate = validate;
-    },
-
-    /**
-     * Converts an error to something that will JSONify usefully
-     *
-     * JS error objects JSONify to an empty object, so we need to convert them
-     * to a plain object ourselves first.  Since we'll end up doing some
-     * conversion of the format to better match jshint errors anyway, we'll
-     * just do that here too.  But sanitization will happen outside the iframe,
-     * since any code here can be bypassed by the user.
-     *
-     * @param {*} error: the error to JSONify
-     * @returns {*}
-     */
-    jsonifyError: function jsonifyError(error) {
-        if (typeof error !== "object" || $.isPlainObject(error)) {
-            // If we're not an object, or we're a plain object, we don't need
-            // to do anything.
-            return error;
-        } else {
-            return {
-                row: error.lineno ? error.lineno - 2 : -1,
-                column: 0,
-                text: error.message,
-                type: "error",
-                source: "native",
-                priority: 3
-            };
-        }
-    },
-
-    /**
-     * Performs all steps necessary to run code.
-     * - lint
-     * - actually run the code
-     * - manage lint and runtime errors
-     * - call the callback (via buildDone) to run tests
-     *
-     * @param userCode: code to run
-     * @param callback: used by the tests
-     * @param noLint: disables linting if true, first run still lints
-     *
-     * TODO(kevinb) return a Deferred and move test related code to test_utils
-     */
-    runCode: function runCode(userCode, callback, noLint) {
-        this.currentCode = userCode;
-        var timestamp = Date.now();
-
-        this.results = {
-            timestamp: timestamp,
-            code: userCode,
-            errors: [],
-            assertions: [],
-            warnings: []
-        };
-
-        var skip = noLint && this.firstLint;
-
-        // Always lint the first time, so that PJS can populate its list of globals
-        this.output.lint(userCode, skip).then((function (lintResults) {
-            this.lintErrors = lintResults.errors;
-            this.lintErrors.timestamp = timestamp;
-            this.lintWarnings = lintResults.warnings;
-            this.lintWarnings.timestamp = timestamp;
-            return this.lintDone(userCode, timestamp);
-        }).bind(this)).then((function () {
-            this.buildDone(userCode, callback);
-        }).bind(this));
-
-        this.firstLint = true;
-    },
-
-    /**
-     * Runs the code and records runtime errors.  Returns immediately if there
-     * are any lint errors.
-     *
-     * @param userCode
-     * @param timestamp
-     * @returns {$.Deferred}
-     */
-    lintDone: function lintDone(userCode, timestamp) {
-        var deferred = $.Deferred();
-        if (this.lintErrors.length > 0 || this.onlyRunTests) {
-            deferred.resolve();
-            return deferred;
-        }
-
-        // Then run the user's code
-        try {
-            this.output.runCode(userCode, (function (runtimeErrors) {
-                this.runtimeErrors = runtimeErrors;
-                this.runtimeErrors.timestamp = timestamp;
-                deferred.resolve();
-            }).bind(this));
-        } catch (e) {
-            if (this.outputs.hasOwnProperty("pjs")) {
-                this.runtimeErrors = [e];
-            }
-            deferred.resolve();
-        }
-        return deferred;
-    },
-
-    /**
-     * Posts results to the the parent frame and runs tests if a callback has
-     * been provided or if the .validate property is set.
-     *
-     * @param userCode
-     * @param callback
-     */
-    buildDone: function buildDone(userCode, callback) {
-        var errors = [];
-        var warnings = [];
-
-        // only use lint errors if the timestamp isn't stale
-        if (this.results.timestamp === this.lintErrors.timestamp) {
-            errors = errors.concat(this.lintErrors);
-        }
-        // only use runtime errors if the timestamp isn't stale
-        if (this.results.timestamp === this.runtimeErrors.timestamp) {
-            errors = errors.concat(this.runtimeErrors);
-        }
-        // only use lint warnings if the timestamp isn't stale
-        if (this.results.timestamp === this.lintWarnings.timestamp) {
-            warnings = warnings.concat(this.lintWarnings);
-        }
-
-        errors = errors || [];
-        errors = errors.map(this.jsonifyError);
-
-        if (!this.loaded) {
-            this.postParent({ loaded: true });
-            this.loaded = true;
-        }
-
-        // Update results
-        this.results.errors = errors;
-        this.results.warnings = warnings;
-        this.phoneHome();
-
-        this.toggle(!errors.length);
-
-        // A callback for working with a test suite
-        if (callback) {
-            //This is synchronous
-            this._test(userCode, this.validate, errors, function (errors, testResults) {
-                callback(errors, testResults);
-            });
-            // Normal case
-        } else {
-            // This is debounced (async)
-            if (this.validate !== "") {
-                this.test(userCode, this.validate, errors, (function (errors, testResults) {
-                    this.results.errors = errors;
-                    this.results.tests = testResults;
-                    this.phoneHome();
-                }).bind(this));
-            }
-        }
-    },
-
-    /**
-     * Send the most up to date errors/test results to the parent frame.
-     */
-    phoneHome: function phoneHome() {
-        this.postParent({
-            results: this.results
-        });
-    },
-
-    test: _.throttle(function () {
-        this._test.apply(this, arguments);
-    }, 200),
-    _test: function _test(userCode, validate, errors, callback) {
-        this.output.test(userCode, validate, errors, callback);
-    },
-
-    lint: function lint(userCode, callback) {
-        this.output.lint(userCode, callback);
-    },
-
-    getUserCode: function getUserCode() {
-        return this.currentCode || "";
-    },
-
-    toggle: function toggle(_toggle) {
-        if (this.output.toggle) {
-            this.output.toggle(_toggle);
-        }
-    },
-
-    restart: function restart() {
-        // This is called on load and it's possible that the output
-        // hasn't been set yet.
-        if (!this.output) {
-            return;
-        }
-
-        if (this.output.restart) {
-            this.output.restart();
-        }
-
-        this.runCode(this.getUserCode());
-    }
-});
-
-LiveEditorOutput.registerOutput = function (name, output) {
-    LiveEditorOutput.prototype.outputs[name] = output;
-};
+/******/ });

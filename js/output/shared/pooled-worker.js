@@ -1,7 +1,8 @@
-var PooledWorker = function(filename, onExec) {
+const PooledWorker = function(filename, workersDir, onExec) {
     this.pool = [];
     this.curID = 0;
     this.filename = filename;
+    this.workersDir = workersDir;
     this.onExec = onExec || function() {};
 };
 
@@ -48,3 +49,5 @@ PooledWorker.prototype.kill = function() {
     }, this);
     this.pool = [];
 };
+
+module.exports = PooledWorker;

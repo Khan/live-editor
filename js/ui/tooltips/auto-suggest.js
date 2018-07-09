@@ -1,12 +1,19 @@
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const TooltipBase = require("../../ui/tooltip-base.js");
+const TooltipEngine = require("../../ui/tooltip-engine.js");
+
 // A description of general tooltip flow can be found in tooltip-engine.js
-TooltipEngine.classes.autoSuggest = TooltipBase.extend({
+const AutoSuggest = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
         this.render();
         this.bind();
         this.mouse = false;
-        
+
         document.addEventListener("mousedown", () => {
             this.mouse = true;
         });
@@ -20,7 +27,7 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
         // this currently only allows displaying of the tooltip for the outside function, except in cases
         // where the inner function uses one of the other tooltips (e.g. image-picker)
         if (!/(\b[^\d\W][\w]*)\s*(\({1}\s*\){1})*\s*([^\]]*)$/.test(event.pre)
-            || this.parent.options.record.playing) {
+            || (this.parent.options.record && this.parent.options.record.playing)) {
             return;
         }
         if (!this.isInParenthesis(RegExp.$3)) {
@@ -78,3 +85,5 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
         this.$el.find(".hotsuggest").empty().append(content);
     }
 });
+
+TooltipEngine.registerTooltip("autoSuggest", AutoSuggest);

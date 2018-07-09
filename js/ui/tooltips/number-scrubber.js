@@ -1,5 +1,12 @@
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const TooltipBase = require("../../ui/tooltip-base.js");
+const TooltipEngine = require("../../ui/tooltip-engine.js");
+
 // A description of general tooltip flow can be found in tooltip-engine.js
-TooltipEngine.classes.numberScrubber = TooltipBase.extend({
+const NumberScrubber = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
@@ -248,3 +255,4 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
     }
 });
 
+TooltipEngine.registerTooltip("numberScrubber", NumberScrubber);

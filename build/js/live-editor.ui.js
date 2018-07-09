@@ -1,2364 +1,441 @@
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["tipbar"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
-    return "&times;";
-},"3":function(container,depth0,helpers,partials,data) {
-    return "Oh noes!";
-},"5":function(container,depth0,helpers,partials,data) {
-    return "Show me where";
-},"7":function(container,depth0,helpers,partials,data) {
-    return "Previous error";
-},"9":function(container,depth0,helpers,partials,data) {
-    return "Next error";
-},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    var stack1, helper, options, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=helpers.blockHelperMissing, buffer = 
-  "<div class=\"tipbar\">\n    <div class=\"speech-arrow\"></div>\n    <div class=\"error-buddy\"></div>\n    \n    <div class=\"text-wrap\">\n        <button class=\"close\" type=\"button\" aria-label=\"Close\">";
-  stack1 = ((helper = (helper = helpers.i18nDoNotTranslate || (depth0 != null ? depth0.i18nDoNotTranslate : depth0)) != null ? helper : alias2),(options={"name":"i18nDoNotTranslate","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers.i18nDoNotTranslate) { stack1 = alias4.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</button>\n        <div class=\"oh-no\">";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(3, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</div>\n        <div class=\"message\"></div>\n        <div class=\"show-me\"><a href>";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</a></div>\n        <div class=\"tipnav\">\n            <a href=\"javascript:void(0);\" class=\"prev\" title=\"";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(7, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "\">\n                <span class=\"ui-icon ui-icon-circle-triangle-w\"></span>\n            </a>\n            <span class=\"current-pos\"></span>\n            <a href=\"javascript:void(0);\" class=\"next\" title=\"";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(9, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "\">\n                <span class=\"ui-icon ui-icon-circle-triangle-e\"></span>\n            </a>\n        </div>\n    </div>\n</div>";
-},"useData":true});;
-/**
- * This is called tipbar for historical reasons.
- * Originally, it appeared as a red bar sliding up from the bottom of the
- * canvas. Now it just powers the error reporting mechanism, which no longer
- * looks like a bar
- */
-
-window.TipBar = Backbone.View.extend({
-    initialize: function initialize(options) {
-        this.liveEditor = options.liveEditor;
-        this.pos = 0;
-        this.errors = [];
-        this.render();
-        this.bind();
-    },
-
-    render: function render() {
-        this.$overlay = $("<div class=\"overlay error-overlay\" style=\"display: none\"></div>").appendTo(this.$el);
-        this.$el.append(Handlebars.templates["tipbar"]());
-        this.$bar = this.$el.find(".tipbar");
-    },
-
-    bind: function bind() {
-        var self = this;
-
-        // Make the error dialog draggable
-        if ($.fn.draggable) {
-            this.$el.find(".tipbar").draggable({
-                containment: "parent",
-                handle: ".error-buddy",
-                axis: "y"
-            });
-        }
-
-        this.$el.on("click", ".tipbar .tipnav a", function (e) {
-            if (!$(this).hasClass("ui-state-disabled")) {
-                self.pos += $(this).hasClass("next") ? 1 : -1;
-                self.update();
-            }
-
-            self.liveEditor.editor.focus();
-
-            return false;
-        });
-
-        this.$el.on("click", ".tipbar .show-me a", function (e) {
-            e.preventDefault();
-
-            var error = self.errors[self.pos];
-            self.liveEditor.editor.setCursor(error);
-            self.liveEditor.editor.setErrorHighlight(true);
-
-            return false;
-        });
-
-        this.$el.on("click", ".tipbar .close", function (e) {
-            self.liveEditor.setThinkingState();
-        });
-    },
-
-    setErrors: function setErrors(errors) {
-        this.errors = errors;
-        this.update(false);
-    },
-
-    update: function update(show) {
-        if (!this.errors.length) return;
-
-        var errors = this.errors;
-        var pos = errors[this.pos] == null ? 0 : this.pos;
-
-        // Inject current text
-        this.$bar.find(".current-pos").text(errors.length > 1 ? pos + 1 + "/" + errors.length : "").end().find(".message").html(errors[pos].text || errors[pos] || "").end().find("a.prev").toggleClass("ui-state-disabled", pos === 0).end().find("a.next").toggleClass("ui-state-disabled", pos + 1 === errors.length).end();
-
-        // it could be undefined, null, or -1
-        this.$el.find(".show-me").toggle(errors[pos].row > -1);
-
-        this.$bar.find(".tipnav").toggle(errors.length > 1);
-        if (show) {
-            this.$overlay.show();
-            this.$bar.show();
-        }
-    },
-
-    hide: function hide() {
-        this.$bar.hide();
-        this.$overlay.hide();
-        clearTimeout(this.errorDelay);
-    },
-
-    toggleErrors: function toggleErrors(errors, delay) {
-        var hasErrors = errors.length > 0;
-        if (!hasErrors) {
-            this.hide();
-            return;
-        }
-
-        this.$overlay.show();
-        this.setErrors(errors);
-
-        clearTimeout(this.errorDelay);
-        this.errorDelay = setTimeout((function () {
-            this.update(true);
-        }).bind(this), delay);
-    },
-
-    setErrorPosition: function setErrorPosition(errorPos) {
-        this.pos = errorPos;
-        this.update(true);
-    }
-});
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["live-editor"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
-    return " no-output";
-},"3":function(container,depth0,helpers,partials,data) {
-    var helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=container.escapeExpression;
-
-  return "                <iframe id=\"output-frame\"\n                    src=\""
-    + alias4(((helper = (helper = helpers.execFile || (depth0 != null ? depth0.execFile : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"execFile","hash":{},"data":data}) : helper)))
-    + "\"\n                    data-src=\""
-    + alias4(((helper = (helper = helpers.execFile || (depth0 != null ? depth0.execFile : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"execFile","hash":{},"data":data}) : helper)))
-    + "\"></iframe>\n";
-},"5":function(container,depth0,helpers,partials,data) {
-    return "Loading...";
-},"7":function(container,depth0,helpers,partials,data) {
-    return "Hmm...";
-},"9":function(container,depth0,helpers,partials,data) {
-    return "Restart";
-},"11":function(container,depth0,helpers,partials,data) {
-    return "                <a href=\"\" class=\"draw-color-button\" id=\""
-    + container.escapeExpression(container.lambda(depth0, depth0))
-    + "\">\n                    <span></span>\n                </a>\n";
-},"13":function(container,depth0,helpers,partials,data) {
-    return "Record";
-},"15":function(container,depth0,helpers,partials,data) {
-    return "Enable Flash to load audio:";
-},"17":function(container,depth0,helpers,partials,data) {
-    return "Play";
-},"19":function(container,depth0,helpers,partials,data) {
-    return "Loading audio...";
-},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-    var stack1, helper, options, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=container.escapeExpression, alias5=helpers.blockHelperMissing, buffer = 
-  "<div class=\"scratchpad-wrap"
-    + ((stack1 = helpers.unless.call(alias1,(depth0 != null ? depth0.execFile : depth0),{"name":"unless","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
-    + "\">\n    <!-- Canvases (Drawing + Output) -->\n    <div class=\"scratchpad-canvas-wrap\">\n        <div id=\"output\">\n            <!-- Extra data-src attribute to work around\n                 cross-origin access policies. -->\n"
-    + ((stack1 = helpers["if"].call(alias1,(depth0 != null ? depth0.execFile : depth0),{"name":"if","hash":{},"fn":container.program(3, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
-    + "            <canvas class=\"scratchpad-draw-canvas\" style=\"display:none;\"\n                width=\"400\" height=\"400\"></canvas>\n\n            <div class=\"overlay disable-overlay\" style=\"display:none;\">\n            </div>\n\n            <div class=\"scratchpad-canvas-loading\">\n                <img src=\""
-    + alias4(((helper = (helper = helpers.imagesDir || (depth0 != null ? depth0.imagesDir : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"imagesDir","hash":{},"data":data}) : helper)))
-    + "/spinner-large.gif\">\n                <span class=\"hide-text\">";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</span>\n            </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar\">\n            <div class=\"error-buddy-resting\">\n                <div class=\"error-buddy-happy\" style=\"display:none;\">\n                    <img src=\""
-    + alias4(((helper = (helper = helpers.imagesDir || (depth0 != null ? depth0.imagesDir : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"imagesDir","hash":{},"data":data}) : helper)))
-    + "/creatures/OhNoes-Happy.png\"/>\n                </div>\n                <a class=\"error-buddy-thinking\" style=\"display:none;\" href=\"javascript:void()\">\n                    <img src=\""
-    + alias4(((helper = (helper = helpers.imagesDir || (depth0 != null ? depth0.imagesDir : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"imagesDir","hash":{},"data":data}) : helper)))
-    + "/creatures/OhNoes-Hmm.png\"/>\n                    ";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(7, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "\n                </a>\n            </div>\n            <button id=\"restart-code\"\n                class=\"simple-button pull-right\">\n                <span class=\"icon-refresh\"></span>\n                ";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(9, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</button>\n\n            <!-- Widgets for selecting colors to doodle on the canvas during\n                recordings -->\n            <div id=\"draw-widgets\" style=\"display:none;\">\n                <a href=\"\" id=\"draw-clear-button\" class=\"ui-button\">\n                    <span class=\"ui-icon-cancel\"></span>\n                </a>\n"
-    + ((stack1 = helpers.each.call(alias1,(depth0 != null ? depth0.colors : depth0),{"name":"each","hash":{},"fn":container.program(11, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
-    + "            </div>\n\n            <!-- Record button -->\n            <button id=\"record\" class=\"simple-button pull-left\" style=\"display:none;\">";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(13, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</button>\n        </div>\n    </div>\n\n    <!-- Editor -->\n    <div class=\"scratchpad-editor-wrap overlay-container\">\n        <div class=\"scratchpad-editor-tabs\">\n          <div id=\"scratchpad-code-editor-tab\" class=\"scratchpad-editor-tab\">\n            <div class=\"scratchpad-editor scratchpad-ace-editor\"></div>\n            <div class=\"overlay disable-overlay\" style=\"display:none;\">\n            </div>\n\n            <div class=\"scratchpad-editor-bigplay-loading\" style=\"display:none;\">\n                <img src=\""
-    + alias4(((helper = (helper = helpers.imagesDir || (depth0 != null ? depth0.imagesDir : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"imagesDir","hash":{},"data":data}) : helper)))
-    + "/spinner-large.gif\">\n                <span class=\"hide-text\">";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(5, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</span>\n            </div>\n\n            <!-- This cannot be removed, if we want Flash to keep working! -->\n            <div id=\"sm2-container\">\n                ";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(15, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "\n                <br>\n            </div>\n\n            <button class=\"scratchpad-editor-bigplay-button\" style=\"display:none;\">\n                <span class=\"icon-play\"></span>\n                <span class=\"hide-text\">";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(17, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</span>\n            </button>\n          </div>\n        </div>\n\n        <div class=\"scratchpad-toolbar\">\n            <!-- Row for playback controls -->\n            <div class=\"scratchpad-playbar\" style=\"display:none;\">\n                <div class=\"scratchpad-playbar-area\" style=\"display:none;\">\n                    <button\n                        class=\"simple-button primary scratchpad-playbar-play\"\n                        type=\"button\">\n                        <span class=\"icon-play\"></span>\n                    </button>\n\n                    <div class=\"scratchpad-playbar-progress\"></div>\n\n                    <span class=\"scratchpad-playbar-timeleft\"></span>\n                </div>\n                <div class=\"loading-msg\">\n                    ";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(19, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "\n                </div>\n            </div>\n            <div class=\"scratchpad-debugger\"></div>\n        </div>\n\n        <div class=\"scratchpad-toolbar scratchpad-dev-record-row\" style=\"display:none;\"></div>\n    </div>\n</div>";
-},"useData":true});;
-window.ScratchpadDrawCanvas = Backbone.View.extend({
-    initialize: function initialize(options) {
-        this.record = options.record;
-
-        this.isDrawing = false;
-
-        this.ctx = this.el.getContext("2d");
-        this.ctx.shadowBlur = 2;
-        this.ctx.lineCap = "round";
-        this.ctx.lineJoin = "round";
-        this.ctx.lineWidth = 1;
-
-        this.clear(true);
-
-        if (this.record) {
-            this.bindRecordView();
-        }
-    },
-
-    commands: ["startLine", "drawLine", "endLine", "setColor", "clear"],
-
-    colors: {
-        black: [0, 0, 0],
-        red: [255, 0, 0],
-        orange: [255, 165, 0],
-        green: [0, 128, 0],
-        blue: [0, 0, 255],
-        lightblue: [173, 216, 230],
-        violet: [128, 0, 128]
-    },
-
-    remove: function remove() {
-        // Clear and reset canvas
-        this.clear(true);
-        this.endDraw();
-
-        // Remove all bound events from draw canvas
-        this.$el.off(".draw-canvas");
-
-        // Remove all bound events from document
-        $(document).off(".draw-canvas");
-    },
-
-    bindRecordView: function bindRecordView() {
-        var self = this;
-        var record = this.record;
-
-        this.$el.on({
-            "mousedown.draw-canvas": function mousedownDrawCanvas(e) {
-                // Left mouse button
-                if (record.recording && e.button === 0) {
-                    self.startLine(e.offsetX, e.offsetY);
-                    e.preventDefault();
-                }
-            },
-
-            "mousemove.draw-canvas": function mousemoveDrawCanvas(e) {
-                if (record.recording) {
-                    self.drawLine(e.offsetX, e.offsetY);
-                }
-            },
-
-            "mouseup.draw-canvas": function mouseupDrawCanvas(e) {
-                if (record.recording) {
-                    self.endLine();
-                }
-            },
-
-            "mouseout.draw-canvas": function mouseoutDrawCanvas(e) {
-                if (record.recording) {
-                    self.endLine();
-                }
-            }
-        });
-
-        record.on("runSeek", function () {
-            self.clear(true);
-            self.endDraw();
-        });
-
-        // Handle record seek caching
-        record.seekCachers.canvas = {
-            getState: function getState() {
-                if (!self.isDrawing) {
-                    return;
-                }
-
-                // Copy the canvas contents
-                var tmpCanvas = document.createElement("canvas");
-                tmpCanvas.width = tmpCanvas.height = self.el.width;
-                tmpCanvas.getContext("2d").drawImage(self.el, 0, 0);
-
-                // Store Canvas state
-                return {
-                    x: self.x,
-                    y: self.y,
-                    down: self.down,
-                    color: self.color,
-                    canvas: tmpCanvas
-                };
-            },
-
-            restoreState: function restoreState(cacheData) {
-                self.startDraw();
-
-                // Restore Canvas state
-                self.x = cacheData.x;
-                self.y = cacheData.y;
-                self.down = cacheData.down;
-                self.setColor(cacheData.color);
-
-                // Restore canvas image
-                // Disable shadow (otherwise the image will have a shadow!)
-                var oldShadow = self.ctx.shadowColor;
-                self.ctx.shadowColor = "rgba(0,0,0,0.0)";
-                self.ctx.drawImage(cacheData.canvas, 0, 0);
-                self.ctx.shadowColor = oldShadow;
-            }
-        };
-
-        // Initialize playback commands
-        _.each(this.commands, function (name) {
-            record.handlers[name] = function () {
-                self[name].apply(self, arguments);
-            };
-        });
-    },
-
-    startLine: function startLine(x, y) {
-        if (!this.down) {
-            this.down = true;
-            this.x = x;
-            this.y = y;
-
-            this.record.log("startLine", x, y);
-        }
-    },
-
-    drawLine: function drawLine(x, y) {
-        if (this.down && this.x != null && this.y != null) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(this.x, this.y);
-            this.ctx.lineTo(x, y);
-            this.ctx.stroke();
-            this.ctx.closePath();
-
-            this.x = x;
-            this.y = y;
-
-            this.record.log("drawLine", x, y);
-        }
-    },
-
-    endLine: function endLine() {
-        if (this.down) {
-            this.down = false;
-            this.record.log("endLine");
-        }
-    },
-
-    setColor: function setColor(color) {
-        if (color != null) {
-            if (!this.isDrawing) {
-                this.startDraw(true);
-            }
-
-            this.color = color;
-
-            this.ctx.shadowColor = "rgba(" + this.colors[color] + ",0.5)";
-            this.ctx.strokeStyle = "rgba(" + this.colors[color] + ",1.0)";
-
-            this.record.log("setColor", color);
-        }
-
-        this.trigger("colorSet", color);
-    },
-
-    clear: function clear(force) {
-        // Clean off the canvas
-        this.ctx.clearRect(0, 0, 600, 480);
-        this.x = null;
-        this.y = null;
-        this.down = false;
-
-        if (force !== true) {
-            this.record.log("clear");
-        }
-    },
-
-    startDraw: function startDraw(colorDone) {
-        if (this.isDrawing) {
-            return;
-        }
-
-        this.isDrawing = true;
-
-        if (colorDone !== true) {
-            this.setColor("black");
-        }
-
-        this.trigger("drawStarted");
-    },
-
-    endDraw: function endDraw() {
-        if (!this.isDrawing) {
-            return;
-        }
-
-        this.isDrawing = false;
-        this.setColor(null);
-        this.trigger("drawEnded");
-    }
-});
-/* Manages the audio chunks as we build up this recording. */
-window.ScratchpadAudioChunks = Backbone.Model.extend({
-
-    initialize: function initialize(options) {
-        // The saved audio chunks
-        this.audioChunks = [];
-        // The current chunk we have not yet saved or discarded
-        this.currentChunk = null;
-    },
-
-    setCurrentChunk: function setCurrentChunk(recording) {
-        this.currentChunk = recording;
-    },
-
-    currentChunkExists: function currentChunkExists() {
-        return !_.isNull(this.currentChunk);
-    },
-
-    startNewChunk: function startNewChunk() {
-        this.currentChunk = null;
-    },
-
-    discardCurrentChunk: function discardCurrentChunk() {
-        this.currentChunk = null;
-    },
-
-    saveCurrentChunk: function saveCurrentChunk() {
-        if (!this.currentChunk) {
-            return;
-        }
-        this.audioChunks.push(this.currentChunk);
-        this.currentChunk = null;
-    },
-
-    /* Return the array of audio chunks, not yet stitched together. */
-    getAllChunks: function getAllChunks() {
-        return this.audioChunks;
-    }
-});
-
-/* Builds up audio and the command chunks for our recording, coordinates
- *  the process.
- *
- *  Heads-up that bugs with recording in chunks sometimes occur due to
- *  buggy playback with the Record object, which also occurs when playing
- *  normal talkies. Recording in chunks depends on Record playback to
- *  restore state after a discard, and so any Record bugs also cause bugs in
- *  recording in chunks.
- */
-window.ScratchpadRecordView = Backbone.View.extend({
-    initialize: function initialize(options) {
-        this.render();
-        this.$recordButton = options.recordButton;
-        this.$finalSaveButton = options.saveButton;
-        this.editor = options.editor;
-        this.record = options.record;
-        this.config = options.config;
-        this.drawCanvas = options.drawCanvas;
-        this.workersDir = options.workersDir;
-        this.transloaditTemplate = options.transloaditTemplate;
-        this.transloaditAuthKey = options.transloaditAuthKey;
-        this.audioChunks = new ScratchpadAudioChunks();
-        this.recordInProgress = false;
-        this.commandChunks = [];
-        this.startingCode = "";
-        this.lastSavedCode = this.editor.text();
-        this.$lastAudioChunkElem = this.$el.find(".last-audio-chunk");
-        // Note: $savedAudioChunksElem HAS to be displayed in order for us to
-        //  get the duration. Hack -- look at other ways to get the duration.
-        this.$savedAudioChunksElem = this.$el.find(".saved-audio-chunks");
-        this.initializeButtons();
-    },
-
-    render: function render() {
-        this.$el.html(Handlebars.templates["dev-record"]({})).show();
-    },
-
-    initializeButtons: function initializeButtons() {
-        // Set up the buttons
-        this.$newChunkButton = this.$el.find(".scratchpad-dev-new-chunk");
-        this.$discardChunkButton = this.$el.find(".scratchpad-dev-discard-chunk");
-        this.$saveChunkButton = this.$el.find(".scratchpad-dev-save-chunk");
-        this.$refreshEditorButton = this.$el.find(".scratchpad-dev-refresh-editor-state");
-        // Disable chunk buttons to start
-        this.disableChunkButtons(true, true, true, true, false);
-        // Bind event listeners
-        this.$newChunkButton.on("click", _.bind(this.newChunk, this));
-        this.$discardChunkButton.on("click", _.bind(this.discardChunk, this));
-        this.$saveChunkButton.on("click", _.bind(this.saveChunk, this));
-        this.$refreshEditorButton.on("click", _.bind(this.refreshEditor, this));
-    },
-
-    /* Set up everything and get permission for recording. */
-    initializeRecordingAudio: function initializeRecordingAudio() {
-        // Start recording the presenter's audio
-        this.multirecorder = new MultiRecorder({
-            workerPath: this.workersDir + "shared/multirecorder-worker.js"
-        });
-        this.$recordButton.text("Use the chunks (and give permission)");
-        this.setButtonDisableStatus(this.$recordButton, true);
-        this.disableChunkButtons(false, true, true, true, true);
-    },
-
-    /* Start recording audio after a brief countdown for preparation.
-     *   Leads to startRecordingCommands() being called,
-     *   so no need to call startRecordingCommands manually.
-     */
-    startRecordingAudio: function startRecordingAudio() {
-        var self = this;
-
-        this.lastSavedCode = this.editor.text();
-        this.multirecorder.startRecording(1).progress(_.bind(function (seconds) {
-            this.$newChunkButton.text(seconds + "...");
-        }, this)).done(_.bind(function () {
-            this.disableChunkButtons(false, true, true, true, true);
-            self.record.recordingAudio = true;
-            this.$newChunkButton.html("Stop recording chunk");
-            this.startRecordingCommands();
-        }, this));
-    },
-
-    /* Stop recording audio. Called from ScratchpadUI as a result of the
-     *  call to stopRecordingCommands. */
-    stopRecordingAudio: function stopRecordingAudio() {
-        this.multirecorder.stopRecording().done(_.bind(function (recording) {
-            this.audioChunks.setCurrentChunk(recording);
-            this.$lastAudioChunkElem.html(recording.createAudioPlayer());
-        }, this));
-    },
-
-    /* Display a sound player with all the saved audio chunks. */
-    showSavedAudioChunks: function showSavedAudioChunks() {
-        this.getFinalAudioRecording(_.bind(function (saved) {
-            this.$savedAudioChunksElem.html(saved.createAudioPlayer());
-        }, this));
-    },
-
-    /* Hack to return the duration of the saved audio, if it exists.
-     *
-     * Depends on the savedAudioChunkElem always being updated when we
-     * add a new saved audio chunk. Note that we do not set the duration
-     * right after creating the savedAudioChunkElem because the elem has
-     * to load and become ready first. Between creating the elem and calling
-     * this function, the hacky assumption is that it has been "long enough"
-     * for the audio elem to load. This is pretty gross.
-     */
-    getDurationMsOfSavedAudio: function getDurationMsOfSavedAudio() {
-        var durationMs = 0;
-        var audioElem = $(this.$savedAudioChunksElem).find("audio");
-        if (audioElem && audioElem.length > 0) {
-            durationMs = audioElem[0].duration * 1000;
-        }
-        return durationMs;
-    },
-
-    /* Start recording user commands. Should only be called from
-     *  startRecordingAudio. */
-    startRecordingCommands: function startRecordingCommands() {
-        if (this.record.hasNoChunks()) {
-            // Save the initial code state
-            //this.scratchpad.get("revision")
-            //    .set("code", this.editor.text());
-            this.startingCode = this.editor.text();
-            var newVersion = this.config.curVersion();
-            // Make sure we record using the scratchpad version
-            this.config.switchVersion(newVersion);
-            this.record.setActualInitData({
-                configVersion: newVersion,
-                code: this.startingCode
-            });
-        }
-
-        // Focus on the editor
-        this.editor.focus();
-        // Start recording
-        this.record.startRecordChunk(this.getDurationMsOfSavedAudio());
-        // Every chunk should start the cursor at 0, 0 and log the event.
-        this.record.log("select", 0, 0);
-        this.editor.setCursor({ row: 0, column: 0 });
-    },
-
-    /* Stop recording commands. This will trigger an event sequence that
-     *    will lead to stopRecordingAudio being called as well.
-     *
-     * Currently assumes that when we stop recording commands, we want
-     * to upload the recording.
-     */
-    stopRecordingCommands: function stopRecordingCommands() {
-        this.record.stopRecordChunk();
-    },
-
-    /* Return the final audio recording, with all the audio chunks stitched
-     *  together. */
-    getFinalAudioRecording: function getFinalAudioRecording(callback) {
-        this.multirecorder.combineRecordings(this.audioChunks.getAllChunks()).done(callback);
-    },
-
-    /* Return the final commands recording, with all the command chunks
-     *  stitched together. */
-    getFinalCommandRecording: function getFinalCommandRecording() {
-        return this.record.dumpRecording();
-    },
-
-    /* Start recording a new chunk, or stop recording the current chunk
-     *  (the button toggles) */
-    newChunk: function newChunk() {
-        if (this.audioChunks.currentChunkExists()) {
-            return;
-        }
-        if (!this.recordInProgress) {
-            // Start recording an new chunk
-            this.editor.editor.setReadOnly(false);
-            this.recordInProgress = true;
-            this.startRecordingAudio();
-        } else {
-            // Stop recording the current chunk
-            this.recordInProgress = false;
-            this.stopRecordingCommands(); // Leads to stopRecordingAudio
-            this.disableChunkButtons(true, false, false, true, true);
-            this.$newChunkButton.html("Start new chunk");
-        }
-    },
-
-    /* Discard the chunk we just recorded.
-     *  Requires replaying all of the existing commands again to get the
-     *  code + canvas back into the right state.
-     *  Unfortunately, this is the biggest source of bugs right now since
-     *  Record playback is separately buggy :/
-     */
-    discardChunk: function discardChunk(evt) {
-        if (!this.audioChunks.currentChunkExists()) {
-            return;
-        }
-        this.audioChunks.discardCurrentChunk();
-        this.record.discardRecordChunk();
-        this.$lastAudioChunkElem.empty();
-        this.refreshEditor();
-    },
-
-    /* Save the chunk we just recorded. */
-    saveChunk: function saveChunk(evt) {
-        if (!this.audioChunks.currentChunkExists()) {
-            return;
-        }
-        this.audioChunks.saveCurrentChunk();
-        this.record.saveRecordChunk();
-        this.lastSavedCode = this.editor.text();
-        this.disableChunkButtons(false, true, true, false, false);
-        this.showSavedAudioChunks();
-        this.$lastAudioChunkElem.empty();
-    },
-
-    /* Play back all the saved chunks to get back to the last
-     *  saved state. */
-    refreshEditor: function refreshEditor(evt) {
-        this.record.loadRecording(this.record.dumpRecording());
-        this.editor.editor.setReadOnly(false);
-        this.record.initData = this.record.actualInitData;
-        // Add an empty command to force the Record playback to
-        // keep playing until the audio track finishes playing
-        if (this.record.commands) {
-            this.record.commands.push([this.getDurationMsOfSavedAudio(), "seek"]);
-        }
-        // Start the play head at 0
-        this.record.time = 0;
-
-        // Reset the editor
-        this.editor.text(this.startingCode);
-        // Clear and hide the drawing area
-        this.drawCanvas.clear(true);
-        this.drawCanvas.endDraw();
-        this.record.seekTo(this.getDurationMsOfSavedAudio());
-
-        // Set a timeout just to wait for all the commands to finish..
-        setTimeout(_.bind(function () {
-            this.disableChunkButtons(false, true, true, false, false);
-        }, this), 1000);
-    },
-
-    /*
-     * Quick way to set the disabled state for lots of recording-related
-     *  buttons at once.
-     */
-    disableChunkButtons: function disableChunkButtons(newBool, discardBool, saveBool, refreshBool, finalBool) {
-        this.setButtonDisableStatus(this.$newChunkButton, newBool);
-        this.setButtonDisableStatus(this.$discardChunkButton, discardBool);
-        this.setButtonDisableStatus(this.$saveChunkButton, saveBool);
-        this.setButtonDisableStatus(this.$refreshEditorButton, refreshBool);
-        this.setButtonDisableStatus(this.$finalSaveButton, finalBool);
-    },
-
-    /* Updated the button to the disabledStatus, if defined. */
-    setButtonDisableStatus: function setButtonDisableStatus($button, disabledStatus) {
-        if (!_.isUndefined(disabledStatus)) {
-            $button.prop("disabled", disabledStatus);
-        }
-    }
-
-});
-// TODO(kevinb) remove after challenges have been converted to use i18n._
-$._ = i18n._;
-
-window.LiveEditor = Backbone.View.extend({
-    dom: {
-        DRAW_CANVAS: ".scratchpad-draw-canvas",
-        DRAW_COLOR_BUTTONS: "#draw-widgets a.draw-color-button",
-        CANVAS_WRAP: ".scratchpad-canvas-wrap",
-        EDITOR: ".scratchpad-editor",
-        CANVAS_LOADING: ".scratchpad-canvas-loading",
-        BIG_PLAY_LOADING: ".scratchpad-editor-bigplay-loading",
-        BIG_PLAY_BUTTON: ".scratchpad-editor-bigplay-button",
-        PLAYBAR: ".scratchpad-playbar",
-        PLAYBAR_AREA: ".scratchpad-playbar-area",
-        PLAYBAR_OPTIONS: ".scratchpad-playbar-options",
-        PLAYBAR_LOADING: ".scratchpad-playbar .loading-msg",
-        PLAYBAR_PROGRESS: ".scratchpad-playbar-progress",
-        PLAYBAR_PLAY: ".scratchpad-playbar-play",
-        PLAYBAR_TIMELEFT: ".scratchpad-playbar-timeleft",
-        PLAYBAR_UI: ".scratchpad-playbar-play, .scratchpad-playbar-progress",
-        OUTPUT_FRAME: "#output-frame",
-        OUTPUT_DIV: "#output",
-        ALL_OUTPUT: "#output, #output-frame",
-        RESTART_BUTTON: "#restart-code",
-        GUTTER_ERROR: ".ace_error",
-        ERROR_BUDDY_HAPPY: ".error-buddy-happy",
-        ERROR_BUDDY_THINKING: ".error-buddy-thinking"
-    },
-
-    mouseCommands: ["move", "over", "out", "down", "up"],
-    colors: ["black", "red", "orange", "green", "blue", "lightblue", "violet"],
-
-    defaultOutputWidth: 400,
-    defaultOutputHeight: 400,
-
-    editors: {},
-
-    initialize: function initialize(options) {
-        this.workersDir = this._qualifyURL(options.workersDir);
-        this.externalsDir = this._qualifyURL(options.externalsDir);
-        this.imagesDir = this._qualifyURL(options.imagesDir);
-        this.soundsDir = options.soundsDir;
-        this.execFile = options.execFile ? this._qualifyURL(options.execFile) : "";
-        this.jshintFile = this._qualifyURL(options.jshintFile || this.externalsDir + "jshint/jshint.js");
-        this.redirectUrl = options.redirectUrl;
-
-        this.outputType = options.outputType || "";
-        this.editorType = options.editorType || _.keys(this.editors)[0];
-        this.editorHeight = options.editorHeight;
-        this.initialCode = options.code;
-        this.initialVersion = options.version;
-        this.settings = options.settings;
-        this.validation = options.validation;
-
-        this.recordingCommands = options.recordingCommands;
-        this.recordingMP3 = options.recordingMP3;
-        this.recordingInit = options.recordingInit || {
-            code: this.initialCode,
-            version: this.initialVersion
-        };
-
-        this.transloaditTemplate = options.transloaditTemplate;
-        this.transloaditAuthKey = options.transloaditAuthKey;
-
-        this.render();
-
-        this.config = new ScratchpadConfig({
-            version: options.version
-        });
-
-        this.record = new ScratchpadRecord();
-
-        // Set up the Canvas drawing area
-        this.drawCanvas = new ScratchpadDrawCanvas({
-            el: this.dom.DRAW_CANVAS,
-            record: this.record
-        });
-
-        this.drawCanvas.on({
-            // Drawing has started
-            drawStarted: (function () {
-                // Activate the canvas
-                this.$el.find(this.dom.DRAW_CANVAS).show();
-            }).bind(this),
-
-            // Drawing has ended
-            drawEnded: (function () {
-                // Hide the canvas
-                this.$el.find(this.dom.DRAW_CANVAS).hide();
-            }).bind(this),
-
-            // A color has been chosen
-            colorSet: (function (color) {
-                // Deactivate all the color buttons
-                this.$el.find(this.dom.DRAW_COLOR_BUTTONS).removeClass("ui-state-active");
-
-                // If a new color has actually been chosen
-                if (color !== null) {
-                    // Select that color and activate the button
-                    this.$el.find("#" + color).addClass("ui-state-active");
-                }
-            }).bind(this)
-        });
-
-        if (options.enableLoopProtect != null) {
-            this.enableLoopProtect = options.enableLoopProtect;
-        } else {
-            this.enableLoopProtect = true;
-        }
-
-        // Set up the editor
-        this.editor = new this.editors[this.editorType]({
-            el: this.dom.EDITOR,
-            code: this.initialCode,
-            autoFocus: options.autoFocus,
-            config: this.config,
-            record: this.record,
-            imagesDir: this.imagesDir,
-            soundsDir: this.soundsDir,
-            externalsDir: this.externalsDir,
-            workersDir: this.workersDir,
-            type: this.editorType
-        });
-
-        var tooltipEngine = this.config.editor.tooltipEngine;
-        if (tooltipEngine.setEnabledStatus) {
-            // Looks to see if "autosuggestToggle=yes" is in the url,
-            //  if it is, then we disable the live autosuggestions.
-            if (window.location.search.indexOf("autosuggestToggle=yes") !== -1) {
-
-                // Overrides whatever is in localStorage.
-                // TODO (anyone) remove this when the URL param is removed.
-                window.localStorage["autosuggest"] = "true";
-
-                // Allows toggling of the autosuggestions.
-                this.editor.editor.commands.addCommand({
-                    name: "toggleAutosuggest",
-                    bindKey: {
-                        win: "Ctrl+Alt+A",
-                        mac: "Command+Option+A"
-                    },
-                    exec: function exec(editor) {
-                        var status = window.localStorage["autosuggest"] === "true";
-
-                        tooltipEngine.setEnabledStatus(status !== true);
-
-                        window.localStorage.setItem("autosuggest", String(status !== true));
-                    }
-                });
-            } else {
-                // since we load the enabled value from localStorage...
-                tooltipEngine.setEnabledStatus("true");
-            }
-        }
-
-        // linting in the webpage environment generates slowparseResults which
-        // is used in the runCode step so skipping linting won't work in that
-        // environment without some more work
-        if (this.editorType === "ace_pjs") {
-            this.noLint = false;
-            this.editor.on("scrubbingStarted", (function () {
-                this.noLint = true;
-            }).bind(this));
-
-            this.editor.on("scrubbingEnded", (function () {
-                this.noLint = false;
-            }).bind(this));
-        }
-
-        this.tipbar = new TipBar({
-            el: this.$(this.dom.OUTPUT_DIV),
-            liveEditor: this
-        });
-
-        // Set up the debugger;
-        if (options.useDebugger) {
-            this["debugger"] = new ScratchpadDebugger({
-                liveEditor: this,
-                editor: this.editor.editor
-            });
-            this["debugger"].on("enabled", function (enabled) {
-                if (enabled) {
-                    this.$el.find(this.dom.RESTART_BUTTON).attr("disabled", "");
-                } else {
-                    this.$el.find(this.dom.RESTART_BUTTON).removeAttr("disabled");
-                }
-            }, this);
-        }
-
-        var code = options.code;
-
-        // Load the text into the editor
-        if (code !== undefined) {
-            this.editor.text(code);
-            this.editor.originalCode = code;
-        }
-
-        // Focus on the editor
-        this.editor.focus();
-
-        if (options.cursor) {
-            // Restore the cursor position
-            this.editor.setCursor(options.cursor);
-        } else {
-            // Set an initial starting selection point
-            this.editor.setSelection({
-                start: { row: 0, column: 0 },
-                end: { row: 0, column: 0 }
-            });
-        }
-
-        // Hide the overlay
-        this.$el.find("#page-overlay").hide();
-
-        // Change the width and height of the output frame if it's been
-        // changed by the user, via the query string, or in the settings
-        this.updateCanvasSize(options.width, options.height);
-
-        if (this.canRecord()) {
-            this.$el.find("#record").show();
-        }
-
-        this.bind();
-        this.setupAudio();
-    },
-
-    render: function render() {
-        this.$el.html(Handlebars.templates["live-editor"]({
-            execFile: this.execFile,
-            imagesDir: this.imagesDir,
-            colors: this.colors
-        }));
-    },
-
-    bind: function bind() {
-        var _this = this;
-
-        var self = this;
-        var $el = this.$el;
-        var dom = this.dom;
-
-        // Make sure that disabled buttons can't still be used
-        $el.delegate(".simple-button.disabled, .ui-state-disabled", "click", function (e) {
-            e.stopImmediatePropagation();
-            return false;
-        });
-
-        // Handle the restart button
-        $el.delegate(this.dom.RESTART_BUTTON, "click", this.restartCode.bind(this));
-
-        this.handleMessagesBound = this.handleMessages.bind(this);
-        $(window).on("message", this.handleMessagesBound);
-
-        $el.find("#output-frame").on("load", function () {
-            _this.outputState = "clean";
-            _this.markDirty();
-        });
-
-        // Whenever the user changes code, execute the code
-        this.editor.on("change", function () {
-            _this.markDirty();
-        });
-
-        this.editor.on("userChangedCode", function () {
-            if (!_this.record.recording && !_this.record.playing) {
-                _this.trigger("userChangedCode");
-            }
-        });
-
-        this.on("runDone", this.runDone.bind(this));
-
-        // This function will fire once after each synchrynous block which changes the cursor
-        // or the current selection. We use it for tag highlighting in webpages.
-        var cursorDirty = function cursorDirty() {
-            if (self.outputState !== "clean") {
-                // This will fire after markDirty() itself gets a chance to start a new run
-                // So it will just keep resetting itself until one run comes back and there are
-                // no changes waiting
-                self.once("runDone", cursorDirty);
-            } else {
-                setTimeout(function () {
-                    if (self.editor.getSelectionIndices) {
-                        self.postFrame({
-                            setCursor: self.editor.getSelectionIndices()
-                        });
-                    }
-                    self.editor.once("changeCursor", cursorDirty);
-                }, 0);
-            }
-            // This makes sure that we pop up the error
-            // if the user changed the cursor to a new line
-            setTimeout(function () {
-                self.maybeShowErrors();
-            }, 0);
-        };
-        this.editor.once("changeCursor", cursorDirty);
-
-        this.config.on("versionSwitched", (function (e, version) {
-            // Re-run the code after a version switch
-            this.markDirty();
-
-            // Run the JSHint config
-            this.config.runVersion(version, "jshint");
-        }).bind(this));
-
-        if (this.hasAudio()) {
-            $el.find(".overlay").show();
-            $el.find(dom.BIG_PLAY_LOADING).show();
-            $el.find(dom.PLAYBAR).show();
-        }
-
-        // Set up color button handling
-        $el.find(dom.DRAW_COLOR_BUTTONS).each(function () {
-            $(this).addClass("ui-button").children().css("background", this.id);
-        });
-
-        // Set up toolbar buttons
-        if (jQuery.fn.buttonize) {
-            $el.buttonize();
-        }
-
-        // Handle color button clicks during recording
-        $el.on("buttonClick", "a.draw-color-button", function () {
-            self.drawCanvas.setColor(this.id);
-            self.editor.focus();
-        });
-
-        // If the user clicks the disable overlay (which is laid over
-        // the editor and canvas on playback) then pause playback.
-        $el.on("click", ".disable-overlay", function () {
-            self.record.pausePlayback();
-        });
-
-        // Set up the playback progress bar
-        $el.find(dom.PLAYBAR_PROGRESS).slider({
-            range: "min",
-            value: 0,
-            min: 0,
-            max: 100,
-
-            // Bind events to the progress playback bar
-            // When a user has started dragging the slider
-            start: function start() {
-                // Prevent slider manipulation while recording
-                if (self.record.recording) {
-                    return false;
-                }
-
-                self.record.seeking = true;
-
-                // Pause playback and remember if we were playing or were paused
-                self.wasPlaying = self.record.playing;
-                self.record.pausePlayback();
-            },
-
-            // While the user is dragging the slider
-            slide: function slide(e, ui) {
-                // Slider position is set in seconds
-                var sliderPos = ui.value * 1000;
-
-                // Seek the player and update the time indicator
-                // Ignore values that match endTime - sometimes the
-                // slider jumps and we should ignore those jumps
-                // It's ok because endTime is still captured on 'change'
-                if (sliderPos !== self.record.endTime()) {
-                    self.updateTimeLeft(sliderPos);
-                    self.seekTo(sliderPos);
-                }
-            },
-
-            // When the sliding has stopped
-            stop: function stop(e, ui) {
-                self.record.seeking = false;
-                self.updateTimeLeft(ui.value * 1000);
-
-                // If we were playing when we started sliding, resume playing
-                if (self.wasPlaying) {
-                    // Set the timeout to give time for the events to catch up
-                    // to the present -- if we start before the events have
-                    // finished, the scratchpad editor code will be in a bad
-                    // state. Wait roughly a second for events to settle down.
-                    setTimeout(function () {
-                        self.record.play();
-                    }, 1000);
-                }
-            }
-        });
-
-        var handlePlayClick = function handlePlayClick() {
-            if (self.record.playing) {
-                self.record.pausePlayback();
-            } else {
-                self.record.play();
-            }
-        };
-
-        // Handle the play button
-        $el.find(dom.PLAYBAR_PLAY).off("click.play-button").on("click.play-button", handlePlayClick);
-
-        var handlePlayButton = function handlePlayButton() {
-            // Show the playback bar and hide the loading message
-            $el.find(dom.PLAYBAR_LOADING).hide();
-            $el.find(dom.PLAYBAR_AREA).show();
-
-            // Handle the big play button click event
-            $el.find(dom.BIG_PLAY_BUTTON).off("click.big-play-button").on("click.big-play-button", function () {
-                $el.find(dom.BIG_PLAY_BUTTON).hide();
-                handlePlayClick();
-            });
-
-            $el.find(dom.PLAYBAR_PLAY).on("click", function () {
-                $el.find(dom.BIG_PLAY_BUTTON).hide();
-            });
-
-            // Hide upon interaction with the editor
-            $el.find(dom.EDITOR).on("click", function () {
-                $el.find(dom.BIG_PLAY_BUTTON).hide();
-            });
-
-            // Switch from loading to play
-            $el.find(dom.BIG_PLAY_LOADING).hide();
-            $el.find(dom.BIG_PLAY_BUTTON).show();
-
-            self.off("readyToPlay", handlePlayButton);
-        };
-
-        // Set up all the big play button interactions
-        this.on("readyToPlay", handlePlayButton);
-
-        // Handle the clear button click during recording
-        $el.on("buttonClick", "#draw-clear-button", function () {
-            self.drawCanvas.clear();
-            self.drawCanvas.endDraw();
-            self.editor.focus();
-        });
-
-        // Handle the restart button
-        $el.on("click", this.dom.RESTART_BUTTON, function () {
-            self.record.log("restart");
-        });
-
-        // Handle the gutter errors
-        $el.on("click", this.dom.GUTTER_ERROR, function () {
-            var lineNum = parseInt($(this).text(), 10);
-            self.setErrorPosition(this.gutterDecorations[lineNum]);
-        });
-
-        // Handle clicks on the thinking Error Buddy
-        $el.on("click", this.dom.ERROR_BUDDY_THINKING, function () {
-            self.setErrorPosition(0);
-        });
-
-        // Bind the handler to start a new recording
-        $el.find("#record").on("click", function () {
-            self.recordHandler(function (err) {
-                if (err) {
-                    // TODO: Change this:
-                    console.error(err);
-                }
-            });
-        });
-
-        // Load the recording playback commands as well, if applicable
-        if (this.recordingCommands) {
-            // Check the filename to see if a multiplier is specified,
-            // of the form audio_x1.3.mp3, which means it's 1.3x as slow
-            var url = this.recordingMP3;
-            var matches = /_x(1.\d+).mp3/.exec(url);
-            var multiplier = parseFloat(matches && matches[1]) || 1;
-            this.record.loadRecording({
-                init: this.recordingInit,
-                commands: this.recordingCommands,
-                multiplier: multiplier
-            });
-        }
-    },
-
-    remove: function remove() {
-        $(window).off("message", this.handleMessagesBound);
-        this.editor.remove();
-    },
-
-    canRecord: function canRecord() {
-        return this.transloaditAuthKey && this.transloaditTemplate;
-    },
-
-    hasAudio: function hasAudio() {
-        return !!this.recordingMP3;
-    },
-
-    setupAudio: function setupAudio() {
-        if (!this.hasAudio()) {
-            return;
-        }
-
-        var self = this;
-        var rebootTimer;
-
-        soundManager.setup({
-            url: this.externalsDir + "SoundManager2/swf/",
-            debugMode: false,
-            // Un-comment this to test Flash on FF:
-            // debugFlash: true, preferFlash: true, useHTML5Audio: false,
-            // See sm2-container in play-page.handlebars and flashblock.css
-            useFlashBlock: true,
-            // Sometimes when Flash is blocked or the browser is slower,
-            //  soundManager will fail to initialize at first,
-            //  claiming no response from the Flash file.
-            // To handle that, we attempt a reboot 3 seconds after each
-            //  timeout, clearing the timer if we get an onready during
-            //  that time (which happens if user un-blocks flash).
-            onready: function onready() {
-                window.clearTimeout(rebootTimer);
-                self.audioInit();
-            },
-            ontimeout: function ontimeout(error) {
-                // The onready event comes pretty soon after the user
-                //  clicks the flashblock, but not instantaneous, so 3
-                //  seconds seems a good amount of time to give them the
-                //  chance to click it before we remove it. It's possible
-                //  they may have to click twice sometimes
-                //  (but the second time time will work).
-                window.clearTimeout(rebootTimer);
-                rebootTimer = window.setTimeout(function () {
-                    // Clear flashblocker divs
-                    self.$el.find("#sm2-container div").remove();
-                    soundManager.reboot();
-                }, 3000);
-            }
-        });
-        soundManager.beginDelayedInit();
-
-        this.bindRecordHandlers();
-    },
-
-    audioInit: function audioInit() {
-        if (!this.hasAudio()) {
-            return;
-        }
-
-        var self = this;
-        var record = this.record;
-
-        // Reset the wasPlaying tracker
-        this.wasPlaying = undefined;
-
-        // Start the play head at 0
-        record.time = 0;
-
-        this.player = soundManager.createSound({
-            // SoundManager errors if no ID is passed in,
-            // even though we don't use it
-            // The ID should be a string starting with a letter.
-            id: "sound" + new Date().getTime(),
-
-            url: this.recordingMP3,
-
-            // Load the audio automatically
-            autoLoad: true,
-
-            // While the audio is playing update the position on the progress
-            // bar and update the time indicator
-            whileplaying: (function () {
-                self.updateTimeLeft(record.currentTime());
-
-                if (!record.seeking) {
-                    // Slider takes values in seconds
-                    self.$el.find(self.dom.PLAYBAR_PROGRESS).slider("option", "value", record.currentTime() / 1000);
-                }
-
-                record.trigger("playUpdate");
-            }).bind(this),
-
-            // Hook audio playback into Record command playback
-            // Define callbacks rather than sending the function directly so
-            // that the scope in the Record methods is correct.
-            onplay: function onplay() {
-                record.play();
-            },
-            onresume: function onresume() {
-                record.play();
-            },
-            onpause: function onpause() {
-                record.pausePlayback();
-            },
-            onload: function onload() {
-                record.durationEstimate = record.duration = this.duration;
-                record.trigger("loaded");
-            },
-            whileloading: function whileloading() {
-                record.duration = null;
-                record.durationEstimate = this.durationEstimate;
-                record.trigger("loading");
-            },
-            // When audio playback is complete, notify everyone listening
-            // that playback is officially done
-            onfinish: function onfinish() {
-                record.stopPlayback();
-                record.trigger("playEnded");
-            },
-            onsuspend: function onsuspend() {
-                // Suspend happens when the audio can't be loaded automatically
-                // (such is the case on iOS devices). Thus we trigger a
-                // readyToPlay event anyway and let the load happen when the
-                // user clicks the play button later on.
-                self.trigger("readyToPlay");
-            }
-        });
-
-        // Wait to start playback until we at least have some
-        // bytes from the server (otherwise the player breaks)
-        var checkStreaming = setInterval(function () {
-            // We've loaded enough to start playing
-            if (self.audioReadyToPlay()) {
-                clearInterval(checkStreaming);
-                self.trigger("readyToPlay");
-            }
-        }, 16);
-
-        this.bindPlayerHandlers();
-    },
-
-    audioReadyToPlay: function audioReadyToPlay() {
-        // NOTE(pamela): We can't just check bytesLoaded,
-        //  because IE reports null for that
-        // (it seems to not get the progress event)
-        // So we've changed it to also check loaded.
-        // If we need to, we can reach inside the HTML5 audio element
-        //  and check the ranges of the buffered property
-        return this.player && (this.player.bytesLoaded > 0 || this.player.loaded);
-    },
-
-    bindPlayerHandlers: function bindPlayerHandlers() {
-        var self = this;
-        var record = this.record;
-
-        // Bind events to the Record object, to track when playback events occur
-        this.record.bind({
-            loading: function loading() {
-                self.updateDurationDisplay();
-            },
-
-            loaded: function loaded() {
-                // Add an empty command to force the Record playback to
-                // keep playing until the audio track finishes playing
-                var commands = record.commands;
-
-                if (commands) {
-                    commands.push([Math.max(record.endTime(), commands[commands.length - 1][0]), "seek"]);
-                }
-                self.updateDurationDisplay();
-            },
-
-            // When play has started
-            playStarted: function playStarted() {
-                // If the audio player is paused, resume playing
-                if (self.player.paused) {
-                    self.player.resume();
-
-                    // Otherwise we can assume that we need to start playing from the top
-                } else if (self.player.playState === 0) {
-                    self.player.play();
-                }
-            },
-
-            // Pause when recording playback pauses
-            playPaused: function playPaused() {
-                self.player.pause();
-            }
-        });
-    },
-
-    bindRecordHandlers: function bindRecordHandlers() {
-        var self = this;
-        var record = this.record;
-
-        /*
-         * Bind events to Record (for recording and playback)
-         * and to ScratchpadCanvas (for recording and playback)
-         */
-
-        record.bind({
-            // Playback of a recording has begun
-            playStarted: function playStarted(e, resume) {
-                // Re-init if the recording version is different from
-                // the scratchpad's normal version
-                self.config.switchVersion(record.getVersion());
-
-                // We're starting over so reset the editor and
-                // canvas to its initial state
-                if (!record.recording && !resume) {
-                    // Reset the editor
-                    self.editor.reset(record.initData.code, false);
-
-                    // Clear and hide the drawing area
-                    self.drawCanvas.clear(true);
-                    self.drawCanvas.endDraw();
-                }
-
-                if (!record.recording) {
-                    // Disable the record button during playback
-                    self.$el.find("#record").addClass("disabled");
-                }
-
-                // During playback disable the restart button
-                self.$el.find(self.dom.RESTART_BUTTON).addClass("disabled");
-
-                if (!record.recording) {
-                    // Turn on playback-related styling
-                    $("html").addClass("playing");
-
-                    // Show an invisible overlay that blocks interactions with
-                    // the editor and canvas areas (preventing the user from
-                    // being able to disturb playback)
-                    self.$el.find(".disable-overlay").show();
-                }
-
-                self.editor.unfold();
-
-                // Activate the play button
-                self.$el.find(self.dom.PLAYBAR_PLAY).find("span").removeClass("glyphicon-play icon-play").addClass("glyphicon-pause icon-pause");
-            },
-
-            playEnded: function playEnded() {
-                // Re-init if the recording version is different from
-                // the scratchpad's normal version
-                self.config.switchVersion(this.initialVersion);
-            },
-
-            // Playback of a recording has been paused
-            playPaused: function playPaused() {
-                // Turn off playback-related styling
-                $("html").removeClass("playing");
-
-                // Disable the blocking overlay
-                self.$el.find(".disable-overlay").hide();
-
-                // Allow the user to restart the code again
-                self.$el.find(self.dom.RESTART_BUTTON).removeClass("disabled");
-
-                // Re-enable the record button after playback
-                self.$el.find("#record").removeClass("disabled");
-
-                // Deactivate the play button
-                self.$el.find(self.dom.PLAYBAR_PLAY).find("span").addClass("glyphicon-play icon-play").removeClass("glyphicon-pause icon-pause");
-            },
-
-            // Recording has begun
-            recordStarted: function recordStarted() {
-                // Let the output know that recording has begun
-                self.postFrame({ recording: true });
-
-                self.$el.find("#draw-widgets").removeClass("hidden").show();
-
-                // Hides the invisible overlay that blocks interactions with the
-                // editor and canvas areas (preventing the user from being able
-                // to disturb the recording)
-                self.$el.find(".disable-overlay").hide();
-
-                // Allow the editor to be changed
-                self.editor.setReadOnly(false);
-
-                // Turn off playback-related styling
-                // (hides hot numbers, for example)
-                $("html").removeClass("playing");
-
-                // Reset the canvas to its initial state only if this is the
-                // very first chunk we are recording.
-                if (record.hasNoChunks()) {
-                    self.drawCanvas.clear(true);
-                    self.drawCanvas.endDraw();
-                }
-
-                // Disable the save button
-                self.$el.find("#save-button, #fork-button").addClass("disabled");
-
-                // Activate the recording button
-                self.$el.find("#record").addClass("toggled");
-            },
-
-            // Recording has ended
-            recordEnded: function recordEnded() {
-                // Let the output know that recording has ended
-                self.postFrame({ recording: false });
-
-                if (record.recordingAudio) {
-                    self.recordView.stopRecordingAudio();
-                }
-
-                // Re-enable the save button
-                self.$el.find("#save-button, #fork-button").removeClass("disabled");
-
-                // Enable playbar UI
-                self.$el.find(self.dom.PLAYBAR_UI).removeClass("ui-state-disabled");
-
-                // Return the recording button to normal
-                self.$el.find("#record").removeClass("toggled disabled");
-
-                // Stop any sort of user playback
-                record.stopPlayback();
-
-                // Show an invisible overlay that blocks interactions with the
-                // editor and canvas areas (preventing the user from being able
-                // to disturb the recording)
-                self.$el.find(".disable-overlay").show();
-
-                // Turn on playback-related styling (hides hot numbers, for
-                // example)
-                $("html").addClass("playing");
-
-                // Prevent the editor from being changed
-                self.editor.setReadOnly(true);
-
-                self.$el.find("#draw-widgets").addClass("hidden").hide();
-
-                // Because we are recording in chunks, do not reset the canvas
-                // to its initial state.
-                self.drawCanvas.endDraw();
-            }
-        });
-
-        // ScratchpadCanvas mouse events to track
-        // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
-        _.each(this.mouseCommands, function (name) {
-            // Handle the command during playback
-            record.handlers[name] = function (x, y) {
-                self.postFrame({
-                    mouseAction: {
-                        name: name,
-                        x: x,
-                        y: y
-                    }
-                });
-            };
-        });
-
-        // When a restart occurs during playback, restart the output
-        record.handlers.restart = function () {
-            var $restart = self.$el.find(self.dom.RESTART_BUTTON);
-
-            if (!$restart.hasClass("hilite")) {
-                $restart.addClass("hilite green");
-                setTimeout(function () {
-                    $restart.removeClass("hilite green");
-                }, 300);
-            }
-
-            self.postFrame({ restart: true });
-        };
-
-        // Force the recording to sync to the current time of the audio playback
-        record.currentTime = function () {
-            return self.player ? self.player.position : 0;
-        };
-
-        // Create a function for retreiving the track end time
-        // Note that duration will be set to the duration estimate while
-        // the track is still loading, and only set to actual duration
-        // once its loaded.
-        record.endTime = function () {
-            return this.duration || this.durationEstimate;
-        };
-    },
-
-    recordHandler: function recordHandler(callback) {
-        // If we're already recording, stop
-        if (this.record.recording) {
-            // Note: We should never hit this case when recording chunks.
-            this.recordView.stopRecordingCommands();
-            return;
-        }
-
-        var saveCode = this.editor.text();
-
-        // You must have some code in the editor before you start recording
-        // otherwise the student will be starting with a blank editor,
-        // which is confusing
-        if (!saveCode) {
-            callback({ error: "empty" });
-        } else if (this.config.curVersion() !== this.config.latestVersion()) {
-            callback({ error: "outdated" });
-        } else if (this.canRecord() && !this.hasAudio()) {
-            this.startRecording();
-            this.editor.focus();
-        } else {
-            callback({ error: "exists" });
-        }
-    },
-
-    startRecording: function startRecording() {
-        this.bindRecordHandlers();
-
-        if (!this.recordView) {
-            var $el = this.$el;
-
-            // NOTE(jeresig): Unfortunately we need to do this to make sure
-            // that we load the web worker from the same domain as the rest
-            // of the site (instead of the domain that the "exec" page is on).
-            // This is dumb and a KA-specific bit of functionality that we
-            // should change, somehow.
-            var workersDir = this.workersDir.replace(/^https?:\/\/[^\/]*/, "");
-
-            this.recordView = new ScratchpadRecordView({
-                el: $el.find(".scratchpad-dev-record-row"),
-                recordButton: $el.find("#record"),
-                saveButton: $el.find("#save-button"),
-                record: this.record,
-                editor: this.editor,
-                config: this.config,
-                workersDir: workersDir,
-                drawCanvas: this.drawCanvas,
-                transloaditTemplate: this.transloaditTemplate,
-                transloaditAuthKey: this.transloaditAuthKey
-            });
-        }
-
-        this.recordView.initializeRecordingAudio();
-    },
-
-    saveRecording: function saveRecording(callback, steps) {
-        // If no command or audio recording was made, just save the results
-        if (!this.record.recorded || !this.record.recordingAudio) {
-            return callback();
-        }
-
-        var transloadit = new TransloaditXhr({
-            authKey: this.transloaditAuthKey,
-            templateId: this.transloaditTemplate,
-            steps: steps,
-            successCb: (function (results) {
-                this.recordingMP3 = results.mp3[0].url.replace(/^http:/, "https:");
-                callback(null, this.recordingMP3);
-            }).bind(this),
-            errorCb: callback
-        });
-
-        this.recordView.getFinalAudioRecording(function (combined) {
-            transloadit.uploadFile(combined.wav);
-        });
-    },
-
-    // We call this function multiple times, because the
-    // endTime value may change as we load the file
-    updateDurationDisplay: function updateDurationDisplay() {
-        // Do things that are dependent on knowing duration
-
-        // This gets called if we're loading while we're playing,
-        // so we need to update with the current time
-        this.updateTimeLeft(this.record.currentTime());
-
-        // Set the duration of the progress bar based upon the track duration
-        // Slider position is set in seconds
-        this.$el.find(this.dom.PLAYBAR_PROGRESS).slider("option", "max", this.record.endTime() / 1000);
-    },
-
-    // Update the time left in playback of the track
-    updateTimeLeft: function updateTimeLeft(time) {
-        // Update the time indicator with a nicely formatted time
-        this.$el.find(".scratchpad-playbar-timeleft").text("-" + this.formatTime(this.record.endTime() - time));
-    },
-
-    // Utility method for formatting time in minutes/seconds
-    formatTime: function formatTime(time) {
-        var seconds = time / 1000,
-            min = Math.floor(seconds / 60),
-            sec = Math.floor(seconds % 60);
-
-        if (min < 0 || sec < 0) {
-            min = 0;
-            sec = 0;
-        }
-
-        return min + ":" + (sec < 10 ? "0" : "") + sec;
-    },
-
-    // Seek the player to a particular time
-    seekTo: function seekTo(timeMS) {
-        // Don't update the slider position when seeking
-        // (since this triggers an event on the #progress element)
-        if (!this.record.seeking) {
-            this.$el.find(this.dom.PLAYBAR_PROGRESS).slider("option", "value", timeMS / 1000);
-        }
-
-        // Move the recording and player positions
-        if (this.record.seekTo(timeMS) !== false) {
-            this.player.setPosition(timeMS);
-        }
-    },
-
-    handleMessages: function handleMessages(e) {
-        // DANGER!  The data coming in from the iframe could be anything,
-        // because with some cleverness the author of the program can send an
-        // arbitrary message up to us.  We need to be careful to sanitize it
-        // before doing anything with it, to avoid XSS attacks.  For some
-        // examples, see https://hackerone.com/reports/103989 or
-        // https://app.asana.com/0/44063710579000/71736430394249.
-        // TODO(benkraft): Right now that sanitization is spread over a number
-        // of different places; some things get sanitized here, while others
-        // get passed around and sanitized elsewhere.  Put all the sanitization
-        // in one place so it's easier to reason about its correctness, since
-        // any gap leaves us open to XSS attacks.
-        // TODO(benkraft): Write some tests that send arbitrary messages up
-        // from the iframe, and assert that they don't end up displaying
-        // arbitrary HTML to the user outside the iframe.
-        var event = e.originalEvent;
-        var data;
-
-        try {
-            data = JSON.parse(event.data);
-        } catch (err) {}
-
-        if (!data) {
-            return;
-        }
-
-        if (typeof data !== "object") {
-            return;
-        }
-
-        if (data.type === "debugger") {
-            // these messages are handled by ui/debugger.js:listenMessages
-            return;
-        }
-
-        this.trigger("update", data);
-
-        // Hide loading overlay if output is loaded
-        // We previously just looked at data.loaded,
-        // but that didn't work for some users (maybe message too early?)
-        // so now we also hide if we see data.results
-
-        if (data.loaded || data.results) {
-            this.$el.find(this.dom.CANVAS_LOADING).hide();
-        }
-
-        // Set the code in the editor
-        if (data.code !== undefined) {
-            // TODO(benkraft): This is technically not unsafe, in that
-            // this.editor.text() does not render its argument as HTML, but it
-            // does mean that a user can write a program which modifies its own
-            // code (perhaps on another user's computer).  Not directly a
-            // security risk, but it would be nice if it weren't possible.
-            this.editor.text(data.code);
-            this.editor.originalCode = data.code;
-            this.restartCode();
-        }
-
-        // Testing/validation code is being set
-        if (data.validate !== undefined && data.validate !== null) {
-            this.validation = data.validate;
-        }
-
-        if (data.results) {
-            this.trigger("runDone");
-        }
-
-        if (this.editorType.indexOf("ace_") === 0 && data.results) {
-            // Remove previously added markers
-            this.removeMarkers();
-            if (data.results.assertions || data.results.warnings) {
-                // Add gutter warning markers in the editor.
-                // E.g. Add `Program.assertEqual(2, 4);` to the live editor to see
-                // an example.
-                var annotations = [];
-                for (var i = 0; i < data.results.assertions.length; i++) {
-                    var assertion = data.results.assertions[i];
-                    annotations.push({
-                        // Coerce to the expected type
-                        row: +assertion.row,
-                        column: +assertion.column,
-                        // This is escaped by the gutter annotation display
-                        // code, so we don't need to escape it here.
-                        text: assertion.text.toString(),
-                        type: "warning"
-                    });
-                    this.addUnderlineMarker(+assertion.row);
-                }
-
-                for (var i = 0; i < data.results.warnings.length; i++) {
-                    var warning = data.results.warnings[i];
-                    annotations.push({
-                        // Coerce to the expected type
-                        row: +warning.row,
-                        column: +warning.column,
-                        // This is escaped by the gutter annotation display
-                        // code, so we don't need to escape it here.
-                        text: warning.text.toString(),
-                        type: "warning"
-                    });
-                    this.addUnderlineMarker(+warning.row);
-                }
-
-                // Add new gutter markers
-                this.editor.editor.session.setAnnotations(annotations);
-            } else {
-                this.editor.editor.session.setAnnotations([]);
-            }
-        }
-
-        if (this.errorState.length === 0) {
-            this.setHappyState();
-        }
-
-        if (data.results && _.isArray(data.results.errors)) {
-            this.handleErrors(this.cleanErrors(data.results.errors));
-        }
-
-        // Set the line visibility in the editor
-        if (data.lines !== undefined) {
-            // Coerce to the expected type
-            this.editor.toggleGutter(data.lines.map(function (x) {
-                return +x;
-            }));
-        }
-
-        // Restart the execution
-        if (data.restart) {
-            this.restartCode();
-        }
-
-        // Log the recorded action
-        if (data.log) {
-            // TODO(benkraft): I think passing unsanitized data to any of our
-            // record handlers is currently safe, but it would be nice to not
-            // depend on that always being true.  Do something to sanitize
-            // this, or at least make it more clear that the data coming in may
-            // be unsanitized.
-            this.record.log.apply(this.record, data.log);
-        }
-    },
-
-    addUnderlineMarker: function addUnderlineMarker(row) {
-        // Underline the problem line to make it more obvious
-        //  if they don't notice the gutter icon
-        var AceRange = ace.require("ace/range").Range;
-        var line = this.editor.editor.session.getDocument().getLine(row);
-        this.editor.editor.session.addMarker(new AceRange(row, 0, row, line.length), "ace_problem_line", "text", false);
-    },
-
-    removeMarkers: function removeMarkers() {
-        // Remove previously added markers and decorations
-        var session = this.editor.editor.session;
-        var markers = session.getMarkers();
-        _.each(markers, function (marker, markerId) {
-            session.removeMarker(markerId);
-        });
-    },
-
-    removeGutterDecorations: function removeGutterDecorations() {
-        // Remove old gutter decorations
-        var session = this.editor.editor.session;
-        _.each(this.gutterDecorations, function (errorOffset, errorRow) {
-            session.removeGutterDecoration(errorRow - 1, "ace_error");
-        });
-    },
-
-    gutterDecorations: [],
-    errorCursorRow: null,
-    showError: null,
-
-    handleErrors: function handleErrors(errors) {
-        // Our new, less-aggressive way of handling errors:
-        // We want to check if the errors we see are caused by the line the
-        // user is currently on, and that they have just typed them, and if so
-        // give the user some time to finish what they were typing.
-
-        // When you start with no errors, the errorCursorRow is null.
-        // When you make an error, the errorCursorRow is set to the current row.
-        // When we register another error, we check if the errorCursorRow is the
-        // same as the current row:
-        //  -if it is, we set a timer for one minute of no typing before showing
-        //   you the error so you have a chance to finish what you're doing.
-        //  -if it is not, we show the error right away.
-
-        // Reset the timer
-        window.clearTimeout(this.errorTimeout);
-
-        if (errors.length) {
-            // There is an error
-            var session = this.editor.editor.session;
-
-            // Remove old gutter markers and decorations
-            this.removeMarkers();
-            this.removeGutterDecorations();
-
-            // Add gutter decorations
-            var gutterDecorations = [];
-            _.each(errors, function (error, index) {
-                // Create a log of which row corresponds with which error
-                // message so that when the user clicks a gutter marker they
-                // are shown the relevant error message.
-                if (gutterDecorations[error.row + 1] === null) {
-                    gutterDecorations[error.row + 1] = index;
-                    session.addGutterDecoration(error.row, "ace_error");
-                }
-
-                this.addUnderlineMarker(error.row);
-            }, this);
-
-            this.gutterDecorations = gutterDecorations;
-
-            // Set the errors
-            this.setErrors(errors);
-
-            this.maybeShowErrors();
-        } else {
-            // If there are no errors, remove the gutter decorations that marked
-            // the errors and reset our state.
-            this.removeGutterDecorations();
-            this.setErrors([]);
-            this.setHappyState();
-            this.showError = false;
-            this.errorCursorRow = null;
-        }
-    },
-
-    maybeShowErrors: function maybeShowErrors() {
-
-        if (!this.hasErrors() || !this.editor || !this.editor.getCursor()) {
-            return;
-        }
-
-        var currentRow = this.editor.getCursor().row;
-        var onlyErrorsOnThisLine = this.errorCursorRow === null || this.errorCursorRow === currentRow;
-        if (this.errorCursorRow === null) {
-            this.errorCursorRow = currentRow;
-        }
-
-        // If we were already planning to show the error, or if there are
-        // errors on more than the current line, or we have errors and the
-        // program was just loaded (i.e. this.showError is null) then we
-        // should show the error now. Otherwise we'll delay showing the
-        // error message to give them time to type.
-        this.showError = this.showError || !onlyErrorsOnThisLine || this.showError === null;
-
-        if (this.showError) {
-            // We've already timed out or moved to another line, so show
-            // the error.
-            this.setErrorState();
-        } else if (onlyErrorsOnThisLine) {
-            // There are new errors caused by typing on this line, so let's
-            // give the typer time to finish what they were writing. We'll
-            // show the tipbar if 1 minute has gone by without typing.
-            this.setThinkingState();
-            // Make doubly sure that we clear the timeout
-            window.clearTimeout(this.errorTimeout);
-            this.errorTimeout = setTimeout((function () {
-                if (this.hasErrors()) {
-                    this.setErrorState();
-                }
-            }).bind(this), 60000);
-        }
-    },
-
-    // This is the current error state of Oh Noes Guy.
-    // His state can be one of:
-    // - happy (no errors)
-    // - thinking (the ambigous state where there may be an error in what the
-    //             typer is currently typing)
-    // - error (there is an error that we want to display prominently)
-    errorState: "",
-    hasErrors: function hasErrors() {
-        return this.tipbar.errors.length;
-    },
-    setErrors: function setErrors(errors) {
-        this.tipbar.setErrors(errors);
-    },
-    setErrorPosition: function setErrorPosition(errorPos) {
-        this.setErrorState();
-        this.tipbar.setErrorPosition(errorPos);
-    },
-    setErrorState: function setErrorState() {
-        this.errorState = "error";
-        this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
-        this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();
-        this.tipbar.update(true);
-    },
-    setThinkingState: function setThinkingState() {
-        if (this.errorState !== "thinking") {
-            this.errorState = "thinking";
-            this.tipbar.hide();
-            this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();
-            this.$el.find(this.dom.ERROR_BUDDY_THINKING).show().animate({ left: -2 }, { duration: 300, easing: "linear" }).animate({ left: 2 }, { duration: 300, easing: "linear" }).animate({ left: 0 }, { duration: 300, easing: "linear" });
-        }
-    },
-    setHappyState: function setHappyState() {
-        this.errorState = "happy";
-        this.tipbar.hide();
-        this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
-        this.$el.find(this.dom.ERROR_BUDDY_HAPPY).show();
-    },
-
-    // Extract the origin from the embedded frame location
-    postFrameOrigin: function postFrameOrigin() {
-        var match = /^.*:\/\/[^\/]*/.exec(this.$el.find("#output-frame").attr("data-src"));
-
-        return match ? match[0] : window.location.protocol + "//" + window.location.host;
-    },
-
-    postFrame: function postFrame(data) {
-        // Send the data to the frame using postMessage
-        this.$el.find("#output-frame")[0].contentWindow.postMessage(JSON.stringify(data), this.postFrameOrigin());
-    },
-
-    hasFrame: function hasFrame() {
-        return !!this.execFile;
-    },
-
-    /*
-     * Restart the code in the output frame.
-     */
-    restartCode: function restartCode() {
-        this.postFrame({ restart: true });
-    },
-
-    /*
-     * Execute some code in the output frame.
-     *
-     * A note about the throttling:
-     * This limits updates to 50FPS. No point in updating faster than that.
-     *
-     * DO NOT CALL THIS DIRECTLY
-     * Instead call markDirty because it will handle
-     * throttling requests properly.
-     */
-    runCode: _.throttle(function (code) {
-        var options = {
-            code: arguments.length === 0 ? this.editor.text() : code,
-            cursor: this.editor.getSelectionIndices ? this.editor.getSelectionIndices() : -1,
-            validate: this.validation || "",
-            noLint: this.noLint,
-            version: this.config.curVersion(),
-            settings: this.settings || {},
-            workersDir: this.workersDir,
-            externalsDir: this.externalsDir,
-            imagesDir: this.imagesDir,
-            soundsDir: this.soundsDir,
-            redirectUrl: this.redirectUrl,
-            jshintFile: this.jshintFile,
-            outputType: this.outputType,
-            enableLoopProtect: this.enableLoopProtect
-        };
-
-        this.trigger("runCode", options);
-
-        this.postFrame(options);
-    }, 20),
-
-    markDirty: function markDirty() {
-        var _this2 = this;
-
-        // makeDirty is called when you type something in the editor. When this
-        // happens, we want to run the code, but also want to throttle how often
-        // we re-run so we can wait for the results of running it to come back.
-        // We keep track of the state using clean/running/dirty markers.
-
-        // The state of the output starts out "clean": the editor and the output
-        // are in sync.
-        // When you type, markDirty gets called, which will mark the state as
-        // "running" and starts of runCode in the background. Since runCode is
-        // async, if you type again while it's running then the output state
-        // will get set to "dirty".
-        // When runCode finishes it will call runDone, which will either set the
-        // state back to clean (if it was running before), or will run again if
-        // the state was dirty.
-        // If runCode takes more than 500ms then runDone will be called and we
-        // set the state back to "clean".
-
-        if (this.outputState === "clean") {
-            // We will run at the end of this code block
-            // This stops replace from trying to execute code
-            // between deleting the old code and adding the new code
-            setTimeout(this.runCode.bind(this), 0);
-            this.outputState = "running";
-
-            // 500ms is an arbitrary timeout. Hopefully long enough for
-            // reasonable programs to execute, but short enough for editor to
-            // not freeze.
-            this.runTimeout = setTimeout(function () {
-                _this2.trigger("runDone");
-            }, 500);
-        } else {
-            this.outputState = "dirty";
-        }
-    },
-
-    // This will either be called when we receive the results
-    // Or it will timeout.
-    runDone: function runDone() {
-        clearTimeout(this.runTimeout);
-        var lastOutputState = this.outputState;
-        this.outputState = "clean";
-        if (lastOutputState === "dirty") {
-            this.markDirty();
-        }
-    },
-
-    // This stops us from sending any updates until the current run has finished
-    // Reset output state to clean as a part of the frame load handler
-    outputState: "dirty",
-
-    updateCanvasSize: function updateCanvasSize(width, height) {
-        width = width || this.defaultOutputWidth;
-        height = height || this.defaultOutputHeight;
-
-        this.$el.find(this.dom.CANVAS_WRAP).width(width);
-        this.$el.find(this.dom.ALL_OUTPUT).height(height);
-
-        // Set the editor height to be the same as the canvas height
-        this.$el.find(this.dom.EDITOR).height(this.editorHeight || height);
-
-        this.trigger("canvasSizeUpdated", {
-            width: width,
-            height: height
-        });
-    },
-
-    getScreenshot: function getScreenshot(callback) {
-        // If we don't have an output frame then we need to render our
-        // own screenshot (so we just use the text in the editor)
-        if (!this.hasFrame()) {
-            var canvas = document.createElement("canvas");
-            canvas.width = 200;
-            canvas.height = 200;
-            var ctx = canvas.getContext("2d");
-
-            // Default sizing, we also use a 5px margin
-            var lineHeight = 24;
-            var maxWidth = 190;
-
-            // We go through all of this so that the text will wrap nicely
-            var text = this.editor.text();
-
-            // Remove all HTML markup and un-escape entities
-            text = text.replace(/<[^>]+>/g, "");
-            text = text.replace(/&nbsp;|&#160;/g, " ");
-            text = text.replace(/&lt;|&#60;/g, "<");
-            text = text.replace(/&gt;|&#62;/g, ">");
-            text = text.replace(/&amp;|&#38;/g, "&");
-            text = text.replace(/&quot;|&#34;/g, "\"");
-            text = text.replace(/&apos;|&#39;/g, "'");
-
-            var words = text.split(/\s+/);
-            var lines = 0;
-            var currentLine = words[0];
-
-            ctx.font = lineHeight + "px serif";
-
-            for (var i = 1; i < words.length; i++) {
-                var word = words[i];
-                var width = ctx.measureText(currentLine + " " + word).width;
-                if (width < maxWidth) {
-                    currentLine += " " + word;
-                } else {
-                    lines += 1;
-                    ctx.fillText(currentLine, 5, (lineHeight + 5) * lines);
-                    currentLine = word;
-                }
-            }
-            lines += 1;
-            ctx.fillText(currentLine, 5, (lineHeight + 5) * lines + 5);
-
-            // Render it to an image and we're done!
-            callback(canvas.toDataURL("image/png"));
-            return;
-        }
-
-        // Unbind any handlers this function may have set for previous
-        // screenshots
-        $(window).off("message.getScreenshot");
-
-        // We're only expecting one screenshot back
-        $(window).on("message.getScreenshot", function (e) {
-            // Only call if the data is actually an image!
-            if (/^data:/.test(e.originalEvent.data)) {
-                callback(e.originalEvent.data);
-            }
-        });
-
-        // Ask the frame for a screenshot
-        this.postFrame({ screenshot: true });
-    },
-
-    undo: function undo() {
-        this.editor.undo();
-    },
-
-    _qualifyURL: function _qualifyURL(url) {
-        var a = document.createElement("a");
-        a.href = url;
-        return a.href;
-    },
-
-    cleanErrors: function cleanErrors(errors) {
-        var loopProtectMessages = {
-            "WhileStatement": i18n._("<code>while</code> loop"),
-            "DoWhileStatement": i18n._("<code>do-while</code> loop"),
-            "ForStatement": i18n._("<code>for</code> loop"),
-            "FunctionDeclaration": i18n._("<code>function</code>"),
-            "FunctionExpression": i18n._("<code>function</code>")
-        };
-
-        errors = errors.map((function (error) {
-            // These errors come from the user, so we can't trust them.  They
-            // get decoded from JSON, so they will just be plain objects, not
-            // arbitrary classes, but they're still potentially full of HTML
-            // that we need to escape.  So any HTML we want to put in needs to
-            // get put in here, rather than somewhere inside the iframe.
-            delete error.html;
-            // TODO(benkraft): This is a kind of ugly place to put this
-            // processing.  Refactor so that we don't have to do something
-            // quite so ad-hoc here, while still keeping any user input
-            // appropriately sanitized.
-            var loopNodeType = error.infiniteLoopNodeType;
-            if (loopNodeType) {
-                error.html = i18n._("A %(type)s is taking too long to run. " + "Perhaps you have a mistake in your code?", {
-                    type: loopProtectMessages[loopNodeType]
-                });
-            }
-
-            var newError = {};
-
-            // error.html was cleared above, so if it exists it's because we
-            // reset it, and it's safe.
-            if (typeof error === "string") {
-                newError.text = this.clean(this.prettify(error));
-            } else if (error.html) {
-                newError.text = this.prettify(error.html);
-            } else {
-                newError.text = this.prettify(this.clean(error.text || error.message || ""));
-            }
-
-            // Coerce anything from the user to the expected types before
-            // copying over
-            if (error.lint !== undefined) {
-                newError.lint = {};
-
-                // TODO(benkraft): Coerce this in a less ad-hoc way, or at
-                // least only pass through the things we'll actually use.
-                // Also, get a stronger guarantee that none of these
-                // strings ever get used unescaped.
-                var numberProps = ["character", "line"];
-                var stringProps = ["code", "evidence", "id", "raw", "reason", "scope", "type"];
-                var objectProps = ["openTag"];
-
-                numberProps.forEach(function (prop) {
-                    if (error.lint[prop] != undefined) {
-                        newError.lint[prop] = +error.lint[prop];
-                    }
-                });
-
-                stringProps.forEach(function (prop) {
-                    if (error.lint[prop] != undefined) {
-                        newError.lint[prop] = error.lint[prop].toString();
-                    }
-                });
-
-                objectProps.forEach(function (prop) {
-                    if (error.lint[prop] != undefined) {
-                        newError.lint[prop] = error.lint[prop];
-                    }
-                });
-            }
-
-            if (error.row != undefined) {
-                newError.row = +error.row;
-            }
-
-            if (error.column != undefined) {
-                newError.column = +error.column;
-            }
-
-            if (error.type != undefined) {
-                newError.type = error.type.toString();
-            }
-
-            if (error.source != undefined) {
-                newError.source = error.source.toString();
-            }
-
-            if (error.priority != undefined) {
-                newError.priority = +error.priority;
-            }
-
-            return newError;
-        }).bind(this));
-
-        errors = errors.sort(function (a, b) {
-            var diff = a.row - b.row;
-            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
-        });
-
-        return errors;
-    },
-
-    // This adds html tags around quoted lines so they can be formatted
-    prettify: function prettify(str) {
-        str = str.split("\"");
-        var htmlString = "";
-        for (var i = 0; i < str.length; i++) {
-            if (str[i].length === 0) {
-                continue;
-            }
-
-            if (i % 2 === 0) {
-                //regular text
-                htmlString += "<span class=\"text\">" + str[i] + "</span>";
-            } else {
-                // text in quotes
-                htmlString += "<span class=\"quote\">" + str[i] + "</span>";
-            }
-        }
-        return htmlString;
-    },
-
-    clean: function clean(str) {
-        return String(str).replace(/</g, "&lt;");
-    }
-});
-
-LiveEditor.registerEditor = function (name, editor) {
-    LiveEditor.prototype.editors[name] = editor;
-};
-
-// Malformed JSON, we don't care about it
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 17);
+/******/ })
+/************************************************************************/
+/******/ ({
+
+/***/ "./js/live-editor.js":
+/*!***************************!*\
+  !*** ./js/live-editor.js ***!
+  \***************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("/* WEBPACK VAR INJECTION */(function(_) {\n\nvar _typeof = typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol && obj !== Symbol.prototype ? \"symbol\" : typeof obj; };\n\nvar Backbone = __webpack_require__(/*! backbone */ \"./node_modules/backbone/backbone.js\");\nBackbone.$ = __webpack_require__(/*! jquery */ \"jquery\");\n\nvar ScratchpadConfig = __webpack_require__(/*! ./shared/config.js */ \"./js/shared/config.js\");\nvar ScratchpadDrawCanvas = __webpack_require__(/*! ./ui/canvas.js */ \"./js/ui/canvas.js\");\nvar TipBar = __webpack_require__(/*! ./ui/tipbar.js */ \"./js/ui/tipbar.js\");\n\nvar liveEditorTemplate = __webpack_require__(/*! ../tmpl/live-editor.handlebars */ \"./tmpl/live-editor.handlebars\");\n\n// TODO(kevinb) remove after challenges have been converted to use i18n._\n$._ = i18n._;\n\nvar LiveEditor = Backbone.View.extend({\n    dom: {\n        DRAW_CANVAS: \".scratchpad-draw-canvas\",\n        DRAW_COLOR_BUTTONS: \"#draw-widgets a.draw-color-button\",\n        CANVAS_WRAP: \".scratchpad-canvas-wrap\",\n        EDITOR: \".scratchpad-editor\",\n        CANVAS_LOADING: \".scratchpad-canvas-loading\",\n        BIG_PLAY_LOADING: \".scratchpad-editor-bigplay-loading\",\n        BIG_PLAY_BUTTON: \".scratchpad-editor-bigplay-button\",\n        PLAYBAR: \".scratchpad-playbar\",\n        PLAYBAR_AREA: \".scratchpad-playbar-area\",\n        PLAYBAR_OPTIONS: \".scratchpad-playbar-options\",\n        PLAYBAR_LOADING: \".scratchpad-playbar .loading-msg\",\n        PLAYBAR_PROGRESS: \".scratchpad-playbar-progress\",\n        PLAYBAR_PLAY: \".scratchpad-playbar-play\",\n        PLAYBAR_TIMELEFT: \".scratchpad-playbar-timeleft\",\n        PLAYBAR_UI: \".scratchpad-playbar-play, .scratchpad-playbar-progress\",\n        OUTPUT_FRAME: \"#output-frame\",\n        OUTPUT_DIV: \"#output\",\n        ALL_OUTPUT: \"#output, #output-frame\",\n        RESTART_BUTTON: \"#restart-code\",\n        GUTTER_ERROR: \".ace_error\",\n        ERROR_BUDDY_HAPPY: \".error-buddy-happy\",\n        ERROR_BUDDY_THINKING: \".error-buddy-thinking\"\n    },\n\n    mouseCommands: [\"move\", \"over\", \"out\", \"down\", \"up\"],\n    colors: [\"black\", \"red\", \"orange\", \"green\", \"blue\", \"lightblue\", \"violet\"],\n\n    defaultOutputWidth: 400,\n    defaultOutputHeight: 400,\n\n    editors: {},\n\n    initialize: function initialize(options) {\n        this.workersDir = this._qualifyURL(options.workersDir);\n        this.externalsDir = this._qualifyURL(options.externalsDir);\n        this.imagesDir = this._qualifyURL(options.imagesDir);\n        this.soundsDir = options.soundsDir;\n        this.execFile = options.execFile ? this._qualifyURL(options.execFile) : \"\";\n        this.jshintFile = this._qualifyURL(options.jshintFile || this.externalsDir + \"jshint/jshint.js\");\n        this.redirectUrl = options.redirectUrl;\n\n        this.outputType = options.outputType || \"\";\n        this.editorType = options.editorType || _.keys(this.editors)[0];\n        this.editorHeight = options.editorHeight;\n        this.initialCode = options.code;\n        this.initialVersion = options.version;\n        this.settings = options.settings;\n        this.validation = options.validation;\n\n        this.recordingCommands = options.recordingCommands;\n        this.recordingMP3 = options.recordingMP3;\n        this.recordingInit = options.recordingInit || {\n            code: this.initialCode,\n            version: this.initialVersion\n        };\n\n        this.transloaditTemplate = options.transloaditTemplate;\n        this.transloaditAuthKey = options.transloaditAuthKey;\n\n        this.render();\n\n        this.config = new ScratchpadConfig({\n            version: options.version\n        });\n\n        // We no longer load in record, since that functionality isn't\n        // currently needed nor supported\n        if (this.canRecord()) {\n            this.record = new ScratchpadRecord();\n        }\n\n        // Set up the Canvas drawing area\n        this.drawCanvas = new ScratchpadDrawCanvas({\n            el: this.dom.DRAW_CANVAS,\n            record: this.record\n        });\n\n        this.drawCanvas.on({\n            // Drawing has started\n            drawStarted: function () {\n                // Activate the canvas\n                this.$el.find(this.dom.DRAW_CANVAS).show();\n            }.bind(this),\n\n            // Drawing has ended\n            drawEnded: function () {\n                // Hide the canvas\n                this.$el.find(this.dom.DRAW_CANVAS).hide();\n            }.bind(this),\n\n            // A color has been chosen\n            colorSet: function (color) {\n                // Deactivate all the color buttons\n                this.$el.find(this.dom.DRAW_COLOR_BUTTONS).removeClass(\"ui-state-active\");\n\n                // If a new color has actually been chosen\n                if (color !== null) {\n                    // Select that color and activate the button\n                    this.$el.find(\"#\" + color).addClass(\"ui-state-active\");\n                }\n            }.bind(this)\n        });\n\n        if (options.enableLoopProtect != null) {\n            this.enableLoopProtect = options.enableLoopProtect;\n        } else {\n            this.enableLoopProtect = true;\n        }\n\n        // Set up the editor\n        this.editor = new this.editors[this.editorType]({\n            el: this.dom.EDITOR,\n            code: this.initialCode,\n            autoFocus: options.autoFocus,\n            config: this.config,\n            record: this.record,\n            imagesDir: this.imagesDir,\n            soundsDir: this.soundsDir,\n            externalsDir: this.externalsDir,\n            workersDir: this.workersDir,\n            type: this.editorType\n        });\n\n        var tooltipEngine = this.config.editor.tooltipEngine;\n        if (tooltipEngine.setEnabledStatus) {\n            // Looks to see if \"autosuggestToggle=yes\" is in the url,\n            //  if it is, then we disable the live autosuggestions.\n            if (window.location.search.indexOf(\"autosuggestToggle=yes\") !== -1) {\n\n                // Overrides whatever is in localStorage.\n                // TODO (anyone) remove this when the URL param is removed.\n                window.localStorage[\"autosuggest\"] = \"true\";\n\n                // Allows toggling of the autosuggestions.\n                this.editor.editor.commands.addCommand({\n                    name: 'toggleAutosuggest',\n                    bindKey: {\n                        win: 'Ctrl+Alt+A',\n                        mac: 'Command+Option+A'\n                    },\n                    exec: function exec(editor) {\n                        var status = window.localStorage[\"autosuggest\"] === \"true\";\n\n                        tooltipEngine.setEnabledStatus(status !== true);\n\n                        window.localStorage.setItem(\"autosuggest\", String(status !== true));\n                    }\n                });\n            } else {\n                // since we load the enabled value from localStorage...\n                tooltipEngine.setEnabledStatus(\"true\");\n            }\n        }\n\n        // linting in the webpage environment generates slowparseResults which\n        // is used in the runCode step so skipping linting won't work in that\n        // environment without some more work\n        if (this.editorType === \"ace_pjs\") {\n            this.noLint = false;\n            this.editor.on(\"scrubbingStarted\", function () {\n                this.noLint = true;\n            }.bind(this));\n\n            this.editor.on(\"scrubbingEnded\", function () {\n                this.noLint = false;\n            }.bind(this));\n        }\n\n        this.tipbar = new TipBar({\n            el: this.$(this.dom.OUTPUT_DIV),\n            liveEditor: this\n        });\n\n        // Set up the debugger;\n        if (options.useDebugger) {\n            this.debugger = new ScratchpadDebugger({\n                liveEditor: this,\n                editor: this.editor.editor\n            });\n            this.debugger.on(\"enabled\", function (enabled) {\n                if (enabled) {\n                    this.$el.find(this.dom.RESTART_BUTTON).attr(\"disabled\", \"\");\n                } else {\n                    this.$el.find(this.dom.RESTART_BUTTON).removeAttr(\"disabled\");\n                }\n            }, this);\n        }\n\n        var code = options.code;\n\n        // Load the text into the editor\n        if (code !== undefined) {\n            this.editor.text(code);\n            this.editor.originalCode = code;\n        }\n\n        // Focus on the editor\n        this.editor.focus();\n\n        if (options.cursor) {\n            // Restore the cursor position\n            this.editor.setCursor(options.cursor);\n        } else {\n            // Set an initial starting selection point\n            this.editor.setSelection({\n                start: { row: 0, column: 0 },\n                end: { row: 0, column: 0 }\n            });\n        }\n\n        // Hide the overlay\n        this.$el.find(\"#page-overlay\").hide();\n\n        // Change the width and height of the output frame if it's been\n        // changed by the user, via the query string, or in the settings\n        this.updateCanvasSize(options.width, options.height);\n\n        if (this.canRecord()) {\n            this.$el.find(\"#record\").show();\n        }\n\n        this.bind();\n        this.setupAudio();\n    },\n\n    render: function render() {\n        this.$el.html(liveEditorTemplate({\n            execFile: this.execFile,\n            imagesDir: this.imagesDir,\n            colors: this.colors\n        }));\n    },\n\n    bind: function bind() {\n        var _this = this;\n\n        var self = this;\n        var $el = this.$el;\n        var dom = this.dom;\n\n        // Make sure that disabled buttons can't still be used\n        $el.delegate(\".simple-button.disabled, .ui-state-disabled\", \"click\", function (e) {\n            e.stopImmediatePropagation();\n            return false;\n        });\n\n        // Handle the restart button\n        $el.delegate(this.dom.RESTART_BUTTON, \"click\", this.restartCode.bind(this));\n\n        this.handleMessagesBound = this.handleMessages.bind(this);\n        $(window).on(\"message\", this.handleMessagesBound);\n\n        $el.find(\"#output-frame\").on(\"load\", function () {\n            _this.outputState = \"clean\";\n            _this.markDirty();\n        });\n\n        // Whenever the user changes code, execute the code\n        this.editor.on(\"change\", function () {\n            _this.markDirty();\n        });\n\n        this.editor.on(\"userChangedCode\", function () {\n            if (!_this.record || !_this.record.recording && !_this.record.playing) {\n                _this.trigger(\"userChangedCode\");\n            }\n        });\n\n        this.on(\"runDone\", this.runDone.bind(this));\n\n        // This function will fire once after each synchrynous block which changes the cursor\n        // or the current selection. We use it for tag highlighting in webpages.\n        var cursorDirty = function cursorDirty() {\n            if (self.outputState !== \"clean\") {\n                // This will fire after markDirty() itself gets a chance to start a new run\n                // So it will just keep resetting itself until one run comes back and there are\n                // no changes waiting\n                self.once(\"runDone\", cursorDirty);\n            } else {\n                setTimeout(function () {\n                    if (self.editor.getSelectionIndices) {\n                        self.postFrame({\n                            setCursor: self.editor.getSelectionIndices()\n                        });\n                    }\n                    self.editor.once(\"changeCursor\", cursorDirty);\n                }, 0);\n            }\n            // This makes sure that we pop up the error\n            // if the user changed the cursor to a new line\n            setTimeout(function () {\n                self.maybeShowErrors();\n            }, 0);\n        };\n        this.editor.once(\"changeCursor\", cursorDirty);\n\n        this.config.on(\"versionSwitched\", function (e, version) {\n            // Re-run the code after a version switch\n            this.markDirty();\n\n            // Run the JSHint config\n            this.config.runVersion(version, \"jshint\");\n        }.bind(this));\n\n        if (this.hasAudio()) {\n            $el.find(\".overlay\").show();\n            $el.find(dom.BIG_PLAY_LOADING).show();\n            $el.find(dom.PLAYBAR).show();\n        }\n\n        // Set up color button handling\n        $el.find(dom.DRAW_COLOR_BUTTONS).each(function () {\n            $(this).addClass(\"ui-button\").children().css(\"background\", this.id);\n        });\n\n        // Set up toolbar buttons\n        if (jQuery.fn.buttonize) {\n            $el.buttonize();\n        }\n\n        // Handle color button clicks during recording\n        $el.on(\"buttonClick\", \"a.draw-color-button\", function () {\n            self.drawCanvas.setColor(this.id);\n            self.editor.focus();\n        });\n\n        // If the user clicks the disable overlay (which is laid over\n        // the editor and canvas on playback) then pause playback.\n        $el.on(\"click\", \".disable-overlay\", function () {\n            self.record.pausePlayback();\n        });\n\n        // Set up the playback progress bar\n        $el.find(dom.PLAYBAR_PROGRESS).slider({\n            range: \"min\",\n            value: 0,\n            min: 0,\n            max: 100,\n\n            // Bind events to the progress playback bar\n            // When a user has started dragging the slider\n            start: function start() {\n                // Prevent slider manipulation while recording\n                if (self.record.recording) {\n                    return false;\n                }\n\n                self.record.seeking = true;\n\n                // Pause playback and remember if we were playing or were paused\n                self.wasPlaying = self.record.playing;\n                self.record.pausePlayback();\n            },\n\n            // While the user is dragging the slider\n            slide: function slide(e, ui) {\n                // Slider position is set in seconds\n                var sliderPos = ui.value * 1000;\n\n                // Seek the player and update the time indicator\n                // Ignore values that match endTime - sometimes the\n                // slider jumps and we should ignore those jumps\n                // It's ok because endTime is still captured on 'change'\n                if (sliderPos !== self.record.endTime()) {\n                    self.updateTimeLeft(sliderPos);\n                    self.seekTo(sliderPos);\n                }\n            },\n\n            // When the sliding has stopped\n            stop: function stop(e, ui) {\n                self.record.seeking = false;\n                self.updateTimeLeft(ui.value * 1000);\n\n                // If we were playing when we started sliding, resume playing\n                if (self.wasPlaying) {\n                    // Set the timeout to give time for the events to catch up\n                    // to the present -- if we start before the events have\n                    // finished, the scratchpad editor code will be in a bad\n                    // state. Wait roughly a second for events to settle down.\n                    setTimeout(function () {\n                        self.record.play();\n                    }, 1000);\n                }\n            }\n        });\n\n        var handlePlayClick = function handlePlayClick() {\n            if (self.record.playing) {\n                self.record.pausePlayback();\n            } else {\n                self.record.play();\n            }\n        };\n\n        // Handle the play button\n        $el.find(dom.PLAYBAR_PLAY).off(\"click.play-button\").on(\"click.play-button\", handlePlayClick);\n\n        var handlePlayButton = function handlePlayButton() {\n            // Show the playback bar and hide the loading message\n            $el.find(dom.PLAYBAR_LOADING).hide();\n            $el.find(dom.PLAYBAR_AREA).show();\n\n            // Handle the big play button click event\n            $el.find(dom.BIG_PLAY_BUTTON).off(\"click.big-play-button\").on(\"click.big-play-button\", function () {\n                $el.find(dom.BIG_PLAY_BUTTON).hide();\n                handlePlayClick();\n            });\n\n            $el.find(dom.PLAYBAR_PLAY).on(\"click\", function () {\n                $el.find(dom.BIG_PLAY_BUTTON).hide();\n            });\n\n            // Hide upon interaction with the editor\n            $el.find(dom.EDITOR).on(\"click\", function () {\n                $el.find(dom.BIG_PLAY_BUTTON).hide();\n            });\n\n            // Switch from loading to play\n            $el.find(dom.BIG_PLAY_LOADING).hide();\n            $el.find(dom.BIG_PLAY_BUTTON).show();\n\n            self.off(\"readyToPlay\", handlePlayButton);\n        };\n\n        // Set up all the big play button interactions\n        this.on(\"readyToPlay\", handlePlayButton);\n\n        // Handle the clear button click during recording\n        $el.on(\"buttonClick\", \"#draw-clear-button\", function () {\n            self.drawCanvas.clear();\n            self.drawCanvas.endDraw();\n            self.editor.focus();\n        });\n\n        // Handle the restart button\n        $el.on(\"click\", this.dom.RESTART_BUTTON, function () {\n            self.record && self.record.log(\"restart\");\n        });\n\n        // Handle the gutter errors\n        $el.on(\"click\", this.dom.GUTTER_ERROR, function () {\n            var lineNum = parseInt($(this).text(), 10);\n            self.setErrorPosition(this.gutterDecorations[lineNum]);\n        });\n\n        // Handle clicks on the thinking Error Buddy\n        $el.on(\"click\", this.dom.ERROR_BUDDY_THINKING, function () {\n            self.setErrorPosition(0);\n        });\n\n        // Bind the handler to start a new recording\n        $el.find(\"#record\").on(\"click\", function () {\n            self.recordHandler(function (err) {\n                if (err) {\n                    // TODO: Change this:\n                    console.error(err);\n                }\n            });\n        });\n\n        // Load the recording playback commands as well, if applicable\n        if (this.recordingCommands) {\n            // Check the filename to see if a multiplier is specified,\n            // of the form audio_x1.3.mp3, which means it's 1.3x as slow\n            var url = this.recordingMP3;\n            var matches = /_x(1.\\d+).mp3/.exec(url);\n            var multiplier = parseFloat(matches && matches[1]) || 1;\n            this.record.loadRecording({\n                init: this.recordingInit,\n                commands: this.recordingCommands,\n                multiplier: multiplier\n            });\n        }\n    },\n\n    remove: function remove() {\n        $(window).off(\"message\", this.handleMessagesBound);\n        this.editor.remove();\n    },\n\n    canRecord: function canRecord() {\n        return this.transloaditAuthKey && this.transloaditTemplate;\n    },\n\n    hasAudio: function hasAudio() {\n        return !!this.recordingMP3;\n    },\n\n    setupAudio: function setupAudio() {\n        if (!this.hasAudio()) {\n            return;\n        }\n\n        var self = this;\n        var rebootTimer;\n\n        soundManager.setup({\n            url: this.externalsDir + \"SoundManager2/swf/\",\n            debugMode: false,\n            // Un-comment this to test Flash on FF:\n            // debugFlash: true, preferFlash: true, useHTML5Audio: false,\n            // See sm2-container in play-page.handlebars and flashblock.css\n            useFlashBlock: true,\n            // Sometimes when Flash is blocked or the browser is slower,\n            //  soundManager will fail to initialize at first,\n            //  claiming no response from the Flash file.\n            // To handle that, we attempt a reboot 3 seconds after each\n            //  timeout, clearing the timer if we get an onready during\n            //  that time (which happens if user un-blocks flash).\n            onready: function onready() {\n                window.clearTimeout(rebootTimer);\n                self.audioInit();\n            },\n            ontimeout: function ontimeout(error) {\n                // The onready event comes pretty soon after the user\n                //  clicks the flashblock, but not instantaneous, so 3\n                //  seconds seems a good amount of time to give them the\n                //  chance to click it before we remove it. It's possible\n                //  they may have to click twice sometimes\n                //  (but the second time time will work).\n                window.clearTimeout(rebootTimer);\n                rebootTimer = window.setTimeout(function () {\n                    // Clear flashblocker divs\n                    self.$el.find(\"#sm2-container div\").remove();\n                    soundManager.reboot();\n                }, 3000);\n            }\n        });\n        soundManager.beginDelayedInit();\n\n        this.bindRecordHandlers();\n    },\n\n    audioInit: function audioInit() {\n        if (!this.hasAudio()) {\n            return;\n        }\n\n        var self = this;\n        var record = this.record;\n\n        // Reset the wasPlaying tracker\n        this.wasPlaying = undefined;\n\n        // Start the play head at 0\n        record.time = 0;\n\n        this.player = soundManager.createSound({\n            // SoundManager errors if no ID is passed in,\n            // even though we don't use it\n            // The ID should be a string starting with a letter.\n            id: \"sound\" + new Date().getTime(),\n\n            url: this.recordingMP3,\n\n            // Load the audio automatically\n            autoLoad: true,\n\n            // While the audio is playing update the position on the progress\n            // bar and update the time indicator\n            whileplaying: function () {\n                self.updateTimeLeft(record.currentTime());\n\n                if (!record.seeking) {\n                    // Slider takes values in seconds\n                    self.$el.find(self.dom.PLAYBAR_PROGRESS).slider(\"option\", \"value\", record.currentTime() / 1000);\n                }\n\n                record.trigger(\"playUpdate\");\n            }.bind(this),\n\n            // Hook audio playback into Record command playback\n            // Define callbacks rather than sending the function directly so\n            // that the scope in the Record methods is correct.\n            onplay: function onplay() {\n                record.play();\n            },\n            onresume: function onresume() {\n                record.play();\n            },\n            onpause: function onpause() {\n                record.pausePlayback();\n            },\n            onload: function onload() {\n                record.durationEstimate = record.duration = this.duration;\n                record.trigger(\"loaded\");\n            },\n            whileloading: function whileloading() {\n                record.duration = null;\n                record.durationEstimate = this.durationEstimate;\n                record.trigger(\"loading\");\n            },\n            // When audio playback is complete, notify everyone listening\n            // that playback is officially done\n            onfinish: function onfinish() {\n                record.stopPlayback();\n                record.trigger(\"playEnded\");\n            },\n            onsuspend: function onsuspend() {\n                // Suspend happens when the audio can't be loaded automatically\n                // (such is the case on iOS devices). Thus we trigger a\n                // readyToPlay event anyway and let the load happen when the\n                // user clicks the play button later on.\n                self.trigger(\"readyToPlay\");\n            }\n        });\n\n        // Wait to start playback until we at least have some\n        // bytes from the server (otherwise the player breaks)\n        var checkStreaming = setInterval(function () {\n            // We've loaded enough to start playing\n            if (self.audioReadyToPlay()) {\n                clearInterval(checkStreaming);\n                self.trigger(\"readyToPlay\");\n            }\n        }, 16);\n\n        this.bindPlayerHandlers();\n    },\n\n    audioReadyToPlay: function audioReadyToPlay() {\n        // NOTE(pamela): We can't just check bytesLoaded,\n        //  because IE reports null for that\n        // (it seems to not get the progress event)\n        // So we've changed it to also check loaded.\n        // If we need to, we can reach inside the HTML5 audio element\n        //  and check the ranges of the buffered property\n        return this.player && (this.player.bytesLoaded > 0 || this.player.loaded);\n    },\n\n    bindPlayerHandlers: function bindPlayerHandlers() {\n        var self = this;\n        var record = this.record;\n\n        // Bind events to the Record object, to track when playback events occur\n        this.record.bind({\n            loading: function loading() {\n                self.updateDurationDisplay();\n            },\n\n            loaded: function loaded() {\n                // Add an empty command to force the Record playback to\n                // keep playing until the audio track finishes playing\n                var commands = record.commands;\n\n                if (commands) {\n                    commands.push([Math.max(record.endTime(), commands[commands.length - 1][0]), \"seek\"]);\n                }\n                self.updateDurationDisplay();\n            },\n\n            // When play has started\n            playStarted: function playStarted() {\n                // If the audio player is paused, resume playing\n                if (self.player.paused) {\n                    self.player.resume();\n\n                    // Otherwise we can assume that we need to start playing from the top\n                } else if (self.player.playState === 0) {\n                    self.player.play();\n                }\n            },\n\n            // Pause when recording playback pauses\n            playPaused: function playPaused() {\n                self.player.pause();\n            }\n        });\n    },\n\n    bindRecordHandlers: function bindRecordHandlers() {\n        var self = this;\n        var record = this.record;\n\n        /*\n         * Bind events to Record (for recording and playback)\n         * and to ScratchpadCanvas (for recording and playback)\n         */\n\n        record.bind({\n            // Playback of a recording has begun\n            playStarted: function playStarted(e, resume) {\n                // Re-init if the recording version is different from\n                // the scratchpad's normal version\n                self.config.switchVersion(record.getVersion());\n\n                // We're starting over so reset the editor and\n                // canvas to its initial state\n                if (!record.recording && !resume) {\n                    // Reset the editor\n                    self.editor.reset(record.initData.code, false);\n\n                    // Clear and hide the drawing area\n                    self.drawCanvas.clear(true);\n                    self.drawCanvas.endDraw();\n                }\n\n                if (!record.recording) {\n                    // Disable the record button during playback\n                    self.$el.find(\"#record\").addClass(\"disabled\");\n                }\n\n                // During playback disable the restart button\n                self.$el.find(self.dom.RESTART_BUTTON).addClass(\"disabled\");\n\n                if (!record.recording) {\n                    // Turn on playback-related styling\n                    $(\"html\").addClass(\"playing\");\n\n                    // Show an invisible overlay that blocks interactions with\n                    // the editor and canvas areas (preventing the user from\n                    // being able to disturb playback)\n                    self.$el.find(\".disable-overlay\").show();\n                }\n\n                self.editor.unfold();\n\n                // Activate the play button\n                self.$el.find(self.dom.PLAYBAR_PLAY).find(\"span\").removeClass(\"glyphicon-play icon-play\").addClass(\"glyphicon-pause icon-pause\");\n            },\n\n            playEnded: function playEnded() {\n                // Re-init if the recording version is different from\n                // the scratchpad's normal version\n                self.config.switchVersion(this.initialVersion);\n            },\n\n            // Playback of a recording has been paused\n            playPaused: function playPaused() {\n                // Turn off playback-related styling\n                $(\"html\").removeClass(\"playing\");\n\n                // Disable the blocking overlay\n                self.$el.find(\".disable-overlay\").hide();\n\n                // Allow the user to restart the code again\n                self.$el.find(self.dom.RESTART_BUTTON).removeClass(\"disabled\");\n\n                // Re-enable the record button after playback\n                self.$el.find(\"#record\").removeClass(\"disabled\");\n\n                // Deactivate the play button\n                self.$el.find(self.dom.PLAYBAR_PLAY).find(\"span\").addClass(\"glyphicon-play icon-play\").removeClass(\"glyphicon-pause icon-pause\");\n            },\n\n            // Recording has begun\n            recordStarted: function recordStarted() {\n                // Let the output know that recording has begun\n                self.postFrame({ recording: true });\n\n                self.$el.find(\"#draw-widgets\").removeClass(\"hidden\").show();\n\n                // Hides the invisible overlay that blocks interactions with the\n                // editor and canvas areas (preventing the user from being able\n                // to disturb the recording)\n                self.$el.find(\".disable-overlay\").hide();\n\n                // Allow the editor to be changed\n                self.editor.setReadOnly(false);\n\n                // Turn off playback-related styling\n                // (hides hot numbers, for example)\n                $(\"html\").removeClass(\"playing\");\n\n                // Reset the canvas to its initial state only if this is the\n                // very first chunk we are recording.\n                if (record.hasNoChunks()) {\n                    self.drawCanvas.clear(true);\n                    self.drawCanvas.endDraw();\n                }\n\n                // Disable the save button\n                self.$el.find(\"#save-button, #fork-button\").addClass(\"disabled\");\n\n                // Activate the recording button\n                self.$el.find(\"#record\").addClass(\"toggled\");\n            },\n\n            // Recording has ended\n            recordEnded: function recordEnded() {\n                // Let the output know that recording has ended\n                self.postFrame({ recording: false });\n\n                if (record.recordingAudio) {\n                    self.recordView.stopRecordingAudio();\n                }\n\n                // Re-enable the save button\n                self.$el.find(\"#save-button, #fork-button\").removeClass(\"disabled\");\n\n                // Enable playbar UI\n                self.$el.find(self.dom.PLAYBAR_UI).removeClass(\"ui-state-disabled\");\n\n                // Return the recording button to normal\n                self.$el.find(\"#record\").removeClass(\"toggled disabled\");\n\n                // Stop any sort of user playback\n                record.stopPlayback();\n\n                // Show an invisible overlay that blocks interactions with the\n                // editor and canvas areas (preventing the user from being able\n                // to disturb the recording)\n                self.$el.find(\".disable-overlay\").show();\n\n                // Turn on playback-related styling (hides hot numbers, for\n                // example)\n                $(\"html\").addClass(\"playing\");\n\n                // Prevent the editor from being changed\n                self.editor.setReadOnly(true);\n\n                self.$el.find(\"#draw-widgets\").addClass(\"hidden\").hide();\n\n                // Because we are recording in chunks, do not reset the canvas\n                // to its initial state.\n                self.drawCanvas.endDraw();\n            }\n        });\n\n        // ScratchpadCanvas mouse events to track\n        // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup\n        _.each(this.mouseCommands, function (name) {\n            // Handle the command during playback\n            record.handlers[name] = function (x, y) {\n                self.postFrame({\n                    mouseAction: {\n                        name: name,\n                        x: x,\n                        y: y\n                    }\n                });\n            };\n        });\n\n        // When a restart occurs during playback, restart the output\n        record.handlers.restart = function () {\n            var $restart = self.$el.find(self.dom.RESTART_BUTTON);\n\n            if (!$restart.hasClass(\"hilite\")) {\n                $restart.addClass(\"hilite green\");\n                setTimeout(function () {\n                    $restart.removeClass(\"hilite green\");\n                }, 300);\n            }\n\n            self.postFrame({ restart: true });\n        };\n\n        // Force the recording to sync to the current time of the audio playback\n        record.currentTime = function () {\n            return self.player ? self.player.position : 0;\n        };\n\n        // Create a function for retreiving the track end time\n        // Note that duration will be set to the duration estimate while\n        // the track is still loading, and only set to actual duration\n        // once its loaded.\n        record.endTime = function () {\n            return this.duration || this.durationEstimate;\n        };\n    },\n\n    recordHandler: function recordHandler(callback) {\n        // If we're already recording, stop\n        if (this.record.recording) {\n            // Note: We should never hit this case when recording chunks.\n            this.recordView.stopRecordingCommands();\n            return;\n        }\n\n        var saveCode = this.editor.text();\n\n        // You must have some code in the editor before you start recording\n        // otherwise the student will be starting with a blank editor,\n        // which is confusing\n        if (!saveCode) {\n            callback({ error: \"empty\" });\n        } else if (this.config.curVersion() !== this.config.latestVersion()) {\n            callback({ error: \"outdated\" });\n        } else if (this.canRecord() && !this.hasAudio()) {\n            this.startRecording();\n            this.editor.focus();\n        } else {\n            callback({ error: \"exists\" });\n        }\n    },\n\n    startRecording: function startRecording() {\n        this.bindRecordHandlers();\n\n        if (!this.recordView) {\n            var $el = this.$el;\n\n            // NOTE(jeresig): Unfortunately we need to do this to make sure\n            // that we load the web worker from the same domain as the rest\n            // of the site (instead of the domain that the \"exec\" page is on).\n            // This is dumb and a KA-specific bit of functionality that we\n            // should change, somehow.\n            var workersDir = this.workersDir.replace(/^https?:\\/\\/[^\\/]*/, \"\");\n\n            this.recordView = new ScratchpadRecordView({\n                el: $el.find(\".scratchpad-dev-record-row\"),\n                recordButton: $el.find(\"#record\"),\n                saveButton: $el.find(\"#save-button\"),\n                record: this.record,\n                editor: this.editor,\n                config: this.config,\n                workersDir: workersDir,\n                drawCanvas: this.drawCanvas,\n                transloaditTemplate: this.transloaditTemplate,\n                transloaditAuthKey: this.transloaditAuthKey\n            });\n        }\n\n        this.recordView.initializeRecordingAudio();\n    },\n\n    saveRecording: function saveRecording(callback, steps) {\n        // If no command or audio recording was made, just save the results\n        if (!this.record.recorded || !this.record.recordingAudio) {\n            return callback();\n        }\n\n        var transloadit = new TransloaditXhr({\n            authKey: this.transloaditAuthKey,\n            templateId: this.transloaditTemplate,\n            steps: steps,\n            successCb: function (results) {\n                this.recordingMP3 = results.mp3[0].url.replace(/^http:/, \"https:\");\n                callback(null, this.recordingMP3);\n            }.bind(this),\n            errorCb: callback\n        });\n\n        this.recordView.getFinalAudioRecording(function (combined) {\n            transloadit.uploadFile(combined.wav);\n        });\n    },\n\n    // We call this function multiple times, because the\n    // endTime value may change as we load the file\n    updateDurationDisplay: function updateDurationDisplay() {\n        // Do things that are dependent on knowing duration\n\n        // This gets called if we're loading while we're playing,\n        // so we need to update with the current time\n        this.updateTimeLeft(this.record.currentTime());\n\n        // Set the duration of the progress bar based upon the track duration\n        // Slider position is set in seconds\n        this.$el.find(this.dom.PLAYBAR_PROGRESS).slider(\"option\", \"max\", this.record.endTime() / 1000);\n    },\n\n    // Update the time left in playback of the track\n    updateTimeLeft: function updateTimeLeft(time) {\n        // Update the time indicator with a nicely formatted time\n        this.$el.find(\".scratchpad-playbar-timeleft\").text(\"-\" + this.formatTime(this.record.endTime() - time));\n    },\n\n    // Utility method for formatting time in minutes/seconds\n    formatTime: function formatTime(time) {\n        var seconds = time / 1000,\n            min = Math.floor(seconds / 60),\n            sec = Math.floor(seconds % 60);\n\n        if (min < 0 || sec < 0) {\n            min = 0;\n            sec = 0;\n        }\n\n        return min + \":\" + (sec < 10 ? \"0\" : \"\") + sec;\n    },\n\n    // Seek the player to a particular time\n    seekTo: function seekTo(timeMS) {\n        // Don't update the slider position when seeking\n        // (since this triggers an event on the #progress element)\n        if (!this.record.seeking) {\n            this.$el.find(this.dom.PLAYBAR_PROGRESS).slider(\"option\", \"value\", timeMS / 1000);\n        }\n\n        // Move the recording and player positions\n        if (this.record.seekTo(timeMS) !== false) {\n            this.player.setPosition(timeMS);\n        }\n    },\n\n    handleMessages: function handleMessages(e) {\n        // DANGER!  The data coming in from the iframe could be anything,\n        // because with some cleverness the author of the program can send an\n        // arbitrary message up to us.  We need to be careful to sanitize it\n        // before doing anything with it, to avoid XSS attacks.  For some\n        // examples, see https://hackerone.com/reports/103989 or\n        // https://app.asana.com/0/44063710579000/71736430394249.\n        // TODO(benkraft): Right now that sanitization is spread over a number\n        // of different places; some things get sanitized here, while others\n        // get passed around and sanitized elsewhere.  Put all the sanitization\n        // in one place so it's easier to reason about its correctness, since\n        // any gap leaves us open to XSS attacks.\n        // TODO(benkraft): Write some tests that send arbitrary messages up\n        // from the iframe, and assert that they don't end up displaying\n        // arbitrary HTML to the user outside the iframe.\n        var event = e.originalEvent;\n        var data;\n\n        try {\n            data = JSON.parse(event.data);\n        } catch (err) {\n            // Malformed JSON, we don't care about it\n        }\n\n        if (!data) {\n            return;\n        }\n\n        if ((typeof data === \"undefined\" ? \"undefined\" : _typeof(data)) !== \"object\") {\n            return;\n        }\n\n        if (data.type === \"debugger\") {\n            // these messages are handled by ui/debugger.js:listenMessages\n            return;\n        }\n\n        this.trigger(\"update\", data);\n\n        // Hide loading overlay if output is loaded\n        // We previously just looked at data.loaded,\n        // but that didn't work for some users (maybe message too early?)\n        // so now we also hide if we see data.results\n\n        if (data.loaded || data.results) {\n            this.$el.find(this.dom.CANVAS_LOADING).hide();\n        }\n\n        // Set the code in the editor\n        if (data.code !== undefined) {\n            // TODO(benkraft): This is technically not unsafe, in that\n            // this.editor.text() does not render its argument as HTML, but it\n            // does mean that a user can write a program which modifies its own\n            // code (perhaps on another user's computer).  Not directly a\n            // security risk, but it would be nice if it weren't possible.\n            this.editor.text(data.code);\n            this.editor.originalCode = data.code;\n            this.restartCode();\n        }\n\n        // Testing/validation code is being set\n        if (data.validate !== undefined && data.validate !== null) {\n            this.validation = data.validate;\n        }\n\n        if (data.results) {\n            this.trigger(\"runDone\");\n        }\n\n        if (this.editorType.indexOf(\"ace_\") === 0 && data.results) {\n            // Remove previously added markers\n            this.removeMarkers();\n            if (data.results.assertions || data.results.warnings) {\n                // Add gutter warning markers in the editor.\n                // E.g. Add `Program.assertEqual(2, 4);` to the live editor to see\n                // an example.\n                var annotations = [];\n                for (var i = 0; i < data.results.assertions.length; i++) {\n                    var assertion = data.results.assertions[i];\n                    annotations.push({\n                        // Coerce to the expected type\n                        row: +assertion.row,\n                        column: +assertion.column,\n                        // This is escaped by the gutter annotation display\n                        // code, so we don't need to escape it here.\n                        text: assertion.text.toString(),\n                        type: \"warning\"\n                    });\n                    this.addUnderlineMarker(+assertion.row);\n                }\n\n                for (var _i = 0; _i < data.results.warnings.length; _i++) {\n                    var warning = data.results.warnings[_i];\n                    annotations.push({\n                        // Coerce to the expected type\n                        row: +warning.row,\n                        column: +warning.column,\n                        // This is escaped by the gutter annotation display\n                        // code, so we don't need to escape it here.\n                        text: warning.text.toString(),\n                        type: \"warning\"\n                    });\n                    this.addUnderlineMarker(+warning.row);\n                }\n\n                // Add new gutter markers\n                this.editor.editor.session.setAnnotations(annotations);\n            } else {\n                this.editor.editor.session.setAnnotations([]);\n            }\n        }\n\n        if (this.errorState.length === 0) {\n            this.setHappyState();\n        }\n\n        if (data.results && _.isArray(data.results.errors)) {\n            this.handleErrors(this.cleanErrors(data.results.errors));\n        }\n\n        // Set the line visibility in the editor\n        if (data.lines !== undefined) {\n            // Coerce to the expected type\n            this.editor.toggleGutter(data.lines.map(function (x) {\n                return +x;\n            }));\n        }\n\n        // Restart the execution\n        if (data.restart) {\n            this.restartCode();\n        }\n\n        // Log the recorded action\n        if (data.log) {\n            // TODO(benkraft): I think passing unsanitized data to any of our\n            // record handlers is currently safe, but it would be nice to not\n            // depend on that always being true.  Do something to sanitize\n            // this, or at least make it more clear that the data coming in may\n            // be unsanitized.\n            this.record.log.apply(this.record, data.log);\n        }\n    },\n\n    addUnderlineMarker: function addUnderlineMarker(row) {\n        // Underline the problem line to make it more obvious\n        //  if they don't notice the gutter icon\n        var AceRange = ace.require(\"ace/range\").Range;\n        var line = this.editor.editor.session.getDocument().getLine(row);\n        this.editor.editor.session.addMarker(new AceRange(row, 0, row, line.length), \"ace_problem_line\", \"text\", false);\n    },\n\n    removeMarkers: function removeMarkers() {\n        // Remove previously added markers and decorations\n        var session = this.editor.editor.session;\n        var markers = session.getMarkers();\n        _.each(markers, function (marker, markerId) {\n            session.removeMarker(markerId);\n        });\n    },\n\n    removeGutterDecorations: function removeGutterDecorations() {\n        // Remove old gutter decorations\n        var session = this.editor.editor.session;\n        _.each(this.gutterDecorations, function (errorOffset, errorRow) {\n            session.removeGutterDecoration(errorRow - 1, \"ace_error\");\n        });\n    },\n\n    gutterDecorations: [],\n    errorCursorRow: null,\n    showError: null,\n\n    handleErrors: function handleErrors(errors) {\n        // Our new, less-aggressive way of handling errors:\n        // We want to check if the errors we see are caused by the line the\n        // user is currently on, and that they have just typed them, and if so\n        // give the user some time to finish what they were typing.\n\n        // When you start with no errors, the errorCursorRow is null.\n        // When you make an error, the errorCursorRow is set to the current row.\n        // When we register another error, we check if the errorCursorRow is the\n        // same as the current row:\n        //  -if it is, we set a timer for one minute of no typing before showing\n        //   you the error so you have a chance to finish what you're doing.\n        //  -if it is not, we show the error right away.\n\n        // Reset the timer\n        window.clearTimeout(this.errorTimeout);\n\n        if (errors.length) {\n            // There is an error\n            var session = this.editor.editor.session;\n\n            // Remove old gutter markers and decorations\n            this.removeMarkers();\n            this.removeGutterDecorations();\n\n            // Add gutter decorations\n            var gutterDecorations = [];\n            _.each(errors, function (error, index) {\n                // Create a log of which row corresponds with which error\n                // message so that when the user clicks a gutter marker they\n                // are shown the relevant error message.\n                if (gutterDecorations[error.row + 1] === null) {\n                    gutterDecorations[error.row + 1] = index;\n                    session.addGutterDecoration(error.row, \"ace_error\");\n                }\n\n                this.addUnderlineMarker(error.row);\n            }, this);\n\n            this.gutterDecorations = gutterDecorations;\n\n            // Set the errors\n            this.setErrors(errors);\n\n            this.maybeShowErrors();\n        } else {\n            // If there are no errors, remove the gutter decorations that marked\n            // the errors and reset our state.\n            this.removeGutterDecorations();\n            this.setErrors([]);\n            this.setHappyState();\n            this.showError = false;\n            this.errorCursorRow = null;\n        }\n    },\n\n    maybeShowErrors: function maybeShowErrors() {\n\n        if (!this.hasErrors() || !this.editor || !this.editor.getCursor()) {\n            return;\n        }\n\n        var currentRow = this.editor.getCursor().row;\n        var onlyErrorsOnThisLine = this.errorCursorRow === null || this.errorCursorRow === currentRow;\n        if (this.errorCursorRow === null) {\n            this.errorCursorRow = currentRow;\n        }\n\n        // If we were already planning to show the error, or if there are\n        // errors on more than the current line, or we have errors and the\n        // program was just loaded (i.e. this.showError is null) then we\n        // should show the error now. Otherwise we'll delay showing the\n        // error message to give them time to type.\n        this.showError = this.showError || !onlyErrorsOnThisLine || this.showError === null;\n\n        if (this.showError) {\n            // We've already timed out or moved to another line, so show\n            // the error.\n            this.setErrorState();\n        } else if (onlyErrorsOnThisLine) {\n            // There are new errors caused by typing on this line, so let's\n            // give the typer time to finish what they were writing. We'll\n            // show the tipbar if 1 minute has gone by without typing.\n            this.setThinkingState();\n            // Make doubly sure that we clear the timeout\n            window.clearTimeout(this.errorTimeout);\n            this.errorTimeout = setTimeout(function () {\n                if (this.hasErrors()) {\n                    this.setErrorState();\n                }\n            }.bind(this), 60000);\n        }\n    },\n\n    // This is the current error state of Oh Noes Guy.\n    // His state can be one of:\n    // - happy (no errors)\n    // - thinking (the ambigous state where there may be an error in what the\n    //             typer is currently typing)\n    // - error (there is an error that we want to display prominently)\n    errorState: \"\",\n    hasErrors: function hasErrors() {\n        return this.tipbar.errors.length;\n    },\n    setErrors: function setErrors(errors) {\n        this.tipbar.setErrors(errors);\n    },\n    setErrorPosition: function setErrorPosition(errorPos) {\n        this.setErrorState();\n        this.tipbar.setErrorPosition(errorPos);\n    },\n    setErrorState: function setErrorState() {\n        this.errorState = \"error\";\n        this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();\n        this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();\n        this.tipbar.update(true);\n    },\n    setThinkingState: function setThinkingState() {\n        if (this.errorState !== \"thinking\") {\n            this.errorState = \"thinking\";\n            this.tipbar.hide();\n            this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();\n            this.$el.find(this.dom.ERROR_BUDDY_THINKING).show().animate({ left: -2 }, { duration: 300, easing: 'linear' }).animate({ left: 2 }, { duration: 300, easing: 'linear' }).animate({ left: 0 }, { duration: 300, easing: 'linear' });\n        }\n    },\n    setHappyState: function setHappyState() {\n        this.errorState = \"happy\";\n        this.tipbar.hide();\n        this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();\n        this.$el.find(this.dom.ERROR_BUDDY_HAPPY).show();\n    },\n\n    // Extract the origin from the embedded frame location\n    postFrameOrigin: function postFrameOrigin() {\n        var match = /^.*:\\/\\/[^\\/]*/.exec(this.$el.find(\"#output-frame\").attr(\"data-src\"));\n\n        return match ? match[0] : window.location.protocol + \"//\" + window.location.host;\n    },\n\n    postFrame: function postFrame(data) {\n        // Send the data to the frame using postMessage\n        this.$el.find(\"#output-frame\")[0].contentWindow.postMessage(JSON.stringify(data), this.postFrameOrigin());\n    },\n\n    hasFrame: function hasFrame() {\n        return !!this.execFile;\n    },\n\n    /*\n     * Restart the code in the output frame.\n     */\n    restartCode: function restartCode() {\n        this.postFrame({ restart: true });\n    },\n\n    /*\n     * Execute some code in the output frame.\n     *\n     * A note about the throttling:\n     * This limits updates to 50FPS. No point in updating faster than that.\n     *\n     * DO NOT CALL THIS DIRECTLY\n     * Instead call markDirty because it will handle\n     * throttling requests properly.\n     */\n    runCode: _.throttle(function (code) {\n        var options = {\n            code: arguments.length === 0 ? this.editor.text() : code,\n            cursor: this.editor.getSelectionIndices ? this.editor.getSelectionIndices() : -1,\n            validate: this.validation || \"\",\n            noLint: this.noLint,\n            version: this.config.curVersion(),\n            settings: this.settings || {},\n            workersDir: this.workersDir,\n            externalsDir: this.externalsDir,\n            imagesDir: this.imagesDir,\n            soundsDir: this.soundsDir,\n            redirectUrl: this.redirectUrl,\n            jshintFile: this.jshintFile,\n            outputType: this.outputType,\n            enableLoopProtect: this.enableLoopProtect\n        };\n\n        this.trigger(\"runCode\", options);\n\n        this.postFrame(options);\n    }, 20),\n\n    markDirty: function markDirty() {\n        var _this2 = this;\n\n        // makeDirty is called when you type something in the editor. When this\n        // happens, we want to run the code, but also want to throttle how often\n        // we re-run so we can wait for the results of running it to come back.\n        // We keep track of the state using clean/running/dirty markers.\n\n        // The state of the output starts out \"clean\": the editor and the output\n        // are in sync.\n        // When you type, markDirty gets called, which will mark the state as\n        // \"running\" and starts of runCode in the background. Since runCode is\n        // async, if you type again while it's running then the output state\n        // will get set to \"dirty\".\n        // When runCode finishes it will call runDone, which will either set the\n        // state back to clean (if it was running before), or will run again if\n        // the state was dirty.\n        // If runCode takes more than 500ms then runDone will be called and we\n        // set the state back to \"clean\".\n\n        if (this.outputState === \"clean\") {\n            // We will run at the end of this code block\n            // This stops replace from trying to execute code\n            // between deleting the old code and adding the new code\n            setTimeout(this.runCode.bind(this), 0);\n            this.outputState = \"running\";\n\n            // 500ms is an arbitrary timeout. Hopefully long enough for\n            // reasonable programs to execute, but short enough for editor to\n            // not freeze.\n            this.runTimeout = setTimeout(function () {\n                _this2.trigger(\"runDone\");\n            }, 500);\n        } else {\n            this.outputState = \"dirty\";\n        }\n    },\n\n    // This will either be called when we receive the results\n    // Or it will timeout.\n    runDone: function runDone() {\n        clearTimeout(this.runTimeout);\n        var lastOutputState = this.outputState;\n        this.outputState = \"clean\";\n        if (lastOutputState === \"dirty\") {\n            this.markDirty();\n        }\n    },\n\n    // This stops us from sending any updates until the current run has finished\n    // Reset output state to clean as a part of the frame load handler\n    outputState: \"dirty\",\n\n    updateCanvasSize: function updateCanvasSize(width, height) {\n        width = width || this.defaultOutputWidth;\n        height = height || this.defaultOutputHeight;\n\n        this.$el.find(this.dom.CANVAS_WRAP).width(width);\n        this.$el.find(this.dom.ALL_OUTPUT).height(height);\n\n        // Set the editor height to be the same as the canvas height\n        this.$el.find(this.dom.EDITOR).height(this.editorHeight || height);\n\n        this.trigger(\"canvasSizeUpdated\", {\n            width: width,\n            height: height\n        });\n    },\n\n    getScreenshot: function getScreenshot(callback) {\n        // If we don't have an output frame then we need to render our\n        // own screenshot (so we just use the text in the editor)\n        if (!this.hasFrame()) {\n            var canvas = document.createElement(\"canvas\");\n            canvas.width = 200;\n            canvas.height = 200;\n            var ctx = canvas.getContext(\"2d\");\n\n            // Default sizing, we also use a 5px margin\n            var lineHeight = 24;\n            var maxWidth = 190;\n\n            // We go through all of this so that the text will wrap nicely\n            var text = this.editor.text();\n\n            // Remove all HTML markup and un-escape entities\n            text = text.replace(/<[^>]+>/g, \"\");\n            text = text.replace(/&nbsp;|&#160;/g, \" \");\n            text = text.replace(/&lt;|&#60;/g, \"<\");\n            text = text.replace(/&gt;|&#62;/g, \">\");\n            text = text.replace(/&amp;|&#38;/g, \"&\");\n            text = text.replace(/&quot;|&#34;/g, \"\\\"\");\n            text = text.replace(/&apos;|&#39;/g, \"\\'\");\n\n            var words = text.split(/\\s+/);\n            var lines = 0;\n            var currentLine = words[0];\n\n            ctx.font = lineHeight + \"px serif\";\n\n            for (var i = 1; i < words.length; i++) {\n                var word = words[i];\n                var width = ctx.measureText(currentLine + \" \" + word).width;\n                if (width < maxWidth) {\n                    currentLine += \" \" + word;\n                } else {\n                    lines += 1;\n                    ctx.fillText(currentLine, 5, (lineHeight + 5) * lines);\n                    currentLine = word;\n                }\n            }\n            lines += 1;\n            ctx.fillText(currentLine, 5, (lineHeight + 5) * lines + 5);\n\n            // Render it to an image and we're done!\n            callback(canvas.toDataURL(\"image/png\"));\n            return;\n        }\n\n        // Unbind any handlers this function may have set for previous\n        // screenshots\n        $(window).off(\"message.getScreenshot\");\n\n        // We're only expecting one screenshot back\n        $(window).on(\"message.getScreenshot\", function (e) {\n            // Only call if the data is actually an image!\n            if (/^data:/.test(e.originalEvent.data)) {\n                callback(e.originalEvent.data);\n            }\n        });\n\n        // Ask the frame for a screenshot\n        this.postFrame({ screenshot: true });\n    },\n\n    undo: function undo() {\n        this.editor.undo();\n    },\n\n    _qualifyURL: function _qualifyURL(url) {\n        var a = document.createElement(\"a\");\n        a.href = url;\n        return a.href;\n    },\n\n    cleanErrors: function cleanErrors(errors) {\n        var loopProtectMessages = {\n            \"WhileStatement\": i18n._(\"<code>while</code> loop\"),\n            \"DoWhileStatement\": i18n._(\"<code>do-while</code> loop\"),\n            \"ForStatement\": i18n._(\"<code>for</code> loop\"),\n            \"FunctionDeclaration\": i18n._(\"<code>function</code>\"),\n            \"FunctionExpression\": i18n._(\"<code>function</code>\")\n        };\n\n        errors = errors.map(function (error) {\n            // These errors come from the user, so we can't trust them.  They\n            // get decoded from JSON, so they will just be plain objects, not\n            // arbitrary classes, but they're still potentially full of HTML\n            // that we need to escape.  So any HTML we want to put in needs to\n            // get put in here, rather than somewhere inside the iframe.\n            delete error.html;\n            // TODO(benkraft): This is a kind of ugly place to put this\n            // processing.  Refactor so that we don't have to do something\n            // quite so ad-hoc here, while still keeping any user input\n            // appropriately sanitized.\n            var loopNodeType = error.infiniteLoopNodeType;\n            if (loopNodeType) {\n                error.html = i18n._(\"A %(type)s is taking too long to run. \" + \"Perhaps you have a mistake in your code?\", {\n                    type: loopProtectMessages[loopNodeType]\n                });\n            }\n\n            var newError = {};\n\n            // error.html was cleared above, so if it exists it's because we\n            // reset it, and it's safe.\n            if (typeof error === \"string\") {\n                newError.text = this.clean(this.prettify(error));\n            } else if (error.html) {\n                newError.text = this.prettify(error.html);\n            } else {\n                newError.text = this.prettify(this.clean(error.text || error.message || \"\"));\n            }\n\n            // Coerce anything from the user to the expected types before\n            // copying over\n            if (error.lint !== undefined) {\n                newError.lint = {};\n\n                // TODO(benkraft): Coerce this in a less ad-hoc way, or at\n                // least only pass through the things we'll actually use.\n                // Also, get a stronger guarantee that none of these\n                // strings ever get used unescaped.\n                var numberProps = [\"character\", \"line\"];\n                var stringProps = [\"code\", \"evidence\", \"id\", \"raw\", \"reason\", \"scope\", \"type\"];\n                var objectProps = [\"openTag\"];\n\n                numberProps.forEach(function (prop) {\n                    if (error.lint[prop] != undefined) {\n                        newError.lint[prop] = +error.lint[prop];\n                    }\n                });\n\n                stringProps.forEach(function (prop) {\n                    if (error.lint[prop] != undefined) {\n                        newError.lint[prop] = error.lint[prop].toString();\n                    }\n                });\n\n                objectProps.forEach(function (prop) {\n                    if (error.lint[prop] != undefined) {\n                        newError.lint[prop] = error.lint[prop];\n                    }\n                });\n            }\n\n            if (error.row != undefined) {\n                newError.row = +error.row;\n            }\n\n            if (error.column != undefined) {\n                newError.column = +error.column;\n            }\n\n            if (error.type != undefined) {\n                newError.type = error.type.toString();\n            }\n\n            if (error.source != undefined) {\n                newError.source = error.source.toString();\n            }\n\n            if (error.priority != undefined) {\n                newError.priority = +error.priority;\n            }\n\n            return newError;\n        }.bind(this));\n\n        errors = errors.sort(function (a, b) {\n            var diff = a.row - b.row;\n            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;\n        });\n\n        return errors;\n    },\n\n    // This adds html tags around quoted lines so they can be formatted\n    prettify: function prettify(str) {\n        str = str.split(\"\\\"\");\n        var htmlString = \"\";\n        for (var i = 0; i < str.length; i++) {\n            if (str[i].length === 0) {\n                continue;\n            }\n\n            if (i % 2 === 0) {\n                //regular text\n                htmlString += \"<span class=\\\"text\\\">\" + str[i] + \"</span>\";\n            } else {\n                // text in quotes\n                htmlString += \"<span class=\\\"quote\\\">\" + str[i] + \"</span>\";\n            }\n        }\n        return htmlString;\n    },\n\n    clean: function clean(str) {\n        return String(str).replace(/</g, \"&lt;\");\n    }\n});\n\nLiveEditor.registerEditor = function (name, editor) {\n    LiveEditor.prototype.editors[name] = editor;\n};\n\nwindow.LiveEditor = LiveEditor;\n\nmodule.exports = LiveEditor;\n/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! underscore */ \"./node_modules/underscore/underscore.js\")))\n\n//# sourceURL=webpack:///./js/live-editor.js?");
+
+/***/ }),
+
+/***/ "./js/shared/config.js":
+/*!*****************************!*\
+  !*** ./js/shared/config.js ***!
+  \*****************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\n// Maintain all of the configuration options and settings for the site.\n// Have them be versioned and attached to the ScratchpadRevision so that\n// later config changes don't break old code.\n/* jshint unused:false */\nvar Backbone = __webpack_require__(/*! backbone */ \"./node_modules/backbone/backbone.js\");\n\nvar ScratchpadConfig = Backbone.Model.extend({\n    version: null,\n\n    initialize: function initialize(options) {\n        this.version = options.version;\n        this.useDebugger = options.useDebugger;\n\n        if (this.version != null) {\n            this.version = this.latestVersion();\n        }\n    },\n\n    // Run the configuration functions for a particular namespace\n    // of functionality. Can optionally take any number of\n    // additional arguments.\n    runCurVersion: function runCurVersion(type) {\n        var args = Array.prototype.slice.call(arguments, 0);\n        args.unshift(this.curVersion());\n        return this.runVersion.apply(this, args);\n    },\n\n    // Run the configuration functions for a particular namespace\n    // of functionality, for a particular config version. Can optionally\n    // take any number of additional arguments.\n    runVersion: function runVersion(version, type) {\n        var args = Array.prototype.slice.call(arguments, 2);\n\n        for (var i = 0; i <= version; i++) {\n            var configFn = this.versions[i][type];\n\n            if (configFn) {\n                configFn.apply(this, args);\n            }\n        }\n    },\n\n    switchVersion: function switchVersion(version) {\n        // Make sure we're switching to a new version\n        if (version !== this.curVersion()) {\n            // Set the new version\n            this.version = version;\n\n            // Run the inits for all bound handlers\n            this.trigger(\"versionSwitched\", version);\n        }\n    },\n\n    // Get the current config version\n    curVersion: function curVersion() {\n        if (this.version != null) {\n            return this.version;\n        }\n\n        return this.latestVersion();\n    },\n\n    // Get the latest config version\n    latestVersion: function latestVersion() {\n        return this.versions.length - 1;\n    },\n\n    autoCompleteBehavior: {\n        autoBrace: false,\n        braceIndent: true,\n        equalsInsert: true\n    },\n\n    bindAutoComplete: function bindAutoComplete(editor, autoCompleteBehavior) {\n        autoCompleteBehavior = autoCompleteBehavior || this.autoCompleteBehavior;\n\n        // When a { is typed, an endline, indentation, and another endline\n        // are inserted. The cursor is set after the indentation.\n        // Additionally make it so that if \"var draw =\" is typed then\n        // the associated \"function() { ... }; are inserted as well.\n        var behavior = editor.getSession().getMode().$behaviour;\n\n        // Reset auto-complete for parentheses and quotes\n        // (matches earlier Ace behavior)\n        behavior.add(\"parens\", \"insertion\", function () {});\n        behavior.add(\"parens\", \"deletion\", function () {});\n        behavior.add(\"brackets\", \"insertion\", function () {});\n        behavior.add(\"brackets\", \"deletion\", function () {});\n        behavior.add(\"string_dquotes\", \"insertion\", function () {});\n        behavior.add(\"string_dquotes\", \"deletion\", function () {});\n\n        // Auto-completion code based on code from\n        // Ace Editor file: ace-mode-javascript.js\n        behavior.add(\"braces\", \"insertion\", function (state, action, editor, session, text) {\n            var cursor = editor.getCursorPosition();\n            var line = session.doc.getLine(cursor.row);\n\n            if (text === \"{\") {\n                var selection = editor.getSelectionRange();\n                var selected = session.doc.getTextRange(selection);\n\n                // Old auto-completion logic\n                if (autoCompleteBehavior.autoBrace) {\n                    if (selected !== \"\") {\n                        return {\n                            text: \"{\" + selected + \"}\",\n                            selection: false\n                        };\n                    } else {\n                        return {\n                            text: \"{}\",\n                            selection: [1, 1]\n                        };\n                    }\n                } else if (autoCompleteBehavior.braceIndent) {\n                    // This is the one section of the code that's been\n                    // modified, everything else was left as-is.\n                    // Endlines and indentation were added to brace\n                    // autocompletion.\n\n                    // Insert a semicolon after the brace if there's\n                    // an assignment occurring on the same line\n                    // (e.g. if you're doing var draw = function(){...})\n                    var maybeSemicolon = /=\\s*function/.test(line) ? \";\" : \"\";\n\n                    var indent = this.getNextLineIndent(state, line.substring(0, line.length - 1), session.getTabString());\n                    var nextIndent = this.$getIndent(session.doc.getLine(cursor.row));\n\n                    // The case of if (EXPR) { doesn't indent properly\n                    // as the if (EXPR) line doesn't trigger an additional\n                    // indentation level, so we force it to work.\n                    if (indent === nextIndent) {\n                        indent += session.getTabString();\n                    }\n\n                    return {\n                        text: \"{\\n\" + indent + selected + \"\\n\" + nextIndent + \"}\" + maybeSemicolon,\n                        // Format:\n                        // [ rowStartSelection, colStartSelection,\n                        //   rowEndSelection, colEndSelection ]\n                        selection: [1, indent.length, 1, indent.length]\n                    };\n                }\n            } else if (text === \"}\") {\n                var rightChar = line.substring(cursor.column, cursor.column + 1);\n                if (rightChar === \"}\") {\n                    var matching = session.$findOpeningBracket(\"}\", { column: cursor.column + 1, row: cursor.row });\n                    if (matching !== null) {\n                        return {\n                            text: \"\",\n                            selection: [1, 1]\n                        };\n                    }\n                }\n            } else if (text === \"\\n\") {\n                var rightChar = line.substring(cursor.column, cursor.column + 1);\n                if (rightChar === \"}\") {\n                    var openBracePos = session.findMatchingBracket({ row: cursor.row, column: cursor.column + 1 });\n                    if (!openBracePos) {\n                        return null;\n                    }\n\n                    var indent = this.getNextLineIndent(state, line.substring(0, line.length - 1), session.getTabString());\n                    var nextIndent = this.$getIndent(session.doc.getLine(openBracePos.row));\n\n                    return {\n                        text: \"\\n\" + indent + \"\\n\" + nextIndent,\n                        selection: [1, indent.length, 1, indent.length]\n                    };\n                }\n            }\n        });\n\n        // Auto-completion code based on code from\n        // Ace Editor file: ace-mode-javascript.js\n        behavior.add(\"equals\", \"insertion\", function (state, action, editor, session, text) {\n\n            if (!autoCompleteBehavior.equalsInsert) {\n                return;\n            }\n\n            var cursor = editor.getCursorPosition();\n            var line = session.doc.getLine(cursor.row);\n\n            if (text === \"=\" && /\\bdraw\\s*$/.test(line)) {\n                var selection = editor.getSelectionRange();\n                var selected = session.doc.getTextRange(selection);\n\n                var indent = this.getNextLineIndent(state, line.substring(0, line.length - 1), session.getTabString());\n                var nextIndent = this.$getIndent(session.doc.getLine(cursor.row));\n\n                // The case of if (EXPR) { doesn't indent properly\n                // as the if (EXPR) line doesn't trigger an additional\n                // indentation level, so we force it to work.\n                if (indent === nextIndent) {\n                    indent += session.getTabString();\n                }\n\n                return {\n                    text: \"= function() {\\n\" + indent + selected + \"\\n\" + nextIndent + \"};\",\n                    selection: [1, indent.length, 1, indent.length]\n                };\n            }\n        });\n    },\n\n    // The configuration options\n    // All configuration options are namespaced and versioned\n    versions: [{\n        name: \"Initial Configuration\",\n\n        // Ace pjs editor configuration\n        ace_pjs_editor: function ace_pjs_editor(editor) {\n            var aceEditor = editor.editor;\n\n            aceEditor.session.setOption(\"useWorker\", false);\n\n            // Don't highlight the active line\n            aceEditor.setHighlightActiveLine(false);\n\n            // Stop bracket highlighting\n            aceEditor.$highlightBrackets = function () {};\n\n            // Make sure no horizontal scrollbars are shown\n            aceEditor.renderer.setHScrollBarAlwaysVisible(false);\n\n            var session = aceEditor.getSession();\n\n            // Use word wrap\n            session.setUseWrapMode(true);\n\n            // Use soft tabs\n            session.setUseSoftTabs(true);\n\n            // Stop automatic JSHINT warnings\n            session.setUseWorker(false);\n\n            // Set the font size\n            aceEditor.setFontSize(\"14px\");\n\n            // Disable highlighting the selected word\n            aceEditor.setHighlightSelectedWord(false);\n\n            // Show line numbers and enable code collapsing\n            aceEditor.renderer.setShowGutter(true);\n\n            // Don't show print margin\n            aceEditor.renderer.setShowPrintMargin(false);\n\n            // Use JavaScript Mode\n            session.setMode(\"ace/mode/javascript\");\n\n            // Set the editor theme\n            aceEditor.setTheme(\"ace/theme/textmate\");\n\n            // Attach the auto-complete for the editor\n            // (must be re-done every time the mode is set)\n            this.bindAutoComplete(editor.editor, {\n                autoBrace: false,\n                braceIndent: false,\n                equalsInsert: true\n            });\n        },\n\n        // Ace HTML editor configuration\n        ace_webpage_editor: function ace_webpage_editor(editor) {\n            var aceEditor = editor.editor;\n\n            aceEditor.session.setOption(\"useWorker\", false);\n\n            // Don't highlight the active line\n            aceEditor.setHighlightActiveLine(false);\n\n            // Make sure no horizontal scrollbars are shown\n            aceEditor.renderer.setHScrollBarAlwaysVisible(false);\n\n            var session = aceEditor.getSession();\n\n            // Use word wrap\n            session.setUseWrapMode(true);\n\n            // Use soft tabs\n            session.setUseSoftTabs(true);\n\n            // Set the font size\n            aceEditor.setFontSize(\"14px\");\n\n            // Disable highlighting the selected word\n            aceEditor.setHighlightSelectedWord(false);\n\n            // Show line numbers and enable code collapsing\n            aceEditor.renderer.setShowGutter(true);\n\n            // Don't show print margin\n            aceEditor.renderer.setShowPrintMargin(false);\n\n            // Use HTML Mode\n            session.setMode(\"ace/mode/html\");\n\n            // modify auto-complete to be less agressive.\n            // Do not autoclose tags if there is other text after the cursor on the line.\n            var behaviours = session.getMode().$behaviour.getBehaviours();\n            var autoclosingFN = behaviours.autoclosing.insertion;\n            behaviours.autoclosing.insertion = function (state, action, editor, session, text) {\n                var pos = editor.getCursorPosition();\n                var line = session.getLine(pos.row);\n                if (line.slice(pos.column).trim() === \"\") {\n                    return autoclosingFN.apply(this, arguments);\n                }\n            };\n\n            // Set the editor theme\n            aceEditor.setTheme(\"ace/theme/textmate\");\n        },\n\n        // Ace SQL editor configuration\n        ace_sql_editor: function ace_sql_editor(editor) {\n            var aceEditor = editor.editor;\n\n            // Don't highlight the active line\n            aceEditor.setHighlightActiveLine(false);\n\n            // Make sure no horizontal scrollbars are shown\n            aceEditor.renderer.setHScrollBarAlwaysVisible(false);\n\n            var session = aceEditor.getSession();\n\n            // Use word wrap\n            session.setUseWrapMode(true);\n\n            // Use soft tabs\n            session.setUseSoftTabs(true);\n\n            // Set the font size\n            aceEditor.setFontSize(\"14px\");\n\n            // Disable highlighting the selected word\n            aceEditor.setHighlightSelectedWord(false);\n\n            // Show line numbers and enable code collapsing\n            aceEditor.renderer.setShowGutter(true);\n\n            // Don't show print margin\n            aceEditor.renderer.setShowPrintMargin(false);\n\n            // Use SQL Mode\n            session.setMode(\"ace/mode/sql\");\n\n            // Set the editor theme\n            aceEditor.setTheme(\"ace/theme/textmate\");\n        },\n\n        // JSHint configuration\n        // See: http://www.jshint.com/options/\n        jshint: function jshint(output) {\n            output.JSHint = {\n                // Prohibit explicitly undefined variables\n                undef: true,\n\n                // No empty code blocks\n                noempty: true,\n\n                // Prohibits the use of ++ and --\n                plusplus: true,\n\n                // Prohibits the use of arguments.callee and caller\n                noarg: true,\n\n                // Prohibit the use of variables before they were defined\n                latedef: true,\n\n                // Requires the use of === instead of ==\n                eqeqeq: true,\n\n                // Requires you to specify curly braces on loops\n                // and conditionals\n                curly: true,\n\n                // Allow variable shadowing. Declaring a var multiple times\n                // is allowed.\n                shadow: true,\n\n                // Allow mixing spaces and tabs. We can add a prettify one day\n                // if we want to fix things up.\n                smarttabs: true\n            };\n        },\n\n        // Processing.js configuration\n        processing: function processing(canvas) {\n            canvas.size(400, 400);\n            canvas.frameRate(30);\n            canvas.angleMode = \"radians\";\n        }\n    }, {\n        name: \"Switch to Degress from Radians\",\n\n        processing: function processing(canvas) {\n            canvas.angleMode = \"degrees\";\n        }\n    }, {\n        name: \"Brace Autocompletion Changes\",\n\n        ace_pjs_editor: function ace_pjs_editor(editor) {\n            // We no longer version editor changes,\n            // since we made talkie recording more robust.\n            // We still version jshint changes however,\n            // so we keep this one around as a null change.\n        }\n    }, {\n        name: \"Disable Un-needed JSHint Rules\",\n\n        jshint: function jshint(output) {\n            // Re-allow empty braces\n            delete output.JSHint.noempty;\n\n            // Re-allow ++ and --\n            delete output.JSHint.plusplus;\n        }\n    }, {\n        name: \"version 4 placeholder\"\n\n        // At one time live-editor.shared.js had a (version 4) entry that a\n        // duplicate \"Brace Autocompletion Changes\" before it was disabled.\n        // This duplicate was probably introduced by a merge. Unfortunately,\n        // many of the revisions in the datastore are version 4.  This\n        // placeholder version ensures that those revisions continue to work\n        // without throwing exceptions.\n\n\n        // NOTE: update version test in output_test.js\n    }]\n});\n\nmodule.exports = ScratchpadConfig;\n\n//# sourceURL=webpack:///./js/shared/config.js?");
+
+/***/ }),
+
+/***/ "./js/ui/canvas.js":
+/*!*************************!*\
+  !*** ./js/ui/canvas.js ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("/* WEBPACK VAR INJECTION */(function(_) {\n\nvar $ = __webpack_require__(/*! jquery */ \"jquery\");\nvar Backbone = __webpack_require__(/*! backbone */ \"./node_modules/backbone/backbone.js\");\nBackbone.$ = __webpack_require__(/*! jquery */ \"jquery\");\n\nvar ScratchpadDrawCanvas = Backbone.View.extend({\n    initialize: function initialize(options) {\n        this.record = options.record;\n\n        this.isDrawing = false;\n\n        this.ctx = this.el.getContext(\"2d\");\n        this.ctx.shadowBlur = 2;\n        this.ctx.lineCap = \"round\";\n        this.ctx.lineJoin = \"round\";\n        this.ctx.lineWidth = 1;\n\n        this.clear(true);\n\n        if (this.record) {\n            this.bindRecordView();\n        }\n    },\n\n    commands: [\"startLine\", \"drawLine\", \"endLine\", \"setColor\", \"clear\"],\n\n    colors: {\n        black: [0, 0, 0],\n        red: [255, 0, 0],\n        orange: [255, 165, 0],\n        green: [0, 128, 0],\n        blue: [0, 0, 255],\n        lightblue: [173, 216, 230],\n        violet: [128, 0, 128]\n    },\n\n    remove: function remove() {\n        // Clear and reset canvas\n        this.clear(true);\n        this.endDraw();\n\n        // Remove all bound events from draw canvas\n        this.$el.off(\".draw-canvas\");\n\n        // Remove all bound events from document\n        $(document).off(\".draw-canvas\");\n    },\n\n    bindRecordView: function bindRecordView() {\n        var self = this;\n        var record = this.record;\n\n        this.$el.on({\n            \"mousedown.draw-canvas\": function mousedownDrawCanvas(e) {\n                // Left mouse button\n                if (record.recording && e.button === 0) {\n                    self.startLine(e.offsetX, e.offsetY);\n                    e.preventDefault();\n                }\n            },\n\n            \"mousemove.draw-canvas\": function mousemoveDrawCanvas(e) {\n                if (record.recording) {\n                    self.drawLine(e.offsetX, e.offsetY);\n                }\n            },\n\n            \"mouseup.draw-canvas\": function mouseupDrawCanvas(e) {\n                if (record.recording) {\n                    self.endLine();\n                }\n            },\n\n            \"mouseout.draw-canvas\": function mouseoutDrawCanvas(e) {\n                if (record.recording) {\n                    self.endLine();\n                }\n            }\n        });\n\n        record.on(\"runSeek\", function () {\n            self.clear(true);\n            self.endDraw();\n        });\n\n        // Handle record seek caching\n        record.seekCachers.canvas = {\n            getState: function getState() {\n                if (!self.isDrawing) {\n                    return;\n                }\n\n                // Copy the canvas contents\n                var tmpCanvas = document.createElement(\"canvas\");\n                tmpCanvas.width = tmpCanvas.height = self.el.width;\n                tmpCanvas.getContext(\"2d\").drawImage(self.el, 0, 0);\n\n                // Store Canvas state\n                return {\n                    x: self.x,\n                    y: self.y,\n                    down: self.down,\n                    color: self.color,\n                    canvas: tmpCanvas\n                };\n            },\n\n            restoreState: function restoreState(cacheData) {\n                self.startDraw();\n\n                // Restore Canvas state\n                self.x = cacheData.x;\n                self.y = cacheData.y;\n                self.down = cacheData.down;\n                self.setColor(cacheData.color);\n\n                // Restore canvas image\n                // Disable shadow (otherwise the image will have a shadow!)\n                var oldShadow = self.ctx.shadowColor;\n                self.ctx.shadowColor = \"rgba(0,0,0,0.0)\";\n                self.ctx.drawImage(cacheData.canvas, 0, 0);\n                self.ctx.shadowColor = oldShadow;\n            }\n        };\n\n        // Initialize playback commands\n        _.each(this.commands, function (name) {\n            record.handlers[name] = function () {\n                self[name].apply(self, arguments);\n            };\n        });\n    },\n\n    startLine: function startLine(x, y) {\n        if (!this.down) {\n            this.down = true;\n            this.x = x;\n            this.y = y;\n\n            this.record.log(\"startLine\", x, y);\n        }\n    },\n\n    drawLine: function drawLine(x, y) {\n        if (this.down && this.x != null && this.y != null) {\n            this.ctx.beginPath();\n            this.ctx.moveTo(this.x, this.y);\n            this.ctx.lineTo(x, y);\n            this.ctx.stroke();\n            this.ctx.closePath();\n\n            this.x = x;\n            this.y = y;\n\n            this.record.log(\"drawLine\", x, y);\n        }\n    },\n\n    endLine: function endLine() {\n        if (this.down) {\n            this.down = false;\n            this.record.log(\"endLine\");\n        }\n    },\n\n    setColor: function setColor(color) {\n        if (color != null) {\n            if (!this.isDrawing) {\n                this.startDraw(true);\n            }\n\n            this.color = color;\n\n            this.ctx.shadowColor = \"rgba(\" + this.colors[color] + \",0.5)\";\n            this.ctx.strokeStyle = \"rgba(\" + this.colors[color] + \",1.0)\";\n\n            this.record.log(\"setColor\", color);\n        }\n\n        this.trigger(\"colorSet\", color);\n    },\n\n    clear: function clear(force) {\n        // Clean off the canvas\n        this.ctx.clearRect(0, 0, 600, 480);\n        this.x = null;\n        this.y = null;\n        this.down = false;\n\n        if (force !== true) {\n            this.record.log(\"clear\");\n        }\n    },\n\n    startDraw: function startDraw(colorDone) {\n        if (this.isDrawing) {\n            return;\n        }\n\n        this.isDrawing = true;\n\n        if (colorDone !== true) {\n            this.setColor(\"black\");\n        }\n\n        this.trigger(\"drawStarted\");\n    },\n\n    endDraw: function endDraw() {\n        if (!this.isDrawing) {\n            return;\n        }\n\n        this.isDrawing = false;\n        this.setColor(null);\n        this.trigger(\"drawEnded\");\n    }\n});\n\nmodule.exports = ScratchpadDrawCanvas;\n/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! underscore */ \"./node_modules/underscore/underscore.js\")))\n\n//# sourceURL=webpack:///./js/ui/canvas.js?");
+
+/***/ }),
+
+/***/ "./js/ui/tipbar.js":
+/*!*************************!*\
+  !*** ./js/ui/tipbar.js ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\n/**\n * This is called tipbar for historical reasons.\n * Originally, it appeared as a red bar sliding up from the bottom of the\n * canvas. Now it just powers the error reporting mechanism, which no longer\n * looks like a bar\n */\nvar $ = __webpack_require__(/*! jquery */ \"jquery\");\nvar Backbone = __webpack_require__(/*! backbone */ \"./node_modules/backbone/backbone.js\");\nBackbone.$ = __webpack_require__(/*! jquery */ \"jquery\");\n\nvar tipBarTemplate = __webpack_require__(/*! ../../tmpl/tipbar.handlebars */ \"./tmpl/tipbar.handlebars\");\n\nvar TipBar = Backbone.View.extend({\n    initialize: function initialize(options) {\n        this.liveEditor = options.liveEditor;\n        this.pos = 0;\n        this.errors = [];\n        this.render();\n        this.bind();\n    },\n\n    render: function render() {\n        this.$overlay = $(\"<div class=\\\"overlay error-overlay\\\" style=\\\"display: none\\\"></div>\").appendTo(this.$el);\n        this.$el.append(tipBarTemplate());\n        this.$bar = this.$el.find(\".tipbar\");\n    },\n\n    bind: function bind() {\n        var self = this;\n\n        // Make the error dialog draggable\n        if ($.fn.draggable) {\n            this.$el.find(\".tipbar\").draggable({\n                containment: \"parent\",\n                handle: \".error-buddy\",\n                axis: \"y\"\n            });\n        }\n\n        this.$el.on(\"click\", \".tipbar .tipnav a\", function (e) {\n            if (!$(this).hasClass(\"ui-state-disabled\")) {\n                self.pos += $(this).hasClass(\"next\") ? 1 : -1;\n                self.update();\n            }\n\n            self.liveEditor.editor.focus();\n\n            return false;\n        });\n\n        this.$el.on(\"click\", \".tipbar .show-me a\", function (e) {\n            e.preventDefault();\n\n            var error = self.errors[self.pos];\n            self.liveEditor.editor.setCursor(error);\n            self.liveEditor.editor.setErrorHighlight(true);\n\n            return false;\n        });\n\n        this.$el.on(\"click\", \".tipbar .close\", function (e) {\n            self.liveEditor.setThinkingState();\n        });\n    },\n\n    setErrors: function setErrors(errors) {\n        this.errors = errors;\n        this.update(false);\n    },\n\n    update: function update(show) {\n        if (!this.errors.length) return;\n\n        var errors = this.errors;\n        var pos = errors[this.pos] == null ? 0 : this.pos;\n\n        // Inject current text\n        this.$bar.find(\".current-pos\").text(errors.length > 1 ? pos + 1 + \"/\" + errors.length : \"\").end().find(\".message\").html(errors[pos].text || errors[pos] || \"\").end().find(\"a.prev\").toggleClass(\"ui-state-disabled\", pos === 0).end().find(\"a.next\").toggleClass(\"ui-state-disabled\", pos + 1 === errors.length).end();\n\n        // it could be undefined, null, or -1\n        this.$el.find(\".show-me\").toggle(errors[pos].row > -1);\n\n        this.$bar.find(\".tipnav\").toggle(errors.length > 1);\n        if (show) {\n            this.$overlay.show();\n            this.$bar.show();\n        }\n    },\n\n    hide: function hide() {\n        this.$bar.hide();\n        this.$overlay.hide();\n        clearTimeout(this.errorDelay);\n    },\n\n    toggleErrors: function toggleErrors(errors, delay) {\n        var hasErrors = errors.length > 0;\n        if (!hasErrors) {\n            this.hide();\n            return;\n        }\n\n        this.$overlay.show();\n        this.setErrors(errors);\n\n        clearTimeout(this.errorDelay);\n        this.errorDelay = setTimeout(function () {\n            this.update(true);\n        }.bind(this), delay);\n    },\n\n    setErrorPosition: function setErrorPosition(errorPos) {\n        this.pos = errorPos;\n        this.update(true);\n    }\n});\n\nmodule.exports = TipBar;\n\n//# sourceURL=webpack:///./js/ui/tipbar.js?");
+
+/***/ }),
+
+/***/ "./node_modules/backbone/backbone.js":
+/*!*******************************************!*\
+  !*** ./node_modules/backbone/backbone.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("//     Backbone.js 1.0.0\n\n//     (c) 2010-2013 Jeremy Ashkenas, DocumentCloud Inc.\n//     Backbone may be freely distributed under the MIT license.\n//     For all details and documentation:\n//     http://backbonejs.org\n\n(function(){\n\n  // Initial Setup\n  // -------------\n\n  // Save a reference to the global object (`window` in the browser, `exports`\n  // on the server).\n  var root = this;\n\n  // Save the previous value of the `Backbone` variable, so that it can be\n  // restored later on, if `noConflict` is used.\n  var previousBackbone = root.Backbone;\n\n  // Create local references to array methods we'll want to use later.\n  var array = [];\n  var push = array.push;\n  var slice = array.slice;\n  var splice = array.splice;\n\n  // The top-level namespace. All public Backbone classes and modules will\n  // be attached to this. Exported for both the browser and the server.\n  var Backbone;\n  if (true) {\n    Backbone = exports;\n  } else {}\n\n  // Current version of the library. Keep in sync with `package.json`.\n  Backbone.VERSION = '1.0.0';\n\n  // Require Underscore, if we're on the server, and it's not already present.\n  var _ = root._;\n  if (!_ && (\"function\" !== 'undefined')) _ = __webpack_require__(/*! underscore */ \"./node_modules/underscore/underscore.js\");\n\n  // For Backbone's purposes, jQuery, Zepto, Ender, or My Library (kidding) owns\n  // the `$` variable.\n  Backbone.$ = root.jQuery || root.Zepto || root.ender || root.$;\n\n  // Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable\n  // to its previous owner. Returns a reference to this Backbone object.\n  Backbone.noConflict = function() {\n    root.Backbone = previousBackbone;\n    return this;\n  };\n\n  // Turn on `emulateHTTP` to support legacy HTTP servers. Setting this option\n  // will fake `\"PUT\"` and `\"DELETE\"` requests via the `_method` parameter and\n  // set a `X-Http-Method-Override` header.\n  Backbone.emulateHTTP = false;\n\n  // Turn on `emulateJSON` to support legacy servers that can't deal with direct\n  // `application/json` requests ... will encode the body as\n  // `application/x-www-form-urlencoded` instead and will send the model in a\n  // form param named `model`.\n  Backbone.emulateJSON = false;\n\n  // Backbone.Events\n  // ---------------\n\n  // A module that can be mixed in to *any object* in order to provide it with\n  // custom events. You may bind with `on` or remove with `off` callback\n  // functions to an event; `trigger`-ing an event fires all callbacks in\n  // succession.\n  //\n  //     var object = {};\n  //     _.extend(object, Backbone.Events);\n  //     object.on('expand', function(){ alert('expanded'); });\n  //     object.trigger('expand');\n  //\n  var Events = Backbone.Events = {\n\n    // Bind an event to a `callback` function. Passing `\"all\"` will bind\n    // the callback to all events fired.\n    on: function(name, callback, context) {\n      if (!eventsApi(this, 'on', name, [callback, context]) || !callback) return this;\n      this._events || (this._events = {});\n      var events = this._events[name] || (this._events[name] = []);\n      events.push({callback: callback, context: context, ctx: context || this});\n      return this;\n    },\n\n    // Bind an event to only be triggered a single time. After the first time\n    // the callback is invoked, it will be removed.\n    once: function(name, callback, context) {\n      if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;\n      var self = this;\n      var once = _.once(function() {\n        self.off(name, once);\n        callback.apply(this, arguments);\n      });\n      once._callback = callback;\n      return this.on(name, once, context);\n    },\n\n    // Remove one or many callbacks. If `context` is null, removes all\n    // callbacks with that function. If `callback` is null, removes all\n    // callbacks for the event. If `name` is null, removes all bound\n    // callbacks for all events.\n    off: function(name, callback, context) {\n      var retain, ev, events, names, i, l, j, k;\n      if (!this._events || !eventsApi(this, 'off', name, [callback, context])) return this;\n      if (!name && !callback && !context) {\n        this._events = {};\n        return this;\n      }\n\n      names = name ? [name] : _.keys(this._events);\n      for (i = 0, l = names.length; i < l; i++) {\n        name = names[i];\n        if (events = this._events[name]) {\n          this._events[name] = retain = [];\n          if (callback || context) {\n            for (j = 0, k = events.length; j < k; j++) {\n              ev = events[j];\n              if ((callback && callback !== ev.callback && callback !== ev.callback._callback) ||\n                  (context && context !== ev.context)) {\n                retain.push(ev);\n              }\n            }\n          }\n          if (!retain.length) delete this._events[name];\n        }\n      }\n\n      return this;\n    },\n\n    // Trigger one or many events, firing all bound callbacks. Callbacks are\n    // passed the same arguments as `trigger` is, apart from the event name\n    // (unless you're listening on `\"all\"`, which will cause your callback to\n    // receive the true name of the event as the first argument).\n    trigger: function(name) {\n      if (!this._events) return this;\n      var args = slice.call(arguments, 1);\n      if (!eventsApi(this, 'trigger', name, args)) return this;\n      var events = this._events[name];\n      var allEvents = this._events.all;\n      if (events) triggerEvents(events, args);\n      if (allEvents) triggerEvents(allEvents, arguments);\n      return this;\n    },\n\n    // Tell this object to stop listening to either specific events ... or\n    // to every object it's currently listening to.\n    stopListening: function(obj, name, callback) {\n      var listeners = this._listeners;\n      if (!listeners) return this;\n      var deleteListener = !name && !callback;\n      if (typeof name === 'object') callback = this;\n      if (obj) (listeners = {})[obj._listenerId] = obj;\n      for (var id in listeners) {\n        listeners[id].off(name, callback, this);\n        if (deleteListener) delete this._listeners[id];\n      }\n      return this;\n    }\n\n  };\n\n  // Regular expression used to split event strings.\n  var eventSplitter = /\\s+/;\n\n  // Implement fancy features of the Events API such as multiple event\n  // names `\"change blur\"` and jQuery-style event maps `{change: action}`\n  // in terms of the existing API.\n  var eventsApi = function(obj, action, name, rest) {\n    if (!name) return true;\n\n    // Handle event maps.\n    if (typeof name === 'object') {\n      for (var key in name) {\n        obj[action].apply(obj, [key, name[key]].concat(rest));\n      }\n      return false;\n    }\n\n    // Handle space separated event names.\n    if (eventSplitter.test(name)) {\n      var names = name.split(eventSplitter);\n      for (var i = 0, l = names.length; i < l; i++) {\n        obj[action].apply(obj, [names[i]].concat(rest));\n      }\n      return false;\n    }\n\n    return true;\n  };\n\n  // A difficult-to-believe, but optimized internal dispatch function for\n  // triggering events. Tries to keep the usual cases speedy (most internal\n  // Backbone events have 3 arguments).\n  var triggerEvents = function(events, args) {\n    var ev, i = -1, l = events.length, a1 = args[0], a2 = args[1], a3 = args[2];\n    switch (args.length) {\n      case 0: while (++i < l) (ev = events[i]).callback.call(ev.ctx); return;\n      case 1: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1); return;\n      case 2: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2); return;\n      case 3: while (++i < l) (ev = events[i]).callback.call(ev.ctx, a1, a2, a3); return;\n      default: while (++i < l) (ev = events[i]).callback.apply(ev.ctx, args);\n    }\n  };\n\n  var listenMethods = {listenTo: 'on', listenToOnce: 'once'};\n\n  // Inversion-of-control versions of `on` and `once`. Tell *this* object to\n  // listen to an event in another object ... keeping track of what it's\n  // listening to.\n  _.each(listenMethods, function(implementation, method) {\n    Events[method] = function(obj, name, callback) {\n      var listeners = this._listeners || (this._listeners = {});\n      var id = obj._listenerId || (obj._listenerId = _.uniqueId('l'));\n      listeners[id] = obj;\n      if (typeof name === 'object') callback = this;\n      obj[implementation](name, callback, this);\n      return this;\n    };\n  });\n\n  // Aliases for backwards compatibility.\n  Events.bind   = Events.on;\n  Events.unbind = Events.off;\n\n  // Allow the `Backbone` object to serve as a global event bus, for folks who\n  // want global \"pubsub\" in a convenient place.\n  _.extend(Backbone, Events);\n\n  // Backbone.Model\n  // --------------\n\n  // Backbone **Models** are the basic data object in the framework --\n  // frequently representing a row in a table in a database on your server.\n  // A discrete chunk of data and a bunch of useful, related methods for\n  // performing computations and transformations on that data.\n\n  // Create a new model with the specified attributes. A client id (`cid`)\n  // is automatically generated and assigned for you.\n  var Model = Backbone.Model = function(attributes, options) {\n    var defaults;\n    var attrs = attributes || {};\n    options || (options = {});\n    this.cid = _.uniqueId('c');\n    this.attributes = {};\n    _.extend(this, _.pick(options, modelOptions));\n    if (options.parse) attrs = this.parse(attrs, options) || {};\n    if (defaults = _.result(this, 'defaults')) {\n      attrs = _.defaults({}, attrs, defaults);\n    }\n    this.set(attrs, options);\n    this.changed = {};\n    this.initialize.apply(this, arguments);\n  };\n\n  // A list of options to be attached directly to the model, if provided.\n  var modelOptions = ['url', 'urlRoot', 'collection'];\n\n  // Attach all inheritable methods to the Model prototype.\n  _.extend(Model.prototype, Events, {\n\n    // A hash of attributes whose current and previous value differ.\n    changed: null,\n\n    // The value returned during the last failed validation.\n    validationError: null,\n\n    // The default name for the JSON `id` attribute is `\"id\"`. MongoDB and\n    // CouchDB users may want to set this to `\"_id\"`.\n    idAttribute: 'id',\n\n    // Initialize is an empty function by default. Override it with your own\n    // initialization logic.\n    initialize: function(){},\n\n    // Return a copy of the model's `attributes` object.\n    toJSON: function(options) {\n      return _.clone(this.attributes);\n    },\n\n    // Proxy `Backbone.sync` by default -- but override this if you need\n    // custom syncing semantics for *this* particular model.\n    sync: function() {\n      return Backbone.sync.apply(this, arguments);\n    },\n\n    // Get the value of an attribute.\n    get: function(attr) {\n      return this.attributes[attr];\n    },\n\n    // Get the HTML-escaped value of an attribute.\n    escape: function(attr) {\n      return _.escape(this.get(attr));\n    },\n\n    // Returns `true` if the attribute contains a value that is not null\n    // or undefined.\n    has: function(attr) {\n      return this.get(attr) != null;\n    },\n\n    // Set a hash of model attributes on the object, firing `\"change\"`. This is\n    // the core primitive operation of a model, updating the data and notifying\n    // anyone who needs to know about the change in state. The heart of the beast.\n    set: function(key, val, options) {\n      var attr, attrs, unset, changes, silent, changing, prev, current;\n      if (key == null) return this;\n\n      // Handle both `\"key\", value` and `{key: value}` -style arguments.\n      if (typeof key === 'object') {\n        attrs = key;\n        options = val;\n      } else {\n        (attrs = {})[key] = val;\n      }\n\n      options || (options = {});\n\n      // Run validation.\n      if (!this._validate(attrs, options)) return false;\n\n      // Extract attributes and options.\n      unset           = options.unset;\n      silent          = options.silent;\n      changes         = [];\n      changing        = this._changing;\n      this._changing  = true;\n\n      if (!changing) {\n        this._previousAttributes = _.clone(this.attributes);\n        this.changed = {};\n      }\n      current = this.attributes, prev = this._previousAttributes;\n\n      // Check for changes of `id`.\n      if (this.idAttribute in attrs) this.id = attrs[this.idAttribute];\n\n      // For each `set` attribute, update or delete the current value.\n      for (attr in attrs) {\n        val = attrs[attr];\n        if (!_.isEqual(current[attr], val)) changes.push(attr);\n        if (!_.isEqual(prev[attr], val)) {\n          this.changed[attr] = val;\n        } else {\n          delete this.changed[attr];\n        }\n        unset ? delete current[attr] : current[attr] = val;\n      }\n\n      // Trigger all relevant attribute changes.\n      if (!silent) {\n        if (changes.length) this._pending = true;\n        for (var i = 0, l = changes.length; i < l; i++) {\n          this.trigger('change:' + changes[i], this, current[changes[i]], options);\n        }\n      }\n\n      // You might be wondering why there's a `while` loop here. Changes can\n      // be recursively nested within `\"change\"` events.\n      if (changing) return this;\n      if (!silent) {\n        while (this._pending) {\n          this._pending = false;\n          this.trigger('change', this, options);\n        }\n      }\n      this._pending = false;\n      this._changing = false;\n      return this;\n    },\n\n    // Remove an attribute from the model, firing `\"change\"`. `unset` is a noop\n    // if the attribute doesn't exist.\n    unset: function(attr, options) {\n      return this.set(attr, void 0, _.extend({}, options, {unset: true}));\n    },\n\n    // Clear all attributes on the model, firing `\"change\"`.\n    clear: function(options) {\n      var attrs = {};\n      for (var key in this.attributes) attrs[key] = void 0;\n      return this.set(attrs, _.extend({}, options, {unset: true}));\n    },\n\n    // Determine if the model has changed since the last `\"change\"` event.\n    // If you specify an attribute name, determine if that attribute has changed.\n    hasChanged: function(attr) {\n      if (attr == null) return !_.isEmpty(this.changed);\n      return _.has(this.changed, attr);\n    },\n\n    // Return an object containing all the attributes that have changed, or\n    // false if there are no changed attributes. Useful for determining what\n    // parts of a view need to be updated and/or what attributes need to be\n    // persisted to the server. Unset attributes will be set to undefined.\n    // You can also pass an attributes object to diff against the model,\n    // determining if there *would be* a change.\n    changedAttributes: function(diff) {\n      if (!diff) return this.hasChanged() ? _.clone(this.changed) : false;\n      var val, changed = false;\n      var old = this._changing ? this._previousAttributes : this.attributes;\n      for (var attr in diff) {\n        if (_.isEqual(old[attr], (val = diff[attr]))) continue;\n        (changed || (changed = {}))[attr] = val;\n      }\n      return changed;\n    },\n\n    // Get the previous value of an attribute, recorded at the time the last\n    // `\"change\"` event was fired.\n    previous: function(attr) {\n      if (attr == null || !this._previousAttributes) return null;\n      return this._previousAttributes[attr];\n    },\n\n    // Get all of the attributes of the model at the time of the previous\n    // `\"change\"` event.\n    previousAttributes: function() {\n      return _.clone(this._previousAttributes);\n    },\n\n    // Fetch the model from the server. If the server's representation of the\n    // model differs from its current attributes, they will be overridden,\n    // triggering a `\"change\"` event.\n    fetch: function(options) {\n      options = options ? _.clone(options) : {};\n      if (options.parse === void 0) options.parse = true;\n      var model = this;\n      var success = options.success;\n      options.success = function(resp) {\n        if (!model.set(model.parse(resp, options), options)) return false;\n        if (success) success(model, resp, options);\n        model.trigger('sync', model, resp, options);\n      };\n      wrapError(this, options);\n      return this.sync('read', this, options);\n    },\n\n    // Set a hash of model attributes, and sync the model to the server.\n    // If the server returns an attributes hash that differs, the model's\n    // state will be `set` again.\n    save: function(key, val, options) {\n      var attrs, method, xhr, attributes = this.attributes;\n\n      // Handle both `\"key\", value` and `{key: value}` -style arguments.\n      if (key == null || typeof key === 'object') {\n        attrs = key;\n        options = val;\n      } else {\n        (attrs = {})[key] = val;\n      }\n\n      // If we're not waiting and attributes exist, save acts as `set(attr).save(null, opts)`.\n      if (attrs && (!options || !options.wait) && !this.set(attrs, options)) return false;\n\n      options = _.extend({validate: true}, options);\n\n      // Do not persist invalid models.\n      if (!this._validate(attrs, options)) return false;\n\n      // Set temporary attributes if `{wait: true}`.\n      if (attrs && options.wait) {\n        this.attributes = _.extend({}, attributes, attrs);\n      }\n\n      // After a successful server-side save, the client is (optionally)\n      // updated with the server-side state.\n      if (options.parse === void 0) options.parse = true;\n      var model = this;\n      var success = options.success;\n      options.success = function(resp) {\n        // Ensure attributes are restored during synchronous saves.\n        model.attributes = attributes;\n        var serverAttrs = model.parse(resp, options);\n        if (options.wait) serverAttrs = _.extend(attrs || {}, serverAttrs);\n        if (_.isObject(serverAttrs) && !model.set(serverAttrs, options)) {\n          return false;\n        }\n        if (success) success(model, resp, options);\n        model.trigger('sync', model, resp, options);\n      };\n      wrapError(this, options);\n\n      method = this.isNew() ? 'create' : (options.patch ? 'patch' : 'update');\n      if (method === 'patch') options.attrs = attrs;\n      xhr = this.sync(method, this, options);\n\n      // Restore attributes.\n      if (attrs && options.wait) this.attributes = attributes;\n\n      return xhr;\n    },\n\n    // Destroy this model on the server if it was already persisted.\n    // Optimistically removes the model from its collection, if it has one.\n    // If `wait: true` is passed, waits for the server to respond before removal.\n    destroy: function(options) {\n      options = options ? _.clone(options) : {};\n      var model = this;\n      var success = options.success;\n\n      var destroy = function() {\n        model.trigger('destroy', model, model.collection, options);\n      };\n\n      options.success = function(resp) {\n        if (options.wait || model.isNew()) destroy();\n        if (success) success(model, resp, options);\n        if (!model.isNew()) model.trigger('sync', model, resp, options);\n      };\n\n      if (this.isNew()) {\n        options.success();\n        return false;\n      }\n      wrapError(this, options);\n\n      var xhr = this.sync('delete', this, options);\n      if (!options.wait) destroy();\n      return xhr;\n    },\n\n    // Default URL for the model's representation on the server -- if you're\n    // using Backbone's restful methods, override this to change the endpoint\n    // that will be called.\n    url: function() {\n      var base = _.result(this, 'urlRoot') || _.result(this.collection, 'url') || urlError();\n      if (this.isNew()) return base;\n      return base + (base.charAt(base.length - 1) === '/' ? '' : '/') + encodeURIComponent(this.id);\n    },\n\n    // **parse** converts a response into the hash of attributes to be `set` on\n    // the model. The default implementation is just to pass the response along.\n    parse: function(resp, options) {\n      return resp;\n    },\n\n    // Create a new model with identical attributes to this one.\n    clone: function() {\n      return new this.constructor(this.attributes);\n    },\n\n    // A model is new if it has never been saved to the server, and lacks an id.\n    isNew: function() {\n      return this.id == null;\n    },\n\n    // Check if the model is currently in a valid state.\n    isValid: function(options) {\n      return this._validate({}, _.extend(options || {}, { validate: true }));\n    },\n\n    // Run validation against the next complete set of model attributes,\n    // returning `true` if all is well. Otherwise, fire an `\"invalid\"` event.\n    _validate: function(attrs, options) {\n      if (!options.validate || !this.validate) return true;\n      attrs = _.extend({}, this.attributes, attrs);\n      var error = this.validationError = this.validate(attrs, options) || null;\n      if (!error) return true;\n      this.trigger('invalid', this, error, _.extend(options || {}, {validationError: error}));\n      return false;\n    }\n\n  });\n\n  // Underscore methods that we want to implement on the Model.\n  var modelMethods = ['keys', 'values', 'pairs', 'invert', 'pick', 'omit'];\n\n  // Mix in each Underscore method as a proxy to `Model#attributes`.\n  _.each(modelMethods, function(method) {\n    Model.prototype[method] = function() {\n      var args = slice.call(arguments);\n      args.unshift(this.attributes);\n      return _[method].apply(_, args);\n    };\n  });\n\n  // Backbone.Collection\n  // -------------------\n\n  // If models tend to represent a single row of data, a Backbone Collection is\n  // more analagous to a table full of data ... or a small slice or page of that\n  // table, or a collection of rows that belong together for a particular reason\n  // -- all of the messages in this particular folder, all of the documents\n  // belonging to this particular author, and so on. Collections maintain\n  // indexes of their models, both in order, and for lookup by `id`.\n\n  // Create a new **Collection**, perhaps to contain a specific type of `model`.\n  // If a `comparator` is specified, the Collection will maintain\n  // its models in sort order, as they're added and removed.\n  var Collection = Backbone.Collection = function(models, options) {\n    options || (options = {});\n    if (options.url) this.url = options.url;\n    if (options.model) this.model = options.model;\n    if (options.comparator !== void 0) this.comparator = options.comparator;\n    this._reset();\n    this.initialize.apply(this, arguments);\n    if (models) this.reset(models, _.extend({silent: true}, options));\n  };\n\n  // Default options for `Collection#set`.\n  var setOptions = {add: true, remove: true, merge: true};\n  var addOptions = {add: true, merge: false, remove: false};\n\n  // Define the Collection's inheritable methods.\n  _.extend(Collection.prototype, Events, {\n\n    // The default model for a collection is just a **Backbone.Model**.\n    // This should be overridden in most cases.\n    model: Model,\n\n    // Initialize is an empty function by default. Override it with your own\n    // initialization logic.\n    initialize: function(){},\n\n    // The JSON representation of a Collection is an array of the\n    // models' attributes.\n    toJSON: function(options) {\n      return this.map(function(model){ return model.toJSON(options); });\n    },\n\n    // Proxy `Backbone.sync` by default.\n    sync: function() {\n      return Backbone.sync.apply(this, arguments);\n    },\n\n    // Add a model, or list of models to the set.\n    add: function(models, options) {\n      return this.set(models, _.defaults(options || {}, addOptions));\n    },\n\n    // Remove a model, or a list of models from the set.\n    remove: function(models, options) {\n      models = _.isArray(models) ? models.slice() : [models];\n      options || (options = {});\n      var i, l, index, model;\n      for (i = 0, l = models.length; i < l; i++) {\n        model = this.get(models[i]);\n        if (!model) continue;\n        delete this._byId[model.id];\n        delete this._byId[model.cid];\n        index = this.indexOf(model);\n        this.models.splice(index, 1);\n        this.length--;\n        if (!options.silent) {\n          options.index = index;\n          model.trigger('remove', model, this, options);\n        }\n        this._removeReference(model);\n      }\n      return this;\n    },\n\n    // Update a collection by `set`-ing a new list of models, adding new ones,\n    // removing models that are no longer present, and merging models that\n    // already exist in the collection, as necessary. Similar to **Model#set**,\n    // the core operation for updating the data contained by the collection.\n    set: function(models, options) {\n      options = _.defaults(options || {}, setOptions);\n      if (options.parse) models = this.parse(models, options);\n      if (!_.isArray(models)) models = models ? [models] : [];\n      var i, l, model, attrs, existing, sort;\n      var at = options.at;\n      var sortable = this.comparator && (at == null) && options.sort !== false;\n      var sortAttr = _.isString(this.comparator) ? this.comparator : null;\n      var toAdd = [], toRemove = [], modelMap = {};\n\n      // Turn bare objects into model references, and prevent invalid models\n      // from being added.\n      for (i = 0, l = models.length; i < l; i++) {\n        if (!(model = this._prepareModel(models[i], options))) continue;\n\n        // If a duplicate is found, prevent it from being added and\n        // optionally merge it into the existing model.\n        if (existing = this.get(model)) {\n          if (options.remove) modelMap[existing.cid] = true;\n          if (options.merge) {\n            existing.set(model.attributes, options);\n            if (sortable && !sort && existing.hasChanged(sortAttr)) sort = true;\n          }\n\n        // This is a new model, push it to the `toAdd` list.\n        } else if (options.add) {\n          toAdd.push(model);\n\n          // Listen to added models' events, and index models for lookup by\n          // `id` and by `cid`.\n          model.on('all', this._onModelEvent, this);\n          this._byId[model.cid] = model;\n          if (model.id != null) this._byId[model.id] = model;\n        }\n      }\n\n      // Remove nonexistent models if appropriate.\n      if (options.remove) {\n        for (i = 0, l = this.length; i < l; ++i) {\n          if (!modelMap[(model = this.models[i]).cid]) toRemove.push(model);\n        }\n        if (toRemove.length) this.remove(toRemove, options);\n      }\n\n      // See if sorting is needed, update `length` and splice in new models.\n      if (toAdd.length) {\n        if (sortable) sort = true;\n        this.length += toAdd.length;\n        if (at != null) {\n          splice.apply(this.models, [at, 0].concat(toAdd));\n        } else {\n          push.apply(this.models, toAdd);\n        }\n      }\n\n      // Silently sort the collection if appropriate.\n      if (sort) this.sort({silent: true});\n\n      if (options.silent) return this;\n\n      // Trigger `add` events.\n      for (i = 0, l = toAdd.length; i < l; i++) {\n        (model = toAdd[i]).trigger('add', model, this, options);\n      }\n\n      // Trigger `sort` if the collection was sorted.\n      if (sort) this.trigger('sort', this, options);\n      return this;\n    },\n\n    // When you have more items than you want to add or remove individually,\n    // you can reset the entire set with a new list of models, without firing\n    // any granular `add` or `remove` events. Fires `reset` when finished.\n    // Useful for bulk operations and optimizations.\n    reset: function(models, options) {\n      options || (options = {});\n      for (var i = 0, l = this.models.length; i < l; i++) {\n        this._removeReference(this.models[i]);\n      }\n      options.previousModels = this.models;\n      this._reset();\n      this.add(models, _.extend({silent: true}, options));\n      if (!options.silent) this.trigger('reset', this, options);\n      return this;\n    },\n\n    // Add a model to the end of the collection.\n    push: function(model, options) {\n      model = this._prepareModel(model, options);\n      this.add(model, _.extend({at: this.length}, options));\n      return model;\n    },\n\n    // Remove a model from the end of the collection.\n    pop: function(options) {\n      var model = this.at(this.length - 1);\n      this.remove(model, options);\n      return model;\n    },\n\n    // Add a model to the beginning of the collection.\n    unshift: function(model, options) {\n      model = this._prepareModel(model, options);\n      this.add(model, _.extend({at: 0}, options));\n      return model;\n    },\n\n    // Remove a model from the beginning of the collection.\n    shift: function(options) {\n      var model = this.at(0);\n      this.remove(model, options);\n      return model;\n    },\n\n    // Slice out a sub-array of models from the collection.\n    slice: function(begin, end) {\n      return this.models.slice(begin, end);\n    },\n\n    // Get a model from the set by id.\n    get: function(obj) {\n      if (obj == null) return void 0;\n      return this._byId[obj.id != null ? obj.id : obj.cid || obj];\n    },\n\n    // Get the model at the given index.\n    at: function(index) {\n      return this.models[index];\n    },\n\n    // Return models with matching attributes. Useful for simple cases of\n    // `filter`.\n    where: function(attrs, first) {\n      if (_.isEmpty(attrs)) return first ? void 0 : [];\n      return this[first ? 'find' : 'filter'](function(model) {\n        for (var key in attrs) {\n          if (attrs[key] !== model.get(key)) return false;\n        }\n        return true;\n      });\n    },\n\n    // Return the first model with matching attributes. Useful for simple cases\n    // of `find`.\n    findWhere: function(attrs) {\n      return this.where(attrs, true);\n    },\n\n    // Force the collection to re-sort itself. You don't need to call this under\n    // normal circumstances, as the set will maintain sort order as each item\n    // is added.\n    sort: function(options) {\n      if (!this.comparator) throw new Error('Cannot sort a set without a comparator');\n      options || (options = {});\n\n      // Run sort based on type of `comparator`.\n      if (_.isString(this.comparator) || this.comparator.length === 1) {\n        this.models = this.sortBy(this.comparator, this);\n      } else {\n        this.models.sort(_.bind(this.comparator, this));\n      }\n\n      if (!options.silent) this.trigger('sort', this, options);\n      return this;\n    },\n\n    // Figure out the smallest index at which a model should be inserted so as\n    // to maintain order.\n    sortedIndex: function(model, value, context) {\n      value || (value = this.comparator);\n      var iterator = _.isFunction(value) ? value : function(model) {\n        return model.get(value);\n      };\n      return _.sortedIndex(this.models, model, iterator, context);\n    },\n\n    // Pluck an attribute from each model in the collection.\n    pluck: function(attr) {\n      return _.invoke(this.models, 'get', attr);\n    },\n\n    // Fetch the default set of models for this collection, resetting the\n    // collection when they arrive. If `reset: true` is passed, the response\n    // data will be passed through the `reset` method instead of `set`.\n    fetch: function(options) {\n      options = options ? _.clone(options) : {};\n      if (options.parse === void 0) options.parse = true;\n      var success = options.success;\n      var collection = this;\n      options.success = function(resp) {\n        var method = options.reset ? 'reset' : 'set';\n        collection[method](resp, options);\n        if (success) success(collection, resp, options);\n        collection.trigger('sync', collection, resp, options);\n      };\n      wrapError(this, options);\n      return this.sync('read', this, options);\n    },\n\n    // Create a new instance of a model in this collection. Add the model to the\n    // collection immediately, unless `wait: true` is passed, in which case we\n    // wait for the server to agree.\n    create: function(model, options) {\n      options = options ? _.clone(options) : {};\n      if (!(model = this._prepareModel(model, options))) return false;\n      if (!options.wait) this.add(model, options);\n      var collection = this;\n      var success = options.success;\n      options.success = function(resp) {\n        if (options.wait) collection.add(model, options);\n        if (success) success(model, resp, options);\n      };\n      model.save(null, options);\n      return model;\n    },\n\n    // **parse** converts a response into a list of models to be added to the\n    // collection. The default implementation is just to pass it through.\n    parse: function(resp, options) {\n      return resp;\n    },\n\n    // Create a new collection with an identical list of models as this one.\n    clone: function() {\n      return new this.constructor(this.models);\n    },\n\n    // Private method to reset all internal state. Called when the collection\n    // is first initialized or reset.\n    _reset: function() {\n      this.length = 0;\n      this.models = [];\n      this._byId  = {};\n    },\n\n    // Prepare a hash of attributes (or other model) to be added to this\n    // collection.\n    _prepareModel: function(attrs, options) {\n      if (attrs instanceof Model) {\n        if (!attrs.collection) attrs.collection = this;\n        return attrs;\n      }\n      options || (options = {});\n      options.collection = this;\n      var model = new this.model(attrs, options);\n      if (!model._validate(attrs, options)) {\n        this.trigger('invalid', this, attrs, options);\n        return false;\n      }\n      return model;\n    },\n\n    // Internal method to sever a model's ties to a collection.\n    _removeReference: function(model) {\n      if (this === model.collection) delete model.collection;\n      model.off('all', this._onModelEvent, this);\n    },\n\n    // Internal method called every time a model in the set fires an event.\n    // Sets need to update their indexes when models change ids. All other\n    // events simply proxy through. \"add\" and \"remove\" events that originate\n    // in other collections are ignored.\n    _onModelEvent: function(event, model, collection, options) {\n      if ((event === 'add' || event === 'remove') && collection !== this) return;\n      if (event === 'destroy') this.remove(model, options);\n      if (model && event === 'change:' + model.idAttribute) {\n        delete this._byId[model.previous(model.idAttribute)];\n        if (model.id != null) this._byId[model.id] = model;\n      }\n      this.trigger.apply(this, arguments);\n    }\n\n  });\n\n  // Underscore methods that we want to implement on the Collection.\n  // 90% of the core usefulness of Backbone Collections is actually implemented\n  // right here:\n  var methods = ['forEach', 'each', 'map', 'collect', 'reduce', 'foldl',\n    'inject', 'reduceRight', 'foldr', 'find', 'detect', 'filter', 'select',\n    'reject', 'every', 'all', 'some', 'any', 'include', 'contains', 'invoke',\n    'max', 'min', 'toArray', 'size', 'first', 'head', 'take', 'initial', 'rest',\n    'tail', 'drop', 'last', 'without', 'indexOf', 'shuffle', 'lastIndexOf',\n    'isEmpty', 'chain'];\n\n  // Mix in each Underscore method as a proxy to `Collection#models`.\n  _.each(methods, function(method) {\n    Collection.prototype[method] = function() {\n      var args = slice.call(arguments);\n      args.unshift(this.models);\n      return _[method].apply(_, args);\n    };\n  });\n\n  // Underscore methods that take a property name as an argument.\n  var attributeMethods = ['groupBy', 'countBy', 'sortBy'];\n\n  // Use attributes instead of properties.\n  _.each(attributeMethods, function(method) {\n    Collection.prototype[method] = function(value, context) {\n      var iterator = _.isFunction(value) ? value : function(model) {\n        return model.get(value);\n      };\n      return _[method](this.models, iterator, context);\n    };\n  });\n\n  // Backbone.View\n  // -------------\n\n  // Backbone Views are almost more convention than they are actual code. A View\n  // is simply a JavaScript object that represents a logical chunk of UI in the\n  // DOM. This might be a single item, an entire list, a sidebar or panel, or\n  // even the surrounding frame which wraps your whole app. Defining a chunk of\n  // UI as a **View** allows you to define your DOM events declaratively, without\n  // having to worry about render order ... and makes it easy for the view to\n  // react to specific changes in the state of your models.\n\n  // Creating a Backbone.View creates its initial element outside of the DOM,\n  // if an existing element is not provided...\n  var View = Backbone.View = function(options) {\n    this.cid = _.uniqueId('view');\n    this._configure(options || {});\n    this._ensureElement();\n    this.initialize.apply(this, arguments);\n    this.delegateEvents();\n  };\n\n  // Cached regex to split keys for `delegate`.\n  var delegateEventSplitter = /^(\\S+)\\s*(.*)$/;\n\n  // List of view options to be merged as properties.\n  var viewOptions = ['model', 'collection', 'el', 'id', 'attributes', 'className', 'tagName', 'events'];\n\n  // Set up all inheritable **Backbone.View** properties and methods.\n  _.extend(View.prototype, Events, {\n\n    // The default `tagName` of a View's element is `\"div\"`.\n    tagName: 'div',\n\n    // jQuery delegate for element lookup, scoped to DOM elements within the\n    // current view. This should be prefered to global lookups where possible.\n    $: function(selector) {\n      return this.$el.find(selector);\n    },\n\n    // Initialize is an empty function by default. Override it with your own\n    // initialization logic.\n    initialize: function(){},\n\n    // **render** is the core function that your view should override, in order\n    // to populate its element (`this.el`), with the appropriate HTML. The\n    // convention is for **render** to always return `this`.\n    render: function() {\n      return this;\n    },\n\n    // Remove this view by taking the element out of the DOM, and removing any\n    // applicable Backbone.Events listeners.\n    remove: function() {\n      this.$el.remove();\n      this.stopListening();\n      return this;\n    },\n\n    // Change the view's element (`this.el` property), including event\n    // re-delegation.\n    setElement: function(element, delegate) {\n      if (this.$el) this.undelegateEvents();\n      this.$el = element instanceof Backbone.$ ? element : Backbone.$(element);\n      this.el = this.$el[0];\n      if (delegate !== false) this.delegateEvents();\n      return this;\n    },\n\n    // Set callbacks, where `this.events` is a hash of\n    //\n    // *{\"event selector\": \"callback\"}*\n    //\n    //     {\n    //       'mousedown .title':  'edit',\n    //       'click .button':     'save'\n    //       'click .open':       function(e) { ... }\n    //     }\n    //\n    // pairs. Callbacks will be bound to the view, with `this` set properly.\n    // Uses event delegation for efficiency.\n    // Omitting the selector binds the event to `this.el`.\n    // This only works for delegate-able events: not `focus`, `blur`, and\n    // not `change`, `submit`, and `reset` in Internet Explorer.\n    delegateEvents: function(events) {\n      if (!(events || (events = _.result(this, 'events')))) return this;\n      this.undelegateEvents();\n      for (var key in events) {\n        var method = events[key];\n        if (!_.isFunction(method)) method = this[events[key]];\n        if (!method) continue;\n\n        var match = key.match(delegateEventSplitter);\n        var eventName = match[1], selector = match[2];\n        method = _.bind(method, this);\n        eventName += '.delegateEvents' + this.cid;\n        if (selector === '') {\n          this.$el.on(eventName, method);\n        } else {\n          this.$el.on(eventName, selector, method);\n        }\n      }\n      return this;\n    },\n\n    // Clears all callbacks previously bound to the view with `delegateEvents`.\n    // You usually don't need to use this, but may wish to if you have multiple\n    // Backbone views attached to the same DOM element.\n    undelegateEvents: function() {\n      this.$el.off('.delegateEvents' + this.cid);\n      return this;\n    },\n\n    // Performs the initial configuration of a View with a set of options.\n    // Keys with special meaning *(e.g. model, collection, id, className)* are\n    // attached directly to the view.  See `viewOptions` for an exhaustive\n    // list.\n    _configure: function(options) {\n      if (this.options) options = _.extend({}, _.result(this, 'options'), options);\n      _.extend(this, _.pick(options, viewOptions));\n      this.options = options;\n    },\n\n    // Ensure that the View has a DOM element to render into.\n    // If `this.el` is a string, pass it through `$()`, take the first\n    // matching element, and re-assign it to `el`. Otherwise, create\n    // an element from the `id`, `className` and `tagName` properties.\n    _ensureElement: function() {\n      if (!this.el) {\n        var attrs = _.extend({}, _.result(this, 'attributes'));\n        if (this.id) attrs.id = _.result(this, 'id');\n        if (this.className) attrs['class'] = _.result(this, 'className');\n        var $el = Backbone.$('<' + _.result(this, 'tagName') + '>').attr(attrs);\n        this.setElement($el, false);\n      } else {\n        this.setElement(_.result(this, 'el'), false);\n      }\n    }\n\n  });\n\n  // Backbone.sync\n  // -------------\n\n  // Override this function to change the manner in which Backbone persists\n  // models to the server. You will be passed the type of request, and the\n  // model in question. By default, makes a RESTful Ajax request\n  // to the model's `url()`. Some possible customizations could be:\n  //\n  // * Use `setTimeout` to batch rapid-fire updates into a single request.\n  // * Send up the models as XML instead of JSON.\n  // * Persist models via WebSockets instead of Ajax.\n  //\n  // Turn on `Backbone.emulateHTTP` in order to send `PUT` and `DELETE` requests\n  // as `POST`, with a `_method` parameter containing the true HTTP method,\n  // as well as all requests with the body as `application/x-www-form-urlencoded`\n  // instead of `application/json` with the model in a param named `model`.\n  // Useful when interfacing with server-side languages like **PHP** that make\n  // it difficult to read the body of `PUT` requests.\n  Backbone.sync = function(method, model, options) {\n    var type = methodMap[method];\n\n    // Default options, unless specified.\n    _.defaults(options || (options = {}), {\n      emulateHTTP: Backbone.emulateHTTP,\n      emulateJSON: Backbone.emulateJSON\n    });\n\n    // Default JSON-request options.\n    var params = {type: type, dataType: 'json'};\n\n    // Ensure that we have a URL.\n    if (!options.url) {\n      params.url = _.result(model, 'url') || urlError();\n    }\n\n    // Ensure that we have the appropriate request data.\n    if (options.data == null && model && (method === 'create' || method === 'update' || method === 'patch')) {\n      params.contentType = 'application/json';\n      params.data = JSON.stringify(options.attrs || model.toJSON(options));\n    }\n\n    // For older servers, emulate JSON by encoding the request into an HTML-form.\n    if (options.emulateJSON) {\n      params.contentType = 'application/x-www-form-urlencoded';\n      params.data = params.data ? {model: params.data} : {};\n    }\n\n    // For older servers, emulate HTTP by mimicking the HTTP method with `_method`\n    // And an `X-HTTP-Method-Override` header.\n    if (options.emulateHTTP && (type === 'PUT' || type === 'DELETE' || type === 'PATCH')) {\n      params.type = 'POST';\n      if (options.emulateJSON) params.data._method = type;\n      var beforeSend = options.beforeSend;\n      options.beforeSend = function(xhr) {\n        xhr.setRequestHeader('X-HTTP-Method-Override', type);\n        if (beforeSend) return beforeSend.apply(this, arguments);\n      };\n    }\n\n    // Don't process data on a non-GET request.\n    if (params.type !== 'GET' && !options.emulateJSON) {\n      params.processData = false;\n    }\n\n    // If we're sending a `PATCH` request, and we're in an old Internet Explorer\n    // that still has ActiveX enabled by default, override jQuery to use that\n    // for XHR instead. Remove this line when jQuery supports `PATCH` on IE8.\n    if (params.type === 'PATCH' && window.ActiveXObject &&\n          !(window.external && window.external.msActiveXFilteringEnabled)) {\n      params.xhr = function() {\n        return new ActiveXObject(\"Microsoft.XMLHTTP\");\n      };\n    }\n\n    // Make the request, allowing the user to override any Ajax options.\n    var xhr = options.xhr = Backbone.ajax(_.extend(params, options));\n    model.trigger('request', model, xhr, options);\n    return xhr;\n  };\n\n  // Map from CRUD to HTTP for our default `Backbone.sync` implementation.\n  var methodMap = {\n    'create': 'POST',\n    'update': 'PUT',\n    'patch':  'PATCH',\n    'delete': 'DELETE',\n    'read':   'GET'\n  };\n\n  // Set the default implementation of `Backbone.ajax` to proxy through to `$`.\n  // Override this if you'd like to use a different library.\n  Backbone.ajax = function() {\n    return Backbone.$.ajax.apply(Backbone.$, arguments);\n  };\n\n  // Backbone.Router\n  // ---------------\n\n  // Routers map faux-URLs to actions, and fire events when routes are\n  // matched. Creating a new one sets its `routes` hash, if not set statically.\n  var Router = Backbone.Router = function(options) {\n    options || (options = {});\n    if (options.routes) this.routes = options.routes;\n    this._bindRoutes();\n    this.initialize.apply(this, arguments);\n  };\n\n  // Cached regular expressions for matching named param parts and splatted\n  // parts of route strings.\n  var optionalParam = /\\((.*?)\\)/g;\n  var namedParam    = /(\\(\\?)?:\\w+/g;\n  var splatParam    = /\\*\\w+/g;\n  var escapeRegExp  = /[\\-{}\\[\\]+?.,\\\\\\^$|#\\s]/g;\n\n  // Set up all inheritable **Backbone.Router** properties and methods.\n  _.extend(Router.prototype, Events, {\n\n    // Initialize is an empty function by default. Override it with your own\n    // initialization logic.\n    initialize: function(){},\n\n    // Manually bind a single named route to a callback. For example:\n    //\n    //     this.route('search/:query/p:num', 'search', function(query, num) {\n    //       ...\n    //     });\n    //\n    route: function(route, name, callback) {\n      if (!_.isRegExp(route)) route = this._routeToRegExp(route);\n      if (_.isFunction(name)) {\n        callback = name;\n        name = '';\n      }\n      if (!callback) callback = this[name];\n      var router = this;\n      Backbone.history.route(route, function(fragment) {\n        var args = router._extractParameters(route, fragment);\n        callback && callback.apply(router, args);\n        router.trigger.apply(router, ['route:' + name].concat(args));\n        router.trigger('route', name, args);\n        Backbone.history.trigger('route', router, name, args);\n      });\n      return this;\n    },\n\n    // Simple proxy to `Backbone.history` to save a fragment into the history.\n    navigate: function(fragment, options) {\n      Backbone.history.navigate(fragment, options);\n      return this;\n    },\n\n    // Bind all defined routes to `Backbone.history`. We have to reverse the\n    // order of the routes here to support behavior where the most general\n    // routes can be defined at the bottom of the route map.\n    _bindRoutes: function() {\n      if (!this.routes) return;\n      this.routes = _.result(this, 'routes');\n      var route, routes = _.keys(this.routes);\n      while ((route = routes.pop()) != null) {\n        this.route(route, this.routes[route]);\n      }\n    },\n\n    // Convert a route string into a regular expression, suitable for matching\n    // against the current location hash.\n    _routeToRegExp: function(route) {\n      route = route.replace(escapeRegExp, '\\\\$&')\n                   .replace(optionalParam, '(?:$1)?')\n                   .replace(namedParam, function(match, optional){\n                     return optional ? match : '([^\\/]+)';\n                   })\n                   .replace(splatParam, '(.*?)');\n      return new RegExp('^' + route + '$');\n    },\n\n    // Given a route, and a URL fragment that it matches, return the array of\n    // extracted decoded parameters. Empty or unmatched parameters will be\n    // treated as `null` to normalize cross-browser behavior.\n    _extractParameters: function(route, fragment) {\n      var params = route.exec(fragment).slice(1);\n      return _.map(params, function(param) {\n        return param ? decodeURIComponent(param) : null;\n      });\n    }\n\n  });\n\n  // Backbone.History\n  // ----------------\n\n  // Handles cross-browser history management, based on either\n  // [pushState](http://diveintohtml5.info/history.html) and real URLs, or\n  // [onhashchange](https://developer.mozilla.org/en-US/docs/DOM/window.onhashchange)\n  // and URL fragments. If the browser supports neither (old IE, natch),\n  // falls back to polling.\n  var History = Backbone.History = function() {\n    this.handlers = [];\n    _.bindAll(this, 'checkUrl');\n\n    // Ensure that `History` can be used outside of the browser.\n    if (typeof window !== 'undefined') {\n      this.location = window.location;\n      this.history = window.history;\n    }\n  };\n\n  // Cached regex for stripping a leading hash/slash and trailing space.\n  var routeStripper = /^[#\\/]|\\s+$/g;\n\n  // Cached regex for stripping leading and trailing slashes.\n  var rootStripper = /^\\/+|\\/+$/g;\n\n  // Cached regex for detecting MSIE.\n  var isExplorer = /msie [\\w.]+/;\n\n  // Cached regex for removing a trailing slash.\n  var trailingSlash = /\\/$/;\n\n  // Has the history handling already been started?\n  History.started = false;\n\n  // Set up all inheritable **Backbone.History** properties and methods.\n  _.extend(History.prototype, Events, {\n\n    // The default interval to poll for hash changes, if necessary, is\n    // twenty times a second.\n    interval: 50,\n\n    // Gets the true hash value. Cannot use location.hash directly due to bug\n    // in Firefox where location.hash will always be decoded.\n    getHash: function(window) {\n      var match = (window || this).location.href.match(/#(.*)$/);\n      return match ? match[1] : '';\n    },\n\n    // Get the cross-browser normalized URL fragment, either from the URL,\n    // the hash, or the override.\n    getFragment: function(fragment, forcePushState) {\n      if (fragment == null) {\n        if (this._hasPushState || !this._wantsHashChange || forcePushState) {\n          fragment = this.location.pathname;\n          var root = this.root.replace(trailingSlash, '');\n          if (!fragment.indexOf(root)) fragment = fragment.substr(root.length);\n        } else {\n          fragment = this.getHash();\n        }\n      }\n      return fragment.replace(routeStripper, '');\n    },\n\n    // Start the hash change handling, returning `true` if the current URL matches\n    // an existing route, and `false` otherwise.\n    start: function(options) {\n      if (History.started) throw new Error(\"Backbone.history has already been started\");\n      History.started = true;\n\n      // Figure out the initial configuration. Do we need an iframe?\n      // Is pushState desired ... is it available?\n      this.options          = _.extend({}, {root: '/'}, this.options, options);\n      this.root             = this.options.root;\n      this._wantsHashChange = this.options.hashChange !== false;\n      this._wantsPushState  = !!this.options.pushState;\n      this._hasPushState    = !!(this.options.pushState && this.history && this.history.pushState);\n      var fragment          = this.getFragment();\n      var docMode           = document.documentMode;\n      var oldIE             = (isExplorer.exec(navigator.userAgent.toLowerCase()) && (!docMode || docMode <= 7));\n\n      // Normalize root to always include a leading and trailing slash.\n      this.root = ('/' + this.root + '/').replace(rootStripper, '/');\n\n      if (oldIE && this._wantsHashChange) {\n        this.iframe = Backbone.$('<iframe src=\"javascript:0\" tabindex=\"-1\" />').hide().appendTo('body')[0].contentWindow;\n        this.navigate(fragment);\n      }\n\n      // Depending on whether we're using pushState or hashes, and whether\n      // 'onhashchange' is supported, determine how we check the URL state.\n      if (this._hasPushState) {\n        Backbone.$(window).on('popstate', this.checkUrl);\n      } else if (this._wantsHashChange && ('onhashchange' in window) && !oldIE) {\n        Backbone.$(window).on('hashchange', this.checkUrl);\n      } else if (this._wantsHashChange) {\n        this._checkUrlInterval = setInterval(this.checkUrl, this.interval);\n      }\n\n      // Determine if we need to change the base url, for a pushState link\n      // opened by a non-pushState browser.\n      this.fragment = fragment;\n      var loc = this.location;\n      var atRoot = loc.pathname.replace(/[^\\/]$/, '$&/') === this.root;\n\n      // If we've started off with a route from a `pushState`-enabled browser,\n      // but we're currently in a browser that doesn't support it...\n      if (this._wantsHashChange && this._wantsPushState && !this._hasPushState && !atRoot) {\n        this.fragment = this.getFragment(null, true);\n        this.location.replace(this.root + this.location.search + '#' + this.fragment);\n        // Return immediately as browser will do redirect to new url\n        return true;\n\n      // Or if we've started out with a hash-based route, but we're currently\n      // in a browser where it could be `pushState`-based instead...\n      } else if (this._wantsPushState && this._hasPushState && atRoot && loc.hash) {\n        this.fragment = this.getHash().replace(routeStripper, '');\n        this.history.replaceState({}, document.title, this.root + this.fragment + loc.search);\n      }\n\n      if (!this.options.silent) return this.loadUrl();\n    },\n\n    // Disable Backbone.history, perhaps temporarily. Not useful in a real app,\n    // but possibly useful for unit testing Routers.\n    stop: function() {\n      Backbone.$(window).off('popstate', this.checkUrl).off('hashchange', this.checkUrl);\n      clearInterval(this._checkUrlInterval);\n      History.started = false;\n    },\n\n    // Add a route to be tested when the fragment changes. Routes added later\n    // may override previous routes.\n    route: function(route, callback) {\n      this.handlers.unshift({route: route, callback: callback});\n    },\n\n    // Checks the current URL to see if it has changed, and if it has,\n    // calls `loadUrl`, normalizing across the hidden iframe.\n    checkUrl: function(e) {\n      var current = this.getFragment();\n      if (current === this.fragment && this.iframe) {\n        current = this.getFragment(this.getHash(this.iframe));\n      }\n      if (current === this.fragment) return false;\n      if (this.iframe) this.navigate(current);\n      this.loadUrl() || this.loadUrl(this.getHash());\n    },\n\n    // Attempt to load the current URL fragment. If a route succeeds with a\n    // match, returns `true`. If no defined routes matches the fragment,\n    // returns `false`.\n    loadUrl: function(fragmentOverride) {\n      var fragment = this.fragment = this.getFragment(fragmentOverride);\n      var matched = _.any(this.handlers, function(handler) {\n        if (handler.route.test(fragment)) {\n          handler.callback(fragment);\n          return true;\n        }\n      });\n      return matched;\n    },\n\n    // Save a fragment into the hash history, or replace the URL state if the\n    // 'replace' option is passed. You are responsible for properly URL-encoding\n    // the fragment in advance.\n    //\n    // The options object can contain `trigger: true` if you wish to have the\n    // route callback be fired (not usually desirable), or `replace: true`, if\n    // you wish to modify the current URL without adding an entry to the history.\n    navigate: function(fragment, options) {\n      if (!History.started) return false;\n      if (!options || options === true) options = {trigger: options};\n      fragment = this.getFragment(fragment || '');\n      if (this.fragment === fragment) return;\n      this.fragment = fragment;\n      var url = this.root + fragment;\n\n      // If pushState is available, we use it to set the fragment as a real URL.\n      if (this._hasPushState) {\n        this.history[options.replace ? 'replaceState' : 'pushState']({}, document.title, url);\n\n      // If hash changes haven't been explicitly disabled, update the hash\n      // fragment to store history.\n      } else if (this._wantsHashChange) {\n        this._updateHash(this.location, fragment, options.replace);\n        if (this.iframe && (fragment !== this.getFragment(this.getHash(this.iframe)))) {\n          // Opening and closing the iframe tricks IE7 and earlier to push a\n          // history entry on hash-tag change.  When replace is true, we don't\n          // want this.\n          if(!options.replace) this.iframe.document.open().close();\n          this._updateHash(this.iframe.location, fragment, options.replace);\n        }\n\n      // If you've told us that you explicitly don't want fallback hashchange-\n      // based history, then `navigate` becomes a page refresh.\n      } else {\n        return this.location.assign(url);\n      }\n      if (options.trigger) this.loadUrl(fragment);\n    },\n\n    // Update the hash location, either replacing the current entry, or adding\n    // a new one to the browser history.\n    _updateHash: function(location, fragment, replace) {\n      if (replace) {\n        var href = location.href.replace(/(javascript:|#).*$/, '');\n        location.replace(href + '#' + fragment);\n      } else {\n        // Some browsers require that `hash` contains a leading #.\n        location.hash = '#' + fragment;\n      }\n    }\n\n  });\n\n  // Create the default Backbone.history.\n  Backbone.history = new History;\n\n  // Helpers\n  // -------\n\n  // Helper function to correctly set up the prototype chain, for subclasses.\n  // Similar to `goog.inherits`, but uses a hash of prototype properties and\n  // class properties to be extended.\n  var extend = function(protoProps, staticProps) {\n    var parent = this;\n    var child;\n\n    // The constructor function for the new subclass is either defined by you\n    // (the \"constructor\" property in your `extend` definition), or defaulted\n    // by us to simply call the parent's constructor.\n    if (protoProps && _.has(protoProps, 'constructor')) {\n      child = protoProps.constructor;\n    } else {\n      child = function(){ return parent.apply(this, arguments); };\n    }\n\n    // Add static properties to the constructor function, if supplied.\n    _.extend(child, parent, staticProps);\n\n    // Set the prototype chain to inherit from `parent`, without calling\n    // `parent`'s constructor function.\n    var Surrogate = function(){ this.constructor = child; };\n    Surrogate.prototype = parent.prototype;\n    child.prototype = new Surrogate;\n\n    // Add prototype properties (instance properties) to the subclass,\n    // if supplied.\n    if (protoProps) _.extend(child.prototype, protoProps);\n\n    // Set a convenience property in case the parent's prototype is needed\n    // later.\n    child.__super__ = parent.prototype;\n\n    return child;\n  };\n\n  // Set up inheritance for the model, collection, router, view and history.\n  Model.extend = Collection.extend = Router.extend = View.extend = History.extend = extend;\n\n  // Throw an error when a URL is needed, and none is supplied.\n  var urlError = function() {\n    throw new Error('A \"url\" property or function must be specified');\n  };\n\n  // Wrap an optional error callback with a fallback error event.\n  var wrapError = function (model, options) {\n    var error = options.error;\n    options.error = function(resp) {\n      if (error) error(model, resp, options);\n      model.trigger('error', model, resp, options);\n    };\n  };\n\n}).call(this);\n\n\n//# sourceURL=webpack:///./node_modules/backbone/backbone.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars.runtime.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars.runtime.js ***!
+  \****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n// istanbul ignore next\n\nfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }\n\n// istanbul ignore next\n\nfunction _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }\n\nvar _handlebarsBase = __webpack_require__(/*! ./handlebars/base */ \"./node_modules/handlebars/dist/cjs/handlebars/base.js\");\n\nvar base = _interopRequireWildcard(_handlebarsBase);\n\n// Each of these augment the Handlebars object. No need to setup here.\n// (This is done to easily share code between commonjs and browse envs)\n\nvar _handlebarsSafeString = __webpack_require__(/*! ./handlebars/safe-string */ \"./node_modules/handlebars/dist/cjs/handlebars/safe-string.js\");\n\nvar _handlebarsSafeString2 = _interopRequireDefault(_handlebarsSafeString);\n\nvar _handlebarsException = __webpack_require__(/*! ./handlebars/exception */ \"./node_modules/handlebars/dist/cjs/handlebars/exception.js\");\n\nvar _handlebarsException2 = _interopRequireDefault(_handlebarsException);\n\nvar _handlebarsUtils = __webpack_require__(/*! ./handlebars/utils */ \"./node_modules/handlebars/dist/cjs/handlebars/utils.js\");\n\nvar Utils = _interopRequireWildcard(_handlebarsUtils);\n\nvar _handlebarsRuntime = __webpack_require__(/*! ./handlebars/runtime */ \"./node_modules/handlebars/dist/cjs/handlebars/runtime.js\");\n\nvar runtime = _interopRequireWildcard(_handlebarsRuntime);\n\nvar _handlebarsNoConflict = __webpack_require__(/*! ./handlebars/no-conflict */ \"./node_modules/handlebars/dist/cjs/handlebars/no-conflict.js\");\n\nvar _handlebarsNoConflict2 = _interopRequireDefault(_handlebarsNoConflict);\n\n// For compatibility and usage outside of module systems, make the Handlebars object a namespace\nfunction create() {\n  var hb = new base.HandlebarsEnvironment();\n\n  Utils.extend(hb, base);\n  hb.SafeString = _handlebarsSafeString2['default'];\n  hb.Exception = _handlebarsException2['default'];\n  hb.Utils = Utils;\n  hb.escapeExpression = Utils.escapeExpression;\n\n  hb.VM = runtime;\n  hb.template = function (spec) {\n    return runtime.template(spec, hb);\n  };\n\n  return hb;\n}\n\nvar inst = create();\ninst.create = create;\n\n_handlebarsNoConflict2['default'](inst);\n\ninst['default'] = inst;\n\nexports['default'] = inst;\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL2xpYi9oYW5kbGViYXJzLnJ1bnRpbWUuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7OEJBQXNCLG1CQUFtQjs7SUFBN0IsSUFBSTs7Ozs7b0NBSU8sMEJBQTBCOzs7O21DQUMzQix3QkFBd0I7Ozs7K0JBQ3ZCLG9CQUFvQjs7SUFBL0IsS0FBSzs7aUNBQ1Esc0JBQXNCOztJQUFuQyxPQUFPOztvQ0FFSSwwQkFBMEI7Ozs7O0FBR2pELFNBQVMsTUFBTSxHQUFHO0FBQ2hCLE1BQUksRUFBRSxHQUFHLElBQUksSUFBSSxDQUFDLHFCQUFxQixFQUFFLENBQUM7O0FBRTFDLE9BQUssQ0FBQyxNQUFNLENBQUMsRUFBRSxFQUFFLElBQUksQ0FBQyxDQUFDO0FBQ3ZCLElBQUUsQ0FBQyxVQUFVLG9DQUFhLENBQUM7QUFDM0IsSUFBRSxDQUFDLFNBQVMsbUNBQVksQ0FBQztBQUN6QixJQUFFLENBQUMsS0FBSyxHQUFHLEtBQUssQ0FBQztBQUNqQixJQUFFLENBQUMsZ0JBQWdCLEdBQUcsS0FBSyxDQUFDLGdCQUFnQixDQUFDOztBQUU3QyxJQUFFLENBQUMsRUFBRSxHQUFHLE9BQU8sQ0FBQztBQUNoQixJQUFFLENBQUMsUUFBUSxHQUFHLFVBQVMsSUFBSSxFQUFFO0FBQzNCLFdBQU8sT0FBTyxDQUFDLFFBQVEsQ0FBQyxJQUFJLEVBQUUsRUFBRSxDQUFDLENBQUM7R0FDbkMsQ0FBQzs7QUFFRixTQUFPLEVBQUUsQ0FBQztDQUNYOztBQUVELElBQUksSUFBSSxHQUFHLE1BQU0sRUFBRSxDQUFDO0FBQ3BCLElBQUksQ0FBQyxNQUFNLEdBQUcsTUFBTSxDQUFDOztBQUVyQixrQ0FBVyxJQUFJLENBQUMsQ0FBQzs7QUFFakIsSUFBSSxDQUFDLFNBQVMsQ0FBQyxHQUFHLElBQUksQ0FBQzs7cUJBRVIsSUFBSSIsImZpbGUiOiJoYW5kbGViYXJzLnJ1bnRpbWUuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgKiBhcyBiYXNlIGZyb20gJy4vaGFuZGxlYmFycy9iYXNlJztcblxuLy8gRWFjaCBvZiB0aGVzZSBhdWdtZW50IHRoZSBIYW5kbGViYXJzIG9iamVjdC4gTm8gbmVlZCB0byBzZXR1cCBoZXJlLlxuLy8gKFRoaXMgaXMgZG9uZSB0byBlYXNpbHkgc2hhcmUgY29kZSBiZXR3ZWVuIGNvbW1vbmpzIGFuZCBicm93c2UgZW52cylcbmltcG9ydCBTYWZlU3RyaW5nIGZyb20gJy4vaGFuZGxlYmFycy9zYWZlLXN0cmluZyc7XG5pbXBvcnQgRXhjZXB0aW9uIGZyb20gJy4vaGFuZGxlYmFycy9leGNlcHRpb24nO1xuaW1wb3J0ICogYXMgVXRpbHMgZnJvbSAnLi9oYW5kbGViYXJzL3V0aWxzJztcbmltcG9ydCAqIGFzIHJ1bnRpbWUgZnJvbSAnLi9oYW5kbGViYXJzL3J1bnRpbWUnO1xuXG5pbXBvcnQgbm9Db25mbGljdCBmcm9tICcuL2hhbmRsZWJhcnMvbm8tY29uZmxpY3QnO1xuXG4vLyBGb3IgY29tcGF0aWJpbGl0eSBhbmQgdXNhZ2Ugb3V0c2lkZSBvZiBtb2R1bGUgc3lzdGVtcywgbWFrZSB0aGUgSGFuZGxlYmFycyBvYmplY3QgYSBuYW1lc3BhY2VcbmZ1bmN0aW9uIGNyZWF0ZSgpIHtcbiAgbGV0IGhiID0gbmV3IGJhc2UuSGFuZGxlYmFyc0Vudmlyb25tZW50KCk7XG5cbiAgVXRpbHMuZXh0ZW5kKGhiLCBiYXNlKTtcbiAgaGIuU2FmZVN0cmluZyA9IFNhZmVTdHJpbmc7XG4gIGhiLkV4Y2VwdGlvbiA9IEV4Y2VwdGlvbjtcbiAgaGIuVXRpbHMgPSBVdGlscztcbiAgaGIuZXNjYXBlRXhwcmVzc2lvbiA9IFV0aWxzLmVzY2FwZUV4cHJlc3Npb247XG5cbiAgaGIuVk0gPSBydW50aW1lO1xuICBoYi50ZW1wbGF0ZSA9IGZ1bmN0aW9uKHNwZWMpIHtcbiAgICByZXR1cm4gcnVudGltZS50ZW1wbGF0ZShzcGVjLCBoYik7XG4gIH07XG5cbiAgcmV0dXJuIGhiO1xufVxuXG5sZXQgaW5zdCA9IGNyZWF0ZSgpO1xuaW5zdC5jcmVhdGUgPSBjcmVhdGU7XG5cbm5vQ29uZmxpY3QoaW5zdCk7XG5cbmluc3RbJ2RlZmF1bHQnXSA9IGluc3Q7XG5cbmV4cG9ydCBkZWZhdWx0IGluc3Q7XG4iXX0=\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars.runtime.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/base.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/base.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\nexports.HandlebarsEnvironment = HandlebarsEnvironment;\n// istanbul ignore next\n\nfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }\n\nvar _utils = __webpack_require__(/*! ./utils */ \"./node_modules/handlebars/dist/cjs/handlebars/utils.js\");\n\nvar _exception = __webpack_require__(/*! ./exception */ \"./node_modules/handlebars/dist/cjs/handlebars/exception.js\");\n\nvar _exception2 = _interopRequireDefault(_exception);\n\nvar _helpers = __webpack_require__(/*! ./helpers */ \"./node_modules/handlebars/dist/cjs/handlebars/helpers.js\");\n\nvar _decorators = __webpack_require__(/*! ./decorators */ \"./node_modules/handlebars/dist/cjs/handlebars/decorators.js\");\n\nvar _logger = __webpack_require__(/*! ./logger */ \"./node_modules/handlebars/dist/cjs/handlebars/logger.js\");\n\nvar _logger2 = _interopRequireDefault(_logger);\n\nvar VERSION = '4.0.11';\nexports.VERSION = VERSION;\nvar COMPILER_REVISION = 7;\n\nexports.COMPILER_REVISION = COMPILER_REVISION;\nvar REVISION_CHANGES = {\n  1: '<= 1.0.rc.2', // 1.0.rc.2 is actually rev2 but doesn't report it\n  2: '== 1.0.0-rc.3',\n  3: '== 1.0.0-rc.4',\n  4: '== 1.x.x',\n  5: '== 2.0.0-alpha.x',\n  6: '>= 2.0.0-beta.1',\n  7: '>= 4.0.0'\n};\n\nexports.REVISION_CHANGES = REVISION_CHANGES;\nvar objectType = '[object Object]';\n\nfunction HandlebarsEnvironment(helpers, partials, decorators) {\n  this.helpers = helpers || {};\n  this.partials = partials || {};\n  this.decorators = decorators || {};\n\n  _helpers.registerDefaultHelpers(this);\n  _decorators.registerDefaultDecorators(this);\n}\n\nHandlebarsEnvironment.prototype = {\n  constructor: HandlebarsEnvironment,\n\n  logger: _logger2['default'],\n  log: _logger2['default'].log,\n\n  registerHelper: function registerHelper(name, fn) {\n    if (_utils.toString.call(name) === objectType) {\n      if (fn) {\n        throw new _exception2['default']('Arg not supported with multiple helpers');\n      }\n      _utils.extend(this.helpers, name);\n    } else {\n      this.helpers[name] = fn;\n    }\n  },\n  unregisterHelper: function unregisterHelper(name) {\n    delete this.helpers[name];\n  },\n\n  registerPartial: function registerPartial(name, partial) {\n    if (_utils.toString.call(name) === objectType) {\n      _utils.extend(this.partials, name);\n    } else {\n      if (typeof partial === 'undefined') {\n        throw new _exception2['default']('Attempting to register a partial called \"' + name + '\" as undefined');\n      }\n      this.partials[name] = partial;\n    }\n  },\n  unregisterPartial: function unregisterPartial(name) {\n    delete this.partials[name];\n  },\n\n  registerDecorator: function registerDecorator(name, fn) {\n    if (_utils.toString.call(name) === objectType) {\n      if (fn) {\n        throw new _exception2['default']('Arg not supported with multiple decorators');\n      }\n      _utils.extend(this.decorators, name);\n    } else {\n      this.decorators[name] = fn;\n    }\n  },\n  unregisterDecorator: function unregisterDecorator(name) {\n    delete this.decorators[name];\n  }\n};\n\nvar log = _logger2['default'].log;\n\nexports.log = log;\nexports.createFrame = _utils.createFrame;\nexports.logger = _logger2['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2Jhc2UuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7cUJBQTRDLFNBQVM7O3lCQUMvQixhQUFhOzs7O3VCQUNFLFdBQVc7OzBCQUNSLGNBQWM7O3NCQUNuQyxVQUFVOzs7O0FBRXRCLElBQU0sT0FBTyxHQUFHLFFBQVEsQ0FBQzs7QUFDekIsSUFBTSxpQkFBaUIsR0FBRyxDQUFDLENBQUM7OztBQUU1QixJQUFNLGdCQUFnQixHQUFHO0FBQzlCLEdBQUMsRUFBRSxhQUFhO0FBQ2hCLEdBQUMsRUFBRSxlQUFlO0FBQ2xCLEdBQUMsRUFBRSxlQUFlO0FBQ2xCLEdBQUMsRUFBRSxVQUFVO0FBQ2IsR0FBQyxFQUFFLGtCQUFrQjtBQUNyQixHQUFDLEVBQUUsaUJBQWlCO0FBQ3BCLEdBQUMsRUFBRSxVQUFVO0NBQ2QsQ0FBQzs7O0FBRUYsSUFBTSxVQUFVLEdBQUcsaUJBQWlCLENBQUM7O0FBRTlCLFNBQVMscUJBQXFCLENBQUMsT0FBTyxFQUFFLFFBQVEsRUFBRSxVQUFVLEVBQUU7QUFDbkUsTUFBSSxDQUFDLE9BQU8sR0FBRyxPQUFPLElBQUksRUFBRSxDQUFDO0FBQzdCLE1BQUksQ0FBQyxRQUFRLEdBQUcsUUFBUSxJQUFJLEVBQUUsQ0FBQztBQUMvQixNQUFJLENBQUMsVUFBVSxHQUFHLFVBQVUsSUFBSSxFQUFFLENBQUM7O0FBRW5DLGtDQUF1QixJQUFJLENBQUMsQ0FBQztBQUM3Qix3Q0FBMEIsSUFBSSxDQUFDLENBQUM7Q0FDakM7O0FBRUQscUJBQXFCLENBQUMsU0FBUyxHQUFHO0FBQ2hDLGFBQVcsRUFBRSxxQkFBcUI7O0FBRWxDLFFBQU0scUJBQVE7QUFDZCxLQUFHLEVBQUUsb0JBQU8sR0FBRzs7QUFFZixnQkFBYyxFQUFFLHdCQUFTLElBQUksRUFBRSxFQUFFLEVBQUU7QUFDakMsUUFBSSxnQkFBUyxJQUFJLENBQUMsSUFBSSxDQUFDLEtBQUssVUFBVSxFQUFFO0FBQ3RDLFVBQUksRUFBRSxFQUFFO0FBQUUsY0FBTSwyQkFBYyx5Q0FBeUMsQ0FBQyxDQUFDO09BQUU7QUFDM0Usb0JBQU8sSUFBSSxDQUFDLE9BQU8sRUFBRSxJQUFJLENBQUMsQ0FBQztLQUM1QixNQUFNO0FBQ0wsVUFBSSxDQUFDLE9BQU8sQ0FBQyxJQUFJLENBQUMsR0FBRyxFQUFFLENBQUM7S0FDekI7R0FDRjtBQUNELGtCQUFnQixFQUFFLDBCQUFTLElBQUksRUFBRTtBQUMvQixXQUFPLElBQUksQ0FBQyxPQUFPLENBQUMsSUFBSSxDQUFDLENBQUM7R0FDM0I7O0FBRUQsaUJBQWUsRUFBRSx5QkFBUyxJQUFJLEVBQUUsT0FBTyxFQUFFO0FBQ3ZDLFFBQUksZ0JBQVMsSUFBSSxDQUFDLElBQUksQ0FBQyxLQUFLLFVBQVUsRUFBRTtBQUN0QyxvQkFBTyxJQUFJLENBQUMsUUFBUSxFQUFFLElBQUksQ0FBQyxDQUFDO0tBQzdCLE1BQU07QUFDTCxVQUFJLE9BQU8sT0FBTyxLQUFLLFdBQVcsRUFBRTtBQUNsQyxjQUFNLHlFQUEwRCxJQUFJLG9CQUFpQixDQUFDO09BQ3ZGO0FBQ0QsVUFBSSxDQUFDLFFBQVEsQ0FBQyxJQUFJLENBQUMsR0FBRyxPQUFPLENBQUM7S0FDL0I7R0FDRjtBQUNELG1CQUFpQixFQUFFLDJCQUFTLElBQUksRUFBRTtBQUNoQyxXQUFPLElBQUksQ0FBQyxRQUFRLENBQUMsSUFBSSxDQUFDLENBQUM7R0FDNUI7O0FBRUQsbUJBQWlCLEVBQUUsMkJBQVMsSUFBSSxFQUFFLEVBQUUsRUFBRTtBQUNwQyxRQUFJLGdCQUFTLElBQUksQ0FBQyxJQUFJLENBQUMsS0FBSyxVQUFVLEVBQUU7QUFDdEMsVUFBSSxFQUFFLEVBQUU7QUFBRSxjQUFNLDJCQUFjLDRDQUE0QyxDQUFDLENBQUM7T0FBRTtBQUM5RSxvQkFBTyxJQUFJLENBQUMsVUFBVSxFQUFFLElBQUksQ0FBQyxDQUFDO0tBQy9CLE1BQU07QUFDTCxVQUFJLENBQUMsVUFBVSxDQUFDLElBQUksQ0FBQyxHQUFHLEVBQUUsQ0FBQztLQUM1QjtHQUNGO0FBQ0QscUJBQW1CLEVBQUUsNkJBQVMsSUFBSSxFQUFFO0FBQ2xDLFdBQU8sSUFBSSxDQUFDLFVBQVUsQ0FBQyxJQUFJLENBQUMsQ0FBQztHQUM5QjtDQUNGLENBQUM7O0FBRUssSUFBSSxHQUFHLEdBQUcsb0JBQU8sR0FBRyxDQUFDOzs7UUFFcEIsV0FBVztRQUFFLE1BQU0iLCJmaWxlIjoiYmFzZS5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7Y3JlYXRlRnJhbWUsIGV4dGVuZCwgdG9TdHJpbmd9IGZyb20gJy4vdXRpbHMnO1xuaW1wb3J0IEV4Y2VwdGlvbiBmcm9tICcuL2V4Y2VwdGlvbic7XG5pbXBvcnQge3JlZ2lzdGVyRGVmYXVsdEhlbHBlcnN9IGZyb20gJy4vaGVscGVycyc7XG5pbXBvcnQge3JlZ2lzdGVyRGVmYXVsdERlY29yYXRvcnN9IGZyb20gJy4vZGVjb3JhdG9ycyc7XG5pbXBvcnQgbG9nZ2VyIGZyb20gJy4vbG9nZ2VyJztcblxuZXhwb3J0IGNvbnN0IFZFUlNJT04gPSAnNC4wLjExJztcbmV4cG9ydCBjb25zdCBDT01QSUxFUl9SRVZJU0lPTiA9IDc7XG5cbmV4cG9ydCBjb25zdCBSRVZJU0lPTl9DSEFOR0VTID0ge1xuICAxOiAnPD0gMS4wLnJjLjInLCAvLyAxLjAucmMuMiBpcyBhY3R1YWxseSByZXYyIGJ1dCBkb2Vzbid0IHJlcG9ydCBpdFxuICAyOiAnPT0gMS4wLjAtcmMuMycsXG4gIDM6ICc9PSAxLjAuMC1yYy40JyxcbiAgNDogJz09IDEueC54JyxcbiAgNTogJz09IDIuMC4wLWFscGhhLngnLFxuICA2OiAnPj0gMi4wLjAtYmV0YS4xJyxcbiAgNzogJz49IDQuMC4wJ1xufTtcblxuY29uc3Qgb2JqZWN0VHlwZSA9ICdbb2JqZWN0IE9iamVjdF0nO1xuXG5leHBvcnQgZnVuY3Rpb24gSGFuZGxlYmFyc0Vudmlyb25tZW50KGhlbHBlcnMsIHBhcnRpYWxzLCBkZWNvcmF0b3JzKSB7XG4gIHRoaXMuaGVscGVycyA9IGhlbHBlcnMgfHwge307XG4gIHRoaXMucGFydGlhbHMgPSBwYXJ0aWFscyB8fCB7fTtcbiAgdGhpcy5kZWNvcmF0b3JzID0gZGVjb3JhdG9ycyB8fCB7fTtcblxuICByZWdpc3RlckRlZmF1bHRIZWxwZXJzKHRoaXMpO1xuICByZWdpc3RlckRlZmF1bHREZWNvcmF0b3JzKHRoaXMpO1xufVxuXG5IYW5kbGViYXJzRW52aXJvbm1lbnQucHJvdG90eXBlID0ge1xuICBjb25zdHJ1Y3RvcjogSGFuZGxlYmFyc0Vudmlyb25tZW50LFxuXG4gIGxvZ2dlcjogbG9nZ2VyLFxuICBsb2c6IGxvZ2dlci5sb2csXG5cbiAgcmVnaXN0ZXJIZWxwZXI6IGZ1bmN0aW9uKG5hbWUsIGZuKSB7XG4gICAgaWYgKHRvU3RyaW5nLmNhbGwobmFtZSkgPT09IG9iamVjdFR5cGUpIHtcbiAgICAgIGlmIChmbikgeyB0aHJvdyBuZXcgRXhjZXB0aW9uKCdBcmcgbm90IHN1cHBvcnRlZCB3aXRoIG11bHRpcGxlIGhlbHBlcnMnKTsgfVxuICAgICAgZXh0ZW5kKHRoaXMuaGVscGVycywgbmFtZSk7XG4gICAgfSBlbHNlIHtcbiAgICAgIHRoaXMuaGVscGVyc1tuYW1lXSA9IGZuO1xuICAgIH1cbiAgfSxcbiAgdW5yZWdpc3RlckhlbHBlcjogZnVuY3Rpb24obmFtZSkge1xuICAgIGRlbGV0ZSB0aGlzLmhlbHBlcnNbbmFtZV07XG4gIH0sXG5cbiAgcmVnaXN0ZXJQYXJ0aWFsOiBmdW5jdGlvbihuYW1lLCBwYXJ0aWFsKSB7XG4gICAgaWYgKHRvU3RyaW5nLmNhbGwobmFtZSkgPT09IG9iamVjdFR5cGUpIHtcbiAgICAgIGV4dGVuZCh0aGlzLnBhcnRpYWxzLCBuYW1lKTtcbiAgICB9IGVsc2Uge1xuICAgICAgaWYgKHR5cGVvZiBwYXJ0aWFsID09PSAndW5kZWZpbmVkJykge1xuICAgICAgICB0aHJvdyBuZXcgRXhjZXB0aW9uKGBBdHRlbXB0aW5nIHRvIHJlZ2lzdGVyIGEgcGFydGlhbCBjYWxsZWQgXCIke25hbWV9XCIgYXMgdW5kZWZpbmVkYCk7XG4gICAgICB9XG4gICAgICB0aGlzLnBhcnRpYWxzW25hbWVdID0gcGFydGlhbDtcbiAgICB9XG4gIH0sXG4gIHVucmVnaXN0ZXJQYXJ0aWFsOiBmdW5jdGlvbihuYW1lKSB7XG4gICAgZGVsZXRlIHRoaXMucGFydGlhbHNbbmFtZV07XG4gIH0sXG5cbiAgcmVnaXN0ZXJEZWNvcmF0b3I6IGZ1bmN0aW9uKG5hbWUsIGZuKSB7XG4gICAgaWYgKHRvU3RyaW5nLmNhbGwobmFtZSkgPT09IG9iamVjdFR5cGUpIHtcbiAgICAgIGlmIChmbikgeyB0aHJvdyBuZXcgRXhjZXB0aW9uKCdBcmcgbm90IHN1cHBvcnRlZCB3aXRoIG11bHRpcGxlIGRlY29yYXRvcnMnKTsgfVxuICAgICAgZXh0ZW5kKHRoaXMuZGVjb3JhdG9ycywgbmFtZSk7XG4gICAgfSBlbHNlIHtcbiAgICAgIHRoaXMuZGVjb3JhdG9yc1tuYW1lXSA9IGZuO1xuICAgIH1cbiAgfSxcbiAgdW5yZWdpc3RlckRlY29yYXRvcjogZnVuY3Rpb24obmFtZSkge1xuICAgIGRlbGV0ZSB0aGlzLmRlY29yYXRvcnNbbmFtZV07XG4gIH1cbn07XG5cbmV4cG9ydCBsZXQgbG9nID0gbG9nZ2VyLmxvZztcblxuZXhwb3J0IHtjcmVhdGVGcmFtZSwgbG9nZ2VyfTtcbiJdfQ==\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/base.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/decorators.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/decorators.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\nexports.registerDefaultDecorators = registerDefaultDecorators;\n// istanbul ignore next\n\nfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }\n\nvar _decoratorsInline = __webpack_require__(/*! ./decorators/inline */ \"./node_modules/handlebars/dist/cjs/handlebars/decorators/inline.js\");\n\nvar _decoratorsInline2 = _interopRequireDefault(_decoratorsInline);\n\nfunction registerDefaultDecorators(instance) {\n  _decoratorsInline2['default'](instance);\n}\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2RlY29yYXRvcnMuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Z0NBQTJCLHFCQUFxQjs7OztBQUV6QyxTQUFTLHlCQUF5QixDQUFDLFFBQVEsRUFBRTtBQUNsRCxnQ0FBZSxRQUFRLENBQUMsQ0FBQztDQUMxQiIsImZpbGUiOiJkZWNvcmF0b3JzLmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHJlZ2lzdGVySW5saW5lIGZyb20gJy4vZGVjb3JhdG9ycy9pbmxpbmUnO1xuXG5leHBvcnQgZnVuY3Rpb24gcmVnaXN0ZXJEZWZhdWx0RGVjb3JhdG9ycyhpbnN0YW5jZSkge1xuICByZWdpc3RlcklubGluZShpbnN0YW5jZSk7XG59XG5cbiJdfQ==\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/decorators.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/decorators/inline.js":
+/*!**************************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/decorators/inline.js ***!
+  \**************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n\nvar _utils = __webpack_require__(/*! ../utils */ \"./node_modules/handlebars/dist/cjs/handlebars/utils.js\");\n\nexports['default'] = function (instance) {\n  instance.registerDecorator('inline', function (fn, props, container, options) {\n    var ret = fn;\n    if (!props.partials) {\n      props.partials = {};\n      ret = function (context, options) {\n        // Create a new partials stack frame prior to exec.\n        var original = container.partials;\n        container.partials = _utils.extend({}, original, props.partials);\n        var ret = fn(context, options);\n        container.partials = original;\n        return ret;\n      };\n    }\n\n    props.partials[options.args[0]] = options.fn;\n\n    return ret;\n  });\n};\n\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2RlY29yYXRvcnMvaW5saW5lLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7cUJBQXFCLFVBQVU7O3FCQUVoQixVQUFTLFFBQVEsRUFBRTtBQUNoQyxVQUFRLENBQUMsaUJBQWlCLENBQUMsUUFBUSxFQUFFLFVBQVMsRUFBRSxFQUFFLEtBQUssRUFBRSxTQUFTLEVBQUUsT0FBTyxFQUFFO0FBQzNFLFFBQUksR0FBRyxHQUFHLEVBQUUsQ0FBQztBQUNiLFFBQUksQ0FBQyxLQUFLLENBQUMsUUFBUSxFQUFFO0FBQ25CLFdBQUssQ0FBQyxRQUFRLEdBQUcsRUFBRSxDQUFDO0FBQ3BCLFNBQUcsR0FBRyxVQUFTLE9BQU8sRUFBRSxPQUFPLEVBQUU7O0FBRS9CLFlBQUksUUFBUSxHQUFHLFNBQVMsQ0FBQyxRQUFRLENBQUM7QUFDbEMsaUJBQVMsQ0FBQyxRQUFRLEdBQUcsY0FBTyxFQUFFLEVBQUUsUUFBUSxFQUFFLEtBQUssQ0FBQyxRQUFRLENBQUMsQ0FBQztBQUMxRCxZQUFJLEdBQUcsR0FBRyxFQUFFLENBQUMsT0FBTyxFQUFFLE9BQU8sQ0FBQyxDQUFDO0FBQy9CLGlCQUFTLENBQUMsUUFBUSxHQUFHLFFBQVEsQ0FBQztBQUM5QixlQUFPLEdBQUcsQ0FBQztPQUNaLENBQUM7S0FDSDs7QUFFRCxTQUFLLENBQUMsUUFBUSxDQUFDLE9BQU8sQ0FBQyxJQUFJLENBQUMsQ0FBQyxDQUFDLENBQUMsR0FBRyxPQUFPLENBQUMsRUFBRSxDQUFDOztBQUU3QyxXQUFPLEdBQUcsQ0FBQztHQUNaLENBQUMsQ0FBQztDQUNKIiwiZmlsZSI6ImlubGluZS5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7ZXh0ZW5kfSBmcm9tICcuLi91dGlscyc7XG5cbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKGluc3RhbmNlKSB7XG4gIGluc3RhbmNlLnJlZ2lzdGVyRGVjb3JhdG9yKCdpbmxpbmUnLCBmdW5jdGlvbihmbiwgcHJvcHMsIGNvbnRhaW5lciwgb3B0aW9ucykge1xuICAgIGxldCByZXQgPSBmbjtcbiAgICBpZiAoIXByb3BzLnBhcnRpYWxzKSB7XG4gICAgICBwcm9wcy5wYXJ0aWFscyA9IHt9O1xuICAgICAgcmV0ID0gZnVuY3Rpb24oY29udGV4dCwgb3B0aW9ucykge1xuICAgICAgICAvLyBDcmVhdGUgYSBuZXcgcGFydGlhbHMgc3RhY2sgZnJhbWUgcHJpb3IgdG8gZXhlYy5cbiAgICAgICAgbGV0IG9yaWdpbmFsID0gY29udGFpbmVyLnBhcnRpYWxzO1xuICAgICAgICBjb250YWluZXIucGFydGlhbHMgPSBleHRlbmQoe30sIG9yaWdpbmFsLCBwcm9wcy5wYXJ0aWFscyk7XG4gICAgICAgIGxldCByZXQgPSBmbihjb250ZXh0LCBvcHRpb25zKTtcbiAgICAgICAgY29udGFpbmVyLnBhcnRpYWxzID0gb3JpZ2luYWw7XG4gICAgICAgIHJldHVybiByZXQ7XG4gICAgICB9O1xuICAgIH1cblxuICAgIHByb3BzLnBhcnRpYWxzW29wdGlvbnMuYXJnc1swXV0gPSBvcHRpb25zLmZuO1xuXG4gICAgcmV0dXJuIHJldDtcbiAgfSk7XG59XG4iXX0=\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/decorators/inline.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/exception.js":
+/*!******************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/exception.js ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n\nvar errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];\n\nfunction Exception(message, node) {\n  var loc = node && node.loc,\n      line = undefined,\n      column = undefined;\n  if (loc) {\n    line = loc.start.line;\n    column = loc.start.column;\n\n    message += ' - ' + line + ':' + column;\n  }\n\n  var tmp = Error.prototype.constructor.call(this, message);\n\n  // Unfortunately errors are not enumerable in Chrome (at least), so `for prop in tmp` doesn't work.\n  for (var idx = 0; idx < errorProps.length; idx++) {\n    this[errorProps[idx]] = tmp[errorProps[idx]];\n  }\n\n  /* istanbul ignore else */\n  if (Error.captureStackTrace) {\n    Error.captureStackTrace(this, Exception);\n  }\n\n  try {\n    if (loc) {\n      this.lineNumber = line;\n\n      // Work around issue under safari where we can't directly set the column value\n      /* istanbul ignore next */\n      if (Object.defineProperty) {\n        Object.defineProperty(this, 'column', {\n          value: column,\n          enumerable: true\n        });\n      } else {\n        this.column = column;\n      }\n    }\n  } catch (nop) {\n    /* Ignore if the browser is very particular */\n  }\n}\n\nException.prototype = new Error();\n\nexports['default'] = Exception;\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2V4Y2VwdGlvbi5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7O0FBQ0EsSUFBTSxVQUFVLEdBQUcsQ0FBQyxhQUFhLEVBQUUsVUFBVSxFQUFFLFlBQVksRUFBRSxTQUFTLEVBQUUsTUFBTSxFQUFFLFFBQVEsRUFBRSxPQUFPLENBQUMsQ0FBQzs7QUFFbkcsU0FBUyxTQUFTLENBQUMsT0FBTyxFQUFFLElBQUksRUFBRTtBQUNoQyxNQUFJLEdBQUcsR0FBRyxJQUFJLElBQUksSUFBSSxDQUFDLEdBQUc7TUFDdEIsSUFBSSxZQUFBO01BQ0osTUFBTSxZQUFBLENBQUM7QUFDWCxNQUFJLEdBQUcsRUFBRTtBQUNQLFFBQUksR0FBRyxHQUFHLENBQUMsS0FBSyxDQUFDLElBQUksQ0FBQztBQUN0QixVQUFNLEdBQUcsR0FBRyxDQUFDLEtBQUssQ0FBQyxNQUFNLENBQUM7O0FBRTFCLFdBQU8sSUFBSSxLQUFLLEdBQUcsSUFBSSxHQUFHLEdBQUcsR0FBRyxNQUFNLENBQUM7R0FDeEM7O0FBRUQsTUFBSSxHQUFHLEdBQUcsS0FBSyxDQUFDLFNBQVMsQ0FBQyxXQUFXLENBQUMsSUFBSSxDQUFDLElBQUksRUFBRSxPQUFPLENBQUMsQ0FBQzs7O0FBRzFELE9BQUssSUFBSSxHQUFHLEdBQUcsQ0FBQyxFQUFFLEdBQUcsR0FBRyxVQUFVLENBQUMsTUFBTSxFQUFFLEdBQUcsRUFBRSxFQUFFO0FBQ2hELFFBQUksQ0FBQyxVQUFVLENBQUMsR0FBRyxDQUFDLENBQUMsR0FBRyxHQUFHLENBQUMsVUFBVSxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUM7R0FDOUM7OztBQUdELE1BQUksS0FBSyxDQUFDLGlCQUFpQixFQUFFO0FBQzNCLFNBQUssQ0FBQyxpQkFBaUIsQ0FBQyxJQUFJLEVBQUUsU0FBUyxDQUFDLENBQUM7R0FDMUM7O0FBRUQsTUFBSTtBQUNGLFFBQUksR0FBRyxFQUFFO0FBQ1AsVUFBSSxDQUFDLFVBQVUsR0FBRyxJQUFJLENBQUM7Ozs7QUFJdkIsVUFBSSxNQUFNLENBQUMsY0FBYyxFQUFFO0FBQ3pCLGNBQU0sQ0FBQyxjQUFjLENBQUMsSUFBSSxFQUFFLFFBQVEsRUFBRTtBQUNwQyxlQUFLLEVBQUUsTUFBTTtBQUNiLG9CQUFVLEVBQUUsSUFBSTtTQUNqQixDQUFDLENBQUM7T0FDSixNQUFNO0FBQ0wsWUFBSSxDQUFDLE1BQU0sR0FBRyxNQUFNLENBQUM7T0FDdEI7S0FDRjtHQUNGLENBQUMsT0FBTyxHQUFHLEVBQUU7O0dBRWI7Q0FDRjs7QUFFRCxTQUFTLENBQUMsU0FBUyxHQUFHLElBQUksS0FBSyxFQUFFLENBQUM7O3FCQUVuQixTQUFTIiwiZmlsZSI6ImV4Y2VwdGlvbi5qcyIsInNvdXJjZXNDb250ZW50IjpbIlxuY29uc3QgZXJyb3JQcm9wcyA9IFsnZGVzY3JpcHRpb24nLCAnZmlsZU5hbWUnLCAnbGluZU51bWJlcicsICdtZXNzYWdlJywgJ25hbWUnLCAnbnVtYmVyJywgJ3N0YWNrJ107XG5cbmZ1bmN0aW9uIEV4Y2VwdGlvbihtZXNzYWdlLCBub2RlKSB7XG4gIGxldCBsb2MgPSBub2RlICYmIG5vZGUubG9jLFxuICAgICAgbGluZSxcbiAgICAgIGNvbHVtbjtcbiAgaWYgKGxvYykge1xuICAgIGxpbmUgPSBsb2Muc3RhcnQubGluZTtcbiAgICBjb2x1bW4gPSBsb2Muc3RhcnQuY29sdW1uO1xuXG4gICAgbWVzc2FnZSArPSAnIC0gJyArIGxpbmUgKyAnOicgKyBjb2x1bW47XG4gIH1cblxuICBsZXQgdG1wID0gRXJyb3IucHJvdG90eXBlLmNvbnN0cnVjdG9yLmNhbGwodGhpcywgbWVzc2FnZSk7XG5cbiAgLy8gVW5mb3J0dW5hdGVseSBlcnJvcnMgYXJlIG5vdCBlbnVtZXJhYmxlIGluIENocm9tZSAoYXQgbGVhc3QpLCBzbyBgZm9yIHByb3AgaW4gdG1wYCBkb2Vzbid0IHdvcmsuXG4gIGZvciAobGV0IGlkeCA9IDA7IGlkeCA8IGVycm9yUHJvcHMubGVuZ3RoOyBpZHgrKykge1xuICAgIHRoaXNbZXJyb3JQcm9wc1tpZHhdXSA9IHRtcFtlcnJvclByb3BzW2lkeF1dO1xuICB9XG5cbiAgLyogaXN0YW5idWwgaWdub3JlIGVsc2UgKi9cbiAgaWYgKEVycm9yLmNhcHR1cmVTdGFja1RyYWNlKSB7XG4gICAgRXJyb3IuY2FwdHVyZVN0YWNrVHJhY2UodGhpcywgRXhjZXB0aW9uKTtcbiAgfVxuXG4gIHRyeSB7XG4gICAgaWYgKGxvYykge1xuICAgICAgdGhpcy5saW5lTnVtYmVyID0gbGluZTtcblxuICAgICAgLy8gV29yayBhcm91bmQgaXNzdWUgdW5kZXIgc2FmYXJpIHdoZXJlIHdlIGNhbid0IGRpcmVjdGx5IHNldCB0aGUgY29sdW1uIHZhbHVlXG4gICAgICAvKiBpc3RhbmJ1bCBpZ25vcmUgbmV4dCAqL1xuICAgICAgaWYgKE9iamVjdC5kZWZpbmVQcm9wZXJ0eSkge1xuICAgICAgICBPYmplY3QuZGVmaW5lUHJvcGVydHkodGhpcywgJ2NvbHVtbicsIHtcbiAgICAgICAgICB2YWx1ZTogY29sdW1uLFxuICAgICAgICAgIGVudW1lcmFibGU6IHRydWVcbiAgICAgICAgfSk7XG4gICAgICB9IGVsc2Uge1xuICAgICAgICB0aGlzLmNvbHVtbiA9IGNvbHVtbjtcbiAgICAgIH1cbiAgICB9XG4gIH0gY2F0Y2ggKG5vcCkge1xuICAgIC8qIElnbm9yZSBpZiB0aGUgYnJvd3NlciBpcyB2ZXJ5IHBhcnRpY3VsYXIgKi9cbiAgfVxufVxuXG5FeGNlcHRpb24ucHJvdG90eXBlID0gbmV3IEVycm9yKCk7XG5cbmV4cG9ydCBkZWZhdWx0IEV4Y2VwdGlvbjtcbiJdfQ==\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/exception.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/helpers.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/helpers.js ***!
+  \****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\nexports.registerDefaultHelpers = registerDefaultHelpers;\n// istanbul ignore next\n\nfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }\n\nvar _helpersBlockHelperMissing = __webpack_require__(/*! ./helpers/block-helper-missing */ \"./node_modules/handlebars/dist/cjs/handlebars/helpers/block-helper-missing.js\");\n\nvar _helpersBlockHelperMissing2 = _interopRequireDefault(_helpersBlockHelperMissing);\n\nvar _helpersEach = __webpack_require__(/*! ./helpers/each */ \"./node_modules/handlebars/dist/cjs/handlebars/helpers/each.js\");\n\nvar _helpersEach2 = _interopRequireDefault(_helpersEach);\n\nvar _helpersHelperMissing = __webpack_require__(/*! ./helpers/helper-missing */ \"./node_modules/handlebars/dist/cjs/handlebars/helpers/helper-missing.js\");\n\nvar _helpersHelperMissing2 = _interopRequireDefault(_helpersHelperMissing);\n\nvar _helpersIf = __webpack_require__(/*! ./helpers/if */ \"./node_modules/handlebars/dist/cjs/handlebars/helpers/if.js\");\n\nvar _helpersIf2 = _interopRequireDefault(_helpersIf);\n\nvar _helpersLog = __webpack_require__(/*! ./helpers/log */ \"./node_modules/handlebars/dist/cjs/handlebars/helpers/log.js\");\n\nvar _helpersLog2 = _interopRequireDefault(_helpersLog);\n\nvar _helpersLookup = __webpack_require__(/*! ./helpers/lookup */ \"./node_modules/handlebars/dist/cjs/handlebars/helpers/lookup.js\");\n\nvar _helpersLookup2 = _interopRequireDefault(_helpersLookup);\n\nvar _helpersWith = __webpack_require__(/*! ./helpers/with */ \"./node_modules/handlebars/dist/cjs/handlebars/helpers/with.js\");\n\nvar _helpersWith2 = _interopRequireDefault(_helpersWith);\n\nfunction registerDefaultHelpers(instance) {\n  _helpersBlockHelperMissing2['default'](instance);\n  _helpersEach2['default'](instance);\n  _helpersHelperMissing2['default'](instance);\n  _helpersIf2['default'](instance);\n  _helpersLog2['default'](instance);\n  _helpersLookup2['default'](instance);\n  _helpersWith2['default'](instance);\n}\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2hlbHBlcnMuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7eUNBQXVDLGdDQUFnQzs7OzsyQkFDOUMsZ0JBQWdCOzs7O29DQUNQLDBCQUEwQjs7Ozt5QkFDckMsY0FBYzs7OzswQkFDYixlQUFlOzs7OzZCQUNaLGtCQUFrQjs7OzsyQkFDcEIsZ0JBQWdCOzs7O0FBRWxDLFNBQVMsc0JBQXNCLENBQUMsUUFBUSxFQUFFO0FBQy9DLHlDQUEyQixRQUFRLENBQUMsQ0FBQztBQUNyQywyQkFBYSxRQUFRLENBQUMsQ0FBQztBQUN2QixvQ0FBc0IsUUFBUSxDQUFDLENBQUM7QUFDaEMseUJBQVcsUUFBUSxDQUFDLENBQUM7QUFDckIsMEJBQVksUUFBUSxDQUFDLENBQUM7QUFDdEIsNkJBQWUsUUFBUSxDQUFDLENBQUM7QUFDekIsMkJBQWEsUUFBUSxDQUFDLENBQUM7Q0FDeEIiLCJmaWxlIjoiaGVscGVycy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCByZWdpc3RlckJsb2NrSGVscGVyTWlzc2luZyBmcm9tICcuL2hlbHBlcnMvYmxvY2staGVscGVyLW1pc3NpbmcnO1xuaW1wb3J0IHJlZ2lzdGVyRWFjaCBmcm9tICcuL2hlbHBlcnMvZWFjaCc7XG5pbXBvcnQgcmVnaXN0ZXJIZWxwZXJNaXNzaW5nIGZyb20gJy4vaGVscGVycy9oZWxwZXItbWlzc2luZyc7XG5pbXBvcnQgcmVnaXN0ZXJJZiBmcm9tICcuL2hlbHBlcnMvaWYnO1xuaW1wb3J0IHJlZ2lzdGVyTG9nIGZyb20gJy4vaGVscGVycy9sb2cnO1xuaW1wb3J0IHJlZ2lzdGVyTG9va3VwIGZyb20gJy4vaGVscGVycy9sb29rdXAnO1xuaW1wb3J0IHJlZ2lzdGVyV2l0aCBmcm9tICcuL2hlbHBlcnMvd2l0aCc7XG5cbmV4cG9ydCBmdW5jdGlvbiByZWdpc3RlckRlZmF1bHRIZWxwZXJzKGluc3RhbmNlKSB7XG4gIHJlZ2lzdGVyQmxvY2tIZWxwZXJNaXNzaW5nKGluc3RhbmNlKTtcbiAgcmVnaXN0ZXJFYWNoKGluc3RhbmNlKTtcbiAgcmVnaXN0ZXJIZWxwZXJNaXNzaW5nKGluc3RhbmNlKTtcbiAgcmVnaXN0ZXJJZihpbnN0YW5jZSk7XG4gIHJlZ2lzdGVyTG9nKGluc3RhbmNlKTtcbiAgcmVnaXN0ZXJMb29rdXAoaW5zdGFuY2UpO1xuICByZWdpc3RlcldpdGgoaW5zdGFuY2UpO1xufVxuIl19\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/helpers.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/helpers/block-helper-missing.js":
+/*!*************************************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/helpers/block-helper-missing.js ***!
+  \*************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n\nvar _utils = __webpack_require__(/*! ../utils */ \"./node_modules/handlebars/dist/cjs/handlebars/utils.js\");\n\nexports['default'] = function (instance) {\n  instance.registerHelper('blockHelperMissing', function (context, options) {\n    var inverse = options.inverse,\n        fn = options.fn;\n\n    if (context === true) {\n      return fn(this);\n    } else if (context === false || context == null) {\n      return inverse(this);\n    } else if (_utils.isArray(context)) {\n      if (context.length > 0) {\n        if (options.ids) {\n          options.ids = [options.name];\n        }\n\n        return instance.helpers.each(context, options);\n      } else {\n        return inverse(this);\n      }\n    } else {\n      if (options.data && options.ids) {\n        var data = _utils.createFrame(options.data);\n        data.contextPath = _utils.appendContextPath(options.data.contextPath, options.name);\n        options = { data: data };\n      }\n\n      return fn(context, options);\n    }\n  });\n};\n\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2hlbHBlcnMvYmxvY2staGVscGVyLW1pc3NpbmcuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7OztxQkFBc0QsVUFBVTs7cUJBRWpELFVBQVMsUUFBUSxFQUFFO0FBQ2hDLFVBQVEsQ0FBQyxjQUFjLENBQUMsb0JBQW9CLEVBQUUsVUFBUyxPQUFPLEVBQUUsT0FBTyxFQUFFO0FBQ3ZFLFFBQUksT0FBTyxHQUFHLE9BQU8sQ0FBQyxPQUFPO1FBQ3pCLEVBQUUsR0FBRyxPQUFPLENBQUMsRUFBRSxDQUFDOztBQUVwQixRQUFJLE9BQU8sS0FBSyxJQUFJLEVBQUU7QUFDcEIsYUFBTyxFQUFFLENBQUMsSUFBSSxDQUFDLENBQUM7S0FDakIsTUFBTSxJQUFJLE9BQU8sS0FBSyxLQUFLLElBQUksT0FBTyxJQUFJLElBQUksRUFBRTtBQUMvQyxhQUFPLE9BQU8sQ0FBQyxJQUFJLENBQUMsQ0FBQztLQUN0QixNQUFNLElBQUksZUFBUSxPQUFPLENBQUMsRUFBRTtBQUMzQixVQUFJLE9BQU8sQ0FBQyxNQUFNLEdBQUcsQ0FBQyxFQUFFO0FBQ3RCLFlBQUksT0FBTyxDQUFDLEdBQUcsRUFBRTtBQUNmLGlCQUFPLENBQUMsR0FBRyxHQUFHLENBQUMsT0FBTyxDQUFDLElBQUksQ0FBQyxDQUFDO1NBQzlCOztBQUVELGVBQU8sUUFBUSxDQUFDLE9BQU8sQ0FBQyxJQUFJLENBQUMsT0FBTyxFQUFFLE9BQU8sQ0FBQyxDQUFDO09BQ2hELE1BQU07QUFDTCxlQUFPLE9BQU8sQ0FBQyxJQUFJLENBQUMsQ0FBQztPQUN0QjtLQUNGLE1BQU07QUFDTCxVQUFJLE9BQU8sQ0FBQyxJQUFJLElBQUksT0FBTyxDQUFDLEdBQUcsRUFBRTtBQUMvQixZQUFJLElBQUksR0FBRyxtQkFBWSxPQUFPLENBQUMsSUFBSSxDQUFDLENBQUM7QUFDckMsWUFBSSxDQUFDLFdBQVcsR0FBRyx5QkFBa0IsT0FBTyxDQUFDLElBQUksQ0FBQyxXQUFXLEVBQUUsT0FBTyxDQUFDLElBQUksQ0FBQyxDQUFDO0FBQzdFLGVBQU8sR0FBRyxFQUFDLElBQUksRUFBRSxJQUFJLEVBQUMsQ0FBQztPQUN4Qjs7QUFFRCxhQUFPLEVBQUUsQ0FBQyxPQUFPLEVBQUUsT0FBTyxDQUFDLENBQUM7S0FDN0I7R0FDRixDQUFDLENBQUM7Q0FDSiIsImZpbGUiOiJibG9jay1oZWxwZXItbWlzc2luZy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7YXBwZW5kQ29udGV4dFBhdGgsIGNyZWF0ZUZyYW1lLCBpc0FycmF5fSBmcm9tICcuLi91dGlscyc7XG5cbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKGluc3RhbmNlKSB7XG4gIGluc3RhbmNlLnJlZ2lzdGVySGVscGVyKCdibG9ja0hlbHBlck1pc3NpbmcnLCBmdW5jdGlvbihjb250ZXh0LCBvcHRpb25zKSB7XG4gICAgbGV0IGludmVyc2UgPSBvcHRpb25zLmludmVyc2UsXG4gICAgICAgIGZuID0gb3B0aW9ucy5mbjtcblxuICAgIGlmIChjb250ZXh0ID09PSB0cnVlKSB7XG4gICAgICByZXR1cm4gZm4odGhpcyk7XG4gICAgfSBlbHNlIGlmIChjb250ZXh0ID09PSBmYWxzZSB8fCBjb250ZXh0ID09IG51bGwpIHtcbiAgICAgIHJldHVybiBpbnZlcnNlKHRoaXMpO1xuICAgIH0gZWxzZSBpZiAoaXNBcnJheShjb250ZXh0KSkge1xuICAgICAgaWYgKGNvbnRleHQubGVuZ3RoID4gMCkge1xuICAgICAgICBpZiAob3B0aW9ucy5pZHMpIHtcbiAgICAgICAgICBvcHRpb25zLmlkcyA9IFtvcHRpb25zLm5hbWVdO1xuICAgICAgICB9XG5cbiAgICAgICAgcmV0dXJuIGluc3RhbmNlLmhlbHBlcnMuZWFjaChjb250ZXh0LCBvcHRpb25zKTtcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIHJldHVybiBpbnZlcnNlKHRoaXMpO1xuICAgICAgfVxuICAgIH0gZWxzZSB7XG4gICAgICBpZiAob3B0aW9ucy5kYXRhICYmIG9wdGlvbnMuaWRzKSB7XG4gICAgICAgIGxldCBkYXRhID0gY3JlYXRlRnJhbWUob3B0aW9ucy5kYXRhKTtcbiAgICAgICAgZGF0YS5jb250ZXh0UGF0aCA9IGFwcGVuZENvbnRleHRQYXRoKG9wdGlvbnMuZGF0YS5jb250ZXh0UGF0aCwgb3B0aW9ucy5uYW1lKTtcbiAgICAgICAgb3B0aW9ucyA9IHtkYXRhOiBkYXRhfTtcbiAgICAgIH1cblxuICAgICAgcmV0dXJuIGZuKGNvbnRleHQsIG9wdGlvbnMpO1xuICAgIH1cbiAgfSk7XG59XG4iXX0=\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/helpers/block-helper-missing.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/helpers/each.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/helpers/each.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n// istanbul ignore next\n\nfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }\n\nvar _utils = __webpack_require__(/*! ../utils */ \"./node_modules/handlebars/dist/cjs/handlebars/utils.js\");\n\nvar _exception = __webpack_require__(/*! ../exception */ \"./node_modules/handlebars/dist/cjs/handlebars/exception.js\");\n\nvar _exception2 = _interopRequireDefault(_exception);\n\nexports['default'] = function (instance) {\n  instance.registerHelper('each', function (context, options) {\n    if (!options) {\n      throw new _exception2['default']('Must pass iterator to #each');\n    }\n\n    var fn = options.fn,\n        inverse = options.inverse,\n        i = 0,\n        ret = '',\n        data = undefined,\n        contextPath = undefined;\n\n    if (options.data && options.ids) {\n      contextPath = _utils.appendContextPath(options.data.contextPath, options.ids[0]) + '.';\n    }\n\n    if (_utils.isFunction(context)) {\n      context = context.call(this);\n    }\n\n    if (options.data) {\n      data = _utils.createFrame(options.data);\n    }\n\n    function execIteration(field, index, last) {\n      if (data) {\n        data.key = field;\n        data.index = index;\n        data.first = index === 0;\n        data.last = !!last;\n\n        if (contextPath) {\n          data.contextPath = contextPath + field;\n        }\n      }\n\n      ret = ret + fn(context[field], {\n        data: data,\n        blockParams: _utils.blockParams([context[field], field], [contextPath + field, null])\n      });\n    }\n\n    if (context && typeof context === 'object') {\n      if (_utils.isArray(context)) {\n        for (var j = context.length; i < j; i++) {\n          if (i in context) {\n            execIteration(i, i, i === context.length - 1);\n          }\n        }\n      } else {\n        var priorKey = undefined;\n\n        for (var key in context) {\n          if (context.hasOwnProperty(key)) {\n            // We're running the iterations one step out of sync so we can detect\n            // the last iteration without have to scan the object twice and create\n            // an itermediate keys array.\n            if (priorKey !== undefined) {\n              execIteration(priorKey, i - 1);\n            }\n            priorKey = key;\n            i++;\n          }\n        }\n        if (priorKey !== undefined) {\n          execIteration(priorKey, i - 1, true);\n        }\n      }\n    }\n\n    if (i === 0) {\n      ret = inverse(this);\n    }\n\n    return ret;\n  });\n};\n\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2hlbHBlcnMvZWFjaC5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7O3FCQUErRSxVQUFVOzt5QkFDbkUsY0FBYzs7OztxQkFFckIsVUFBUyxRQUFRLEVBQUU7QUFDaEMsVUFBUSxDQUFDLGNBQWMsQ0FBQyxNQUFNLEVBQUUsVUFBUyxPQUFPLEVBQUUsT0FBTyxFQUFFO0FBQ3pELFFBQUksQ0FBQyxPQUFPLEVBQUU7QUFDWixZQUFNLDJCQUFjLDZCQUE2QixDQUFDLENBQUM7S0FDcEQ7O0FBRUQsUUFBSSxFQUFFLEdBQUcsT0FBTyxDQUFDLEVBQUU7UUFDZixPQUFPLEdBQUcsT0FBTyxDQUFDLE9BQU87UUFDekIsQ0FBQyxHQUFHLENBQUM7UUFDTCxHQUFHLEdBQUcsRUFBRTtRQUNSLElBQUksWUFBQTtRQUNKLFdBQVcsWUFBQSxDQUFDOztBQUVoQixRQUFJLE9BQU8sQ0FBQyxJQUFJLElBQUksT0FBTyxDQUFDLEdBQUcsRUFBRTtBQUMvQixpQkFBVyxHQUFHLHlCQUFrQixPQUFPLENBQUMsSUFBSSxDQUFDLFdBQVcsRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLENBQUMsQ0FBQyxDQUFDLEdBQUcsR0FBRyxDQUFDO0tBQ2pGOztBQUVELFFBQUksa0JBQVcsT0FBTyxDQUFDLEVBQUU7QUFBRSxhQUFPLEdBQUcsT0FBTyxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQztLQUFFOztBQUUxRCxRQUFJLE9BQU8sQ0FBQyxJQUFJLEVBQUU7QUFDaEIsVUFBSSxHQUFHLG1CQUFZLE9BQU8sQ0FBQyxJQUFJLENBQUMsQ0FBQztLQUNsQzs7QUFFRCxhQUFTLGFBQWEsQ0FBQyxLQUFLLEVBQUUsS0FBSyxFQUFFLElBQUksRUFBRTtBQUN6QyxVQUFJLElBQUksRUFBRTtBQUNSLFlBQUksQ0FBQyxHQUFHLEdBQUcsS0FBSyxDQUFDO0FBQ2pCLFlBQUksQ0FBQyxLQUFLLEdBQUcsS0FBSyxDQUFDO0FBQ25CLFlBQUksQ0FBQyxLQUFLLEdBQUcsS0FBSyxLQUFLLENBQUMsQ0FBQztBQUN6QixZQUFJLENBQUMsSUFBSSxHQUFHLENBQUMsQ0FBQyxJQUFJLENBQUM7O0FBRW5CLFlBQUksV0FBVyxFQUFFO0FBQ2YsY0FBSSxDQUFDLFdBQVcsR0FBRyxXQUFXLEdBQUcsS0FBSyxDQUFDO1NBQ3hDO09BQ0Y7O0FBRUQsU0FBRyxHQUFHLEdBQUcsR0FBRyxFQUFFLENBQUMsT0FBTyxDQUFDLEtBQUssQ0FBQyxFQUFFO0FBQzdCLFlBQUksRUFBRSxJQUFJO0FBQ1YsbUJBQVcsRUFBRSxtQkFBWSxDQUFDLE9BQU8sQ0FBQyxLQUFLLENBQUMsRUFBRSxLQUFLLENBQUMsRUFBRSxDQUFDLFdBQVcsR0FBRyxLQUFLLEVBQUUsSUFBSSxDQUFDLENBQUM7T0FDL0UsQ0FBQyxDQUFDO0tBQ0o7O0FBRUQsUUFBSSxPQUFPLElBQUksT0FBTyxPQUFPLEtBQUssUUFBUSxFQUFFO0FBQzFDLFVBQUksZUFBUSxPQUFPLENBQUMsRUFBRTtBQUNwQixhQUFLLElBQUksQ0FBQyxHQUFHLE9BQU8sQ0FBQyxNQUFNLEVBQUUsQ0FBQyxHQUFHLENBQUMsRUFBRSxDQUFDLEVBQUUsRUFBRTtBQUN2QyxjQUFJLENBQUMsSUFBSSxPQUFPLEVBQUU7QUFDaEIseUJBQWEsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxFQUFFLENBQUMsS0FBSyxPQUFPLENBQUMsTUFBTSxHQUFHLENBQUMsQ0FBQyxDQUFDO1dBQy9DO1NBQ0Y7T0FDRixNQUFNO0FBQ0wsWUFBSSxRQUFRLFlBQUEsQ0FBQzs7QUFFYixhQUFLLElBQUksR0FBRyxJQUFJLE9BQU8sRUFBRTtBQUN2QixjQUFJLE9BQU8sQ0FBQyxjQUFjLENBQUMsR0FBRyxDQUFDLEVBQUU7Ozs7QUFJL0IsZ0JBQUksUUFBUSxLQUFLLFNBQVMsRUFBRTtBQUMxQiwyQkFBYSxDQUFDLFFBQVEsRUFBRSxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUM7YUFDaEM7QUFDRCxvQkFBUSxHQUFHLEdBQUcsQ0FBQztBQUNmLGFBQUMsRUFBRSxDQUFDO1dBQ0w7U0FDRjtBQUNELFlBQUksUUFBUSxLQUFLLFNBQVMsRUFBRTtBQUMxQix1QkFBYSxDQUFDLFFBQVEsRUFBRSxDQUFDLEdBQUcsQ0FBQyxFQUFFLElBQUksQ0FBQyxDQUFDO1NBQ3RDO09BQ0Y7S0FDRjs7QUFFRCxRQUFJLENBQUMsS0FBSyxDQUFDLEVBQUU7QUFDWCxTQUFHLEdBQUcsT0FBTyxDQUFDLElBQUksQ0FBQyxDQUFDO0tBQ3JCOztBQUVELFdBQU8sR0FBRyxDQUFDO0dBQ1osQ0FBQyxDQUFDO0NBQ0oiLCJmaWxlIjoiZWFjaC5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7YXBwZW5kQ29udGV4dFBhdGgsIGJsb2NrUGFyYW1zLCBjcmVhdGVGcmFtZSwgaXNBcnJheSwgaXNGdW5jdGlvbn0gZnJvbSAnLi4vdXRpbHMnO1xuaW1wb3J0IEV4Y2VwdGlvbiBmcm9tICcuLi9leGNlcHRpb24nO1xuXG5leHBvcnQgZGVmYXVsdCBmdW5jdGlvbihpbnN0YW5jZSkge1xuICBpbnN0YW5jZS5yZWdpc3RlckhlbHBlcignZWFjaCcsIGZ1bmN0aW9uKGNvbnRleHQsIG9wdGlvbnMpIHtcbiAgICBpZiAoIW9wdGlvbnMpIHtcbiAgICAgIHRocm93IG5ldyBFeGNlcHRpb24oJ011c3QgcGFzcyBpdGVyYXRvciB0byAjZWFjaCcpO1xuICAgIH1cblxuICAgIGxldCBmbiA9IG9wdGlvbnMuZm4sXG4gICAgICAgIGludmVyc2UgPSBvcHRpb25zLmludmVyc2UsXG4gICAgICAgIGkgPSAwLFxuICAgICAgICByZXQgPSAnJyxcbiAgICAgICAgZGF0YSxcbiAgICAgICAgY29udGV4dFBhdGg7XG5cbiAgICBpZiAob3B0aW9ucy5kYXRhICYmIG9wdGlvbnMuaWRzKSB7XG4gICAgICBjb250ZXh0UGF0aCA9IGFwcGVuZENvbnRleHRQYXRoKG9wdGlvbnMuZGF0YS5jb250ZXh0UGF0aCwgb3B0aW9ucy5pZHNbMF0pICsgJy4nO1xuICAgIH1cblxuICAgIGlmIChpc0Z1bmN0aW9uKGNvbnRleHQpKSB7IGNvbnRleHQgPSBjb250ZXh0LmNhbGwodGhpcyk7IH1cblxuICAgIGlmIChvcHRpb25zLmRhdGEpIHtcbiAgICAgIGRhdGEgPSBjcmVhdGVGcmFtZShvcHRpb25zLmRhdGEpO1xuICAgIH1cblxuICAgIGZ1bmN0aW9uIGV4ZWNJdGVyYXRpb24oZmllbGQsIGluZGV4LCBsYXN0KSB7XG4gICAgICBpZiAoZGF0YSkge1xuICAgICAgICBkYXRhLmtleSA9IGZpZWxkO1xuICAgICAgICBkYXRhLmluZGV4ID0gaW5kZXg7XG4gICAgICAgIGRhdGEuZmlyc3QgPSBpbmRleCA9PT0gMDtcbiAgICAgICAgZGF0YS5sYXN0ID0gISFsYXN0O1xuXG4gICAgICAgIGlmIChjb250ZXh0UGF0aCkge1xuICAgICAgICAgIGRhdGEuY29udGV4dFBhdGggPSBjb250ZXh0UGF0aCArIGZpZWxkO1xuICAgICAgICB9XG4gICAgICB9XG5cbiAgICAgIHJldCA9IHJldCArIGZuKGNvbnRleHRbZmllbGRdLCB7XG4gICAgICAgIGRhdGE6IGRhdGEsXG4gICAgICAgIGJsb2NrUGFyYW1zOiBibG9ja1BhcmFtcyhbY29udGV4dFtmaWVsZF0sIGZpZWxkXSwgW2NvbnRleHRQYXRoICsgZmllbGQsIG51bGxdKVxuICAgICAgfSk7XG4gICAgfVxuXG4gICAgaWYgKGNvbnRleHQgJiYgdHlwZW9mIGNvbnRleHQgPT09ICdvYmplY3QnKSB7XG4gICAgICBpZiAoaXNBcnJheShjb250ZXh0KSkge1xuICAgICAgICBmb3IgKGxldCBqID0gY29udGV4dC5sZW5ndGg7IGkgPCBqOyBpKyspIHtcbiAgICAgICAgICBpZiAoaSBpbiBjb250ZXh0KSB7XG4gICAgICAgICAgICBleGVjSXRlcmF0aW9uKGksIGksIGkgPT09IGNvbnRleHQubGVuZ3RoIC0gMSk7XG4gICAgICAgICAgfVxuICAgICAgICB9XG4gICAgICB9IGVsc2Uge1xuICAgICAgICBsZXQgcHJpb3JLZXk7XG5cbiAgICAgICAgZm9yIChsZXQga2V5IGluIGNvbnRleHQpIHtcbiAgICAgICAgICBpZiAoY29udGV4dC5oYXNPd25Qcm9wZXJ0eShrZXkpKSB7XG4gICAgICAgICAgICAvLyBXZSdyZSBydW5uaW5nIHRoZSBpdGVyYXRpb25zIG9uZSBzdGVwIG91dCBvZiBzeW5jIHNvIHdlIGNhbiBkZXRlY3RcbiAgICAgICAgICAgIC8vIHRoZSBsYXN0IGl0ZXJhdGlvbiB3aXRob3V0IGhhdmUgdG8gc2NhbiB0aGUgb2JqZWN0IHR3aWNlIGFuZCBjcmVhdGVcbiAgICAgICAgICAgIC8vIGFuIGl0ZXJtZWRpYXRlIGtleXMgYXJyYXkuXG4gICAgICAgICAgICBpZiAocHJpb3JLZXkgIT09IHVuZGVmaW5lZCkge1xuICAgICAgICAgICAgICBleGVjSXRlcmF0aW9uKHByaW9yS2V5LCBpIC0gMSk7XG4gICAgICAgICAgICB9XG4gICAgICAgICAgICBwcmlvcktleSA9IGtleTtcbiAgICAgICAgICAgIGkrKztcbiAgICAgICAgICB9XG4gICAgICAgIH1cbiAgICAgICAgaWYgKHByaW9yS2V5ICE9PSB1bmRlZmluZWQpIHtcbiAgICAgICAgICBleGVjSXRlcmF0aW9uKHByaW9yS2V5LCBpIC0gMSwgdHJ1ZSk7XG4gICAgICAgIH1cbiAgICAgIH1cbiAgICB9XG5cbiAgICBpZiAoaSA9PT0gMCkge1xuICAgICAgcmV0ID0gaW52ZXJzZSh0aGlzKTtcbiAgICB9XG5cbiAgICByZXR1cm4gcmV0O1xuICB9KTtcbn1cbiJdfQ==\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/helpers/each.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/helpers/helper-missing.js":
+/*!*******************************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/helpers/helper-missing.js ***!
+  \*******************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n// istanbul ignore next\n\nfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }\n\nvar _exception = __webpack_require__(/*! ../exception */ \"./node_modules/handlebars/dist/cjs/handlebars/exception.js\");\n\nvar _exception2 = _interopRequireDefault(_exception);\n\nexports['default'] = function (instance) {\n  instance.registerHelper('helperMissing', function () /* [args, ]options */{\n    if (arguments.length === 1) {\n      // A missing field in a {{foo}} construct.\n      return undefined;\n    } else {\n      // Someone is actually trying to call something, blow up.\n      throw new _exception2['default']('Missing helper: \"' + arguments[arguments.length - 1].name + '\"');\n    }\n  });\n};\n\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2hlbHBlcnMvaGVscGVyLW1pc3NpbmcuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozt5QkFBc0IsY0FBYzs7OztxQkFFckIsVUFBUyxRQUFRLEVBQUU7QUFDaEMsVUFBUSxDQUFDLGNBQWMsQ0FBQyxlQUFlLEVBQUUsaUNBQWdDO0FBQ3ZFLFFBQUksU0FBUyxDQUFDLE1BQU0sS0FBSyxDQUFDLEVBQUU7O0FBRTFCLGFBQU8sU0FBUyxDQUFDO0tBQ2xCLE1BQU07O0FBRUwsWUFBTSwyQkFBYyxtQkFBbUIsR0FBRyxTQUFTLENBQUMsU0FBUyxDQUFDLE1BQU0sR0FBRyxDQUFDLENBQUMsQ0FBQyxJQUFJLEdBQUcsR0FBRyxDQUFDLENBQUM7S0FDdkY7R0FDRixDQUFDLENBQUM7Q0FDSiIsImZpbGUiOiJoZWxwZXItbWlzc2luZy5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBFeGNlcHRpb24gZnJvbSAnLi4vZXhjZXB0aW9uJztcblxuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oaW5zdGFuY2UpIHtcbiAgaW5zdGFuY2UucmVnaXN0ZXJIZWxwZXIoJ2hlbHBlck1pc3NpbmcnLCBmdW5jdGlvbigvKiBbYXJncywgXW9wdGlvbnMgKi8pIHtcbiAgICBpZiAoYXJndW1lbnRzLmxlbmd0aCA9PT0gMSkge1xuICAgICAgLy8gQSBtaXNzaW5nIGZpZWxkIGluIGEge3tmb299fSBjb25zdHJ1Y3QuXG4gICAgICByZXR1cm4gdW5kZWZpbmVkO1xuICAgIH0gZWxzZSB7XG4gICAgICAvLyBTb21lb25lIGlzIGFjdHVhbGx5IHRyeWluZyB0byBjYWxsIHNvbWV0aGluZywgYmxvdyB1cC5cbiAgICAgIHRocm93IG5ldyBFeGNlcHRpb24oJ01pc3NpbmcgaGVscGVyOiBcIicgKyBhcmd1bWVudHNbYXJndW1lbnRzLmxlbmd0aCAtIDFdLm5hbWUgKyAnXCInKTtcbiAgICB9XG4gIH0pO1xufVxuIl19\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/helpers/helper-missing.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/helpers/if.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/helpers/if.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n\nvar _utils = __webpack_require__(/*! ../utils */ \"./node_modules/handlebars/dist/cjs/handlebars/utils.js\");\n\nexports['default'] = function (instance) {\n  instance.registerHelper('if', function (conditional, options) {\n    if (_utils.isFunction(conditional)) {\n      conditional = conditional.call(this);\n    }\n\n    // Default behavior is to render the positive path if the value is truthy and not empty.\n    // The `includeZero` option may be set to treat the condtional as purely not empty based on the\n    // behavior of isEmpty. Effectively this determines if 0 is handled by the positive path or negative.\n    if (!options.hash.includeZero && !conditional || _utils.isEmpty(conditional)) {\n      return options.inverse(this);\n    } else {\n      return options.fn(this);\n    }\n  });\n\n  instance.registerHelper('unless', function (conditional, options) {\n    return instance.helpers['if'].call(this, conditional, { fn: options.inverse, inverse: options.fn, hash: options.hash });\n  });\n};\n\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2hlbHBlcnMvaWYuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7OztxQkFBa0MsVUFBVTs7cUJBRTdCLFVBQVMsUUFBUSxFQUFFO0FBQ2hDLFVBQVEsQ0FBQyxjQUFjLENBQUMsSUFBSSxFQUFFLFVBQVMsV0FBVyxFQUFFLE9BQU8sRUFBRTtBQUMzRCxRQUFJLGtCQUFXLFdBQVcsQ0FBQyxFQUFFO0FBQUUsaUJBQVcsR0FBRyxXQUFXLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQyxDQUFDO0tBQUU7Ozs7O0FBS3RFLFFBQUksQUFBQyxDQUFDLE9BQU8sQ0FBQyxJQUFJLENBQUMsV0FBVyxJQUFJLENBQUMsV0FBVyxJQUFLLGVBQVEsV0FBVyxDQUFDLEVBQUU7QUFDdkUsYUFBTyxPQUFPLENBQUMsT0FBTyxDQUFDLElBQUksQ0FBQyxDQUFDO0tBQzlCLE1BQU07QUFDTCxhQUFPLE9BQU8sQ0FBQyxFQUFFLENBQUMsSUFBSSxDQUFDLENBQUM7S0FDekI7R0FDRixDQUFDLENBQUM7O0FBRUgsVUFBUSxDQUFDLGNBQWMsQ0FBQyxRQUFRLEVBQUUsVUFBUyxXQUFXLEVBQUUsT0FBTyxFQUFFO0FBQy9ELFdBQU8sUUFBUSxDQUFDLE9BQU8sQ0FBQyxJQUFJLENBQUMsQ0FBQyxJQUFJLENBQUMsSUFBSSxFQUFFLFdBQVcsRUFBRSxFQUFDLEVBQUUsRUFBRSxPQUFPLENBQUMsT0FBTyxFQUFFLE9BQU8sRUFBRSxPQUFPLENBQUMsRUFBRSxFQUFFLElBQUksRUFBRSxPQUFPLENBQUMsSUFBSSxFQUFDLENBQUMsQ0FBQztHQUN2SCxDQUFDLENBQUM7Q0FDSiIsImZpbGUiOiJpZi5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7aXNFbXB0eSwgaXNGdW5jdGlvbn0gZnJvbSAnLi4vdXRpbHMnO1xuXG5leHBvcnQgZGVmYXVsdCBmdW5jdGlvbihpbnN0YW5jZSkge1xuICBpbnN0YW5jZS5yZWdpc3RlckhlbHBlcignaWYnLCBmdW5jdGlvbihjb25kaXRpb25hbCwgb3B0aW9ucykge1xuICAgIGlmIChpc0Z1bmN0aW9uKGNvbmRpdGlvbmFsKSkgeyBjb25kaXRpb25hbCA9IGNvbmRpdGlvbmFsLmNhbGwodGhpcyk7IH1cblxuICAgIC8vIERlZmF1bHQgYmVoYXZpb3IgaXMgdG8gcmVuZGVyIHRoZSBwb3NpdGl2ZSBwYXRoIGlmIHRoZSB2YWx1ZSBpcyB0cnV0aHkgYW5kIG5vdCBlbXB0eS5cbiAgICAvLyBUaGUgYGluY2x1ZGVaZXJvYCBvcHRpb24gbWF5IGJlIHNldCB0byB0cmVhdCB0aGUgY29uZHRpb25hbCBhcyBwdXJlbHkgbm90IGVtcHR5IGJhc2VkIG9uIHRoZVxuICAgIC8vIGJlaGF2aW9yIG9mIGlzRW1wdHkuIEVmZmVjdGl2ZWx5IHRoaXMgZGV0ZXJtaW5lcyBpZiAwIGlzIGhhbmRsZWQgYnkgdGhlIHBvc2l0aXZlIHBhdGggb3IgbmVnYXRpdmUuXG4gICAgaWYgKCghb3B0aW9ucy5oYXNoLmluY2x1ZGVaZXJvICYmICFjb25kaXRpb25hbCkgfHwgaXNFbXB0eShjb25kaXRpb25hbCkpIHtcbiAgICAgIHJldHVybiBvcHRpb25zLmludmVyc2UodGhpcyk7XG4gICAgfSBlbHNlIHtcbiAgICAgIHJldHVybiBvcHRpb25zLmZuKHRoaXMpO1xuICAgIH1cbiAgfSk7XG5cbiAgaW5zdGFuY2UucmVnaXN0ZXJIZWxwZXIoJ3VubGVzcycsIGZ1bmN0aW9uKGNvbmRpdGlvbmFsLCBvcHRpb25zKSB7XG4gICAgcmV0dXJuIGluc3RhbmNlLmhlbHBlcnNbJ2lmJ10uY2FsbCh0aGlzLCBjb25kaXRpb25hbCwge2ZuOiBvcHRpb25zLmludmVyc2UsIGludmVyc2U6IG9wdGlvbnMuZm4sIGhhc2g6IG9wdGlvbnMuaGFzaH0pO1xuICB9KTtcbn1cbiJdfQ==\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/helpers/if.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/helpers/log.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/helpers/log.js ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n\nexports['default'] = function (instance) {\n  instance.registerHelper('log', function () /* message, options */{\n    var args = [undefined],\n        options = arguments[arguments.length - 1];\n    for (var i = 0; i < arguments.length - 1; i++) {\n      args.push(arguments[i]);\n    }\n\n    var level = 1;\n    if (options.hash.level != null) {\n      level = options.hash.level;\n    } else if (options.data && options.data.level != null) {\n      level = options.data.level;\n    }\n    args[0] = level;\n\n    instance.log.apply(instance, args);\n  });\n};\n\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2hlbHBlcnMvbG9nLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7cUJBQWUsVUFBUyxRQUFRLEVBQUU7QUFDaEMsVUFBUSxDQUFDLGNBQWMsQ0FBQyxLQUFLLEVBQUUsa0NBQWlDO0FBQzlELFFBQUksSUFBSSxHQUFHLENBQUMsU0FBUyxDQUFDO1FBQ2xCLE9BQU8sR0FBRyxTQUFTLENBQUMsU0FBUyxDQUFDLE1BQU0sR0FBRyxDQUFDLENBQUMsQ0FBQztBQUM5QyxTQUFLLElBQUksQ0FBQyxHQUFHLENBQUMsRUFBRSxDQUFDLEdBQUcsU0FBUyxDQUFDLE1BQU0sR0FBRyxDQUFDLEVBQUUsQ0FBQyxFQUFFLEVBQUU7QUFDN0MsVUFBSSxDQUFDLElBQUksQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztLQUN6Qjs7QUFFRCxRQUFJLEtBQUssR0FBRyxDQUFDLENBQUM7QUFDZCxRQUFJLE9BQU8sQ0FBQyxJQUFJLENBQUMsS0FBSyxJQUFJLElBQUksRUFBRTtBQUM5QixXQUFLLEdBQUcsT0FBTyxDQUFDLElBQUksQ0FBQyxLQUFLLENBQUM7S0FDNUIsTUFBTSxJQUFJLE9BQU8sQ0FBQyxJQUFJLElBQUksT0FBTyxDQUFDLElBQUksQ0FBQyxLQUFLLElBQUksSUFBSSxFQUFFO0FBQ3JELFdBQUssR0FBRyxPQUFPLENBQUMsSUFBSSxDQUFDLEtBQUssQ0FBQztLQUM1QjtBQUNELFFBQUksQ0FBQyxDQUFDLENBQUMsR0FBRyxLQUFLLENBQUM7O0FBRWhCLFlBQVEsQ0FBQyxHQUFHLE1BQUEsQ0FBWixRQUFRLEVBQVMsSUFBSSxDQUFDLENBQUM7R0FDeEIsQ0FBQyxDQUFDO0NBQ0oiLCJmaWxlIjoibG9nLmpzIiwic291cmNlc0NvbnRlbnQiOlsiZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oaW5zdGFuY2UpIHtcbiAgaW5zdGFuY2UucmVnaXN0ZXJIZWxwZXIoJ2xvZycsIGZ1bmN0aW9uKC8qIG1lc3NhZ2UsIG9wdGlvbnMgKi8pIHtcbiAgICBsZXQgYXJncyA9IFt1bmRlZmluZWRdLFxuICAgICAgICBvcHRpb25zID0gYXJndW1lbnRzW2FyZ3VtZW50cy5sZW5ndGggLSAxXTtcbiAgICBmb3IgKGxldCBpID0gMDsgaSA8IGFyZ3VtZW50cy5sZW5ndGggLSAxOyBpKyspIHtcbiAgICAgIGFyZ3MucHVzaChhcmd1bWVudHNbaV0pO1xuICAgIH1cblxuICAgIGxldCBsZXZlbCA9IDE7XG4gICAgaWYgKG9wdGlvbnMuaGFzaC5sZXZlbCAhPSBudWxsKSB7XG4gICAgICBsZXZlbCA9IG9wdGlvbnMuaGFzaC5sZXZlbDtcbiAgICB9IGVsc2UgaWYgKG9wdGlvbnMuZGF0YSAmJiBvcHRpb25zLmRhdGEubGV2ZWwgIT0gbnVsbCkge1xuICAgICAgbGV2ZWwgPSBvcHRpb25zLmRhdGEubGV2ZWw7XG4gICAgfVxuICAgIGFyZ3NbMF0gPSBsZXZlbDtcblxuICAgIGluc3RhbmNlLmxvZyguLi4gYXJncyk7XG4gIH0pO1xufVxuIl19\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/helpers/log.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/helpers/lookup.js":
+/*!***********************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/helpers/lookup.js ***!
+  \***********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n\nexports['default'] = function (instance) {\n  instance.registerHelper('lookup', function (obj, field) {\n    return obj && obj[field];\n  });\n};\n\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2hlbHBlcnMvbG9va3VwLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7cUJBQWUsVUFBUyxRQUFRLEVBQUU7QUFDaEMsVUFBUSxDQUFDLGNBQWMsQ0FBQyxRQUFRLEVBQUUsVUFBUyxHQUFHLEVBQUUsS0FBSyxFQUFFO0FBQ3JELFdBQU8sR0FBRyxJQUFJLEdBQUcsQ0FBQyxLQUFLLENBQUMsQ0FBQztHQUMxQixDQUFDLENBQUM7Q0FDSiIsImZpbGUiOiJsb29rdXAuanMiLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgZGVmYXVsdCBmdW5jdGlvbihpbnN0YW5jZSkge1xuICBpbnN0YW5jZS5yZWdpc3RlckhlbHBlcignbG9va3VwJywgZnVuY3Rpb24ob2JqLCBmaWVsZCkge1xuICAgIHJldHVybiBvYmogJiYgb2JqW2ZpZWxkXTtcbiAgfSk7XG59XG4iXX0=\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/helpers/lookup.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/helpers/with.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/helpers/with.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n\nvar _utils = __webpack_require__(/*! ../utils */ \"./node_modules/handlebars/dist/cjs/handlebars/utils.js\");\n\nexports['default'] = function (instance) {\n  instance.registerHelper('with', function (context, options) {\n    if (_utils.isFunction(context)) {\n      context = context.call(this);\n    }\n\n    var fn = options.fn;\n\n    if (!_utils.isEmpty(context)) {\n      var data = options.data;\n      if (options.data && options.ids) {\n        data = _utils.createFrame(options.data);\n        data.contextPath = _utils.appendContextPath(options.data.contextPath, options.ids[0]);\n      }\n\n      return fn(context, {\n        data: data,\n        blockParams: _utils.blockParams([context], [data && data.contextPath])\n      });\n    } else {\n      return options.inverse(this);\n    }\n  });\n};\n\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2hlbHBlcnMvd2l0aC5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7O3FCQUErRSxVQUFVOztxQkFFMUUsVUFBUyxRQUFRLEVBQUU7QUFDaEMsVUFBUSxDQUFDLGNBQWMsQ0FBQyxNQUFNLEVBQUUsVUFBUyxPQUFPLEVBQUUsT0FBTyxFQUFFO0FBQ3pELFFBQUksa0JBQVcsT0FBTyxDQUFDLEVBQUU7QUFBRSxhQUFPLEdBQUcsT0FBTyxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQztLQUFFOztBQUUxRCxRQUFJLEVBQUUsR0FBRyxPQUFPLENBQUMsRUFBRSxDQUFDOztBQUVwQixRQUFJLENBQUMsZUFBUSxPQUFPLENBQUMsRUFBRTtBQUNyQixVQUFJLElBQUksR0FBRyxPQUFPLENBQUMsSUFBSSxDQUFDO0FBQ3hCLFVBQUksT0FBTyxDQUFDLElBQUksSUFBSSxPQUFPLENBQUMsR0FBRyxFQUFFO0FBQy9CLFlBQUksR0FBRyxtQkFBWSxPQUFPLENBQUMsSUFBSSxDQUFDLENBQUM7QUFDakMsWUFBSSxDQUFDLFdBQVcsR0FBRyx5QkFBa0IsT0FBTyxDQUFDLElBQUksQ0FBQyxXQUFXLEVBQUUsT0FBTyxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO09BQ2hGOztBQUVELGFBQU8sRUFBRSxDQUFDLE9BQU8sRUFBRTtBQUNqQixZQUFJLEVBQUUsSUFBSTtBQUNWLG1CQUFXLEVBQUUsbUJBQVksQ0FBQyxPQUFPLENBQUMsRUFBRSxDQUFDLElBQUksSUFBSSxJQUFJLENBQUMsV0FBVyxDQUFDLENBQUM7T0FDaEUsQ0FBQyxDQUFDO0tBQ0osTUFBTTtBQUNMLGFBQU8sT0FBTyxDQUFDLE9BQU8sQ0FBQyxJQUFJLENBQUMsQ0FBQztLQUM5QjtHQUNGLENBQUMsQ0FBQztDQUNKIiwiZmlsZSI6IndpdGguanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQge2FwcGVuZENvbnRleHRQYXRoLCBibG9ja1BhcmFtcywgY3JlYXRlRnJhbWUsIGlzRW1wdHksIGlzRnVuY3Rpb259IGZyb20gJy4uL3V0aWxzJztcblxuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oaW5zdGFuY2UpIHtcbiAgaW5zdGFuY2UucmVnaXN0ZXJIZWxwZXIoJ3dpdGgnLCBmdW5jdGlvbihjb250ZXh0LCBvcHRpb25zKSB7XG4gICAgaWYgKGlzRnVuY3Rpb24oY29udGV4dCkpIHsgY29udGV4dCA9IGNvbnRleHQuY2FsbCh0aGlzKTsgfVxuXG4gICAgbGV0IGZuID0gb3B0aW9ucy5mbjtcblxuICAgIGlmICghaXNFbXB0eShjb250ZXh0KSkge1xuICAgICAgbGV0IGRhdGEgPSBvcHRpb25zLmRhdGE7XG4gICAgICBpZiAob3B0aW9ucy5kYXRhICYmIG9wdGlvbnMuaWRzKSB7XG4gICAgICAgIGRhdGEgPSBjcmVhdGVGcmFtZShvcHRpb25zLmRhdGEpO1xuICAgICAgICBkYXRhLmNvbnRleHRQYXRoID0gYXBwZW5kQ29udGV4dFBhdGgob3B0aW9ucy5kYXRhLmNvbnRleHRQYXRoLCBvcHRpb25zLmlkc1swXSk7XG4gICAgICB9XG5cbiAgICAgIHJldHVybiBmbihjb250ZXh0LCB7XG4gICAgICAgIGRhdGE6IGRhdGEsXG4gICAgICAgIGJsb2NrUGFyYW1zOiBibG9ja1BhcmFtcyhbY29udGV4dF0sIFtkYXRhICYmIGRhdGEuY29udGV4dFBhdGhdKVxuICAgICAgfSk7XG4gICAgfSBlbHNlIHtcbiAgICAgIHJldHVybiBvcHRpb25zLmludmVyc2UodGhpcyk7XG4gICAgfVxuICB9KTtcbn1cbiJdfQ==\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/helpers/with.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/logger.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/logger.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\n\nvar _utils = __webpack_require__(/*! ./utils */ \"./node_modules/handlebars/dist/cjs/handlebars/utils.js\");\n\nvar logger = {\n  methodMap: ['debug', 'info', 'warn', 'error'],\n  level: 'info',\n\n  // Maps a given level value to the `methodMap` indexes above.\n  lookupLevel: function lookupLevel(level) {\n    if (typeof level === 'string') {\n      var levelMap = _utils.indexOf(logger.methodMap, level.toLowerCase());\n      if (levelMap >= 0) {\n        level = levelMap;\n      } else {\n        level = parseInt(level, 10);\n      }\n    }\n\n    return level;\n  },\n\n  // Can be overridden in the host environment\n  log: function log(level) {\n    level = logger.lookupLevel(level);\n\n    if (typeof console !== 'undefined' && logger.lookupLevel(logger.level) <= level) {\n      var method = logger.methodMap[level];\n      if (!console[method]) {\n        // eslint-disable-line no-console\n        method = 'log';\n      }\n\n      for (var _len = arguments.length, message = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {\n        message[_key - 1] = arguments[_key];\n      }\n\n      console[method].apply(console, message); // eslint-disable-line no-console\n    }\n  }\n};\n\nexports['default'] = logger;\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL2xvZ2dlci5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7O3FCQUFzQixTQUFTOztBQUUvQixJQUFJLE1BQU0sR0FBRztBQUNYLFdBQVMsRUFBRSxDQUFDLE9BQU8sRUFBRSxNQUFNLEVBQUUsTUFBTSxFQUFFLE9BQU8sQ0FBQztBQUM3QyxPQUFLLEVBQUUsTUFBTTs7O0FBR2IsYUFBVyxFQUFFLHFCQUFTLEtBQUssRUFBRTtBQUMzQixRQUFJLE9BQU8sS0FBSyxLQUFLLFFBQVEsRUFBRTtBQUM3QixVQUFJLFFBQVEsR0FBRyxlQUFRLE1BQU0sQ0FBQyxTQUFTLEVBQUUsS0FBSyxDQUFDLFdBQVcsRUFBRSxDQUFDLENBQUM7QUFDOUQsVUFBSSxRQUFRLElBQUksQ0FBQyxFQUFFO0FBQ2pCLGFBQUssR0FBRyxRQUFRLENBQUM7T0FDbEIsTUFBTTtBQUNMLGFBQUssR0FBRyxRQUFRLENBQUMsS0FBSyxFQUFFLEVBQUUsQ0FBQyxDQUFDO09BQzdCO0tBQ0Y7O0FBRUQsV0FBTyxLQUFLLENBQUM7R0FDZDs7O0FBR0QsS0FBRyxFQUFFLGFBQVMsS0FBSyxFQUFjO0FBQy9CLFNBQUssR0FBRyxNQUFNLENBQUMsV0FBVyxDQUFDLEtBQUssQ0FBQyxDQUFDOztBQUVsQyxRQUFJLE9BQU8sT0FBTyxLQUFLLFdBQVcsSUFBSSxNQUFNLENBQUMsV0FBVyxDQUFDLE1BQU0sQ0FBQyxLQUFLLENBQUMsSUFBSSxLQUFLLEVBQUU7QUFDL0UsVUFBSSxNQUFNLEdBQUcsTUFBTSxDQUFDLFNBQVMsQ0FBQyxLQUFLLENBQUMsQ0FBQztBQUNyQyxVQUFJLENBQUMsT0FBTyxDQUFDLE1BQU0sQ0FBQyxFQUFFOztBQUNwQixjQUFNLEdBQUcsS0FBSyxDQUFDO09BQ2hCOzt3Q0FQbUIsT0FBTztBQUFQLGVBQU87OztBQVEzQixhQUFPLENBQUMsTUFBTSxPQUFDLENBQWYsT0FBTyxFQUFZLE9BQU8sQ0FBQyxDQUFDO0tBQzdCO0dBQ0Y7Q0FDRixDQUFDOztxQkFFYSxNQUFNIiwiZmlsZSI6ImxvZ2dlci5qcyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7aW5kZXhPZn0gZnJvbSAnLi91dGlscyc7XG5cbmxldCBsb2dnZXIgPSB7XG4gIG1ldGhvZE1hcDogWydkZWJ1ZycsICdpbmZvJywgJ3dhcm4nLCAnZXJyb3InXSxcbiAgbGV2ZWw6ICdpbmZvJyxcblxuICAvLyBNYXBzIGEgZ2l2ZW4gbGV2ZWwgdmFsdWUgdG8gdGhlIGBtZXRob2RNYXBgIGluZGV4ZXMgYWJvdmUuXG4gIGxvb2t1cExldmVsOiBmdW5jdGlvbihsZXZlbCkge1xuICAgIGlmICh0eXBlb2YgbGV2ZWwgPT09ICdzdHJpbmcnKSB7XG4gICAgICBsZXQgbGV2ZWxNYXAgPSBpbmRleE9mKGxvZ2dlci5tZXRob2RNYXAsIGxldmVsLnRvTG93ZXJDYXNlKCkpO1xuICAgICAgaWYgKGxldmVsTWFwID49IDApIHtcbiAgICAgICAgbGV2ZWwgPSBsZXZlbE1hcDtcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIGxldmVsID0gcGFyc2VJbnQobGV2ZWwsIDEwKTtcbiAgICAgIH1cbiAgICB9XG5cbiAgICByZXR1cm4gbGV2ZWw7XG4gIH0sXG5cbiAgLy8gQ2FuIGJlIG92ZXJyaWRkZW4gaW4gdGhlIGhvc3QgZW52aXJvbm1lbnRcbiAgbG9nOiBmdW5jdGlvbihsZXZlbCwgLi4ubWVzc2FnZSkge1xuICAgIGxldmVsID0gbG9nZ2VyLmxvb2t1cExldmVsKGxldmVsKTtcblxuICAgIGlmICh0eXBlb2YgY29uc29sZSAhPT0gJ3VuZGVmaW5lZCcgJiYgbG9nZ2VyLmxvb2t1cExldmVsKGxvZ2dlci5sZXZlbCkgPD0gbGV2ZWwpIHtcbiAgICAgIGxldCBtZXRob2QgPSBsb2dnZXIubWV0aG9kTWFwW2xldmVsXTtcbiAgICAgIGlmICghY29uc29sZVttZXRob2RdKSB7ICAgLy8gZXNsaW50LWRpc2FibGUtbGluZSBuby1jb25zb2xlXG4gICAgICAgIG1ldGhvZCA9ICdsb2cnO1xuICAgICAgfVxuICAgICAgY29uc29sZVttZXRob2RdKC4uLm1lc3NhZ2UpOyAgICAvLyBlc2xpbnQtZGlzYWJsZS1saW5lIG5vLWNvbnNvbGVcbiAgICB9XG4gIH1cbn07XG5cbmV4cG9ydCBkZWZhdWx0IGxvZ2dlcjtcbiJdfQ==\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/logger.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/no-conflict.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/no-conflict.js ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("/* WEBPACK VAR INJECTION */(function(global) {/* global window */\n\n\nexports.__esModule = true;\n\nexports['default'] = function (Handlebars) {\n  /* istanbul ignore next */\n  var root = typeof global !== 'undefined' ? global : window,\n      $Handlebars = root.Handlebars;\n  /* istanbul ignore next */\n  Handlebars.noConflict = function () {\n    if (root.Handlebars === Handlebars) {\n      root.Handlebars = $Handlebars;\n    }\n    return Handlebars;\n  };\n};\n\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL25vLWNvbmZsaWN0LmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7O3FCQUNlLFVBQVMsVUFBVSxFQUFFOztBQUVsQyxNQUFJLElBQUksR0FBRyxPQUFPLE1BQU0sS0FBSyxXQUFXLEdBQUcsTUFBTSxHQUFHLE1BQU07TUFDdEQsV0FBVyxHQUFHLElBQUksQ0FBQyxVQUFVLENBQUM7O0FBRWxDLFlBQVUsQ0FBQyxVQUFVLEdBQUcsWUFBVztBQUNqQyxRQUFJLElBQUksQ0FBQyxVQUFVLEtBQUssVUFBVSxFQUFFO0FBQ2xDLFVBQUksQ0FBQyxVQUFVLEdBQUcsV0FBVyxDQUFDO0tBQy9CO0FBQ0QsV0FBTyxVQUFVLENBQUM7R0FDbkIsQ0FBQztDQUNIIiwiZmlsZSI6Im5vLWNvbmZsaWN0LmpzIiwic291cmNlc0NvbnRlbnQiOlsiLyogZ2xvYmFsIHdpbmRvdyAqL1xuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oSGFuZGxlYmFycykge1xuICAvKiBpc3RhbmJ1bCBpZ25vcmUgbmV4dCAqL1xuICBsZXQgcm9vdCA9IHR5cGVvZiBnbG9iYWwgIT09ICd1bmRlZmluZWQnID8gZ2xvYmFsIDogd2luZG93LFxuICAgICAgJEhhbmRsZWJhcnMgPSByb290LkhhbmRsZWJhcnM7XG4gIC8qIGlzdGFuYnVsIGlnbm9yZSBuZXh0ICovXG4gIEhhbmRsZWJhcnMubm9Db25mbGljdCA9IGZ1bmN0aW9uKCkge1xuICAgIGlmIChyb290LkhhbmRsZWJhcnMgPT09IEhhbmRsZWJhcnMpIHtcbiAgICAgIHJvb3QuSGFuZGxlYmFycyA9ICRIYW5kbGViYXJzO1xuICAgIH1cbiAgICByZXR1cm4gSGFuZGxlYmFycztcbiAgfTtcbn1cbiJdfQ==\n\n/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../../webpack/buildin/global.js */ \"./node_modules/webpack/buildin/global.js\")))\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/no-conflict.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/runtime.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/runtime.js ***!
+  \****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\nexports.checkRevision = checkRevision;\nexports.template = template;\nexports.wrapProgram = wrapProgram;\nexports.resolvePartial = resolvePartial;\nexports.invokePartial = invokePartial;\nexports.noop = noop;\n// istanbul ignore next\n\nfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }\n\n// istanbul ignore next\n\nfunction _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }\n\nvar _utils = __webpack_require__(/*! ./utils */ \"./node_modules/handlebars/dist/cjs/handlebars/utils.js\");\n\nvar Utils = _interopRequireWildcard(_utils);\n\nvar _exception = __webpack_require__(/*! ./exception */ \"./node_modules/handlebars/dist/cjs/handlebars/exception.js\");\n\nvar _exception2 = _interopRequireDefault(_exception);\n\nvar _base = __webpack_require__(/*! ./base */ \"./node_modules/handlebars/dist/cjs/handlebars/base.js\");\n\nfunction checkRevision(compilerInfo) {\n  var compilerRevision = compilerInfo && compilerInfo[0] || 1,\n      currentRevision = _base.COMPILER_REVISION;\n\n  if (compilerRevision !== currentRevision) {\n    if (compilerRevision < currentRevision) {\n      var runtimeVersions = _base.REVISION_CHANGES[currentRevision],\n          compilerVersions = _base.REVISION_CHANGES[compilerRevision];\n      throw new _exception2['default']('Template was precompiled with an older version of Handlebars than the current runtime. ' + 'Please update your precompiler to a newer version (' + runtimeVersions + ') or downgrade your runtime to an older version (' + compilerVersions + ').');\n    } else {\n      // Use the embedded version info since the runtime doesn't know about this revision yet\n      throw new _exception2['default']('Template was precompiled with a newer version of Handlebars than the current runtime. ' + 'Please update your runtime to a newer version (' + compilerInfo[1] + ').');\n    }\n  }\n}\n\nfunction template(templateSpec, env) {\n  /* istanbul ignore next */\n  if (!env) {\n    throw new _exception2['default']('No environment passed to template');\n  }\n  if (!templateSpec || !templateSpec.main) {\n    throw new _exception2['default']('Unknown template object: ' + typeof templateSpec);\n  }\n\n  templateSpec.main.decorator = templateSpec.main_d;\n\n  // Note: Using env.VM references rather than local var references throughout this section to allow\n  // for external users to override these as psuedo-supported APIs.\n  env.VM.checkRevision(templateSpec.compiler);\n\n  function invokePartialWrapper(partial, context, options) {\n    if (options.hash) {\n      context = Utils.extend({}, context, options.hash);\n      if (options.ids) {\n        options.ids[0] = true;\n      }\n    }\n\n    partial = env.VM.resolvePartial.call(this, partial, context, options);\n    var result = env.VM.invokePartial.call(this, partial, context, options);\n\n    if (result == null && env.compile) {\n      options.partials[options.name] = env.compile(partial, templateSpec.compilerOptions, env);\n      result = options.partials[options.name](context, options);\n    }\n    if (result != null) {\n      if (options.indent) {\n        var lines = result.split('\\n');\n        for (var i = 0, l = lines.length; i < l; i++) {\n          if (!lines[i] && i + 1 === l) {\n            break;\n          }\n\n          lines[i] = options.indent + lines[i];\n        }\n        result = lines.join('\\n');\n      }\n      return result;\n    } else {\n      throw new _exception2['default']('The partial ' + options.name + ' could not be compiled when running in runtime-only mode');\n    }\n  }\n\n  // Just add water\n  var container = {\n    strict: function strict(obj, name) {\n      if (!(name in obj)) {\n        throw new _exception2['default']('\"' + name + '\" not defined in ' + obj);\n      }\n      return obj[name];\n    },\n    lookup: function lookup(depths, name) {\n      var len = depths.length;\n      for (var i = 0; i < len; i++) {\n        if (depths[i] && depths[i][name] != null) {\n          return depths[i][name];\n        }\n      }\n    },\n    lambda: function lambda(current, context) {\n      return typeof current === 'function' ? current.call(context) : current;\n    },\n\n    escapeExpression: Utils.escapeExpression,\n    invokePartial: invokePartialWrapper,\n\n    fn: function fn(i) {\n      var ret = templateSpec[i];\n      ret.decorator = templateSpec[i + '_d'];\n      return ret;\n    },\n\n    programs: [],\n    program: function program(i, data, declaredBlockParams, blockParams, depths) {\n      var programWrapper = this.programs[i],\n          fn = this.fn(i);\n      if (data || depths || blockParams || declaredBlockParams) {\n        programWrapper = wrapProgram(this, i, fn, data, declaredBlockParams, blockParams, depths);\n      } else if (!programWrapper) {\n        programWrapper = this.programs[i] = wrapProgram(this, i, fn);\n      }\n      return programWrapper;\n    },\n\n    data: function data(value, depth) {\n      while (value && depth--) {\n        value = value._parent;\n      }\n      return value;\n    },\n    merge: function merge(param, common) {\n      var obj = param || common;\n\n      if (param && common && param !== common) {\n        obj = Utils.extend({}, common, param);\n      }\n\n      return obj;\n    },\n    // An empty object to use as replacement for null-contexts\n    nullContext: Object.seal({}),\n\n    noop: env.VM.noop,\n    compilerInfo: templateSpec.compiler\n  };\n\n  function ret(context) {\n    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];\n\n    var data = options.data;\n\n    ret._setup(options);\n    if (!options.partial && templateSpec.useData) {\n      data = initData(context, data);\n    }\n    var depths = undefined,\n        blockParams = templateSpec.useBlockParams ? [] : undefined;\n    if (templateSpec.useDepths) {\n      if (options.depths) {\n        depths = context != options.depths[0] ? [context].concat(options.depths) : options.depths;\n      } else {\n        depths = [context];\n      }\n    }\n\n    function main(context /*, options*/) {\n      return '' + templateSpec.main(container, context, container.helpers, container.partials, data, blockParams, depths);\n    }\n    main = executeDecorators(templateSpec.main, main, container, options.depths || [], data, blockParams);\n    return main(context, options);\n  }\n  ret.isTop = true;\n\n  ret._setup = function (options) {\n    if (!options.partial) {\n      container.helpers = container.merge(options.helpers, env.helpers);\n\n      if (templateSpec.usePartial) {\n        container.partials = container.merge(options.partials, env.partials);\n      }\n      if (templateSpec.usePartial || templateSpec.useDecorators) {\n        container.decorators = container.merge(options.decorators, env.decorators);\n      }\n    } else {\n      container.helpers = options.helpers;\n      container.partials = options.partials;\n      container.decorators = options.decorators;\n    }\n  };\n\n  ret._child = function (i, data, blockParams, depths) {\n    if (templateSpec.useBlockParams && !blockParams) {\n      throw new _exception2['default']('must pass block params');\n    }\n    if (templateSpec.useDepths && !depths) {\n      throw new _exception2['default']('must pass parent depths');\n    }\n\n    return wrapProgram(container, i, templateSpec[i], data, 0, blockParams, depths);\n  };\n  return ret;\n}\n\nfunction wrapProgram(container, i, fn, data, declaredBlockParams, blockParams, depths) {\n  function prog(context) {\n    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];\n\n    var currentDepths = depths;\n    if (depths && context != depths[0] && !(context === container.nullContext && depths[0] === null)) {\n      currentDepths = [context].concat(depths);\n    }\n\n    return fn(container, context, container.helpers, container.partials, options.data || data, blockParams && [options.blockParams].concat(blockParams), currentDepths);\n  }\n\n  prog = executeDecorators(fn, prog, container, depths, data, blockParams);\n\n  prog.program = i;\n  prog.depth = depths ? depths.length : 0;\n  prog.blockParams = declaredBlockParams || 0;\n  return prog;\n}\n\nfunction resolvePartial(partial, context, options) {\n  if (!partial) {\n    if (options.name === '@partial-block') {\n      partial = options.data['partial-block'];\n    } else {\n      partial = options.partials[options.name];\n    }\n  } else if (!partial.call && !options.name) {\n    // This is a dynamic partial that returned a string\n    options.name = partial;\n    partial = options.partials[partial];\n  }\n  return partial;\n}\n\nfunction invokePartial(partial, context, options) {\n  // Use the current closure context to save the partial-block if this partial\n  var currentPartialBlock = options.data && options.data['partial-block'];\n  options.partial = true;\n  if (options.ids) {\n    options.data.contextPath = options.ids[0] || options.data.contextPath;\n  }\n\n  var partialBlock = undefined;\n  if (options.fn && options.fn !== noop) {\n    (function () {\n      options.data = _base.createFrame(options.data);\n      // Wrapper function to get access to currentPartialBlock from the closure\n      var fn = options.fn;\n      partialBlock = options.data['partial-block'] = function partialBlockWrapper(context) {\n        var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];\n\n        // Restore the partial-block from the closure for the execution of the block\n        // i.e. the part inside the block of the partial call.\n        options.data = _base.createFrame(options.data);\n        options.data['partial-block'] = currentPartialBlock;\n        return fn(context, options);\n      };\n      if (fn.partials) {\n        options.partials = Utils.extend({}, options.partials, fn.partials);\n      }\n    })();\n  }\n\n  if (partial === undefined && partialBlock) {\n    partial = partialBlock;\n  }\n\n  if (partial === undefined) {\n    throw new _exception2['default']('The partial ' + options.name + ' could not be found');\n  } else if (partial instanceof Function) {\n    return partial(context, options);\n  }\n}\n\nfunction noop() {\n  return '';\n}\n\nfunction initData(context, data) {\n  if (!data || !('root' in data)) {\n    data = data ? _base.createFrame(data) : {};\n    data.root = context;\n  }\n  return data;\n}\n\nfunction executeDecorators(fn, prog, container, depths, data, blockParams) {\n  if (fn.decorator) {\n    var props = {};\n    prog = fn.decorator(prog, props, container, depths && depths[0], data, blockParams, depths);\n    Utils.extend(prog, props);\n  }\n  return prog;\n}\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL3J1bnRpbWUuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7cUJBQXVCLFNBQVM7O0lBQXBCLEtBQUs7O3lCQUNLLGFBQWE7Ozs7b0JBQzhCLFFBQVE7O0FBRWxFLFNBQVMsYUFBYSxDQUFDLFlBQVksRUFBRTtBQUMxQyxNQUFNLGdCQUFnQixHQUFHLFlBQVksSUFBSSxZQUFZLENBQUMsQ0FBQyxDQUFDLElBQUksQ0FBQztNQUN2RCxlQUFlLDBCQUFvQixDQUFDOztBQUUxQyxNQUFJLGdCQUFnQixLQUFLLGVBQWUsRUFBRTtBQUN4QyxRQUFJLGdCQUFnQixHQUFHLGVBQWUsRUFBRTtBQUN0QyxVQUFNLGVBQWUsR0FBRyx1QkFBaUIsZUFBZSxDQUFDO1VBQ25ELGdCQUFnQixHQUFHLHVCQUFpQixnQkFBZ0IsQ0FBQyxDQUFDO0FBQzVELFlBQU0sMkJBQWMseUZBQXlGLEdBQ3ZHLHFEQUFxRCxHQUFHLGVBQWUsR0FBRyxtREFBbUQsR0FBRyxnQkFBZ0IsR0FBRyxJQUFJLENBQUMsQ0FBQztLQUNoSyxNQUFNOztBQUVMLFlBQU0sMkJBQWMsd0ZBQXdGLEdBQ3RHLGlEQUFpRCxHQUFHLFlBQVksQ0FBQyxDQUFDLENBQUMsR0FBRyxJQUFJLENBQUMsQ0FBQztLQUNuRjtHQUNGO0NBQ0Y7O0FBRU0sU0FBUyxRQUFRLENBQUMsWUFBWSxFQUFFLEdBQUcsRUFBRTs7QUFFMUMsTUFBSSxDQUFDLEdBQUcsRUFBRTtBQUNSLFVBQU0sMkJBQWMsbUNBQW1DLENBQUMsQ0FBQztHQUMxRDtBQUNELE1BQUksQ0FBQyxZQUFZLElBQUksQ0FBQyxZQUFZLENBQUMsSUFBSSxFQUFFO0FBQ3ZDLFVBQU0sMkJBQWMsMkJBQTJCLEdBQUcsT0FBTyxZQUFZLENBQUMsQ0FBQztHQUN4RTs7QUFFRCxjQUFZLENBQUMsSUFBSSxDQUFDLFNBQVMsR0FBRyxZQUFZLENBQUMsTUFBTSxDQUFDOzs7O0FBSWxELEtBQUcsQ0FBQyxFQUFFLENBQUMsYUFBYSxDQUFDLFlBQVksQ0FBQyxRQUFRLENBQUMsQ0FBQzs7QUFFNUMsV0FBUyxvQkFBb0IsQ0FBQyxPQUFPLEVBQUUsT0FBTyxFQUFFLE9BQU8sRUFBRTtBQUN2RCxRQUFJLE9BQU8sQ0FBQyxJQUFJLEVBQUU7QUFDaEIsYUFBTyxHQUFHLEtBQUssQ0FBQyxNQUFNLENBQUMsRUFBRSxFQUFFLE9BQU8sRUFBRSxPQUFPLENBQUMsSUFBSSxDQUFDLENBQUM7QUFDbEQsVUFBSSxPQUFPLENBQUMsR0FBRyxFQUFFO0FBQ2YsZUFBTyxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUMsR0FBRyxJQUFJLENBQUM7T0FDdkI7S0FDRjs7QUFFRCxXQUFPLEdBQUcsR0FBRyxDQUFDLEVBQUUsQ0FBQyxjQUFjLENBQUMsSUFBSSxDQUFDLElBQUksRUFBRSxPQUFPLEVBQUUsT0FBTyxFQUFFLE9BQU8sQ0FBQyxDQUFDO0FBQ3RFLFFBQUksTUFBTSxHQUFHLEdBQUcsQ0FBQyxFQUFFLENBQUMsYUFBYSxDQUFDLElBQUksQ0FBQyxJQUFJLEVBQUUsT0FBTyxFQUFFLE9BQU8sRUFBRSxPQUFPLENBQUMsQ0FBQzs7QUFFeEUsUUFBSSxNQUFNLElBQUksSUFBSSxJQUFJLEdBQUcsQ0FBQyxPQUFPLEVBQUU7QUFDakMsYUFBTyxDQUFDLFFBQVEsQ0FBQyxPQUFPLENBQUMsSUFBSSxDQUFDLEdBQUcsR0FBRyxDQUFDLE9BQU8sQ0FBQyxPQUFPLEVBQUUsWUFBWSxDQUFDLGVBQWUsRUFBRSxHQUFHLENBQUMsQ0FBQztBQUN6RixZQUFNLEdBQUcsT0FBTyxDQUFDLFFBQVEsQ0FBQyxPQUFPLENBQUMsSUFBSSxDQUFDLENBQUMsT0FBTyxFQUFFLE9BQU8sQ0FBQyxDQUFDO0tBQzNEO0FBQ0QsUUFBSSxNQUFNLElBQUksSUFBSSxFQUFFO0FBQ2xCLFVBQUksT0FBTyxDQUFDLE1BQU0sRUFBRTtBQUNsQixZQUFJLEtBQUssR0FBRyxNQUFNLENBQUMsS0FBSyxDQUFDLElBQUksQ0FBQyxDQUFDO0FBQy9CLGFBQUssSUFBSSxDQUFDLEdBQUcsQ0FBQyxFQUFFLENBQUMsR0FBRyxLQUFLLENBQUMsTUFBTSxFQUFFLENBQUMsR0FBRyxDQUFDLEVBQUUsQ0FBQyxFQUFFLEVBQUU7QUFDNUMsY0FBSSxDQUFDLEtBQUssQ0FBQyxDQUFDLENBQUMsSUFBSSxDQUFDLEdBQUcsQ0FBQyxLQUFLLENBQUMsRUFBRTtBQUM1QixrQkFBTTtXQUNQOztBQUVELGVBQUssQ0FBQyxDQUFDLENBQUMsR0FBRyxPQUFPLENBQUMsTUFBTSxHQUFHLEtBQUssQ0FBQyxDQUFDLENBQUMsQ0FBQztTQUN0QztBQUNELGNBQU0sR0FBRyxLQUFLLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQyxDQUFDO09BQzNCO0FBQ0QsYUFBTyxNQUFNLENBQUM7S0FDZixNQUFNO0FBQ0wsWUFBTSwyQkFBYyxjQUFjLEdBQUcsT0FBTyxDQUFDLElBQUksR0FBRywwREFBMEQsQ0FBQyxDQUFDO0tBQ2pIO0dBQ0Y7OztBQUdELE1BQUksU0FBUyxHQUFHO0FBQ2QsVUFBTSxFQUFFLGdCQUFTLEdBQUcsRUFBRSxJQUFJLEVBQUU7QUFDMUIsVUFBSSxFQUFFLElBQUksSUFBSSxHQUFHLENBQUEsQUFBQyxFQUFFO0FBQ2xCLGNBQU0sMkJBQWMsR0FBRyxHQUFHLElBQUksR0FBRyxtQkFBbUIsR0FBRyxHQUFHLENBQUMsQ0FBQztPQUM3RDtBQUNELGFBQU8sR0FBRyxDQUFDLElBQUksQ0FBQyxDQUFDO0tBQ2xCO0FBQ0QsVUFBTSxFQUFFLGdCQUFTLE1BQU0sRUFBRSxJQUFJLEVBQUU7QUFDN0IsVUFBTSxHQUFHLEdBQUcsTUFBTSxDQUFDLE1BQU0sQ0FBQztBQUMxQixXQUFLLElBQUksQ0FBQyxHQUFHLENBQUMsRUFBRSxDQUFDLEdBQUcsR0FBRyxFQUFFLENBQUMsRUFBRSxFQUFFO0FBQzVCLFlBQUksTUFBTSxDQUFDLENBQUMsQ0FBQyxJQUFJLE1BQU0sQ0FBQyxDQUFDLENBQUMsQ0FBQyxJQUFJLENBQUMsSUFBSSxJQUFJLEVBQUU7QUFDeEMsaUJBQU8sTUFBTSxDQUFDLENBQUMsQ0FBQyxDQUFDLElBQUksQ0FBQyxDQUFDO1NBQ3hCO09BQ0Y7S0FDRjtBQUNELFVBQU0sRUFBRSxnQkFBUyxPQUFPLEVBQUUsT0FBTyxFQUFFO0FBQ2pDLGFBQU8sT0FBTyxPQUFPLEtBQUssVUFBVSxHQUFHLE9BQU8sQ0FBQyxJQUFJLENBQUMsT0FBTyxDQUFDLEdBQUcsT0FBTyxDQUFDO0tBQ3hFOztBQUVELG9CQUFnQixFQUFFLEtBQUssQ0FBQyxnQkFBZ0I7QUFDeEMsaUJBQWEsRUFBRSxvQkFBb0I7O0FBRW5DLE1BQUUsRUFBRSxZQUFTLENBQUMsRUFBRTtBQUNkLFVBQUksR0FBRyxHQUFHLFlBQVksQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUMxQixTQUFHLENBQUMsU0FBUyxHQUFHLFlBQVksQ0FBQyxDQUFDLEdBQUcsSUFBSSxDQUFDLENBQUM7QUFDdkMsYUFBTyxHQUFHLENBQUM7S0FDWjs7QUFFRCxZQUFRLEVBQUUsRUFBRTtBQUNaLFdBQU8sRUFBRSxpQkFBUyxDQUFDLEVBQUUsSUFBSSxFQUFFLG1CQUFtQixFQUFFLFdBQVcsRUFBRSxNQUFNLEVBQUU7QUFDbkUsVUFBSSxjQUFjLEdBQUcsSUFBSSxDQUFDLFFBQVEsQ0FBQyxDQUFDLENBQUM7VUFDakMsRUFBRSxHQUFHLElBQUksQ0FBQyxFQUFFLENBQUMsQ0FBQyxDQUFDLENBQUM7QUFDcEIsVUFBSSxJQUFJLElBQUksTUFBTSxJQUFJLFdBQVcsSUFBSSxtQkFBbUIsRUFBRTtBQUN4RCxzQkFBYyxHQUFHLFdBQVcsQ0FBQyxJQUFJLEVBQUUsQ0FBQyxFQUFFLEVBQUUsRUFBRSxJQUFJLEVBQUUsbUJBQW1CLEVBQUUsV0FBVyxFQUFFLE1BQU0sQ0FBQyxDQUFDO09BQzNGLE1BQU0sSUFBSSxDQUFDLGNBQWMsRUFBRTtBQUMxQixzQkFBYyxHQUFHLElBQUksQ0FBQyxRQUFRLENBQUMsQ0FBQyxDQUFDLEdBQUcsV0FBVyxDQUFDLElBQUksRUFBRSxDQUFDLEVBQUUsRUFBRSxDQUFDLENBQUM7T0FDOUQ7QUFDRCxhQUFPLGNBQWMsQ0FBQztLQUN2Qjs7QUFFRCxRQUFJLEVBQUUsY0FBUyxLQUFLLEVBQUUsS0FBSyxFQUFFO0FBQzNCLGFBQU8sS0FBSyxJQUFJLEtBQUssRUFBRSxFQUFFO0FBQ3ZCLGFBQUssR0FBRyxLQUFLLENBQUMsT0FBTyxDQUFDO09BQ3ZCO0FBQ0QsYUFBTyxLQUFLLENBQUM7S0FDZDtBQUNELFNBQUssRUFBRSxlQUFTLEtBQUssRUFBRSxNQUFNLEVBQUU7QUFDN0IsVUFBSSxHQUFHLEdBQUcsS0FBSyxJQUFJLE1BQU0sQ0FBQzs7QUFFMUIsVUFBSSxLQUFLLElBQUksTUFBTSxJQUFLLEtBQUssS0FBSyxNQUFNLEFBQUMsRUFBRTtBQUN6QyxXQUFHLEdBQUcsS0FBSyxDQUFDLE1BQU0sQ0FBQyxFQUFFLEVBQUUsTUFBTSxFQUFFLEtBQUssQ0FBQyxDQUFDO09BQ3ZDOztBQUVELGFBQU8sR0FBRyxDQUFDO0tBQ1o7O0FBRUQsZUFBVyxFQUFFLE1BQU0sQ0FBQyxJQUFJLENBQUMsRUFBRSxDQUFDOztBQUU1QixRQUFJLEVBQUUsR0FBRyxDQUFDLEVBQUUsQ0FBQyxJQUFJO0FBQ2pCLGdCQUFZLEVBQUUsWUFBWSxDQUFDLFFBQVE7R0FDcEMsQ0FBQzs7QUFFRixXQUFTLEdBQUcsQ0FBQyxPQUFPLEVBQWdCO1FBQWQsT0FBTyx5REFBRyxFQUFFOztBQUNoQyxRQUFJLElBQUksR0FBRyxPQUFPLENBQUMsSUFBSSxDQUFDOztBQUV4QixPQUFHLENBQUMsTUFBTSxDQUFDLE9BQU8sQ0FBQyxDQUFDO0FBQ3BCLFFBQUksQ0FBQyxPQUFPLENBQUMsT0FBTyxJQUFJLFlBQVksQ0FBQyxPQUFPLEVBQUU7QUFDNUMsVUFBSSxHQUFHLFFBQVEsQ0FBQyxPQUFPLEVBQUUsSUFBSSxDQUFDLENBQUM7S0FDaEM7QUFDRCxRQUFJLE1BQU0sWUFBQTtRQUNOLFdBQVcsR0FBRyxZQUFZLENBQUMsY0FBYyxHQUFHLEVBQUUsR0FBRyxTQUFTLENBQUM7QUFDL0QsUUFBSSxZQUFZLENBQUMsU0FBUyxFQUFFO0FBQzFCLFVBQUksT0FBTyxDQUFDLE1BQU0sRUFBRTtBQUNsQixjQUFNLEdBQUcsT0FBTyxJQUFJLE9BQU8sQ0FBQyxNQUFNLENBQUMsQ0FBQyxDQUFDLEdBQUcsQ0FBQyxPQUFPLENBQUMsQ0FBQyxNQUFNLENBQUMsT0FBTyxDQUFDLE1BQU0sQ0FBQyxHQUFHLE9BQU8sQ0FBQyxNQUFNLENBQUM7T0FDM0YsTUFBTTtBQUNMLGNBQU0sR0FBRyxDQUFDLE9BQU8sQ0FBQyxDQUFDO09BQ3BCO0tBQ0Y7O0FBRUQsYUFBUyxJQUFJLENBQUMsT0FBTyxnQkFBZTtBQUNsQyxhQUFPLEVBQUUsR0FBRyxZQUFZLENBQUMsSUFBSSxDQUFDLFNBQVMsRUFBRSxPQUFPLEVBQUUsU0FBUyxDQUFDLE9BQU8sRUFBRSxTQUFTLENBQUMsUUFBUSxFQUFFLElBQUksRUFBRSxXQUFXLEVBQUUsTUFBTSxDQUFDLENBQUM7S0FDckg7QUFDRCxRQUFJLEdBQUcsaUJBQWlCLENBQUMsWUFBWSxDQUFDLElBQUksRUFBRSxJQUFJLEVBQUUsU0FBUyxFQUFFLE9BQU8sQ0FBQyxNQUFNLElBQUksRUFBRSxFQUFFLElBQUksRUFBRSxXQUFXLENBQUMsQ0FBQztBQUN0RyxXQUFPLElBQUksQ0FBQyxPQUFPLEVBQUUsT0FBTyxDQUFDLENBQUM7R0FDL0I7QUFDRCxLQUFHLENBQUMsS0FBSyxHQUFHLElBQUksQ0FBQzs7QUFFakIsS0FBRyxDQUFDLE1BQU0sR0FBRyxVQUFTLE9BQU8sRUFBRTtBQUM3QixRQUFJLENBQUMsT0FBTyxDQUFDLE9BQU8sRUFBRTtBQUNwQixlQUFTLENBQUMsT0FBTyxHQUFHLFNBQVMsQ0FBQyxLQUFLLENBQUMsT0FBTyxDQUFDLE9BQU8sRUFBRSxHQUFHLENBQUMsT0FBTyxDQUFDLENBQUM7O0FBRWxFLFVBQUksWUFBWSxDQUFDLFVBQVUsRUFBRTtBQUMzQixpQkFBUyxDQUFDLFFBQVEsR0FBRyxTQUFTLENBQUMsS0FBSyxDQUFDLE9BQU8sQ0FBQyxRQUFRLEVBQUUsR0FBRyxDQUFDLFFBQVEsQ0FBQyxDQUFDO09BQ3RFO0FBQ0QsVUFBSSxZQUFZLENBQUMsVUFBVSxJQUFJLFlBQVksQ0FBQyxhQUFhLEVBQUU7QUFDekQsaUJBQVMsQ0FBQyxVQUFVLEdBQUcsU0FBUyxDQUFDLEtBQUssQ0FBQyxPQUFPLENBQUMsVUFBVSxFQUFFLEdBQUcsQ0FBQyxVQUFVLENBQUMsQ0FBQztPQUM1RTtLQUNGLE1BQU07QUFDTCxlQUFTLENBQUMsT0FBTyxHQUFHLE9BQU8sQ0FBQyxPQUFPLENBQUM7QUFDcEMsZUFBUyxDQUFDLFFBQVEsR0FBRyxPQUFPLENBQUMsUUFBUSxDQUFDO0FBQ3RDLGVBQVMsQ0FBQyxVQUFVLEdBQUcsT0FBTyxDQUFDLFVBQVUsQ0FBQztLQUMzQztHQUNGLENBQUM7O0FBRUYsS0FBRyxDQUFDLE1BQU0sR0FBRyxVQUFTLENBQUMsRUFBRSxJQUFJLEVBQUUsV0FBVyxFQUFFLE1BQU0sRUFBRTtBQUNsRCxRQUFJLFlBQVksQ0FBQyxjQUFjLElBQUksQ0FBQyxXQUFXLEVBQUU7QUFDL0MsWUFBTSwyQkFBYyx3QkFBd0IsQ0FBQyxDQUFDO0tBQy9DO0FBQ0QsUUFBSSxZQUFZLENBQUMsU0FBUyxJQUFJLENBQUMsTUFBTSxFQUFFO0FBQ3JDLFlBQU0sMkJBQWMseUJBQXlCLENBQUMsQ0FBQztLQUNoRDs7QUFFRCxXQUFPLFdBQVcsQ0FBQyxTQUFTLEVBQUUsQ0FBQyxFQUFFLFlBQVksQ0FBQyxDQUFDLENBQUMsRUFBRSxJQUFJLEVBQUUsQ0FBQyxFQUFFLFdBQVcsRUFBRSxNQUFNLENBQUMsQ0FBQztHQUNqRixDQUFDO0FBQ0YsU0FBTyxHQUFHLENBQUM7Q0FDWjs7QUFFTSxTQUFTLFdBQVcsQ0FBQyxTQUFTLEVBQUUsQ0FBQyxFQUFFLEVBQUUsRUFBRSxJQUFJLEVBQUUsbUJBQW1CLEVBQUUsV0FBVyxFQUFFLE1BQU0sRUFBRTtBQUM1RixXQUFTLElBQUksQ0FBQyxPQUFPLEVBQWdCO1FBQWQsT0FBTyx5REFBRyxFQUFFOztBQUNqQyxRQUFJLGFBQWEsR0FBRyxNQUFNLENBQUM7QUFDM0IsUUFBSSxNQUFNLElBQUksT0FBTyxJQUFJLE1BQU0sQ0FBQyxDQUFDLENBQUMsSUFBSSxFQUFFLE9BQU8sS0FBSyxTQUFTLENBQUMsV0FBVyxJQUFJLE1BQU0sQ0FBQyxDQUFDLENBQUMsS0FBSyxJQUFJLENBQUEsQUFBQyxFQUFFO0FBQ2hHLG1CQUFhLEdBQUcsQ0FBQyxPQUFPLENBQUMsQ0FBQyxNQUFNLENBQUMsTUFBTSxDQUFDLENBQUM7S0FDMUM7O0FBRUQsV0FBTyxFQUFFLENBQUMsU0FBUyxFQUNmLE9BQU8sRUFDUCxTQUFTLENBQUMsT0FBTyxFQUFFLFNBQVMsQ0FBQyxRQUFRLEVBQ3JDLE9BQU8sQ0FBQyxJQUFJLElBQUksSUFBSSxFQUNwQixXQUFXLElBQUksQ0FBQyxPQUFPLENBQUMsV0FBVyxDQUFDLENBQUMsTUFBTSxDQUFDLFdBQVcsQ0FBQyxFQUN4RCxhQUFhLENBQUMsQ0FBQztHQUNwQjs7QUFFRCxNQUFJLEdBQUcsaUJBQWlCLENBQUMsRUFBRSxFQUFFLElBQUksRUFBRSxTQUFTLEVBQUUsTUFBTSxFQUFFLElBQUksRUFBRSxXQUFXLENBQUMsQ0FBQzs7QUFFekUsTUFBSSxDQUFDLE9BQU8sR0FBRyxDQUFDLENBQUM7QUFDakIsTUFBSSxDQUFDLEtBQUssR0FBRyxNQUFNLEdBQUcsTUFBTSxDQUFDLE1BQU0sR0FBRyxDQUFDLENBQUM7QUFDeEMsTUFBSSxDQUFDLFdBQVcsR0FBRyxtQkFBbUIsSUFBSSxDQUFDLENBQUM7QUFDNUMsU0FBTyxJQUFJLENBQUM7Q0FDYjs7QUFFTSxTQUFTLGNBQWMsQ0FBQyxPQUFPLEVBQUUsT0FBTyxFQUFFLE9BQU8sRUFBRTtBQUN4RCxNQUFJLENBQUMsT0FBTyxFQUFFO0FBQ1osUUFBSSxPQUFPLENBQUMsSUFBSSxLQUFLLGdCQUFnQixFQUFFO0FBQ3JDLGFBQU8sR0FBRyxPQUFPLENBQUMsSUFBSSxDQUFDLGVBQWUsQ0FBQyxDQUFDO0tBQ3pDLE1BQU07QUFDTCxhQUFPLEdBQUcsT0FBTyxDQUFDLFFBQVEsQ0FBQyxPQUFPLENBQUMsSUFBSSxDQUFDLENBQUM7S0FDMUM7R0FDRixNQUFNLElBQUksQ0FBQyxPQUFPLENBQUMsSUFBSSxJQUFJLENBQUMsT0FBTyxDQUFDLElBQUksRUFBRTs7QUFFekMsV0FBTyxDQUFDLElBQUksR0FBRyxPQUFPLENBQUM7QUFDdkIsV0FBTyxHQUFHLE9BQU8sQ0FBQyxRQUFRLENBQUMsT0FBTyxDQUFDLENBQUM7R0FDckM7QUFDRCxTQUFPLE9BQU8sQ0FBQztDQUNoQjs7QUFFTSxTQUFTLGFBQWEsQ0FBQyxPQUFPLEVBQUUsT0FBTyxFQUFFLE9BQU8sRUFBRTs7QUFFdkQsTUFBTSxtQkFBbUIsR0FBRyxPQUFPLENBQUMsSUFBSSxJQUFJLE9BQU8sQ0FBQyxJQUFJLENBQUMsZUFBZSxDQUFDLENBQUM7QUFDMUUsU0FBTyxDQUFDLE9BQU8sR0FBRyxJQUFJLENBQUM7QUFDdkIsTUFBSSxPQUFPLENBQUMsR0FBRyxFQUFFO0FBQ2YsV0FBTyxDQUFDLElBQUksQ0FBQyxXQUFXLEdBQUcsT0FBTyxDQUFDLEdBQUcsQ0FBQyxDQUFDLENBQUMsSUFBSSxPQUFPLENBQUMsSUFBSSxDQUFDLFdBQVcsQ0FBQztHQUN2RTs7QUFFRCxNQUFJLFlBQVksWUFBQSxDQUFDO0FBQ2pCLE1BQUksT0FBTyxDQUFDLEVBQUUsSUFBSSxPQUFPLENBQUMsRUFBRSxLQUFLLElBQUksRUFBRTs7QUFDckMsYUFBTyxDQUFDLElBQUksR0FBRyxrQkFBWSxPQUFPLENBQUMsSUFBSSxDQUFDLENBQUM7O0FBRXpDLFVBQUksRUFBRSxHQUFHLE9BQU8sQ0FBQyxFQUFFLENBQUM7QUFDcEIsa0JBQVksR0FBRyxPQUFPLENBQUMsSUFBSSxDQUFDLGVBQWUsQ0FBQyxHQUFHLFNBQVMsbUJBQW1CLENBQUMsT0FBTyxFQUFnQjtZQUFkLE9BQU8seURBQUcsRUFBRTs7OztBQUkvRixlQUFPLENBQUMsSUFBSSxHQUFHLGtCQUFZLE9BQU8sQ0FBQyxJQUFJLENBQUMsQ0FBQztBQUN6QyxlQUFPLENBQUMsSUFBSSxDQUFDLGVBQWUsQ0FBQyxHQUFHLG1CQUFtQixDQUFDO0FBQ3BELGVBQU8sRUFBRSxDQUFDLE9BQU8sRUFBRSxPQUFPLENBQUMsQ0FBQztPQUM3QixDQUFDO0FBQ0YsVUFBSSxFQUFFLENBQUMsUUFBUSxFQUFFO0FBQ2YsZUFBTyxDQUFDLFFBQVEsR0FBRyxLQUFLLENBQUMsTUFBTSxDQUFDLEVBQUUsRUFBRSxPQUFPLENBQUMsUUFBUSxFQUFFLEVBQUUsQ0FBQyxRQUFRLENBQUMsQ0FBQztPQUNwRTs7R0FDRjs7QUFFRCxNQUFJLE9BQU8sS0FBSyxTQUFTLElBQUksWUFBWSxFQUFFO0FBQ3pDLFdBQU8sR0FBRyxZQUFZLENBQUM7R0FDeEI7O0FBRUQsTUFBSSxPQUFPLEtBQUssU0FBUyxFQUFFO0FBQ3pCLFVBQU0sMkJBQWMsY0FBYyxHQUFHLE9BQU8sQ0FBQyxJQUFJLEdBQUcscUJBQXFCLENBQUMsQ0FBQztHQUM1RSxNQUFNLElBQUksT0FBTyxZQUFZLFFBQVEsRUFBRTtBQUN0QyxXQUFPLE9BQU8sQ0FBQyxPQUFPLEVBQUUsT0FBTyxDQUFDLENBQUM7R0FDbEM7Q0FDRjs7QUFFTSxTQUFTLElBQUksR0FBRztBQUFFLFNBQU8sRUFBRSxDQUFDO0NBQUU7O0FBRXJDLFNBQVMsUUFBUSxDQUFDLE9BQU8sRUFBRSxJQUFJLEVBQUU7QUFDL0IsTUFBSSxDQUFDLElBQUksSUFBSSxFQUFFLE1BQU0sSUFBSSxJQUFJLENBQUEsQUFBQyxFQUFFO0FBQzlCLFFBQUksR0FBRyxJQUFJLEdBQUcsa0JBQVksSUFBSSxDQUFDLEdBQUcsRUFBRSxDQUFDO0FBQ3JDLFFBQUksQ0FBQyxJQUFJLEdBQUcsT0FBTyxDQUFDO0dBQ3JCO0FBQ0QsU0FBTyxJQUFJLENBQUM7Q0FDYjs7QUFFRCxTQUFTLGlCQUFpQixDQUFDLEVBQUUsRUFBRSxJQUFJLEVBQUUsU0FBUyxFQUFFLE1BQU0sRUFBRSxJQUFJLEVBQUUsV0FBVyxFQUFFO0FBQ3pFLE1BQUksRUFBRSxDQUFDLFNBQVMsRUFBRTtBQUNoQixRQUFJLEtBQUssR0FBRyxFQUFFLENBQUM7QUFDZixRQUFJLEdBQUcsRUFBRSxDQUFDLFNBQVMsQ0FBQyxJQUFJLEVBQUUsS0FBSyxFQUFFLFNBQVMsRUFBRSxNQUFNLElBQUksTUFBTSxDQUFDLENBQUMsQ0FBQyxFQUFFLElBQUksRUFBRSxXQUFXLEVBQUUsTUFBTSxDQUFDLENBQUM7QUFDNUYsU0FBSyxDQUFDLE1BQU0sQ0FBQyxJQUFJLEVBQUUsS0FBSyxDQUFDLENBQUM7R0FDM0I7QUFDRCxTQUFPLElBQUksQ0FBQztDQUNiIiwiZmlsZSI6InJ1bnRpbWUuanMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgKiBhcyBVdGlscyBmcm9tICcuL3V0aWxzJztcbmltcG9ydCBFeGNlcHRpb24gZnJvbSAnLi9leGNlcHRpb24nO1xuaW1wb3J0IHsgQ09NUElMRVJfUkVWSVNJT04sIFJFVklTSU9OX0NIQU5HRVMsIGNyZWF0ZUZyYW1lIH0gZnJvbSAnLi9iYXNlJztcblxuZXhwb3J0IGZ1bmN0aW9uIGNoZWNrUmV2aXNpb24oY29tcGlsZXJJbmZvKSB7XG4gIGNvbnN0IGNvbXBpbGVyUmV2aXNpb24gPSBjb21waWxlckluZm8gJiYgY29tcGlsZXJJbmZvWzBdIHx8IDEsXG4gICAgICAgIGN1cnJlbnRSZXZpc2lvbiA9IENPTVBJTEVSX1JFVklTSU9OO1xuXG4gIGlmIChjb21waWxlclJldmlzaW9uICE9PSBjdXJyZW50UmV2aXNpb24pIHtcbiAgICBpZiAoY29tcGlsZXJSZXZpc2lvbiA8IGN1cnJlbnRSZXZpc2lvbikge1xuICAgICAgY29uc3QgcnVudGltZVZlcnNpb25zID0gUkVWSVNJT05fQ0hBTkdFU1tjdXJyZW50UmV2aXNpb25dLFxuICAgICAgICAgICAgY29tcGlsZXJWZXJzaW9ucyA9IFJFVklTSU9OX0NIQU5HRVNbY29tcGlsZXJSZXZpc2lvbl07XG4gICAgICB0aHJvdyBuZXcgRXhjZXB0aW9uKCdUZW1wbGF0ZSB3YXMgcHJlY29tcGlsZWQgd2l0aCBhbiBvbGRlciB2ZXJzaW9uIG9mIEhhbmRsZWJhcnMgdGhhbiB0aGUgY3VycmVudCBydW50aW1lLiAnICtcbiAgICAgICAgICAgICdQbGVhc2UgdXBkYXRlIHlvdXIgcHJlY29tcGlsZXIgdG8gYSBuZXdlciB2ZXJzaW9uICgnICsgcnVudGltZVZlcnNpb25zICsgJykgb3IgZG93bmdyYWRlIHlvdXIgcnVudGltZSB0byBhbiBvbGRlciB2ZXJzaW9uICgnICsgY29tcGlsZXJWZXJzaW9ucyArICcpLicpO1xuICAgIH0gZWxzZSB7XG4gICAgICAvLyBVc2UgdGhlIGVtYmVkZGVkIHZlcnNpb24gaW5mbyBzaW5jZSB0aGUgcnVudGltZSBkb2Vzbid0IGtub3cgYWJvdXQgdGhpcyByZXZpc2lvbiB5ZXRcbiAgICAgIHRocm93IG5ldyBFeGNlcHRpb24oJ1RlbXBsYXRlIHdhcyBwcmVjb21waWxlZCB3aXRoIGEgbmV3ZXIgdmVyc2lvbiBvZiBIYW5kbGViYXJzIHRoYW4gdGhlIGN1cnJlbnQgcnVudGltZS4gJyArXG4gICAgICAgICAgICAnUGxlYXNlIHVwZGF0ZSB5b3VyIHJ1bnRpbWUgdG8gYSBuZXdlciB2ZXJzaW9uICgnICsgY29tcGlsZXJJbmZvWzFdICsgJykuJyk7XG4gICAgfVxuICB9XG59XG5cbmV4cG9ydCBmdW5jdGlvbiB0ZW1wbGF0ZSh0ZW1wbGF0ZVNwZWMsIGVudikge1xuICAvKiBpc3RhbmJ1bCBpZ25vcmUgbmV4dCAqL1xuICBpZiAoIWVudikge1xuICAgIHRocm93IG5ldyBFeGNlcHRpb24oJ05vIGVudmlyb25tZW50IHBhc3NlZCB0byB0ZW1wbGF0ZScpO1xuICB9XG4gIGlmICghdGVtcGxhdGVTcGVjIHx8ICF0ZW1wbGF0ZVNwZWMubWFpbikge1xuICAgIHRocm93IG5ldyBFeGNlcHRpb24oJ1Vua25vd24gdGVtcGxhdGUgb2JqZWN0OiAnICsgdHlwZW9mIHRlbXBsYXRlU3BlYyk7XG4gIH1cblxuICB0ZW1wbGF0ZVNwZWMubWFpbi5kZWNvcmF0b3IgPSB0ZW1wbGF0ZVNwZWMubWFpbl9kO1xuXG4gIC8vIE5vdGU6IFVzaW5nIGVudi5WTSByZWZlcmVuY2VzIHJhdGhlciB0aGFuIGxvY2FsIHZhciByZWZlcmVuY2VzIHRocm91Z2hvdXQgdGhpcyBzZWN0aW9uIHRvIGFsbG93XG4gIC8vIGZvciBleHRlcm5hbCB1c2VycyB0byBvdmVycmlkZSB0aGVzZSBhcyBwc3VlZG8tc3VwcG9ydGVkIEFQSXMuXG4gIGVudi5WTS5jaGVja1JldmlzaW9uKHRlbXBsYXRlU3BlYy5jb21waWxlcik7XG5cbiAgZnVuY3Rpb24gaW52b2tlUGFydGlhbFdyYXBwZXIocGFydGlhbCwgY29udGV4dCwgb3B0aW9ucykge1xuICAgIGlmIChvcHRpb25zLmhhc2gpIHtcbiAgICAgIGNvbnRleHQgPSBVdGlscy5leHRlbmQoe30sIGNvbnRleHQsIG9wdGlvbnMuaGFzaCk7XG4gICAgICBpZiAob3B0aW9ucy5pZHMpIHtcbiAgICAgICAgb3B0aW9ucy5pZHNbMF0gPSB0cnVlO1xuICAgICAgfVxuICAgIH1cblxuICAgIHBhcnRpYWwgPSBlbnYuVk0ucmVzb2x2ZVBhcnRpYWwuY2FsbCh0aGlzLCBwYXJ0aWFsLCBjb250ZXh0LCBvcHRpb25zKTtcbiAgICBsZXQgcmVzdWx0ID0gZW52LlZNLmludm9rZVBhcnRpYWwuY2FsbCh0aGlzLCBwYXJ0aWFsLCBjb250ZXh0LCBvcHRpb25zKTtcblxuICAgIGlmIChyZXN1bHQgPT0gbnVsbCAmJiBlbnYuY29tcGlsZSkge1xuICAgICAgb3B0aW9ucy5wYXJ0aWFsc1tvcHRpb25zLm5hbWVdID0gZW52LmNvbXBpbGUocGFydGlhbCwgdGVtcGxhdGVTcGVjLmNvbXBpbGVyT3B0aW9ucywgZW52KTtcbiAgICAgIHJlc3VsdCA9IG9wdGlvbnMucGFydGlhbHNbb3B0aW9ucy5uYW1lXShjb250ZXh0LCBvcHRpb25zKTtcbiAgICB9XG4gICAgaWYgKHJlc3VsdCAhPSBudWxsKSB7XG4gICAgICBpZiAob3B0aW9ucy5pbmRlbnQpIHtcbiAgICAgICAgbGV0IGxpbmVzID0gcmVzdWx0LnNwbGl0KCdcXG4nKTtcbiAgICAgICAgZm9yIChsZXQgaSA9IDAsIGwgPSBsaW5lcy5sZW5ndGg7IGkgPCBsOyBpKyspIHtcbiAgICAgICAgICBpZiAoIWxpbmVzW2ldICYmIGkgKyAxID09PSBsKSB7XG4gICAgICAgICAgICBicmVhaztcbiAgICAgICAgICB9XG5cbiAgICAgICAgICBsaW5lc1tpXSA9IG9wdGlvbnMuaW5kZW50ICsgbGluZXNbaV07XG4gICAgICAgIH1cbiAgICAgICAgcmVzdWx0ID0gbGluZXMuam9pbignXFxuJyk7XG4gICAgICB9XG4gICAgICByZXR1cm4gcmVzdWx0O1xuICAgIH0gZWxzZSB7XG4gICAgICB0aHJvdyBuZXcgRXhjZXB0aW9uKCdUaGUgcGFydGlhbCAnICsgb3B0aW9ucy5uYW1lICsgJyBjb3VsZCBub3QgYmUgY29tcGlsZWQgd2hlbiBydW5uaW5nIGluIHJ1bnRpbWUtb25seSBtb2RlJyk7XG4gICAgfVxuICB9XG5cbiAgLy8gSnVzdCBhZGQgd2F0ZXJcbiAgbGV0IGNvbnRhaW5lciA9IHtcbiAgICBzdHJpY3Q6IGZ1bmN0aW9uKG9iaiwgbmFtZSkge1xuICAgICAgaWYgKCEobmFtZSBpbiBvYmopKSB7XG4gICAgICAgIHRocm93IG5ldyBFeGNlcHRpb24oJ1wiJyArIG5hbWUgKyAnXCIgbm90IGRlZmluZWQgaW4gJyArIG9iaik7XG4gICAgICB9XG4gICAgICByZXR1cm4gb2JqW25hbWVdO1xuICAgIH0sXG4gICAgbG9va3VwOiBmdW5jdGlvbihkZXB0aHMsIG5hbWUpIHtcbiAgICAgIGNvbnN0IGxlbiA9IGRlcHRocy5sZW5ndGg7XG4gICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGxlbjsgaSsrKSB7XG4gICAgICAgIGlmIChkZXB0aHNbaV0gJiYgZGVwdGhzW2ldW25hbWVdICE9IG51bGwpIHtcbiAgICAgICAgICByZXR1cm4gZGVwdGhzW2ldW25hbWVdO1xuICAgICAgICB9XG4gICAgICB9XG4gICAgfSxcbiAgICBsYW1iZGE6IGZ1bmN0aW9uKGN1cnJlbnQsIGNvbnRleHQpIHtcbiAgICAgIHJldHVybiB0eXBlb2YgY3VycmVudCA9PT0gJ2Z1bmN0aW9uJyA/IGN1cnJlbnQuY2FsbChjb250ZXh0KSA6IGN1cnJlbnQ7XG4gICAgfSxcblxuICAgIGVzY2FwZUV4cHJlc3Npb246IFV0aWxzLmVzY2FwZUV4cHJlc3Npb24sXG4gICAgaW52b2tlUGFydGlhbDogaW52b2tlUGFydGlhbFdyYXBwZXIsXG5cbiAgICBmbjogZnVuY3Rpb24oaSkge1xuICAgICAgbGV0IHJldCA9IHRlbXBsYXRlU3BlY1tpXTtcbiAgICAgIHJldC5kZWNvcmF0b3IgPSB0ZW1wbGF0ZVNwZWNbaSArICdfZCddO1xuICAgICAgcmV0dXJuIHJldDtcbiAgICB9LFxuXG4gICAgcHJvZ3JhbXM6IFtdLFxuICAgIHByb2dyYW06IGZ1bmN0aW9uKGksIGRhdGEsIGRlY2xhcmVkQmxvY2tQYXJhbXMsIGJsb2NrUGFyYW1zLCBkZXB0aHMpIHtcbiAgICAgIGxldCBwcm9ncmFtV3JhcHBlciA9IHRoaXMucHJvZ3JhbXNbaV0sXG4gICAgICAgICAgZm4gPSB0aGlzLmZuKGkpO1xuICAgICAgaWYgKGRhdGEgfHwgZGVwdGhzIHx8IGJsb2NrUGFyYW1zIHx8IGRlY2xhcmVkQmxvY2tQYXJhbXMpIHtcbiAgICAgICAgcHJvZ3JhbVdyYXBwZXIgPSB3cmFwUHJvZ3JhbSh0aGlzLCBpLCBmbiwgZGF0YSwgZGVjbGFyZWRCbG9ja1BhcmFtcywgYmxvY2tQYXJhbXMsIGRlcHRocyk7XG4gICAgICB9IGVsc2UgaWYgKCFwcm9ncmFtV3JhcHBlcikge1xuICAgICAgICBwcm9ncmFtV3JhcHBlciA9IHRoaXMucHJvZ3JhbXNbaV0gPSB3cmFwUHJvZ3JhbSh0aGlzLCBpLCBmbik7XG4gICAgICB9XG4gICAgICByZXR1cm4gcHJvZ3JhbVdyYXBwZXI7XG4gICAgfSxcblxuICAgIGRhdGE6IGZ1bmN0aW9uKHZhbHVlLCBkZXB0aCkge1xuICAgICAgd2hpbGUgKHZhbHVlICYmIGRlcHRoLS0pIHtcbiAgICAgICAgdmFsdWUgPSB2YWx1ZS5fcGFyZW50O1xuICAgICAgfVxuICAgICAgcmV0dXJuIHZhbHVlO1xuICAgIH0sXG4gICAgbWVyZ2U6IGZ1bmN0aW9uKHBhcmFtLCBjb21tb24pIHtcbiAgICAgIGxldCBvYmogPSBwYXJhbSB8fCBjb21tb247XG5cbiAgICAgIGlmIChwYXJhbSAmJiBjb21tb24gJiYgKHBhcmFtICE9PSBjb21tb24pKSB7XG4gICAgICAgIG9iaiA9IFV0aWxzLmV4dGVuZCh7fSwgY29tbW9uLCBwYXJhbSk7XG4gICAgICB9XG5cbiAgICAgIHJldHVybiBvYmo7XG4gICAgfSxcbiAgICAvLyBBbiBlbXB0eSBvYmplY3QgdG8gdXNlIGFzIHJlcGxhY2VtZW50IGZvciBudWxsLWNvbnRleHRzXG4gICAgbnVsbENvbnRleHQ6IE9iamVjdC5zZWFsKHt9KSxcblxuICAgIG5vb3A6IGVudi5WTS5ub29wLFxuICAgIGNvbXBpbGVySW5mbzogdGVtcGxhdGVTcGVjLmNvbXBpbGVyXG4gIH07XG5cbiAgZnVuY3Rpb24gcmV0KGNvbnRleHQsIG9wdGlvbnMgPSB7fSkge1xuICAgIGxldCBkYXRhID0gb3B0aW9ucy5kYXRhO1xuXG4gICAgcmV0Ll9zZXR1cChvcHRpb25zKTtcbiAgICBpZiAoIW9wdGlvbnMucGFydGlhbCAmJiB0ZW1wbGF0ZVNwZWMudXNlRGF0YSkge1xuICAgICAgZGF0YSA9IGluaXREYXRhKGNvbnRleHQsIGRhdGEpO1xuICAgIH1cbiAgICBsZXQgZGVwdGhzLFxuICAgICAgICBibG9ja1BhcmFtcyA9IHRlbXBsYXRlU3BlYy51c2VCbG9ja1BhcmFtcyA/IFtdIDogdW5kZWZpbmVkO1xuICAgIGlmICh0ZW1wbGF0ZVNwZWMudXNlRGVwdGhzKSB7XG4gICAgICBpZiAob3B0aW9ucy5kZXB0aHMpIHtcbiAgICAgICAgZGVwdGhzID0gY29udGV4dCAhPSBvcHRpb25zLmRlcHRoc1swXSA/IFtjb250ZXh0XS5jb25jYXQob3B0aW9ucy5kZXB0aHMpIDogb3B0aW9ucy5kZXB0aHM7XG4gICAgICB9IGVsc2Uge1xuICAgICAgICBkZXB0aHMgPSBbY29udGV4dF07XG4gICAgICB9XG4gICAgfVxuXG4gICAgZnVuY3Rpb24gbWFpbihjb250ZXh0LyosIG9wdGlvbnMqLykge1xuICAgICAgcmV0dXJuICcnICsgdGVtcGxhdGVTcGVjLm1haW4oY29udGFpbmVyLCBjb250ZXh0LCBjb250YWluZXIuaGVscGVycywgY29udGFpbmVyLnBhcnRpYWxzLCBkYXRhLCBibG9ja1BhcmFtcywgZGVwdGhzKTtcbiAgICB9XG4gICAgbWFpbiA9IGV4ZWN1dGVEZWNvcmF0b3JzKHRlbXBsYXRlU3BlYy5tYWluLCBtYWluLCBjb250YWluZXIsIG9wdGlvbnMuZGVwdGhzIHx8IFtdLCBkYXRhLCBibG9ja1BhcmFtcyk7XG4gICAgcmV0dXJuIG1haW4oY29udGV4dCwgb3B0aW9ucyk7XG4gIH1cbiAgcmV0LmlzVG9wID0gdHJ1ZTtcblxuICByZXQuX3NldHVwID0gZnVuY3Rpb24ob3B0aW9ucykge1xuICAgIGlmICghb3B0aW9ucy5wYXJ0aWFsKSB7XG4gICAgICBjb250YWluZXIuaGVscGVycyA9IGNvbnRhaW5lci5tZXJnZShvcHRpb25zLmhlbHBlcnMsIGVudi5oZWxwZXJzKTtcblxuICAgICAgaWYgKHRlbXBsYXRlU3BlYy51c2VQYXJ0aWFsKSB7XG4gICAgICAgIGNvbnRhaW5lci5wYXJ0aWFscyA9IGNvbnRhaW5lci5tZXJnZShvcHRpb25zLnBhcnRpYWxzLCBlbnYucGFydGlhbHMpO1xuICAgICAgfVxuICAgICAgaWYgKHRlbXBsYXRlU3BlYy51c2VQYXJ0aWFsIHx8IHRlbXBsYXRlU3BlYy51c2VEZWNvcmF0b3JzKSB7XG4gICAgICAgIGNvbnRhaW5lci5kZWNvcmF0b3JzID0gY29udGFpbmVyLm1lcmdlKG9wdGlvbnMuZGVjb3JhdG9ycywgZW52LmRlY29yYXRvcnMpO1xuICAgICAgfVxuICAgIH0gZWxzZSB7XG4gICAgICBjb250YWluZXIuaGVscGVycyA9IG9wdGlvbnMuaGVscGVycztcbiAgICAgIGNvbnRhaW5lci5wYXJ0aWFscyA9IG9wdGlvbnMucGFydGlhbHM7XG4gICAgICBjb250YWluZXIuZGVjb3JhdG9ycyA9IG9wdGlvbnMuZGVjb3JhdG9ycztcbiAgICB9XG4gIH07XG5cbiAgcmV0Ll9jaGlsZCA9IGZ1bmN0aW9uKGksIGRhdGEsIGJsb2NrUGFyYW1zLCBkZXB0aHMpIHtcbiAgICBpZiAodGVtcGxhdGVTcGVjLnVzZUJsb2NrUGFyYW1zICYmICFibG9ja1BhcmFtcykge1xuICAgICAgdGhyb3cgbmV3IEV4Y2VwdGlvbignbXVzdCBwYXNzIGJsb2NrIHBhcmFtcycpO1xuICAgIH1cbiAgICBpZiAodGVtcGxhdGVTcGVjLnVzZURlcHRocyAmJiAhZGVwdGhzKSB7XG4gICAgICB0aHJvdyBuZXcgRXhjZXB0aW9uKCdtdXN0IHBhc3MgcGFyZW50IGRlcHRocycpO1xuICAgIH1cblxuICAgIHJldHVybiB3cmFwUHJvZ3JhbShjb250YWluZXIsIGksIHRlbXBsYXRlU3BlY1tpXSwgZGF0YSwgMCwgYmxvY2tQYXJhbXMsIGRlcHRocyk7XG4gIH07XG4gIHJldHVybiByZXQ7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiB3cmFwUHJvZ3JhbShjb250YWluZXIsIGksIGZuLCBkYXRhLCBkZWNsYXJlZEJsb2NrUGFyYW1zLCBibG9ja1BhcmFtcywgZGVwdGhzKSB7XG4gIGZ1bmN0aW9uIHByb2coY29udGV4dCwgb3B0aW9ucyA9IHt9KSB7XG4gICAgbGV0IGN1cnJlbnREZXB0aHMgPSBkZXB0aHM7XG4gICAgaWYgKGRlcHRocyAmJiBjb250ZXh0ICE9IGRlcHRoc1swXSAmJiAhKGNvbnRleHQgPT09IGNvbnRhaW5lci5udWxsQ29udGV4dCAmJiBkZXB0aHNbMF0gPT09IG51bGwpKSB7XG4gICAgICBjdXJyZW50RGVwdGhzID0gW2NvbnRleHRdLmNvbmNhdChkZXB0aHMpO1xuICAgIH1cblxuICAgIHJldHVybiBmbihjb250YWluZXIsXG4gICAgICAgIGNvbnRleHQsXG4gICAgICAgIGNvbnRhaW5lci5oZWxwZXJzLCBjb250YWluZXIucGFydGlhbHMsXG4gICAgICAgIG9wdGlvbnMuZGF0YSB8fCBkYXRhLFxuICAgICAgICBibG9ja1BhcmFtcyAmJiBbb3B0aW9ucy5ibG9ja1BhcmFtc10uY29uY2F0KGJsb2NrUGFyYW1zKSxcbiAgICAgICAgY3VycmVudERlcHRocyk7XG4gIH1cblxuICBwcm9nID0gZXhlY3V0ZURlY29yYXRvcnMoZm4sIHByb2csIGNvbnRhaW5lciwgZGVwdGhzLCBkYXRhLCBibG9ja1BhcmFtcyk7XG5cbiAgcHJvZy5wcm9ncmFtID0gaTtcbiAgcHJvZy5kZXB0aCA9IGRlcHRocyA/IGRlcHRocy5sZW5ndGggOiAwO1xuICBwcm9nLmJsb2NrUGFyYW1zID0gZGVjbGFyZWRCbG9ja1BhcmFtcyB8fCAwO1xuICByZXR1cm4gcHJvZztcbn1cblxuZXhwb3J0IGZ1bmN0aW9uIHJlc29sdmVQYXJ0aWFsKHBhcnRpYWwsIGNvbnRleHQsIG9wdGlvbnMpIHtcbiAgaWYgKCFwYXJ0aWFsKSB7XG4gICAgaWYgKG9wdGlvbnMubmFtZSA9PT0gJ0BwYXJ0aWFsLWJsb2NrJykge1xuICAgICAgcGFydGlhbCA9IG9wdGlvbnMuZGF0YVsncGFydGlhbC1ibG9jayddO1xuICAgIH0gZWxzZSB7XG4gICAgICBwYXJ0aWFsID0gb3B0aW9ucy5wYXJ0aWFsc1tvcHRpb25zLm5hbWVdO1xuICAgIH1cbiAgfSBlbHNlIGlmICghcGFydGlhbC5jYWxsICYmICFvcHRpb25zLm5hbWUpIHtcbiAgICAvLyBUaGlzIGlzIGEgZHluYW1pYyBwYXJ0aWFsIHRoYXQgcmV0dXJuZWQgYSBzdHJpbmdcbiAgICBvcHRpb25zLm5hbWUgPSBwYXJ0aWFsO1xuICAgIHBhcnRpYWwgPSBvcHRpb25zLnBhcnRpYWxzW3BhcnRpYWxdO1xuICB9XG4gIHJldHVybiBwYXJ0aWFsO1xufVxuXG5leHBvcnQgZnVuY3Rpb24gaW52b2tlUGFydGlhbChwYXJ0aWFsLCBjb250ZXh0LCBvcHRpb25zKSB7XG4gIC8vIFVzZSB0aGUgY3VycmVudCBjbG9zdXJlIGNvbnRleHQgdG8gc2F2ZSB0aGUgcGFydGlhbC1ibG9jayBpZiB0aGlzIHBhcnRpYWxcbiAgY29uc3QgY3VycmVudFBhcnRpYWxCbG9jayA9IG9wdGlvbnMuZGF0YSAmJiBvcHRpb25zLmRhdGFbJ3BhcnRpYWwtYmxvY2snXTtcbiAgb3B0aW9ucy5wYXJ0aWFsID0gdHJ1ZTtcbiAgaWYgKG9wdGlvbnMuaWRzKSB7XG4gICAgb3B0aW9ucy5kYXRhLmNvbnRleHRQYXRoID0gb3B0aW9ucy5pZHNbMF0gfHwgb3B0aW9ucy5kYXRhLmNvbnRleHRQYXRoO1xuICB9XG5cbiAgbGV0IHBhcnRpYWxCbG9jaztcbiAgaWYgKG9wdGlvbnMuZm4gJiYgb3B0aW9ucy5mbiAhPT0gbm9vcCkge1xuICAgIG9wdGlvbnMuZGF0YSA9IGNyZWF0ZUZyYW1lKG9wdGlvbnMuZGF0YSk7XG4gICAgLy8gV3JhcHBlciBmdW5jdGlvbiB0byBnZXQgYWNjZXNzIHRvIGN1cnJlbnRQYXJ0aWFsQmxvY2sgZnJvbSB0aGUgY2xvc3VyZVxuICAgIGxldCBmbiA9IG9wdGlvbnMuZm47XG4gICAgcGFydGlhbEJsb2NrID0gb3B0aW9ucy5kYXRhWydwYXJ0aWFsLWJsb2NrJ10gPSBmdW5jdGlvbiBwYXJ0aWFsQmxvY2tXcmFwcGVyKGNvbnRleHQsIG9wdGlvbnMgPSB7fSkge1xuXG4gICAgICAvLyBSZXN0b3JlIHRoZSBwYXJ0aWFsLWJsb2NrIGZyb20gdGhlIGNsb3N1cmUgZm9yIHRoZSBleGVjdXRpb24gb2YgdGhlIGJsb2NrXG4gICAgICAvLyBpLmUuIHRoZSBwYXJ0IGluc2lkZSB0aGUgYmxvY2sgb2YgdGhlIHBhcnRpYWwgY2FsbC5cbiAgICAgIG9wdGlvbnMuZGF0YSA9IGNyZWF0ZUZyYW1lKG9wdGlvbnMuZGF0YSk7XG4gICAgICBvcHRpb25zLmRhdGFbJ3BhcnRpYWwtYmxvY2snXSA9IGN1cnJlbnRQYXJ0aWFsQmxvY2s7XG4gICAgICByZXR1cm4gZm4oY29udGV4dCwgb3B0aW9ucyk7XG4gICAgfTtcbiAgICBpZiAoZm4ucGFydGlhbHMpIHtcbiAgICAgIG9wdGlvbnMucGFydGlhbHMgPSBVdGlscy5leHRlbmQoe30sIG9wdGlvbnMucGFydGlhbHMsIGZuLnBhcnRpYWxzKTtcbiAgICB9XG4gIH1cblxuICBpZiAocGFydGlhbCA9PT0gdW5kZWZpbmVkICYmIHBhcnRpYWxCbG9jaykge1xuICAgIHBhcnRpYWwgPSBwYXJ0aWFsQmxvY2s7XG4gIH1cblxuICBpZiAocGFydGlhbCA9PT0gdW5kZWZpbmVkKSB7XG4gICAgdGhyb3cgbmV3IEV4Y2VwdGlvbignVGhlIHBhcnRpYWwgJyArIG9wdGlvbnMubmFtZSArICcgY291bGQgbm90IGJlIGZvdW5kJyk7XG4gIH0gZWxzZSBpZiAocGFydGlhbCBpbnN0YW5jZW9mIEZ1bmN0aW9uKSB7XG4gICAgcmV0dXJuIHBhcnRpYWwoY29udGV4dCwgb3B0aW9ucyk7XG4gIH1cbn1cblxuZXhwb3J0IGZ1bmN0aW9uIG5vb3AoKSB7IHJldHVybiAnJzsgfVxuXG5mdW5jdGlvbiBpbml0RGF0YShjb250ZXh0LCBkYXRhKSB7XG4gIGlmICghZGF0YSB8fCAhKCdyb290JyBpbiBkYXRhKSkge1xuICAgIGRhdGEgPSBkYXRhID8gY3JlYXRlRnJhbWUoZGF0YSkgOiB7fTtcbiAgICBkYXRhLnJvb3QgPSBjb250ZXh0O1xuICB9XG4gIHJldHVybiBkYXRhO1xufVxuXG5mdW5jdGlvbiBleGVjdXRlRGVjb3JhdG9ycyhmbiwgcHJvZywgY29udGFpbmVyLCBkZXB0aHMsIGRhdGEsIGJsb2NrUGFyYW1zKSB7XG4gIGlmIChmbi5kZWNvcmF0b3IpIHtcbiAgICBsZXQgcHJvcHMgPSB7fTtcbiAgICBwcm9nID0gZm4uZGVjb3JhdG9yKHByb2csIHByb3BzLCBjb250YWluZXIsIGRlcHRocyAmJiBkZXB0aHNbMF0sIGRhdGEsIGJsb2NrUGFyYW1zLCBkZXB0aHMpO1xuICAgIFV0aWxzLmV4dGVuZChwcm9nLCBwcm9wcyk7XG4gIH1cbiAgcmV0dXJuIHByb2c7XG59XG4iXX0=\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/runtime.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/safe-string.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/safe-string.js ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("// Build out our basic SafeString type\n\n\nexports.__esModule = true;\nfunction SafeString(string) {\n  this.string = string;\n}\n\nSafeString.prototype.toString = SafeString.prototype.toHTML = function () {\n  return '' + this.string;\n};\n\nexports['default'] = SafeString;\nmodule.exports = exports['default'];\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL3NhZmUtc3RyaW5nLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7QUFDQSxTQUFTLFVBQVUsQ0FBQyxNQUFNLEVBQUU7QUFDMUIsTUFBSSxDQUFDLE1BQU0sR0FBRyxNQUFNLENBQUM7Q0FDdEI7O0FBRUQsVUFBVSxDQUFDLFNBQVMsQ0FBQyxRQUFRLEdBQUcsVUFBVSxDQUFDLFNBQVMsQ0FBQyxNQUFNLEdBQUcsWUFBVztBQUN2RSxTQUFPLEVBQUUsR0FBRyxJQUFJLENBQUMsTUFBTSxDQUFDO0NBQ3pCLENBQUM7O3FCQUVhLFVBQVUiLCJmaWxlIjoic2FmZS1zdHJpbmcuanMiLCJzb3VyY2VzQ29udGVudCI6WyIvLyBCdWlsZCBvdXQgb3VyIGJhc2ljIFNhZmVTdHJpbmcgdHlwZVxuZnVuY3Rpb24gU2FmZVN0cmluZyhzdHJpbmcpIHtcbiAgdGhpcy5zdHJpbmcgPSBzdHJpbmc7XG59XG5cblNhZmVTdHJpbmcucHJvdG90eXBlLnRvU3RyaW5nID0gU2FmZVN0cmluZy5wcm90b3R5cGUudG9IVE1MID0gZnVuY3Rpb24oKSB7XG4gIHJldHVybiAnJyArIHRoaXMuc3RyaW5nO1xufTtcblxuZXhwb3J0IGRlZmF1bHQgU2FmZVN0cmluZztcbiJdfQ==\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/safe-string.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/dist/cjs/handlebars/utils.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/handlebars/dist/cjs/handlebars/utils.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+eval("\n\nexports.__esModule = true;\nexports.extend = extend;\nexports.indexOf = indexOf;\nexports.escapeExpression = escapeExpression;\nexports.isEmpty = isEmpty;\nexports.createFrame = createFrame;\nexports.blockParams = blockParams;\nexports.appendContextPath = appendContextPath;\nvar escape = {\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#x27;',\n  '`': '&#x60;',\n  '=': '&#x3D;'\n};\n\nvar badChars = /[&<>\"'`=]/g,\n    possible = /[&<>\"'`=]/;\n\nfunction escapeChar(chr) {\n  return escape[chr];\n}\n\nfunction extend(obj /* , ...source */) {\n  for (var i = 1; i < arguments.length; i++) {\n    for (var key in arguments[i]) {\n      if (Object.prototype.hasOwnProperty.call(arguments[i], key)) {\n        obj[key] = arguments[i][key];\n      }\n    }\n  }\n\n  return obj;\n}\n\nvar toString = Object.prototype.toString;\n\nexports.toString = toString;\n// Sourced from lodash\n// https://github.com/bestiejs/lodash/blob/master/LICENSE.txt\n/* eslint-disable func-style */\nvar isFunction = function isFunction(value) {\n  return typeof value === 'function';\n};\n// fallback for older versions of Chrome and Safari\n/* istanbul ignore next */\nif (isFunction(/x/)) {\n  exports.isFunction = isFunction = function (value) {\n    return typeof value === 'function' && toString.call(value) === '[object Function]';\n  };\n}\nexports.isFunction = isFunction;\n\n/* eslint-enable func-style */\n\n/* istanbul ignore next */\nvar isArray = Array.isArray || function (value) {\n  return value && typeof value === 'object' ? toString.call(value) === '[object Array]' : false;\n};\n\nexports.isArray = isArray;\n// Older IE versions do not directly support indexOf so we must implement our own, sadly.\n\nfunction indexOf(array, value) {\n  for (var i = 0, len = array.length; i < len; i++) {\n    if (array[i] === value) {\n      return i;\n    }\n  }\n  return -1;\n}\n\nfunction escapeExpression(string) {\n  if (typeof string !== 'string') {\n    // don't escape SafeStrings, since they're already safe\n    if (string && string.toHTML) {\n      return string.toHTML();\n    } else if (string == null) {\n      return '';\n    } else if (!string) {\n      return string + '';\n    }\n\n    // Force a string conversion as this will be done by the append regardless and\n    // the regex test will do this transparently behind the scenes, causing issues if\n    // an object's to string has escaped characters in it.\n    string = '' + string;\n  }\n\n  if (!possible.test(string)) {\n    return string;\n  }\n  return string.replace(badChars, escapeChar);\n}\n\nfunction isEmpty(value) {\n  if (!value && value !== 0) {\n    return true;\n  } else if (isArray(value) && value.length === 0) {\n    return true;\n  } else {\n    return false;\n  }\n}\n\nfunction createFrame(object) {\n  var frame = extend({}, object);\n  frame._parent = object;\n  return frame;\n}\n\nfunction blockParams(params, ids) {\n  params.path = ids;\n  return params;\n}\n\nfunction appendContextPath(contextPath, id) {\n  return (contextPath ? contextPath + '.' : '') + id;\n}\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL2xpYi9oYW5kbGViYXJzL3V0aWxzLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7QUFBQSxJQUFNLE1BQU0sR0FBRztBQUNiLEtBQUcsRUFBRSxPQUFPO0FBQ1osS0FBRyxFQUFFLE1BQU07QUFDWCxLQUFHLEVBQUUsTUFBTTtBQUNYLEtBQUcsRUFBRSxRQUFRO0FBQ2IsS0FBRyxFQUFFLFFBQVE7QUFDYixLQUFHLEVBQUUsUUFBUTtBQUNiLEtBQUcsRUFBRSxRQUFRO0NBQ2QsQ0FBQzs7QUFFRixJQUFNLFFBQVEsR0FBRyxZQUFZO0lBQ3ZCLFFBQVEsR0FBRyxXQUFXLENBQUM7O0FBRTdCLFNBQVMsVUFBVSxDQUFDLEdBQUcsRUFBRTtBQUN2QixTQUFPLE1BQU0sQ0FBQyxHQUFHLENBQUMsQ0FBQztDQUNwQjs7QUFFTSxTQUFTLE1BQU0sQ0FBQyxHQUFHLG9CQUFtQjtBQUMzQyxPQUFLLElBQUksQ0FBQyxHQUFHLENBQUMsRUFBRSxDQUFDLEdBQUcsU0FBUyxDQUFDLE1BQU0sRUFBRSxDQUFDLEVBQUUsRUFBRTtBQUN6QyxTQUFLLElBQUksR0FBRyxJQUFJLFNBQVMsQ0FBQyxDQUFDLENBQUMsRUFBRTtBQUM1QixVQUFJLE1BQU0sQ0FBQyxTQUFTLENBQUMsY0FBYyxDQUFDLElBQUksQ0FBQyxTQUFTLENBQUMsQ0FBQyxDQUFDLEVBQUUsR0FBRyxDQUFDLEVBQUU7QUFDM0QsV0FBRyxDQUFDLEdBQUcsQ0FBQyxHQUFHLFNBQVMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxHQUFHLENBQUMsQ0FBQztPQUM5QjtLQUNGO0dBQ0Y7O0FBRUQsU0FBTyxHQUFHLENBQUM7Q0FDWjs7QUFFTSxJQUFJLFFBQVEsR0FBRyxNQUFNLENBQUMsU0FBUyxDQUFDLFFBQVEsQ0FBQzs7Ozs7O0FBS2hELElBQUksVUFBVSxHQUFHLG9CQUFTLEtBQUssRUFBRTtBQUMvQixTQUFPLE9BQU8sS0FBSyxLQUFLLFVBQVUsQ0FBQztDQUNwQyxDQUFDOzs7QUFHRixJQUFJLFVBQVUsQ0FBQyxHQUFHLENBQUMsRUFBRTtBQUNuQixVQUlNLFVBQVUsR0FKaEIsVUFBVSxHQUFHLFVBQVMsS0FBSyxFQUFFO0FBQzNCLFdBQU8sT0FBTyxLQUFLLEtBQUssVUFBVSxJQUFJLFFBQVEsQ0FBQyxJQUFJLENBQUMsS0FBSyxDQUFDLEtBQUssbUJBQW1CLENBQUM7R0FDcEYsQ0FBQztDQUNIO1FBQ08sVUFBVSxHQUFWLFVBQVU7Ozs7O0FBSVgsSUFBTSxPQUFPLEdBQUcsS0FBSyxDQUFDLE9BQU8sSUFBSSxVQUFTLEtBQUssRUFBRTtBQUN0RCxTQUFPLEFBQUMsS0FBSyxJQUFJLE9BQU8sS0FBSyxLQUFLLFFBQVEsR0FBSSxRQUFRLENBQUMsSUFBSSxDQUFDLEtBQUssQ0FBQyxLQUFLLGdCQUFnQixHQUFHLEtBQUssQ0FBQztDQUNqRyxDQUFDOzs7OztBQUdLLFNBQVMsT0FBTyxDQUFDLEtBQUssRUFBRSxLQUFLLEVBQUU7QUFDcEMsT0FBSyxJQUFJLENBQUMsR0FBRyxDQUFDLEVBQUUsR0FBRyxHQUFHLEtBQUssQ0FBQyxNQUFNLEVBQUUsQ0FBQyxHQUFHLEdBQUcsRUFBRSxDQUFDLEVBQUUsRUFBRTtBQUNoRCxRQUFJLEtBQUssQ0FBQyxDQUFDLENBQUMsS0FBSyxLQUFLLEVBQUU7QUFDdEIsYUFBTyxDQUFDLENBQUM7S0FDVjtHQUNGO0FBQ0QsU0FBTyxDQUFDLENBQUMsQ0FBQztDQUNYOztBQUdNLFNBQVMsZ0JBQWdCLENBQUMsTUFBTSxFQUFFO0FBQ3ZDLE1BQUksT0FBTyxNQUFNLEtBQUssUUFBUSxFQUFFOztBQUU5QixRQUFJLE1BQU0sSUFBSSxNQUFNLENBQUMsTUFBTSxFQUFFO0FBQzNCLGFBQU8sTUFBTSxDQUFDLE1BQU0sRUFBRSxDQUFDO0tBQ3hCLE1BQU0sSUFBSSxNQUFNLElBQUksSUFBSSxFQUFFO0FBQ3pCLGFBQU8sRUFBRSxDQUFDO0tBQ1gsTUFBTSxJQUFJLENBQUMsTUFBTSxFQUFFO0FBQ2xCLGFBQU8sTUFBTSxHQUFHLEVBQUUsQ0FBQztLQUNwQjs7Ozs7QUFLRCxVQUFNLEdBQUcsRUFBRSxHQUFHLE1BQU0sQ0FBQztHQUN0Qjs7QUFFRCxNQUFJLENBQUMsUUFBUSxDQUFDLElBQUksQ0FBQyxNQUFNLENBQUMsRUFBRTtBQUFFLFdBQU8sTUFBTSxDQUFDO0dBQUU7QUFDOUMsU0FBTyxNQUFNLENBQUMsT0FBTyxDQUFDLFFBQVEsRUFBRSxVQUFVLENBQUMsQ0FBQztDQUM3Qzs7QUFFTSxTQUFTLE9BQU8sQ0FBQyxLQUFLLEVBQUU7QUFDN0IsTUFBSSxDQUFDLEtBQUssSUFBSSxLQUFLLEtBQUssQ0FBQyxFQUFFO0FBQ3pCLFdBQU8sSUFBSSxDQUFDO0dBQ2IsTUFBTSxJQUFJLE9BQU8sQ0FBQyxLQUFLLENBQUMsSUFBSSxLQUFLLENBQUMsTUFBTSxLQUFLLENBQUMsRUFBRTtBQUMvQyxXQUFPLElBQUksQ0FBQztHQUNiLE1BQU07QUFDTCxXQUFPLEtBQUssQ0FBQztHQUNkO0NBQ0Y7O0FBRU0sU0FBUyxXQUFXLENBQUMsTUFBTSxFQUFFO0FBQ2xDLE1BQUksS0FBSyxHQUFHLE1BQU0sQ0FBQyxFQUFFLEVBQUUsTUFBTSxDQUFDLENBQUM7QUFDL0IsT0FBSyxDQUFDLE9BQU8sR0FBRyxNQUFNLENBQUM7QUFDdkIsU0FBTyxLQUFLLENBQUM7Q0FDZDs7QUFFTSxTQUFTLFdBQVcsQ0FBQyxNQUFNLEVBQUUsR0FBRyxFQUFFO0FBQ3ZDLFFBQU0sQ0FBQyxJQUFJLEdBQUcsR0FBRyxDQUFDO0FBQ2xCLFNBQU8sTUFBTSxDQUFDO0NBQ2Y7O0FBRU0sU0FBUyxpQkFBaUIsQ0FBQyxXQUFXLEVBQUUsRUFBRSxFQUFFO0FBQ2pELFNBQU8sQ0FBQyxXQUFXLEdBQUcsV0FBVyxHQUFHLEdBQUcsR0FBRyxFQUFFLENBQUEsR0FBSSxFQUFFLENBQUM7Q0FDcEQiLCJmaWxlIjoidXRpbHMuanMiLCJzb3VyY2VzQ29udGVudCI6WyJjb25zdCBlc2NhcGUgPSB7XG4gICcmJzogJyZhbXA7JyxcbiAgJzwnOiAnJmx0OycsXG4gICc+JzogJyZndDsnLFxuICAnXCInOiAnJnF1b3Q7JyxcbiAgXCInXCI6ICcmI3gyNzsnLFxuICAnYCc6ICcmI3g2MDsnLFxuICAnPSc6ICcmI3gzRDsnXG59O1xuXG5jb25zdCBiYWRDaGFycyA9IC9bJjw+XCInYD1dL2csXG4gICAgICBwb3NzaWJsZSA9IC9bJjw+XCInYD1dLztcblxuZnVuY3Rpb24gZXNjYXBlQ2hhcihjaHIpIHtcbiAgcmV0dXJuIGVzY2FwZVtjaHJdO1xufVxuXG5leHBvcnQgZnVuY3Rpb24gZXh0ZW5kKG9iai8qICwgLi4uc291cmNlICovKSB7XG4gIGZvciAobGV0IGkgPSAxOyBpIDwgYXJndW1lbnRzLmxlbmd0aDsgaSsrKSB7XG4gICAgZm9yIChsZXQga2V5IGluIGFyZ3VtZW50c1tpXSkge1xuICAgICAgaWYgKE9iamVjdC5wcm90b3R5cGUuaGFzT3duUHJvcGVydHkuY2FsbChhcmd1bWVudHNbaV0sIGtleSkpIHtcbiAgICAgICAgb2JqW2tleV0gPSBhcmd1bWVudHNbaV1ba2V5XTtcbiAgICAgIH1cbiAgICB9XG4gIH1cblxuICByZXR1cm4gb2JqO1xufVxuXG5leHBvcnQgbGV0IHRvU3RyaW5nID0gT2JqZWN0LnByb3RvdHlwZS50b1N0cmluZztcblxuLy8gU291cmNlZCBmcm9tIGxvZGFzaFxuLy8gaHR0cHM6Ly9naXRodWIuY29tL2Jlc3RpZWpzL2xvZGFzaC9ibG9iL21hc3Rlci9MSUNFTlNFLnR4dFxuLyogZXNsaW50LWRpc2FibGUgZnVuYy1zdHlsZSAqL1xubGV0IGlzRnVuY3Rpb24gPSBmdW5jdGlvbih2YWx1ZSkge1xuICByZXR1cm4gdHlwZW9mIHZhbHVlID09PSAnZnVuY3Rpb24nO1xufTtcbi8vIGZhbGxiYWNrIGZvciBvbGRlciB2ZXJzaW9ucyBvZiBDaHJvbWUgYW5kIFNhZmFyaVxuLyogaXN0YW5idWwgaWdub3JlIG5leHQgKi9cbmlmIChpc0Z1bmN0aW9uKC94LykpIHtcbiAgaXNGdW5jdGlvbiA9IGZ1bmN0aW9uKHZhbHVlKSB7XG4gICAgcmV0dXJuIHR5cGVvZiB2YWx1ZSA9PT0gJ2Z1bmN0aW9uJyAmJiB0b1N0cmluZy5jYWxsKHZhbHVlKSA9PT0gJ1tvYmplY3QgRnVuY3Rpb25dJztcbiAgfTtcbn1cbmV4cG9ydCB7aXNGdW5jdGlvbn07XG4vKiBlc2xpbnQtZW5hYmxlIGZ1bmMtc3R5bGUgKi9cblxuLyogaXN0YW5idWwgaWdub3JlIG5leHQgKi9cbmV4cG9ydCBjb25zdCBpc0FycmF5ID0gQXJyYXkuaXNBcnJheSB8fCBmdW5jdGlvbih2YWx1ZSkge1xuICByZXR1cm4gKHZhbHVlICYmIHR5cGVvZiB2YWx1ZSA9PT0gJ29iamVjdCcpID8gdG9TdHJpbmcuY2FsbCh2YWx1ZSkgPT09ICdbb2JqZWN0IEFycmF5XScgOiBmYWxzZTtcbn07XG5cbi8vIE9sZGVyIElFIHZlcnNpb25zIGRvIG5vdCBkaXJlY3RseSBzdXBwb3J0IGluZGV4T2Ygc28gd2UgbXVzdCBpbXBsZW1lbnQgb3VyIG93biwgc2FkbHkuXG5leHBvcnQgZnVuY3Rpb24gaW5kZXhPZihhcnJheSwgdmFsdWUpIHtcbiAgZm9yIChsZXQgaSA9IDAsIGxlbiA9IGFycmF5Lmxlbmd0aDsgaSA8IGxlbjsgaSsrKSB7XG4gICAgaWYgKGFycmF5W2ldID09PSB2YWx1ZSkge1xuICAgICAgcmV0dXJuIGk7XG4gICAgfVxuICB9XG4gIHJldHVybiAtMTtcbn1cblxuXG5leHBvcnQgZnVuY3Rpb24gZXNjYXBlRXhwcmVzc2lvbihzdHJpbmcpIHtcbiAgaWYgKHR5cGVvZiBzdHJpbmcgIT09ICdzdHJpbmcnKSB7XG4gICAgLy8gZG9uJ3QgZXNjYXBlIFNhZmVTdHJpbmdzLCBzaW5jZSB0aGV5J3JlIGFscmVhZHkgc2FmZVxuICAgIGlmIChzdHJpbmcgJiYgc3RyaW5nLnRvSFRNTCkge1xuICAgICAgcmV0dXJuIHN0cmluZy50b0hUTUwoKTtcbiAgICB9IGVsc2UgaWYgKHN0cmluZyA9PSBudWxsKSB7XG4gICAgICByZXR1cm4gJyc7XG4gICAgfSBlbHNlIGlmICghc3RyaW5nKSB7XG4gICAgICByZXR1cm4gc3RyaW5nICsgJyc7XG4gICAgfVxuXG4gICAgLy8gRm9yY2UgYSBzdHJpbmcgY29udmVyc2lvbiBhcyB0aGlzIHdpbGwgYmUgZG9uZSBieSB0aGUgYXBwZW5kIHJlZ2FyZGxlc3MgYW5kXG4gICAgLy8gdGhlIHJlZ2V4IHRlc3Qgd2lsbCBkbyB0aGlzIHRyYW5zcGFyZW50bHkgYmVoaW5kIHRoZSBzY2VuZXMsIGNhdXNpbmcgaXNzdWVzIGlmXG4gICAgLy8gYW4gb2JqZWN0J3MgdG8gc3RyaW5nIGhhcyBlc2NhcGVkIGNoYXJhY3RlcnMgaW4gaXQuXG4gICAgc3RyaW5nID0gJycgKyBzdHJpbmc7XG4gIH1cblxuICBpZiAoIXBvc3NpYmxlLnRlc3Qoc3RyaW5nKSkgeyByZXR1cm4gc3RyaW5nOyB9XG4gIHJldHVybiBzdHJpbmcucmVwbGFjZShiYWRDaGFycywgZXNjYXBlQ2hhcik7XG59XG5cbmV4cG9ydCBmdW5jdGlvbiBpc0VtcHR5KHZhbHVlKSB7XG4gIGlmICghdmFsdWUgJiYgdmFsdWUgIT09IDApIHtcbiAgICByZXR1cm4gdHJ1ZTtcbiAgfSBlbHNlIGlmIChpc0FycmF5KHZhbHVlKSAmJiB2YWx1ZS5sZW5ndGggPT09IDApIHtcbiAgICByZXR1cm4gdHJ1ZTtcbiAgfSBlbHNlIHtcbiAgICByZXR1cm4gZmFsc2U7XG4gIH1cbn1cblxuZXhwb3J0IGZ1bmN0aW9uIGNyZWF0ZUZyYW1lKG9iamVjdCkge1xuICBsZXQgZnJhbWUgPSBleHRlbmQoe30sIG9iamVjdCk7XG4gIGZyYW1lLl9wYXJlbnQgPSBvYmplY3Q7XG4gIHJldHVybiBmcmFtZTtcbn1cblxuZXhwb3J0IGZ1bmN0aW9uIGJsb2NrUGFyYW1zKHBhcmFtcywgaWRzKSB7XG4gIHBhcmFtcy5wYXRoID0gaWRzO1xuICByZXR1cm4gcGFyYW1zO1xufVxuXG5leHBvcnQgZnVuY3Rpb24gYXBwZW5kQ29udGV4dFBhdGgoY29udGV4dFBhdGgsIGlkKSB7XG4gIHJldHVybiAoY29udGV4dFBhdGggPyBjb250ZXh0UGF0aCArICcuJyA6ICcnKSArIGlkO1xufVxuIl19\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/dist/cjs/handlebars/utils.js?");
+
+/***/ }),
+
+/***/ "./node_modules/handlebars/runtime.js":
+/*!********************************************!*\
+  !*** ./node_modules/handlebars/runtime.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("// Create a simple path alias to allow browserify to resolve\n// the runtime on a supported path.\nmodule.exports = __webpack_require__(/*! ./dist/cjs/handlebars.runtime */ \"./node_modules/handlebars/dist/cjs/handlebars.runtime.js\")['default'];\n\n\n//# sourceURL=webpack:///./node_modules/handlebars/runtime.js?");
+
+/***/ }),
+
+/***/ "./node_modules/underscore/underscore.js":
+/*!***********************************************!*\
+  !*** ./node_modules/underscore/underscore.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("//     Underscore.js 1.4.4\n//     http://underscorejs.org\n//     (c) 2009-2013 Jeremy Ashkenas, DocumentCloud Inc.\n//     Underscore may be freely distributed under the MIT license.\n\n(function() {\n\n  // Baseline setup\n  // --------------\n\n  // Establish the root object, `window` in the browser, or `global` on the server.\n  var root = this;\n\n  // Save the previous value of the `_` variable.\n  var previousUnderscore = root._;\n\n  // Establish the object that gets returned to break out of a loop iteration.\n  var breaker = {};\n\n  // Save bytes in the minified (but not gzipped) version:\n  var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;\n\n  // Create quick reference variables for speed access to core prototypes.\n  var push             = ArrayProto.push,\n      slice            = ArrayProto.slice,\n      concat           = ArrayProto.concat,\n      toString         = ObjProto.toString,\n      hasOwnProperty   = ObjProto.hasOwnProperty;\n\n  // All **ECMAScript 5** native function implementations that we hope to use\n  // are declared here.\n  var\n    nativeForEach      = ArrayProto.forEach,\n    nativeMap          = ArrayProto.map,\n    nativeReduce       = ArrayProto.reduce,\n    nativeReduceRight  = ArrayProto.reduceRight,\n    nativeFilter       = ArrayProto.filter,\n    nativeEvery        = ArrayProto.every,\n    nativeSome         = ArrayProto.some,\n    nativeIndexOf      = ArrayProto.indexOf,\n    nativeLastIndexOf  = ArrayProto.lastIndexOf,\n    nativeIsArray      = Array.isArray,\n    nativeKeys         = Object.keys,\n    nativeBind         = FuncProto.bind;\n\n  // Create a safe reference to the Underscore object for use below.\n  var _ = function(obj) {\n    if (obj instanceof _) return obj;\n    if (!(this instanceof _)) return new _(obj);\n    this._wrapped = obj;\n  };\n\n  // Export the Underscore object for **Node.js**, with\n  // backwards-compatibility for the old `require()` API. If we're in\n  // the browser, add `_` as a global object via a string identifier,\n  // for Closure Compiler \"advanced\" mode.\n  if (true) {\n    if (typeof module !== 'undefined' && module.exports) {\n      exports = module.exports = _;\n    }\n    exports._ = _;\n  } else {}\n\n  // Current version.\n  _.VERSION = '1.4.4';\n\n  // Collection Functions\n  // --------------------\n\n  // The cornerstone, an `each` implementation, aka `forEach`.\n  // Handles objects with the built-in `forEach`, arrays, and raw objects.\n  // Delegates to **ECMAScript 5**'s native `forEach` if available.\n  var each = _.each = _.forEach = function(obj, iterator, context) {\n    if (obj == null) return;\n    if (nativeForEach && obj.forEach === nativeForEach) {\n      obj.forEach(iterator, context);\n    } else if (obj.length === +obj.length) {\n      for (var i = 0, l = obj.length; i < l; i++) {\n        if (iterator.call(context, obj[i], i, obj) === breaker) return;\n      }\n    } else {\n      for (var key in obj) {\n        if (_.has(obj, key)) {\n          if (iterator.call(context, obj[key], key, obj) === breaker) return;\n        }\n      }\n    }\n  };\n\n  // Return the results of applying the iterator to each element.\n  // Delegates to **ECMAScript 5**'s native `map` if available.\n  _.map = _.collect = function(obj, iterator, context) {\n    var results = [];\n    if (obj == null) return results;\n    if (nativeMap && obj.map === nativeMap) return obj.map(iterator, context);\n    each(obj, function(value, index, list) {\n      results[results.length] = iterator.call(context, value, index, list);\n    });\n    return results;\n  };\n\n  var reduceError = 'Reduce of empty array with no initial value';\n\n  // **Reduce** builds up a single result from a list of values, aka `inject`,\n  // or `foldl`. Delegates to **ECMAScript 5**'s native `reduce` if available.\n  _.reduce = _.foldl = _.inject = function(obj, iterator, memo, context) {\n    var initial = arguments.length > 2;\n    if (obj == null) obj = [];\n    if (nativeReduce && obj.reduce === nativeReduce) {\n      if (context) iterator = _.bind(iterator, context);\n      return initial ? obj.reduce(iterator, memo) : obj.reduce(iterator);\n    }\n    each(obj, function(value, index, list) {\n      if (!initial) {\n        memo = value;\n        initial = true;\n      } else {\n        memo = iterator.call(context, memo, value, index, list);\n      }\n    });\n    if (!initial) throw new TypeError(reduceError);\n    return memo;\n  };\n\n  // The right-associative version of reduce, also known as `foldr`.\n  // Delegates to **ECMAScript 5**'s native `reduceRight` if available.\n  _.reduceRight = _.foldr = function(obj, iterator, memo, context) {\n    var initial = arguments.length > 2;\n    if (obj == null) obj = [];\n    if (nativeReduceRight && obj.reduceRight === nativeReduceRight) {\n      if (context) iterator = _.bind(iterator, context);\n      return initial ? obj.reduceRight(iterator, memo) : obj.reduceRight(iterator);\n    }\n    var length = obj.length;\n    if (length !== +length) {\n      var keys = _.keys(obj);\n      length = keys.length;\n    }\n    each(obj, function(value, index, list) {\n      index = keys ? keys[--length] : --length;\n      if (!initial) {\n        memo = obj[index];\n        initial = true;\n      } else {\n        memo = iterator.call(context, memo, obj[index], index, list);\n      }\n    });\n    if (!initial) throw new TypeError(reduceError);\n    return memo;\n  };\n\n  // Return the first value which passes a truth test. Aliased as `detect`.\n  _.find = _.detect = function(obj, iterator, context) {\n    var result;\n    any(obj, function(value, index, list) {\n      if (iterator.call(context, value, index, list)) {\n        result = value;\n        return true;\n      }\n    });\n    return result;\n  };\n\n  // Return all the elements that pass a truth test.\n  // Delegates to **ECMAScript 5**'s native `filter` if available.\n  // Aliased as `select`.\n  _.filter = _.select = function(obj, iterator, context) {\n    var results = [];\n    if (obj == null) return results;\n    if (nativeFilter && obj.filter === nativeFilter) return obj.filter(iterator, context);\n    each(obj, function(value, index, list) {\n      if (iterator.call(context, value, index, list)) results[results.length] = value;\n    });\n    return results;\n  };\n\n  // Return all the elements for which a truth test fails.\n  _.reject = function(obj, iterator, context) {\n    return _.filter(obj, function(value, index, list) {\n      return !iterator.call(context, value, index, list);\n    }, context);\n  };\n\n  // Determine whether all of the elements match a truth test.\n  // Delegates to **ECMAScript 5**'s native `every` if available.\n  // Aliased as `all`.\n  _.every = _.all = function(obj, iterator, context) {\n    iterator || (iterator = _.identity);\n    var result = true;\n    if (obj == null) return result;\n    if (nativeEvery && obj.every === nativeEvery) return obj.every(iterator, context);\n    each(obj, function(value, index, list) {\n      if (!(result = result && iterator.call(context, value, index, list))) return breaker;\n    });\n    return !!result;\n  };\n\n  // Determine if at least one element in the object matches a truth test.\n  // Delegates to **ECMAScript 5**'s native `some` if available.\n  // Aliased as `any`.\n  var any = _.some = _.any = function(obj, iterator, context) {\n    iterator || (iterator = _.identity);\n    var result = false;\n    if (obj == null) return result;\n    if (nativeSome && obj.some === nativeSome) return obj.some(iterator, context);\n    each(obj, function(value, index, list) {\n      if (result || (result = iterator.call(context, value, index, list))) return breaker;\n    });\n    return !!result;\n  };\n\n  // Determine if the array or object contains a given value (using `===`).\n  // Aliased as `include`.\n  _.contains = _.include = function(obj, target) {\n    if (obj == null) return false;\n    if (nativeIndexOf && obj.indexOf === nativeIndexOf) return obj.indexOf(target) != -1;\n    return any(obj, function(value) {\n      return value === target;\n    });\n  };\n\n  // Invoke a method (with arguments) on every item in a collection.\n  _.invoke = function(obj, method) {\n    var args = slice.call(arguments, 2);\n    var isFunc = _.isFunction(method);\n    return _.map(obj, function(value) {\n      return (isFunc ? method : value[method]).apply(value, args);\n    });\n  };\n\n  // Convenience version of a common use case of `map`: fetching a property.\n  _.pluck = function(obj, key) {\n    return _.map(obj, function(value){ return value[key]; });\n  };\n\n  // Convenience version of a common use case of `filter`: selecting only objects\n  // containing specific `key:value` pairs.\n  _.where = function(obj, attrs, first) {\n    if (_.isEmpty(attrs)) return first ? null : [];\n    return _[first ? 'find' : 'filter'](obj, function(value) {\n      for (var key in attrs) {\n        if (attrs[key] !== value[key]) return false;\n      }\n      return true;\n    });\n  };\n\n  // Convenience version of a common use case of `find`: getting the first object\n  // containing specific `key:value` pairs.\n  _.findWhere = function(obj, attrs) {\n    return _.where(obj, attrs, true);\n  };\n\n  // Return the maximum element or (element-based computation).\n  // Can't optimize arrays of integers longer than 65,535 elements.\n  // See: https://bugs.webkit.org/show_bug.cgi?id=80797\n  _.max = function(obj, iterator, context) {\n    if (!iterator && _.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {\n      return Math.max.apply(Math, obj);\n    }\n    if (!iterator && _.isEmpty(obj)) return -Infinity;\n    var result = {computed : -Infinity, value: -Infinity};\n    each(obj, function(value, index, list) {\n      var computed = iterator ? iterator.call(context, value, index, list) : value;\n      computed >= result.computed && (result = {value : value, computed : computed});\n    });\n    return result.value;\n  };\n\n  // Return the minimum element (or element-based computation).\n  _.min = function(obj, iterator, context) {\n    if (!iterator && _.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {\n      return Math.min.apply(Math, obj);\n    }\n    if (!iterator && _.isEmpty(obj)) return Infinity;\n    var result = {computed : Infinity, value: Infinity};\n    each(obj, function(value, index, list) {\n      var computed = iterator ? iterator.call(context, value, index, list) : value;\n      computed < result.computed && (result = {value : value, computed : computed});\n    });\n    return result.value;\n  };\n\n  // Shuffle an array.\n  _.shuffle = function(obj) {\n    var rand;\n    var index = 0;\n    var shuffled = [];\n    each(obj, function(value) {\n      rand = _.random(index++);\n      shuffled[index - 1] = shuffled[rand];\n      shuffled[rand] = value;\n    });\n    return shuffled;\n  };\n\n  // An internal function to generate lookup iterators.\n  var lookupIterator = function(value) {\n    return _.isFunction(value) ? value : function(obj){ return obj[value]; };\n  };\n\n  // Sort the object's values by a criterion produced by an iterator.\n  _.sortBy = function(obj, value, context) {\n    var iterator = lookupIterator(value);\n    return _.pluck(_.map(obj, function(value, index, list) {\n      return {\n        value : value,\n        index : index,\n        criteria : iterator.call(context, value, index, list)\n      };\n    }).sort(function(left, right) {\n      var a = left.criteria;\n      var b = right.criteria;\n      if (a !== b) {\n        if (a > b || a === void 0) return 1;\n        if (a < b || b === void 0) return -1;\n      }\n      return left.index < right.index ? -1 : 1;\n    }), 'value');\n  };\n\n  // An internal function used for aggregate \"group by\" operations.\n  var group = function(obj, value, context, behavior) {\n    var result = {};\n    var iterator = lookupIterator(value || _.identity);\n    each(obj, function(value, index) {\n      var key = iterator.call(context, value, index, obj);\n      behavior(result, key, value);\n    });\n    return result;\n  };\n\n  // Groups the object's values by a criterion. Pass either a string attribute\n  // to group by, or a function that returns the criterion.\n  _.groupBy = function(obj, value, context) {\n    return group(obj, value, context, function(result, key, value) {\n      (_.has(result, key) ? result[key] : (result[key] = [])).push(value);\n    });\n  };\n\n  // Counts instances of an object that group by a certain criterion. Pass\n  // either a string attribute to count by, or a function that returns the\n  // criterion.\n  _.countBy = function(obj, value, context) {\n    return group(obj, value, context, function(result, key) {\n      if (!_.has(result, key)) result[key] = 0;\n      result[key]++;\n    });\n  };\n\n  // Use a comparator function to figure out the smallest index at which\n  // an object should be inserted so as to maintain order. Uses binary search.\n  _.sortedIndex = function(array, obj, iterator, context) {\n    iterator = iterator == null ? _.identity : lookupIterator(iterator);\n    var value = iterator.call(context, obj);\n    var low = 0, high = array.length;\n    while (low < high) {\n      var mid = (low + high) >>> 1;\n      iterator.call(context, array[mid]) < value ? low = mid + 1 : high = mid;\n    }\n    return low;\n  };\n\n  // Safely convert anything iterable into a real, live array.\n  _.toArray = function(obj) {\n    if (!obj) return [];\n    if (_.isArray(obj)) return slice.call(obj);\n    if (obj.length === +obj.length) return _.map(obj, _.identity);\n    return _.values(obj);\n  };\n\n  // Return the number of elements in an object.\n  _.size = function(obj) {\n    if (obj == null) return 0;\n    return (obj.length === +obj.length) ? obj.length : _.keys(obj).length;\n  };\n\n  // Array Functions\n  // ---------------\n\n  // Get the first element of an array. Passing **n** will return the first N\n  // values in the array. Aliased as `head` and `take`. The **guard** check\n  // allows it to work with `_.map`.\n  _.first = _.head = _.take = function(array, n, guard) {\n    if (array == null) return void 0;\n    return (n != null) && !guard ? slice.call(array, 0, n) : array[0];\n  };\n\n  // Returns everything but the last entry of the array. Especially useful on\n  // the arguments object. Passing **n** will return all the values in\n  // the array, excluding the last N. The **guard** check allows it to work with\n  // `_.map`.\n  _.initial = function(array, n, guard) {\n    return slice.call(array, 0, array.length - ((n == null) || guard ? 1 : n));\n  };\n\n  // Get the last element of an array. Passing **n** will return the last N\n  // values in the array. The **guard** check allows it to work with `_.map`.\n  _.last = function(array, n, guard) {\n    if (array == null) return void 0;\n    if ((n != null) && !guard) {\n      return slice.call(array, Math.max(array.length - n, 0));\n    } else {\n      return array[array.length - 1];\n    }\n  };\n\n  // Returns everything but the first entry of the array. Aliased as `tail` and `drop`.\n  // Especially useful on the arguments object. Passing an **n** will return\n  // the rest N values in the array. The **guard**\n  // check allows it to work with `_.map`.\n  _.rest = _.tail = _.drop = function(array, n, guard) {\n    return slice.call(array, (n == null) || guard ? 1 : n);\n  };\n\n  // Trim out all falsy values from an array.\n  _.compact = function(array) {\n    return _.filter(array, _.identity);\n  };\n\n  // Internal implementation of a recursive `flatten` function.\n  var flatten = function(input, shallow, output) {\n    each(input, function(value) {\n      if (_.isArray(value)) {\n        shallow ? push.apply(output, value) : flatten(value, shallow, output);\n      } else {\n        output.push(value);\n      }\n    });\n    return output;\n  };\n\n  // Return a completely flattened version of an array.\n  _.flatten = function(array, shallow) {\n    return flatten(array, shallow, []);\n  };\n\n  // Return a version of the array that does not contain the specified value(s).\n  _.without = function(array) {\n    return _.difference(array, slice.call(arguments, 1));\n  };\n\n  // Produce a duplicate-free version of the array. If the array has already\n  // been sorted, you have the option of using a faster algorithm.\n  // Aliased as `unique`.\n  _.uniq = _.unique = function(array, isSorted, iterator, context) {\n    if (_.isFunction(isSorted)) {\n      context = iterator;\n      iterator = isSorted;\n      isSorted = false;\n    }\n    var initial = iterator ? _.map(array, iterator, context) : array;\n    var results = [];\n    var seen = [];\n    each(initial, function(value, index) {\n      if (isSorted ? (!index || seen[seen.length - 1] !== value) : !_.contains(seen, value)) {\n        seen.push(value);\n        results.push(array[index]);\n      }\n    });\n    return results;\n  };\n\n  // Produce an array that contains the union: each distinct element from all of\n  // the passed-in arrays.\n  _.union = function() {\n    return _.uniq(concat.apply(ArrayProto, arguments));\n  };\n\n  // Produce an array that contains every item shared between all the\n  // passed-in arrays.\n  _.intersection = function(array) {\n    var rest = slice.call(arguments, 1);\n    return _.filter(_.uniq(array), function(item) {\n      return _.every(rest, function(other) {\n        return _.indexOf(other, item) >= 0;\n      });\n    });\n  };\n\n  // Take the difference between one array and a number of other arrays.\n  // Only the elements present in just the first array will remain.\n  _.difference = function(array) {\n    var rest = concat.apply(ArrayProto, slice.call(arguments, 1));\n    return _.filter(array, function(value){ return !_.contains(rest, value); });\n  };\n\n  // Zip together multiple lists into a single array -- elements that share\n  // an index go together.\n  _.zip = function() {\n    var args = slice.call(arguments);\n    var length = _.max(_.pluck(args, 'length'));\n    var results = new Array(length);\n    for (var i = 0; i < length; i++) {\n      results[i] = _.pluck(args, \"\" + i);\n    }\n    return results;\n  };\n\n  // Converts lists into objects. Pass either a single array of `[key, value]`\n  // pairs, or two parallel arrays of the same length -- one of keys, and one of\n  // the corresponding values.\n  _.object = function(list, values) {\n    if (list == null) return {};\n    var result = {};\n    for (var i = 0, l = list.length; i < l; i++) {\n      if (values) {\n        result[list[i]] = values[i];\n      } else {\n        result[list[i][0]] = list[i][1];\n      }\n    }\n    return result;\n  };\n\n  // If the browser doesn't supply us with indexOf (I'm looking at you, **MSIE**),\n  // we need this function. Return the position of the first occurrence of an\n  // item in an array, or -1 if the item is not included in the array.\n  // Delegates to **ECMAScript 5**'s native `indexOf` if available.\n  // If the array is large and already in sort order, pass `true`\n  // for **isSorted** to use binary search.\n  _.indexOf = function(array, item, isSorted) {\n    if (array == null) return -1;\n    var i = 0, l = array.length;\n    if (isSorted) {\n      if (typeof isSorted == 'number') {\n        i = (isSorted < 0 ? Math.max(0, l + isSorted) : isSorted);\n      } else {\n        i = _.sortedIndex(array, item);\n        return array[i] === item ? i : -1;\n      }\n    }\n    if (nativeIndexOf && array.indexOf === nativeIndexOf) return array.indexOf(item, isSorted);\n    for (; i < l; i++) if (array[i] === item) return i;\n    return -1;\n  };\n\n  // Delegates to **ECMAScript 5**'s native `lastIndexOf` if available.\n  _.lastIndexOf = function(array, item, from) {\n    if (array == null) return -1;\n    var hasIndex = from != null;\n    if (nativeLastIndexOf && array.lastIndexOf === nativeLastIndexOf) {\n      return hasIndex ? array.lastIndexOf(item, from) : array.lastIndexOf(item);\n    }\n    var i = (hasIndex ? from : array.length);\n    while (i--) if (array[i] === item) return i;\n    return -1;\n  };\n\n  // Generate an integer Array containing an arithmetic progression. A port of\n  // the native Python `range()` function. See\n  // [the Python documentation](http://docs.python.org/library/functions.html#range).\n  _.range = function(start, stop, step) {\n    if (arguments.length <= 1) {\n      stop = start || 0;\n      start = 0;\n    }\n    step = arguments[2] || 1;\n\n    var len = Math.max(Math.ceil((stop - start) / step), 0);\n    var idx = 0;\n    var range = new Array(len);\n\n    while(idx < len) {\n      range[idx++] = start;\n      start += step;\n    }\n\n    return range;\n  };\n\n  // Function (ahem) Functions\n  // ------------------\n\n  // Create a function bound to a given object (assigning `this`, and arguments,\n  // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if\n  // available.\n  _.bind = function(func, context) {\n    if (func.bind === nativeBind && nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));\n    var args = slice.call(arguments, 2);\n    return function() {\n      return func.apply(context, args.concat(slice.call(arguments)));\n    };\n  };\n\n  // Partially apply a function by creating a version that has had some of its\n  // arguments pre-filled, without changing its dynamic `this` context.\n  _.partial = function(func) {\n    var args = slice.call(arguments, 1);\n    return function() {\n      return func.apply(this, args.concat(slice.call(arguments)));\n    };\n  };\n\n  // Bind all of an object's methods to that object. Useful for ensuring that\n  // all callbacks defined on an object belong to it.\n  _.bindAll = function(obj) {\n    var funcs = slice.call(arguments, 1);\n    if (funcs.length === 0) funcs = _.functions(obj);\n    each(funcs, function(f) { obj[f] = _.bind(obj[f], obj); });\n    return obj;\n  };\n\n  // Memoize an expensive function by storing its results.\n  _.memoize = function(func, hasher) {\n    var memo = {};\n    hasher || (hasher = _.identity);\n    return function() {\n      var key = hasher.apply(this, arguments);\n      return _.has(memo, key) ? memo[key] : (memo[key] = func.apply(this, arguments));\n    };\n  };\n\n  // Delays a function for the given number of milliseconds, and then calls\n  // it with the arguments supplied.\n  _.delay = function(func, wait) {\n    var args = slice.call(arguments, 2);\n    return setTimeout(function(){ return func.apply(null, args); }, wait);\n  };\n\n  // Defers a function, scheduling it to run after the current call stack has\n  // cleared.\n  _.defer = function(func) {\n    return _.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));\n  };\n\n  // Returns a function, that, when invoked, will only be triggered at most once\n  // during a given window of time.\n  _.throttle = function(func, wait) {\n    var context, args, timeout, result;\n    var previous = 0;\n    var later = function() {\n      previous = new Date;\n      timeout = null;\n      result = func.apply(context, args);\n    };\n    return function() {\n      var now = new Date;\n      var remaining = wait - (now - previous);\n      context = this;\n      args = arguments;\n      if (remaining <= 0) {\n        clearTimeout(timeout);\n        timeout = null;\n        previous = now;\n        result = func.apply(context, args);\n      } else if (!timeout) {\n        timeout = setTimeout(later, remaining);\n      }\n      return result;\n    };\n  };\n\n  // Returns a function, that, as long as it continues to be invoked, will not\n  // be triggered. The function will be called after it stops being called for\n  // N milliseconds. If `immediate` is passed, trigger the function on the\n  // leading edge, instead of the trailing.\n  _.debounce = function(func, wait, immediate) {\n    var timeout, result;\n    return function() {\n      var context = this, args = arguments;\n      var later = function() {\n        timeout = null;\n        if (!immediate) result = func.apply(context, args);\n      };\n      var callNow = immediate && !timeout;\n      clearTimeout(timeout);\n      timeout = setTimeout(later, wait);\n      if (callNow) result = func.apply(context, args);\n      return result;\n    };\n  };\n\n  // Returns a function that will be executed at most one time, no matter how\n  // often you call it. Useful for lazy initialization.\n  _.once = function(func) {\n    var ran = false, memo;\n    return function() {\n      if (ran) return memo;\n      ran = true;\n      memo = func.apply(this, arguments);\n      func = null;\n      return memo;\n    };\n  };\n\n  // Returns the first function passed as an argument to the second,\n  // allowing you to adjust arguments, run code before and after, and\n  // conditionally execute the original function.\n  _.wrap = function(func, wrapper) {\n    return function() {\n      var args = [func];\n      push.apply(args, arguments);\n      return wrapper.apply(this, args);\n    };\n  };\n\n  // Returns a function that is the composition of a list of functions, each\n  // consuming the return value of the function that follows.\n  _.compose = function() {\n    var funcs = arguments;\n    return function() {\n      var args = arguments;\n      for (var i = funcs.length - 1; i >= 0; i--) {\n        args = [funcs[i].apply(this, args)];\n      }\n      return args[0];\n    };\n  };\n\n  // Returns a function that will only be executed after being called N times.\n  _.after = function(times, func) {\n    if (times <= 0) return func();\n    return function() {\n      if (--times < 1) {\n        return func.apply(this, arguments);\n      }\n    };\n  };\n\n  // Object Functions\n  // ----------------\n\n  // Retrieve the names of an object's properties.\n  // Delegates to **ECMAScript 5**'s native `Object.keys`\n  _.keys = nativeKeys || function(obj) {\n    if (obj !== Object(obj)) throw new TypeError('Invalid object');\n    var keys = [];\n    for (var key in obj) if (_.has(obj, key)) keys[keys.length] = key;\n    return keys;\n  };\n\n  // Retrieve the values of an object's properties.\n  _.values = function(obj) {\n    var values = [];\n    for (var key in obj) if (_.has(obj, key)) values.push(obj[key]);\n    return values;\n  };\n\n  // Convert an object into a list of `[key, value]` pairs.\n  _.pairs = function(obj) {\n    var pairs = [];\n    for (var key in obj) if (_.has(obj, key)) pairs.push([key, obj[key]]);\n    return pairs;\n  };\n\n  // Invert the keys and values of an object. The values must be serializable.\n  _.invert = function(obj) {\n    var result = {};\n    for (var key in obj) if (_.has(obj, key)) result[obj[key]] = key;\n    return result;\n  };\n\n  // Return a sorted list of the function names available on the object.\n  // Aliased as `methods`\n  _.functions = _.methods = function(obj) {\n    var names = [];\n    for (var key in obj) {\n      if (_.isFunction(obj[key])) names.push(key);\n    }\n    return names.sort();\n  };\n\n  // Extend a given object with all the properties in passed-in object(s).\n  _.extend = function(obj) {\n    each(slice.call(arguments, 1), function(source) {\n      if (source) {\n        for (var prop in source) {\n          obj[prop] = source[prop];\n        }\n      }\n    });\n    return obj;\n  };\n\n  // Return a copy of the object only containing the whitelisted properties.\n  _.pick = function(obj) {\n    var copy = {};\n    var keys = concat.apply(ArrayProto, slice.call(arguments, 1));\n    each(keys, function(key) {\n      if (key in obj) copy[key] = obj[key];\n    });\n    return copy;\n  };\n\n   // Return a copy of the object without the blacklisted properties.\n  _.omit = function(obj) {\n    var copy = {};\n    var keys = concat.apply(ArrayProto, slice.call(arguments, 1));\n    for (var key in obj) {\n      if (!_.contains(keys, key)) copy[key] = obj[key];\n    }\n    return copy;\n  };\n\n  // Fill in a given object with default properties.\n  _.defaults = function(obj) {\n    each(slice.call(arguments, 1), function(source) {\n      if (source) {\n        for (var prop in source) {\n          if (obj[prop] == null) obj[prop] = source[prop];\n        }\n      }\n    });\n    return obj;\n  };\n\n  // Create a (shallow-cloned) duplicate of an object.\n  _.clone = function(obj) {\n    if (!_.isObject(obj)) return obj;\n    return _.isArray(obj) ? obj.slice() : _.extend({}, obj);\n  };\n\n  // Invokes interceptor with the obj, and then returns obj.\n  // The primary purpose of this method is to \"tap into\" a method chain, in\n  // order to perform operations on intermediate results within the chain.\n  _.tap = function(obj, interceptor) {\n    interceptor(obj);\n    return obj;\n  };\n\n  // Internal recursive comparison function for `isEqual`.\n  var eq = function(a, b, aStack, bStack) {\n    // Identical objects are equal. `0 === -0`, but they aren't identical.\n    // See the Harmony `egal` proposal: http://wiki.ecmascript.org/doku.php?id=harmony:egal.\n    if (a === b) return a !== 0 || 1 / a == 1 / b;\n    // A strict comparison is necessary because `null == undefined`.\n    if (a == null || b == null) return a === b;\n    // Unwrap any wrapped objects.\n    if (a instanceof _) a = a._wrapped;\n    if (b instanceof _) b = b._wrapped;\n    // Compare `[[Class]]` names.\n    var className = toString.call(a);\n    if (className != toString.call(b)) return false;\n    switch (className) {\n      // Strings, numbers, dates, and booleans are compared by value.\n      case '[object String]':\n        // Primitives and their corresponding object wrappers are equivalent; thus, `\"5\"` is\n        // equivalent to `new String(\"5\")`.\n        return a == String(b);\n      case '[object Number]':\n        // `NaN`s are equivalent, but non-reflexive. An `egal` comparison is performed for\n        // other numeric values.\n        return a != +a ? b != +b : (a == 0 ? 1 / a == 1 / b : a == +b);\n      case '[object Date]':\n      case '[object Boolean]':\n        // Coerce dates and booleans to numeric primitive values. Dates are compared by their\n        // millisecond representations. Note that invalid dates with millisecond representations\n        // of `NaN` are not equivalent.\n        return +a == +b;\n      // RegExps are compared by their source patterns and flags.\n      case '[object RegExp]':\n        return a.source == b.source &&\n               a.global == b.global &&\n               a.multiline == b.multiline &&\n               a.ignoreCase == b.ignoreCase;\n    }\n    if (typeof a != 'object' || typeof b != 'object') return false;\n    // Assume equality for cyclic structures. The algorithm for detecting cyclic\n    // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.\n    var length = aStack.length;\n    while (length--) {\n      // Linear search. Performance is inversely proportional to the number of\n      // unique nested structures.\n      if (aStack[length] == a) return bStack[length] == b;\n    }\n    // Add the first object to the stack of traversed objects.\n    aStack.push(a);\n    bStack.push(b);\n    var size = 0, result = true;\n    // Recursively compare objects and arrays.\n    if (className == '[object Array]') {\n      // Compare array lengths to determine if a deep comparison is necessary.\n      size = a.length;\n      result = size == b.length;\n      if (result) {\n        // Deep compare the contents, ignoring non-numeric properties.\n        while (size--) {\n          if (!(result = eq(a[size], b[size], aStack, bStack))) break;\n        }\n      }\n    } else {\n      // Objects with different constructors are not equivalent, but `Object`s\n      // from different frames are.\n      var aCtor = a.constructor, bCtor = b.constructor;\n      if (aCtor !== bCtor && !(_.isFunction(aCtor) && (aCtor instanceof aCtor) &&\n                               _.isFunction(bCtor) && (bCtor instanceof bCtor))) {\n        return false;\n      }\n      // Deep compare objects.\n      for (var key in a) {\n        if (_.has(a, key)) {\n          // Count the expected number of properties.\n          size++;\n          // Deep compare each member.\n          if (!(result = _.has(b, key) && eq(a[key], b[key], aStack, bStack))) break;\n        }\n      }\n      // Ensure that both objects contain the same number of properties.\n      if (result) {\n        for (key in b) {\n          if (_.has(b, key) && !(size--)) break;\n        }\n        result = !size;\n      }\n    }\n    // Remove the first object from the stack of traversed objects.\n    aStack.pop();\n    bStack.pop();\n    return result;\n  };\n\n  // Perform a deep comparison to check if two objects are equal.\n  _.isEqual = function(a, b) {\n    return eq(a, b, [], []);\n  };\n\n  // Is a given array, string, or object empty?\n  // An \"empty\" object has no enumerable own-properties.\n  _.isEmpty = function(obj) {\n    if (obj == null) return true;\n    if (_.isArray(obj) || _.isString(obj)) return obj.length === 0;\n    for (var key in obj) if (_.has(obj, key)) return false;\n    return true;\n  };\n\n  // Is a given value a DOM element?\n  _.isElement = function(obj) {\n    return !!(obj && obj.nodeType === 1);\n  };\n\n  // Is a given value an array?\n  // Delegates to ECMA5's native Array.isArray\n  _.isArray = nativeIsArray || function(obj) {\n    return toString.call(obj) == '[object Array]';\n  };\n\n  // Is a given variable an object?\n  _.isObject = function(obj) {\n    return obj === Object(obj);\n  };\n\n  // Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp.\n  each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'], function(name) {\n    _['is' + name] = function(obj) {\n      return toString.call(obj) == '[object ' + name + ']';\n    };\n  });\n\n  // Define a fallback version of the method in browsers (ahem, IE), where\n  // there isn't any inspectable \"Arguments\" type.\n  if (!_.isArguments(arguments)) {\n    _.isArguments = function(obj) {\n      return !!(obj && _.has(obj, 'callee'));\n    };\n  }\n\n  // Optimize `isFunction` if appropriate.\n  if (true) {\n    _.isFunction = function(obj) {\n      return typeof obj === 'function';\n    };\n  }\n\n  // Is a given object a finite number?\n  _.isFinite = function(obj) {\n    return isFinite(obj) && !isNaN(parseFloat(obj));\n  };\n\n  // Is the given value `NaN`? (NaN is the only number which does not equal itself).\n  _.isNaN = function(obj) {\n    return _.isNumber(obj) && obj != +obj;\n  };\n\n  // Is a given value a boolean?\n  _.isBoolean = function(obj) {\n    return obj === true || obj === false || toString.call(obj) == '[object Boolean]';\n  };\n\n  // Is a given value equal to null?\n  _.isNull = function(obj) {\n    return obj === null;\n  };\n\n  // Is a given variable undefined?\n  _.isUndefined = function(obj) {\n    return obj === void 0;\n  };\n\n  // Shortcut function for checking if an object has a given property directly\n  // on itself (in other words, not on a prototype).\n  _.has = function(obj, key) {\n    return hasOwnProperty.call(obj, key);\n  };\n\n  // Utility Functions\n  // -----------------\n\n  // Run Underscore.js in *noConflict* mode, returning the `_` variable to its\n  // previous owner. Returns a reference to the Underscore object.\n  _.noConflict = function() {\n    root._ = previousUnderscore;\n    return this;\n  };\n\n  // Keep the identity function around for default iterators.\n  _.identity = function(value) {\n    return value;\n  };\n\n  // Run a function **n** times.\n  _.times = function(n, iterator, context) {\n    var accum = Array(n);\n    for (var i = 0; i < n; i++) accum[i] = iterator.call(context, i);\n    return accum;\n  };\n\n  // Return a random integer between min and max (inclusive).\n  _.random = function(min, max) {\n    if (max == null) {\n      max = min;\n      min = 0;\n    }\n    return min + Math.floor(Math.random() * (max - min + 1));\n  };\n\n  // List of HTML entities for escaping.\n  var entityMap = {\n    escape: {\n      '&': '&amp;',\n      '<': '&lt;',\n      '>': '&gt;',\n      '\"': '&quot;',\n      \"'\": '&#x27;',\n      '/': '&#x2F;'\n    }\n  };\n  entityMap.unescape = _.invert(entityMap.escape);\n\n  // Regexes containing the keys and values listed immediately above.\n  var entityRegexes = {\n    escape:   new RegExp('[' + _.keys(entityMap.escape).join('') + ']', 'g'),\n    unescape: new RegExp('(' + _.keys(entityMap.unescape).join('|') + ')', 'g')\n  };\n\n  // Functions for escaping and unescaping strings to/from HTML interpolation.\n  _.each(['escape', 'unescape'], function(method) {\n    _[method] = function(string) {\n      if (string == null) return '';\n      return ('' + string).replace(entityRegexes[method], function(match) {\n        return entityMap[method][match];\n      });\n    };\n  });\n\n  // If the value of the named property is a function then invoke it;\n  // otherwise, return it.\n  _.result = function(object, property) {\n    if (object == null) return null;\n    var value = object[property];\n    return _.isFunction(value) ? value.call(object) : value;\n  };\n\n  // Add your own custom functions to the Underscore object.\n  _.mixin = function(obj) {\n    each(_.functions(obj), function(name){\n      var func = _[name] = obj[name];\n      _.prototype[name] = function() {\n        var args = [this._wrapped];\n        push.apply(args, arguments);\n        return result.call(this, func.apply(_, args));\n      };\n    });\n  };\n\n  // Generate a unique integer id (unique within the entire client session).\n  // Useful for temporary DOM ids.\n  var idCounter = 0;\n  _.uniqueId = function(prefix) {\n    var id = ++idCounter + '';\n    return prefix ? prefix + id : id;\n  };\n\n  // By default, Underscore uses ERB-style template delimiters, change the\n  // following template settings to use alternative delimiters.\n  _.templateSettings = {\n    evaluate    : /<%([\\s\\S]+?)%>/g,\n    interpolate : /<%=([\\s\\S]+?)%>/g,\n    escape      : /<%-([\\s\\S]+?)%>/g\n  };\n\n  // When customizing `templateSettings`, if you don't want to define an\n  // interpolation, evaluation or escaping regex, we need one that is\n  // guaranteed not to match.\n  var noMatch = /(.)^/;\n\n  // Certain characters need to be escaped so that they can be put into a\n  // string literal.\n  var escapes = {\n    \"'\":      \"'\",\n    '\\\\':     '\\\\',\n    '\\r':     'r',\n    '\\n':     'n',\n    '\\t':     't',\n    '\\u2028': 'u2028',\n    '\\u2029': 'u2029'\n  };\n\n  var escaper = /\\\\|'|\\r|\\n|\\t|\\u2028|\\u2029/g;\n\n  // JavaScript micro-templating, similar to John Resig's implementation.\n  // Underscore templating handles arbitrary delimiters, preserves whitespace,\n  // and correctly escapes quotes within interpolated code.\n  _.template = function(text, data, settings) {\n    var render;\n    settings = _.defaults({}, settings, _.templateSettings);\n\n    // Combine delimiters into one regular expression via alternation.\n    var matcher = new RegExp([\n      (settings.escape || noMatch).source,\n      (settings.interpolate || noMatch).source,\n      (settings.evaluate || noMatch).source\n    ].join('|') + '|$', 'g');\n\n    // Compile the template source, escaping string literals appropriately.\n    var index = 0;\n    var source = \"__p+='\";\n    text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {\n      source += text.slice(index, offset)\n        .replace(escaper, function(match) { return '\\\\' + escapes[match]; });\n\n      if (escape) {\n        source += \"'+\\n((__t=(\" + escape + \"))==null?'':_.escape(__t))+\\n'\";\n      }\n      if (interpolate) {\n        source += \"'+\\n((__t=(\" + interpolate + \"))==null?'':__t)+\\n'\";\n      }\n      if (evaluate) {\n        source += \"';\\n\" + evaluate + \"\\n__p+='\";\n      }\n      index = offset + match.length;\n      return match;\n    });\n    source += \"';\\n\";\n\n    // If a variable is not specified, place data values in local scope.\n    if (!settings.variable) source = 'with(obj||{}){\\n' + source + '}\\n';\n\n    source = \"var __t,__p='',__j=Array.prototype.join,\" +\n      \"print=function(){__p+=__j.call(arguments,'');};\\n\" +\n      source + \"return __p;\\n\";\n\n    try {\n      render = new Function(settings.variable || 'obj', '_', source);\n    } catch (e) {\n      e.source = source;\n      throw e;\n    }\n\n    if (data) return render(data, _);\n    var template = function(data) {\n      return render.call(this, data, _);\n    };\n\n    // Provide the compiled function source as a convenience for precompilation.\n    template.source = 'function(' + (settings.variable || 'obj') + '){\\n' + source + '}';\n\n    return template;\n  };\n\n  // Add a \"chain\" function, which will delegate to the wrapper.\n  _.chain = function(obj) {\n    return _(obj).chain();\n  };\n\n  // OOP\n  // ---------------\n  // If Underscore is called as a function, it returns a wrapped object that\n  // can be used OO-style. This wrapper holds altered versions of all the\n  // underscore functions. Wrapped objects may be chained.\n\n  // Helper function to continue chaining intermediate results.\n  var result = function(obj) {\n    return this._chain ? _(obj).chain() : obj;\n  };\n\n  // Add all of the Underscore functions to the wrapper object.\n  _.mixin(_);\n\n  // Add all mutator Array functions to the wrapper.\n  each(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(name) {\n    var method = ArrayProto[name];\n    _.prototype[name] = function() {\n      var obj = this._wrapped;\n      method.apply(obj, arguments);\n      if ((name == 'shift' || name == 'splice') && obj.length === 0) delete obj[0];\n      return result.call(this, obj);\n    };\n  });\n\n  // Add all accessor Array functions to the wrapper.\n  each(['concat', 'join', 'slice'], function(name) {\n    var method = ArrayProto[name];\n    _.prototype[name] = function() {\n      return result.call(this, method.apply(this._wrapped, arguments));\n    };\n  });\n\n  _.extend(_.prototype, {\n\n    // Start chaining a wrapped Underscore object.\n    chain: function() {\n      this._chain = true;\n      return this;\n    },\n\n    // Extracts the result from a wrapped and chained object.\n    value: function() {\n      return this._wrapped;\n    }\n\n  });\n\n}).call(this);\n\n\n//# sourceURL=webpack:///./node_modules/underscore/underscore.js?");
+
+/***/ }),
+
+/***/ "./node_modules/webpack/buildin/global.js":
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("var g;\n\n// This works in non-strict mode\ng = (function() {\n\treturn this;\n})();\n\ntry {\n\t// This works if eval is allowed (see CSP)\n\tg = g || Function(\"return this\")() || (1, eval)(\"this\");\n} catch (e) {\n\t// This works if the window reference is available\n\tif (typeof window === \"object\") g = window;\n}\n\n// g can still be undefined, but nothing to do about it...\n// We return undefined, instead of nothing here, so it's\n// easier to handle this case. if(!global) { ...}\n\nmodule.exports = g;\n\n\n//# sourceURL=webpack:///(webpack)/buildin/global.js?");
+
+/***/ }),
+
+/***/ "./tmpl/live-editor.handlebars":
+/*!*************************************!*\
+  !*** ./tmpl/live-editor.handlebars ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("var Handlebars = __webpack_require__(/*! ./node_modules/handlebars/runtime.js */ \"./node_modules/handlebars/runtime.js\");\nfunction __default(obj) { return obj && (obj.__esModule ? obj[\"default\"] : obj); }\nmodule.exports = (Handlebars[\"default\"] || Handlebars).template({\"1\":function(container,depth0,helpers,partials,data) {\n    return \" no-output\";\n},\"3\":function(container,depth0,helpers,partials,data) {\n    var helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3=\"function\", alias4=container.escapeExpression;\n\n  return \"                <iframe id=\\\"output-frame\\\"\\n                    src=\\\"\"\n    + alias4(((helper = (helper = helpers.execFile || (depth0 != null ? depth0.execFile : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{\"name\":\"execFile\",\"hash\":{},\"data\":data}) : helper)))\n    + \"\\\"\\n                    data-src=\\\"\"\n    + alias4(((helper = (helper = helpers.execFile || (depth0 != null ? depth0.execFile : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{\"name\":\"execFile\",\"hash\":{},\"data\":data}) : helper)))\n    + \"\\\"></iframe>\\n\";\n},\"5\":function(container,depth0,helpers,partials,data) {\n    return \"Loading...\";\n},\"7\":function(container,depth0,helpers,partials,data) {\n    return \"Hmm...\";\n},\"9\":function(container,depth0,helpers,partials,data) {\n    return \"Restart\";\n},\"11\":function(container,depth0,helpers,partials,data) {\n    return \"                <a href=\\\"\\\" class=\\\"draw-color-button\\\" id=\\\"\"\n    + container.escapeExpression(container.lambda(depth0, depth0))\n    + \"\\\">\\n                    <span></span>\\n                </a>\\n\";\n},\"13\":function(container,depth0,helpers,partials,data) {\n    return \"Record\";\n},\"15\":function(container,depth0,helpers,partials,data) {\n    return \"Enable Flash to load audio:\";\n},\"17\":function(container,depth0,helpers,partials,data) {\n    return \"Play\";\n},\"19\":function(container,depth0,helpers,partials,data) {\n    return \"Loading audio...\";\n},\"compiler\":[7,\">= 4.0.0\"],\"main\":function(container,depth0,helpers,partials,data) {\n    var stack1, helper, options, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3=\"function\", alias4=container.escapeExpression, alias5=helpers.blockHelperMissing, buffer = \n  \"<div class=\\\"scratchpad-wrap\"\n    + ((stack1 = helpers.unless.call(alias1,(depth0 != null ? depth0.execFile : depth0),{\"name\":\"unless\",\"hash\":{},\"fn\":container.program(1, data, 0),\"inverse\":container.noop,\"data\":data})) != null ? stack1 : \"\")\n    + \"\\\">\\n    <!-- Canvases (Drawing + Output) -->\\n    <div class=\\\"scratchpad-canvas-wrap\\\">\\n        <div id=\\\"output\\\">\\n            <!-- Extra data-src attribute to work around\\n                 cross-origin access policies. -->\\n\"\n    + ((stack1 = helpers[\"if\"].call(alias1,(depth0 != null ? depth0.execFile : depth0),{\"name\":\"if\",\"hash\":{},\"fn\":container.program(3, data, 0),\"inverse\":container.noop,\"data\":data})) != null ? stack1 : \"\")\n    + \"            <canvas class=\\\"scratchpad-draw-canvas\\\" style=\\\"display:none;\\\"\\n                width=\\\"400\\\" height=\\\"400\\\"></canvas>\\n\\n            <div class=\\\"overlay disable-overlay\\\" style=\\\"display:none;\\\">\\n            </div>\\n\\n            <div class=\\\"scratchpad-canvas-loading\\\">\\n                <img src=\\\"\"\n    + alias4(((helper = (helper = helpers.imagesDir || (depth0 != null ? depth0.imagesDir : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{\"name\":\"imagesDir\",\"hash\":{},\"data\":data}) : helper)))\n    + \"/spinner-large.gif\\\">\\n                <span class=\\\"hide-text\\\">\";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(5, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"</span>\\n            </div>\\n        </div>\\n\\n        <div class=\\\"scratchpad-toolbar\\\">\\n            <div class=\\\"error-buddy-resting\\\">\\n                <div class=\\\"error-buddy-happy\\\" style=\\\"display:none;\\\">\\n                    <img src=\\\"\"\n    + alias4(((helper = (helper = helpers.imagesDir || (depth0 != null ? depth0.imagesDir : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{\"name\":\"imagesDir\",\"hash\":{},\"data\":data}) : helper)))\n    + \"/creatures/OhNoes-Happy.png\\\"/>\\n                </div>\\n                <a class=\\\"error-buddy-thinking\\\" style=\\\"display:none;\\\" href=\\\"javascript:void()\\\">\\n                    <img src=\\\"\"\n    + alias4(((helper = (helper = helpers.imagesDir || (depth0 != null ? depth0.imagesDir : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{\"name\":\"imagesDir\",\"hash\":{},\"data\":data}) : helper)))\n    + \"/creatures/OhNoes-Hmm.png\\\"/>\\n                    \";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(7, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"\\n                </a>\\n            </div>\\n            <button id=\\\"restart-code\\\"\\n                class=\\\"simple-button pull-right\\\">\\n                <span class=\\\"icon-refresh\\\"></span>\\n                \";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(9, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"</button>\\n\\n            <!-- Widgets for selecting colors to doodle on the canvas during\\n                recordings -->\\n            <div id=\\\"draw-widgets\\\" style=\\\"display:none;\\\">\\n                <a href=\\\"\\\" id=\\\"draw-clear-button\\\" class=\\\"ui-button\\\">\\n                    <span class=\\\"ui-icon-cancel\\\"></span>\\n                </a>\\n\"\n    + ((stack1 = helpers.each.call(alias1,(depth0 != null ? depth0.colors : depth0),{\"name\":\"each\",\"hash\":{},\"fn\":container.program(11, data, 0),\"inverse\":container.noop,\"data\":data})) != null ? stack1 : \"\")\n    + \"            </div>\\n\\n            <!-- Record button -->\\n            <button id=\\\"record\\\" class=\\\"simple-button pull-left\\\" style=\\\"display:none;\\\">\";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(13, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"</button>\\n        </div>\\n    </div>\\n\\n    <!-- Editor -->\\n    <div class=\\\"scratchpad-editor-wrap overlay-container\\\">\\n        <div class=\\\"scratchpad-editor-tabs\\\">\\n          <div id=\\\"scratchpad-code-editor-tab\\\" class=\\\"scratchpad-editor-tab\\\">\\n            <div class=\\\"scratchpad-editor scratchpad-ace-editor\\\"></div>\\n            <div class=\\\"overlay disable-overlay\\\" style=\\\"display:none;\\\">\\n            </div>\\n\\n            <div class=\\\"scratchpad-editor-bigplay-loading\\\" style=\\\"display:none;\\\">\\n                <img src=\\\"\"\n    + alias4(((helper = (helper = helpers.imagesDir || (depth0 != null ? depth0.imagesDir : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{\"name\":\"imagesDir\",\"hash\":{},\"data\":data}) : helper)))\n    + \"/spinner-large.gif\\\">\\n                <span class=\\\"hide-text\\\">\";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(5, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"</span>\\n            </div>\\n\\n            <!-- This cannot be removed, if we want Flash to keep working! -->\\n            <div id=\\\"sm2-container\\\">\\n                \";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(15, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"\\n                <br>\\n            </div>\\n\\n            <button class=\\\"scratchpad-editor-bigplay-button\\\" style=\\\"display:none;\\\">\\n                <span class=\\\"icon-play\\\"></span>\\n                <span class=\\\"hide-text\\\">\";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(17, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"</span>\\n            </button>\\n          </div>\\n        </div>\\n\\n        <div class=\\\"scratchpad-toolbar\\\">\\n            <!-- Row for playback controls -->\\n            <div class=\\\"scratchpad-playbar\\\" style=\\\"display:none;\\\">\\n                <div class=\\\"scratchpad-playbar-area\\\" style=\\\"display:none;\\\">\\n                    <button\\n                        class=\\\"simple-button primary scratchpad-playbar-play\\\"\\n                        type=\\\"button\\\">\\n                        <span class=\\\"icon-play\\\"></span>\\n                    </button>\\n\\n                    <div class=\\\"scratchpad-playbar-progress\\\"></div>\\n\\n                    <span class=\\\"scratchpad-playbar-timeleft\\\"></span>\\n                </div>\\n                <div class=\\\"loading-msg\\\">\\n                    \";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(19, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias5.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  return buffer + \"\\n                </div>\\n            </div>\\n            <div class=\\\"scratchpad-debugger\\\"></div>\\n        </div>\\n\\n        <div class=\\\"scratchpad-toolbar scratchpad-dev-record-row\\\" style=\\\"display:none;\\\"></div>\\n    </div>\\n</div>\";\n},\"useData\":true});\n\n//# sourceURL=webpack:///./tmpl/live-editor.handlebars?");
+
+/***/ }),
+
+/***/ "./tmpl/tipbar.handlebars":
+/*!********************************!*\
+  !*** ./tmpl/tipbar.handlebars ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("var Handlebars = __webpack_require__(/*! ./node_modules/handlebars/runtime.js */ \"./node_modules/handlebars/runtime.js\");\nfunction __default(obj) { return obj && (obj.__esModule ? obj[\"default\"] : obj); }\nmodule.exports = (Handlebars[\"default\"] || Handlebars).template({\"1\":function(container,depth0,helpers,partials,data) {\n    return \"&times;\";\n},\"3\":function(container,depth0,helpers,partials,data) {\n    return \"Oh noes!\";\n},\"5\":function(container,depth0,helpers,partials,data) {\n    return \"Show me where\";\n},\"7\":function(container,depth0,helpers,partials,data) {\n    return \"Previous error\";\n},\"9\":function(container,depth0,helpers,partials,data) {\n    return \"Next error\";\n},\"compiler\":[7,\">= 4.0.0\"],\"main\":function(container,depth0,helpers,partials,data) {\n    var stack1, helper, options, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3=\"function\", alias4=helpers.blockHelperMissing, buffer = \n  \"<div class=\\\"tipbar\\\">\\n    <div class=\\\"speech-arrow\\\"></div>\\n    <div class=\\\"error-buddy\\\"></div>\\n    \\n    <div class=\\\"text-wrap\\\">\\n        <button class=\\\"close\\\" type=\\\"button\\\" aria-label=\\\"Close\\\">\";\n  stack1 = ((helper = (helper = helpers.i18nDoNotTranslate || (depth0 != null ? depth0.i18nDoNotTranslate : depth0)) != null ? helper : alias2),(options={\"name\":\"i18nDoNotTranslate\",\"hash\":{},\"fn\":container.program(1, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers.i18nDoNotTranslate) { stack1 = alias4.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"</button>\\n        <div class=\\\"oh-no\\\">\";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(3, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"</div>\\n        <div class=\\\"message\\\"></div>\\n        <div class=\\\"show-me\\\"><a href>\";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(5, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"</a></div>\\n        <div class=\\\"tipnav\\\">\\n            <a href=\\\"javascript:void(0);\\\" class=\\\"prev\\\" title=\\\"\";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(7, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  buffer += \"\\\">\\n                <span class=\\\"ui-icon ui-icon-circle-triangle-w\\\"></span>\\n            </a>\\n            <span class=\\\"current-pos\\\"></span>\\n            <a href=\\\"javascript:void(0);\\\" class=\\\"next\\\" title=\\\"\";\n  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={\"name\":\"_\",\"hash\":{},\"fn\":container.program(9, data, 0),\"inverse\":container.noop,\"data\":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));\n  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}\n  if (stack1 != null) { buffer += stack1; }\n  return buffer + \"\\\">\\n                <span class=\\\"ui-icon ui-icon-circle-triangle-e\\\"></span>\\n            </a>\\n        </div>\\n    </div>\\n</div>\";\n},\"useData\":true});\n\n//# sourceURL=webpack:///./tmpl/tipbar.handlebars?");
+
+/***/ }),
+
+/***/ 17:
+/*!*********************************!*\
+  !*** multi ./js/live-editor.js ***!
+  \*********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("module.exports = __webpack_require__(/*! ./js/live-editor.js */\"./js/live-editor.js\");\n\n\n//# sourceURL=webpack:///multi_./js/live-editor.js?");
+
+/***/ }),
+
+/***/ "jquery":
+/*!*************************!*\
+  !*** external "jQuery" ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = jQuery;\n\n//# sourceURL=webpack:///external_%22jQuery%22?");
+
+/***/ })
+
+/******/ });

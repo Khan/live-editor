@@ -1,7 +1,14 @@
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const PooledWorker = require("./pooled-worker.js");
+const ScratchpadConfig = require("../../shared/config.js");
+
 // TODO(kevinb) remove after challenges have been converted to use i18n._
 $._ = i18n._;
 
-window.LiveEditorOutput = Backbone.View.extend({
+const LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
@@ -19,7 +26,8 @@ window.LiveEditorOutput = Backbone.View.extend({
         });
 
         if (options.outputType) {
-            this.setOutput(options.outputType, true, options.loopProtectTimeouts);
+            console.log("In initialize");
+            this.setOutput(options);
         }
 
         // Add a timestamp property to the lintErrors and runtimeErrors arrays
@@ -47,26 +55,38 @@ window.LiveEditorOutput = Backbone.View.extend({
             this.handleMessage.bind(this), false);
     },
 
-    setOutput: function(outputType, enableLoopProtect, loopProtectTimeouts) {
-        var OutputClass = this.outputs[outputType];
-        this.output = new OutputClass({
+    setOutput: function(options) {
+        var OutputClass = this.outputs[options.outputType];
+        const classOptions = {
             el: this.$el.find(".output"),
             config: this.config,
             output: this,
-            type: outputType,
-            enableLoopProtect: enableLoopProtect,
-            loopProtectTimeouts: loopProtectTimeouts
-        });
+            type: options.outputType,
+            enableLoopProtect: options.enableLoopProtect !== false,
+            loopProtectTimeouts: options.loopProtectTimeouts
+        };
+        if (options.workersDir) {
+            classOptions.workersDir = this._qualifyURL(options.workersDir);
+        }
+        if (options.externalsDir) {
+            classOptions.externalsDir = this._qualifyURL(options.externalsDir);
+        }
+        if (options.jshintFile) {
+            classOptions.jshintFile = this._qualifyURL(options.jshintFile);
+        }
+        console.log("Options");
+        console.log(options);
+        console.log("classOptions");
+        console.log(classOptions);
+        this.output = new OutputClass(classOptions);
     },
 
     setPaths: function(data) {
         if (data.workersDir) {
             this.workersDir = this._qualifyURL(data.workersDir);
-            PooledWorker.prototype.workersDir = this.workersDir;
         }
         if (data.externalsDir) {
             this.externalsDir = this._qualifyURL(data.externalsDir);
-            PooledWorker.prototype.externalsDir = this.externalsDir;
         }
         if (data.imagesDir) {
             this.imagesDir = this._qualifyURL(data.imagesDir);
@@ -79,7 +99,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
         if (data.jshintFile) {
             this.jshintFile = this._qualifyURL(data.jshintFile);
-            PooledWorker.prototype.jshintFile = this.jshintFile;
         }
     },
 
@@ -124,7 +143,14 @@ window.LiveEditorOutput = Backbone.View.extend({
             if (data.loopProtectTimeouts != null) {
                 loopProtectTimeouts = data.loopProtectTimeouts;
             }
-            this.setOutput(outputType, enableLoopProtect, loopProtectTimeouts);
+            this.setOutput({
+                outputType,
+                enableLoopProtect,
+                loopProtectTimeouts,
+                workersDir: data.workersDir,
+                externalsDir: data.externalsDir,
+                jshintFile: data.jshintFile
+            });
         }
 
         // filter out debugger events
@@ -282,12 +308,14 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Always lint the first time, so that PJS can populate its list of globals
         this.output.lint(userCode, skip).then(function (lintResults) {
+            console.log("All lint done", lintResults);
             this.lintErrors = lintResults.errors;
             this.lintErrors.timestamp = timestamp;
             this.lintWarnings = lintResults.warnings;
             this.lintWarnings.timestamp = timestamp;
             return this.lintDone(userCode, timestamp);
         }.bind(this)).then(function () {
+            console.log("Build done", userCode);
             this.buildDone(userCode, callback);
         }.bind(this));
 
@@ -433,3 +461,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 LiveEditorOutput.registerOutput = function(name, output) {
     LiveEditorOutput.prototype.outputs[name] = output;
 };
+
+window.LiveEditorOutput = LiveEditorOutput;
+
+module.exports = LiveEditorOutput;

@@ -1,7 +1,16 @@
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const ScratchpadConfig = require("./shared/config.js");
+const ScratchpadDrawCanvas = require("./ui/canvas.js");
+const TipBar = require("./ui/tipbar.js");
+
+const liveEditorTemplate = require("../tmpl/live-editor.handlebars");
+
 // TODO(kevinb) remove after challenges have been converted to use i18n._
 $._ = i18n._;
 
-window.LiveEditor = Backbone.View.extend({
+const LiveEditor = Backbone.View.extend({
     dom: {
         DRAW_CANVAS: ".scratchpad-draw-canvas",
         DRAW_COLOR_BUTTONS: "#draw-widgets a.draw-color-button",
@@ -69,7 +78,11 @@ window.LiveEditor = Backbone.View.extend({
             version: options.version
         });
 
-        this.record = new ScratchpadRecord();
+        // We no longer load in record, since that functionality isn't
+        // currently needed nor supported
+        if (this.canRecord()) {
+            this.record = new ScratchpadRecord();
+        }
 
         // Set up the Canvas drawing area
         this.drawCanvas = new ScratchpadDrawCanvas({
@@ -228,7 +241,7 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     render: function() {
-        this.$el.html(Handlebars.templates["live-editor"]({
+        this.$el.html(liveEditorTemplate({
             execFile: this.execFile,
             imagesDir: this.imagesDir,
             colors: this.colors
@@ -264,7 +277,8 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         this.editor.on("userChangedCode", () => {
-            if (!this.record.recording && !this.record.playing) {
+            if (!this.record ||
+                (!this.record.recording && !this.record.playing)) {
               this.trigger("userChangedCode");
             }
         });
@@ -443,7 +457,7 @@ window.LiveEditor = Backbone.View.extend({
 
         // Handle the restart button
         $el.on("click", this.dom.RESTART_BUTTON, function() {
-            self.record.log("restart");
+            self.record && self.record.log("restart");
         });
 
         // Handle the gutter errors
@@ -1665,3 +1679,7 @@ window.LiveEditor = Backbone.View.extend({
 LiveEditor.registerEditor = function(name, editor) {
     LiveEditor.prototype.editors[name] = editor;
 };
+
+window.LiveEditor = LiveEditor;
+
+module.exports = LiveEditor;

@@ -1,4 +1,10 @@
-function PJSResourceCache(options) {
+const $ = require("jquery");
+const esprima = require("esprima");
+
+const ASTTransforms = require("./pjs-ast-transforms.js");
+const walkAST = require("../shared/ast-walker.js");
+
+const PJSResourceCache = function(options) {
     this.canvas = options.canvas;   // customized Processing instance
     this.output = options.output;   // LiveEditorOutput instance
     this.cache = {};
@@ -150,3 +156,5 @@ PJSResourceCache.findResources = function(code) {
 
     return resources;
 };
+
+module.exports = PJSResourceCache;

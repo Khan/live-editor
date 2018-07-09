@@ -1,4 +1,4 @@
-window.ASTBuilder = {
+const ASTBuilder = {
     /**
      * @param {Expression} left
      * @param {string} operator: "=", "+=", "-=", "*=", "/=", etc.
@@ -123,3 +123,5 @@ window.ASTBuilder = {
         };
     }
 };
+
+module.exports = ASTBuilder;

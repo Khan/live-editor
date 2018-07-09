@@ -708,5 +708,5 @@ var BabyHint = {
         return errors;
     }
 };
-// TODO(jlfwong): Stop globalizing BabyHint
-window.BabyHint = BabyHint;
+
+module.exports = BabyHint;

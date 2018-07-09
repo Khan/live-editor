@@ -1,3 +1,12 @@
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+const Slowparse = require("../../../external/slowparse/slowparse.js");
+
+const LoopProtector = require("../shared/loop-protect.js");
+const StateScrubber = require("./state-scrubber.js");
+const WebpageTester = require("./webpage-tester.js");
+
 /**
  * WebpageOutput
  * It creates an iframe on the same domain, and uses
@@ -10,7 +19,7 @@
  * so that it can be sandboxed from the main domain,
  * it communicates via postMessage() with liveEditor.
  */
-window.WebpageOutput = Backbone.View.extend({
+const WebpageOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
@@ -331,16 +340,17 @@ window.WebpageOutput = Backbone.View.extend({
     },
 
     runCode: function(codeObj, callback) {
+        console.log("Running code", codeObj);
         this.stateScrubber.clearAll();
         this.KA_INFINITE_LOOP = false;
         this.foundRunTimeError = false;
         this.frameDoc.open();
         // It's necessary in FF/IE to redefine it here
-        this.$frame.contentWindow.KAInfiniteLoopProtect =
-                this.loopProtector.KAInfiniteLoopProtect;
-        this.$frame.contentWindow.addEventListener("error", function () {
+        //this.$frame.contentWindow.KAInfiniteLoopProtect =
+        //        this.loopProtector.KAInfiniteLoopProtect;
+        this.$frame.contentWindow.addEventListener("error", () => {
             this.foundRunTimeError = true;
-        }.bind(this));
+        });
 
         this.frameDoc.write(this.slowparseResults.code);
         this.frameDoc.close();
@@ -365,3 +375,5 @@ window.WebpageOutput = Backbone.View.extend({
 });
 
 LiveEditorOutput.registerOutput("webpage", WebpageOutput);
+
+module.exports = WebpageOutput;
