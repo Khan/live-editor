@@ -30,11 +30,11 @@ gulp.task("templates", function() {
     gulp.src(paths.templates)
         .pipe(changed("build/tmpl", {extension: ".js"}))
         .pipe(handlebars({
-            handlebars: require("handlebars")
+            handlebars: require("handlebars"),
         }))
         .pipe(defineModule("plain"))
         .pipe(declare({
-            namespace: "Handlebars.templates"
+            namespace: "Handlebars.templates",
         }))
         .pipe(gulp.dest("build/tmpl"));
 });
@@ -43,12 +43,14 @@ var firstBuild = true;
 var scriptTypes = Object.keys(paths.scripts);
 
 scriptTypes.forEach(function(type) {
-    gulp.task("script_" + type, ["templates"], function() {
-        var outputFileName = "live-editor." + type + ".js";
+    gulp.task(`script_${type}`, ["templates"], function() {
+        var outputFileName = `live-editor.${type}.js`;
         var srcPath = path.join(__dirname, "js");
 
         return gulp.src(paths.scripts[type])
-            .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
+            .pipe(firstBuild
+                ? gutil.noop()
+                : newer(`build/js/${outputFileName}`))
             .pipe(gulpIf(function (file) {
                 // transform source files but not dependencies
                 return file.path.indexOf(srcPath) === 0;
@@ -59,10 +61,12 @@ scriptTypes.forEach(function(type) {
             .pipe(gulp.dest("build/js"));
     });
 
-    gulp.task("script_" + type + "_min", ["script_" + type], function() {
-        var outputFileName = "live-editor." + type + ".min.js";
-        return gulp.src(["build/js/live-editor." + type + ".js"])
-            .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
+    gulp.task(`script_${type}_min`, [`script_${type}`], function() {
+        var outputFileName = `live-editor.${type}.min.js`;
+        return gulp.src([`build/js/live-editor.${type}.js`])
+            .pipe(firstBuild
+                ? gutil.noop()
+                : newer(`build/js/${outputFileName}`))
             .pipe(uglify())
             .pipe(concat(outputFileName))
             .pipe(chmod(644))
@@ -72,11 +76,11 @@ scriptTypes.forEach(function(type) {
 });
 
 gulp.task("scripts", scriptTypes.map(function(type) {
-    return "script_" + type;
+    return `script_${type}`;
 }));
 
 gulp.task("scripts_min", scriptTypes.map(function(type) {
-    return "script_" + type + "_min";
+    return `script_${type}_min`;
 }));
 
 gulp.task("workers", function() {
@@ -98,17 +102,19 @@ gulp.task("externals", function() {
 var styleTypes = Object.keys(paths.styles);
 
 styleTypes.forEach(function(type) {
-    gulp.task("style_" + type, function() {
-        var outputFileName = "live-editor." + type + ".css";
+    gulp.task(`style_${type}`, function() {
+        var outputFileName = `live-editor.${type}.css`;
         return gulp.src(paths.styles[type])
-            .pipe(firstBuild ? gutil.noop() : newer("build/css/" + outputFileName))
+            .pipe(firstBuild
+                ? gutil.noop()
+                : newer(`build/css/${outputFileName}`))
             .pipe(concat(outputFileName))
             .pipe(gulp.dest("build/css"));
     });
 });
 
 gulp.task("styles", styleTypes.map(function(type) {
-    return "style_" + type;
+    return `style_${type}`;
 }));
 
 gulp.task("images", function() {
@@ -118,11 +124,11 @@ gulp.task("images", function() {
 
 gulp.task("watch", function() {
     scriptTypes.forEach(function(type) {
-        gulp.watch(paths.scripts[type], ["script_" + type]);
+        gulp.watch(paths.scripts[type], [`script_${type}`]);
     });
 
     styleTypes.forEach(function(type) {
-        gulp.watch(paths.styles[type], ["style_" + type]);
+        gulp.watch(paths.styles[type], [`style_${type}`]);
     });
 
     gulp.watch(paths.templates, ["templates"]);
@@ -149,7 +155,7 @@ var runTest = function(fileName) {
         // We then run the Mocha tests in a headless PhantomJS
         var stream = mochaChrome();
         stream.write({
-            path: "http://localhost:11537/tests/" + fileName
+            path: `http://localhost:11537/tests/${fileName}`,
         });
         stream.end();
         stream.on("finish", function() {
@@ -166,12 +172,12 @@ var failureCount = 0;
 
 // We run tests in groups so that we don't require as much memory to run them
 // in Travis-CI.
-var pjs_tests = ["jshint", "output", "assert", "ast_transform", "async"];
+var pjsTests = ["jshint", "output", "assert", "ast_transform", "async"];
 
-pjs_tests.forEach(function(test) {
-    gulp.task("test_output_pjs_" + test, ["script_output_pjs"], function() {
+pjsTests.forEach(function(test) {
+    gulp.task(`test_output_pjs_${test}`, ["script_output_pjs"], function() {
         return gulp.src("tests/output/pjs/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js"}))
+            .pipe(mochaRunner({ test: `${test}_test.js`}))
             .on("error", function (err) {
                 failureCount += parseInt(err.message);
                 this.emit("end");
@@ -180,19 +186,19 @@ pjs_tests.forEach(function(test) {
 });
 
 gulp.task("test_output_pjs", function(callback) {
-    var sequence = pjs_tests.map(function(test) {
-        return "test_output_pjs_" + test;
+    var sequence = pjsTests.map(function(test) {
+        return `test_output_pjs_${test}`;
     });
     sequence.push(callback);
-    runSequence.apply(null, sequence);
+    runSequence(...sequence);
 });
 
-var webpage_tests = ["assert", "output", "transform"];
+var webpageTests = ["assert", "output", "transform"];
 
-webpage_tests.forEach(function(test) {
-    gulp.task("test_output_webpage_" + test, ["script_output_pjs"], function() {
+webpageTests.forEach(function(test) {
+    gulp.task(`test_output_webpage_${test}`, ["script_output_pjs"], function() {
         return gulp.src("tests/output/webpage/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js" }))
+            .pipe(mochaRunner({ test: `${test}_test.js` }))
             .on("error", function (err) {
                 failureCount += parseInt(err.message);
                 this.emit("end");
@@ -201,15 +207,15 @@ webpage_tests.forEach(function(test) {
 });
 
 gulp.task("test_output_webpage", ["script_output_webpage"], function(callback) {
-    var sequence = webpage_tests.map(function(test) {
-        return "test_output_webpage_" + test;
+    var sequence = webpageTests.map(function(test) {
+        return `test_output_webpage_${test}`;
     });
     sequence.push(callback);
-    runSequence.apply(null, sequence);
+    runSequence(...sequence);
 });
 
 gulp.task("test_output_sql", ["script_output_sql"], function() {
-   return gulp.src("tests/output/sql/index.html")
+    return gulp.src("tests/output/sql/index.html")
        .pipe(mochaRunner());
 });
 
@@ -263,7 +269,15 @@ gulp.task("check", function() {
 });
 
 gulp.task("build",
-    ["check", "templates", "scripts", "workers", "styles", "images", "externals"],
+    [
+        "check",
+        "templates",
+        "scripts",
+        "workers",
+        "styles",
+        "images",
+        "externals",
+    ],
     function() {
         firstBuild = false;
     });
