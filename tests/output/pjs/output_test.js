@@ -114,6 +114,10 @@ describe("Scratchpad Output Exec", function() {
         background(105, 171, 74);
     });
 
+    test("Declaring an uninitialized variable in 1st expression of for loop", function() {
+        for (var i = 0, j; i < 10; i++) {}
+    });
+
     test("for loop with variable declaration", function() {
         for (var i = 0; i < 10; i++) {
             ellipse(25 * i, 200, 50, 50);
@@ -433,15 +437,15 @@ describe("Scratchpad Output Exec", function() {
     test("String object works", function() {
         var letter = String.fromCharCode(65);
     });
-    
+
     test("Number object works", function() {
         var newVal = Number.isFinite(1/0);
     });
-    
+
     test("Date object works", function() {
         var newDate = Date.now();
     });
-    
+
     test("Processing's parseFloat, parseInt work", function() {
         var settings = {};
         var val = parseInt(settings.val, 10) || 13;
