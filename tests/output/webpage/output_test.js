@@ -93,13 +93,13 @@ describe("Linting", function() {
     test("parsing of CDATA in <textarea> elements",
         "<textarea>" + text + "</textarea>");
 
-    test("parsing of uppercase <TEXTAREA> should work", [
+    test("parsing of uppercase <TEXTAREA> tags should work", [
         '<TEXTAREA>hi</TEXTAREA>',
         '<TEXTAREA>hi</textarea>',
         '<textarea>hi</TEXTAREA>',
     ]);
 
-    test("Parsing of uppercase <SCRIPT> should work", [
+    test("parsing of uppercase <SCRIPT> tags should work", [
         '<SCRIPT>var hi = "hi";</SCRIPT>',
         '<SCRIPT>var hi = "hi";</script>',
         '<script>var hi = "hi";</SCRIPT>',

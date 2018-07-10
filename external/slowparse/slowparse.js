@@ -1629,7 +1629,7 @@
     // passed the beginning `<tagname` of an HTML element.
     _parseCDATA: function(tagname) {
       var token,
-           matchString = `</${tagname}>`,
+           matchString = '</'+tagname+'>',
            text,
            textInterval = { start: 0, end: 0 },
            openTagEnd = this.domBuilder.currentNode.parseInfo.openTag.end,
@@ -1646,8 +1646,7 @@
           };
           this.domBuilder.currentNode.parseInfo.closeTag = closeTagInterval;
           textInterval.start = token.interval.start;
-          textInterval.end = token.interval.end -
-            (closeTagInterval.end - closeTagInterval.start);
+          textInterval.end = token.interval.end - (closeTagInterval.end - closeTagInterval.start);
           this.domBuilder.text(text, textInterval);
           this.domBuilder.popElement();
           return;
@@ -1728,22 +1727,21 @@
 
           // If the opening tag represents a `<script>` element, we need
           // to parse all its contents as CDATA (unparsed character data)
-          if (tagName && tagName.toLowerCase() === "script") {
+          if (tagName && tagName === "script") {
             this.domBuilder.pushContext("javascript", this.stream.pos);
-            this._parseCDATA(tagName);
+            this._parseCDATA("script");
             this.domBuilder.pushContext("html", this.stream.pos);
           }
 
           // If the opening tag represents a `<textarea>` element, we need
           // to parse all its contents as CDATA (unparsed character data)
-          if (tagName && tagName.toLowerCase() === "textarea") {
+          if (tagName && tagName === "textarea") {
             this.domBuilder.pushContext("text", this.stream.pos);
-            this._parseCDATA(tagName);
+            this._parseCDATA("textarea");
             this.domBuilder.pushContext("html", this.stream.pos);
           }
 
-          // if there is no more content in the parent element,
-          // we tell DOM builder that we're done.
+          // if there is no more content in the parent element, we tell DOM builder that we're done.
           if(parentTagNode && parentTagNode != this.domBuilder.fragment) {
             var parentTagName = parentTagNode.nodeName.toLowerCase(),
                 nextIsParent = isNextTagParent(this.stream, parentTagName),
