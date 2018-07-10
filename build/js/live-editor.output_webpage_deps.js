@@ -10092,6 +10092,16 @@ require("/tools/entry-point.js");
         cursor: start
       };
     },
+    UNKNOWN_CSS_PROPERTY_NAME: function(parser, start, end, property) {
+      return {
+        cssProperty: {
+          start: start,
+          end: end,
+          property: property
+        },
+        cursor: start
+      };
+    },
     INVALID_CSS_PROPERTY_NAME: function(parser, start, end, property) {
       return {
         cssProperty: {
@@ -10789,8 +10799,13 @@ require("/tools/entry-point.js");
       if (next === ':') {
         // Before we continue, we must make sure the string we found is a real
         // CSS property.
-        if (!( property && property.match(/^[a-z\-]+$/)) || !this._knownCSSProperty(property)) {
-          throw new ParseError("INVALID_CSS_PROPERTY_NAME", this, propertyStart, propertyEnd, property);
+        var isValidName = property && property.match(/^[a-z\-]+$/);
+        if (!isValidName) {
+          throw new ParseError("INVALID_CSS_PROPERTY_NAME",
+              this, propertyStart, propertyEnd, property);
+        } else if (!this._knownCSSProperty(property)) {
+          this.warnings.push(new ParseError("UNKNOWN_CSS_PROPERTY_NAME",
+              this, propertyStart, propertyEnd, property));
         }
         this.stream.markTokenStartAfterSpace();
         this._parseValue(selector, selectorStart, property, propertyStart);

@@ -56,6 +56,18 @@ window.AceEditor = Backbone.View.extend({
             ScratchpadAutosuggest.init(this.editor);
         }
 
+        // Override ACE gutter tooltip positioning due to bugginess
+        ace.require("ace/tooltip").Tooltip.prototype.setPosition = function (x, y) {
+            // Calculate x & y, relative to editor & scrolled window
+            var editorOffset = $(this.$parentNode).offset();
+            var xOffset = editorOffset.left - $(window).scrollLeft();
+            var yOffset = editorOffset.top - $(window).scrollTop();
+            x -= xOffset;
+            y -= yOffset;
+            this.getElement().style.left = x + "px";
+            this.getElement().style.top = y + "px";
+        };
+
         // Make the editor vertically resizable
         if (this.$el.resizable) {
             this.$el.resizable({
