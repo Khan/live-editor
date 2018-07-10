@@ -262,7 +262,8 @@ gulp.task("check", function() {
     }
 });
 
-gulp.task("build", ["check", "templates", "scripts", "workers", "styles", "images", "externals"],
+gulp.task("build",
+    ["check", "templates", "scripts", "workers", "styles", "images", "externals"],
     function() {
         firstBuild = false;
     });
