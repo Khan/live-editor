@@ -93,6 +93,18 @@ describe("Linting", function() {
     test("parsing of CDATA in <textarea> elements",
         "<textarea>" + text + "</textarea>");
 
+    test("parsing of uppercase <TEXTAREA> tags should work", [
+        '<TEXTAREA>hi</TEXTAREA>',
+        '<TEXTAREA>hi</textarea>',
+        '<textarea>hi</TEXTAREA>',
+    ]);
+
+    test("parsing of uppercase <SCRIPT> tags should work", [
+        '<SCRIPT>var hi = "hi";</SCRIPT>',
+        '<SCRIPT>var hi = "hi";</script>',
+        '<script>var hi = "hi";</SCRIPT>',
+    ]);
+
     test("parsing of HTML is case-insensitive", [
         '<P CLASS="FOO">hi</P>',
         '<P class="FOO">hi</P>',
@@ -235,6 +247,18 @@ describe("Linting", function() {
 
     failingTest("Object element banned",
         "<object></object>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Frameset element banned",
+        "<frameset></frameset>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Frame element banned",
+        "<frame></frame>", [
             {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
         ]
     );
