@@ -1637,7 +1637,7 @@
 
       this.stream.makeToken();
       while (!this.stream.end()) {
-        if (this.stream.match(matchString, true)) {
+        if (this.stream.match(matchString, true, true)) {
           token = this.stream.makeToken();
           text = token.value.slice(0, -matchString.length);
           closeTagInterval = {
@@ -1725,7 +1725,7 @@
             this.domBuilder.text(cssBlock.value, cssBlock.parseInfo);
           }
 
-          // If the opening tag represents a `<textarea>` element, we need
+          // If the opening tag represents a `<script>` element, we need
           // to parse all its contents as CDATA (unparsed character data)
           if (tagName && tagName === "script") {
             this.domBuilder.pushContext("javascript", this.stream.pos);
