@@ -1,45 +1,45 @@
 <div class="scratchpad-debugger">
-    {{#_}}Debug Mode{{/_}}
+    {{{i18n "Debug Mode" }}}
     <input type="checkbox" class="debug-mode">
     <span class="debugger-level" style="display:none;margin-left:20px;">
-        {{#_}}Level{{/_}}
+        {{{i18n "Level" }}}
         <select class="debugger-level-select">
             <option value="beginner" selected>
-                {{#_}}Beginner{{/_}}
+                {{{i18n "Beginner" }}}
             </option>
             <option value="advanced">
-                {{#_}}Advanced{{/_}}
+                {{{i18n "Advanced" }}}
             </option>
         </select>
     </span>
 
     <div class="debugger-simple" style="display:none;margin-top:5px;">
         <button class="debug-begin" style="margin-right:20px;">
-            {{#_}}Begin{{/_}}
+            {{{i18n "Begin" }}}
         </button>
         <button class="step-in" disabled>
-            {{#_}}Step{{/_}}
+            {{{i18n "Step" }}}
         </button>
         <button class="debug-end" disabled style="margin-left:20px;">
-            {{#_}}End{{/_}}
+            {{{i18n "End" }}}
         </button>
     </div>
     <div class="debugger-complex" style="display:none;margin-top:5px;">
         <button class="debug-restart" style="margin-right:10px;">
-            {{#_}}Restart{{/_}}
+            {{{i18n "Restart" }}}
         </button>
         <!-- start/restart -->
         <button class="step-over" disabled>
-            {{#_}}Step Over{{/_}}
+            {{{i18n "Step Over" }}}
         </button>
         <button class="step-in" disabled>
-            {{#_}}Step In{{/_}}
+            {{{i18n "Step In" }}}
         </button>
         <button class="step-out" disabled>
-            {{#_}}Step Out{{/_}}
+            {{{i18n "Step Out" }}}
         </button>
         <button class="debug-continue" disabled style="margin-left:10px;">
-            {{#_}}Continue{{/_}}
+            {{{i18n "Continue" }}}
         </button>
     </div>
 </div>

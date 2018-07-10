@@ -124,7 +124,6 @@ class PJSCodeInjector {
                         this.addWorkerToPool(worker);
                     }
                 }.bind(this);
-                console.log("Posting message", options);
                 worker.postMessage({
                     code: hintCode,
                     externalsDir: options.externalsDir,

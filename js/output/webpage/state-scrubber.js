@@ -26,7 +26,6 @@ class StateScrubber {
                 var propDescriptor =
                     Object.getOwnPropertyDescriptor(target, prop);
                 if (!propDescriptor || propDescriptor.configurable) {
-                    console.log("Freezing ", prop);
                     Object.defineProperty(target, prop, {
                         value: target[prop],
                         writable: false,
@@ -37,7 +36,6 @@ class StateScrubber {
                 // Couldn't access property for permissions reasons,
                 // like window.frame
                 // Only happens on prod where it's cross-origin
-                console.log("Error freezing ", e);
             }
         });
         // Completely lock down window's prototype chain
@@ -50,7 +48,6 @@ class StateScrubber {
                 // This should get rid of variables which cannot be deleted
                 // http://perfectionkills.com/understanding-delete/
                 this.target[prop] = undefined;
-                console.log("Deleting global ", prop);
                 delete this.target[prop];
             }
         }

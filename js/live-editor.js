@@ -1,9 +1,11 @@
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
+const React = require("react");
+const ReactDOM = require("react-dom");
 
 const ScratchpadConfig = require("./shared/config.js");
 const ScratchpadDrawCanvas = require("./ui/canvas.js");
-const TipBar = require("./ui/tipbar.js");
+const TipBar = require("./ui/tipbar.jsx");
 
 const liveEditorTemplate = require("../tmpl/live-editor.handlebars");
 
@@ -32,6 +34,7 @@ const LiveEditor = Backbone.View.extend({
         ALL_OUTPUT: "#output, #output-frame",
         RESTART_BUTTON: "#restart-code",
         GUTTER_ERROR: ".ace_error",
+        TIPBAR_WRAPPER: ".tipbar-wrapper",
         ERROR_BUDDY_HAPPY: ".error-buddy-happy",
         ERROR_BUDDY_THINKING: ".error-buddy-thinking",
     },
@@ -182,10 +185,7 @@ const LiveEditor = Backbone.View.extend({
             }.bind(this));
         }
 
-        this.tipbar = new TipBar({
-            el: this.$(this.dom.OUTPUT_DIV),
-            liveEditor: this
-        });
+        this.renderTipBar({liveEditor: this});
 
         // Set up the debugger;
         if (options.useDebugger) {
@@ -238,6 +238,13 @@ const LiveEditor = Backbone.View.extend({
 
         this.bind();
         this.setupAudio();
+    },
+
+    renderTipBar: function(props) {
+        props.liveEditor = this;
+        ReactDOM.render(
+            React.createElement(TipBar, props, null),
+            this.$(this.dom.TIPBAR_WRAPPER)[0]);
     },
 
     render: function() {
@@ -463,12 +470,12 @@ const LiveEditor = Backbone.View.extend({
         // Handle the gutter errors
         $el.on("click", this.dom.GUTTER_ERROR, function() {
             var lineNum = parseInt($(this).text(), 10);
-            self.setErrorPosition(this.gutterDecorations[lineNum]);
+            self.setErrorState(this.gutterDecorations[lineNum]);
         });
 
         // Handle clicks on the thinking Error Buddy
         $el.on("click", this.dom.ERROR_BUDDY_THINKING, function() {
-            self.setErrorPosition(0);
+            self.setErrorState(0);
         });
 
         // Bind the handler to start a new recording
@@ -1300,6 +1307,16 @@ const LiveEditor = Backbone.View.extend({
         }
     },
 
+
+
+    // Non-UI related, just storing errors
+    hasErrors: function() {
+        return this.errors && this.errors.length;
+    },
+    setErrors: function(errors) {
+        this.errors = errors;
+    },
+
     // This is the current error state of Oh Noes Guy.
     // His state can be one of:
     // - happy (no errors)
@@ -1307,26 +1324,22 @@ const LiveEditor = Backbone.View.extend({
     //             typer is currently typing)
     // - error (there is an error that we want to display prominently)
     errorState: "",
-    hasErrors: function() {
-        return this.tipbar.errors.length;
-    },
-    setErrors: function(errors) {
-        this.tipbar.setErrors(errors);
-    },
-    setErrorPosition: function(errorPos) {
-        this.setErrorState();
-        this.tipbar.setErrorPosition(errorPos);
-    },
-    setErrorState: function() {
+    setErrorState: function(errorNum) {
         this.errorState = "error";
         this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
         this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();
-        this.tipbar.update(true);
+        this.renderTipBar({
+            errorNum: errorNum || 0,
+            errors: this.errors,
+            isHidden: false});
     },
     setThinkingState: function() {
         if (this.errorState !== "thinking") {
             this.errorState = "thinking";
-            this.tipbar.hide();
+            this.renderTipBar({
+                errors: this.errors,
+                isHidden: true
+            });
             this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();
             this.$el.find(this.dom.ERROR_BUDDY_THINKING).show()
                 .animate({ left: -2 }, {duration: 300, easing: 'linear'})
@@ -1336,7 +1349,10 @@ const LiveEditor = Backbone.View.extend({
     },
     setHappyState: function() {
         this.errorState = "happy";
-        this.tipbar.hide();
+        this.renderTipBar({
+            errors: this.errors,
+            isHidden: true
+        });
         this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
         this.$el.find(this.dom.ERROR_BUDDY_HAPPY).show();
     },

@@ -349,6 +349,7 @@ const LiveEditorOutput = Backbone.View.extend({
             if (this.outputs.hasOwnProperty('pjs')) {
                 this.runtimeErrors = [e];
             }
+            console.warn(e);
             deferred.resolve();
         }
         return deferred;

@@ -1,10 +1,13 @@
-var SQLTester = function(options) {
+const SQL = require("sql.js");
+
+const OutputTester = require("../shared/output-tester.js");
+
+const SQLTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
 };
 
 SQLTester.prototype = new OutputTester();
-
 
 /**
  * Small collection of some utility functions to tack onto the function
@@ -364,12 +367,12 @@ SQLTester.prototype.testMethods = {
                 }
             }
         }
-        
+
         return { success: true };
     },
 
     /**
-     * @param templateDBInfo: A template DB to match column names 
+     * @param templateDBInfo: A template DB to match column names
      * @return {success} if user table contains same column names
      *   Note - it could also contain other names,
      *   use matchTableColumnCount if you need to be exact.
@@ -617,8 +620,8 @@ SQLTester.prototype.testMethods = {
 
         // This allows us to check Step 1 results even if
         //  Step 2 results are not correct, for example.
-        numResults = numResults || results.length; 
-        
+        numResults = numResults || results.length;
+
         // Make sure we have similar results
         for (var i = 0; i < numResults; i++) {
             var res = results[i];
@@ -642,7 +645,7 @@ SQLTester.prototype.testMethods = {
     moreResultsThan(num) {
         var dbInfo = this.userCode;
         var results = dbInfo.results;
-        return { success: (results.length > num) };            
+        return { success: (results.length > num) };
     },
 
     /*
@@ -668,4 +671,4 @@ SQLTester.prototype.testMethods = {
     },
 };
 
-
+module.exports = SQLTester;

@@ -63,19 +63,12 @@ var config = {
             "./js/output/pjs/pjs-output.js"
         ],
         output_webpage: [
-            //"./external/structuredjs/external/esprima.js",
-            //"./external/structured-blocks/external/escodegen.browser.js",
             "./external/html2canvas/html2canvas.js",
             "./external/structuredjs/structured.js",
             "./js/output/webpage/webpage-output.js"
         ],
-        output_sql_deps: [
-            "./external/html2canvas/html2canvas.js",
-            "sql.js"
-        ],
         output_sql: [
-            "./tmpl/sql-results.handlebars",
-            "./js/output/sql/sql-tester.js",
+            "./external/html2canvas/html2canvas.js",
             "./js/output/sql/sql-output.js"
         ],
         output: [
@@ -104,13 +97,10 @@ var config = {
     },
     module: {
         rules: [{
-            test: /\.js$/,
+            test: /\.(js|jsx)$/,
             exclude: /(node_modules|external)/,
             use: {
-                loader: 'babel-loader',
-                options: {
-                    presets: ['env']
-                }
+                loader: "babel-loader"
             }
         },
         {
@@ -121,7 +111,13 @@ var config = {
                     path.resolve(__dirname, "tmpl/helpers")
                 ]
             }
-        }
+        },
+        {
+            test: /\.css$/,
+            use: [
+              'css-loader'
+            ]
+         }
         ]
     },
     plugins: [

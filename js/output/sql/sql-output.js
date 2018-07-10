@@ -1,5 +1,16 @@
-/* global SQLTester */
-window.SQLOutput = Backbone.View.extend({
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+const React = require("react");
+const ReactDOM = require("react-dom");
+const Slowparse = require("../../../external/slowparse/slowparse.js");
+const SQL = require("sql.js");
+
+const SQLTester = require("./sql-tester.js");
+const SQLResults = require("./sql-results.jsx");
+const SQLResultsCSS = require("../../../css/output/sql-results.css");
+
+const SQLOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
@@ -11,15 +22,6 @@ window.SQLOutput = Backbone.View.extend({
 
         // Load SQL config options
         this.config.runCurVersion("sql", this);
-
-        // Register a helper to tell the difference between null and 0
-        Handlebars.registerHelper('isNull', function(variable, options) {
-            if (variable === null) {
-                return options.fn(this);
-            } else {
-                return options.inverse(this);
-            }
-        });
     },
 
     render: function() {
@@ -111,7 +113,7 @@ window.SQLOutput = Backbone.View.extend({
             errorMessage += ". " +
                 i18n._("Are you missing a parenthesis?");
         } else if (isSyntaxError &&
-                statement.indexOf("CREATE") !== -1 && 
+                statement.indexOf("CREATE") !== -1 &&
                 statement.indexOf("TABLE") === -1 && (
                     statement.indexOf("INDEX") === -1 ||
                     statement.indexOf("TRIGGER") === -1 ||
@@ -133,7 +135,7 @@ window.SQLOutput = Backbone.View.extend({
                 i18n._("Do you have a semi-colon after each statement?");
         } else if (isSyntaxError &&
             statement.indexOf("INSERT") !== -1 &&
-            statement.search(/[^INSERT],\d*\s*[a-zA-Z]+/) > -1 
+            statement.search(/[^INSERT],\d*\s*[a-zA-Z]+/) > -1
             ) {
             errorMessage += ". " +
                 i18n._("Are you missing quotes around text values?");
@@ -175,7 +177,7 @@ window.SQLOutput = Backbone.View.extend({
             return deferred;
         }
 
-        if (!window.SQLOutput.isSupported()) {
+        if (!SQLOutput.isSupported()) {
             deferred.resolve({
               errors: [{
                   row: -1,
@@ -338,7 +340,7 @@ window.SQLOutput = Backbone.View.extend({
     },
 
     runCode: function(userCode, callback) {
-        if (!window.SQLOutput.isSupported()) {
+        if (!SQLOutput.isSupported()) {
             return callback([], userCode);
         }
 
@@ -348,23 +350,24 @@ window.SQLOutput = Backbone.View.extend({
         var tables = SQLTester.Util.getTables(db);
         db.close();
 
-        var output = Handlebars.templates["sql-results"]({
-            tables: tables,
-            results: results
-        });
-
         var doc = this.getDocument();
         doc.open();
-        doc.write(output);
+        doc.write('<!DOCTYPE html><html><head></head><body><div class="frame-root"></div></body></html>');
+        ReactDOM.render(
+            React.createElement(SQLResults, {tables, results}, null),
+            doc.body.children[0]);
+        const docStyle = document.createElement("style");
+        docStyle.innerHTML = SQLResultsCSS;
+        doc.head.appendChild(docStyle);
         doc.close();
 
         // If a new result set was added, scroll to the bottom
         if (results && results.length) {
             // Ignore the first time the scratchpad loads
-            if (window.SQLOutput.lastResultsLen !== undefined) {
+            if (SQLOutput.lastResultsLen !== undefined) {
                 $(doc).scrollTop($(doc).height());
             }
-            window.SQLOutput.lastResultsLen = results.length;
+            SQLOutput.lastResultsLen = results.length;
         }
 
         this.postProcessing();
@@ -381,9 +384,11 @@ window.SQLOutput = Backbone.View.extend({
     }
 });
 
-window.SQLOutput.isSupported = function() {
+SQLOutput.isSupported = function() {
     // Check to make sure the typed arrays dependency is supported.
     return "Uint8ClampedArray" in window;
 };
 
 LiveEditorOutput.registerOutput("sql", SQLOutput);
+
+module.exports = SQLOutput;

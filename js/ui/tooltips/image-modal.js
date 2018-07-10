@@ -128,7 +128,7 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
         logForRecording: function(action, value) {
             var logPrefix = this.options.logPrefix || "mediamodal";
             var logAction = logPrefix + "." + action;
-            this.options.record.log(logAction, value);
+            this.options.record && this.options.record.log(logAction, value);
         },
 
         render: function() {
