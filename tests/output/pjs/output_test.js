@@ -114,10 +114,6 @@ describe("Scratchpad Output Exec", function() {
         background(105, 171, 74);
     });
 
-    test("Declaring an uninitialized variable in 1st expression of for loop", function() {
-        for (var i = 0, j; i < 10; i++) {}
-    });
-
     test("for loop with variable declaration", function() {
         for (var i = 0; i < 10; i++) {
             ellipse(25 * i, 200, 50, 50);

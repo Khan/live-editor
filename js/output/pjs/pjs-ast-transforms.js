@@ -204,15 +204,13 @@ ASTTransforms.rewriteContextVariables = function(envName, context) {
 
                             return {
                                 type: "SequenceExpression",
-                                expressions: node.declarations
-									.filter(decl => decl.init !== null)
-									.map(decl => {
-										return b.AssignmentExpression(
-											b.MemberExpression(b.Identifier(envName),b.Identifier(decl.id.name)),
-											"=",
-											decl.init
-										);
-									})
+                                expressions: node.declarations.map(decl => {
+                                    return b.AssignmentExpression(
+                                        b.MemberExpression(b.Identifier(envName),b.Identifier(decl.id.name)),
+                                        "=",
+                                        decl.init
+                                    );
+                                })
                             };
                         }
 
