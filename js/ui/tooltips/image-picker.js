@@ -1,8 +1,10 @@
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
+const React = require("react");
+const ReactDOM = require("react-dom");
 
-const imagePickerTemplate = require("../../../tmpl/image-picker.handlebars");
+const ImageScroller = require("./image-scroller.jsx")
 const TooltipBase = require("../../ui/tooltip-base.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
 
@@ -56,51 +58,36 @@ const ImagePicker = TooltipBase.extend({
         event.stopPropagation();
         ScratchpadAutosuggest.enableLiveCompletion(false);
     },
+    renderImageScroller: function(currentImage) {
 
-    render: function() {
-        var imagesDir = this.options.imagesDir;
-
-        var results = imagePickerTemplate({
-            imagesDir: imagesDir,
-            groups: _.map(OutputImages, function(data) {
-                data.imagesDir = imagesDir;
-                return data;
-            })
-        });
-
-        this.$el = $("<div class='tooltip mediapicker'>" + results +
-            "<div class='arrow'></div></div>")
-            .appendTo("body").hide();
-
-
-        this.bind();
+        const props = {
+            currentImage: currentImage,
+            imagesDir: this.options.imagesDir,
+            imageGroups: OutputImages,
+            onMouseLeave: () => {
+                this.options.editor.clearSelection();
+                this.options.editor.focus();
+            },
+            onImageSelect: (imageName) => {
+                this.updateText(imageName);
+                this.updateTooltip(`"${imageName}"`);
+            }
+        };
+        ReactDOM.render(
+            React.createElement(ImageScroller, props, null),
+            this.$el.find(".image-scroller-wrapper")[0]);
     },
 
-    bind: function() {
-        var self = this;
-
-        this.$(".media-groups").scroll(_.throttle(function() {
-            TooltipUtils.lazyLoadMedia(this);
-        }, 200, {leading: false}));
-
-        this.$el
-            .on("mouseenter", function() {
-                TooltipUtils.lazyLoadMedia($(this));
-            })
-            .on("click", ".image", function() {
-                $(this).parents(".mediapicker").find(".active").removeClass("active");
-                $(this).addClass("active");
-                var path = $(this).attr("data-path");
-                self.updateText(path);
-                self.updateTooltip(`"${path}"`);
-            })
-            .on("mouseleave", function() {
-                self.options.editor.clearSelection();
-                self.options.editor.focus();
-            });
+    render: function() {
+        this.$el = $("<div class='tooltip mediapicker'>" +
+                     "<div class='image-scroller-wrapper'/>" +
+                     "<div class='arrow'></div></div>")
+            .appendTo("body").hide();
+        this.renderImageScroller();
     },
 
     remove: function() {
+        ReactDOM.unmountComponentAtNode(this.$(".mediapicker")[0]);
         this.$el.remove();
         this.unbindFromRequestTooltip();
     },
@@ -122,9 +109,7 @@ const ImagePicker = TooltipBase.extend({
             }
         });
 
-        var fullPath = this.parent.options.imagesDir + foundPath + ".png";
-        this.$el.find(".current-media img")
-            .attr("src", fullPath);
+        this.renderImageScroller(foundPath);
 
         this.value = path;
     },

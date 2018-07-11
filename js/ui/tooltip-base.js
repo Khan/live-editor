@@ -84,7 +84,7 @@ const TooltipBase = Backbone.View.extend({
     //  - I use the session's $fromUndo variable to tell the editor not to save undo's. This
     //     is undocumented. There's currently (7/25/15) a test for it in tooltips_test.js.
     updateText: function(newText, customSelection, avoidUndo) {
-        if (!this.parent || this.parent.options.record.playing) {
+        if (!this.parent || this.parent.options.record && this.parent.options.record.playing) {
             return;
         }
         var parent = this.parent;

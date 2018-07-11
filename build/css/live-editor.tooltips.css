@@ -214,11 +214,11 @@
     font-weight: 900;
 }
 
-/* 
+/*
  * This is the compiled css for Bootstrap tabs and pills.
  * Compiled from bootstrap 2.3.2 (less/navs.less)
  */
- 
+
 .clearfix {
   *zoom: 1;
 }
@@ -706,14 +706,6 @@ html.playing .tooltip.hide-while-playing {
     width: 343px;
 }
 
-.tooltip.mediapicker:hover div.current-media {
-    display: none;
-}
-
-.tooltip.mediapicker:hover div.media-groups {
-    display: block;
-}
-
 .tooltip.mediapicker:hover div.media-groups p {
     font-size: 12px;
     margin: 5px;
@@ -731,7 +723,6 @@ html.playing .tooltip.hide-while-playing {
 
 .tooltip.mediapicker div.media-groups {
     background: white;
-    display: none;
     max-height: 300px;
     overflow-y: scroll;
 }
@@ -844,7 +835,7 @@ html.playing .tooltip.hide-while-playing {
     position: absolute;
     top: 14px;
     left: 50%;
-    margin-left: -9px; 
+    margin-left: -9px;
 }
 
 .tooltip .ui-slider-handle {
