@@ -86,13 +86,27 @@ describe("Scratchpad Output - BabyHint checks", function() {
         babyhint: true,
         code: "for (var i = 0; i < 10; x++) { }"
     });
-    
+
     assertTest({
         title: "Missing comma should only report a single error",
         reason: "Did you forget to add a comma between two parameters?",
         babyhint: true,
         code: "fill(255, 0 0);",
         count: 1
+    });
+
+    assertTest({
+        title: "Too many arguments",
+        reason: "\"dist()\" takes 4 or 6 parameters, not 7!",
+        babyhint: true,
+        code: "dist(30, 50, 20, 30, 50, 39, 3);"
+    });
+
+    assertTest({
+        title: "Too few arguments",
+        reason: "\"rect()\" takes 4, 5 or 8 parameters, not 3!",
+        babyhint: true,
+        code: "rect(100, 200, 300);"
     });
 });
 
@@ -336,7 +350,7 @@ describe("Scratchpad Output - Error report pattern checks", function() {
 
     allErrorsTest({
         title: "Different errors on same line are still reported sepearately",
-        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it.", 
+        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it.",
             "\"j\" is not defined. Make sure you're spelling it correctly and that you declared it."],
         jshint: true,
         code: "for (i = 0, j = 0; i * j < 100; i++, j++) {}"
@@ -344,7 +358,7 @@ describe("Scratchpad Output - Error report pattern checks", function() {
 
     allErrorsTest({
         title: "Same error on different lines are still reported separately",
-        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it.", 
+        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it.",
             "\"i\" is not defined. Make sure you're spelling it correctly and that you declared it."],
         jshint: true,
         code: "for (i = 0; i < 10; i++) {} \n i = 4;"
