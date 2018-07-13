@@ -28,7 +28,6 @@ var config = {
             "./js/ui/tooltips/image-picker.js",
             "./js/ui/tooltips/number-scrubber-click.js",
             "./js/ui/tooltips/number-scrubber.js",
-            "./js/ui/tooltips/tooltip-utils.js",
             "./js/editors/ace/editor-ace.js"
         ],
         editor_textarea: [

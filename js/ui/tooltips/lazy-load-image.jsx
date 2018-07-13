@@ -37,11 +37,10 @@ class LazyLoadImage extends Component {
         }
         return (
             <img
+                className={this.props.className}
                 ref={this.imageRef}
                 src={imgSrc}
                 alt={this.props.alt}
-                width="50"
-                height="50"
                 />
         );
     }

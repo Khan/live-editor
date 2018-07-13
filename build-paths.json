@@ -34,7 +34,6 @@
         "tooltips": [
             "css/ui/colorpicker.css",
             "css/ui/autosuggest.css",
-            "css/ui/tabs.css",
             "css/ui/tooltips.css"
         ],
         "output": [

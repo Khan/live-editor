@@ -315,19 +315,6 @@ html.playing .tooltip.hide-while-playing {
     margin-left: 10px;
 }
 
-.mediapicker-modal .nav-tabs {
-    margin: 18px 0 0;
-    padding-left: 20px;
-}
-
-.nav-pills a {
-    color: #699c52;
-}
-
-.nav-pills .active a {
-    background-color: #77b05d;
-}
-
 .scrubber-handle .flipped-arrow {
     display: inline-block;
     transform: scaleX(-1.0);

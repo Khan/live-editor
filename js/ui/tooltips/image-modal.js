@@ -23,12 +23,6 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             this.parent = options.parent;
             this.render();
             this.bind();
-            TooltipUtils.setupScrollSpy(
-                this.$(".mediapicker-modal-content"),
-                function(content) { // This function finds the associated pills for a scrollable div.
-                    return $(content).closest(".tab-pane").find(".nav-pills");
-                }
-            );
         },
 
         // There are more bindings below in events.
@@ -46,13 +40,6 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
                 }, 100)
             );
 
-            // Lazy load on scroll
-            this.$(".mediapicker-modal-content").scroll(
-                _.throttle(function(e) {
-                    TooltipUtils.lazyLoadMedia(e.currentTarget);
-                }, 200)
-            );
-
             // Treat playing an audio file like a selection
             // The play event can't be delegated, so we do it here.
             this.$(".mediapicker-modal-file audio").on("play", function(e) {
@@ -63,17 +50,6 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
         events: {
             // Highlight file when it is clicked
             "click .mediapicker-modal-file": "handleFileSelect",
-
-            "click .nav-tabs a": function(e) {
-                $(e.currentTarget).tab("show");
-                e.preventDefault();
-            },
-
-            // Modal or tab
-            "shown": function() {
-                TooltipUtils.lazyLoadMedia(
-                    this.$(".tab-pane.active .mediapicker-modal-content"));
-            },
 
             "hide.bs.modal": function() {
                 this.scrollStart = undefined;

@@ -9,17 +9,25 @@ class MediaPickerScroller extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            scrollTop: 0
+            scrollTop: 0,
+            scrollHeight: 320
         };
 
         this.handleScroll = this.handleScroll.bind(this);
         this.throttledOnScroll = _.throttle(this.handleScroll, 200);
         this.scrollerRef = React.createRef();
+
+        // Add link IDs and node refs to each group
+        this.props.groups.forEach((group) => {
+            group.linkId = "im-group-" + slugify(group.groupName);
+            group.nodeRef = React.createRef();
+        });
     }
 
     componentDidMount () {
         this.calculateDomPosition();
     }
+
     handleScroll () {
         this.calculateDomPosition();
     }
@@ -28,39 +36,57 @@ class MediaPickerScroller extends Component {
         if (!this.scrollerRef.current) {
             return;
         }
+        const scrollTop = this.scrollerRef.current.scrollTop;
+
+        // Figure out which is the last visible group
+        let visibleGroup;
+        this.props.groups.forEach((group) => {
+            // There will be no nodeRef for a single-group scroller
+            if (group.nodeRef.current &&
+                group.nodeRef.current.offsetTop <= scrollTop) {
+                visibleGroup = group.groupName;
+            }
+        });
+
         this.setState({
-            scrollTop: this.scrollerRef.current.scrollTop
+            scrollTop: scrollTop,
+            visibleGroup: visibleGroup
         })
     }
 
     render() {
         const groups = this.props.groups;
         const spinnerPath = `${this.props.imagesDir}/spinner.gif`;
-        const scrollMax = this.state.scrollTop + (300 * 2);
-        console.log(scrollMax);
+        const scrollMax = this.state.scrollTop + (320 * 2);
 
         const areMultipleGroups = groups.length > 1;
-        // Add linkRefs to each group
-        groups.forEach((group) => {
-            group.linkRef = "im-group-" + slugify(group.groupName);
-        });
+
 
         // Build list of sidebar links if multiple groups
         let groupsLinks;
         if (areMultipleGroups) {
             const sidebarItems = groups.map((group, ind) => {
-                let itemClass;
-                if (ind === 0) {
-                    itemClass = "active";
+                let isActive = false;
+                if (group.groupName === this.state.visibleGroup ||
+                    (!this.state.visibleGroup && ind === 0)) {
+                    isActive = true;
                 }
+                const aClassName = css(
+                    styles.groupsLinksItemA,
+                    isActive && styles.groupsLinksItemActiveA
+                    );
+                const liKey = `${group.groupName}-link`;
                 return (
-                    <li className={itemClass}>
-                        <a href={group.linkRef}>{group.groupName}</a>
+                    <li key={liKey} className={css(styles.groupsLinksItem)}>
+                        <a href={`#${group.linkId}`}
+                           className={aClassName}>
+                           {group.groupName}
+                        </a>
                     </li>
                 );
             });
             groupsLinks = (
-                <ul className="nav nav-pills nav-stackable">
+                <ul className={css(styles.groupsLinksList)}>
                     {sidebarItems}
                 </ul>
             )
@@ -70,7 +96,13 @@ class MediaPickerScroller extends Component {
         const groupsDivs = groups.map((group) => {
             let groupHeader;
             if (areMultipleGroups) {
-                groupHeader = <h3 id={group.linkRef}>{group.groupName}</h3>
+                groupHeader = (
+                    <h3 key={group.linkRef}
+                        ref={group.nodeRef}
+                        id={group.linkId}
+                        >
+                        {group.groupName}
+                    </h3>);
             }
             let citeLink;
             if (group.cite) {
@@ -82,7 +114,6 @@ class MediaPickerScroller extends Component {
                     </p>
                 );
             }
-            console.log(group);
             const thumbsDir = group.thumbsDir || "";
             const images = group.images && group.images.map((fileName) => {
                 const imageName = `${group.groupName}/${fileName}`;
@@ -121,9 +152,9 @@ class MediaPickerScroller extends Component {
                     </div>
                 );
             });
-
+            const divKey = `${group.groupName}-wrapper`;
             return (
-                <div className="mediapicker-modal-group">
+                <div key={divKey}>
                     {groupHeader}
                     {citeLink}
                     {images}
@@ -132,22 +163,17 @@ class MediaPickerScroller extends Component {
             );
         });
 
+        // Note that position:relative is inlined so that offsetParent
+        // is calculated properly for the lazy-loaded images
         return (
-            <div >
-                <div className={css(styles.groupsLinks)}>
+            <div>
+                <div className={css(styles.groupsLinksBox)}>
                 {groupsLinks}
                 </div>
-                <div ref={this.scrollerRef}
+                <div className={css(styles.scrollArea)}
+                    style={{position: "relative"}}
+                    ref={this.scrollerRef}
                     onScroll={this.handleScroll}
-                    style={{
-                        width: "520px",
-                        height: "320px",
-                        overflowY: "auto",
-                        float: "left",
-                        position: "relative",
-                        boxSizing: "border-box",
-                        padding: "0 120px 0 20px"
-                    }}
                     >
                 {groupsDivs}
                 </div>
@@ -157,14 +183,27 @@ class MediaPickerScroller extends Component {
 }
 
 const styles = StyleSheet.create({
+    scrollArea: {
+        color: "rgb(85, 85, 85)",
+        width: "520px",
+        height: "320px",
+        overflowY: "auto",
+        float: "left",
+        position: "relative",
+        boxSizing: "border-box",
+        padding: "0 120px 0 20px"
+    },
     fileBox: {
-        cursor: "pointer"
+        cursor: "pointer",
+        fontSize: "14px"
     },
     imageBox: {
         display: "inline-block",
+        height: "100px",
         width: "100px",
         marginRight: "20px",
-        marginBottom: "20px"
+        marginBottom: "20px",
+        textAlign: "center",
     },
     imagePreview: {
         maxWidth: "100%",
@@ -175,8 +214,8 @@ const styles = StyleSheet.create({
     imageCaption: {
         width: "100%",
         display: "inline-block",
-        textAlign: "center",
-        fontStyle: "italic"
+        fontStyle: "italic",
+        marginTop: "5px"
     },
     soundBox: {
         borderRadius: "6px",
@@ -187,18 +226,38 @@ const styles = StyleSheet.create({
         fontStyle: "italic",
         verticalAlign: "top",
         paddingTop: "5px",
-        display: "inline-block"
+        display: "inline-block",
+        marginTop: "5px"
     },
     soundPreview: {
         width: "250px",
         background: "black"
     },
-    groupsLinks: {
+    groupsLinksBox: {
         float: "right",
         width: "100px",
         top: "10px",
         right: "20px"
     },
+    groupsLinksList: {
+        marginLeft: "0",
+        marginBottom: "20px",
+        listStyle: "none"
+    },
+    groupsLinksItem: {
+        float: "left"
+    },
+    groupsLinksItemA: {
+        borderRadius: "5px",
+        display: "block",
+        lineHeight: "14px",
+        margin: "2px 2px 2px 0px",
+        padding: "8px 12px"
+    },
+    groupsLinksItemActiveA: {
+        color: "#ffffff",
+        backgroundColor: "#0088cc"
+    }
 });
 
 module.exports = MediaPickerScroller;
