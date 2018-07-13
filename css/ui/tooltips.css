@@ -225,12 +225,12 @@ html.playing .tooltip.hide-while-playing {
 }
 
 .tooltip.mediapicker-preview.mediapicker__image .mediapicker-preview-content {
-    height: 135px;
-    width: 100px;
+    height: 150px;
+    width: 120px;
 }
 
 .tooltip.mediapicker-preview.mediapicker__sound .mediapicker-preview-content {
-    width: 100px;
+    width: 250px;
 }
 
 .tooltip.mediapicker-preview audio {
@@ -241,7 +241,7 @@ html.playing .tooltip.hide-while-playing {
 
 .thumb-shell {
     height: 100px;
-    width: 100px;
+    width: 100%;
     margin-bottom: 5px;
     text-align: center;
 }
@@ -291,76 +291,16 @@ html.playing .tooltip.hide-while-playing {
     margin-bottom: 0;
 }
 
-.mediapicker-modal .mediapicker-modal-content {
-    width: 520px;
-    height: 320px;
-    overflow-y: auto;
-    float: left;
-    position: relative;
-    box-sizing: border-box;
-    padding: 0 120px 0 20px;
-}
-
 .mediapicker-modal .tab-pane {
     position: relative;
-}
-
-.mediapicker-modal .mediapicker-modal-file {
-    cursor: pointer;
-}
-
-.mediapicker-modal .image {
-    display: inline-block;
-    width: 100px;
-    margin-right: 20px;
-    margin-bottom: 20px;
-}
-
-.mediapicker-modal .image img {
-    max-width: 100%;
-    max-height: 100%;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-.mediapicker-modal .sound {
-    border-radius: 6px;
-    margin-bottom: 6px;
-    padding: 4px 2px 2px 4px;
-}
-
-.mediapicker-modal .sound audio {
-    width: 250px;
-    background: black;
-}
-
-.mediapicker-modal .sound span {
-    font-style: italic;
-    vertical-align: top;
-    padding-top: 5px;
-    display: inline-block;
 }
 
 .mediapicker-modal .image.active img, .mediapicker-modal .sound.active audio {
     box-shadow: 0 0 10px 1px #699c52;
 }
 
-.mediapicker-modal .image span {
-    width: 100%;
-    display: inline-block;
-    text-align: center;
-    font-style: italic;
-}
-
 .mediapicker-modal .top-shadow {
     box-shadow: 0px 5px 7px -6px #888888 inset
-}
-
-.mediapicker-modal .right {
-    width: 100px;
-    position: absolute;
-    top: 10px;
-    right: 20px;
 }
 
 .mediapicker-modal-footer {

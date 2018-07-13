@@ -794,12 +794,12 @@ html.playing .tooltip.hide-while-playing {
 }
 
 .tooltip.mediapicker-preview.mediapicker__image .mediapicker-preview-content {
-    height: 135px;
-    width: 100px;
+    height: 150px;
+    width: 120px;
 }
 
 .tooltip.mediapicker-preview.mediapicker__sound .mediapicker-preview-content {
-    width: 100px;
+    width: 250px;
 }
 
 .tooltip.mediapicker-preview audio {
@@ -810,7 +810,7 @@ html.playing .tooltip.hide-while-playing {
 
 .thumb-shell {
     height: 100px;
-    width: 100px;
+    width: 100%;
     margin-bottom: 5px;
     text-align: center;
 }
@@ -860,15 +860,6 @@ html.playing .tooltip.hide-while-playing {
     margin-bottom: 0;
 }
 
-.mediapicker-modal .mediapicker-modal-content {
-    width: 520px;
-    height: 320px;
-    overflow-y: auto;
-    float: left;
-    position: relative;
-    box-sizing: border-box;
-    padding: 0 120px 0 20px;
-}
 
 .mediapicker-modal .tab-pane {
     position: relative;

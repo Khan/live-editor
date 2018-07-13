@@ -1,9 +1,10 @@
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
+const React = require("react");
+const ReactDOM = require("react-dom");
 
-const mediaPickerModalTemplate = require("../../../tmpl/mediapicker-modal.handlebars");
-const mediaPickerPreviewTemplate = require("../../../tmpl/mediapicker-preview.handlebars");
+const MediaPickerTooltip = require("./media-picker-tooltip.jsx");
 const TooltipBase = require("../../ui/tooltip-base.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
 
@@ -131,13 +132,21 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             this.options.record && this.options.record.log(logAction, value);
         },
 
-        render: function() {
-            this.$el = $(mediaPickerModalTemplate({
+        renderMediaPickerGallery() {
+            const props = {
                 imagesDir: this.options.imagesDir,
                 soundsDir: this.options.soundsDir,
                 classes: this.options.files
-            }));
-            this.$el.appendTo("body").hide();
+            }
+            ReactDOM.render(
+                React.createElement(MediaPickerGallery, props, null),
+                this.$el[0]);
+        },
+
+        render: function() {
+            this.$el = $("<div class='media-gallery-wrapper'/>")
+                .appendTo("body").hide();
+            this.renderMediaPickerGallery();
         }
     });
 
@@ -184,63 +193,60 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             if (url !== this.currentUrl) {
                 this.currentUrl = url.trim();
                 if (url === "") {
-                    this.$(".thumb").hide();
-                    this.$(".thumb-throbber").hide();
-                    this.$(".thumb-error").text(i18n._("Enter an image URL.")).show();
+                    this.renderPreview({
+                        errorMessage: i18n._("Enter an image URL."),
+                        errorType: "notice"
+                    });
                     return;
                 }
                 var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|ka-perseus-images\.s3\.amazonaws\.com|wikimedia\.org|localhost:\d+)$/i;
                 var match = /\/\/([^\/]*)(?:\/|\?|#|$)/.exec(url);
                 var host = match ? match[1] : "";
                 if (!host || allowedHosts.test(host)) {
-                    if (url !== this.$(".thumb").attr("src")) {
-                        this.$(".thumb").attr("src", url);
-                        this.$(".thumb-throbber").show();
-                    }
-                    if (this.$(".thumb-error").hasClass("domainError")) {
-                        this.$(".thumb-error").removeClass("domainError").hide();
-                        this.$(".thumb").show();
-                    }
+                    this.renderPreview({
+                        imageSrc: url
+                    });
                 } else {
-                    this.$(".thumb").hide();
-                    this.$(".thumb-error")
-                        .text(i18n._("Sorry! That server is not permitted."))
-                        .addClass("domainError").show();
-                    this.$(".thumb-throbber").hide();
+                    this.renderPreview({
+                        errorMessage: i18n._("Sorry! That server is not permitted."),
+                        errorType: "error"
+                    });
                 }
             }
         },
 
+        renderPreview: function(props) {
+            props = props || {};
+            props.mediaType = "image";
+            props.onBrowseClick = () => {
+                this.modal.show();
+            }
+            props.imagesDir = this.options.imagesDir;
+            props.soundsDir = this.options.soundsDir;
+            props.mediaClasses = this.options.files;
+
+            ReactDOM.render(
+                React.createElement(MediaPickerTooltip, props, null),
+                this.$el.find(".media-preview-wrapper")[0]);
+        },
+
         render: function() {
             var self = this;
-            this.$el = $(mediaPickerPreviewTemplate(
-                            {isAudio: false}))
-                            .appendTo("body").hide();
 
-            this.$(".thumb")
-                .on("load", function() {
-                    $(this).closest(".thumb-shell").find(".thumb-error").hide();
-                    $(this).show();
-                    self.$(".thumb-throbber").hide();
-                })
-                .on("error", function() {
-                    if (self.currentUrl !== $(this).attr("src")) {
-                        return;
-                    }
-                    $(this).closest(".thumb-shell").find(".thumb-error")
-                        .text(i18n._("That is not a valid image URL.")).show();
-                    $(this).hide();
-                    self.$(".thumb-throbber").hide();
-                });
+            this.$el = $("<div class='tooltip mediapicker-preview'>" +
+                        "<div class='media-preview-wrapper'/>" +
+                        "<div class='arrow'></div></div>")
+                .addClass("mediapicker__image")
+                .appendTo("body").hide();
 
-            this.$("button").on("click", function() {
-                self.modal.show();
-            });
+            this.renderPreview();
 
+            /*
             this.modal = new Modal(_.defaults({
                 parent: this,
-                logPrefix: "imagemodal"
+                TODO: logPrefix: "imagemodal"
             }, this.options));
+            */
         },
 
         remove: function() {

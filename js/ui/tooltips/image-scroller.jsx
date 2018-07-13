@@ -1,4 +1,3 @@
-const $ = require("jquery");
 import React, {Component} from 'react';
 
 const LazyLoadImage = require("./lazy-load-image.jsx");
@@ -26,7 +25,6 @@ class ImageScroller extends Component {
     }
 
     handleMouseEnter() {
-        console.log("mouse enter");
         this.setState({isHovering: true});
         this.calculateDomPosition();
     }
@@ -57,7 +55,6 @@ class ImageScroller extends Component {
     render () {
         const spinnerPath = `${this.props.imagesDir}spinner.gif`;
         const scrollMax = this.state.scrollTop + (300 * 2);
-        console.log("scrollMax", scrollMax);
 
         const groupsDivs = this.props.imageGroups.map((group) => {
             let citeP;
