@@ -9,12 +9,13 @@ class MediaPickerTooltip extends Component {
     // props mediaType, mediaSrc, errorMessage, errorType, imagesDir, soundsDir, classes
 
     render() {
-        const mediaPickerModal = <MediaPickerModal {...this.props}/>;
+        const mediaPickerModal =
+            ({closeModal}) => <MediaPickerModal {...this.props} onClose={closeModal}/>;
 
         return (
             <div className="mediapicker-preview-content">
                 <MediaPickerPreview {...this.props}/>
-                <ModalLauncher modal={mediaPickerModal}>
+                <ModalLauncher modal={mediaPickerModal} onClose={this.props.onModalClose}>
                     {({openModal}) =>
                     <Button
                         onClick={openModal}

@@ -17,114 +17,6 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
  as students seem to prefer that UI to the imagePicker UI.
  */
 (function() {
-    var Modal = Backbone.View.extend({
-        initialize: function(options) {
-            this.options = options;
-            this.parent = options.parent;
-            this.render();
-            this.bind();
-        },
-
-        // There are more bindings below in events.
-        // These are here because scroll events cannot be delegated
-        bind: function() {
-            // Handle the shadow which appears on scroll
-            this.$(".mediapicker-modal-content").scroll(
-                _.throttle(function(e) {
-                    var $target = $(e.currentTarget);
-                    if ($target.scrollTop() > 0) {
-                        $target.addClass("top-shadow");
-                    } else {
-                        $target.removeClass("top-shadow");
-                    }
-                }, 100)
-            );
-
-            // Treat playing an audio file like a selection
-            // The play event can't be delegated, so we do it here.
-            this.$(".mediapicker-modal-file audio").on("play", function(e) {
-                this.handleFileSelect(e);
-            }.bind(this));
-        },
-
-        events: {
-            // Highlight file when it is clicked
-            "click .mediapicker-modal-file": "handleFileSelect",
-
-            "hide.bs.modal": function() {
-                this.scrollStart = undefined;
-                $("body").css("overflow", "auto");
-                this.logForRecording("hide");
-            },
-
-            // Update the url in ACE if someone clicks ok
-            "click .mediapicker-modal-submit": function(e) {
-                var $active = this.$(".mediapicker-modal-file.active");
-                if ($active.length !== 1) {
-                    return;
-                }
-                // The update and preview path are same for images,
-                //  but differ for sound by the addition of quotation marks
-                this.parent.updateText($active.attr("data-update-path"));
-                this.parent.updateTooltip($active.attr("data-preview-path"));
-            }
-        },
-
-        // Normally we could just listen to the show event on the modal,
-        // but an indistinguishable "show" event also bubbles from the tab.
-        // Instead we call this show() event ourselves when the button is clicked.
-        show: function() {
-            this.$el.modal();
-            $("body").css("overflow", "hidden");
-            this.$(".mediapicker-modal-file.active").removeClass("active");
-            this.logForRecording("show");
-        },
-
-        handleFileSelect: function(e) {
-            this.$(".mediapicker-modal-file.active").removeClass("active");
-            var $file = $(e.currentTarget).closest(".mediapicker-modal-file");
-            $file.addClass("active");
-            this.logForRecording("selectImg", $file.attr("data-path"));
-        },
-
-        selectFile: function(dataPath) {
-            var $file = this.$(".mediapicker-modal-file[data-path='"+dataPath+"']");
-            var $pane = $file.closest(".tab-pane");
-            var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
-            $tab.tab("show");
-            $pane.find(".mediapicker-modal-content").scrollTop(
-                $file.position().top - 100);
-            return $file;
-        },
-
-        selectImg: function(dataPath) {
-            var $file = this.selectFile(dataPath);
-            $file.find("img").click();
-        },
-
-        logForRecording: function(action, value) {
-            var logPrefix = this.options.logPrefix || "mediamodal";
-            var logAction = logPrefix + "." + action;
-            this.options.record && this.options.record.log(logAction, value);
-        },
-
-        renderMediaPickerGallery() {
-            const props = {
-                imagesDir: this.options.imagesDir,
-                soundsDir: this.options.soundsDir,
-                classes: this.options.files
-            }
-            ReactDOM.render(
-                React.createElement(MediaPickerGallery, props, null),
-                this.$el[0]);
-        },
-
-        render: function() {
-            this.$el = $("<div class='media-gallery-wrapper'/>")
-                .appendTo("body").hide();
-            this.renderMediaPickerGallery();
-        }
-    });
 
     const ImageModal = TooltipBase.extend({
         initialize: function(options) {
@@ -194,8 +86,24 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
         renderPreview: function(props) {
             props = props || {};
             props.mediaType = "image";
-            props.onBrowseClick = () => {
-                this.modal.show();
+            props.onFileSelect = (fileInfo) => {
+                this.activeFileInfo = fileInfo;
+                this.logForRecording(props.mediaType, "selectImg", fileInfo.groupAndName);
+            };
+            props.onModalShow = () => {
+                this.logForRecording(props.mediaType, "show");
+            };
+            props.onModalClose = () => {
+                this.logForRecording(props.mediaType, "hide");
+                if (!this.activeFileInfo) return;
+                let updatePath = this.activeFileInfo.fullImgPath;
+                this.updateTooltip(updatePath);
+                // Add quote marks to the path text for sounds
+                if (props.mediaType === 'audio') {
+                    updatePath = `"${updatePath}"`
+                }
+                this.updateText(updatePath);
+
             }
             props.imagesDir = this.options.imagesDir;
             props.soundsDir = this.options.soundsDir;
@@ -229,6 +137,28 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             this.$el.remove();
             this.modal.remove();
             this.unbindFromRequestTooltip();
+        },
+
+        // Related to talkthrough playback:
+        selectFile: function(dataPath) {
+            var $file = this.$(".mediapicker-modal-file[data-path='"+dataPath+"']");
+            var $pane = $file.closest(".tab-pane");
+            var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
+            $tab.tab("show");
+            $pane.find(".mediapicker-modal-content").scrollTop(
+                $file.position().top - 100);
+            return $file;
+        },
+
+        selectImg: function(dataPath) {
+            var $file = this.selectFile(dataPath);
+            $file.find("img").click();
+        },
+
+        logForRecording: function(action, value) {
+            var logPrefix = this.options.logPrefix || "mediamodal";
+            var logAction = logPrefix + "." + action;
+            this.options.record && this.options.record.log(logAction, value);
         }
     });
 

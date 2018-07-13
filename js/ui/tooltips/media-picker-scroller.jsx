@@ -10,22 +10,40 @@ class MediaPickerScroller extends Component {
         super(props);
         this.state = {
             scrollTop: 0,
-            scrollHeight: 320
+            scrollHeight: 320,
+            activeFileInfo: {}
         };
 
         this.handleScroll = this.handleScroll.bind(this);
         this.throttledOnScroll = _.throttle(this.handleScroll, 200);
         this.scrollerRef = React.createRef();
+        this.handleFileSelect = this.handleFileSelect.bind(this);
 
         // Add link IDs and node refs to each group
         this.props.groups.forEach((group) => {
             group.linkId = "im-group-" + slugify(group.groupName);
             group.nodeRef = React.createRef();
+
+            const thumbsDir = group.thumbsDir || "";
+            group.imagesInfo = group.images && group.images.map((fileName) => {
+                return {
+                    fullImgPath: `${this.props.imagesDir}${group.groupName}/${fileName}.png`,
+                    fullThumbPath: `${this.props.imagesDir}${group.groupName}${thumbsDir}/${fileName}.png`,
+                    groupAndName: `${group.groupName}/${fileName}`,
+                    name: fileName
+                };
+            });
         });
     }
 
     componentDidMount () {
         this.calculateDomPosition();
+    }
+
+    handleFileSelect (fileInfo) {
+        console.log("Selected", fileInfo);
+        this.setState({activeFileInfo: fileInfo});
+        this.props.onFileSelect(fileInfo);
     }
 
     handleScroll () {
@@ -36,6 +54,21 @@ class MediaPickerScroller extends Component {
         if (!this.scrollerRef.current) {
             return;
         }
+
+        /*** TODO?
+         *
+         this.$(".mediapicker-modal-content").scroll(
+            _.throttle(function(e) {
+                var $target = $(e.currentTarget);
+                if ($target.scrollTop() > 0) {
+                    $target.addClass("top-shadow");
+                } else {
+                    $target.removeClass("top-shadow");
+                }
+            }, 100)
+        );
+         */
+
         const scrollTop = this.scrollerRef.current.scrollTop;
 
         // Figure out which is the last visible group
@@ -114,30 +147,37 @@ class MediaPickerScroller extends Component {
                     </p>
                 );
             }
-            const thumbsDir = group.thumbsDir || "";
-            const images = group.images && group.images.map((fileName) => {
-                const imageName = `${group.groupName}/${fileName}`;
-                const imagePath = `${this.props.imagesDir}${group.groupName}${thumbsDir}/${fileName}.png`;
+
+            const images = group.imagesInfo && group.imagesInfo.map((info) => {
+                const isActive = this.state.activeFileInfo &&
+                    info.name === this.state.activeFileInfo.name;
+                const divClass = css(styles.fileBox, styles.imageBox,
+                    isActive && styles.fileBoxActive);
                 return (
-                    <div className={css(styles.fileBox, styles.imageBox)}
-                        key={imageName}
-                        onClick={(e) => this.handleImageClick(imageName, e)}>
+                    <div className={divClass}
+                        key={info.groupAndName}
+                        onClick={(e) => this.handleFileSelect(info, e)}>
                         <LazyLoadImage
                             className={css(styles.imagePreview)}
-                            alt={fileName}
-                            src={imagePath}
+                            alt={info.name}
+                            src={info.fullThumbPath}
                             placeholderSrc={spinnerPath}
                             parentScrollMax={scrollMax}
                             />
-                        <span className={css(styles.imageCaption)}>{fileName}</span>
+                        <span className={css(styles.imageCaption)}>{info.name}</span>
                     </div>
                 );
             });
             const sounds = group.sounds && group.sounds.map((fileName) => {
                 const soundName = `${group.groupName}/${fileName}`;
                 const soundPath = `${this.props.soundsDir}${group.groupName}${fileName}.mp3`;
+                const isActive = fileName === this.state.activeFile;
+                const divClass = css(styles.fileBox, styles.soundBox,
+                    isActive && styles.fileBoxActive);
+                // TODO:
+                // Treat playing an audio file like a selection
                 return (
-                    <div className={css(styles.fileBox, styles.soundBox)}
+                    <div className={divClass}
                         key={soundName}
                         onClick={(e) => this.handleSoundClick(soundName, e)}>
                         <LazyLoadImage
@@ -196,6 +236,9 @@ const styles = StyleSheet.create({
     fileBox: {
         cursor: "pointer",
         fontSize: "14px"
+    },
+    fileBoxActive: {
+        boxShadow: "0 0 10px 1px #699c52"
     },
     imageBox: {
         display: "inline-block",

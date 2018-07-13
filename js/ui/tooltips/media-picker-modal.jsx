@@ -9,20 +9,6 @@ const MediaPickerScroller = require("./media-picker-scroller.jsx");
 
 class MediaPickerModal extends Component {
 
-    constructor(props) {
-        super(props);
-        this.handleButtonClick = this.handleButtonClick.bind(this);
-        this.handleCloseClick = this.handleCloseClick.bind(this);
-    }
-
-    handleButtonClick() {
-        console.log("Twas the night before clickmas")
-    }
-
-    handleCloseClick() {
-        console.log("Twas closed?")
-    }
-
     render() {
         // state: activeClass
         // props: mediaClasses
@@ -40,6 +26,7 @@ class MediaPickerModal extends Component {
                     <MediaPickerScroller
                         groups={mediaClass.groups}
                         imagesDir={this.props.imagesDir}
+                        onFileSelect={this.props.onFileSelect}
                         />
                 </TabPanel>;
         });
@@ -55,16 +42,11 @@ class MediaPickerModal extends Component {
                     </Tabs>
                 }
                 footer={
-                    <Button
-                        onClick={this.handleButtonClick}
-                    >
+                    <Button onClick={this.props.onClose}>
                     {i18n._("Ok")}
                     </Button>
                 }
-                onClickCloseButton={() => alert("This would close the modal.")}
-
-            />
-            );
+            />);
     }
 }
 
