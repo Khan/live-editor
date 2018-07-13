@@ -11,14 +11,12 @@ class MediaPickerModal extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {
-        }
         this.handleButtonClick = this.handleButtonClick.bind(this);
         this.handleCloseClick = this.handleCloseClick.bind(this);
     }
 
     handleButtonClick() {
-        console.log("Twas clicked")
+        console.log("Twas the night before clickmas")
     }
 
     handleCloseClick() {
@@ -30,7 +28,6 @@ class MediaPickerModal extends Component {
         // props: mediaClasses
 
         // First make the tabs
-        console.log(this.props);
         const classesTabs = this.props.mediaClasses.map((mediaClass) => {
             const tabKey = `${mediaClass.className}-tab`;
             return <Tab key={tabKey}>{mediaClass.className}</Tab>;
@@ -72,23 +69,3 @@ class MediaPickerModal extends Component {
 }
 
 module.exports = MediaPickerModal;
-
-/*
-
-                content={
-                    <Tabs>
-                        <TabList>
-                            {classesTabs}
-                        </TabList>
-                        {classesTabPanels}
-                    </Tabs>
-                }
-                footer={
-                    <Button
-                        onClick={this.handleButtonClick}
-                    >
-                    {i18n._("Ok")}
-                    </Button>
-                }
-                onClickCloseButton={this.handleCloseClick}
-                */
