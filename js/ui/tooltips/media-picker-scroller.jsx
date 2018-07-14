@@ -1,5 +1,5 @@
 import Button from "@khanacademy/wonder-blocks-button";
-import { StyleSheet, css } from 'aphrodite';
+import { StyleSheet, css } from 'aphrodite/no-important';
 const LazyLoadImage = require("./lazy-load-image.jsx");
 import React, {Component} from 'react';
 const slugify = require('slugify');
@@ -54,20 +54,6 @@ class MediaPickerScroller extends Component {
         if (!this.scrollerRef.current) {
             return;
         }
-
-        /*** TODO?
-         *
-         this.$(".mediapicker-modal-content").scroll(
-            _.throttle(function(e) {
-                var $target = $(e.currentTarget);
-                if ($target.scrollTop() > 0) {
-                    $target.addClass("top-shadow");
-                } else {
-                    $target.removeClass("top-shadow");
-                }
-            }, 100)
-        );
-         */
 
         const scrollTop = this.scrollerRef.current.scrollTop;
 
@@ -157,14 +143,19 @@ class MediaPickerScroller extends Component {
                     <div className={divClass}
                         key={info.groupAndName}
                         onClick={(e) => this.handleFileSelect(info, e)}>
-                        <LazyLoadImage
-                            className={css(styles.imagePreview)}
-                            alt={info.name}
-                            src={info.fullThumbPath}
-                            placeholderSrc={spinnerPath}
-                            parentScrollMax={scrollMax}
-                            />
-                        <span className={css(styles.imageCaption)}>{info.name}</span>
+                        <figure className={css(styles.imagePreviewWrapper)}>
+                            <figcaption className={css(styles.imageCaption)}>
+                            {info.name}
+                            </figcaption>
+                            <LazyLoadImage
+                                className={css(styles.imagePreview)}
+                                alt={info.name}
+                                src={info.fullThumbPath}
+                                placeholderSrc={spinnerPath}
+                                parentScrollMax={scrollMax}
+                                />
+
+                        </figure>
                     </div>
                 );
             });
@@ -197,8 +188,10 @@ class MediaPickerScroller extends Component {
                 <div key={divKey}>
                     {groupHeader}
                     {citeLink}
+                    <div className={css(styles.mediaGrid)}>
                     {images}
                     {sounds}
+                    </div>
                 </div>
             );
         });
@@ -233,32 +226,40 @@ const styles = StyleSheet.create({
         boxSizing: "border-box",
         padding: "0 120px 0 20px"
     },
+    mediaGrid: {
+        display: "flex",
+        flexWrap: "wrap"
+    },
     fileBox: {
+        borderRadius: "4px",
         cursor: "pointer",
-        fontSize: "14px"
+        fontSize: "14px",
+        flex: "1 1 80px",
+        padding: "4px"
     },
     fileBoxActive: {
-        boxShadow: "0 0 10px 1px #699c52"
+        boxShadow: "0 0 10px 1px rgb(24, 101, 242)"
     },
     imageBox: {
         display: "inline-block",
-        height: "100px",
-        width: "100px",
-        marginRight: "20px",
-        marginBottom: "20px",
+        marginBottom: "8px",
+        marginRight: "4px",
         textAlign: "center",
+    },
+    imagePreviewWrapper: {
+        margin: "0",
+        overflow: "hidden"
     },
     imagePreview: {
         maxWidth: "100%",
-        maxHeight: "100%",
-        display: "inline-block",
+        height: "auto",
+        display: "block",
         verticalAlign: "middle"
     },
     imageCaption: {
-        width: "100%",
-        display: "inline-block",
+        fontSize: "11px",
         fontStyle: "italic",
-        marginTop: "5px"
+        marginBottom: "6px"
     },
     soundBox: {
         borderRadius: "6px",

@@ -62,6 +62,7 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
                 this.currentUrl = url.trim();
                 if (url === "") {
                     this.renderPreview({
+                        mediaSrc: "",
                         errorMessage: i18n._("Enter an image URL."),
                         errorType: "notice"
                     });
@@ -72,10 +73,12 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
                 var host = match ? match[1] : "";
                 if (!host || allowedHosts.test(host)) {
                     this.renderPreview({
-                        imageSrc: url
+                        mediaSrc: url,
+                        errorMessage: ""
                     });
                 } else {
                     this.renderPreview({
+                        mediaSrc: "",
                         errorMessage: i18n._("Sorry! That server is not permitted."),
                         errorType: "error"
                     });

@@ -14,20 +14,16 @@ class MediaPickerPreview extends Component {
     }
 
     handleImageLoad() {
-        this.setState({imageLoaded: true});
+        this.setState({imageLoaded: true, errorMessage: ""});
     }
 
     handleImageError() {
-        /*
-        TODO: wutt
-        if (self.currentUrl !== $(this).attr("src")) {
-            return;
-        }*/
-        this.setState({errorMessage: i18n._("That is not a valid image URL.")})
+        this.setState({
+            errorMessage: i18n._("That is not a valid image URL.")
+        });
     }
 
     render() {
-
         let mediaPreview;
         if (this.props.mediaType === "audio") {
             mediaPreview = <div>

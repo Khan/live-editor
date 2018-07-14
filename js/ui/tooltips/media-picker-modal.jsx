@@ -1,8 +1,9 @@
 import Button from "@khanacademy/wonder-blocks-button";
 import {OneColumnModal} from "@khanacademy/wonder-blocks-modal";
+import { StyleSheet, css } from 'aphrodite/no-important';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import React, {Component} from 'react';
-import 'react-tabs/style/react-tabs.css';
+import 'react-tabs/style/react-tabs.css'; // TODO: it doesn't work!
 
 const LazyLoadImage = require("./lazy-load-image.jsx");
 const MediaPickerScroller = require("./media-picker-scroller.jsx");
