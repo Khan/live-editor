@@ -38,8 +38,7 @@ var config = {
         ],
         debugger: [
             "./node_modules/iframe-overlay/dist/iframe-overlay.js",
-            "./js/ui/debugger.js",
-            "./tmpl/debugger.handlebars"
+            "./js/ui/debugger.js"
         ],
         shared: [
             "./js/shared/all-images.js",

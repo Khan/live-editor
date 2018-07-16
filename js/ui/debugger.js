@@ -4,7 +4,7 @@ const iframeOverlay = require("iframe-overlay");
 const React = require("react");
 const ReactDOM = require("react-dom");
 
-const DebuggerControls = require("./debugger-controls.jsx")
+const DebuggerControls = require("./debugger-controls.jsx");
 
 /* Provides debugging support for live-editor */
 const ScratchpadDebugger = Backbone.View.extend({

@@ -1,5 +1,12 @@
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+const React = require("react");
+const ReactDOM = require("react-dom");
+
+const RecordControls = require("./record-controls.jsx");
+
 /* Manages the audio chunks as we build up this recording. */
-window.ScratchpadAudioChunks = Backbone.Model.extend({
+const ScratchpadAudioChunks = Backbone.Model.extend({
 
     initialize: function(options) {
         // The saved audio chunks
@@ -48,7 +55,7 @@ window.ScratchpadAudioChunks = Backbone.Model.extend({
  *  restore state after a discard, and so any Record bugs also cause bugs in
  *  recording in chunks.
  */
-window.ScratchpadRecordView = Backbone.View.extend({
+const ScratchpadRecordView = Backbone.View.extend({
     initialize: function(options) {
         this.render();
         this.$recordButton = options.recordButton;
@@ -73,7 +80,9 @@ window.ScratchpadRecordView = Backbone.View.extend({
     },
 
     render: function() {
-        this.$el.html(Handlebars.templates["dev-record"]({})).show();
+        ReactDOM.render(
+            React.createElement(RecordControls, {}, null),
+            this.el);
     },
 
     initializeButtons: function() {
@@ -307,3 +316,5 @@ window.ScratchpadRecordView = Backbone.View.extend({
     }
 
 });
+
+module.exports = ScratchpadRecordView;

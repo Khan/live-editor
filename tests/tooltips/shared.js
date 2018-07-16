@@ -19,7 +19,7 @@ var uniqueEditor = function() {
         imagesDir: "../../build/images/",
         externalsDir: "",
         workersDir: "",
-        record: new ScratchpadRecord(),
+        record: new ScratchpadRecordModel(),
         type: "ace_pjs"
     });
     ScratchpadAutosuggest.init(ace.editor);

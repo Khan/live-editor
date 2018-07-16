@@ -6,6 +6,8 @@ const ReactDOM = require("react-dom");
 const ScratchpadDebugger = require("./ui/debugger.js");
 const ScratchpadConfig = require("./shared/config.js");
 const ScratchpadDrawCanvas = require("./ui/canvas.js");
+const ScratchpadRecordModel = require("./shared/record.js");
+const ScratchpadRecordView = require("./ui/record.js");
 const TipBar = require("./ui/tipbar.jsx");
 
 const liveEditorTemplate = require("../tmpl/live-editor.handlebars");
@@ -85,7 +87,7 @@ const LiveEditor = Backbone.View.extend({
         // We no longer load in record, since that functionality isn't
         // currently needed nor supported
         if (this.canRecord()) {
-            this.record = new ScratchpadRecord();
+            this.record = new ScratchpadRecordModel();
         }
 
         // Set up the Canvas drawing area
