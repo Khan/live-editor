@@ -1,0 +1,29 @@
+// These are rules that apply to javascript snippets that are
+// included in html inside <script> tags.  These snippets must
+// use ES5, since browsers do not support ES6 natively yet.
+//
+// If you want to adjust/add a rule that is not specific to what
+// browsers do or do not support, modify eslintrc.shared instead.
+{
+    "rules": {
+        // NOTE: we can support 'const' one day; though cf. 'let'.
+        // http://caniuse.com/#feat=const
+
+        // ---------------------------------------
+        // ES5 rules that we disable for 'embedded' javascript.
+        // For instance, we don't indent inside the IIFE-wrapper we have
+        // inside every <script> block, so we can't test for indentation.
+        // And the way we remove template tags often introduces weird
+        // whitespace and line-joins, so we can't check for whitespace or
+        // too-long-line errors either.
+        "indent": 0,
+        "max-len": 0,
+        "max-lines": 0,
+        "no-trailing-spaces": 0
+    },
+    "globals": {},
+    "env": {
+        "browser": true
+    },
+    "extends": "./eslintrc.shared"
+}

@@ -1,0 +1,149 @@
+// These are rules that are shared by all our javascript, no matter
+// where it is written (in webapp javascript files, inside html
+// <script> tags, in node.js scripts).
+//
+// In particular, there are NO ES6 OR ES7 rules here, since browsers
+// do not support them yet.  Look in `eslintrc` for those rules instead.
+//
+// This rc file is not meant to be used directly; rather it is extended
+// by the user-facing files eslintrc, eslintrc.browser, and eslintrc.node.
+{
+    "rules": {
+        // We'd possibly like to remove the 'properties': 'never' one day.
+        "camelcase": [2, {"properties": "never"}],
+        "curly": 2,
+        "eqeqeq": [2, "allow-null"],
+        "guard-for-in": 2,
+        "linebreak-style": [2, "unix"],
+        "max-lines": [2, 1000],
+        "no-alert": 2,
+        "no-array-constructor": 2,
+        "no-console": 2,
+        "no-debugger": 2,
+        "no-dupe-class-members": 2,
+        "no-dupe-keys": 2,
+        "no-extra-bind": 2,
+        "no-new": 2,
+        "no-new-func": 2,
+        "no-new-object": 2,
+        "no-throw-literal": 2,
+        "no-undef": 2,
+        "no-unexpected-multiline": 2,
+        "no-unreachable": 2,
+        "no-unused-expressions": [2, {"allowShortCircuit": true, "allowTernary": true}],
+        "no-unused-vars": [2, {"args": "none", "varsIgnorePattern": "^_*$"}],
+        "no-useless-call": 2,
+        "no-with": 2,
+        "one-var": [2, "never"],
+        "jsx-a11y/alt-text": 2,
+        "jsx-a11y/aria-props": 2,
+        "jsx-a11y/anchor-is-valid": 2,
+        // TODO(scottgrant): Add additional a11y rules as we support them.
+        // ---------------------------------------
+        // Stuff that's disabled for now, but maybe shouldn't be.
+        // TODO(jeresig): It's an anti-pattern but it appears to be used
+        // frequently in reducers, the alternative would be super-clunky.
+        "no-case-declarations": 0,
+        // TODO(csilvers): enable these if/when community agrees on it.
+        // Might be nice to turn this on one day, but since we don't
+        // use jsdoc anywhere it seems silly to require it yet.
+        "valid-jsdoc": 0,
+        "require-jsdoc": 0
+    },
+    "globals": {
+        // These are copied from
+        //   webapp:js_css_packages/third_party_js.py:_NON_REQUIREABLE_GLOBALS
+        // TODO(csilvers): maybe move to comment-style globals so we don't
+        // have to keep these lists in sync?
+        "KAdefine": true,
+        "KAdefineTiming": true,
+        "resizeSignupCallout": true,
+        "FB": true,
+        "fbAsyncInit": true,
+        "ga": true,
+        "google": true,
+        "YT": true,
+        "onYouTubeIframeAPIReady": true,
+        "Sailthru": true,
+        "CameraTag": true,
+        "StripeCheckout": true,
+        "define": true, "requirejs": true,
+        "phantom": true,
+        "casper": true,
+        "unisubs_readyAPIIDs": true,
+        "__gcse": true,
+        "_jipt": true,
+        "MathJax": true,
+        "olark": true,
+        "babelHelpers": true,
+        // These are copied from the "globals" fields of various
+        // entries in third_party_js.py.  I only included the ones
+        // I could get programatically, via:
+        //    grep -o '"globals".*' js_css_packages/third_party_js.py \
+        //        | grep -o '"[^"]*"' | sort -u | sed 's/$/: true,/'
+        "$": true,
+        "AceEditor": true,
+        "BabyHint": true,
+        "Backbone": true,
+        "CKEDITOR": true,
+        "ColVis": true,
+        "DTNodeStatus_Error": true,
+        "Downloadify": true,
+        "FastMarkerOverlayInit": true,
+        "Handlebars": true,
+        "Highcharts": true,
+        "JSHINT": true,
+        "JSToolboxEditor": true,
+        "KAS": true,
+        "Khan": true,
+        "KhanUtil": true,
+        "Kicksend": true,
+        "Masonry": true,
+        "MathQuill": true,
+        "Mocha": true,
+        "OutputImages": true,
+        "PJSOutput": true,
+        "Perseus": true,
+        "Processing": true,
+        "Rainbow": true,
+        "React": true,
+        "ReactART": true,
+        "ReactHotAPI": true,
+        "SQL": true,
+        "SQLOutput": true,
+        "ScratchpadAutosuggest": true,
+        "ScratchpadConfig": true,
+        "ScratchpadRecord": true,
+        "Select2": true,
+        "Slowparse": true,
+        "Structured": true,
+        "StructuredBlocksEditor": true,
+        "TextareaEditor": true,
+        "TooltipBase": true,
+        "TooltipEngine": true,
+        "WebpageOutput": true,
+        "after": true,
+        "before": true,
+        "com": true,
+        "describe": true,
+        "esprima": true,
+        "globals": true,
+        "guiders": true,
+        "html2canvas": true,
+        "it": true,
+        "jQuery": true,
+        "methodDraw": true,
+        "mocha": true,
+        "moment": true,
+        "xlsx": true,
+        "UserVoice": true
+    },
+    "plugins": [
+        "jsx-a11y",
+        "prettier"
+    ],
+    "extends": [
+        "eslint:recommended",
+        "prettier"
+    ]
+}
