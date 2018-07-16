@@ -3,6 +3,7 @@ Backbone.$ = require("jquery");
 const React = require("react");
 const ReactDOM = require("react-dom");
 
+const ScratchpadDebugger = require("./ui/debugger.js");
 const ScratchpadConfig = require("./shared/config.js");
 const ScratchpadDrawCanvas = require("./ui/canvas.js");
 const TipBar = require("./ui/tipbar.jsx");

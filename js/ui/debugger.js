@@ -1,6 +1,13 @@
-/* Provides debugging support for live-editor */
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+const iframeOverlay = require("iframe-overlay");
+const React = require("react");
+const ReactDOM = require("react-dom");
 
-window.ScratchpadDebugger = Backbone.View.extend({
+const DebuggerControls = require("./debugger-controls.jsx")
+
+/* Provides debugging support for live-editor */
+const ScratchpadDebugger = Backbone.View.extend({
 
     el: ".scratchpad-debugger",
 
@@ -13,11 +20,9 @@ window.ScratchpadDebugger = Backbone.View.extend({
     },
 
     render: function() {
-        this.$el.html(Handlebars.templates["debugger"]({
-            execFile: this.execFile,
-            imagesDir: this.imagesDir,
-            colors: this.colors
-        }));
+        ReactDOM.render(
+            React.createElement(DebuggerControls, {}, null),
+            this.el);
     },
 
     postFrame: function(data) {
@@ -26,7 +31,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
     bind: function() {
         // create the overlay first before binding any event handlers because
-        // createOverlay moves the iframe's position in the DOM tree which 
+        // createOverlay moves the iframe's position in the DOM tree which
         // unbinds existing event handlers
         var iframe = $("iframe").get(0);
         this.overlay = iframeOverlay.createOverlay(iframe);
@@ -289,3 +294,5 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.$el.find(".debug-continue").attr("disabled", "");
     }
 });
+
+module.exports = ScratchpadDebugger;
