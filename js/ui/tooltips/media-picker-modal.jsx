@@ -3,9 +3,8 @@ import {OneColumnModal} from "@khanacademy/wonder-blocks-modal";
 import { StyleSheet, css } from 'aphrodite/no-important';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import React, {Component} from 'react';
-import 'react-tabs/style/react-tabs.css'; // TODO: it doesn't work!
+import 'react-tabs/style/react-tabs.css';
 
-const LazyLoadImage = require("./lazy-load-image.jsx");
 const MediaPickerScroller = require("./media-picker-scroller.jsx");
 
 class MediaPickerModal extends Component {
@@ -27,6 +26,7 @@ class MediaPickerModal extends Component {
                     <MediaPickerScroller
                         groups={mediaClass.groups}
                         imagesDir={this.props.imagesDir}
+                        soundsDir={this.props.soundsDir}
                         onFileSelect={this.props.onFileSelect}
                         />
                 </TabPanel>;

@@ -28,11 +28,9 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             this.bindToRequestTooltip();
             if (this.options.record) {
                 Object.assign(this.options.record.handlers, {
-                    "imagemodal.show": this.modal.show.bind(this.modal),
-                    "imagemodal.hide": function(){
-                        this.modal.$el.modal("hide");
-                    }.bind(this),
-                    "imagemodal.selectImg": this.modal.selectImg.bind(this.modal)
+                    "imagemodal.show": this.showModal.bind(this),
+                    "imagemodal.hide": this.hideModal.bind(this),
+                    "imagemodal.selectImg": this.selectImg.bind(this)
                 });
             }
 
@@ -61,11 +59,11 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             if (url !== this.currentUrl) {
                 this.currentUrl = url.trim();
                 if (url === "") {
-                    this.renderPreview({
-                        mediaSrc: "",
-                        errorMessage: i18n._("Enter an image URL."),
-                        errorType: "notice"
-                    });
+                        this.renderPreview({
+                            mediaSrc: "",
+                            errorMessage: i18n._("Enter an image URL."),
+                            errorType: "notice"
+                        });
                     return;
                 }
                 var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|ka-perseus-images\.s3\.amazonaws\.com|wikimedia\.org|localhost:\d+)$/i;
@@ -91,25 +89,19 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             props.mediaType = "image";
             props.onFileSelect = (fileInfo) => {
                 this.activeFileInfo = fileInfo;
-                this.logForRecording(props.mediaType, "selectImg", fileInfo.groupAndName);
+                this.logForRecording("selectImg", fileInfo.groupAndName);
             };
             props.onModalShow = () => {
-                this.logForRecording(props.mediaType, "show");
+                this.logForRecording("show");
             };
             props.onModalClose = () => {
-                this.logForRecording(props.mediaType, "hide");
+                this.logForRecording("hide");
                 if (!this.activeFileInfo) return;
                 let updatePath = this.activeFileInfo.fullImgPath;
                 this.updateTooltip(updatePath);
-                // Add quote marks to the path text for sounds
-                if (props.mediaType === 'audio') {
-                    updatePath = `"${updatePath}"`
-                }
                 this.updateText(updatePath);
-
             }
             props.imagesDir = this.options.imagesDir;
-            props.soundsDir = this.options.soundsDir;
             props.mediaClasses = this.options.files;
 
             ReactDOM.render(
@@ -127,23 +119,27 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
                 .appendTo("body").hide();
 
             this.renderPreview();
-
-            /*
-            this.modal = new Modal(_.defaults({
-                parent: this,
-                TODO: logPrefix: "imagemodal"
-            }, this.options));
-            */
         },
 
         remove: function() {
             this.$el.remove();
-            this.modal.remove();
+            // TODO: Remove react
             this.unbindFromRequestTooltip();
         },
 
         // Related to talkthrough playback:
+        // TODO
+
+        showModal: function() {
+            // TODO: how to open programmatically?
+        },
+
+        hideModal: function() {
+            // TODO: how to hide programmatically?
+        },
+
         selectFile: function(dataPath) {
+            // TODO: How to update programmatically?
             var $file = this.$(".mediapicker-modal-file[data-path='"+dataPath+"']");
             var $pane = $file.closest(".tab-pane");
             var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
@@ -159,8 +155,7 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
         },
 
         logForRecording: function(action, value) {
-            var logPrefix = this.options.logPrefix || "mediamodal";
-            var logAction = logPrefix + "." + action;
+            var logAction = "imagemodal" + action;
             this.options.record && this.options.record.log(logAction, value);
         }
     });
@@ -185,6 +180,7 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             //  PhantomJS's inability to pass around RegEx objects in tests.
             //  That should be fixed in PhantomJS2.0, so we are eagerly
             //  awaiting the upgrade of gulp-mocha-phantomjs to that.
+            // TODO: We use Chrome now!
             var functionStart = event.col - RegExp.lastMatch.length;
             var paramsStart = functionStart + RegExp.$1.length;
 
@@ -230,33 +226,55 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
                 partialPath = partialPath.replace(/\"/g, "");
                 this.currentUrl = this.options.soundsDir + partialPath + ".mp3";
                 if (partialPath === "") {
-                    this.$(".thumb-error").text(i18n._("Invalid sound file.")).show();
+                    this.renderPreview({
+                        mediaSrc: "",
+                        errorMessage: i18n._("Invalid sound file."),
+                        errorType: "notice"
+                    });
                     return;
-                } else {
-                    this.$(".thumb-error").hide();
                 }
             }
-            this.$(".mediapicker-preview-file").attr("src", this.currentUrl);
+            this.renderPreview({
+                mediaSrc: this.currentUrl,
+                errorMessage: ""
+            });
+        },
+
+        renderPreview: function(props) {
+            props = props || {};
+            props.mediaType = "audio";
+            props.onFileSelect = (fileInfo) => {
+                this.activeFileInfo = fileInfo;
+            };
+            props.onModalClose = () => {
+                if (!this.activeFileInfo) return;
+                let updatePath = this.activeFileInfo.groupAndName;
+                this.updateTooltip(updatePath);
+                this.updateText(`"${updatePath}"`);
+
+            }
+            props.soundsDir = this.options.soundsDir;
+            props.mediaClasses = this.options.files;
+            ReactDOM.render(
+                React.createElement(MediaPickerTooltip, props, null),
+                this.$el.find(".media-preview-wrapper")[0]);
         },
 
         render: function() {
             var self = this;
-            this.$el = $(mediaPickerPreviewTemplate(
-                            {isAudio: true}))
-                            .appendTo("body").hide();
 
-            this.$("button").on("click", function() {
-                self.modal.show();
-            });
+            this.$el = $("<div class='tooltip mediapicker-preview'>" +
+                        "<div class='media-preview-wrapper'/>" +
+                        "<div class='arrow'></div></div>")
+                .addClass("mediapicker__sound")
+                .appendTo("body").hide();
 
-            this.modal = new Modal(_.defaults({
-                parent: this
-            }, this.options));
+            this.renderPreview();
         },
 
         remove: function() {
             this.$el.remove();
-            this.modal.remove();
+            // TODO: Remove react
             this.unbindFromRequestTooltip();
         }
     });

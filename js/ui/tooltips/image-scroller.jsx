@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
+import { StyleSheet, css } from 'aphrodite/no-important';
 
-const LazyLoadImage = require("./lazy-load-image.jsx");
+const LazyLoadMedia = require("./lazy-load-media.jsx");
 
 class ImageScroller extends Component {
 
@@ -60,7 +61,7 @@ class ImageScroller extends Component {
             let citeP;
             if (group.cite) {
                 citeP = (
-                    <p>
+                    <p className={css(styles.citeP)}>
                         <a href="{group.citeLink}" target="_blank">
                         {group.cite}
                         </a>
@@ -69,27 +70,26 @@ class ImageScroller extends Component {
             const imagesDivs = group.images.map((fileName) => {
                 const imageName = `${group.groupName}/${fileName}`;
                 const imagePath = `${this.props.imagesDir}${imageName}.png`;
-                let divClass = "image";
-                if (imageName === this.state.activeImage) {
-                    divClass += " active";
-                }
+                let divClass = css(styles.imageBox,
+                    imageName === this.state.activeImage && styles.active);
                 return (
                     <div className={divClass}
                         key={imageName}
                         onClick={(e) => this.handleImageClick(imageName, e)}>
-                        <LazyLoadImage
+                        <LazyLoadMedia
                             alt={fileName}
                             src={imagePath}
+                            className={css(styles.img)}
                             placeholderSrc={spinnerPath}
                             parentScrollMax={scrollMax}
                             />
-                        <span className="name">{fileName}</span>
+                        <span>{fileName}</span>
                     </div>
                 );
             });
             return (
-                <div className="media-group" key={group.groupName}>
-                    <h3>{group.groupName}</h3>
+                <div className={css(styles.group)} key={group.groupName}>
+                    <h3 className={css(styles.groupH)}>{group.groupName}</h3>
                     {citeP}
                     {imagesDivs}
                 </div>
@@ -103,17 +103,23 @@ class ImageScroller extends Component {
 
         let currentImageDiv;
         if (!this.state.isHovering) {
-            currentImageDiv = <div className="current-media">
-                    <img src={currentPath}/>
+            currentImageDiv = <div className={css(styles.previewBox)}>
+                    <img className={css(styles.previewImg)} src={currentPath}/>
                 </div>;
         }
         let imageGroupsDiv;
         if (this.state.isHovering) {
-            imageGroupsDiv = <div className="media-groups" ref={this.scrollerRef} onScroll={this.handleScroll}>
-                <div style={{position: "relative"}}>
-                {groupsDivs}
+            // It's necessary to specify position: relative as an inline style
+            // so that the browser calculates correct offsetParent for scrolling
+            imageGroupsDiv = (
+                <div className={css(styles.groups)}
+                    ref={this.scrollerRef}
+                    onScroll={this.handleScroll}>
+                    <div style={{position: "relative"}}>
+                    {groupsDivs}
+                    </div>
                 </div>
-            </div>;
+            );
         }
 
         return (
@@ -127,5 +133,52 @@ class ImageScroller extends Component {
         );
     }
 }
+
+const styles = StyleSheet.create({
+    previewBox: {
+        background: "#FFF",
+        padding: "2px"
+    },
+    previewImg: {
+        maxWidth: "50px",
+        maxHeight: "50px"
+    },
+    groups: {
+        background: "white",
+        maxHeight: "300px",
+        overflowY: "scroll"
+    },
+    group: {
+        overflow: "auto"
+    },
+    groupH: {
+        margin: "5px"
+    },
+    citeP: {
+        fontSize: "12px",
+        margin: "5px"
+    },
+    imageBox: {
+        background: "white",
+        border: "2px solid #EEE",
+        cursor: "pointer",
+        float: "left",
+        height: "50px",
+        margin: "5px",
+        overflow: "hidden",
+        padding: "5px",
+        whiteSpace: "nowrap",
+        width: "140px"
+    },
+    img: {
+        maxHeight: "50px",
+        maxWidth: "50px",
+        marginRight: "5px",
+        verticalAlign: "middle"
+    },
+    active: {
+        boxShadow: "rgb(24, 101, 242) 0px 0px 10px 1px"
+    }
+});
 
 module.exports = ImageScroller;

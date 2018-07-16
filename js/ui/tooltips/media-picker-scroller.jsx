@@ -1,6 +1,6 @@
 import Button from "@khanacademy/wonder-blocks-button";
 import { StyleSheet, css } from 'aphrodite/no-important';
-const LazyLoadImage = require("./lazy-load-image.jsx");
+const LazyLoadMedia = require("./lazy-load-media.jsx");
 import React, {Component} from 'react';
 const slugify = require('slugify');
 
@@ -29,6 +29,13 @@ class MediaPickerScroller extends Component {
                 return {
                     fullImgPath: `${this.props.imagesDir}${group.groupName}/${fileName}.png`,
                     fullThumbPath: `${this.props.imagesDir}${group.groupName}${thumbsDir}/${fileName}.png`,
+                    groupAndName: `${group.groupName}/${fileName}`,
+                    name: fileName
+                };
+            });
+            group.soundsInfo = group.sounds && group.sounds.map((fileName) => {
+                return {
+                    fullPath: `${this.props.soundsDir}${group.groupName}/${fileName}.mp3`,
                     groupAndName: `${group.groupName}/${fileName}`,
                     name: fileName
                 };
@@ -147,7 +154,7 @@ class MediaPickerScroller extends Component {
                             <figcaption className={css(styles.imageCaption)}>
                             {info.name}
                             </figcaption>
-                            <LazyLoadImage
+                            <LazyLoadMedia
                                 className={css(styles.imagePreview)}
                                 alt={info.name}
                                 src={info.fullThumbPath}
@@ -159,26 +166,26 @@ class MediaPickerScroller extends Component {
                     </div>
                 );
             });
-            const sounds = group.sounds && group.sounds.map((fileName) => {
-                const soundName = `${group.groupName}/${fileName}`;
-                const soundPath = `${this.props.soundsDir}${group.groupName}${fileName}.mp3`;
-                const isActive = fileName === this.state.activeFile;
+            const sounds = group.soundsInfo && group.soundsInfo.map((info) => {
+                const isActive = this.state.activeFileInfo &&
+                    info.name === this.state.activeFileInfo.name;
                 const divClass = css(styles.fileBox, styles.soundBox,
                     isActive && styles.fileBoxActive);
                 // TODO:
-                // Treat playing an audio file like a selection
+                // Treat playing an audio file like a selection, add onPlay
                 return (
                     <div className={divClass}
-                        key={soundName}
-                        onClick={(e) => this.handleSoundClick(soundName, e)}>
-                        <LazyLoadImage
+                        key={info.groupAndName}
+                        onPlay={(e) => this.handleFileSelect(info, e)}>
+                        <LazyLoadMedia
                             className={css(styles.soundPreview)}
                             type="audio"
-                            src={soundPath}
+                            src={info.fullPath}
+                            placeholderSrc=""
                             parentScrollMax={scrollMax}
                             />
                         <span className={css(styles.soundCaption)}>
-                            {fileName}
+                            {info.name}
                         </span>
                     </div>
                 );

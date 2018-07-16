@@ -137,63 +137,6 @@ html.playing .tooltip.hide-while-playing {
     width: 343px;
 }
 
-.tooltip.mediapicker:hover div.media-groups p {
-    font-size: 12px;
-    margin: 5px;
-}
-
-.tooltip.mediapicker div.current-media {
-    background: #FFF;
-    padding: 2px;
-}
-
-.tooltip.mediapicker div.current-media img {
-    max-width: 50px;
-    max-height: 50px;
-}
-
-.tooltip.mediapicker div.media-groups {
-    background: white;
-    max-height: 300px;
-    overflow-y: scroll;
-}
-
-.tooltip.mediapicker div.media-group {
-    overflow: auto;
-}
-
-.tooltip.mediapicker div.media-group .image {
-    background: white;
-    border: 2px solid #EEE;
-    cursor: pointer;
-    float: left;
-    height: 50px;
-    margin: 5px;
-    overflow: hidden;
-    padding: 5px;
-    white-space: nowrap;
-    width: 140px;
-}
-
-.tooltip.mediapicker .media-group .image.active {
-    border-color: #000;
-}
-
-.tooltip.mediapicker .media-group .image img {
-    max-height: 50px;
-    max-width: 50px;
-    margin-right: 5px;
-    vertical-align: middle;
-}
-
-.tooltip.mediapicker .media-group .sound audio {
-    max-width: 80px;
-}
-
-.tooltip.mediapicker .media-group h3 {
-    margin: 5px;
-}
-
 .tooltip.mediapicker .arrow, .tooltip.mediapicker-preview .arrow {
     border-bottom: 8px solid transparent;
     border-left: none;
@@ -218,101 +161,12 @@ html.playing .tooltip.hide-while-playing {
     top: 40px;
 }
 
-.tooltip.mediapicker-preview .mediapicker-preview-content {
-    background-color: #FFF;
-    padding: 5px;
-    margin-right: 0;
-}
-
-.tooltip.mediapicker-preview.mediapicker__image .mediapicker-preview-content {
-    height: 150px;
-    width: 120px;
-}
-
-.tooltip.mediapicker-preview.mediapicker__sound .mediapicker-preview-content {
-    width: 250px;
-}
-
-.tooltip.mediapicker-preview audio {
-    max-width: 100%;
-}
-
-/** Used in both the modal and the picker **/
-
-.thumb-shell {
-    height: 100px;
-    width: 100%;
-    margin-bottom: 5px;
-    text-align: center;
-}
-
-.thumb-shell > .thumb-error {
-    display: inline-block;
-    vertical-align: middle;
-    text-align: center;
-    color: red;
-    font-weight: bold;
-    padding-top: 30%;
-}
-
-.thumb-shell img {
-    display: inline-block;
-    max-width: 100%;
-    max-height: 100%;
-    vertical-align: middle;
-}
-
-.tooltip.mediapicker-preview .thumb-throbber{
-    position: absolute;
-    top: 14px;
-    left: 50%;
-    margin-left: -9px;
-}
-
 .tooltip .ui-slider-handle {
     width: 8px;
 }
 
 .tooltip .colorpicker_field {
     display: none;
-}
-
-/** Media picker CSS: Used for both an image and audio picker **/
-.mediapicker-modal {
-    width: 520px;
-    margin-left: -250px;
-    padding: 0;
-    top: 50%;
-    margin-top: -225px;
-}
-
-.mediapicker-modal h3 {
-    font-size: 20px;
-    margin-bottom: 0;
-}
-
-.mediapicker-modal .tab-pane {
-    position: relative;
-}
-
-.mediapicker-modal .image.active img, .mediapicker-modal .sound.active audio {
-    box-shadow: 0 0 10px 1px #699c52;
-}
-
-.mediapicker-modal .top-shadow {
-    box-shadow: 0px 5px 7px -6px #888888 inset
-}
-
-.mediapicker-modal-footer {
-    clear: both;
-    background-color: white;
-    padding: 15px;
-    text-align: right;
-    border-top: 1px solid #e5e5e5;
-}
-
-.mediapicker-modal-footer button{
-    margin-left: 10px;
 }
 
 .scrubber-handle .flipped-arrow {

@@ -54,6 +54,7 @@
     "rimraf": "^2.5.4",
     "run-sequence": "^0.3.6",
     "sinon": "^1.10.3",
+    "style-loader": "^0.21.0",
     "through2": "^2.0.0",
     "vinyl-sourcemaps-apply": "^0.1.4",
     "webpack": "^4.15.1",

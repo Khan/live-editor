@@ -1,6 +1,7 @@
 import Button from "@khanacademy/wonder-blocks-button";
 import {ModalLauncher} from "@khanacademy/wonder-blocks-modal";
 import React, {Component} from 'react';
+import { StyleSheet, css } from 'aphrodite/no-important';
 
 const MediaPickerModal = require("./media-picker-modal.jsx");
 const MediaPickerPreview = require("./media-picker-preview.jsx");
@@ -12,14 +13,17 @@ class MediaPickerTooltip extends Component {
         const mediaPickerModal =
             ({closeModal}) => <MediaPickerModal {...this.props} onClose={closeModal}/>;
 
+        const divClass = css(styles.tooltipBox,
+            this.props.mediaType === "audio" ? styles.audio : styles.image);
+
         return (
-            <div className="mediapicker-preview-content">
+            <div className={divClass}>
                 <MediaPickerPreview {...this.props}/>
                 <ModalLauncher modal={mediaPickerModal} onClose={this.props.onModalClose}>
                     {({openModal}) =>
                     <Button
                         onClick={openModal}
-                        style={{display: "block", margin: "0 auto"}}
+                        style={styles.launcherButton}
                     >
                         {i18n._("Pick file:")}
                     </Button>
@@ -28,7 +32,26 @@ class MediaPickerTooltip extends Component {
             </div>
         );
     }
-
 }
+
+// TODO: Doesn't work!
+const styles = StyleSheet.create({
+    tooltipBox: {
+        backgroundColor: "#FFF",
+        padding: "5px",
+        marginRight: "0"
+    },
+    audio: {
+        width: "250px"
+    },
+    image: {
+        height: "150px",
+        width: "120px"
+    },
+    launcherButton: {
+        display: "block",
+        margin: "5px auto"
+    }
+});
 
 module.exports = MediaPickerTooltip;
