@@ -38,7 +38,6 @@ At this point you can make a fresh build, using [Gulp](http://gulpjs.com/):
 
     npm run build
 
-If you have an issue with "this.merge" is undefined, then `rm -rf node_modules/gulp-handlebars/node_modules/handlebars`.
 
 ## Testing
 

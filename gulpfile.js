@@ -9,7 +9,6 @@ var concat = require("gulp-concat");
 var uglify = require("gulp-uglify");
 var newer = require("gulp-newer");
 var changed = require("gulp-changed");
-var handlebars = require("gulp-handlebars");
 var defineModule = require("gulp-define-module");
 var declare = require("gulp-declare");
 var runSequence = require("run-sequence");
@@ -25,19 +24,6 @@ var eol = require("gulp-eol");
 var mochaRunner = require("./testutil/gulp-mocha-runner.js");
 var check = require("./check.js");
 var paths = require("./build-paths.json");
-
-gulp.task("templates", function() {
-    gulp.src(paths.templates)
-        .pipe(changed("build/tmpl", {extension: ".js"}))
-        .pipe(handlebars({
-            handlebars: require("handlebars")
-        }))
-        .pipe(defineModule("plain"))
-        .pipe(declare({
-            namespace: "Handlebars.templates"
-        }))
-        .pipe(gulp.dest("build/tmpl"));
-});
 
 var firstBuild = true;
 var scriptTypes = Object.keys(paths.scripts);

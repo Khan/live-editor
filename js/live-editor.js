@@ -3,14 +3,14 @@ Backbone.$ = require("jquery");
 const React = require("react");
 const ReactDOM = require("react-dom");
 
+const EditorWrapper = require("./ui/editor-wrapper.jsx");
+const OutputWrapper = require("./ui/output-wrapper.jsx");
 const ScratchpadDebugger = require("./ui/debugger.js");
 const ScratchpadConfig = require("./shared/config.js");
 const ScratchpadDrawCanvas = require("./ui/canvas.js");
 const ScratchpadRecordModel = require("./shared/record.js");
 const ScratchpadRecordView = require("./ui/record.js");
 const TipBar = require("./ui/tipbar.jsx");
-
-const liveEditorTemplate = require("../tmpl/live-editor.handlebars");
 
 // TODO(kevinb) remove after challenges have been converted to use i18n._
 $._ = i18n._;
@@ -245,17 +245,43 @@ const LiveEditor = Backbone.View.extend({
 
     renderTipBar: function(props) {
         props.liveEditor = this;
+        console.log(this.$el);
         ReactDOM.render(
             React.createElement(TipBar, props, null),
             this.$(this.dom.TIPBAR_WRAPPER)[0]);
     },
 
-    render: function() {
-        this.$el.html(liveEditorTemplate({
+    renderOutputWrapper: function() {
+        const props = {
             execFile: this.execFile,
             imagesDir: this.imagesDir,
-            colors: this.colors
-        }));
+            colors: this.colors,
+            canRecord: this.canRecord()
+        }
+        ReactDOM.render(
+            React.createElement(OutputWrapper, props, null),
+            this.$(".scratchpad-canvas-wrap")[0]);
+    },
+
+    renderEditorWrapper: function() {
+        const props = {
+            imagesDir: this.imagesDir
+        }
+        ReactDOM.render(
+            React.createElement(EditorWrapper, props, null),
+            this.$(".scratchpad-editor-wrap")[0]);
+    },
+
+    render: function() {
+        this.$el.html('<div class="scratchpad-wrap">' +
+            '<div class="scratchpad-canvas-wrap"/>' +
+            '<div class="scratchpad-editor-wrap overlay-container">' +
+            '</div>');
+        if (!this.execFile) {
+            this.$('.scratchpad-wrap').addClass('no-output');
+        }
+        this.renderOutputWrapper();
+        this.renderEditorWrapper();
     },
 
     bind: function() {
@@ -532,7 +558,7 @@ const LiveEditor = Backbone.View.extend({
             debugMode: false,
             // Un-comment this to test Flash on FF:
             // debugFlash: true, preferFlash: true, useHTML5Audio: false,
-            // See sm2-container in play-page.handlebars and flashblock.css
+            // See sm2-container in editor-wrapper.jsx and flashblock.css
             useFlashBlock: true,
             // Sometimes when Flash is blocked or the browser is slower,
             //  soundManager will fail to initialize at first,

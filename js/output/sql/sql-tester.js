@@ -40,7 +40,6 @@ SQLTester.Util = {
             return {
                 name: table,
                 rowCount: rowCount,
-                hasSingleRow: rowCount === 1, // lame, for handlebars :(
                 columns: v.map(function(v) {
                     return {
                         cid: v[0],

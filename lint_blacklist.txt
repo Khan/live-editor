@@ -13,7 +13,4 @@ js/
 # TODO(kevinb) fix the lint in this file (there's lots of it)
 js/workers/pjs/processing-stubs.js
 
-# TODO(kevinb) i18n-ize
-tmpl/sql-results.handlebars
-
 *.js

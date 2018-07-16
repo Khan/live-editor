@@ -102,15 +102,6 @@ var config = {
             }
         },
         {
-            test: /\.handlebars$/,
-            loader: "handlebars-loader",
-            options: {
-                helperDirs: [
-                    path.resolve(__dirname, "tmpl/helpers")
-                ]
-            }
-        },
-        {
             test: /\.css$/,
             use: [
                 'style-loader',
