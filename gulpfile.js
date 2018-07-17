@@ -5,48 +5,14 @@ var path = require("path");
 
 var gulp = require("gulp");
 
-var concat = require("gulp-concat");
-var uglify = require("gulp-uglify");
-var newer = require("gulp-newer");
-var changed = require("gulp-changed");
-var defineModule = require("gulp-define-module");
-var declare = require("gulp-declare");
 var runSequence = require("run-sequence");
 var mochaChrome = require("gulp-mocha-chrome");
 var staticServe = require("node-static");
 var request = require("request");
-var gutil = require("gulp-util");
-var gulpIf = require("gulp-if");
-var chmod = require("gulp-chmod");
-var eol = require("gulp-eol");
 
 var mochaRunner = require("./testutil/gulp-mocha-runner.js");
-var check = require("./check.js");
-var paths = require("./build-paths.json");
 
 var firstBuild = true;
-
-var styleTypes = Object.keys(paths.styles);
-
-styleTypes.forEach(function(type) {
-    gulp.task("style_" + type, function() {
-        var outputFileName = "live-editor." + type + ".css";
-        return gulp.src(paths.styles[type])
-            .pipe(firstBuild ? gutil.noop() : newer("build/css/" + outputFileName))
-            .pipe(concat(outputFileName))
-            .pipe(gulp.dest("build/css"));
-    });
-});
-
-gulp.task("styles", styleTypes.map(function(type) {
-    return "style_" + type;
-}));
-
-gulp.task("watch", function() {
-    styleTypes.forEach(function(type) {
-        gulp.watch(paths.styles[type], ["style_" + type]);
-    });
-});
 
 var runTest = function(fileName) {
     return function() {
@@ -165,22 +131,5 @@ gulp.task("test", function(callback) {
     runSequence("test_output_pjs", "test_output_webpage", "test_output_sql",
         "test_tooltips", "check_errors", callback);
 });
-
-// Check to make sure all source files and dependencies exist before building.
-gulp.task("check", function() {
-    var missing = check();
-    if (missing.length > 0) {
-        console.log("Aborting build");
-        process.exit();
-    } else {
-        console.log("all files exist");
-    }
-});
-
-gulp.task("build",
-    ["check", "styles"],
-    function() {
-        firstBuild = false;
-    });
 
 gulp.task("default", ["watch", "build"]);

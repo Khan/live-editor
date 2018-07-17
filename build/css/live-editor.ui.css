@@ -1,97 +1,3 @@
-/**
- * Code Error Reporting
- * --------------------
- *
- * Indicates to users if something is wrong in the code. Overlays on top
- * of the canvases.
- */
-.tipbar {
-    border-radius: 10px;
-    /* Needs to match the background image */
-    background: #F9F9F9;
-    border: 1px solid #EEE;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
-    color: #000;
-    font-family: Helvetica;
-    font-weight: normal;
-    left: 125px;
-    margin: auto;
-    min-height: 40px;
-    position: absolute;
-    top: 100px;
-    width: 260px;
-}
-.tipbar .error-buddy {
-    background: url(../images/scratchpads/error-buddy.png);
-    cursor: move;
-    height: 116px;
-    left: -140px;
-    opacity: 0.75;
-    position: absolute;
-    top: -12px;
-    width: 130px;
-}
-.tipbar .speech-arrow {
-    background-image: url(../images/scratchpads/speech-arrow.png);
-    background-repeat: no-repeat;
-    height: 24px;
-    left: -14px;
-    position: absolute;
-    top: 40px;
-    width: 14px;
-}
-.tipbar .text-wrap {
-    line-height: 1.4em;
-    margin: 8px;
-}
-.tipbar .text-wrap .message {
-    line-height: 20px;
-    margin: 10px 0px;
-    text-align: left;
-}
-.tipbar .text-wrap .message .quote {
-    border-radius: 5px;
-    background: #fff;
-    border: 1px solid #EEE;
-    display: inline-block;
-    font-family: Consolas, Courier New, monospace;
-    font-size: 14px;
-    line-height: 22px;
-    margin: 0px 2px;
-    padding: 1px 4px;
-    text-align: left;
-}
-#test-errors {
-    color: red;
-    position: absolute;
-    z-index: 1000000;
-}
-/**
- * == COMPONENTS ========================================================
- * These styles correspond to self-contained graphical components
- */
-/**
- * Overlays
- * --------
- *
- * Transparent or translucent overlays placed on top of the editor and/or canvas
- * in order to disable interaction with them. The closest parent with
- * position: relative or position: absolute determines the scope of the page
- * blocked by the overlay.
- */
-.overlay {
-    height: 100%;
-    left: 0px;
-    margin: 0;
-    position: absolute;
-    top: 0px;
-    width: 100%;
-}
-.error-overlay {
-    background: rgba(255, 255, 255, 0.6);
-    z-index: auto;
-}
-
 .scratchpad-wrap {
     position: relative;
 }
@@ -298,7 +204,6 @@
 }
 
 .scratchpad-playbar .loading-msg {
-    background: url(../images/spinner.gif) no-repeat 7px center;
     line-height: 30px;
     padding-left: 30px;
 }
@@ -363,4 +268,100 @@ button {
 
 button.hilite {
     box-shadow: 0 0 20px green;
+}
+
+/** Tipbar CSS (Error Buddy **/
+
+/**
+ * Code Error Reporting
+ * --------------------
+ *
+ * Indicates to users if something is wrong in the code. Overlays on top
+ * of the canvases.
+ */
+ .tipbar {
+    border-radius: 10px;
+    /* Needs to match the background image */
+    background: #F9F9F9;
+    border: 1px solid #EEE;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+    color: #000;
+    font-family: Helvetica;
+    font-weight: normal;
+    left: 125px;
+    margin: auto;
+    min-height: 40px;
+    position: absolute;
+    top: 100px;
+    width: 260px;
+}
+.tipbar .error-buddy {
+    background: url(../images/scratchpads/error-buddy.png);
+    cursor: move;
+    height: 116px;
+    left: -140px;
+    opacity: 0.75;
+    position: absolute;
+    top: -12px;
+    width: 130px;
+}
+.tipbar .speech-arrow {
+    background-image: url(../images/scratchpads/speech-arrow.png);
+    background-repeat: no-repeat;
+    height: 24px;
+    left: -14px;
+    position: absolute;
+    top: 40px;
+    width: 14px;
+}
+.tipbar .text-wrap {
+    line-height: 1.4em;
+    margin: 8px;
+}
+.tipbar .text-wrap .message {
+    line-height: 20px;
+    margin: 10px 0px;
+    text-align: left;
+}
+.tipbar .text-wrap .message .quote {
+    border-radius: 5px;
+    background: #fff;
+    border: 1px solid #EEE;
+    display: inline-block;
+    font-family: Consolas, Courier New, monospace;
+    font-size: 14px;
+    line-height: 22px;
+    margin: 0px 2px;
+    padding: 1px 4px;
+    text-align: left;
+}
+#test-errors {
+    color: red;
+    position: absolute;
+    z-index: 1000000;
+}
+/**
+ * == COMPONENTS ========================================================
+ * These styles correspond to self-contained graphical components
+ */
+/**
+ * Overlays
+ * --------
+ *
+ * Transparent or translucent overlays placed on top of the editor and/or canvas
+ * in order to disable interaction with them. The closest parent with
+ * position: relative or position: absolute determines the scope of the page
+ * blocked by the overlay.
+ */
+.overlay {
+    height: 100%;
+    left: 0px;
+    margin: 0;
+    position: absolute;
+    top: 0px;
+    width: 100%;
+}
+.error-overlay {
+    background: rgba(255, 255, 255, 0.6);
+    z-index: auto;
 }

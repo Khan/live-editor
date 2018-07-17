@@ -1,5 +1,7 @@
 import React, {Component} from "react";
 
+import "../../css/ui/debugger.css";
+
 class DebuggerControls extends Component {
     render() {
         // This is just a very simple port from Handlebars

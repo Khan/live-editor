@@ -6,6 +6,8 @@ Backbone.$ = require("jquery");
 const i18n = require("i18n");
 const ScratchpadConfig = require("../../shared/config.js");
 
+import "../../../css/output/style.css";
+
 // TODO(kevinb) remove after challenges have been converted to use i18n._
 $._ = i18n._;
 

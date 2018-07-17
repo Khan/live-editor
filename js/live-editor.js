@@ -18,6 +18,8 @@ const ScratchpadRecordModel = require("./shared/record.js");
 const ScratchpadRecordView = require("./ui/record.js");
 const TipBar = require("./ui/tipbar.jsx");
 
+import "../css/ui/flashblock.css";
+
 // TODO(kevinb) remove after challenges have been converted to use i18n._
 $._ = i18n._;
 

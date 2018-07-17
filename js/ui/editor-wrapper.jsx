@@ -48,7 +48,7 @@ class EditorWrapper extends Component {
                     >
                         <div
                             className="scratchpad-playbar-area"
-                            style={{display: "none"}}
+                            style={{display: "no0ne"}}
                         >
                             <button
                                 className="primary scratchpad-playbar-play"
@@ -60,6 +60,7 @@ class EditorWrapper extends Component {
                             <span className="scratchpad-playbar-timeleft" />
                         </div>
                         <div className="loading-msg">
+                            <CircularSpinner size="small"/>
                             {i18n._("Loading audio...")}
                         </div>
                     </div>

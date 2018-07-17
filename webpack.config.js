@@ -156,7 +156,14 @@ const config = {
             {from: 'images/',
              to: path.resolve(__dirname, 'build/images')},
             {from: 'sounds/',
-             to: path.resolve(__dirname, 'build/sounds')}
+             to: path.resolve(__dirname, 'build/sounds')},
+            // Copy CSS files which have url()s
+            // (Other CSS files are included via imports via style-loader)
+            // TODO: Move CSS into Aphrodite and/or import images better
+            {from: 'css/ui/tooltips.css',
+            to: path.resolve(__dirname, 'build/css/live-editor.tooltips.css')},
+            {from: 'css/ui/style.css',
+            to: path.resolve(__dirname, 'build/css/live-editor.ui.css')}
         ])
     ]
 };
