@@ -1,3 +1,6 @@
+/* eslint-disable no-empty, no-var, no-throw-literal, no-redeclare, no-useless-escape */
+/* TODO: Fix the lint errors */
+const _ = require("underscore");
 const SQL = require("sql.js");
 
 const OutputTester = require("../shared/output-tester.js");
@@ -249,6 +252,7 @@ SQLTester.prototype.testMethods = {
         for (var key in params) {
             if (params[key][0] !== "$") {
                 if (window.console) {
+                    // eslint-disable-next-line no-console
                     console.warn("Invalid parameter in constraint " +
                             "(should begin with a '$'): ", params[key]);
                 }

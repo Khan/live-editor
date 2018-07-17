@@ -1,7 +1,11 @@
+/* eslint-disable no-var, prefer-spread, no-extra-bind, no-throw-literal, prefer-const */
+/* TODO: Fix the lint errors */
+const _ = require("underscore");
 const $ = require("jquery");
 const esprima = require("esprima");
 
 const ASTTransforms = require("./pjs-ast-transforms.js");
+const i18n = require("i18n");
 const OutputSounds = require("../../shared/sounds.js");
 const walkAST = require("../shared/ast-walker.js");
 

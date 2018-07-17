@@ -1,4 +1,12 @@
-window.TextareaEditor = Backbone.View.extend({
+/* eslint-disable no-var */
+/* TODO: Fix the lint errors */
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const LiveEditor = require("../../live-editor.js");
+
+const TextareaEditor = Backbone.View.extend({
     initialize: function(options) {
         this.defaultCode = options.code;
         this.autoFocus = options.autoFocus;
@@ -108,3 +116,5 @@ window.TextareaEditor = Backbone.View.extend({
 });
 
 LiveEditor.registerEditor("textarea_document", TextareaEditor);
+
+module.exports = TextareaEditor;

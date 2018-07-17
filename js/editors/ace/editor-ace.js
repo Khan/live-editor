@@ -1,4 +1,8 @@
+/* eslint-disable no-var, no-useless-escape, no-useless-call */
+/* TODO: Fix the lint errors */
+const _ = require("underscore");
 const $ = require("jquery");
+const ace = require("ace-builds");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 

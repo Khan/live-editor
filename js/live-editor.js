@@ -1,8 +1,14 @@
+/* eslint-disable max-lines, no-var, no-useless-escape, eqeqeq, prefer-spread,
+   prefer-const, no-extra-bind, no-undef, one-var
+*/
+/* TODO: Fix the lint errors */
+const _ = require("underscore");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 const React = require("react");
 const ReactDOM = require("react-dom");
 
+const i18n = require("i18n");
 const EditorWrapper = require("./ui/editor-wrapper.jsx");
 const OutputWrapper = require("./ui/output-wrapper.jsx");
 const ScratchpadDebugger = require("./ui/debugger.js");
@@ -245,7 +251,6 @@ const LiveEditor = Backbone.View.extend({
 
     renderTipBar: function(props) {
         props.liveEditor = this;
-        console.log(this.$el);
         ReactDOM.render(
             React.createElement(TipBar, props, null),
             this.$(this.dom.TIPBAR_WRAPPER)[0]);
@@ -508,8 +513,7 @@ const LiveEditor = Backbone.View.extend({
         $el.find("#record").on("click", function() {
             self.recordHandler(function(err) {
                 if (err) {
-                    // TODO: Change this:
-                    console.error(err);
+                    console.error(err); // eslint-disable-line no-console
                 }
             });
         });

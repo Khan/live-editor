@@ -1,7 +1,5 @@
-/* eslint-disable no-var, no-undef, no-extra-bind, no-redeclare*/
+/* eslint-disable no-var, no-undef, no-extra-bind, no-redeclare, one-var */
 /* TODO: Fix the lint errors */
-/* To fix, remove an entry above, npm run lint, and fix errors. */
-
 /**
  * Helper functionality for the Scratchpad auto suggest feature,
  * parameter information and live documentation.

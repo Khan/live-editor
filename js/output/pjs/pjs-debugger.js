@@ -1,6 +1,5 @@
 /* global ProcessingDebugger */
 
-const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 
@@ -44,7 +43,7 @@ const PJSDebugger = Backbone.View.extend({
     },
 
     handleMessage: function(event) {
-        var data;
+        let data;
 
         this.frameSource = event.source;
         this.frameOrigin = event.origin;

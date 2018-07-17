@@ -1,3 +1,8 @@
+/* eslint-disable no-var, one-var, curly */
+/* TODO: Fix the lint errors */
+const _ = require("underscore");
+
+const i18n = require("i18n");
 const OutputTester = require("../shared/output-tester.js");
 
 const PJSTester = function(options) {
@@ -376,7 +381,7 @@ PJSTester.prototype.testMethods = {
             };
         } catch (e) {
             if (window.console) {
-                console.warn(e);
+                console.warn(e); // eslint-disable-line no-console
             }
             return {
                 success: true,

@@ -1,7 +1,12 @@
+/* eslint-disable max-lines, no-var, no-throw-literal, one-var, prefer-const,
+   no-empty, prefer-spread, no-extra-bind, no-new-func */
+/* TODO: Fix the lint errors */
+const _ = require("underscore");
 const esprima = require("esprima");
 const escodegen = require("escodegen");
 
 const ASTTransforms = require("./pjs-ast-transforms.js");
+const i18n = require("i18n");
 const LoopProtector = require("../shared/loop-protect.js");
 const OutputSounds = require("../../shared/sounds.js");
 const PJSResourceCache = require("./pjs-resource-cache.js");
@@ -114,7 +119,6 @@ class PJSCodeInjector {
                 var worker = this.getWorkerFromPool();
 
                 worker.onmessage = function(event) {
-                    console.log("Got message back", event);
                     if (event.data.type === "jshint") {
                         // If a new request has come in since the worker started
                         // then we just ignore the results and don't fire the callback
@@ -179,7 +183,7 @@ class PJSCodeInjector {
 
             // Basic console logging
             debug: (...args) => {
-                console.log(...args);
+                console.log(...args); // eslint-disable-line no-console
             }
         });
 
@@ -373,7 +377,6 @@ class PJSCodeInjector {
         this.hintWorker.exec(hintCode, (hintData, hintErrors) => {
             this.globals = this.extractGlobals(hintData);
             deferred.resolve(hintErrors);
-            console.log("Got results of hint worker", hintErrors);
         });
 
         return deferred;
@@ -504,7 +507,7 @@ class PJSCodeInjector {
                 this.injectCode(userCode, callback);
             });
         } catch(e) {
-            console.warn(e);
+            console.warn(e); // eslint-disable-line no-console
             let [line, text] = e.message.split(":");
 
             if (text.trim() === "Unexpected token ILLEGAL") {

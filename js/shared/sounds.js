@@ -1,7 +1,5 @@
 /* eslint-disable no-undef */
 /* TODO: Fix the lint errors */
-/* To fix, remove an entry above, npm run lint, and fix errors. */
-
 if (!i18n._) {
     i18n._ = function(msg) {
         return msg;

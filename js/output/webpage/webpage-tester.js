@@ -1,7 +1,5 @@
 /* eslint-disable */
 /* TODO: Fix the lint errors */
-/* To fix, remove an entry above, npm run lint, and fix errors. */
-
 const OutputTester = require("../shared/output-tester.js");
 const PJSTester = require("../pjs/pjs-tester.js");
 

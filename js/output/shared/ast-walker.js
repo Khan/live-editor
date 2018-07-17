@@ -1,3 +1,5 @@
+/* eslint-disable prefer-const */
+/* TODO: Fix the lint errors */
 /**
  * Traverses an AST and calls visitor methods on each of the visitors.
  *

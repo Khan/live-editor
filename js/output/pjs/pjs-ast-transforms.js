@@ -1,5 +1,8 @@
+/* eslint-disable no-var, prefer-const, no-throw-literal */
+/* TODO: Fix the lint errors */
 const escodegen = require("escodegen");
 
+const AllImages = require("../../shared/all-images.js");
 const OutputSounds = require("../../shared/sounds.js");
 
 const ASTTransforms = {};

@@ -1,8 +1,6 @@
 /* global ace */
 /* eslint-disable no-var */
 /* TODO: Fix the lint errors */
-/* To fix, remove an entry above, npm run lint, and fix errors. */
-
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");

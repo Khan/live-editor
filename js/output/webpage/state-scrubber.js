@@ -1,3 +1,5 @@
+/* eslint-disable no-var */
+/* TODO: Fix the lint errors */
 /**
  * StateScrubber
  * Resets the global javascript state in the browser

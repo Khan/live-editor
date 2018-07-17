@@ -1,7 +1,13 @@
+/* eslint-disable no-var, no-redeclare, prefer-const */
+/* TODO: Fix the lint errors */
+const _ = require("underscore");
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
+const iframeOverlay = require("iframe-overlay");
 
+const i18n = require("i18n");
+const LiveEditorOutput = require("../shared/output.js");
 const PJSCodeInjector = require("./pjs-code-injector.js");
 const PJSDebugger = require("./pjs-debugger.js");
 const PJSResourceCache = require("./pjs-resource-cache.js");
@@ -340,9 +346,7 @@ const PJSOutput = Backbone.View.extend({
 
     lint: function(userCode, skip) {
         return this.injector.lint(userCode, skip).then((hintErrors) => {
-            console.log("Linted", hintErrors);
             let babyErrors = BabyHint.babyErrors(userCode, hintErrors);
-            console.log("baby errors", babyErrors);
             return {
                 errors: this.mergeErrors(hintErrors, babyErrors),
                 warnings: []
@@ -468,7 +472,6 @@ const PJSOutput = Backbone.View.extend({
 
     // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
     runCode: function(userCode, callback) {
-        console.log("Running code", userCode);
         this.injector.runCode(userCode, callback);
     },
 

@@ -1,7 +1,5 @@
 /* eslint-disable no-var, no-undef, no-redeclare, no-console */
 /* TODO: Fix the lint errors */
-/* To fix, remove an entry above, npm run lint, and fix errors. */
-
 const Backbone = require("backbone");
 
 // Note: All time measurements are handled in milliseconds

@@ -1,9 +1,13 @@
+/* eslint-disable no-empty, no-var, no-console, prefer-const, no-new-func */
+/* TODO: Fix the lint errors */
+const _ = require("underscore");
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 const i18n = require("i18n");
 const Slowparse = require("../../../external/slowparse/slowparse.js");
 
+const LiveEditorOutput = require("../shared/output.js");
 const LoopProtector = require("../shared/loop-protect.js");
 const StateScrubber = require("./state-scrubber.js");
 const WebpageTester = require("./webpage-tester.js");

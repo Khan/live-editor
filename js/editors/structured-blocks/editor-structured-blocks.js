@@ -1,3 +1,11 @@
+/* eslint-disable */
+/* TODO: Fix the lint errors */
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+const LiveEditor = require("../../live-editor.js");
+
 window.StructuredBlocksEditor = Backbone.View.extend({
     initialize: function(options) {
         this.defaultCode = (options.code || "").trim();
@@ -135,3 +143,5 @@ window.StructuredBlocksEditor = Backbone.View.extend({
 });
 
 LiveEditor.registerEditor("structured-blocks_pjs", StructuredBlocksEditor);
+
+module.exports = StructuredBlocksEditor;

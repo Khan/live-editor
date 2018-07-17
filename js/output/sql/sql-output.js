@@ -1,11 +1,14 @@
+/* eslint-disable no-var, no-redeclare, no-new-func */
+/* TODO: Fix the lint errors */
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 const React = require("react");
 const ReactDOM = require("react-dom");
-const Slowparse = require("../../../external/slowparse/slowparse.js");
 const SQL = require("sql.js");
 
+const i18n = require("i18n");
+const LiveEditorOutput = require("../shared/output.js");
 const SQLTester = require("./sql-tester.js");
 const SQLResults = require("./sql-results.jsx");
 const SQLResultsCSS = require("../../../css/output/sql-results.css");

@@ -1,8 +1,9 @@
+const _ = require("underscore");
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 
-const PooledWorker = require("./pooled-worker.js");
+const i18n = require("i18n");
 const ScratchpadConfig = require("../../shared/config.js");
 
 // TODO(kevinb) remove after challenges have been converted to use i18n._
@@ -26,7 +27,6 @@ const LiveEditorOutput = Backbone.View.extend({
         });
 
         if (options.outputType) {
-            console.log("In initialize");
             this.setOutput(options);
         }
 
@@ -56,7 +56,7 @@ const LiveEditorOutput = Backbone.View.extend({
     },
 
     setOutput: function(options) {
-        var OutputClass = this.outputs[options.outputType];
+        const OutputClass = this.outputs[options.outputType];
         const classOptions = {
             el: this.$el.find(".output"),
             config: this.config,
@@ -74,10 +74,6 @@ const LiveEditorOutput = Backbone.View.extend({
         if (options.jshintFile) {
             classOptions.jshintFile = this._qualifyURL(options.jshintFile);
         }
-        console.log("Options");
-        console.log(options);
-        console.log("classOptions");
-        console.log(classOptions);
         this.output = new OutputClass(classOptions);
     },
 
@@ -103,13 +99,13 @@ const LiveEditorOutput = Backbone.View.extend({
     },
 
     _qualifyURL: function(url){
-        var a = document.createElement("a");
+        const a = document.createElement("a");
         a.href = url;
         return a.href;
     },
 
     handleMessage: function(event) {
-        var data;
+        let data;
 
         this.frameSource = event.source;
         this.frameOrigin = event.origin;
@@ -131,12 +127,12 @@ const LiveEditorOutput = Backbone.View.extend({
             return;
         }
         if (!this.output) {
-            var outputType = data.outputType || _.keys(this.outputs)[0];
-            var enableLoopProtect = true;
+            const outputType = data.outputType || _.keys(this.outputs)[0];
+            let enableLoopProtect = true;
             if (data.enableLoopProtect != null) {
                 enableLoopProtect = data.enableLoopProtect;
             }
-            var loopProtectTimeouts = {
+            let loopProtectTimeouts = {
                 initialTimeout: 2000,
                 frameTimeout: 500
             };
@@ -196,7 +192,7 @@ const LiveEditorOutput = Backbone.View.extend({
 
         // Take a screenshot of the output
         if (data.screenshot != null) {
-            var screenshotSize = data.screenshotSize || 200;
+            const screenshotSize = data.screenshotSize || 200;
             this.output.getScreenshot(screenshotSize, function(data) {
                 // Send back the screenshot data
                 this.postParent(data);
@@ -204,11 +200,11 @@ const LiveEditorOutput = Backbone.View.extend({
         }
 
         if (this.output.messageHandlers) {
-            for (var prop in data) {
+            Object.keys(data).forEach((prop) => {
                 if (prop in this.output.messageHandlers) {
                     this.output.messageHandlers[prop].call(this.output, data);
                 }
-            }
+            });
         }
     },
 
@@ -294,7 +290,7 @@ const LiveEditorOutput = Backbone.View.extend({
      */
     runCode: function(userCode, callback, noLint) {
         this.currentCode = userCode;
-        var timestamp = Date.now();
+        const timestamp = Date.now();
 
         this.results = {
             timestamp: timestamp,
@@ -304,18 +300,16 @@ const LiveEditorOutput = Backbone.View.extend({
             warnings: []
         };
 
-        var skip = noLint && this.firstLint;
+        const skip = noLint && this.firstLint;
 
         // Always lint the first time, so that PJS can populate its list of globals
         this.output.lint(userCode, skip).then(function (lintResults) {
-            console.log("All lint done", lintResults);
             this.lintErrors = lintResults.errors;
             this.lintErrors.timestamp = timestamp;
             this.lintWarnings = lintResults.warnings;
             this.lintWarnings.timestamp = timestamp;
             return this.lintDone(userCode, timestamp);
         }.bind(this)).then(function () {
-            console.log("Build done", userCode);
             this.buildDone(userCode, callback);
         }.bind(this));
 
@@ -331,7 +325,7 @@ const LiveEditorOutput = Backbone.View.extend({
      * @returns {$.Deferred}
      */
     lintDone: function(userCode, timestamp) {
-        var deferred = $.Deferred();
+        const deferred = $.Deferred();
         if (this.lintErrors.length > 0 || this.onlyRunTests) {
             deferred.resolve();
             return deferred;
@@ -349,7 +343,7 @@ const LiveEditorOutput = Backbone.View.extend({
             if (this.outputs.hasOwnProperty('pjs')) {
                 this.runtimeErrors = [e];
             }
-            console.warn(e);
+            console.warn(e); // eslint-disable-line no-console
             deferred.resolve();
         }
         return deferred;
@@ -363,8 +357,8 @@ const LiveEditorOutput = Backbone.View.extend({
      * @param callback
      */
     buildDone: function(userCode, callback) {
-        var errors = [];
-        var warnings = [];
+        let errors = [];
+        let warnings = [];
 
         // only use lint errors if the timestamp isn't stale
         if (this.results.timestamp === this.lintErrors.timestamp) {
@@ -424,7 +418,7 @@ const LiveEditorOutput = Backbone.View.extend({
 
 
     test: _.throttle(function() {
-        this._test.apply(this, arguments);
+        this._test(...arguments);
     }, 200),
     _test: function(userCode, validate, errors, callback) {
         this.output.test(userCode, validate, errors, callback);
