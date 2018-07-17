@@ -26,11 +26,6 @@ var paths = require("./build-paths.json");
 
 var firstBuild = true;
 
-gulp.task("externals", function() {
-    gulp.src(paths.externals, {base: "./"})
-        .pipe(gulp.dest("build/"));
-});
-
 var styleTypes = Object.keys(paths.styles);
 
 styleTypes.forEach(function(type) {
@@ -183,7 +178,7 @@ gulp.task("check", function() {
 });
 
 gulp.task("build",
-    ["check", "styles", "externals"],
+    ["check", "styles"],
     function() {
         firstBuild = false;
     });

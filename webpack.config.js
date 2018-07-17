@@ -138,6 +138,20 @@ const config = {
              to: path.resolve(__dirname, 'build/workers/shared')},
             {from: 'external/multirecorderjs/multirecorder-worker.js',
              to: path.resolve(__dirname, 'build/workers/shared')},
+            // Copy externals (used by workers)
+            {from: 'node_modules/es5-shim/es5-shim.js',
+             to: path.resolve(__dirname, 'build/external/es5-shim')},
+            {from: 'external/jshint/jshint.js',
+             to: path.resolve(__dirname, 'build/external/jshint')},
+            {from: 'external/structuredjs/structured.js',
+             to: path.resolve(__dirname, 'build/external/structuredjs')},
+            {from: 'external/structuredjs/external/esprima.js',
+             to: path.resolve(__dirname, 'build/external/structuredjs/external')},
+            {from: 'node_modules/underscore/underscore.js',
+             to: path.resolve(__dirname, 'build/external/underscore')},
+            // Used by flash fallback (TODO: investigate if still needed)
+            {from: 'nnode_modules/soundmanager/swf/**',
+             to: path.resolve(__dirname, 'build/external/SoundManager2')},
             // Copy images and sounds
             {from: 'images/',
              to: path.resolve(__dirname, 'build/images')},

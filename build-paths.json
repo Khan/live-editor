@@ -1,12 +1,4 @@
 {
-    "externals": [
-        "node_modules/es5-shim/es5-shim.js",
-        "external/jshint/jshint.js",
-        "external/structuredjs/external/esprima.js",
-        "external/structuredjs/structured.js",
-        "node_modules/underscore/underscore.js",
-        "node_modules/soundmanager/swf/**"
-    ],
     "styles": {
         "core_deps": [
             "node_modules/jquery-ui-dist/jquery-ui.theme.css"
