@@ -1,3 +1,8 @@
+/* eslint-disable no-var, no-redeclare, no-new-func */
+/* TODO: Fix the lint errors */
+const _ = require("underscore");
+
+const i18n = require("i18n");
 const PooledWorker = require("./pooled-worker.js");
 
 const OutputTester = function() {};
@@ -41,6 +46,7 @@ OutputTester.prototype = {
                     tester.exec(validate);
                 } catch(e) {
                     if (window.console) {
+                        // eslint-disable-next-line no-console
                         console.warn(e.message);
                     }
                     return;
@@ -76,7 +82,6 @@ OutputTester.prototype = {
                         }
                     }
                 };
-                console.log("externalDir", this.externalsDir);
                 worker.postMessage({
                     code: code,
                     validate: validate,
@@ -165,6 +170,7 @@ OutputTester.prototype = {
                         return fn.apply(this, arguments);
                     } catch (e) {
                         if (window.console) {
+                            // eslint-disable-next-line no-console
                             console.warn(e);
                         }
                     }

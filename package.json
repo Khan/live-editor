@@ -5,8 +5,8 @@
   "main": "dist/live-editor.js",
   "scripts": {
     "lint": "eslint --config ./eslint/eslintrc js",
-    "build": "webpack --mode development && gulp build",
-    "test": "gulp test"
+    "build": "webpack --mode development",
+    "test": "gulp test_tooltips"
   },
   "repository": {
     "type": "git",
@@ -30,6 +30,7 @@
     "chrome-launcher": "^0.10.2",
     "chrome-remote-interface": "^0.25.2",
     "chrome-unmirror": "^0.1.0",
+    "copy-webpack-plugin": "^4.5.2",
     "css-loader": "^1.0.0",
     "eslint": "^4.19.1",
     "eslint-config-prettier": "^2.9.0",

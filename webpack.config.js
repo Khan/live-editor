@@ -1,7 +1,10 @@
-var path = require('path');
-var webpack = require('webpack');
+const path = require('path');
 
-var config = {
+const webpack = require('webpack');
+
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+const config = {
     performance: { hints: false },
     entry: {
         core_deps: [
@@ -122,7 +125,25 @@ var config = {
         }),
         new webpack.ProvidePlugin({
             _: "underscore"
-        })
+        }),
+        new CopyWebpackPlugin([
+            // Copy worker files
+            {from: 'js/workers/pjs/',
+             to: path.resolve(__dirname, 'build/workers/pjs')},
+            {from: 'js/output/pjs/pjs-tester.js',
+             to: path.resolve(__dirname, 'build/workers/pjs')},
+            {from: 'node_modules/ace-builds/src-noconflict/worker-html.js',
+             to: path.resolve(__dirname, 'build/workers/webpage')},
+            {from: 'js/output/shared/output-tester.js',
+             to: path.resolve(__dirname, 'build/workers/shared')},
+            {from: 'external/multirecorderjs/multirecorder-worker.js',
+             to: path.resolve(__dirname, 'build/workers/shared')},
+            // Copy images and sounds
+            {from: 'images/',
+             to: path.resolve(__dirname, 'build/images')},
+            {from: 'sounds/',
+             to: path.resolve(__dirname, 'build/sounds')}
+        ])
     ]
 };
 

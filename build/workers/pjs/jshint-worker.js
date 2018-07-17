@@ -1,7 +1,5 @@
 /* eslint-disable no-var, no-undef */
 /* TODO: Fix the lint errors */
-/* To fix, remove an entry above, npm run lint, and fix errors. */
-
 var init = false;
 
 self.onmessage = function(event) {

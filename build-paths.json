@@ -1,16 +1,4 @@
 {
-    "workers_pjs": [
-        "js/workers/pjs/jshint-worker.js",
-        "js/workers/pjs/test-worker.js",
-        "js/output/pjs/pjs-tester.js"
-    ],
-    "workers_webpage": [
-        "node_modules/ace-builds/src-noconflict/worker-html.js"
-    ],
-    "workers_shared": [
-        "js/output/shared/output-tester.js",
-        "external/multirecorderjs/multirecorder-worker.js"
-    ],
     "externals": [
         "node_modules/es5-shim/es5-shim.js",
         "external/jshint/jshint.js",
@@ -41,9 +29,5 @@
         "debugger": [
             "css/ui/debugger.css"
         ]
-    },
-    "images": [
-        "images/**",
-        "external/structured-blocks/images/**"
-    ]
+    }
 }
