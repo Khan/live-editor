@@ -1,3 +1,7 @@
+/* eslint-disable no-var */
+/* TODO: Fix the lint errors */
+/* To fix, remove an entry above, npm run lint, and fix errors. */
+const _ = require("underscore");
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
@@ -123,9 +127,9 @@ const ScratchpadDrawCanvas = Backbone.View.extend({
         };
 
         // Initialize playback commands
-        _.each(this.commands, function(name) {
+        this.commands.forEach((name) => {
             record.handlers[name] = function() {
-                self[name].apply(self, arguments);
+                this[name].apply(self, arguments);
             };
         });
     },

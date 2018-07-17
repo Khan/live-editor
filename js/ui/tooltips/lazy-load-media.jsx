@@ -1,22 +1,29 @@
-const $ = require("jquery");
-import React, {Component} from 'react';
+import React, {Component} from "react";
 
 class LazyLoadMedia extends Component {
+    props: {
+        parentScrollMax: number,
+        placeholderSrc: string,
+        src: string,
+        type: string,
+        className: string,
+        alt: string,
+    };
 
     // props: scrollposition, src, placeholdrsrc, type (audio or image)
     // state: isloaded
     constructor(props) {
         super(props);
         this.state = {
-            isVisible: false
-        }
+            isVisible: false,
+        };
         this.mediaRef = React.createRef();
     }
-    componentDidMount () {
+    componentDidMount() {
         this.calculateVisibility();
     }
 
-    componentDidUpdate () {
+    componentDidUpdate() {
         this.calculateVisibility();
     }
 
@@ -26,7 +33,7 @@ class LazyLoadMedia extends Component {
             return;
         }
         if (mediaDom.offsetTop < this.props.parentScrollMax) {
-            this.setState({isVisible: true})
+            this.setState({isVisible: true});
         }
     }
 
@@ -37,19 +44,23 @@ class LazyLoadMedia extends Component {
         }
         let media;
         if (this.props.type === "audio") {
-            media = <audio
-                className={this.props.className}
-                ref={this.mediaRef}
-                src={mediaSrc}
-                controls
+            media = (
+                <audio
+                    className={this.props.className}
+                    ref={this.mediaRef}
+                    src={mediaSrc}
+                    controls
                 />
+            );
         } else {
-            media = <img
-                className={this.props.className}
-                ref={this.mediaRef}
-                src={mediaSrc}
-                alt={this.props.alt}
+            media = (
+                <img
+                    className={this.props.className}
+                    ref={this.mediaRef}
+                    src={mediaSrc}
+                    alt={this.props.alt}
                 />
+            );
         }
         return media;
     }

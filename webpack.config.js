@@ -86,7 +86,10 @@ var config = {
             // See https://github.com/kripken/sql.js/issues/112
             fs: true,
             jquery: "jQuery",
-            $: "jQuery"
+            $: "jQuery",
+            underscore: "_",
+            "ace-builds": "ace",
+            i18n: "i18n"
         }
     ],
     output: {

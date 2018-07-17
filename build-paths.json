@@ -23,11 +23,6 @@
         "core_deps": [
             "node_modules/jquery-ui-dist/jquery-ui.theme.css"
         ],
-        "editor_structured_blocks": [
-            "external/structured-blocks/css/style.css",
-            "external/structured-blocks/external/github.css",
-            "css/editors/structured-blocks/style.css"
-        ],
         "audio": [
             "css/ui/flashblock.css"
         ],

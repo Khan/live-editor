@@ -42,7 +42,7 @@
 }
 .tipbar .text-wrap {
     line-height: 1.4em;
-    margin: 8px 8px 33px 8px;
+    margin: 8px;
 }
 .tipbar .text-wrap .message {
     line-height: 20px;
@@ -60,77 +60,6 @@
     margin: 0px 2px;
     padding: 1px 4px;
     text-align: left;
-}
-.tipbar .text-wrap .oh-no {
-    font-size: 13px;
-    font-weight: bold;
-}
-.tipbar .text-wrap .show-me a {
-    color: #005987;
-    font-size: 14px;
-    font-weight: bold;
-    position: absolute;
-    left: 7px;
-}
-.tipbar .text-wrap .show-me a:hover {
-    color: #678D00;
-    text-decoration: underline;
-}
-.tipbar .tipnav {
-    right: 7px;
-    position: absolute;
-}
-.tipbar .tipnav a {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 5px;
-    color: #000;
-    display: inline-block;
-    font-size: 10px;
-    height: 16px;
-    line-height: 16px;
-    padding: 1px 1px 1px 3px;
-}
-.tipbar .tipnav a.prev {
-    padding: 1px 3px 1px 1px;
-}
-.tipbar .tipnav a .ui-icon {
-    background-image: url(../images/scratchpads/ui-icons_808080_256x240.png);
-    background-repeat: no-repeat;
-    display: inline-block;
-    height: 16px;
-    margin-top: -4px;
-    overflow: hidden;
-    text-indent: -99999px;
-    vertical-align: middle;
-    width: 16px;
-}
-.tipbar .tipnav a .ui-icon.ui-icon-circle-triangle-w {
-    background-position: -80px -192px;
-}
-.tipbar .tipnav a .ui-icon.ui-icon-circle-triangle-e {
-    background-position: -48px -192px;
-}
-.tipbar .close {
-    background-color: transparent;
-    border: none;
-    color: black;
-    float: right;
-    text-shadow: 0 1px 0 #CDCDCD;
-}
-.tipbar .text a {
-    text-decoration: underline;
-}
-.tipbar form input {
-    margin-bottom: 8px;
-    margin-top: 8px;
-}
-.tipbar form .ui-button {
-    margin-left: 8px;
-}
-.tipbar .status .ui-icon {
-    display: inline-block;
-    position: relative;
-    top: 4px;
 }
 #test-errors {
     color: red;

@@ -1,3 +1,8 @@
+/* eslint-disable no-var */
+/* TODO: Fix the lint errors */
+/* To fix, remove an entry above, npm run lint, and fix errors. */
+
+const _ = require("underscore");
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
@@ -133,11 +138,9 @@ const TooltipEngine = Backbone.View.extend({
     },
 
     remove: function() {
-        console.log("typeof this.callbacks", typeof this.callbacks);
         _.each(this.callbacks, function(cb) {
             cb.target.off(cb.event, cb.fn);
         });
-        console.log("typeof this.tooltips", typeof this.tooltips);
         _.each(this.tooltips, function(tooltip) {
             tooltip.remove();
         });

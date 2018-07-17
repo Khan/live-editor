@@ -1,3 +1,5 @@
+/* global MultiRecorder */
+const _ = require("underscore");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 const React = require("react");
@@ -118,7 +120,7 @@ const ScratchpadRecordView = Backbone.View.extend({
      *   so no need to call startRecordingCommands manually.
      */
     startRecordingAudio: function() {
-        var self = this;
+        const self = this;
 
         this.lastSavedCode = this.editor.text();
         this.multirecorder.startRecording(1)
@@ -161,8 +163,8 @@ const ScratchpadRecordView = Backbone.View.extend({
      * for the audio elem to load. This is pretty gross.
      */
     getDurationMsOfSavedAudio: function() {
-        var durationMs = 0;
-        var audioElem = $(this.$savedAudioChunksElem).find("audio");
+        let durationMs = 0;
+        const audioElem = $(this.$savedAudioChunksElem).find("audio");
         if (audioElem && audioElem.length > 0) {
             durationMs = audioElem[0].duration * 1000;
         }
@@ -177,7 +179,7 @@ const ScratchpadRecordView = Backbone.View.extend({
             //this.scratchpad.get("revision")
             //    .set("code", this.editor.text());
             this.startingCode = this.editor.text();
-            var newVersion = this.config.curVersion();
+            const newVersion = this.config.curVersion();
             // Make sure we record using the scratchpad version
             this.config.switchVersion(newVersion);
             this.record.setActualInitData({

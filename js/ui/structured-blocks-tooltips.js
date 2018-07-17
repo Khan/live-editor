@@ -1,3 +1,7 @@
+/* eslint-disable no-var, no-extra-bind */
+/* TODO: Fix the lint errors */
+/* To fix, remove an entry above, npm run lint, and fix errors. */
+
 (function() {
     var ESC = 27;
 

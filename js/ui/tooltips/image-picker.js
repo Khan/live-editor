@@ -4,6 +4,7 @@ Backbone.$ = require("jquery");
 const React = require("react");
 const ReactDOM = require("react-dom");
 
+const OutputImages = require("../../shared/images.js").OutputImages;
 const ImageScroller = require("./image-scroller.jsx")
 const TooltipBase = require("../../ui/tooltip-base.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
@@ -21,16 +22,16 @@ const ImagePicker = TooltipBase.extend({
     },
 
     detector: function(event) {
-        if (!/(\bgetImage\s*\()[^\)]*$/.test(event.pre)) {
+        if (!/(\bgetImage\s*\()[^)]*$/.test(event.pre)) {
             return;
         }
-        var functionStart = event.col - RegExp.lastMatch.length;
-        var paramsStart = functionStart + RegExp.$1.length;
+        const functionStart = event.col - RegExp.lastMatch.length;
+        const paramsStart = functionStart + RegExp.$1.length;
 
-        var pieces = /^(\s*)(["']?[^\)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
-        var leadingPadding = pieces[1];
-        var pathStart = paramsStart + leadingPadding.length;
-        var path = pieces[2];
+        const pieces = /^(\s*)(["']?[^)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
+        const leadingPadding = pieces[1];
+        const pathStart = paramsStart + leadingPadding.length;
+        let path = pieces[2];
         this.closing = pieces[3];
 
         this.aceLocation = {
@@ -93,15 +94,15 @@ const ImagePicker = TooltipBase.extend({
     },
 
     updateTooltip: function(rawPath) {
-        var foundPath = this.defaultImage;
+        let foundPath = this.defaultImage;
 
-        var path = /^["']?(.*?)["']?$/.exec(rawPath)[1];
-        var pathParts = path.split("/");
-        var groupName = pathParts[0];
-        var fileName = pathParts[1];
-        _.each(OutputImages, function(group) {
+        const path = /^["']?(.*?)["']?$/.exec(rawPath)[1];
+        const pathParts = path.split("/");
+        const groupName = pathParts[0];
+        const fileName = pathParts[1];
+        OutputImages.forEach((group) => {
             if (group.groupName === groupName) {
-                _.each(group.images, function(imageName) {
+                group.images.forEach((imageName) => {
                     if (imageName === fileName) {
                         foundPath = groupName + "/" + fileName;
                     }
@@ -115,7 +116,7 @@ const ImagePicker = TooltipBase.extend({
     },
 
     updateText: function(newPath) {
-        var newText = '"' + newPath + '"';
+        const newText = '"' + newPath + '"';
         TooltipBase.prototype.updateText.call(this, newText);
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }

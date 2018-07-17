@@ -1,3 +1,5 @@
+/* global i18n */
+
 // Helper functionality for the Scratchpad auto suggest feature
 window.ScratchpadAutosuggestData = {
     _keywords: {

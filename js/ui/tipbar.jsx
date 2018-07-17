@@ -4,47 +4,60 @@
  * canvas. Now it powers the error reporting mechanism, which no longer
  * looks like a bar.
  */
-const $ = require("jquery");
-import React, {Component} from 'react';
+const i18n = require("i18n");
+import {icons} from "@khanacademy/wonder-blocks-icon";
+import Button from "@khanacademy/wonder-blocks-button";
+import IconButton from "@khanacademy/wonder-blocks-icon-button";
+import {StyleSheet, css} from "aphrodite/no-important";
+import React, {Component} from "react";
 
 class TipBar extends Component {
-    // props: liveEditor, isHidden, errors
+    props: {
+        liveEditor: Object,
+        isHidden: boolean,
+        errors: Array<string>,
+        errorNum: number,
+    };
+
     static defaultProps = {
         errors: [],
-        isHidden: true
-    }
+        isHidden: true,
+    };
 
     constructor(props) {
         super(props);
         this.state = {
-            errorNum: props.errorNum || 0
-        }
+            errorNum: props.errorNum || 0,
+        };
         this.handleShowMeClick = this.handleShowMeClick.bind(this);
         this.handlePrevClick = this.handlePrevClick.bind(this);
         this.handleNextClick = this.handleNextClick.bind(this);
         this.handleCloseClick = this.handleCloseClick.bind(this);
     }
 
-    handleShowMeClick () {
+    handleShowMeClick() {
         const error = this.props.errors[this.state.errorNum];
         this.props.liveEditor.editor.setCursor(error);
         this.props.liveEditor.editor.setErrorHighlight(true);
     }
 
-    handleCloseClick () {
+    handleCloseClick() {
         this.props.liveEditor.setThinkingState();
     }
 
-    handlePrevClick () {
+    handlePrevClick() {
         this.setState((prevState, props) => ({
-            errorNum: Math.max(0, prevState.errorNum - 1)
+            errorNum: Math.max(0, prevState.errorNum - 1),
         }));
         this.props.liveEditor.editor.focus();
     }
 
-    handleNextClick () {
+    handleNextClick() {
         this.setState((prevState, props) => ({
-            errorNum: Math.min(prevState.errorNum + 1, this.props.errors.length - 1)
+            errorNum: Math.min(
+                prevState.errorNum + 1,
+                this.props.errors.length - 1,
+            ),
         }));
         this.props.liveEditor.editor.focus();
     }
@@ -55,69 +68,52 @@ class TipBar extends Component {
         }
 
         const errors = this.props.errors;
-        const errorNum = errors[this.state.errorNum] == null ?
-            0 :
-            this.state.errorNum;
+        const errorNum =
+            errors[this.state.errorNum] == null ? 0 : this.state.errorNum;
         const currentError = errors[errorNum];
 
         const messageHtml = {
-            __html: currentError.text || currentError || ""
+            __html: currentError.text || currentError || "",
         };
 
         let showMeDiv;
-        if (currentError.row > -1) { // it could be undefined, null, or -1
+        if (currentError.row > -1) {
+            // it could be undefined, null, or -1
             showMeDiv = (
-                <div className="show-me">
-                    <a
-                        href="javascript:void(0)"
-                        onClick={this.handleShowMeClick}
-                    >
+                <Button
+                    className={css(styles.showMeButton)}
+                    onClick={this.handleShowMeClick}
+                    kind="tertiary"
+                >
                     {i18n._("Show me where")}
-                    </a>
-                </div>
+                </Button>
             );
         }
 
         let navDiv;
         if (errors.length > 1) {
-
-            let prevClasses = "prev";
-            if (errorNum <= 0) {
-                prevClasses += " ui-state-disabled";
-            }
-            let nextClasses = "next";
-            if (errorNum >= errors.length - 1) {
-                nextClasses += " ui-state-disabled";
-            }
-            const numText = errors.length > 1 ?
-                (errorNum + 1) + "/" + errors.length :
-                "";
-
+            const numText =
+                errors.length > 1 ? errorNum + 1 + "/" + errors.length : "";
             navDiv = (
-                <div className="tipnav">
-                    <a
-                        href="javascript:void(0)"
-                        className={prevClasses}
+                <div className={css(styles.errorNav)}>
+                    <IconButton
+                        icon={icons.caretLeft}
+                        aria-label={i18n._("Previous error")}
                         onClick={this.handlePrevClick}
-                        title={i18n._("Previous error")}
-                    >
-                        <span className="ui-icon ui-icon-circle-triangle-w"></span>
-                    </a>
-                    <span className="current-pos">{numText}</span>
-                    <a
-                        href="javascript:void(0)"
-                        className={nextClasses}
+                        disabled={errorNum <= 0}
+                    />
+                    <span className={css(styles.errorNums)}>{numText}</span>
+                    <IconButton
+                        icon={icons.caretRight}
+                        aria-label={i18n._("Next error")}
                         onClick={this.handleNextClick}
-                        title={i18n._("Next error")}
-                    >
-                        <span className="ui-icon ui-icon-circle-triangle-e"></span>
-                    </a>
+                        disabled={errorNum >= errors.length - 1}
+                    />
                 </div>
             );
         }
 
-
-         // Make the error dialog draggable
+        // Make the error dialog draggable
         // Replace with react-draggable
         /*
         if ($.fn.draggable) {
@@ -131,21 +127,23 @@ class TipBar extends Component {
 
         return (
             <div>
-                <div className="overlay error-overlay">
-                </div>
+                <div className="overlay error-overlay" />
                 <div className="tipbar">
-                    <div className="speech-arrow"></div>
-                    <div className="error-buddy"></div>
+                    <div className="speech-arrow" />
+                    <div className="error-buddy" />
                     <div className="text-wrap">
-                        <button
-                            className="close"
-                            type="button"
+                        <IconButton
+                            style={styles.closeButton}
+                            icon={icons.dismiss}
+                            aria-label={i18n._("Close")}
+                            kind="tertiary"
                             onClick={this.handleCloseClick}
-                            aria-label="Close">
-                            {i18n.i18nDoNotTranslate("\u00D7")}
-                        </button>
-                        <div className="oh-no">{i18n._("Oh noes!")}</div>
-                        <div className="message"
+                        />
+                        <div className={css(styles.ohNoHeader)}>
+                            {i18n._("Oh noes!")}
+                        </div>
+                        <div
+                            className="message"
                             dangerouslySetInnerHTML={messageHtml}
                         />
                         {showMeDiv}
@@ -156,5 +154,26 @@ class TipBar extends Component {
         );
     }
 }
+
+const styles = StyleSheet.create({
+    closeButton: {
+        float: "right",
+    },
+    ohNoHeader: {
+        fontSize: "13px",
+        fontWeight: "bold",
+    },
+    showMeButton: {
+        float: "left",
+    },
+    errorNav: {
+        float: "right",
+    },
+    errorNums: {
+        verticalAlign: "middle",
+        display: "inline-block",
+        paddingBottom: "10px",
+    },
+});
 
 module.exports = TipBar;

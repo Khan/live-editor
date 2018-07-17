@@ -26,44 +26,6 @@ var check = require("./check.js");
 var paths = require("./build-paths.json");
 
 var firstBuild = true;
-var scriptTypes = Object.keys(paths.scripts);
-
-scriptTypes.forEach(function(type) {
-    gulp.task("script_" + type, ["templates"], function() {
-        var outputFileName = "live-editor." + type + ".js";
-        var srcPath = path.join(__dirname, "js");
-
-        return gulp.src(paths.scripts[type])
-            .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
-            .pipe(gulpIf(function (file) {
-                // transform source files but not dependencies
-                return file.path.indexOf(srcPath) === 0;
-            }, babel({ blacklist: ["strict"] })))
-            .pipe(concat(outputFileName))
-            .pipe(chmod(644))
-            .pipe(eol("\n"))
-            .pipe(gulp.dest("build/js"));
-    });
-
-    gulp.task("script_" + type + "_min", ["script_" + type], function() {
-        var outputFileName = "live-editor." + type + ".min.js";
-        return gulp.src(["build/js/live-editor." + type + ".js"])
-            .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
-            .pipe(uglify())
-            .pipe(concat(outputFileName))
-            .pipe(chmod(644))
-            .pipe(eol("\n"))
-            .pipe(gulp.dest("build/js"));
-    });
-});
-
-gulp.task("scripts", scriptTypes.map(function(type) {
-    return "script_" + type;
-}));
-
-gulp.task("scripts_min", scriptTypes.map(function(type) {
-    return "script_" + type + "_min";
-}));
 
 gulp.task("workers", function() {
     gulp.src(paths.workers_webpage)
@@ -103,10 +65,6 @@ gulp.task("images", function() {
 });
 
 gulp.task("watch", function() {
-    scriptTypes.forEach(function(type) {
-        gulp.watch(paths.scripts[type], ["script_" + type]);
-    });
-
     styleTypes.forEach(function(type) {
         gulp.watch(paths.styles[type], ["style_" + type]);
     });
@@ -249,7 +207,7 @@ gulp.task("check", function() {
 });
 
 gulp.task("build",
-    ["check", "templates", "scripts", "workers", "styles", "images", "externals"],
+    ["check", "workers", "styles", "images", "externals"],
     function() {
         firstBuild = false;
     });

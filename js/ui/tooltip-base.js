@@ -1,4 +1,9 @@
+/* eslint-disable no-var */
+/* TODO: Fix the lint errors */
+/* To fix, remove an entry above, npm run lint, and fix errors. */
+
 const $ = require("jquery");
+const ace = require("ace-builds");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 
@@ -123,7 +128,7 @@ const TooltipBase = Backbone.View.extend({
         if (this.parent.options.record.playing) {
             return;
         }
-        this.parent.editor.session.insert.apply(this.parent.editor.session, arguments);
+        this.parent.editor.session.insert(...arguments);
     },
 
     parens: {

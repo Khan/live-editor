@@ -1,3 +1,8 @@
+/* global ace */
+/* eslint-disable no-var */
+/* TODO: Fix the lint errors */
+/* To fix, remove an entry above, npm run lint, and fix errors. */
+
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
@@ -84,14 +89,14 @@ const ColorPicker = TooltipBase.extend({
         var paramsEnd = paramsStart + body.length;
         var functionEnd = paramsStart + pieces[0].length;
 
-        var allColors = _.map(body.split(','), parseFloat);
+        var allColors = body.split(',').map(parseFloat);
         if (allColors.length === 4 && !isNaN(allColors[3])) {
             body = body.slice(0, body.lastIndexOf(','));
             paramsEnd = paramsStart + body.length;
             this.closing = event.line.slice(paramsEnd, functionEnd);
         }
 
-        var colors = _.map(body.split(','), function(c) {
+        var colors = body.split(',').map(function(c) {
             c = parseFloat(c);
             return (isNaN(c) ? 0 : c);
         });
@@ -128,7 +133,7 @@ const ColorPicker = TooltipBase.extend({
 
             // Auto-fill
             if (body.trim().length === 0) {
-                var rgb = {
+                rgb = {
                     r: 255,
                     g: 0,
                     b: 0

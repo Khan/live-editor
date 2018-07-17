@@ -3,6 +3,7 @@ const escodegen = require("escodegen");
 
 const ASTTransforms = require("./pjs-ast-transforms.js");
 const LoopProtector = require("../shared/loop-protect.js");
+const OutputSounds = require("../../shared/sounds.js");
 const PJSResourceCache = require("./pjs-resource-cache.js");
 const PJSUtils = require("./pjs-utils.js");
 const PooledWorker = require("../shared/pooled-worker.js");
@@ -503,6 +504,7 @@ class PJSCodeInjector {
                 this.injectCode(userCode, callback);
             });
         } catch(e) {
+            console.warn(e);
             let [line, text] = e.message.split(":");
 
             if (text.trim() === "Unexpected token ILLEGAL") {

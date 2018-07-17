@@ -1,4 +1,6 @@
-window.PJSTester = function(options) {
+const OutputTester = require("../shared/output-tester.js");
+
+const PJSTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
 };
@@ -395,7 +397,7 @@ PJSTester.prototype.testMethods = {
         }
         return this.testContext.match(structure).success;
     },
-            
+
     _checkSyntaxErrors: function(syntaxChecks) {
         if (!syntaxChecks) return;
 
@@ -462,3 +464,5 @@ PJSTester.prototype.testMethods = {
         });
     }
 };
+
+module.exports = PJSTester;

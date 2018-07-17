@@ -264,11 +264,8 @@ const LiveEditor = Backbone.View.extend({
     },
 
     renderEditorWrapper: function() {
-        const props = {
-            imagesDir: this.imagesDir
-        }
         ReactDOM.render(
-            React.createElement(EditorWrapper, props, null),
+            React.createElement(EditorWrapper, {}, null),
             this.$(".scratchpad-editor-wrap")[0]);
     },
 

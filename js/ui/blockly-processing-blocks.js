@@ -1,3 +1,7 @@
+/* eslint-disable */
+/* TODO: Fix the lint errors */
+/* To fix, remove an entry above, npm run lint, and fix errors. */
+
 /* global Blockly, patternMatch, goog */
 /*
  Missing but want to add:

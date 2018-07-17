@@ -1,7 +1,6 @@
-import React, {Component} from 'react';
+import React, {Component} from "react";
 
 class RecordControls extends Component {
-
     render() {
         // This is just a very simple port from Handlebars
         // If KA/anyone decides to re-enable recording in the future,
@@ -25,14 +24,12 @@ class RecordControls extends Component {
                 <div className="show-audio-chunks-wrapper">
                     <p>
                         <span>{$._("Last audio chunk recorded:")}</span>
-                        <span className="last-audio-chunk">
-                            {$._("Empty")}
-                        </span>
+                        <span className="last-audio-chunk">{$._("Empty")}</span>
                     </p>
                     <p>
                         <span>{$._("All saved audio chunks:")}</span>
                         <span className="saved-audio-chunks">
-                        {$._("Empty")}
+                            {$._("Empty")}
                         </span>
                     </p>
                 </div>

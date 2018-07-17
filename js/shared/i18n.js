@@ -1,3 +1,7 @@
+/* eslint-disable no-var, camelcase, no-undef */
+/* TODO: Fix the lint errors */
+/* To fix, remove an entry above, npm run lint, and fix errors. */
+
 (function() {
     // If no language is specified, or if an unknown language is specified,
     // then fall back to using "en" as the base language

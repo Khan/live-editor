@@ -1,4 +1,6 @@
-window.OutputTester = function() {};
+const PooledWorker = require("./pooled-worker.js");
+
+const OutputTester = function() {};
 
 OutputTester.prototype = {
     initialize: function(options) {
@@ -6,6 +8,7 @@ OutputTester.prototype = {
 
         this.tests = [];
         this.testContext = {};
+        this.externalsDir = options.externalsDir;
 
         for (var prop in this.testMethods) {
             if (this.testMethods.hasOwnProperty(prop)) {
@@ -28,7 +31,7 @@ OutputTester.prototype = {
          * The worker that runs the tests in the background, if possible.
          */
         this.testWorker = new PooledWorker(
-            options.workerFile,
+            options.workerFile, options.workersDir,
             function(code, validate, errors, callback) {
                 var self = this;
 
@@ -73,7 +76,7 @@ OutputTester.prototype = {
                         }
                     }
                 };
-
+                console.log("externalDir", this.externalsDir);
                 worker.postMessage({
                     code: code,
                     validate: validate,
@@ -269,3 +272,5 @@ OutputTester.prototype = {
         }
     }
 };
+
+module.exports = OutputTester;

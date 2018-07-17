@@ -1,5 +1,7 @@
 const escodegen = require("escodegen");
 
+const OutputSounds = require("../../shared/sounds.js");
+
 const ASTTransforms = {};
 
 let b = require("../shared/ast-builder.js");

@@ -2,6 +2,7 @@ const $ = require("jquery");
 const esprima = require("esprima");
 
 const ASTTransforms = require("./pjs-ast-transforms.js");
+const OutputSounds = require("../../shared/sounds.js");
 const walkAST = require("../shared/ast-walker.js");
 
 const PJSResourceCache = function(options) {

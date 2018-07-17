@@ -1,6 +1,7 @@
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
+const i18n = require("i18n");
 const Slowparse = require("../../../external/slowparse/slowparse.js");
 
 const LoopProtector = require("../shared/loop-protect.js");
@@ -346,7 +347,6 @@ const WebpageOutput = Backbone.View.extend({
     },
 
     runCode: function(codeObj, callback) {
-        console.log("Running code", codeObj);
         this.stateScrubber.clearAll();
         this.KA_INFINITE_LOOP = false;
         this.foundRunTimeError = false;

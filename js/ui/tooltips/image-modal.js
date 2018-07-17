@@ -1,10 +1,13 @@
+/* global i18n */
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 const React = require("react");
 const ReactDOM = require("react-dom");
 
+const ExtendedOutputImages = require("../../shared/images.js").ExtendedOutputImages;
 const MediaPickerTooltip = require("./media-picker-tooltip.jsx");
+const OutputSounds = require("../../shared/sounds.js");
 const TooltipBase = require("../../ui/tooltip-base.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
 
@@ -40,8 +43,8 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             if (!/<img\s+[^>]*?\s*src\s*=\s*["']([^"']*)$/.test(event.pre)) {
                 return;
             }
-            var urlStart = event.col - RegExp.$1.length;
-            var url = event.line.slice(urlStart).match(/^[^"']*/)[0];
+            const urlStart = event.col - RegExp.$1.length;
+            const url = event.line.slice(urlStart).match(/^[^"']*/)[0];
             this.aceLocation = {
                 start: urlStart,
                 length: url.length,
@@ -66,9 +69,9 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
                         });
                     return;
                 }
-                var allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|ka-perseus-images\.s3\.amazonaws\.com|wikimedia\.org|localhost:\d+)$/i;
-                var match = /\/\/([^\/]*)(?:\/|\?|#|$)/.exec(url);
-                var host = match ? match[1] : "";
+                const allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|ka-perseus-images\.s3\.amazonaws\.com|wikimedia\.org|localhost:\d+)$/i;
+                const match = /\/\/([^/]*)(?:\/|\?|#|$)/.exec(url);
+                const host = match ? match[1] : "";
                 if (!host || allowedHosts.test(host)) {
                     this.renderPreview({
                         mediaSrc: url,
@@ -96,8 +99,8 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             };
             props.onModalClose = () => {
                 this.logForRecording("hide");
-                if (!this.activeFileInfo) return;
-                let updatePath = this.activeFileInfo.fullImgPath;
+                if (!this.activeFileInfo) {return;}
+                const updatePath = this.activeFileInfo.fullImgPath;
                 this.updateTooltip(updatePath);
                 this.updateText(updatePath);
             }
@@ -110,14 +113,11 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
         },
 
         render: function() {
-            var self = this;
-
             this.$el = $("<div class='tooltip mediapicker-preview'>" +
                         "<div class='media-preview-wrapper'/>" +
                         "<div class='arrow'></div></div>")
                 .addClass("mediapicker__image")
                 .appendTo("body").hide();
-
             this.renderPreview();
         },
 
@@ -140,9 +140,9 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
 
         selectFile: function(dataPath) {
             // TODO: How to update programmatically?
-            var $file = this.$(".mediapicker-modal-file[data-path='"+dataPath+"']");
-            var $pane = $file.closest(".tab-pane");
-            var $tab = this.$("a[href='#"+$pane.attr("id")+"']");
+            const $file = this.$(".mediapicker-modal-file[data-path='"+dataPath+"']");
+            const $pane = $file.closest(".tab-pane");
+            const $tab = this.$("a[href='#"+$pane.attr("id")+"']");
             $tab.tab("show");
             $pane.find(".mediapicker-modal-content").scrollTop(
                 $file.position().top - 100);
@@ -150,12 +150,12 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
         },
 
         selectImg: function(dataPath) {
-            var $file = this.selectFile(dataPath);
+            const $file = this.selectFile(dataPath);
             $file.find("img").click();
         },
 
         logForRecording: function(action, value) {
-            var logAction = "imagemodal" + action;
+            const logAction = "imagemodal" + action;
             this.options.record && this.options.record.log(logAction, value);
         }
     });
@@ -172,7 +172,7 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
         },
 
         detector: function(event) {
-            if (!/(\bgetSound\s*\()[^\)]*$/.test(event.pre)) {
+            if (!/(\bgetSound\s*\()[^)]*$/.test(event.pre)) {
                 return;
             }
             // This is quite similar to code in image-picker.js,
@@ -181,14 +181,14 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
             //  That should be fixed in PhantomJS2.0, so we are eagerly
             //  awaiting the upgrade of gulp-mocha-phantomjs to that.
             // TODO: We use Chrome now!
-            var functionStart = event.col - RegExp.lastMatch.length;
-            var paramsStart = functionStart + RegExp.$1.length;
+            const functionStart = event.col - RegExp.lastMatch.length;
+            const paramsStart = functionStart + RegExp.$1.length;
 
-            var pieces = /^(\s*)(["']?[^\)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
-            var leading = pieces[1];
-            var pathStart = paramsStart + leading.length;
-            var path = pieces[2];
-            var closing = pieces[3];
+            const pieces = /^(\s*)(["']?[^)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
+            const leading = pieces[1];
+            const pathStart = paramsStart + leading.length;
+            let path = pieces[2];
+            let closing = pieces[3];
 
             if (leading.length === 0 &&
                 path.length === 0 &&
@@ -223,7 +223,7 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
 
         updateTooltip: function(partialPath) {
             if (partialPath !== this.currentUrl) {
-                partialPath = partialPath.replace(/\"/g, "");
+                partialPath = partialPath.replace(/"/g, "");
                 this.currentUrl = this.options.soundsDir + partialPath + ".mp3";
                 if (partialPath === "") {
                     this.renderPreview({
@@ -247,8 +247,8 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
                 this.activeFileInfo = fileInfo;
             };
             props.onModalClose = () => {
-                if (!this.activeFileInfo) return;
-                let updatePath = this.activeFileInfo.groupAndName;
+                if (!this.activeFileInfo) {return;}
+                const updatePath = this.activeFileInfo.groupAndName;
                 this.updateTooltip(updatePath);
                 this.updateText(`"${updatePath}"`);
 
@@ -261,8 +261,6 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
         },
 
         render: function() {
-            var self = this;
-
             this.$el = $("<div class='tooltip mediapicker-preview'>" +
                         "<div class='media-preview-wrapper'/>" +
                         "<div class='arrow'></div></div>")

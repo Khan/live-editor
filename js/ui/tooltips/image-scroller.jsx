@@ -1,17 +1,24 @@
-import React, {Component} from 'react';
-import { StyleSheet, css } from 'aphrodite/no-important';
+const _ = require("underscore");
+import React, {Component} from "react";
+import {StyleSheet, css} from "aphrodite/no-important";
 
 const LazyLoadMedia = require("./lazy-load-media.jsx");
 
 class ImageScroller extends Component {
+    props: {
+        currentImage: string,
+        imagesDir: string,
+        imageGroups: Array<Object>,
+        onMouseLeave: () => void,
+        onImageSelect: (name: string) => void,
+    };
 
-    // props: imagesDir, imageGroups, currentImage, onMouseLeave, onImageSelect
     constructor(props) {
         super(props);
         this.state = {
             activeImage: this.props.currentImage,
             scrollTop: 0,
-            isHovering: false
+            isHovering: false,
         };
         this.handleMouseEnter = this.handleMouseEnter.bind(this);
         this.handleMouseLeave = this.handleMouseLeave.bind(this);
@@ -21,7 +28,7 @@ class ImageScroller extends Component {
         this.scrollerRef = React.createRef();
     }
 
-    componentDidMount () {
+    componentDidMount() {
         this.calculateDomPosition();
     }
 
@@ -30,17 +37,17 @@ class ImageScroller extends Component {
         this.calculateDomPosition();
     }
 
-    handleMouseLeave () {
+    handleMouseLeave() {
         this.setState({isHovering: false});
         this.props.onMouseLeave();
     }
 
-    handleImageClick (imageName) {
+    handleImageClick(imageName) {
         this.setState({activeImage: imageName});
         this.props.onImageSelect(imageName);
     }
 
-    handleScroll () {
+    handleScroll() {
         this.calculateDomPosition();
     }
 
@@ -49,13 +56,13 @@ class ImageScroller extends Component {
             return;
         }
         this.setState({
-            scrollTop: this.scrollerRef.current.scrollTop
-        })
+            scrollTop: this.scrollerRef.current.scrollTop,
+        });
     }
 
-    render () {
+    render() {
         const spinnerPath = `${this.props.imagesDir}spinner.gif`;
-        const scrollMax = this.state.scrollTop + (300 * 2);
+        const scrollMax = this.state.scrollTop + 300 * 2;
 
         const groupsDivs = this.props.imageGroups.map((group) => {
             let citeP;
@@ -63,26 +70,31 @@ class ImageScroller extends Component {
                 citeP = (
                     <p className={css(styles.citeP)}>
                         <a href="{group.citeLink}" target="_blank">
-                        {group.cite}
+                            {group.cite}
                         </a>
-                    </p>);
+                    </p>
+                );
             }
             const imagesDivs = group.images.map((fileName) => {
                 const imageName = `${group.groupName}/${fileName}`;
                 const imagePath = `${this.props.imagesDir}${imageName}.png`;
-                let divClass = css(styles.imageBox,
-                    imageName === this.state.activeImage && styles.active);
+                const divClass = css(
+                    styles.imageBox,
+                    imageName === this.state.activeImage && styles.active,
+                );
                 return (
-                    <div className={divClass}
+                    <div
+                        className={divClass}
                         key={imageName}
-                        onClick={(e) => this.handleImageClick(imageName, e)}>
+                        onClick={(e) => this.handleImageClick(imageName, e)}
+                    >
                         <LazyLoadMedia
                             alt={fileName}
                             src={imagePath}
                             className={css(styles.img)}
                             placeholderSrc={spinnerPath}
                             parentScrollMax={scrollMax}
-                            />
+                        />
                         <span>{fileName}</span>
                     </div>
                 );
@@ -98,26 +110,34 @@ class ImageScroller extends Component {
 
         let currentPath = `${this.props.imagesDir}cute/Blank.png`;
         if (this.props.currentImage) {
-            currentPath = `${this.props.imagesDir}${this.props.currentImage}.png`;
+            currentPath = `${this.props.imagesDir}${
+                this.props.currentImage
+            }.png`;
         }
 
         let currentImageDiv;
         if (!this.state.isHovering) {
-            currentImageDiv = <div className={css(styles.previewBox)}>
-                    <img className={css(styles.previewImg)} src={currentPath}/>
-                </div>;
+            currentImageDiv = (
+                <div className={css(styles.previewBox)}>
+                    <img
+                        className={css(styles.previewImg)}
+                        src={currentPath}
+                        alt={this.props.currentImage}
+                    />
+                </div>
+            );
         }
         let imageGroupsDiv;
         if (this.state.isHovering) {
             // It's necessary to specify position: relative as an inline style
             // so that the browser calculates correct offsetParent for scrolling
             imageGroupsDiv = (
-                <div className={css(styles.groups)}
+                <div
+                    className={css(styles.groups)}
                     ref={this.scrollerRef}
-                    onScroll={this.handleScroll}>
-                    <div style={{position: "relative"}}>
-                    {groupsDivs}
-                    </div>
+                    onScroll={this.handleScroll}
+                >
+                    <div style={{position: "relative"}}>{groupsDivs}</div>
                 </div>
             );
         }
@@ -126,9 +146,9 @@ class ImageScroller extends Component {
             <div
                 onMouseEnter={this.handleMouseEnter}
                 onMouseLeave={this.handleMouseLeave}
-                >
-            {currentImageDiv}
-            {imageGroupsDiv}
+            >
+                {currentImageDiv}
+                {imageGroupsDiv}
             </div>
         );
     }
@@ -137,26 +157,26 @@ class ImageScroller extends Component {
 const styles = StyleSheet.create({
     previewBox: {
         background: "#FFF",
-        padding: "2px"
+        padding: "2px",
     },
     previewImg: {
         maxWidth: "50px",
-        maxHeight: "50px"
+        maxHeight: "50px",
     },
     groups: {
         background: "white",
         maxHeight: "300px",
-        overflowY: "scroll"
+        overflowY: "scroll",
     },
     group: {
-        overflow: "auto"
+        overflow: "auto",
     },
     groupH: {
-        margin: "5px"
+        margin: "5px",
     },
     citeP: {
         fontSize: "12px",
-        margin: "5px"
+        margin: "5px",
     },
     imageBox: {
         background: "white",
@@ -168,17 +188,17 @@ const styles = StyleSheet.create({
         overflow: "hidden",
         padding: "5px",
         whiteSpace: "nowrap",
-        width: "140px"
+        width: "140px",
     },
     img: {
         maxHeight: "50px",
         maxWidth: "50px",
         marginRight: "5px",
-        verticalAlign: "middle"
+        verticalAlign: "middle",
     },
     active: {
-        boxShadow: "rgb(24, 101, 242) 0px 0px 10px 1px"
-    }
+        boxShadow: "rgb(24, 101, 242) 0px 0px 10px 1px",
+    },
 });
 
 module.exports = ImageScroller;

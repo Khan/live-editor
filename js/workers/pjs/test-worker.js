@@ -1,3 +1,7 @@
+/* eslint-disable no-var, no-undef */
+/* TODO: Fix the lint errors */
+/* To fix, remove an entry above, npm run lint, and fix errors. */
+
 // Mock out $._, since we don't use any of the sprintf functionality
 var i18n = {};
 i18n._ = function(str) { return str; };
