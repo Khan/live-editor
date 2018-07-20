@@ -68,6 +68,9 @@ const config = {
         jshint_worker: [
             "./js/workers/pjs/jshint-worker.js"
         ],
+        live_editor_ace: [
+            "./js/live-editor-ace.js"
+        ],
         // Used for testing:
         live_editor: [
             "./js/editors/ace/editor-ace.js",

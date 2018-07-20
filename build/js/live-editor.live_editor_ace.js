@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 18);
+/******/ 	return __webpack_require__(__webpack_require__.s = 17);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -131,15 +131,15 @@ eval("\n\n/* eslint-disable no-var, no-useless-escape, no-useless-call */\n/* TO
 
 /***/ }),
 
-/***/ "./js/live-editor.global.js":
-/*!**********************************!*\
-  !*** ./js/live-editor.global.js ***!
-  \**********************************/
+/***/ "./js/live-editor-ace.js":
+/*!*******************************!*\
+  !*** ./js/live-editor-ace.js ***!
+  \*******************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("\n\nwindow.LiveEditor = __webpack_require__(/*! ./live-editor.js */ \"./js/live-editor.js\");\n\n//# sourceURL=webpack:///./js/live-editor.global.js?");
+eval("\n\nvar AceEditor = __webpack_require__(/*! ./editors/ace/editor-ace.js */ \"./js/editors/ace/editor-ace.js\");\nvar LiveEditor = __webpack_require__(/*! ./live-editor.js */ \"./js/live-editor.js\");\n\nmodule.exports = LiveEditor;\n\n//# sourceURL=webpack:///./js/live-editor-ace.js?");
 
 /***/ }),
 
@@ -2118,14 +2118,14 @@ eval("module.exports = function(module) {\n\tif (!module.webpackPolyfill) {\n\t\
 
 /***/ }),
 
-/***/ 18:
-/*!***********************************************************************!*\
-  !*** multi ./js/editors/ace/editor-ace.js ./js/live-editor.global.js ***!
-  \***********************************************************************/
+/***/ 17:
+/*!*************************************!*\
+  !*** multi ./js/live-editor-ace.js ***!
+  \*************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("__webpack_require__(/*! ./js/editors/ace/editor-ace.js */\"./js/editors/ace/editor-ace.js\");\nmodule.exports = __webpack_require__(/*! ./js/live-editor.global.js */\"./js/live-editor.global.js\");\n\n\n//# sourceURL=webpack:///multi_./js/editors/ace/editor-ace.js_./js/live-editor.global.js?");
+eval("module.exports = __webpack_require__(/*! ./js/live-editor-ace.js */\"./js/live-editor-ace.js\");\n\n\n//# sourceURL=webpack:///multi_./js/live-editor-ace.js?");
 
 /***/ }),
 
