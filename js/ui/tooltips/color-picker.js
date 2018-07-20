@@ -5,6 +5,9 @@ const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 
+require("../../../external/colorpicker/colorpicker.js");
+
+const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
 const TooltipBase = require("../../ui/tooltip-base.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
 
@@ -174,3 +177,5 @@ const ColorPicker = TooltipBase.extend({
 });
 
 TooltipEngine.registerTooltip("colorPicker", ColorPicker);
+
+module.exports = ColorPicker;

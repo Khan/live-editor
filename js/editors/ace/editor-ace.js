@@ -3,11 +3,20 @@
 const _ = require("lodash");
 const $ = require("jquery");
 const ace = require("ace-builds");
+
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 
 const LiveEditor = require("../../live-editor.js");
+const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
+require("../../ui/tooltips/color-picker.js");
+require("../../ui/tooltips/number-scrubber.js");
+require("../../ui/tooltips/number-scrubber-click.js");
+require("../../ui/tooltips/image-picker.js");
+require("../../ui/tooltips/image-modal.js");
+require("../../ui/tooltips/sound-modal.js");
+require("../../ui/tooltips/auto-suggest.js");
 
 const AceEditor = Backbone.View.extend({
     dom: {

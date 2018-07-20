@@ -9,30 +9,26 @@
     </head>
     <body>
         <div id="mocha"></div>
+        <!-- External dependencies:
+            These are not bundled by live-editor because the Khan Academy code
+            provides them outside the live-editor bundle.
+        -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.5.7/es5-shim.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.3.3/backbone-min.js"></script>
+
         <script src="../../build/js/live-editor.core_deps.js"></script>
-        <script>
-        window.LiveEditor = {registerEditor: function(){}}; //So that editor_ace.js doesn't throw an error
-        </script>
-        <script src="../../build/external/underscore/underscore.js"></script>
         <script src="../../build/js/live-editor.editor_ace_deps.js"></script>
-        <script src="../../build/js/live-editor.shared.js"></script>
-        <script src="../../build/js/live-editor.editor_ace.js"></script>
-        <script src="../../build/js/live-editor.tooltips.js"></script>
         <script src="../../node_modules/mocha/mocha.js"></script>
         <script src="../../node_modules/sinon/pkg/sinon.js"></script>
         <script src="../../node_modules/expect.js/index.js"></script>
         <script src="../../testutil/json-reporter.js"></script>
-        <script src="shared.js"></script>
         <script src="../shared_utils.js"></script>
+        <script src="../../build/js/live-editor.tooltips_tests.js"></script>
         <script>
-            runTestFiles([
-                "numberScrubber_test.js",
-                "imagePicker_test.js",
-                "imageModal_test.js",
-                "soundModal_test.js",
-                "colorPicker_test.js",
-                "tooltips_test.js",
-            ]);
+            runTestFiles([]);
         </script>
     </body>
 </html>

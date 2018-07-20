@@ -106,7 +106,6 @@ var runTest = function(options) {
             }
 
             checkErrors(options.errors, errors);
-            console.log(errors);
             checkAssertions(options.assertions, output.results.assertions);
             options.simulateClick && simulateClick(output);
 
@@ -148,7 +147,6 @@ var finishTest = function(done, output, options) {
 
 var assertTest = function(options) {
     options.test = function(output, errors, testResults, callback) {
-        console.log("Came back from test");
         if (!options.reason) {
             expect(errors.length).to.be.equal(0);
         } else {

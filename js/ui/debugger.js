@@ -27,6 +27,11 @@ const ScratchpadDebugger = Backbone.View.extend({
             this.el);
     },
 
+    remove: function() {
+        ReactDOM.unmountComponentAtNode(this.$el[0]);
+        this.$el.remove();
+    },
+
     postFrame: function(data) {
         this.liveEditor.postFrame(data);
     },

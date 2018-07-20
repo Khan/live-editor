@@ -1,3 +1,10 @@
+const {
+    tooltipClasses,
+    getMockedTooltip,
+    testMockedTooltipDetection,
+    testReplace
+} = require("./shared.js");
+
 describe("numberScrubber - detection", function() {
     var mockedNumberScrubber = getMockedTooltip(tooltipClasses.numberScrubber, ["detector", "initialize"]);
 

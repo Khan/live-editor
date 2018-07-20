@@ -1,7 +1,7 @@
 /* global i18n */
 
 // Helper functionality for the Scratchpad auto suggest feature
-window.ScratchpadAutosuggestData = {
+const ScratchpadAutosuggestData = {
     _keywords: {
         type: i18n._("keyword"),
         whitelist: ["break", "case", "catch", "continue", "default", "delete",
@@ -908,3 +908,5 @@ window.ScratchpadAutosuggestData = {
             "keyPressed", "keyReleased", "keyTyped"]
     },
 };
+
+module.exports = ScratchpadAutosuggestData;

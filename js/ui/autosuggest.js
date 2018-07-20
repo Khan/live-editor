@@ -4,7 +4,9 @@
  * Helper functionality for the Scratchpad auto suggest feature,
  * parameter information and live documentation.
  */
-window.ScratchpadAutosuggest = {
+const ScratchpadAutosuggestData = require("./autosuggest-data.js");
+
+const ScratchpadAutosuggest = {
     /**
      * Initializes the autosuggest functionality and adds/modifies the
      * completers to be applicable to KA.
@@ -299,3 +301,5 @@ window.ScratchpadAutosuggest = {
                            .append(autosuggestDescription);
     }
 };
+
+module.exports = ScratchpadAutosuggest;

@@ -87,6 +87,11 @@ const ScratchpadRecordView = Backbone.View.extend({
             this.el);
     },
 
+    remove: function() {
+        ReactDOM.unmountComponentAtNode(this.$el[0]);
+        this.$el.remove();
+    },
+
     initializeButtons: function() {
         // Set up the buttons
         this.$newChunkButton = this.$el.find(".scratchpad-dev-new-chunk");

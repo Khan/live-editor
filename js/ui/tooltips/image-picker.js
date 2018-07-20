@@ -4,8 +4,9 @@ Backbone.$ = require("jquery");
 const React = require("react");
 const ReactDOM = require("react-dom");
 
-const OutputImages = require("../../shared/images.js").OutputImages;
 const ImageScroller = require("./image-scroller.jsx")
+const OutputImages = require("../../shared/images.js").OutputImages;
+const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
 const TooltipBase = require("../../ui/tooltip-base.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
 
@@ -88,7 +89,7 @@ const ImagePicker = TooltipBase.extend({
     },
 
     remove: function() {
-        ReactDOM.unmountComponentAtNode(this.$(".mediapicker")[0]);
+        ReactDOM.unmountComponentAtNode(this.$(".image-scroller-wrapper")[0]);
         this.$el.remove();
         this.unbindFromRequestTooltip();
     },
@@ -123,3 +124,5 @@ const ImagePicker = TooltipBase.extend({
 });
 
 TooltipEngine.registerTooltip("imagePicker", ImagePicker);
+
+module.exports = ImagePicker;

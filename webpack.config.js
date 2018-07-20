@@ -20,16 +20,6 @@ const config = {
             "./node_modules/ace-builds/src-noconflict/ext-language_tools.js"
         ],
         editor_ace: [
-            "./external/colorpicker/colorpicker.js",
-            "./js/ui/autosuggest.js",
-            "./js/ui/autosuggest-data.js",
-            "./js/ui/tooltip-engine.js",
-            "./js/ui/tooltips/auto-suggest.js",
-            "./js/ui/tooltips/color-picker.js",
-            "./js/ui/tooltips/image-modal.js",
-            "./js/ui/tooltips/image-picker.js",
-            "./js/ui/tooltips/number-scrubber-click.js",
-            "./js/ui/tooltips/number-scrubber.js",
             "./js/editors/ace/editor-ace.js"
         ],
         editor_textarea: [
@@ -82,7 +72,15 @@ const config = {
         loop_protector: [
             "./js/output/shared/loop-protect.global.js"
         ],
-        mocha: [
+        tooltips_tests: [
+            "./tests/tooltips/colorPicker_test.js",
+            "./tests/tooltips/numberScrubber_test.js",
+            "./tests/tooltips/imagePicker_test.js",
+            "./tests/tooltips/imageModal_test.js",
+            "./tests/tooltips/soundModal_test.js",
+            "./tests/tooltips/tooltips_test.js"
+        ],
+        module_tests: [
             "./external/processing-js/processing.js",
             "./js/shared/config.test.js",
             "./js/output/shared/loop-protect.test.js",

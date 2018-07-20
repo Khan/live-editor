@@ -1,3 +1,10 @@
+const {
+    tooltipClasses,
+    getMockedTooltip,
+    testMockedTooltipDetection,
+    testReplace
+} = require("./shared.js");
+
 describe("imageModal - detection", function() {
     var mockedImageModal = getMockedTooltip(tooltipClasses.imageModal, ["detector"]);
 

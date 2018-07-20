@@ -322,21 +322,13 @@ describe("LoopProtector", function() {
 
         output.output.injector.loopProtector = new LoopProtector(function (error) {
             // caught by the runCode callback
-            console.log("Error in here", error);
         }, {initialTimeout: 200, frameTimeout: 50}, true);
-        console.log("Gonna run code");
-        try {
-            window.onerror =
-            output.runCode(code, function (errors, testResults) {
-                console.log("Ran it", errors);
-                expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
-                expect(errors[0].row).to.equal(3);
-                console.log("ALLLLL DONE!");
-                done();
-            });
-        } catch(e) {
 
-        }
+        output.runCode(code, function (errors, testResults) {
+            expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
+            expect(errors[0].row).to.equal(3);
+            done();
+        });
 
     });
 });

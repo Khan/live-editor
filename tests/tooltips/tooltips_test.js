@@ -1,3 +1,10 @@
+const {
+    TTE,
+    uniqueEditor,
+    typeLine,
+    getTooltipRequestEvent
+} = require("./shared.js");
+
 describe("tooltips_test - test ACE anti-undo hack", function() {
     var editor, tte, session;
 
@@ -10,7 +17,11 @@ describe("tooltips_test - test ACE anti-undo hack", function() {
 
     afterEach(function (done) {
         setTimeout(function() {
-            tte.remove();
+            try {
+                tte.remove();
+            } catch(e) {
+                console.warn(e);
+            }
             done();
         }, 0)
     });

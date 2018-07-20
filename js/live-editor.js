@@ -538,6 +538,9 @@ const LiveEditor = Backbone.View.extend({
     remove: function() {
         $(window).off("message", this.handleMessagesBound);
         this.editor.remove();
+        ReactDOM.unmountComponentAtNode(this.$(".scratchpad-editor-wrap")[0]);
+        ReactDOM.unmountComponentAtNode(this.$(".scratchpad-canvas-wrap")[0]);
+        this.$el.remove();
     },
 
     canRecord: function() {

@@ -622,7 +622,7 @@ class PJSCodeInjector {
             // their arguments.
             // TODO(jeresig): See if we can move this off into the worker
             // thread to save an execution.
-            Object.keys(this.globals).forEach(() => {
+            _.each(this.globals, (val, global) => {
                 var value = this.processing[global];
                 // Expose all the global values, if they already exist although
                 // even if they are undefined, the result will still get sucked
@@ -649,11 +649,11 @@ class PJSCodeInjector {
             }
 
             // Attach names to all functions
-            for (const [prop, val] of Object.entries(grabAll)) {
+            _.each(grabAll, function(val, prop) {
                 if (typeof val === "function") {
                     val.__name = prop;
                 }
-            }
+            });
 
             // Keep track of all the constructor functions that may
             // have to be reinitialized
@@ -712,16 +712,16 @@ class PJSCodeInjector {
             }
 
             // We also look for newly-changed global variables to inject
-            for (const [prop, val] of Object.entries(grabAll)) {
+            _.each(grabAll, (val, prop) => {
                 // Ignore KAInfiniteLoop functions.
                 if (/^KAInfiniteLoop/.test(prop)) {
-                    break;
+                    return;
                 }
 
                 // Ignore PJSOuput so that we can still access 'test', 'lint'
                 // and other methods in our tests.
                 if (/^PJSCodeInjector/.test(prop)) {
-                    break;
+                    return;
                 }
 
                 // Turn the result of the extracted value into
@@ -799,9 +799,10 @@ class PJSCodeInjector {
                 } catch (e) {
                     this.objectExtract(prop, val);
                 }
-            }
+            });
+
             // Insertion of new object properties or methods on a prototype
-            for (const [objProp, val] of Object.entries(this.grabObj)) {
+            _.each(this.grabObj, (val, objProp) => {
                 var baseName = /^[^.[]*/.exec(objProp)[0];
 
                 // If we haven't done an extraction before or if the value
@@ -811,7 +812,7 @@ class PJSCodeInjector {
                         reinit[baseName]) {
                     inject += objProp + " = " + val + ";\n";
                 }
-            }
+            });
 
             // Deletion of old object properties
             for (var objProp in this.lastGrabObj) {
@@ -889,11 +890,11 @@ class PJSCodeInjector {
             }
 
             // Attach names to all functions
-            for (const [prop, val] of Object.entries(this.globals)) {
+            _.each(this.globals, function(val, prop) {
                 if (typeof val === "function") {
                     val.__name = prop;
                 }
-            }
+            });
 
             // Otherwise if there is code to inject
         } else if (inject || mutatingCalls.length > 0) {

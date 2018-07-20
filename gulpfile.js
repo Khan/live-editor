@@ -27,7 +27,7 @@ var runTest = function(fileName) {
         });
         server.listen(11537);
 
-        // We then run the Mocha tests in a headless PhantomJS
+        // We then run the Mocha tests in headless Chrome
         var stream = mochaChrome();
         stream.write({
             path: "http://localhost:11537/tests/" + fileName
@@ -134,7 +134,7 @@ gulp.task("test_record", ["test_record_data"],
 
 gulp.task("test", function(callback) {
     runSequence("test_output_pjs", "test_output_webpage", "test_output_sql",
-        "test_modules", "check_errors", callback);
+        "test_tooltips", "test_modules", "check_errors", callback);
 });
 
 gulp.task("default", ["watch", "build"]);

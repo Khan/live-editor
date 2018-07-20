@@ -29,3 +29,5 @@ const NumberScrubberClick = TooltipBase.extend({
 });
 
 TooltipEngine.registerTooltip("numberScrubberClick", NumberScrubberClick);
+
+module.exports = NumberScrubberClick;

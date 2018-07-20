@@ -5,6 +5,8 @@ const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 
+const ScratchpadAutosuggest = require("../ui/autosuggest.js");
+
 const TooltipEngine = Backbone.View.extend({
     initialize: function(options) {
         this.options = options;

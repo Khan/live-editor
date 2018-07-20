@@ -1,3 +1,13 @@
+const {
+    editor,
+    TTE,
+    tooltipClasses,
+    getMockedTooltip,
+    testMockedTooltipDetection,
+    testReplace,
+    typeLine,
+    getLine
+} = require("./shared.js");
 
 describe("imagePicker - detection", function() {
     var mockedImagePicker = getMockedTooltip(tooltipClasses.imagePicker, ["detector"]);
