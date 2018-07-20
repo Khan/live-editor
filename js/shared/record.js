@@ -21,6 +21,10 @@ window.ScratchpadRecord = Backbone.Model.extend({
         // Array of command arrays for each chunk. Only holds chunks that
         // have been saved.
         this.allSavedCommands = [];
+
+        // True when we actively seeking to a new position and potentially
+        // building the cache.
+        this.seeking = false;
     },
 
     setActualInitData: function(actualData) {
@@ -141,6 +145,12 @@ window.ScratchpadRecord = Backbone.Model.extend({
     // Seek to a given position in the playback, executing all the
     // commands in the interim
     seekTo: function(time) {
+        if (this.seeking) {
+            return;
+        }
+
+        this.seeking = true;
+
         // Initialize and seek to the desired position
         this.pauseTime = (new Date()).getTime();
         this.playStart = this.pauseTime - time;
@@ -188,13 +198,27 @@ window.ScratchpadRecord = Backbone.Model.extend({
             this.cacheRestore(-1 * this.seekCacheInterval);
         }
 
-        // Execute commands and build cache, bringing state up to current
-        for (var i = cacheOffset; i <= seekPos; i++) {
-            this.runCommand(this.commands[i]);
-            this.cache(i);
+        let currentOffset = cacheOffset;
+        const buildCache = () => {
+            const animationStep = 100;
+            const steps = Math.min(animationStep, seekPos - currentOffset + 1);
+            const newOffset = currentOffset + steps;
+
+            // console.log(`${currentOffset} / ${newOffset} / ${seekPos}`);
+            for (; currentOffset < newOffset; currentOffset += 1) {
+                this.runCommand(this.commands[currentOffset]);
+                this.cache(currentOffset);
+            }
+
+            if (currentOffset <= seekPos) {
+                window.requestAnimationFrame(buildCache);
+            } else {
+                this.seeking = false;
+                this.trigger("seekDone");
+            }
         }
 
-        this.trigger("seekDone");
+        window.requestAnimationFrame(buildCache);
     },
 
     // Cache the result of the specified command
@@ -232,7 +256,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
 
     play: function() {
         // Don't play if we're already playing or recording
-        if (this.recording || this.playing || !this.commands ||
+        if (this.recording || this.playing || this.seeking || !this.commands ||
                 this.commands.length === 0) {
             return;
         }
