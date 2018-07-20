@@ -1731,6 +1731,4 @@ LiveEditor.registerEditor = function(name, editor) {
     LiveEditor.prototype.editors[name] = editor;
 };
 
-window.LiveEditor = LiveEditor;
-
 module.exports = LiveEditor;

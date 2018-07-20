@@ -69,6 +69,10 @@ const config = {
             "./js/workers/pjs/jshint-worker.js"
         ],
         // Used for testing:
+        live_editor: [
+            "./js/editors/ace/editor-ace.js",
+            "./js/live-editor.global.js"
+        ],
         loop_protector: [
             "./js/output/shared/loop-protect.global.js"
         ],

@@ -1,0 +1,1 @@
+window.LiveEditor = require("./live-editor.js");
