@@ -1,4 +1,4 @@
-const _ = require("underscore");
+const _ = require("lodash");
 import {StyleSheet, css} from "aphrodite/no-important";
 const LazyLoadMedia = require("./lazy-load-media.jsx");
 import React, {Component} from "react";

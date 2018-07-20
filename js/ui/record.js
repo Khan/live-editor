@@ -1,5 +1,5 @@
 /* global MultiRecorder */
-const _ = require("underscore");
+const _ = require("lodash");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 const React = require("react");

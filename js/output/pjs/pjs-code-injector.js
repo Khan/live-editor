@@ -1,7 +1,7 @@
 /* eslint-disable max-lines, no-var, no-throw-literal, one-var, prefer-const,
    no-empty, prefer-spread, no-extra-bind, no-new-func */
 /* TODO: Fix the lint errors */
-const _ = require("underscore");
+const _ = require("lodash");
 const esprima = require("esprima");
 const escodegen = require("escodegen");
 
@@ -106,7 +106,7 @@ class PJSCodeInjector {
          * The worker that analyzes the user's code.
          */
         this.hintWorker = new PooledWorker(
-            "pjs/jshint-worker.js",
+            "js/live-editor.jshint_worker.js",
             options.workersDir,
             function(hintCode, callback) {
                 // Fallback in case of no worker support
@@ -622,7 +622,7 @@ class PJSCodeInjector {
             // their arguments.
             // TODO(jeresig): See if we can move this off into the worker
             // thread to save an execution.
-            _.each(this.globals, function(val, global) {
+            Object.keys(this.globals).forEach(() => {
                 var value = this.processing[global];
                 // Expose all the global values, if they already exist although
                 // even if they are undefined, the result will still get sucked
@@ -637,7 +637,7 @@ class PJSCodeInjector {
                         return 0;
                     } :
                     value);
-            }.bind(this));
+            });
 
             // Run the code with the grabAll context. The code is run with no
             // side effects and instead all function calls and globally-defined
@@ -649,11 +649,11 @@ class PJSCodeInjector {
             }
 
             // Attach names to all functions
-            _.each(grabAll, function(val, prop) {
+            for (const [prop, val] of Object.entries(grabAll)) {
                 if (typeof val === "function") {
                     val.__name = prop;
                 }
-            });
+            }
 
             // Keep track of all the constructor functions that may
             // have to be reinitialized
@@ -712,16 +712,16 @@ class PJSCodeInjector {
             }
 
             // We also look for newly-changed global variables to inject
-            _.each(grabAll, function(val, prop) {
+            for (const [prop, val] of Object.entries(grabAll)) {
                 // Ignore KAInfiniteLoop functions.
                 if (/^KAInfiniteLoop/.test(prop)) {
-                    return;
+                    break;
                 }
 
                 // Ignore PJSOuput so that we can still access 'test', 'lint'
                 // and other methods in our tests.
-                if (/^PJSOutput/.test(prop)) {
-                    return;
+                if (/^PJSCodeInjector/.test(prop)) {
+                    break;
                 }
 
                 // Turn the result of the extracted value into
@@ -799,10 +799,9 @@ class PJSCodeInjector {
                 } catch (e) {
                     this.objectExtract(prop, val);
                 }
-            }.bind(this));
-
+            }
             // Insertion of new object properties or methods on a prototype
-            _.each(this.grabObj, function(val, objProp) {
+            for (const [objProp, val] of Object.entries(this.grabObj)) {
                 var baseName = /^[^.[]*/.exec(objProp)[0];
 
                 // If we haven't done an extraction before or if the value
@@ -812,7 +811,7 @@ class PJSCodeInjector {
                         reinit[baseName]) {
                     inject += objProp + " = " + val + ";\n";
                 }
-            }.bind(this));
+            }
 
             // Deletion of old object properties
             for (var objProp in this.lastGrabObj) {
@@ -890,11 +889,11 @@ class PJSCodeInjector {
             }
 
             // Attach names to all functions
-            _.each(this.globals, function(val, prop) {
+            for (const [prop, val] of Object.entries(this.globals)) {
                 if (typeof val === "function") {
                     val.__name = prop;
                 }
-            });
+            }
 
             // Otherwise if there is code to inject
         } else if (inject || mutatingCalls.length > 0) {
@@ -1064,6 +1063,7 @@ class PJSCodeInjector {
 
         // TODO(kevinb) generate this code once (once webpack is in place)
         helperCode += `var resources = ${JSON.stringify(resources)};\n`;
+        helperCode += `var OutputSounds = ${JSON.stringify(OutputSounds)};\n`;
         helperCode += PJSUtils.cleanupCode(
             PJSUtils.codeFromFunction(function () {
                 var resourceCache = [];
@@ -1101,7 +1101,6 @@ class PJSCodeInjector {
                     var deferred = $.Deferred();
                     var audio = document.createElement("audio");
                     var parts = filename.split("/");
-
                     var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
                     if (!group || group.sounds.indexOf(parts[1].replace(".mp3", "")) === -1) {
                         deferred.resolve();

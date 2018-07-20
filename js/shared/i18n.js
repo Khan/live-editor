@@ -1,5 +1,8 @@
 /* eslint-disable no-var, camelcase, no-undef */
 /* TODO: Fix the lint errors */
+
+const Jed = require("jed");
+
 (function() {
     // If no language is specified, or if an unknown language is specified,
     // then fall back to using "en" as the base language

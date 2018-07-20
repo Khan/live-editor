@@ -22,12 +22,7 @@ var runTest = function(options) {
         runTest(noLintOpts);
     }
 
-    if (options.version === undefined) {
-        options.version = ScratchpadConfig.prototype.latestVersion();
-    }
-
-    var displayTitle = options.title +
-        " (Version: " + options.version + ")";
+    var displayTitle = options.title;
 
     var code1 = getCodeFromOptions(options.code);
     var code2 = getCodeFromOptions(options.code2);
@@ -43,7 +38,7 @@ var runTest = function(options) {
     itFunc(displayTitle, function(done) {
         var output = new LiveEditorOutput({
             outputType: "pjs",
-            workersDir: "../../../build/workers/",
+            workersDir: "../../../build/",
             externalsDir: "../../../build/external/",
             imagesDir: "../../../build/images/",
             soundsDir: "../../../sounds/",
@@ -56,7 +51,9 @@ var runTest = function(options) {
         });
 
         // Switch to the Scratchpad's version
-        output.config.switchVersion(options.version);
+        if (options.version) {
+            output.config.switchVersion(options.version);
+        }
 
         if (options.validate) {
             output.initTests(options.validate);
@@ -109,6 +106,7 @@ var runTest = function(options) {
             }
 
             checkErrors(options.errors, errors);
+            console.log(errors);
             checkAssertions(options.assertions, output.results.assertions);
             options.simulateClick && simulateClick(output);
 
@@ -150,6 +148,7 @@ var finishTest = function(done, output, options) {
 
 var assertTest = function(options) {
     options.test = function(output, errors, testResults, callback) {
+        console.log("Came back from test");
         if (!options.reason) {
             expect(errors.length).to.be.equal(0);
         } else {
@@ -261,7 +260,7 @@ var simulateClick = function(output) {
 var createLiveEditorOutput = function() {
     return new LiveEditorOutput({
         outputType: "pjs",
-        workersDir: "../../../build/workers/",
+        workersDir: "../../../build/",
         externalsDir: "../../../build/external/",
         imagesDir: "../../../build/images/",
         soundsDir: "../../../sounds/",

@@ -1,5 +1,7 @@
 /* eslint-disable no-undef */
 /* TODO: Fix the lint errors */
+const i18n = require("./i18n.js");
+
 if (!i18n._) {
     i18n._ = function(msg) {
         return msg;

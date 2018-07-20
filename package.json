@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint --config ./eslint/eslintrc js",
     "build": "webpack --mode development",
-    "test": "gulp test_tooltips"
+    "test": "gulp test"
   },
   "repository": {
     "type": "git",
@@ -27,6 +27,7 @@
     "babel-preset-env": "^1.7.0",
     "babel-preset-flow": "^6.23.0",
     "babel-preset-react": "^6.24.1",
+    "chai": "^4.1.2",
     "chrome-launcher": "^0.10.2",
     "chrome-remote-interface": "^0.25.2",
     "chrome-unmirror": "^0.1.0",
@@ -53,7 +54,9 @@
     "gulp-symlink": "^2.0.1",
     "gulp-uglify": "^0.3.1",
     "gulp-util": "^3.0.6",
-    "mocha": "^1.21.4",
+    "mocha": "^1.21.5",
+    "mocha-loader": "^1.1.3",
+    "mocha-webpack": "git+https://github.com/thomasmichaelwallace/mocha-webpack.git",
     "node-static": "^0.7.4",
     "object-assign": "^3.0.0",
     "prettier": "1.13.7",
@@ -61,11 +64,11 @@
     "request": "^2.44.0",
     "rimraf": "^2.5.4",
     "run-sequence": "^0.3.6",
-    "sinon": "^1.10.3",
+    "sinon": "^6.1.3",
     "style-loader": "^0.21.0",
     "through2": "^2.0.0",
     "vinyl-sourcemaps-apply": "^0.1.4",
-    "webpack": "^4.15.1",
+    "webpack": "^4.16.1",
     "webpack-cli": "^3.0.8"
   },
   "dependencies": {

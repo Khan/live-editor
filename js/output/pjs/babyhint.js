@@ -16,7 +16,7 @@
  *                      the same line)
  * }
  */
-const _ = require("underscore");
+const _ = require("lodash");
 
 const i18n = require("i18n");
 

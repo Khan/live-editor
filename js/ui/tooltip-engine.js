@@ -1,6 +1,6 @@
 /* eslint-disable no-var */
 /* TODO: Fix the lint errors */
-const _ = require("underscore");
+const _ = require("lodash");
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");

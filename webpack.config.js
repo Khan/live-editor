@@ -8,7 +8,6 @@ const config = {
     performance: { hints: false },
     entry: {
         core_deps: [
-            "./node_modules/jed/jed.js",
             "./js/shared/i18n.js"
         ],
         editor_ace_deps: [
@@ -39,21 +38,11 @@ const config = {
         audio: [
             "./node_modules/soundmanager2/script/soundmanager2.js",
         ],
-        debugger: [
-            "./node_modules/iframe-overlay/dist/iframe-overlay.js",
-            "./js/ui/debugger.js"
-        ],
         shared: [
             "./js/shared/all-images.js",
             "./js/shared/images.js",
             "./js/shared/sounds.js",
             "./js/shared/config.js"
-        ],
-        output_debugger_deps: [
-            "./node_modules/iframe-overlay/dist/iframe-overlay.js",
-            "./external/debugger/build/debugger.js",
-            "./external/debugger/build/processing-debugger.js",
-            "./js/output/pjs/pjs-debugger.js"
         ],
         output_pjs: [
             "./external/processing-js/processing.js",
@@ -72,13 +61,32 @@ const config = {
             "./external/html2canvas/html2canvas.js",
             "./js/output/sql/sql-output.js"
         ],
-        output: [
-            "./js/output/shared/pooled-worker.js",
-            "./js/output/shared/output-tester.js",
-            "./js/output/shared/output.js"
+        // Debugger related: not currently enabled
+        debugger: [
+            "./node_modules/iframe-overlay/dist/iframe-overlay.js",
+            "./js/ui/debugger.js"
         ],
-        ui: [
-            "./js/live-editor.js"
+        output_debugger: [
+            "./node_modules/iframe-overlay/dist/iframe-overlay.js",
+            "./external/debugger/build/debugger.js",
+            "./external/debugger/build/processing-debugger.js",
+            "./js/output/pjs/pjs-debugger.js"
+        ],
+        test_worker: [
+            "./js/workers/pjs/test-worker.js"
+        ],
+        jshint_worker: [
+            "./js/workers/pjs/jshint-worker.js"
+        ],
+        // Used for testing:
+        loop_protector: [
+            "./js/output/shared/loop-protect.global.js"
+        ],
+        mocha: [
+            "./external/processing-js/processing.js",
+            "./js/shared/config.test.js",
+            "./js/output/shared/loop-protect.test.js",
+            "./js/output/pjs/pjs-code-injector.test.js"
         ]
     },
     externals: [
@@ -90,7 +98,7 @@ const config = {
             fs: true,
             jquery: "jQuery",
             $: "jQuery",
-            underscore: "_",
+            lodash: "_",
             "ace-builds": "ace",
             i18n: "i18n"
         }
@@ -113,7 +121,12 @@ const config = {
                 'style-loader',
                 'css-loader'
             ]
-         }
+         },
+         {
+            test: /test\.js$/,
+            use: 'mocha-loader',
+            exclude: /node_modules/,
+          }
         ]
     },
     plugins: [
@@ -127,28 +140,11 @@ const config = {
             _: "underscore"
         }),
         new CopyWebpackPlugin([
-            // Copy worker files
-            {from: 'js/workers/pjs/',
-             to: path.resolve(__dirname, 'build/workers/pjs')},
-            {from: 'js/output/pjs/pjs-tester.js',
-             to: path.resolve(__dirname, 'build/workers/pjs')},
+            // Copy worker files (TODO: investigate if still needed)
             {from: 'node_modules/ace-builds/src-noconflict/worker-html.js',
              to: path.resolve(__dirname, 'build/workers/webpage')},
-            {from: 'js/output/shared/output-tester.js',
-             to: path.resolve(__dirname, 'build/workers/shared')},
             {from: 'external/multirecorderjs/multirecorder-worker.js',
              to: path.resolve(__dirname, 'build/workers/shared')},
-            // Copy externals (used by workers)
-            {from: 'node_modules/es5-shim/es5-shim.js',
-             to: path.resolve(__dirname, 'build/external/es5-shim')},
-            {from: 'external/jshint/jshint.js',
-             to: path.resolve(__dirname, 'build/external/jshint')},
-            {from: 'external/structuredjs/structured.js',
-             to: path.resolve(__dirname, 'build/external/structuredjs')},
-            {from: 'external/structuredjs/external/esprima.js',
-             to: path.resolve(__dirname, 'build/external/structuredjs/external')},
-            {from: 'node_modules/underscore/underscore.js',
-             to: path.resolve(__dirname, 'build/external/underscore')},
             // Used by flash fallback (TODO: investigate if still needed)
             {from: 'nnode_modules/soundmanager/swf/**',
              to: path.resolve(__dirname, 'build/external/SoundManager2')},

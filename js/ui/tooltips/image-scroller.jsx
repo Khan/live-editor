@@ -1,4 +1,4 @@
-const _ = require("underscore");
+const _ = require("lodash");
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 

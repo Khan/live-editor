@@ -1,6 +1,6 @@
 /* eslint-disable no-empty, no-var, no-throw-literal, no-redeclare, no-useless-escape */
 /* TODO: Fix the lint errors */
-const _ = require("underscore");
+const _ = require("lodash");
 const SQL = require("sql.js");
 
 const OutputTester = require("../shared/output-tester.js");

@@ -1,11 +1,7 @@
 /* jshint unused:false */
 var runTest = function(options) {
-    if (options.version === undefined) {
-        options.version = ScratchpadConfig.prototype.latestVersion();
-    }
 
-    var displayTitle = options.title +
-        " (Version: " + options.version + ")";
+    var displayTitle = options.title;
 
     // Assume the code is a string, by default
     var code = options.code;
@@ -20,9 +16,6 @@ var runTest = function(options) {
             imagesDir: "../../../build/images/",
         });
 
-        // Switch to the Scratchpad's version
-        output.config.switchVersion(options.version);
-
         if (options.validate) {
             output.initTests(options.validate);
         }
@@ -34,7 +27,7 @@ var runTest = function(options) {
                 });
                 return;
             }
-            
+
             if (options.pass) {
                 expect(errors).to.have.length(0);
             } else {

@@ -47,7 +47,7 @@ var failureCount = 0;
 
 // We run tests in groups so that we don't require as much memory to run them
 // in Travis-CI.
-var pjs_tests = ["jshint", "output", "assert", "ast_transform", "async"];
+var pjs_tests = ["output", "output", "assert", "async"];
 
 pjs_tests.forEach(function(test) {
     gulp.task("test_output_pjs_" + test, function() {
@@ -68,7 +68,7 @@ gulp.task("test_output_pjs", function(callback) {
     runSequence.apply(null, sequence);
 });
 
-var webpage_tests = ["assert", "output", "transform"];
+var webpage_tests = ["assert", "output"];
 
 webpage_tests.forEach(function(test) {
     gulp.task("test_output_webpage_" + test, function() {
@@ -96,6 +96,11 @@ gulp.task("test_output_sql", function() {
 
 gulp.task("test_tooltips", function() {
     return gulp.src("tests/tooltips/index.html")
+        .pipe(mochaRunner());
+});
+
+gulp.task("test_modules", function() {
+    return gulp.src("tests/module_tests.html")
         .pipe(mochaRunner());
 });
 
@@ -129,7 +134,7 @@ gulp.task("test_record", ["test_record_data"],
 
 gulp.task("test", function(callback) {
     runSequence("test_output_pjs", "test_output_webpage", "test_output_sql",
-        "test_tooltips", "check_errors", callback);
+        "test_modules", "check_errors", callback);
 });
 
 gulp.task("default", ["watch", "build"]);

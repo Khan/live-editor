@@ -2,24 +2,6 @@
 /* global text, color, textFont, fill, text, background, createFont, PVector */
 /* global externals, exp, link, width, draw, mouseMoved, Program */
 
-describe("Version test", function() {
-    it("should use version 4 or greater", function() {
-        var config = new ScratchpadConfig({});
-        expect(config.latestVersion()).to.be(4);
-    });
-});
-
-// Test the lower level functions in Output
-describe("Scratchpad CanvasOutput functions", function() {
-    it("stringifyArray", function() {
-        var undefArray = PJSOutput.stringifyArray([undefined, undefined]);
-        expect(undefArray).to.be.equal("undefined, undefined");
-        var primArray = PJSOutput.stringifyArray([1, "A"]);
-        expect(primArray).to.be.equal("1, \"A\"");
-    });
-
-});
-
 // TODO(kevinb) split into smaller subsuites
 describe("Scratchpad Output Exec", function() {
     test("Make sure instances are serialized properly", function() {
@@ -433,15 +415,15 @@ describe("Scratchpad Output Exec", function() {
     test("String object works", function() {
         var letter = String.fromCharCode(65);
     });
-    
+
     test("Number object works", function() {
         var newVal = Number.isFinite(1/0);
     });
-    
+
     test("Date object works", function() {
         var newDate = Date.now();
     });
-    
+
     test("Processing's parseFloat, parseInt work", function() {
         var settings = {};
         var val = parseInt(settings.val, 10) || 13;

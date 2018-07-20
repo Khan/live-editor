@@ -1,8 +1,9 @@
-/* eslint-disable no-var, no-redeclare, no-new-func */
+/* eslint-disable no-var, no-redeclare, no-new-func, no-unused-vars, no-undef */
 /* TODO: Fix the lint errors */
-const _ = require("underscore");
+/* We list i18n and lodash as globals instead of require() them
+  due to how we load this file in the test-worker */
+/* global i18n, _ */
 
-const i18n = require("i18n");
 const PooledWorker = require("./pooled-worker.js");
 
 const OutputTester = function() {};
@@ -13,7 +14,6 @@ OutputTester.prototype = {
 
         this.tests = [];
         this.testContext = {};
-        this.externalsDir = options.externalsDir;
 
         for (var prop in this.testMethods) {
             if (this.testMethods.hasOwnProperty(prop)) {
@@ -27,8 +27,9 @@ OutputTester.prototype = {
             }
         }
 
-        // This won't be defined inside a web worker itself (that's ok)
-        if (typeof PooledWorker === "undefined") {
+        // When we call this from a worker, we don't specify a workerFile,
+        // and that signifies that we don't need to spawn a worker
+        if (!options || !options.workerFile) {
             return;
         }
 
@@ -38,8 +39,6 @@ OutputTester.prototype = {
         this.testWorker = new PooledWorker(
             options.workerFile, options.workersDir,
             function(code, validate, errors, callback) {
-                var self = this;
-
                 // If there are syntax errors in the tests themselves,
                 //  then we ignore the request to test.
                 try {
@@ -65,7 +64,7 @@ OutputTester.prototype = {
 
                 var worker = this.getWorkerFromPool();
 
-                worker.onmessage = function(event) {
+                worker.onmessage = (event) => {
                     if (event.data.type === "test") {
                         // PJSOutput.prototype.kill() is called synchronously
                         // from callback so if we want test workers to be
@@ -75,8 +74,8 @@ OutputTester.prototype = {
                         // from the PooledWorker's pool so we don't have to
                         // worry about returning workers to the pool before
                         // calling kill()
-                        self.addWorkerToPool(worker);
-                        if (self.isCurrentWorker(worker)) {
+                        this.addWorkerToPool(worker);
+                        if (this.isCurrentWorker(worker)) {
                             var data = event.data.message;
                             callback(data.errors, data.testResults);
                         }
@@ -86,7 +85,7 @@ OutputTester.prototype = {
                     code: code,
                     validate: validate,
                     errors: errors,
-                    externalsDir: this.externalsDir
+                    externalsDir: options.externalsDir
                 });
             }
         );

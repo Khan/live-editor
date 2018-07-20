@@ -5,11 +5,12 @@
  *
  * Dependencies: esprima.js, underscore.js
  */
+const _ = require("underscore");
+const esprima = require("./external/esprima.js");
+
 (function(global) {
     /* Detect npm versus browser usage */
     var exports;
-    var esprima;
-    var _;
 
     // Cache all the structure tests
     var structureCache = {};
@@ -18,15 +19,7 @@
     var cachedCode;
     var cachedCodeTree;
 
-    if (typeof module !== "undefined" && module.exports) {
-        exports = module.exports = {};
-        esprima = require("./external/esprima.js");
-        _ = require("underscore");
-    } else {
-        exports = this.Structured = {};
-        esprima = global.esprima;
-        _ = global._;
-    }
+    exports = module.exports = {};
 
     if (!esprima || !_) {
         throw "Error: Both Esprima and UnderscoreJS are required dependencies.";
@@ -54,7 +47,7 @@
             fn: callback
         };
     }
-    
+
     /*
      * return true if n2 < n1 (according to relatively arbitrary criteria)
      */
@@ -208,15 +201,15 @@
         options = options || {};
         // Many possible inputs formats are accepted for varCallbacks
         // Constraints can be:
-        // 1. a function (from which we will extract the variables)  
+        // 1. a function (from which we will extract the variables)
         // 2. an objects (which already has separate .fn and .variables properties)
         //
         // It will also accept a list of either of the above (or a mix of the two).
-        // Finally it can accept an object for which the keys are the variables and 
+        // Finally it can accept an object for which the keys are the variables and
         // the values are the callbacks (This option is mainly for historical reasons)
         var varCallbacks = options.varCallbacks || [];
-        // We need to keep a hold of the original varCallbacks object because 
-        // When structured first came out it returned the failure message by 
+        // We need to keep a hold of the original varCallbacks object because
+        // When structured first came out it returned the failure message by
         // changing the .failure property on the varCallbacks object and some uses rely on that.
         // We hope to get rid of this someday.
         // TODO: Change over the code so to have a better API

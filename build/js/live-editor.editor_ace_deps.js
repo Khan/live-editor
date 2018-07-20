@@ -170,7 +170,7 @@ eval("/* WEBPACK VAR INJECTION */(function(module) {ace.define(\"ace/mode/sql_hi
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-eval("module.exports = function() {\r\n\tthrow new Error(\"define cannot be used indirect\");\r\n};\r\n\n\n//# sourceURL=webpack:///(webpack)/buildin/amd-define.js?");
+eval("module.exports = function() {\n\tthrow new Error(\"define cannot be used indirect\");\n};\n\n\n//# sourceURL=webpack:///(webpack)/buildin/amd-define.js?");
 
 /***/ }),
 

@@ -1,10 +1,6 @@
 var runTest = function(options) {
-    if (options.version === undefined) {
-        options.version = ScratchpadConfig.prototype.latestVersion();
-    }
 
-    var displayTitle = options.title +
-        " (Version: " + options.version + ")";
+    var displayTitle = options.title;
 
     // Assume the code is a string, by default
     var code = options.code;
@@ -20,9 +16,6 @@ var runTest = function(options) {
             jshintFile: "../../../build/external/jshint/jshint.js",
             redirectUrl: "http://ka.org/r"
         });
-
-        // Switch to the Scratchpad's version
-        output.config.switchVersion(options.version);
 
         if (options.validate) {
             output.initTests(options.validate);

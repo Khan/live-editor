@@ -1,6 +1,6 @@
 /* eslint-disable no-var, prefer-spread, no-extra-bind, no-throw-literal, prefer-const */
 /* TODO: Fix the lint errors */
-const _ = require("underscore");
+const _ = require("lodash");
 const $ = require("jquery");
 const esprima = require("esprima");
 

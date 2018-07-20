@@ -11,7 +11,7 @@ $._ = i18n._;
 // Underscore
 if (typeof window === "undefined") {
     /*global window:true */
-    window = self;
+    //window = self;
 }
 
 var init = false;
@@ -19,10 +19,15 @@ var date = (new Date()).toDateString();
 
 var tester;
 
+require("es5-shim");
+
+const PJSTester = require("../../output/pjs/pjs-tester.js");
+
 self.onmessage = function(event) {
     if (!init) {
         init = true;
 
+        /*
         importScripts(event.data.externalsDir +
             "es5-shim/es5-shim.js?cachebust=" + date);
         importScripts(event.data.externalsDir +
@@ -31,10 +36,11 @@ self.onmessage = function(event) {
             "underscore/underscore.js?cachebust=" + date);
         importScripts(event.data.externalsDir +
             "structuredjs/structured.js?cachebust=A" + date);
+        */
 
         // Bring in the testing logic
-        importScripts("../shared/output-tester.js?cachebust=" + date);
-        importScripts("./pjs-tester.js?cachebust=" + date);
+        //importScripts("../shared/output-tester.js?cachebust=" + date);
+        //importScripts("./pjs-tester.js?cachebust=" + date);
 
         tester = new PJSTester();
     }

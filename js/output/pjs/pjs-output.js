@@ -1,6 +1,6 @@
 /* eslint-disable no-var, no-redeclare, prefer-const */
 /* TODO: Fix the lint errors */
-const _ = require("underscore");
+const _ = require("lodash");
 const $ = require("jquery");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
@@ -36,7 +36,7 @@ const PJSOutput = Backbone.View.extend({
         this.externalsDir = options.externalsDir;
         this.jshintFile = options.jshintFile;
         this.tester = new PJSTester(_.extend(options, {
-            workerFile: "pjs/test-worker.js"
+            workerFile: "js/live-editor.test_worker.js"
         }));
 
         this.render();
@@ -79,8 +79,14 @@ const PJSOutput = Backbone.View.extend({
         if (window !== window.top) {
             var windowMethods = ["alert", "open", "showModalDialog",
                 "confirm", "prompt", "eval"];
+            const noOp = () => {};
             for (var i = 0, l = windowMethods.length; i < l; i++) {
-                window.constructor.prototype[windowMethods[i]] = $.noop;
+                try {
+                    window.constructor.prototype[windowMethods[i]] = noOp;
+                } catch(e) {
+                    // In tests, it can't assign them after they've been frozen
+                }
+
             }
         }
 

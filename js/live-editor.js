@@ -2,7 +2,7 @@
    prefer-const, no-extra-bind, no-undef, one-var
 */
 /* TODO: Fix the lint errors */
-const _ = require("underscore");
+const _ = require("lodash");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 const React = require("react");
