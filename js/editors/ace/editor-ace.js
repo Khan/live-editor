@@ -7,7 +7,6 @@ const ace = require("ace-builds");
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 
-const LiveEditor = require("../../live-editor.js");
 const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
 require("../../ui/tooltips/color-picker.js");

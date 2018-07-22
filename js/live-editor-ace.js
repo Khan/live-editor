@@ -1,4 +1,6 @@
 const AceEditor = require("./editors/ace/editor-ace.js");
 const LiveEditor = require("./live-editor.js");
 
-module.exports = LiveEditor;
+LiveEditor.registerEditor("ace_pjs", AceEditor);
+LiveEditor.registerEditor("ace_webpage", AceEditor);
+LiveEditor.registerEditor("ace_sql", AceEditor);

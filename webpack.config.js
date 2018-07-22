@@ -68,12 +68,17 @@ const config = {
         jshint_worker: [
             "./js/workers/pjs/jshint-worker.js"
         ],
+        // Exported for KA webapp
+        // Dependencies: external, editor_ace_deps, audio
         live_editor_ace: [
             "./js/live-editor-ace.js"
         ],
+        // Used for demos
+        pjs_demo: [
+            "./demos/simple/pjs.js"
+        ],
         // Used for testing:
         live_editor: [
-            "./js/editors/ace/editor-ace.js",
             "./js/live-editor.global.js"
         ],
         loop_protector: [
