@@ -139,7 +139,7 @@ eval("\n\n/* eslint-disable no-var, no-useless-escape, no-useless-call */\n/* TO
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("\n\nvar AceEditor = __webpack_require__(/*! ./editors/ace/editor-ace.js */ \"./js/editors/ace/editor-ace.js\");\nvar LiveEditor = __webpack_require__(/*! ./live-editor.js */ \"./js/live-editor.js\");\n\nLiveEditor.registerEditor(\"ace_pjs\", AceEditor);\nLiveEditor.registerEditor(\"ace_webpage\", AceEditor);\nLiveEditor.registerEditor(\"ace_sql\", AceEditor);\n\n//# sourceURL=webpack:///./js/live-editor-ace.js?");
+eval("\n\nvar AceEditor = __webpack_require__(/*! ./editors/ace/editor-ace.js */ \"./js/editors/ace/editor-ace.js\");\nvar LiveEditor = __webpack_require__(/*! ./live-editor.js */ \"./js/live-editor.js\");\n\nLiveEditor.registerEditor(\"ace_pjs\", AceEditor);\nLiveEditor.registerEditor(\"ace_webpage\", AceEditor);\nLiveEditor.registerEditor(\"ace_sql\", AceEditor);\n\nwindow.LiveEditor = LiveEditor;\n\n//# sourceURL=webpack:///./js/live-editor-ace.js?");
 
 /***/ }),
 

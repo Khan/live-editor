@@ -69,9 +69,13 @@ const config = {
             "./js/workers/pjs/jshint-worker.js"
         ],
         // Exported for KA webapp
-        // Dependencies: external, editor_ace_deps, audio
-        live_editor_ace: [
-            "./js/live-editor-ace.js"
+        // Dependencies: core_deps, audio
+        live_editor_global: [
+            "./js/live-editor.global.js"
+        ],
+        // Dependencies: core_deps, editor_ace_deps
+        editor_ace_global: [
+            "./js/editors/ace/editor-ace.global.js"
         ],
         // Used for demos
         pjs_demo: [
