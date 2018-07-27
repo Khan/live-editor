@@ -81,6 +81,9 @@ const config = {
         pjs_demo: [
             "./demos/simple/pjs.js"
         ],
+        audio_demo: [
+            "./demos/simple/audio.js"
+        ],
         // Used for testing:
         live_editor: [
             "./js/live-editor.global.js"

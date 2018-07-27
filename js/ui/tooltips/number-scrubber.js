@@ -102,7 +102,7 @@ const NumberScrubber = TooltipBase.extend({
                 start: function(e, ui) {
                     self.$el.addClass("dragging");
                     $(this).css("visibility", "hidden");
-                    self.trigger("scrubbingStarted");
+                    self.props.onScrubbingStarted();
                     // The text-to-be-tweaked needs to be the same length at the start and end
                     // of the anti-undo changes.
                     // I could probably just remember the length, but I like putting back the
@@ -134,7 +134,7 @@ const NumberScrubber = TooltipBase.extend({
                     // ...And this makes one undo-able replacement placing the drag's final value.
                     self.updateText(self.intermediateValue.toFixed(self.decimals));
                     self.updateTooltip(self.intermediateValue, self.decimals);
-                    self.trigger("scrubbingEnded");
+                    self.props.onScrubbingEnded();
 
                     // use a timeout because $leftButton.click and $rightButton.click
                     // are called after stop

@@ -32,7 +32,6 @@ const ImageModal = TooltipBase.extend({
                 "imagemodal.selectImg": this.selectImg.bind(this)
             });
         }
-
     },
 
     detector: function(event) {
@@ -91,9 +90,11 @@ const ImageModal = TooltipBase.extend({
             this.logForRecording("selectImg", fileInfo.groupAndName);
         };
         props.onModalShow = () => {
+            this.props.onModalOpened();
             this.logForRecording("show");
         };
         props.onModalClose = () => {
+            this.props.onModalClosed();
             this.logForRecording("hide");
             if (!this.activeFileInfo) {return;}
             const updatePath = this.activeFileInfo.fullImgPath;

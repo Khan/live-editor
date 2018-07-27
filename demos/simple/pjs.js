@@ -1,3 +1,6 @@
+import React from "react";
+import ReactDOM from "react-dom";
+
 const AceEditor = require("../../js/editors/ace/editor-ace.js");
 const LiveEditor = require("../../js/live-editor.js");
 LiveEditor.registerEditor("ace_pjs", AceEditor);
@@ -32,22 +35,26 @@ if (params.scratchpad) {
     xhr.send();
 }
 
-var liveEditor = new LiveEditor({
-    el: document.getElementById("sample-live-editor"),
+var liveEditorProps = {
     code: code,
     width: 400,
     height: 400,
-    editorHeight: "80%",
+    editorHeight: "50%",
     autoFocus: true,
+    outputType: "pjs",
     workersDir: "../../build/",
     externalsDir: "../../build/external/",
     imagesDir: "../../build/images/",
     soundsDir: "../../build/sounds/",
     execFile: outputUrl,
     jshintFile: "../../build/external/jshint/jshint.js",
-    useDebugger: useDebugger
-});
-liveEditor.editor.on("change", function() {
-    window.localStorage["test-code"] = liveEditor.editor.text();
-});
+    useDebugger: useDebugger,
+    onUserChanged: function(code) {
+        window.localStorage["test-code"] = code;
+    }
+};
+
+ReactDOM.render(React.createElement(LiveEditor, liveEditorProps),
+    document.getElementById("sample-live-editor"));
+
 //ScratchpadAutosuggest.init(liveEditor.editor.editor);

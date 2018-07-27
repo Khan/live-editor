@@ -2,197 +2,135 @@
 /* TODO: Fix the lint errors */
 const _ = require("lodash");
 const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
+
+import React, {Component} from "react";
+import ReactDOM from "react-dom";
 
 const ScratchpadAutosuggest = require("../ui/autosuggest.js");
+const TooltipUtils = require("./tooltips/tooltip-utils.js");
 
-const TooltipEngine = Backbone.View.extend({
-    initialize: function(options) {
-        this.options = options;
-        this.editor = options.editor;
-        this.enabled = true;
-        var record = this.options.record;
+class TooltipEngine extends Component {
 
+    constructor(props) {
+        super(props);
+        this.state = {
+            currentTooltip: null
+        };
+        this.domRef = React.createRef();
         this.tooltips = {};
-        var childOptions = _.defaults({
-            parent: this
-        }, options);
+        this.ignore = false;
 
-        options.tooltips.forEach((name) => {
-            this.tooltips[name] = new TooltipEngine.tooltipClasses[name](childOptions);
-            this.tooltips[name].on("scrubbingStarted", function() {
-                this.trigger("scrubbingStarted", name);
-            }.bind(this));
-            this.tooltips[name].on("scrubbingEnded", function() {
-                this.trigger("scrubbingEnded", name);
-            }.bind(this));
-        });
-
+        const record = props.record;
         if (record && !record.handlers.hot) {
             record.handlers.hot = (e) => {
-                if (this.currentTooltip) {
-                    TooltipBase.prototype.updateText.call(this.currentTooltip, e.hot);
+                if (this.state.currentTooltip) {
+                    //TODO: TooltipBase.prototype.updateText.call(this.tooltip, e.hot);
                 }
             };
 
             // disable autofill when playback or seeking has started
             ["playStarted", "runSeek"].forEach((event) => {
                 record.on(event, () => {
-                    Object.values(this.tooltips).forEach(function(tooltip) {
-                        tooltip.autofill = false;
-                    });
+                    this.setState({autofillEnabled: false});
                 });
             });
 
             // enable autofill when playback or seeking has stopped
             ["playPaused", "playStopped", "seekDone"].forEach((event) => {
                 record.on(event, () => {
-                    Object.values(this.tooltips).forEach(function(tooltip) {
-                        tooltip.autofill = true;
-                    });
+                    this.setState({autofillEnabled: true});
                 });
             });
         }
-
-        this.currentTooltip = undefined;
-        this.ignore = false;
-        this.bind();
-    },
-
-    bind: function(){
-        if (this.callbacks) {
-            return;
-        }
-
-        var checkBlur = function(e) {
-            var inEditor = $.contains(this.editor.container, e.target);
-            var inTooltip = (this.currentTooltip && $.contains(this.currentTooltip.$el[0], e.target));
-            var modalOpen = (this.currentTooltip && this.currentTooltip.modal &&
-                                this.currentTooltip.modal.$el.is(":visible"));
-            if (this.currentTooltip && !(inEditor || inTooltip || modalOpen)) {
-                this.currentTooltip.$el.hide();
-                this.currentTooltip = undefined;
-            }
-        }.bind(this);
-
-        this.callbacks = [{
-            target: this.editor.selection,
-            event: "changeCursor",
-            fn: this.doRequestTooltip.bind(this)
-        }, {
-            target: this.editor.session.getDocument(),
-            event: "change",
-            fn: function(e) {
-                if (this.enabled) {
-                    this.doRequestTooltip(e);
-                }
-            }.bind(this)
-        }, {
-            target: this.editor.session,
-            event: "changeScrollTop",
-            fn: function() {
-                if (this.currentTooltip) {
-                    this.currentTooltip.placeOnScreen();
-                }
-            }.bind(this)
-        }, {
-            target: $(document),
-            event: "mousedown",
-            fn: checkBlur
-        }, {
-            target: $(document),
-            event: "contextmenu",
-            fn: checkBlur
-        }, {
-            target: $(this.editor.container),
-            event: "mousedown",
-            fn: function() {
-                this.doRequestTooltip({
-                    action: "click"
-                });
-            }.bind(this)
-        }];
-
-        this.callbacks.forEach((cb) => {
-            cb.target.on(cb.event, cb.fn);
-        });
-
-        this.requestTooltipDefaultCallback = function() {  //Fallback to hiding
-            // We are disabling autosuggest for now until issue #408 is fixed
-            // We may also consider doing A/B tests with partial lists of
-            // commands in the autocomplete to new programmers
-            ScratchpadAutosuggest.enableLiveCompletion(false);
-            if (this.currentTooltip && this.currentTooltip.$el) {
-                this.currentTooltip.$el.hide();
-                this.currentTooltip = undefined;
-            }
-        }.bind(this);
-
-        // Sets the live completion status to whatever value is passed in.
-        this.setEnabledStatus = function(status) {
-            this.enabled = status;
-        }.bind(this);
-
-        this.editor.on("requestTooltip", this.requestTooltipDefaultCallback);
-    },
-
-    remove: function() {
-        _.each(this.callbacks, function(cb) {
-            cb.target.off(cb.event, cb.fn);
-        });
-        _.each(this.tooltips, function(tooltip) {
-            tooltip.remove();
-        });
-
-        this.editor.off("requestTooltip", this.requestTooltipDefaultCallback);
-    },
-
-    doRequestTooltip: function(source) {
-        if (this.ignore) {
-            return;
-        }
-
-        this.last = this.last || {};
-
-        var selection = this.editor.selection;
-        var pos = selection.getCursor();
-        var params = {
-            col: pos.column,
-            row: pos.row,
-            line: this.editor.session.getDocument().getLine(pos.row),
-            selections: selection.getAllRanges(),
-            source: source
-        };
-        params.pre = params.line.slice(0, params.col);
-        params.post = params.line.slice(params.col);
-
-        var duplicate = (params.col === this.last.col &&
-            params.row === this.last.row && params.line === this.last.line);
-
-        if (duplicate && !source) {
-            return false;
-        }
-        if (this.isWithinComment(params.pre)){
-            // if selected text is within a comment, hide current tooltip (if any) and return
-            if (this.currentTooltip) {
-                this.currentTooltip.$el.hide();
-                this.currentTooltip = undefined;
-            }
-            return false;
-        }
-        this.last = params;
-
-        this.editor._emit("requestTooltip", params);
-    },
-
-    // Returns true if we're inside a comment
-    // This isn't a perfect check, but it is close enough.
-    isWithinComment: function(text) {
-        // Comments typically start with a / or a * (for multiline C style)
-        return text.length && (text[0] === "/" || text[0] === "*");
     }
-});
+
+    componentDidUpdate(prevProps) {
+        // First check if a blurEvent means we need to disable current tooltip
+        const blurTarget = this.props.blurEvent && this.props.blurEvent.target;
+        const prevBlurTarget = prevProps.blurEvent && prevProps.blurEvent.target;
+        if (blurTarget &&
+            (!prevBlurTarget|| blurTarget !== prevBlurTarget) &&
+            this.state.currentTooltip &&
+            !this.domRef.current.contains(blurTarget) &&
+            !this.state.modalIsOpen) {
+            this.setState({currentTooltip: null});
+        }
+        // Now check for new events that trigger different tooltips
+        const newEvent = this.props.event;
+        if (this.ignore || !newEvent) {
+            return;
+        }
+        const prevEvent = prevProps.event || {};
+        var isDuplicate = (
+            newEvent.col === prevEvent.col &&
+            newEvent.row === prevEvent.row &&
+            newEvent.line === prevEvent.line &&
+            newEvent.source === prevEvent.source);
+        if (isDuplicate) {
+            return;
+        }
+        if (TooltipUtils.isWithinComment(newEvent.pre)) {
+            // if selected text is within a comment,
+            // hide current tooltip (if any) and return
+            this.setState({currentTooltip: null});
+            return;
+        }
+        this.setState({
+            eventToCheck: newEvent,
+            possibleTooltips: this.props.tooltips
+        })
+    }
+
+    render() {
+
+       const tooltipsRendered = this.props.tooltips.map((name) => {
+            const childProps = Object.assign({
+                    key: name,
+                    isEnabled: false,
+                    autofillEnabled: !this.state.autofillEnabled
+                },
+                this.props);
+            childProps.onScrubbingStarted = () => {
+                this.props.onScrubbingStarted(name);
+            };
+            childProps.onScrubbingEnded = () => {
+                this.props.onScrubbingEnded(name);
+            };
+            childProps.onEventChecked = (foundMatch) => {
+                if (foundMatch) {
+                    this.setState({
+                        currentTooltip: name,
+                        possibleTooltips: []});
+                } else {
+                    this.setState((prevState, props) => ({
+                        possibleTooltips: prevState.possibleTooltips.filter(e => e !== name)
+                    }));
+                }
+            };
+            childProps.onTextUpdateRequest = (aceLocation, newText, newSelection, avoidUndo) => {
+                this.ignore = true;
+                this.props.onTextUpdateRequest(aceLocation, newText, newSelection, avoidUndo);
+                this.ignore = false;
+            };
+            childProps.onModalOpened = () => {
+                this.setState({modalIsOpen: true});
+            };
+            childProps.onModalClosed = () => {
+                this.setState({modalIsOpen: false});
+            };
+            if (this.state.currentTooltip === name) {
+                childProps.isEnabled = true;
+            }
+            if (this.state.possibleTooltips && this.state.possibleTooltips[0] === name) {
+                childProps.eventToCheck = this.state.eventToCheck;
+            }
+            this.tooltips[name] = React.createElement(
+                TooltipEngine.tooltipClasses[name], childProps, null);
+            return this.tooltips[name];
+        });
+        return <div ref={this.domRef}>{tooltipsRendered}</div>;
+    }
+}
 
 TooltipEngine.tooltipClasses = {};
 

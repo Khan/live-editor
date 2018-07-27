@@ -1,132 +1,119 @@
 /* global i18n */
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
-const React = require("react");
+import React, {Component} from "react";
 const ReactDOM = require("react-dom");
 
 const MediaPickerTooltip = require("./media-picker-tooltip.jsx");
 const OutputSounds = require("../../shared/sounds.js");
-const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
-const TooltipBase = require("../../ui/tooltip-base.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
+const TooltipPositioner = require("./tooltip-positioner.js");
+const TooltipUtils = require("./tooltip-utils.js");
 
-const SoundModal = TooltipBase.extend({
-    defaultFile: "\"rpg/metal-clink\"",
-    initialize: function(options) {
-        this.options = options;
-        this.options.files = OutputSounds;
-        this.parent = options.parent;
-        this.autofill = true;
-        this.render();
-        this.bindToRequestTooltip();
-    },
+class SoundModal extends Component {
 
-    detector: function(event) {
-        if (!/(\bgetSound\s*\()[^)]*$/.test(event.pre)) {
-            return;
+    props: {
+        isEnabled: boolean,
+        eventToCheck: Object,
+        aceEditor: Object,
+        onTextInsertRequest: Function,
+        onTextUpdateRequest: Function,
+        soundsDir: string
+    };
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            aceLocation: {},
+            closing: "",
+            mediaSrc:  "\"rpg/metal-clink\""
+        };
+        this.files = OutputSounds;
+        this.autofill = true; // TODO: Convert to prop
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (this.props.eventToCheck) {
+            this.checkEvent(this.props.eventToCheck);
         }
-        // This is quite similar to code in image-picker.js,
-        //  but my attempts to abstract it were thwarted by
-        //  PhantomJS's inability to pass around RegEx objects in tests.
-        //  That should be fixed in PhantomJS2.0, so we are eagerly
-        //  awaiting the upgrade of gulp-mocha-phantomjs to that.
-        // TODO: We use Chrome now!
-        const functionStart = event.col - RegExp.lastMatch.length;
-        const paramsStart = functionStart + RegExp.$1.length;
+    }
 
-        const pieces = /^(\s*)(["']?[^)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
-        const leading = pieces[1];
-        const pathStart = paramsStart + leading.length;
-        let path = pieces[2];
-        let closing = pieces[3];
+    renderPreview () {
+        const props = {
+            mediaType: "audio",
+            soundsDir: this.props.soundsDir,
+            mediaClasses: this.files,
+            onFileSelect: (fileInfo) => {
+                this.activeFileInfo = fileInfo;
+            },
+            onModalClose: () => {
+                console.log("Modal closed!");
+                if (!this.activeFileInfo) {return;}
+                const updatePath = this.activeFileInfo.groupAndName;
+                this.updateTooltip(updatePath);
+                this.props.onTextUpdateRequest(this.state.aceLocation, `"${updatePath}"`);
+            }
+        };
+        return <MediaPickerTooltip {...props} />;
+    }
 
-        if (leading.length === 0 &&
-            path.length === 0 &&
-            closing.length === 0 &&
-            event.source &&
-            event.source.action === "insert" &&
-            event.source.lines[0].length === 1 && this.autofill) {
-            closing = ")" + (this.isInParenthesis(
+    render () {
+        if (!this.props.isEnabled) {
+            return null;
+        }
+        return <TooltipPositioner
+                    className="mediapicker-preview mediapicker__sound"
+                    children={this.renderPreview()}
+                    aceEditor={this.props.aceEditor}
+                    aceLocation={this.state.aceLocation}/>;
+    }
+
+    checkEvent (event) {
+        if (!/(\bgetSound\s*\()[^)]*$/.test(event.pre)) {
+            return this.props.onEventChecked(false);
+        }
+        let {pathStart, functionStart, path, closing, shouldFill} = TooltipUtils.getInfoFromFileMatch(event);
+
+        if (shouldFill && this.autofill) {
+            closing = ")" + (TooltipUtils.isInParenthesis(
                 event.pre.slice(0, functionStart)) ? "" : ";");
-            this.insert({
-                row: event.row,
-                column: pathStart
-            }, closing);
-
-            path = this.defaultFile;
+            this.props.onTextInsertRequest({
+                    row: event.row,
+                    column: pathStart
+                }, closing);
+            path = this.state.mediaSrc;
             this.updateText(path);
         }
-
-        this.aceLocation = {
+        // start, length, shouldFill
+        const aceLocation = {
             start: pathStart,
             length: path.length,
-            row: event.row
+            row: event.row,
+            tooltipCursor: pathStart + path.length + closing.length
         };
-        this.aceLocation.tooltipCursor = this.aceLocation.start +
-            this.aceLocation.length + closing.length;
-
         this.updateTooltip(path);
-        this.placeOnScreen();
-        event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
-    },
+        this.setState({aceLocation: aceLocation, closing: closing});
+        this.props.onEventChecked(true);
+    }
 
-    updateTooltip: function(partialPath) {
-        if (partialPath !== this.currentUrl) {
+    updateTooltip (partialPath) {
+        let foundPath = this.state.mediaSrc;
+        if (partialPath !== foundPath) {
             partialPath = partialPath.replace(/"/g, "");
-            this.currentUrl = this.options.soundsDir + partialPath + ".mp3";
             if (partialPath === "") {
-                this.renderPreview({
+                this.setState({
                     mediaSrc: "",
                     errorMessage: i18n._("Invalid sound file."),
                     errorType: "notice"
                 });
                 return;
             }
+            foundPath = this.props.soundsDir + partialPath + ".mp3";
         }
-        this.renderPreview({
-            mediaSrc: this.currentUrl,
+        this.setState({
+            mediaSrc: foundPath,
             errorMessage: ""
         });
-    },
-
-    renderPreview: function(props) {
-        props = props || {};
-        props.mediaType = "audio";
-        props.onFileSelect = (fileInfo) => {
-            this.activeFileInfo = fileInfo;
-        };
-        props.onModalClose = () => {
-            if (!this.activeFileInfo) {return;}
-            const updatePath = this.activeFileInfo.groupAndName;
-            this.updateTooltip(updatePath);
-            this.updateText(`"${updatePath}"`);
-
-        }
-        props.soundsDir = this.options.soundsDir;
-        props.mediaClasses = this.options.files;
-        ReactDOM.render(
-            React.createElement(MediaPickerTooltip, props, null),
-            this.$el.find(".media-preview-wrapper")[0]);
-    },
-
-    render: function() {
-        this.$el = $("<div class='tooltip mediapicker-preview'>" +
-                    "<div class='media-preview-wrapper'/>" +
-                    "<div class='arrow'></div></div>")
-            .addClass("mediapicker__sound")
-            .appendTo("body").hide();
-
-        this.renderPreview();
-    },
-
-    remove: function() {
-        ReactDOM.unmountComponentAtNode(this.$(".media-preview-wrapper")[0]);
-        this.$el.remove();
-        this.unbindFromRequestTooltip();
     }
-});
+}
 
 TooltipEngine.registerTooltip("soundModal", SoundModal);
 

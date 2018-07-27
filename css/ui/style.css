@@ -25,13 +25,11 @@
 }
 
 .scratchpad-wrap .scratchpad-editor-wrap {
-    margin-right: 412px;
     position: relative;
 }
 
 .scratchpad-wrap .scratchpad-editor-wrap .scratchpad-editor-tabs,
 .scratchpad-wrap .scratchpad-editor-wrap .scratchpad-toolbar {
-    margin-right: @row-spacing;
     position: relative;
 }
 
@@ -80,7 +78,6 @@
 
 .scratchpad-editor-bigplay-button,
 .scratchpad-editor-bigplay-loading,
-.scratchpad-canvas-loading,
 #sm2-container.swf_timedout {
     left: 40%;
     position: absolute;
@@ -138,10 +135,6 @@
 .scratchpad-ace-editor .ace_active_line {
     background: rgba(255, 207, 207, 0.9);
     transition: background 200ms ease-in-out;
-}
-
-.scratchpad-ace-editor .ace_active_line.hilite {
-    background: rgba(255, 100, 100, 1);
 }
 
 .scratchpad-ace-editor .ace_line {

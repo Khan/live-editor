@@ -1,101 +1,112 @@
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
-const React = require("react");
+import React, {Component} from "react";
 const ReactDOM = require("react-dom");
 
 const ImageScroller = require("./image-scroller.jsx")
 const OutputImages = require("../../shared/images.js").OutputImages;
 const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
-const TooltipBase = require("../../ui/tooltip-base.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
+const TooltipPositioner = require("./tooltip-positioner.js");
+const TooltipUtils = require("./tooltip-utils.js");
 
 // A description of general tooltip flow can be found in tooltip-engine.js
-const ImagePicker = TooltipBase.extend({
-    defaultImage: "cute/None",
+class ImagePicker extends Component {
 
-    initialize: function(options) {
-        this.options = options;
-        this.parent = options.parent;
-        this.autofill = true;
-        this.render();
-        this.bindToRequestTooltip();
-    },
+    props: {
+        // Common to all tooltips
+        isEnabled: boolean,
+        eventToCheck: Object,
+        aceEditor: Object,
+        onTextInsertRequest: Function,
+        onTextUpdateRequest: Function,
+        // Specific to ImagePicker
+        imagesDir: string,
+    };
 
-    detector: function(event) {
-        if (!/(\bgetImage\s*\()[^)]*$/.test(event.pre)) {
-            return;
-        }
-        const functionStart = event.col - RegExp.lastMatch.length;
-        const paramsStart = functionStart + RegExp.$1.length;
-
-        const pieces = /^(\s*)(["']?[^)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
-        const leadingPadding = pieces[1];
-        const pathStart = paramsStart + leadingPadding.length;
-        let path = pieces[2];
-        this.closing = pieces[3];
-
-        this.aceLocation = {
-            start: pathStart,
-            length: path.length,
-            row: event.row
+    constructor(props) {
+        super(props);
+        this.state = {
+            currentImage: "cute/None",
+            aceLocation: {},
+            closing: ""
         };
-        this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
+    }
 
-        // TODO(kevinb) extract this into a method on TooltipBase
-        if (leadingPadding.length === 0 && path.length === 0 && this.closing.length === 0 &&
-            event.source && event.source.action === "insert" && event.source.lines[0].length === 1 && this.autofill) {
-
-            this.closing = ")" + (this.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
-            this.insert({
-                row: event.row,
-                column: pathStart
-            }, this.closing);
-
-            path = this.defaultImage;
-            this.updateText(path);
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (this.props.eventToCheck) {
+            this.checkEvent(this.props.eventToCheck);
         }
-        this.updateTooltip(path);
-        this.placeOnScreen();
-        event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
-    },
-    renderImageScroller: function(currentImage) {
+    }
 
+    renderImageScroller () {
         const props = {
-            currentImage: currentImage,
-            imagesDir: this.options.imagesDir,
+            currentImage: this.state.currentImage,
+            imagesDir: this.props.imagesDir,
             imageGroups: OutputImages,
             onMouseLeave: () => {
-                this.options.editor.clearSelection();
-                this.options.editor.focus();
+                // TODO: Propagate to parent of parent?
+                this.props.aceEditor.clearSelection();
+                this.props.aceEditor.focus();
             },
             onImageSelect: (imageName) => {
                 this.updateText(imageName);
                 this.updateTooltip(`"${imageName}"`);
             }
         };
-        ReactDOM.render(
-            React.createElement(ImageScroller, props, null),
-            this.$el.find(".image-scroller-wrapper")[0]);
-    },
+        return <ImageScroller {...props} />;
+    }
 
-    render: function() {
-        this.$el = $("<div class='tooltip mediapicker'>" +
-                     "<div class='image-scroller-wrapper'/>" +
-                     "<div class='arrow'></div></div>")
-            .appendTo("body").hide();
-        this.renderImageScroller();
-    },
+    render () {
+        if (!this.props.isEnabled) {
+            return null;
+        }
+        return <TooltipPositioner
+                    className="mediapicker"
+                    children={this.renderImageScroller()}
+                    aceEditor={this.props.aceEditor}
+                    aceLocation={this.state.aceLocation}/>;
+    }
 
-    remove: function() {
-        ReactDOM.unmountComponentAtNode(this.$(".image-scroller-wrapper")[0]);
-        this.$el.remove();
-        this.unbindFromRequestTooltip();
-    },
+    checkEvent(event) {
+        if (!/(\bgetImage\s*\()[^)]*$/.test(event.pre)) {
+            return this.props.onEventChecked(false);
+        }
+        const functionStart = event.col - RegExp.lastMatch.length;
+        const paramsStart = functionStart + RegExp.$1.length;
+        const pieces = /^(\s*)(["']?[^)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
+        const leadingPadding = pieces[1];
+        const pathStart = paramsStart + leadingPadding.length;
+        let path = pieces[2];
+        let closing = pieces[3];
+        const aceLocation = {
+            start: pathStart,
+            length: path.length,
+            row: event.row
+        };
+        aceLocation.tooltipCursor = aceLocation.start + aceLocation.length + closing.length;
 
-    updateTooltip: function(rawPath) {
-        let foundPath = this.defaultImage;
+        // TODO(kevinb) extract this into a method on TooltipBase
+        if (leadingPadding.length === 0 &&
+            path.length === 0 &&
+            closing.length === 0 &&
+            event.source && event.source.action === "insert" &&
+            event.source.lines[0].length === 1 && this.props.autofillEnabled) {
+
+            closing = ")" + (TooltipUtils.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
+            this.props.onTextInsertRequest({
+                row: event.row,
+                column: pathStart
+            }, closing);
+
+            path = this.state.currentImage;
+            this.updateText(path);
+        }
+        this.updateTooltip(path);
+        this.setState({aceLocation: aceLocation, closing: closing});
+        this.props.onEventChecked(true);
+    }
+
+    updateTooltip(rawPath) {
+        let foundPath = this.state.currentImage;
 
         const path = /^["']?(.*?)["']?$/.exec(rawPath)[1];
         const pathParts = path.split("/");
@@ -110,18 +121,23 @@ const ImagePicker = TooltipBase.extend({
                 });
             }
         });
-
-        this.renderImageScroller(foundPath);
-
-        this.value = path;
-    },
-
-    updateText: function(newPath) {
-        const newText = '"' + newPath + '"';
-        TooltipBase.prototype.updateText.call(this, newText);
-        this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
+        this.setState({currentImage: foundPath});
     }
-});
+
+    updateText(newPath) {
+        // This can be a prop passed along
+        if (!this.props.autofillEnabled) {
+            return;
+        }
+        const newText = '"' + newPath + '"';
+        this.props.onTextUpdateRequest(this.state.aceLocation, newText);
+        // Calculate new location according to new text
+        const newLocation = this.state.aceLocation;
+        newLocation.length = newText.length;
+        newLocation.tooltipCursor = this.state.aceLocation.start + this.state.aceLocation.length + this.state.closing.length;
+        this.setState({aceLocation: newLocation});
+    }
+}
 
 TooltipEngine.registerTooltip("imagePicker", ImagePicker);
 

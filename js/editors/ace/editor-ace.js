@@ -1,125 +1,119 @@
 /* eslint-disable no-var, no-useless-escape, no-useless-call */
 /* TODO: Fix the lint errors */
-const _ = require("lodash");
 const $ = require("jquery");
 const ace = require("ace-builds");
 
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
+import classNames from 'classnames';
+import React, {Component} from "react";
+import ReactDOM from "react-dom";
+import {StyleSheet, css} from "aphrodite/no-important";
 
 const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
 require("../../ui/tooltips/color-picker.js");
-require("../../ui/tooltips/number-scrubber.js");
-require("../../ui/tooltips/number-scrubber-click.js");
+//require("../../ui/tooltips/number-scrubber.js");
+//require("../../ui/tooltips/number-scrubber-click.js");
 require("../../ui/tooltips/image-picker.js");
-require("../../ui/tooltips/image-modal.js");
+//require("../../ui/tooltips/image-modal.js");
 require("../../ui/tooltips/sound-modal.js");
-require("../../ui/tooltips/auto-suggest.js");
+//require("../../ui/tooltips/auto-suggest.js");
 
-const AceEditor = Backbone.View.extend({
-    dom: {
-        ACTIVE_LINE: ".ace_active_line",
-        TEXT_INPUT: "textarea",
-        CONTENT: "div.ace_content"
-    },
+const tooltips = {
+    // The earlier in the list a tooltip appears
+    // the higher priority it gets.
+    ace_pjs: [
+        "imagePicker",
+        "soundModal",
+        "colorPicker",
+        //"numberScrubberClick",
+        //"autoSuggest",
+        //"numberScrubber"
+    ],
+    ace_webpage: [
+        "imageModal",
+        "colorPicker",
+        "numberScrubber"
+    ],
+    ace_sql: [
+        "numberScrubber"
+    ]
+};
 
-    tooltips: {
-        // The earlier in the list a tooltip appears
-        // the higher priority it gets.
-        ace_pjs: [
-            "imagePicker",
-            "soundModal",
-            "colorPicker",
-            "numberScrubberClick",
-            "autoSuggest",
-            "numberScrubber"
-        ],
-        ace_webpage: [
-            "imageModal",
-            "colorPicker",
-            "numberScrubber"
-        ],
-        ace_sql: [
-            "numberScrubber"
-        ]
-    },
+class AceEditorWrapper extends Component {
+    props: {
+        config: Object,
+        record: Object,
+        type: string,
+        imagesDir: string,
+        soundsDir: string,
+        code: string,
+        autoFocus: boolean
+    };
 
-    initialize: function(options) {
-        var self = this;
+    constructor(props) {
+        super(props);
+        this.tooltipEl = document.createElement('div');
+        this.state = {
+        };
+        this.editorRef = React.createRef();
 
-        this.defaultCode = options.code;
-        this.autoFocus = options.autoFocus;
-        this.config = options.config;
-        this.record = options.record;
-        this.type = options.type;
-        this.workersDir = options.workersDir;
-        this.editor = ace.edit(this.el);
-        this.textarea = this.$(this.dom.TEXT_INPUT);
-        this.content = this.$(this.dom.CONTENT);
-        this.offset = this.content.offset();
+        this.config = props.config;
+        this.record = props.record;
+
+        this.handleMouseDown = this.handleMouseDown.bind(this);
+    }
+
+    componentDidMount() {
+        // Append tooltip element to body (Its a portal!)
+        document.body.appendChild(this.tooltipEl);
+
+        // Ace editor setup
+        this.editor = ace.edit(this.editorRef.current);
 
         // Bind the recording logic first. Should always happen before
         // other events (such as the tooltip engine)
         if (this.record) {
-            this.bindRecord();
+           this.bindRecord();
         }
 
-        // Attach the picker tooltips to the editor
-        this.tooltipEngine = new TooltipEngine({
-            tooltips: this.tooltips[this.type],
-            type: this.type,
-            imagesDir: options.imagesDir,
-            soundsDir: options.soundsDir,
-            editor: this.editor,
-            record: this.record
-        });
-
-        this.tooltipEngine.on("scrubbingStarted", function(name) {
-            this.trigger("scrubbingStarted", name);
-        }.bind(this));
-
-        this.tooltipEngine.on("scrubbingEnded", function(name) {
-            this.trigger("scrubbingEnded", name);
-        }.bind(this));
-
         // TODO(bbondy): Support multiple content types for autosuggest.
-        if (this.tooltips[this.type].indexOf("autoSuggest") !== -1) {
+        if (tooltips[this.props.type].indexOf("autoSuggest") !== -1) {
             ScratchpadAutosuggest.init(this.editor);
         }
 
         // Make the editor vertically resizable
-        if (this.$el.resizable) {
-            this.$el.resizable({
+        // TODO: Handle with a React plugin instead of jQuery UI plugin
+        const $editorRef = $(this.editorRef.current);
+        console.log($editorRef);
+        if ($editorRef.resizable) {
+            $editorRef.resizable({
                 // Only allow for vertical resizing
-                handles: "s",
+               handles: "s",
 
-                // While the resize is occurring, resize the Ace editor
-                resize: function() {
-                    self.editor.resize();
-                }
+               // While the resize is occurring, resize the Ace editor
+               resize: () => {
+                   this.editor.resize();
+               }
             });
         }
 
-        var $sensorFrame = $("<iframe>").css({
-            width: "100%",
-            height: 0,
-            position: "absolute",
-            visibility: "hidden"
-        }).appendTo(this.el);
+        const sensorFrame = document.createElement("iframe");
+        sensorFrame.className = css(styles.sensorIframe);
+        this.editorRef.current.append(sensorFrame);
 
-        $($sensorFrame[0].contentWindow.window).on("resize", function() {
+        sensorFrame.contentWindow.window.addEventListener("resize", () => {
             // Force the editor to resize.
             this.editor.resize();
 
             // Set the font size. Scale the font size down when the
             // size of the editor is too small.
-            this.editor.setFontSize(this.$el.width() < 400 ?
-                "12px" : "14px");
-        }.bind(this));
+            const width = this.editorRef.current.getBoundingClientRect().width;
+            this.editor.setFontSize(width < 400 ? "12px" : "14px");
+        });
 
-        // Kill default selection on the hot number
-        this.$el.on("mousedown", ".tooltip", function(e) {
+        // Kill default selection on tooltips
+        $editorRef.on("mousedown", ".tooltip", function(e) {
+            console.log("Got mousedown");
             e.preventDefault();
         });
 
@@ -132,42 +126,175 @@ const AceEditor = Backbone.View.extend({
         this.editor.commands.bindKey("Alt-0", null);
 
         // Stop highlighting lines on cursor change
-        this.editor.selection.addEventListener("changeCursor", function() {
-            self.setErrorHighlight(false);
+        this.editor.selection.addEventListener("changeCursor", () => {
+            this.setErrorHighlight(false);
         });
 
-        this.editor.on("change", function() {
-            self.trigger("change");
+        this.editor.on("change", () => {
+            this.props.onChanged(this.text());
             if (this.editor.curOp && this.editor.curOp.command.name) {
-              self.trigger("userChangedCode");
+                this.props.onUserChanged(this.text());
             }
-        }.bind(this));
-
-        this.editor.on("click", function() {
-            self.trigger("click");
         });
-
-        this.editor.selection.on("changeCursor", function() {
-            self.trigger("changeCursor");
+        this.editor.on("click", () => {
+            this.props.onClicked();
         });
-        this.editor.selection.on("changeSelection", function() {
-            self.trigger("changeCursor");
+        this.editor.selection.on("changeCursor", () => {
+            this.props.onChangedCursor();
+            this.handleTooltipableEvent();
         });
-
-        this.config.on("versionSwitched", function(version) {
-            self.config.runVersion(version, self.type + "_editor", self);
+        this.editor.selection.on("changeSelection", () => {
+            this.props.onChangedCursor();
         });
+        this.editor.session.getDocument().on("change", (e) => {
+            if (this.tooltipsEnabled) { // TODO: Where to store/set?
+                this.handleTooltipableEvent(e);
+            }
+        });
+        this.config.on("versionSwitched", (version) => {
+            this.config.runVersion(version, this.props.type + "_editor", this);
+        });
+        const checkBlur = (e) => {
+            const targetEl = e.target;
+            const editorEl = this.editorRef.current;
+            var inEditor = targetEl !== editorEl && editorEl.contains(targetEl);
+            this.setState({blurEvent: e});
+        };
+        document.body.addEventListener("mousedown", checkBlur);
+        document.body.addEventListener("contextmenu", checkBlur);
 
         this.config.editor = this;
 
-        this.reset();
-    },
+        if (this.props.code !== undefined) {
+            this.text(this.props.code);
+            // Used by recording functionality in webapp
+            this.originalCode = this.props.code;
+        }
 
-    remove: function() {
-        this.tooltipEngine.remove();
-    },
+        this.focus();
 
-    bindRecord: function() {
+        if (this.props.cursor) {
+            // Restore the cursor position
+            this.setCursor(options.cursor);
+        } else {
+            // Set an initial starting selection point
+            this.setSelection({
+                start: {row: 0, column: 0},
+                end: {row: 0, column: 0}
+            });
+        }
+
+    }
+
+    componentWillUnmount() {
+        document.body.removeChild(this.tooltipEl);
+    }
+
+    renderTooltipEngine() {
+        // Attach the picker tooltips to the editor
+        const tooltipEngineProps = {
+            tooltips: tooltips[this.props.type],
+            type: this.props.type,
+            imagesDir: this.props.imagesDir,
+            soundsDir: this.props.soundsDir,
+            aceEditor: this.editor,
+            record: this.record,
+            event: this.state.tooltipableEvent,
+            blurEvent: this.state.blurEvent,
+            // Third parameter, if true, tells ACE not to remember this update in the undo chain. Useful in
+            // number-scrubbing.
+            // THIS IS A PROBLEMATIC HACK.
+            //  - If the undo chain and the editor's text are left in an inconsistent state, then
+            //     future undo's will change the wrong text. I (ChrisJPhoenix) think this just means you need to
+            //     put the editor's text back the way it was before letting anything else happen.
+            //     This causes problems if the user hits the keyboard in the middle of a number-scrub: undo
+            //     won't put things back correctly. Thus, use editor.setReadOnly(true) while using this hack.
+            //  - I use the session's $fromUndo variable to tell the editor not to save undo's. This
+            //     is undocumented. There's currently (7/25/15) a test for it in tooltips_test.js.
+            onTextUpdateRequest: (aceLocation, newText, newSelection, avoidUndo) => {
+                if (this.record && this.record.playing) {
+                    return;
+                }
+                newText = newText.toString();
+                const Range = ace.require("ace/range").Range;
+                const loc = aceLocation;
+                const range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
+
+                // We probably could just set it to false when we're done, but
+                // someone else might be trying a similar hack, or... who knows?
+                let undoState;
+                if (avoidUndo) {
+                    undoState = this.editor.session.$fromUndo;
+                    this.editor.session.$fromUndo = true;
+                }
+                this.editor.session.replace(range, newText);
+                if (avoidUndo) {
+                    this.editor.session.$fromUndo = undoState;
+                }
+                range.end.column = range.start.column + newText.length;
+                if (newSelection) {
+                    range.start.column = loc.start + newSelection.offset;
+                    range.end.column = loc.start + newSelection.offset + newSelection.length;
+                }
+                this.setSelection(range);
+            },
+            onScrubbingStarted: (name) => {
+                this.props.onScrubbingStarted(name);
+            },
+            onScrubbingEnded: (name) => {
+                this.props.onScrubbingEnded(name);
+            },
+            onTextInsertRequest: (aceLocation, newText) => {
+                if (this.record && this.record.playing) {
+                    return;
+                }
+                this.editor.session.insert(aceLocation, newText);
+            }
+        };
+        return ReactDOM.createPortal(
+            React.createElement(TooltipEngine, tooltipEngineProps, null),
+            this.tooltipEl,
+            );
+    }
+
+    render() {
+        return (
+            <div>
+                 <div
+                    ref={this.editorRef}
+                    onMouseDown={this.handleMouseDown}
+                    className={classNames(
+                        "scratchpad-editor",
+                        "scratchpad-ace-editor",
+                        css(styles.inputFrame, styles.noBorder),
+                    )}
+                    style={{height: "400px"}}
+                />
+                {this.renderTooltipEngine()}
+            </div>
+        );
+    }
+
+    handleMouseDown() {
+        this.handleTooltipableEvent({action: "click"});
+    }
+
+    handleTooltipableEvent(source) {
+        var selection = this.editor.selection;
+        var pos = selection.getCursor();
+        var params = {
+            col: pos.column,
+            row: pos.row,
+            line: this.editor.session.getDocument().getLine(pos.row),
+            selections: selection.getAllRanges(),
+            source: source
+        };
+        params.pre = params.line.slice(0, params.col);
+        params.post = params.line.slice(params.col);
+        this.setState({tooltipableEvent: params});
+    }
+
+    bindRecord() {
         var self = this;
         var editor = this.editor;
         var record = this.record;
@@ -205,7 +332,7 @@ const AceEditor = Backbone.View.extend({
             "removeLines"
         ];
 
-        _.each(docOperations, function(op) {
+        docOperations.forEach((op) => {
             record.handlers[op] = function(startRow, startCol, endRow, endCol,
                     data) {
                 var delta = {
@@ -233,7 +360,7 @@ const AceEditor = Backbone.View.extend({
         });
 
         $.extend(record.handlers, {
-            select: function(startRow, startCol, endRow, endCol) {
+            select: (startRow, startCol, endRow, endCol) => {
                 if (endRow == null) {
                     endRow = startRow;
                 }
@@ -242,7 +369,7 @@ const AceEditor = Backbone.View.extend({
                     endCol = startCol;
                 }
 
-                editor.selection.setSelectionRange({
+                this.setSelection({
                     start: {
                         row: startRow,
                         column: startCol
@@ -279,9 +406,9 @@ const AceEditor = Backbone.View.extend({
         record.on("runSeek", function() {
             self.reset(record.initData.code);
         });
-    },
+    }
 
-    handleSelect: function() {
+    handleSelect() {
         if (!this.record.recording) {
             return;
         }
@@ -293,55 +420,59 @@ const AceEditor = Backbone.View.extend({
 
         this.record.log("select", start.row, start.column, end.row,
             end.column);
-    },
+    }
 
-    reset: function(code, focus) {
-        code = code || this.defaultCode;
+    reset(code, focus) {
+        code = code || this.props.code;
 
-        this.config.runCurVersion(this.type + "_editor", this);
+        this.config.runCurVersion(this.props.type + "_editor", this);
 
         // Reset the editor
         this.text(code);
         this.setCursor({row: 0, column: 0}, focus);
-    },
+    }
 
     // Set the cursor position on the editor
-    setErrorHighlight: function(shouldHighlight) {
-        var self = this;
-
+    setErrorHighlight(shouldHighlight) {
         this.editor.setHighlightActiveLine(shouldHighlight);
-
+        if (!shouldHighlight) {
+            return;
+        }
         // Delay adding a flash until the active line is shown
-        setTimeout(function() {
+        setTimeout(() => {
             // Add the hilite flash
-            var line = self.$(self.dom.ACTIVE_LINE).addClass("hilite");
+            const line = this.editorRef.current.querySelector(".ace_gutter-active-line");
+            if (!line) {
+                return;
+            }
+            line.classList.add(css(styles.hiliteErrorLine));
 
             // And quickly remove it again (to give a nice flash animation)
-            setTimeout(function() {
-                line.removeClass("hilite");
-            }, 100);
+            setTimeout(() => {
+                line.classList.remove(css(styles.hiliteErrorLine));
+            }, 500);
         }, 1);
-    },
+    }
 
     // Allow for toggling of the editor gutter
-    toggleGutter: function(toggle) {
+    toggleGutter(toggle) {
         this.editor.renderer.setShowGutter(toggle);
-    },
+    }
 
-    getAllFolds: function() {
+    getAllFolds() {
         var session = this.editor.session;
-        return _.map(session.getAllFolds(), function(fold) {
+        return session.getAllFolds().map((fold) => {
             return [fold.start.row, fold.end.row];
         });
-    },
+    }
 
-    setFolds: function(folds) {
-        _.each(folds, function(fold) {
+    setFolds(folds) {
+        folds.forEach((fold) => {
             this.editor.session.foldAll(fold[0], fold[1], 0);
-        }.bind(this));
-    },
+        });
+    }
 
-    blockPaste: function(chastise) {
+    blockPaste(chastise) {
         // Used throughout the function
         var aceEditor = this.editor;
 
@@ -392,24 +523,24 @@ const AceEditor = Backbone.View.extend({
                 e.stopPropagation();
             }
         }, true);
-    },
+    }
 
     /*
      * Utility plugins for working with the editor
      */
 
     // Focus the editor
-    focus: function() {
-        if (this.autoFocus !== false) {
+    focus() {
+        if (this.props.autoFocus !== false) {
             this.editor.focus();
         }
-    },
+    }
 
-    getCursor: function() {
+    getCursor() {
         return this.editor.getCursorPosition();
-    },
+    }
 
-    getSelectionIndices: function() {
+    getSelectionIndices() {
         var rng = this.editor.getSelectionRange();
         var doc = this.editor.getSession().getDocument();
 
@@ -417,27 +548,27 @@ const AceEditor = Backbone.View.extend({
             start: doc.positionToIndex(rng.start),
             end: doc.positionToIndex(rng.end)
         };
-    },
+    }
 
     // Set the cursor position on the editor
-    setCursor: function(cursorPos, focus) {
+    setCursor(cursorPos, focus) {
         this.editor.moveCursorToPosition(cursorPos);
         this.editor.clearSelection();
 
-        if (focus !== false && this.autoFocus !== false) {
+        if (focus !== false && this.props.autoFocus !== false) {
             this.editor.focus();
         }
-    },
+    }
 
-    setSelection: function(selection) {
+    setSelection(selection) {
         this.editor.selection.setSelectionRange(selection);
-    },
+    }
 
-    setReadOnly: function(readOnly) {
+    setReadOnly(readOnly) {
         this.editor.setReadOnly(readOnly);
-    },
+    }
 
-    text: function(text) {
+    text(text) {
         if (text != null) {
             this.editor.getSession().setValue(text);
         } else {
@@ -445,13 +576,13 @@ const AceEditor = Backbone.View.extend({
         }
 
         return this;
-    },
+    }
 
-    unfold: function() {
+    unfold() {
         return this.editor.getSession().unfold();
-    },
+    }
 
-    insertNewlineIfCursorAtEnd: function() {
+    insertNewlineIfCursorAtEnd() {
         var maxRow = this.editor.getSession().getLength() - 1;
         var line = this.editor.getSession().getLine(maxRow);
         var maxColumn = line.length;
@@ -463,11 +594,72 @@ const AceEditor = Backbone.View.extend({
                 this.setCursor({row: maxRow + 1, column: 0});
             }
         }
-    },
+    }
 
-    undo: function() {
+    undo() {
         this.editor.undo();
+    }
+
+    addUnderlineMarker (row) {
+        // Underline the problem line to make it more obvious
+        //  if they don't notice the gutter icon
+        var AceRange = ace.require("ace/range").Range;
+        var line = this.editor.session.getDocument().getLine(row);
+        this.editor.session.addMarker(
+           new AceRange(row, 0, row, line.length),
+           "ace_problem_line", "text", false);
+    }
+
+    removeMarkers() {
+        // Remove previously added markers and decorations
+        var session = this.editor.session;
+        var markers = session.getMarkers();
+        Object.entries(markers).forEach((marker, markerId) => {
+            session.removeMarker(markerId);
+        });
+    }
+
+    // Remove old gutter decorations
+    removeGutterErrors(gutterDecorations) {
+        this.removeMarkers();
+        this.editor.session.$decorations.forEach((decoration, lineInd) => {
+            this.editor.session.removeGutterDecoration(lineInd, "ace_error");
+        });
+    }
+
+    // Add gutter decorations
+    showGutterErrors(errors) {
+        errors.forEach((error) => {
+            this.editor.session.addGutterDecoration(error.row, "ace_error");
+            this.addUnderlineMarker(error.row);
+        });
+    }
+
+    showGutterWarnings(annotations) {
+        annotations.forEach((annotation) => {
+            this.addUnderlineMarker(annotation.row);
+        });
+        this.editor.session.setAnnotations(annotations);
+    }
+}
+
+const styles = StyleSheet.create({
+    noBorder: {
+        border: "none",
+    },
+    inputFrame: {
+        height: "100% !important",
+        position: "relative",
+    },
+    sensorIframe: {
+        width: "100%",
+        height: 0,
+        position: "absolute",
+        visibility: "hidden"
+    },
+    hiliteErrorLine: {
+        backgroundColor: "rgba(255, 100, 100, 1) !important"
     }
 });
 
-module.exports = AceEditor;
+module.exports = AceEditorWrapper;

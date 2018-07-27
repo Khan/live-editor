@@ -13,10 +13,11 @@ import React, {Component} from "react";
 
 class TipBar extends Component {
     props: {
-        liveEditor: Object,
         isHidden: boolean,
         errors: Array<string>,
         errorNum: number,
+        onErrorShowRequested: Function,
+        onDismissed: Function
     };
 
     static defaultProps = {
@@ -37,19 +38,19 @@ class TipBar extends Component {
 
     handleShowMeClick() {
         const error = this.props.errors[this.state.errorNum];
-        this.props.liveEditor.editor.setCursor(error);
-        this.props.liveEditor.editor.setErrorHighlight(true);
+        this.props.onErrorShowRequested(error);
     }
 
     handleCloseClick() {
-        this.props.liveEditor.setThinkingState();
+        this.props.onDismissed();
     }
 
     handlePrevClick() {
         this.setState((prevState, props) => ({
             errorNum: Math.max(0, prevState.errorNum - 1),
         }));
-        this.props.liveEditor.editor.focus();
+        // TODO: It's unclear why the editor needs to be focus'd here
+        //this.props.liveEditor.editor.focus();
     }
 
     handleNextClick() {
@@ -59,7 +60,8 @@ class TipBar extends Component {
                 this.props.errors.length - 1,
             ),
         }));
-        this.props.liveEditor.editor.focus();
+        // TODO: It's unclear why the editor needs to be focus'd here
+        //this.props.liveEditor.editor.focus();
     }
 
     render() {

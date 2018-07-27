@@ -7,6 +7,7 @@ Backbone.$ = require("jquery");
 const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
 const TooltipBase = require("../../ui/tooltip-base.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
+const TooltipUtils = require("./tooltip-utils.js");
 
 // A description of general tooltip flow can be found in tooltip-engine.js
 const AutoSuggest = TooltipBase.extend({
@@ -33,7 +34,7 @@ const AutoSuggest = TooltipBase.extend({
             || (this.parent.options.record && this.parent.options.record.playing)) {
             return;
         }
-        if (!this.isInParenthesis(RegExp.$3)) {
+        if (!TooltipUtils.isInParenthesis(RegExp.$3)) {
             return;
         }
         if (event.source && event.source.type === "changeCursor" && this.mouse) {

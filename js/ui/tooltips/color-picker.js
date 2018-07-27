@@ -1,135 +1,147 @@
 /* global ace */
 /* eslint-disable no-var */
 /* TODO: Fix the lint errors */
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
+import React, {Component} from "react";
+const ReactDOM = require("react-dom");
+import {StyleSheet, css} from "aphrodite/no-important";
 
-require("../../../external/colorpicker/colorpicker.js");
-
-const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
-const TooltipBase = require("../../ui/tooltip-base.js");
+const FullColorPicker = require("./color-picker-full.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
+const TooltipPositioner = require("./tooltip-positioner.js");
+const TooltipUtils = require("./tooltip-utils.js");
 
 // A description of general tooltip flow can be found in tooltip-engine.js
-const ColorPicker = TooltipBase.extend({
-    initialize: function(options) {
-        this.options = options;
-        this.parent = options.parent;
+class ColorPicker extends Component {
 
-        var funcs = (this.parent.options.type === "ace_webpage") ? "rgb|rgba" : "background|fill|stroke|color";
+    props: {
+        // Common to all tooltips
+        isEnabled: boolean,
+        eventToCheck: Object,
+        editor: Object,
+        onTextInsertRequest: Function,
+        onTextUpdateRequest: Function,
+        onScrubbingStarted: Function,
+        onScrubbingEnded: Function,
+        // Specific to ColorPicker
+        editorType: string,
+
+    };
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            aceLocation: {},
+            closing: "",
+            currentColor: "255, 0, 0"
+        };
+        var funcs = (this.props.editorType === "ace_webpage") ? "rgb|rgba" : "background|fill|stroke|color";
         this.regex = RegExp("(\\b(?:"+funcs+")\\s*\\()[^\\)]*$");
-        this.autofill = true;
+    }
 
-        this.render();
-        this.bind();
-    },
-
-    render: function() {
-        this.$el = $("<div class='tooltip picker'><div class='picker'>" +
-                "</div><div class='arrow'></div></div>")
-            .appendTo("body")
-            .find(".picker").ColorPicker({
-                flat: true,
-                onChange: function(hsb, hex, rgb, undoMode) {
-                    this.updateText(rgb, undoMode);
-                }.bind(this)
-            }).end()
-            .hide();
-    },
-
-    bind: function() {
-        var over = false;
-        var down = false;
-        var self = this;
-
-        this.$el
-            .on("mouseenter", function() {
-                over = true;
-            })
-            .on("mouseleave", function() {
-                over = false;
-                if (!down) {
-                    self.placeOnScreen();
-                }
-                self.options.editor.focus();
-            })
-            .on("mousedown", function() {
-                var $picker = $(this);
-                $picker.addClass("active");
-                down = true;
-                self.trigger("scrubbingStarted");
-
-                $(document).one("mouseup", function() {
-                    $picker.removeClass("active");
-                    down = false;
-                    if (!over) {
-                        self.placeOnScreen();
-                    }
-                    self.trigger("scrubbingEnded");
-                });
-            });
-        this.bindToRequestTooltip();
-    },
-
-    remove: function() {
-        this.$el.remove();
-        this.unbindFromRequestTooltip();
-    },
-
-    detector: function(event) {
-        if (!this.regex.test(event.pre)) {
-            return;
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (this.props.eventToCheck) {
+            this.checkEvent(this.props.eventToCheck);
         }
-        var functionStart = event.col - RegExp.lastMatch.length;
-        var paramsStart = functionStart + RegExp.$1.length;
+    }
 
-        var pieces = /^(.*?)(\);?|$)/.exec(event.line.slice(paramsStart));
-        var body = pieces[1];
-        this.closing = pieces[2];
-        var paramsEnd = paramsStart + body.length;
-        var functionEnd = paramsStart + pieces[0].length;
+    handleMouseEnter = () => {
+        this.setState({showFullPicker: true});
+        this.props.onScrubbingStarted();
+    }
 
-        var allColors = body.split(',').map(parseFloat);
+    handleMouseLeave = () => {
+        this.setState({showFullPicker: true});
+        this.props.aceEditor.focus();
+        this.props.onScrubbingEnded();
+    }
+
+    handleChange = (color) => {
+        this.setState({ color: color.rgb })
+    }
+
+    render () {
+        if (!this.props.isEnabled) {
+            return null;
+        }
+
+        let colorPicker;
+        if (this.state.showFullPicker) {
+            colorPicker = <div className={css(styles.popover)}>
+                    <FullColorPicker color={this.state.currentColor} onChange={this.handleChange}/>
+                </div>;
+        } else {
+            colorPicker = <div className={css(styles.previewDiv)}>
+                <div className={css(styles.colorDiv)} />
+            </div>
+        }
+        const wrapped = <div
+                            onMouseEnter={ this.handleMouseEnter}
+                            onMouseLeave={ this.handleMouseLeave }>
+                        {colorPicker}
+                        </div>
+
+        return <TooltipPositioner
+                    className="picker"
+                    children={wrapped}
+                    aceEditor={this.props.aceEditor}
+                    aceLocation={this.state.aceLocation}/>;
+
+    }
+
+    checkEvent (event) {
+        if (!this.regex.test(event.pre)) {
+            return this.props.onEventChecked(false);
+        }
+        const functionStart = event.col - RegExp.lastMatch.length;
+        const paramsStart = functionStart + RegExp.$1.length;
+
+        const pieces = /^(.*?)(\);?|$)/.exec(event.line.slice(paramsStart));
+        let body = pieces[1];
+        let closing = pieces[2];
+        let paramsEnd = paramsStart + body.length;
+        const functionEnd = paramsStart + pieces[0].length;
+
+        const allColors = body.split(',').map(parseFloat);
         if (allColors.length === 4 && !isNaN(allColors[3])) {
             body = body.slice(0, body.lastIndexOf(','));
             paramsEnd = paramsStart + body.length;
-            this.closing = event.line.slice(paramsEnd, functionEnd);
+            closing = event.line.slice(paramsEnd, functionEnd);
         }
 
-        var colors = body.split(',').map(function(c) {
+        const colors = body.split(',').map(function(c) {
             c = parseFloat(c);
             return (isNaN(c) ? 0 : c);
         });
-        var rgb = {
+        let rgb = {
             r: Math.min(colors[0] || 0, 255),
             g: Math.min(colors[1] || 0, 255),
             b: Math.min(colors[2] || 0, 255)
         };
 
-        this.aceLocation = {
+        const aceLocation = {
             start: paramsStart,
             length: paramsEnd - paramsStart,
             row: event.row
         };
-        this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
+        aceLocation.tooltipCursor = aceLocation.start + aceLocation.length + closing.length;
 
-        var name = event.line.substring(functionStart, paramsStart - 1);
-        var addSemicolon =
-            this.isAfterAssignment(event.pre.slice(0, functionStart));
+        const name = event.line.substring(functionStart, paramsStart - 1);
+        let addSemicolon =
+            TooltipUtils.isAfterAssignment(event.pre.slice(0, functionStart));
         if (['fill', 'stroke', 'background'].includes(name)) {
             addSemicolon = true;
         }
 
         if (event.source && event.source.action === "insert" &&
-            event.source.lines[0].length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
+            event.source.lines[0].length === 1 &&
+            this.props.editorType === "ace_pjs" && this.props.autofillEnabled) {
             // Auto-close
-            if (body.length === 0 && this.closing.length === 0) {
-                this.closing = ")" + (addSemicolon ? ";" : "");
-                this.insert({
+            if (body.length === 0 && closing.length === 0) {
+                closing = ")" + (addSemicolon ? ";" : "");
+                this.props.onTextInsertRequest({
                     row: event.row,
                     column: functionEnd
-                }, this.closing);
+                }, closing);
             }
 
             // Auto-fill
@@ -144,35 +156,63 @@ const ColorPicker = TooltipBase.extend({
         }
 
         this.updateTooltip(rgb);
-        this.placeOnScreen();
-        event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
-    },
+        this.setState({aceLocation: aceLocation, closing: closing});
+        this.props.onEventChecked(true);
+    }
 
-    updateTooltip: function(rgb) {
-        this.$el.find(".picker").ColorPickerSetColor(rgb);
-    },
+    updateTooltip (rgb) {
+        this.setState({currentColor: rgb});
+    }
 
-    updateText: function(rgb, undoMode) {
-        var avoidUndo = false;
+    updateText (rgb, undoMode) {
+        let avoidUndo = false;
         if (undoMode === 'startScrub') {
             // TODO: Next 4 lines of code needs refactoring with textAtAceLocation() in number-scrubber.js.
             // TODO: Sort out this, self, ace, to make it callable from both places, and put it in tooltip-engine.js.
             var Range = ace.require("ace/range").Range;
             var loc = this.aceLocation;
             var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
-            this.originalText = this.parent.editor.getSession().getTextRange(range);
-            this.wasReadOnly = this.parent.editor.getReadOnly();
-            this.parent.editor.setReadOnly(true);
+            this.originalText = this.props.aceEditor.getSession().getTextRange(range);
+            this.wasReadOnly = this.props.aceEditor.getReadOnly();
+            this.props.aceEditor.setReadOnly(true);
             avoidUndo = true;
         } else if (undoMode === 'midScrub') {
             avoidUndo = true;
         } else if (undoMode === 'stopScrub') {
-            TooltipBase.prototype.updateText.call(this, this.originalText, undefined, true);
-            this.parent.editor.setReadOnly(this.wasReadOnly);
+            this.props.onTextUpdateRequest(this.aceLocation, this.originalText, undefined, true);
+            this.props.aceEditor.setReadOnly(this.wasReadOnly);
         }
-        TooltipBase.prototype.updateText.call(this, rgb.r + ", " + rgb.g + ", " + rgb.b, undefined, avoidUndo);
-        this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
+        this.props.onTextUpdateRequest(this.aceLocation, rgb.r + ", " + rgb.g + ", " + rgb.b, undefined, avoidUndo);
+        // Calculate new location according to new text
+        const newLocation = this.state.aceLocation;
+        newLocation.length = newText.length;
+        newLocation.tooltipCursor = this.state.aceLocation.start + this.state.aceLocation.length + this.state.closing.length;
+        this.setState({aceLocation: newLocation});
+    }
+}
+
+const styles = StyleSheet.create({
+    previewDiv: {
+        padding: '5px',
+        background: '#000',
+        borderRadius: '1px',
+        boxShadow: '0 0 0 1px rgba(0,0,0,.1)',
+        display: 'inline-block',
+        cursor: 'pointer',
+    },
+    colorDiv: {
+        width: '15px',
+        height: '15px',
+        borderRadius: '2px',
+    },
+    popover: {
+    },
+    cover: {
+        position: 'fixed',
+        top: '0px',
+        right: '0px',
+        bottom: '0px',
+        left: '0px',
     }
 });
 
