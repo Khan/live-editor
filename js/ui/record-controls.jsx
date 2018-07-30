@@ -45,8 +45,11 @@ class RecordControls extends Component {
         this.lastSavedCode = this.editor.text();
     }
 
-    render: function() {
+    componentDidMount() {
+        this.initializeRecordingAudio();
+    }
 
+    render() {
         /*
         A comment on the chunk buttons:
 
@@ -118,7 +121,7 @@ class RecordControls extends Component {
                 </div>
             </div>
         );
-    },
+    }
 
     /* Set up everything and get permission for recording. */
     initializeRecordingAudio() {
@@ -144,7 +147,7 @@ class RecordControls extends Component {
                 this.record.recordingAudio = true;
                 this.setState({newChunkLabel: "Stop recording chunk"});
                 this.startRecordingCommands();
-            };
+            });
     }
 
     /* Stop recording audio. Called from ScratchpadUI as a result of the
@@ -317,11 +320,9 @@ class RecordControls extends Component {
      * Quick way to set the disabled state for lots of recording-related
      *  buttons at once.
      */
-    disableChunkButtons(disableNew, disableDiscard, disableSave,
-            disableRefresh, disableSave) {
-        this.setState({disableNew, disableDiscard, disableSave,
-            disableRefresh, disableSave});
+    disableChunkButtons(disableNew, disableDiscard, disableSave, disableRefresh) {
+        this.setState({disableNew, disableDiscard, disableSave, disableRefresh});
     }
 }
 
-module.exports = ScratchpadRecordView;
+module.exports = RecordControls;

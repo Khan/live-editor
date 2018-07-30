@@ -20,7 +20,7 @@ const RestartButton = require("./ui/restart-button.jsx");
 import SharedStyles from "./ui/shared-styles.js";
 const ScratchpadConfig = require("./shared/config.js");
 const ScratchpadRecordModel = require("./shared/record.js");
-const ScratchpadRecordView = require("./ui/record.js");
+const RecordControls = require("./ui/record-controls.jsx");
 const PlaybackBar = require("./ui/playback-bar.jsx");
 const Structured = require("../external/structuredjs/structured.js");
 
@@ -520,6 +520,27 @@ class LiveEditor extends Component {
             </Button>;
     }
 
+    renderRecordControls() {
+        if (!this.canRecord() || !this.state.isRecording) {
+            return null;
+        }
+        // NOTE(jeresig): Unfortunately we need to do this to make sure
+        // that we load the web worker from the same domain as the rest
+        // of the site (instead of the domain that the "exec" page is on).
+        // This is a KA-specific bit of functionality that we
+        // should change, somehow.
+        const workersDir = this.workersDir.replace(/^https?:\/\/[^\/]*/, "");
+
+        const props = {
+            record: this.record,
+            editor: this.editor,
+            config: this.config,
+            workersDir: workersDir,
+            drawCanvas: this.drawCanvas
+        };
+        return <RecordControls {...props}/>
+    }
+
     renderPlaybackBar() {
         if (!this.hasAudio() || this.state.isRecording) {
             return null;
@@ -612,6 +633,7 @@ class LiveEditor extends Component {
                 {this.renderPlaybackBar()}
                 {this.renderRecordColorButtons()}
                 {this.renderRecordButton()}
+                {this.renderRecordControls()}
             </div>
         </div>
         );
@@ -1028,36 +1050,6 @@ class LiveEditor extends Component {
         this.drawCanvas.clear();
         this.drawCanvas.endDraw();
         this.aceWrapperRef.current.focus();
-    }
-
-    startRecording () {
-        this.bindRecordHandlers();
-
-        if (!this.recordView) {
-            var $el = this.$el;
-
-            // NOTE(jeresig): Unfortunately we need to do this to make sure
-            // that we load the web worker from the same domain as the rest
-            // of the site (instead of the domain that the "exec" page is on).
-            // This is dumb and a KA-specific bit of functionality that we
-            // should change, somehow.
-            var workersDir = this.workersDir.replace(/^https?:\/\/[^\/]*/, "");
-
-            this.recordView = new ScratchpadRecordView({
-                el: $el.find(".scratchpad-dev-record-row"),
-                recordButton: $el.find("#record"),
-                saveButton: $el.find("#save-button"),
-                record: this.record,
-                editor: this.editor,
-                config: this.config,
-                workersDir: workersDir,
-                drawCanvas: this.drawCanvas,
-                transloaditTemplate: this.props.transloaditTemplate,
-                transloaditAuthKey: this.props.transloaditAuthKey
-            });
-        }
-
-        this.recordView.initializeRecordingAudio();
     }
 
     saveRecording (callback, steps) {
