@@ -74,6 +74,7 @@
   },
   "dependencies": {
     "@khanacademy/wonder-blocks-button": "^1.0.1",
+    "@khanacademy/wonder-blocks-color": "^1.0.4",
     "@khanacademy/wonder-blocks-icon": "^1.0.1",
     "@khanacademy/wonder-blocks-icon-button": "^1.0.1",
     "@khanacademy/wonder-blocks-modal": "^1.0.1",

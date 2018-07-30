@@ -13,6 +13,7 @@ var liveEditorProps = {
     recordingMP3: data.mp3,
     recordingCommands: data.commands,
     recordingInit: data.init,
+    youtubeUrl: "https://www.youtubeeducation.com/embed/D5HQw_GKOwo",
     width: 400,
     height: 400,
     outputType: "pjs",

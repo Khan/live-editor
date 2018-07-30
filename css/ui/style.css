@@ -85,23 +85,6 @@
     z-index: 1000;
 }
 
-.scratchpad-editor-bigplay-button {
-    background: #ddd;
-    border: none;
-    border-radius: 10px;
-    box-shadow: none;
-    color: white;
-    cursor: pointer;
-    font-size: 66px;
-    line-height: 1em;
-    opacity: .7;
-    padding: 18px 23px 18px 31px;
-}
-
-.scratchpad-editor-bigplay-button:hover {
-    opacity: 1.0;
-}
-
 .scratchpad-ace-editor {
     background: #FFF;
     position: relative;
@@ -148,59 +131,6 @@
     width: 100%;
 }
 
-.scratchpad-playbar {
-    height: 30px;
-    position: relative;
-}
-
-.scratchpad-playbar .scratchpad-playbar-play {
-    position: absolute;
-    left: 0;
-}
-
-.scratchpad-playbar .scratchpad-playbar-play .ui-button-text {
-    // override default of .4em so play button will fit in an iframe
-    padding: 5px;
-}
-
-.scratchpad-playbar .scratchpad-playbar-timeleft {
-    font-family: monospace;
-    font-size: 11px;
-    position: absolute;
-    right: 45px;
-    top: 4px;
-}
-
-.scratchpad-playbar .scratchpad-playbar-progress {
-    margin: 0 80px 0 45px;
-    position: relative;
-    top: 8px;
-}
-
-.scratchpad-playbar .scratchpad-playbar-progress .ui-slider-handle {
-    width: 9px;
-}
-
-.scratchpad-playbar .scratchpad-playbar-progress .ui-slider-range-min {
-    background: #678D00;
-}
-
-.scratchpad-playbar .scratchpad-playbar-options {
-    position: absolute;
-    right: 0px;
-    top: 0px;
-}
-
-.scratchpad-playbar .scratchpad-playbar-options .dropdown-toggle {
-    height: 25px;
-    padding: 5px;
-}
-
-.scratchpad-playbar .loading-msg {
-    line-height: 30px;
-    padding-left: 30px;
-}
-
 #output {
     height: 402px;
     position: relative;
@@ -212,23 +142,10 @@
     border: 1px solid #D4CCB0;
 }
 
-.scratchpad-draw-canvas,
-#output-frame {
-    width: 400px;
-    top: 0;
-    left: auto;
-    bottom: auto;
-    right: 0;
-}
-
 #output-frame {
     box-sizing: border-box;
     height: 100%;
     overflow: hidden;
-}
-
-#draw-widgets {
-    margin-bottom: 10px;
 }
 
 .scratchpad-wrap .overlay {
@@ -245,13 +162,6 @@
 
 .scratchpad-wrap .overlay-container {
     position: relative;
-}
-
-.scratchpad-wrap .disable-overlay {
-    background: rgba(255,255,255,0.9);
-    cursor: pointer;
-    opacity: 0;
-    z-index: 880;
 }
 
 button {

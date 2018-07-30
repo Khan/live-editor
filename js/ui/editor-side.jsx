@@ -2,10 +2,14 @@ const i18n = require("i18n");
 
 import classNames from 'classnames';
 import React, {Component} from "react";
+import Button from "@khanacademy/wonder-blocks-button";
+import Icon, {icons} from "@khanacademy/wonder-blocks-icon";
+import IconButton from "@khanacademy/wonder-blocks-icon-button";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 import {StyleSheet, css} from "aphrodite/no-important";
 
 const EditorToolbar = require("./editor-toolbar.jsx");
+import SharedStyles from "./shared-styles.js";
 
 class EditorSide extends Component {
 
@@ -14,24 +18,36 @@ class EditorSide extends Component {
         youtubeUrl: string,
         hasAudio: boolean,
         hideEditor: boolean,
+        showAudioPlayButton: boolean,
+        showAudioSpinner: boolean,
+        showDisableOverlay: boolean,
         contentType: string,
-        onRestartClicked: Function,
-        onDisableClicked: Function
+        onDisableClick: Function,
+        onBigPlayClick: Function
     };
 
+    constructor(props) {
+        super(props);
+        this.state = {
+            closedYoutubeLink: false
+        };
+    }
+
     renderYoutubePlaybackLink() {
-        if (!this.props.youtubeUrl) {
+        // TODO: Trigger after timeout, see webapp
+        if (!(this.props.youtubeUrl && this.props.showYoutubeLink) ||
+            this.state.closedYoutubeLink) {
             return null;
         }
-
         return (
             <div
-                className="scratchpad-editor-youtube-link alert alert-info"
-                style={{display: "none"}}
+                className={css(styles.youtubeLink)}
             >
-                <span className="close" data-dismiss="alert">
-                    &#215;
-                </span>
+                <IconButton
+                    icon={icons.dismiss}
+                    aria-label="Close message"
+                    onClick={(e) => this.setState({closedYoutubeLink: true})}
+                />
                 <a href={this.props.youtubeUrl} target="_blank">
                     {i18n._("If the audio never loads, reload the page or watch on Youtube.")}
                 </a>
@@ -39,39 +55,50 @@ class EditorSide extends Component {
         );
     }
 
+    renderBigPlayButton() {
+        return (
+        <Button
+            style={[styles.middleOfEditor, styles.bigPlayButton]}
+            aria-label={i18n._("Play")}
+            onClick={this.props.onBigPlayClick}
+        >
+            <svg
+                role="img"
+                aria-hidden="true"
+                focusable="false"
+                width="66"
+                height="66"
+                viewBox="0 0 10 10"
+            >
+                <path fill="currentColor" d={playIcon}/>
+            </svg>
+        </Button>
+        );
+    }
+
     renderAudioPlayButton() {
         if (!this.props.hasAudio) {
             return null;
         }
+        let playButton;
+        if (this.props.showAudioPlayButton) {
+            playButton = this.renderBigPlayButton();
+        } else if (this.props.showAudioSpinner) {
+            playButton = <CircularSpinner
+                    style={[styles.middleOfEditor]}
+                    size="large"
+                />;
+        }
 
         return (
             <div>
-                <div
-                    className="overlay disable-overlay"
-                    onClick={this.props.onDisableClicked}
-                />
-                <div className="scratchpad-editor-bigplay-loading">
-                    <CircularSpinner size="large" />
-                    <span className="hide-text">
-                        {i18n._("Loading...")}
-                    </span>
-                </div>
-
+                {playButton}
+                {this.renderYoutubePlaybackLink()}
                 {/* This cannot be removed, if we want Flash to keep working! */}
                 <div id="sm2-container">
                     {i18n._("Enable Flash to load audio:")}
                     <br />
                 </div>
-                {this.renderYoutubePlaybackLink()}
-                <button
-                    className="scratchpad-editor-bigplay-button"
-                    style={{display: "none"}}
-                >
-                    <Icon icon={icons.play} />
-                    <span className="hide-text">
-                        {i18n._("Play")}
-                    </span>
-                </button>
             </div>
         );
     }
@@ -87,6 +114,19 @@ class EditorSide extends Component {
         if (!this.props.toolbar) {
             toolbar = <EditorToolbar {...this.props}/>
         }
+        let disableOverlay;
+        // Show an invisible overlay that blocks interactions with
+        // the editor and canvas areas (preventing the user from
+        // being able to disturb playback)
+        if (this.props.showDisableOverlay) {
+            disableOverlay = <div
+                    className={css(
+                        SharedStyles.overlay,
+                        SharedStyles.disableOverlay,
+                    )}
+                    onClick={this.props.onDisableClick}
+                />;
+        }
         return (
             <div
                 className={classNames(
@@ -101,7 +141,7 @@ class EditorSide extends Component {
                 <div
                     className={classNames(
                         "scratchpad-editor-tabs",
-                        css(styles.editorContainer, styles.noBorder),
+                        css(styles.editorContainer, SharedStyles.noBorder),
                     )}
                 >
                     <div
@@ -118,6 +158,7 @@ class EditorSide extends Component {
                         )}
                     >
                         {this.props.aceEditorWrapper}
+                        {disableOverlay}
                         {this.renderAudioPlayButton()}
                     </div>
                 </div>
@@ -130,6 +171,11 @@ class EditorSide extends Component {
         );
     }
 }
+
+const playIcon =
+        `M1.6,9.9C1.5,10,1.3,10,1.2,10C1.1,10,1,10,0.9,9.9C0.7,9.8,0.6,9.6,
+        0.6,9.4V0.6c0-0.2,0.2-0.4,0.4-0.5C1.1,0,1.4,0,1.6,0.1l7.6,4.5c0.2,0.1,
+        0.3,0.3,0.3,0.5c0,0.2-0.1,0.4-0.3,0.5L1.6,9.9z`;
 
 const defaultDim = 400;
 const defaultBorder = `2px solid #D6D8DA`;
@@ -165,12 +211,43 @@ const styles = StyleSheet.create({
     editorTabDocument: {
         position: "static",
     },
-    noBorder: {
-        border: "none",
-    },
     toolbarWrap: {
         borderTop: defaultBorder,
         padding: 5,
+    },
+    middleOfEditor: {
+        left: "40%",
+        position: "absolute",
+        top: "30%",
+        zIndex: "1000"
+    },
+    youtubeLink: {
+        left: "20%",
+        bottom: "20px",
+        marginBottom: "0",
+        position: "absolute",
+        textAlign: "center",
+        zIndex: 1000,
+        background: "#eee",
+        padding: "10px",
+        borderRadius: "6px",
+    },
+    bigPlayButton: {
+        background: "#ddd",
+        border: "none",
+        borderRadius: "10px",
+        boxShadow: "none",
+        color: "white",
+        cursor: "pointer",
+        fontSize: "66px",
+        lineHeight: "1em",
+        opacity: 0.7,
+        padding: "18px 23px 18px 31px",
+        width: "120px",
+        height: "110px",
+        ":hover": {
+            opacity: 1.0
+        }
     }
 });
 

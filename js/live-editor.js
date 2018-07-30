@@ -10,20 +10,23 @@ import ReactDOM from "react-dom";
 import {StyleSheet, css} from "aphrodite/no-important";
 
 const i18n = require("i18n");
+import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
+const DrawCanvas = require("./ui/draw-canvas.jsx");
 const EditorSide = require("./ui/editor-side.jsx");
 const ErrorBuddy = require("./ui/tipbar.jsx");
 const ErrorBuddyMini = require("./ui/errorbuddy-mini.jsx");
 const OutputSide = require("./ui/output-side.jsx");
 const RestartButton = require("./ui/restart-button.jsx");
-const ScratchpadDebugger = require("./ui/debugger.js");
+import SharedStyles from "./ui/shared-styles.js";
 const ScratchpadConfig = require("./shared/config.js");
-const ScratchpadDrawCanvas = require("./ui/canvas.js");
 const ScratchpadRecordModel = require("./shared/record.js");
 const ScratchpadRecordView = require("./ui/record.js");
+const PlaybackBar = require("./ui/playback-bar.jsx");
 const Structured = require("../external/structuredjs/structured.js");
 
 import "../css/ui/flashblock.css";
 import { throws } from "assert";
+import { IncomingMessage } from "http";
 
 // TODO(kevinb) remove after challenges have been converted to use i18n._
 $._ = i18n._;
@@ -61,6 +64,12 @@ const qualifyURL = function(url) {
 const editors = {};
 
 class LiveEditor extends Component {
+
+    static defaultProps = {
+        outputWidth: 400,
+        outputHeight: 400
+    }
+
     props: {
         hideEditor: boolean,
         version: string,
@@ -71,31 +80,11 @@ class LiveEditor extends Component {
     showError: null
 
     dom: {
-        DRAW_CANVAS: ".scratchpad-draw-canvas",
-        DRAW_COLOR_BUTTONS: "#draw-widgets a.draw-color-button",
         CANVAS_WRAP: ".scratchpad-canvas-wrap",
         EDITOR: ".scratchpad-editor",
-        BIG_PLAY_LOADING: ".scratchpad-editor-bigplay-loading",
-        BIG_PLAY_BUTTON: ".scratchpad-editor-bigplay-button",
-        PLAYBAR: ".scratchpad-playbar",
-        PLAYBAR_AREA: ".scratchpad-playbar-area",
-        PLAYBAR_OPTIONS: ".scratchpad-playbar-options",
-        PLAYBAR_LOADING: ".scratchpad-playbar .loading-msg",
-        PLAYBAR_PROGRESS: ".scratchpad-playbar-progress",
-        PLAYBAR_PLAY: ".scratchpad-playbar-play",
-        PLAYBAR_TIMELEFT: ".scratchpad-playbar-timeleft",
-        PLAYBAR_UI: ".scratchpad-playbar-play, .scratchpad-playbar-progress",
         OUTPUT_FRAME: "#output-frame",
-        OUTPUT_DIV: "#output",
-        ALL_OUTPUT: "#output, #output-frame",
-        GUTTER_ERROR: ".ace_error"
+        ALL_OUTPUT: "#output, #output-frame"
     }
-
-    mouseCommands: ["move", "over", "out", "down", "up"]
-    colors: ["black", "red", "orange", "green", "blue", "lightblue", "violet"]
-
-    defaultOutputWidth: 400
-    defaultOutputHeight: 400
 
     constructor(props) {
         super(props);
@@ -118,7 +107,9 @@ class LiveEditor extends Component {
             // Shows the restart button at all
             showRestart: false,
             // Animates the restart dynamically (talkthrough-triggered)
-            animateRestartNow: false
+            animateRestartNow: false,
+            // Tracks whether audio has loaded enough to begin playing
+            isAudioLoaded: false
         };
 
         // This stops us from sending any updates until the current run has finished
@@ -137,21 +128,12 @@ class LiveEditor extends Component {
 
         this.outputType = props.outputType || "";
         this.editorType = props.editorType || Object.keys(editors)[0];
-        this.editorHeight = props.editorHeight;
-        this.initialCode = props.code;
-        this.initialVersion = props.version;
-        this.settings = props.settings;
         this.validation = props.validation;
 
-        this.recordingCommands = props.recordingCommands;
-        this.recordingMP3 = props.recordingMP3;
-        this.recordingInit = props.recordingInit || {
-            code: this.initialCode,
-            version: this.initialVersion
+        this.recordingInit = this.props.recordingInit || {
+            code: this.props.code,
+            version: this.props.version
         };
-
-        this.transloaditTemplate = props.transloaditTemplate;
-        this.transloaditAuthKey = props.transloaditAuthKey;
 
         this.noLint = false;
 
@@ -161,10 +143,19 @@ class LiveEditor extends Component {
             version: this.props.version
         });
 
-        // We no longer load in record, since that functionality isn't
-        // currently needed nor supported
-        if (this.canRecord()) {
-            this.record = new ScratchpadRecordModel();
+        this.record = new ScratchpadRecordModel();
+        // Load the recording playback commands as well, if applicable
+        if (this.props.recordingCommands) {
+            // Check the filename to see if a multiplier is specified,
+            // of the form audio_x1.3.mp3, which means it's 1.3x as slow
+            const url = this.props.recordingMP3;
+            const matches = /_x(1.\d+).mp3/.exec(url);
+            const multiplier = parseFloat(matches && matches[1]) || 1;
+            this.record.loadRecording({
+                init: this.props.recordingInit,
+                commands: this.props.recordingCommands,
+                multiplier: multiplier
+            });
         }
 
         if (props.enableLoopProtect != null) {
@@ -180,9 +171,12 @@ class LiveEditor extends Component {
         this.handleMessages = this.handleMessages.bind(this);
         this.handleMiniClick = this.handleMiniClick.bind(this);
         this.handleRestartClick = this.handleRestartClick.bind(this);
-        this.handleChangeDebounced =  _.debounce(this.handleChange, 300)
-        //TODO: this.bind();
-        //TODO:this.setupAudio();
+        this.handleOverlayClick = this.handleOverlayClick.bind(this);
+        this.handleRecordColorClick = this.handleRecordColorClick.bind(this);
+        this.handleRecordClearClick = this.handleRecordClearClick.bind(this);
+        this.handleChangeDebounced =  _.debounce(this.handleChange, 300);
+
+        this.setupAudio();
     }
 
     componentDidMount() {
@@ -295,6 +289,16 @@ class LiveEditor extends Component {
         return <ErrorBuddy {...props}/>
     }
 
+    renderDrawCanvas() {
+        const props = {
+            record: this.record,
+            onColorSet: (color) => {
+                this.setState({drawingColor: color});
+            }
+        };
+        return <DrawCanvas {...props}/>
+    }
+
     renderOutputSide() {
         const props = {
             execFile: this.execFile,
@@ -305,8 +309,12 @@ class LiveEditor extends Component {
             canRecord: this.canRecord(),
             isResizable: this.isResizable(),
             hideEditor: this.props.hideEditor,
+            // During playback, prevent user interaction with output side
+            showDisableOverlay: this.state.isPlaying && !this.state.isRecording,
             outputLoaded: this.state.outputLoaded,
+            drawCanvas: this.renderDrawCanvas(),
             errorBuddy: this.renderErrorBuddy(),
+            onDisableClick: this.handleOverlayClick,
             onOutputFrameLoaded: () => {
                 this.outputState = "clean";
                 this.markDirty();
@@ -322,28 +330,32 @@ class LiveEditor extends Component {
             autoFocus: this.props.autoFocus,
             cursor: this.props.cursor,
             config: this.config,
-            record: this.props.record,
+            record: this.record,
             imagesDir: this.props.imagesDir,
             soundsDir: this.props.soundsDir,
             externalsDir: this.props.externalsDir,
             workersDir: this.props.workersDir,
             type: this.editorType,
-            onChanged: () => {
+            onChange: () => {
                 // Whenever the user changes code, execute the code
                 this.markDirty();
                 this.handleChangeDebounced();
             },
-            onUserChanged: (code) => {
+            onUserChange: (code) => {
                 if (!this.record ||
                     (!this.record.recording && !this.record.playing)) {
                     this.props.onUserChanged && this.props.onUserChanged(code);
                 }
             },
-            onChangedCursor: () => {
-                // TODO: this.markDirty();
+            onChangeCursor: () => {
+                this.markDirty();
             },
-            onClicked: () => {
-
+            onClick: () => {
+                // TODO: make big play go away
+                this.setState({editorClicked: true});
+            },
+            onGutterErrorClick: (lineNum) => {
+                this.setErrorState(this.gutterDecorations[lineNum]);
             }
         };
 
@@ -364,14 +376,19 @@ class LiveEditor extends Component {
 
     renderEditorSide () {
         const extraProps = {
+            hasAudio: this.hasAudio(),
+            showYoutubeLink: !this.state.isAudioLoaded,
+            showAudioPlayButton: this.state.isAudioLoaded && !this.state.isPlaying && !this.state.editorClicked,
+            showAudioSpinner: !this.state.isAudioLoaded && !this.state.editorClicked,
+            // During playback, prevent user interaction with editor
+            showDisableOverlay: this.state.isPlaying && !this.state.isRecording,
             aceEditorWrapper: this.renderAceEditorWrapper(),
+            onDisableClick: this.handleOverlayClick,
             onEditorCreated: (aceWrapperRef) => {
                 this.aceWrapperRef = aceWrapperRef;
             },
-            onDisableClicked: () => {
-                // If the user clicks the disable overlay (which is laid over
-                // the editor and canvas on playback) then pause playback.
-                this.record.pausePlayback();
+            onBigPlayClick: () => {
+                this.togglePlayingState();
             },
             leftComponents: [
                 <ErrorBuddyMini
@@ -386,7 +403,7 @@ class LiveEditor extends Component {
                 <RestartButton
                     key="restartButton"
                     labelText={this.props.restartLabel}
-                    isDisabled={!this.state.enableRestart}
+                    isDisabled={this.state.isPlaying}
                     isHidden={!this.state.showRestart}
                     onClick={this.handleRestartClick}
                     animateNow={this.animateRestartNow}
@@ -462,17 +479,108 @@ class LiveEditor extends Component {
         );
     }
 
+
+    renderRecordColorButtons() {
+        if (!this.canRecord() && !this.state.isRecording) {
+            return null;
+        }
+        const colors = ["black", "red", "orange", "green", "blue", "lightblue", "violet"];
+        const colorButtons =  colors.map((color) => {
+            const styles = [{backgroundColor: color}];
+            if (color === this.state.drawingColor) {
+                styles.push({border: "2px solid black"});
+            }
+            return <Button
+                key={color}
+                style={styles}
+                onClick={() => this.handleRecordColorClick(color)}
+            />
+        });
+        return (
+            <div>
+                <IconButton
+                    icon={icons.dismiss}
+                    onClick={this.handleRecordClearClick}
+                />
+                {colorButtons}
+            </div>
+        );
+    }
+
     renderRecordButton() {
         if (!this.canRecord()) {
             return null;
         }
-        return <button id="record" onClick={this.handleRecordClick}>
+
+        return <Button
+                id="record"
+                disabled={this.state.isRecording}
+                onClick={this.handleRecordClick}>
             {i18n._("Record a talkthrough")}
-            </button>;
+            </Button>;
     }
 
     renderPlaybackBar() {
-        return null;
+        if (!this.hasAudio() || this.state.isRecording) {
+            return null;
+        }
+        let playbackBar;
+        if (this.state.isAudioLoaded) {
+            const props = {
+                currentTime: this.state.audioCurrentTime,
+                onClickPlay: () => {
+                    this.togglePlayingState();
+                },
+                onSeekStart: () => {
+                    // Prevent slider manipulation while recording
+                    if (this.record.recording) {
+                        return;
+                    }
+                    this.record.seeking = true;
+                    // Pause playback and remember if we were playing or were paused
+                    this.wasPlaying = this.state.isPlaying;
+                    this.record.pausePlayback();
+                },
+                onSeek: (time) => {
+                    // Seek the player and update the time indicator
+                    // Ignore values that match endTime - sometimes the
+                    // slider jumps and we should ignore those jumps
+                    // It's ok because endTime is still captured on 'change'
+                    if (time !== this.record.endTime()) {
+                        this.setState({audioCurrentTime: time});
+                        this.seekTo(time);
+                    }
+                },
+                onSeekEnd: () => {
+                    this.record.seeking = false;
+
+                    // If we were playing when we started sliding, resume playing
+                    if (this.wasPlaying) {
+                        // Set the timeout to give time for the events to catch up
+                        // to the present -- if we start before the events have
+                        // finished, the scratchpad editor code will be in a bad
+                        // state. Wait roughly a second for events to settle down.
+                        setTimeout(() => {
+                            this.record.play();
+                        }, 1000);
+                    }
+                },
+                playing: this.state.isPlaying,
+                readyToPlay: this.state.isAudioLoaded,
+                totalTime: this.state.audioDurationEstimate,
+                youtubeUrl: this.props.youtubeUrl
+            };
+            playbackBar = <PlaybackBar {...props} />;
+        } else {
+            playbackBar = <CircularSpinner size="small"/>
+        }
+        return (
+            <div className={css(styles.playbar)}>
+                <div className={css(styles.playbackBar)}>
+                    {playbackBar}
+                </div>
+            </div>
+        );
     }
 
     render() {
@@ -502,134 +610,11 @@ class LiveEditor extends Component {
                     {this.renderOutputSide()}
                 </div>
                 {this.renderPlaybackBar()}
+                {this.renderRecordColorButtons()}
                 {this.renderRecordButton()}
             </div>
         </div>
         );
-    }
-
-    bind () {
-
-
-        // Set up the playback progress bar
-        $el.find(dom.PLAYBAR_PROGRESS).slider({
-            range: "min",
-            value: 0,
-            min: 0,
-            max: 100,
-
-            // Bind events to the progress playback bar
-            // When a user has started dragging the slider
-            start: function() {
-                // Prevent slider manipulation while recording
-                if (self.record.recording) {
-                    return false;
-                }
-
-                self.record.seeking = true;
-
-                // Pause playback and remember if we were playing or were paused
-                self.wasPlaying = self.record.playing;
-                self.record.pausePlayback();
-            },
-
-            // While the user is dragging the slider
-            slide: function(e, ui) {
-                // Slider position is set in seconds
-                var sliderPos = ui.value * 1000;
-
-                // Seek the player and update the time indicator
-                // Ignore values that match endTime - sometimes the
-                // slider jumps and we should ignore those jumps
-                // It's ok because endTime is still captured on 'change'
-                if (sliderPos !== self.record.endTime()) {
-                    self.updateTimeLeft(sliderPos);
-                    self.seekTo(sliderPos);
-                }
-            },
-
-            // When the sliding has stopped
-            stop: function(e, ui) {
-                self.record.seeking = false;
-                self.updateTimeLeft(ui.value * 1000);
-
-                // If we were playing when we started sliding, resume playing
-                if (self.wasPlaying) {
-                    // Set the timeout to give time for the events to catch up
-                    // to the present -- if we start before the events have
-                    // finished, the scratchpad editor code will be in a bad
-                    // state. Wait roughly a second for events to settle down.
-                    setTimeout(function() {
-                        self.record.play();
-                    }, 1000);
-                }
-            }
-        });
-
-        var handlePlayClick = function() {
-            if (self.record.playing) {
-                self.record.pausePlayback();
-            } else {
-                self.record.play();
-            }
-        };
-
-        // Handle the play button
-        $el.find(dom.PLAYBAR_PLAY)
-            .off("click.play-button")
-            .on("click.play-button", handlePlayClick);
-
-        var handlePlayButton = function() {
-            // Show the playback bar and hide the loading message
-            $el.find(dom.PLAYBAR_LOADING).hide();
-            $el.find(dom.PLAYBAR_AREA).show();
-
-            // Handle the big play button click event
-            $el.find(dom.BIG_PLAY_BUTTON)
-                .off("click.big-play-button")
-                .on("click.big-play-button", function() {
-                $el.find(dom.BIG_PLAY_BUTTON).hide();
-                handlePlayClick();
-            });
-
-            $el.find(dom.PLAYBAR_PLAY).on("click", function() {
-                $el.find(dom.BIG_PLAY_BUTTON).hide();
-            });
-
-            // Hide upon interaction with the editor
-            $el.find(dom.EDITOR).on("click", function() {
-                $el.find(dom.BIG_PLAY_BUTTON).hide();
-            });
-
-            // Switch from loading to play
-            $el.find(dom.BIG_PLAY_LOADING).hide();
-            $el.find(dom.BIG_PLAY_BUTTON).show();
-
-            self.off("readyToPlay", handlePlayButton);
-        };
-
-        // Set up all the big play button interactions
-        this.on("readyToPlay", handlePlayButton);
-
-        // Handle the gutter errors
-        $el.on("click", this.dom.GUTTER_ERROR, () => {
-            var lineNum = parseInt($(this).text(), 10);
-            this.setErrorState(this.gutterDecorations[lineNum]);
-        });
-
-        // Load the recording playback commands as well, if applicable
-        if (this.recordingCommands) {
-            // Check the filename to see if a multiplier is specified,
-            // of the form audio_x1.3.mp3, which means it's 1.3x as slow
-            var url = this.recordingMP3;
-            var matches = /_x(1.\d+).mp3/.exec(url);
-            var multiplier = parseFloat(matches && matches[1]) || 1;
-            this.record.loadRecording({
-                init: this.recordingInit,
-                commands: this.recordingCommands,
-                multiplier: multiplier
-            });
-        }
     }
 
     componentWillUnmount() {
@@ -637,7 +622,7 @@ class LiveEditor extends Component {
     }
 
     canRecord () {
-        return this.transloaditAuthKey && this.transloaditTemplate;
+        return this.props.transloaditAuthKey && this.props.transloaditTemplate;
     }
 
     isResizable() {
@@ -645,7 +630,7 @@ class LiveEditor extends Component {
     }
 
     hasAudio() {
-        return !!this.recordingMP3;
+        return !!this.props.recordingMP3;
     }
 
     setupAudio () {
@@ -698,8 +683,8 @@ class LiveEditor extends Component {
             return;
         }
 
-        var self = this;
-        var record = this.record;
+        const self = this;
+        const record = this.record;
 
         // Reset the wasPlaying tracker
         this.wasPlaying = undefined;
@@ -713,7 +698,7 @@ class LiveEditor extends Component {
             // The ID should be a string starting with a letter.
             id: "sound" + (new Date()).getTime(),
 
-            url: this.recordingMP3,
+            url: this.props.recordingMP3,
 
             // Load the audio automatically
             autoLoad: true,
@@ -721,21 +706,17 @@ class LiveEditor extends Component {
             // While the audio is playing update the position on the progress
             // bar and update the time indicator
             whileplaying: function() {
-                self.updateTimeLeft(record.currentTime());
-
                 if (!record.seeking) {
-                    // Slider takes values in seconds
-                    self.$el.find(self.dom.PLAYBAR_PROGRESS)
-                        .slider("option", "value", record.currentTime() / 1000);
+                    // TODO: Make sure user can seek while its playing!
                 }
-
+                self.setState({audioCurrentTime: record.currentTime()});
                 record.trigger("playUpdate");
-            }.bind(this),
+            },
 
             // Hook audio playback into Record command playback
             // Define callbacks rather than sending the function directly so
             // that the scope in the Record methods is correct.
-            onplay: function() {
+            onplay: function () {
                 record.play();
             },
             onresume: function() {
@@ -746,11 +727,13 @@ class LiveEditor extends Component {
             },
             onload: function() {
                 record.durationEstimate = record.duration = this.duration;
+                self.setState({audioDurationEstimate: this.duration})
                 record.trigger("loaded");
             },
             whileloading: function() {
                 record.duration = null;
                 record.durationEstimate = this.durationEstimate;
+                self.setState({audioDurationEstimate: this.durationEstimate})
                 record.trigger("loading");
             },
             // When audio playback is complete, notify everyone listening
@@ -761,20 +744,20 @@ class LiveEditor extends Component {
             },
             onsuspend: function() {
                 // Suspend happens when the audio can't be loaded automatically
-                // (such is the case on iOS devices). Thus we trigger a
-                // readyToPlay event anyway and let the load happen when the
+                // (such is the case on iOS devices). Thus we start playing
+                // anyway and let the load happen when the
                 // user clicks the play button later on.
-                self.trigger("readyToPlay");
+                self.setState({isAudioLoaded: true});
             }
         });
 
         // Wait to start playback until we at least have some
         // bytes from the server (otherwise the player breaks)
-        var checkStreaming = setInterval(function() {
+        var checkStreaming = setInterval(() => {
             // We've loaded enough to start playing
-            if (self.audioReadyToPlay()) {
+            if (this.audioReadyToPlay()) {
                 clearInterval(checkStreaming);
-                self.trigger("readyToPlay");
+                this.setState({isAudioLoaded: true});
             }
         }, 16);
 
@@ -791,6 +774,14 @@ class LiveEditor extends Component {
         return this.player &&
             (this.player.bytesLoaded > 0 || this.player.loaded);
     }
+
+    togglePlayingState = function() {
+        if (this.record.playing) {
+            this.record.pausePlayback();
+        } else {
+            this.record.play();
+        }
+    };
 
     bindPlayerHandlers() {
         var self = this;
@@ -848,155 +839,105 @@ class LiveEditor extends Component {
             playStarted: (e, resume) => {
                 // Re-init if the recording version is different from
                 // the scratchpad's normal version
-                self.config.switchVersion(record.getVersion());
+                this.config.switchVersion(record.getVersion());
 
                 // We're starting over so reset the editor and
                 // canvas to its initial state
                 if (!record.recording && !resume) {
                     // Reset the editor
-                    self.editor.reset(record.initData.code, false);
+                    this.aceWrapperRef.current.reset(record.initData.code, false);
 
                     // Clear and hide the drawing area
-                    self.drawCanvas.clear(true);
-                    self.drawCanvas.endDraw();
+                    // TODO!!
+                    //self.drawCanvas.clear(true);
+                    //self.drawCanvas.endDraw();
                 }
-
-                if (!record.recording) {
-                    // Disable the record button during playback
-                    self.$el.find("#record").addClass("disabled");
-                }
-
-                // During playback disable the restart button
-                this.setState({enableRestart: false});
+                this.aceWrapperRef.current.unfold();
 
                 if (!record.recording) {
                     // Turn on playback-related styling
-                    $("html").addClass("playing");
-
-                    // Show an invisible overlay that blocks interactions with
-                    // the editor and canvas areas (preventing the user from
-                    // being able to disturb playback)
-                    self.$el.find(".disable-overlay").show();
+                    document.querySelector("html").classList.add("playing");
                 }
 
-                self.editor.unfold();
-
-                // Activate the play button
-                self.$el.find(self.dom.PLAYBAR_PLAY)
-                    .find("span")
-                    .removeClass("glyphicon-play icon-play")
-                    .addClass("glyphicon-pause icon-pause");
+                this.setState({isPlaying: true});
+                // During playback, disable recording
+                // TODO: Can probably remove this, if this is entirely
+                //  a function of isPlaying
+                this.setState({enableRecording: false});
             },
 
-            playEnded: function() {
+            playEnded: () => {
                 // Re-init if the recording version is different from
                 // the scratchpad's normal version
-                self.config.switchVersion(this.initialVersion);
+                this.config.switchVersion(this.props.version);
+                this.setState({isPlaying: false});
             },
 
             // Playback of a recording has been paused
-            playPaused: function() {
+            playPaused: () => {
+                this.setState({isPlaying: false});
+
+                // Re-enable recording after playback
+                // TODO: Can probably remove this, if this is entirely
+                //  a function of isPlaying
+                this.setState({enableRecording: true});
+
                 // Turn off playback-related styling
-                $("html").removeClass("playing");
-
-                // Disable the blocking overlay
-                self.$el.find(".disable-overlay").hide();
-
-                // Allow the user to restart the code again
-                this.setState({enableRestart: true});
-
-                // Re-enable the record button after playback
-                self.$el.find("#record").removeClass("disabled");
-
-                // Deactivate the play button
-                self.$el.find(self.dom.PLAYBAR_PLAY)
-                    .find("span")
-                    .addClass("glyphicon-play icon-play")
-                    .removeClass("glyphicon-pause icon-pause");
+                document.querySelector("html").classList.remove("playing");
             },
 
             // Recording has begun
-            recordStarted: function() {
+            recordStarted: () => {
                 // Let the output know that recording has begun
-                self.postFrame({ recording: true });
-
-                self.$el.find("#draw-widgets").removeClass("hidden").show();
-
-                // Hides the invisible overlay that blocks interactions with the
-                // editor and canvas areas (preventing the user from being able
-                // to disturb the recording)
-                self.$el.find(".disable-overlay").hide();
+                this.postFrame({ recording: true });
 
                 // Allow the editor to be changed
-                self.editor.setReadOnly(false);
+                this.aceWrapperRef.current.setReadOnly(false);
 
                 // Turn off playback-related styling
                 // (hides hot numbers, for example)
-                $("html").removeClass("playing");
+                document.querySelector("html").classList.remove("playing");
 
                 // Reset the canvas to its initial state only if this is the
                 // very first chunk we are recording.
                 if (record.hasNoChunks()) {
-                    self.drawCanvas.clear(true);
-                    self.drawCanvas.endDraw();
+                    // TODO: Use ref or props
+                    this.drawCanvas.clear(true);
+                    this.drawCanvas.endDraw();
                 }
-
-                // Disable the save button
-                self.$el.find("#save-button, #fork-button")
-                    .addClass("disabled");
-
-                // Activate the recording button
-                self.$el.find("#record").addClass("toggled");
             },
 
             // Recording has ended
-            recordEnded: function() {
+            recordEnded: () => {
                 // Let the output know that recording has ended
-                self.postFrame({ recording: false });
+                this.postFrame({ recording: false });
 
                 if (record.recordingAudio) {
-                    self.recordView.stopRecordingAudio();
+                    this.recordView.stopRecordingAudio();
                 }
-
-                // Re-enable the save button
-                self.$el.find("#save-button, #fork-button")
-                    .removeClass("disabled");
-
-                // Enable playbar UI
-                self.$el.find(self.dom.PLAYBAR_UI)
-                    .removeClass("ui-state-disabled");
-
-                // Return the recording button to normal
-                self.$el.find("#record").removeClass("toggled disabled");
 
                 // Stop any sort of user playback
                 record.stopPlayback();
 
-                // Show an invisible overlay that blocks interactions with the
-                // editor and canvas areas (preventing the user from being able
-                // to disturb the recording)
-                self.$el.find(".disable-overlay").show();
-
                 // Turn on playback-related styling (hides hot numbers, for
                 // example)
-                $("html").addClass("playing");
+                document.querySelector("html").classList.add("playing");
 
                 // Prevent the editor from being changed
-                self.editor.setReadOnly(true);
-
-                self.$el.find("#draw-widgets").addClass("hidden").hide();
+                this.aceWrapperRef.current.setReadOnly(true);
 
                 // Because we are recording in chunks, do not reset the canvas
                 // to its initial state.
-                self.drawCanvas.endDraw();
+                this.drawCanvas.endDraw();
             }
         });
 
         // ScratchpadCanvas mouse events to track
         // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
-        this.mouseCommands.forEach((name) => {
+        const mouseCommands = ["move", "over", "out", "down", "up"];
+        mouseCommands.forEach((name) => {
             // Handle the command during playback
-            record.handlers[name] = function(x, y) {
+            record.handlers[name] = (x, y) => {
                 this.postFrame({
                     mouseAction: {
                         name: name,
@@ -1043,6 +984,12 @@ class LiveEditor extends Component {
         this.record && this.record.log("restart");
     }
 
+    handleOverlayClick() {
+        // If the user clicks the disable overlay (which is laid over
+        // the editor and canvas on playback) then pause playback.
+        this.record.pausePlayback();
+    }
+
     handleRecordClick (callback) {
         // If we're already recording, stop
         if (this.record.recording) {
@@ -1071,6 +1018,18 @@ class LiveEditor extends Component {
         }
     }
 
+    handleRecordColorClick(color) {
+        this.setState({drawingColor: color});
+        this.aceWrapperRef.current.focus();
+    }
+
+    handleRecordClearClick() {
+        this.setState({drawingColor: null});
+        this.drawCanvas.clear();
+        this.drawCanvas.endDraw();
+        this.aceWrapperRef.current.focus();
+    }
+
     startRecording () {
         this.bindRecordHandlers();
 
@@ -1093,8 +1052,8 @@ class LiveEditor extends Component {
                 config: this.config,
                 workersDir: workersDir,
                 drawCanvas: this.drawCanvas,
-                transloaditTemplate: this.transloaditTemplate,
-                transloaditAuthKey: this.transloaditAuthKey
+                transloaditTemplate: this.props.transloaditTemplate,
+                transloaditAuthKey: this.props.transloaditAuthKey
             });
         }
 
@@ -1108,8 +1067,8 @@ class LiveEditor extends Component {
         }
 
         var transloadit = new TransloaditXhr({
-            authKey: this.transloaditAuthKey,
-            templateId: this.transloaditTemplate,
+            authKey: this.props.transloaditAuthKey,
+            templateId: this.props.transloaditTemplate,
             steps: steps,
             successCb: function(results) {
                 this.recordingMP3 =
@@ -1127,23 +1086,9 @@ class LiveEditor extends Component {
     // We call this function multiple times, because the
     // endTime value may change as we load the file
     updateDurationDisplay () {
-        // Do things that are dependent on knowing duration
-
         // This gets called if we're loading while we're playing,
         // so we need to update with the current time
-        this.updateTimeLeft(this.record.currentTime());
-
-        // Set the duration of the progress bar based upon the track duration
-        // Slider position is set in seconds
-        this.$el.find(this.dom.PLAYBAR_PROGRESS).slider("option", "max",
-            this.record.endTime() / 1000);
-    }
-
-    // Update the time left in playback of the track
-    updateTimeLeft (time) {
-        // Update the time indicator with a nicely formatted time
-        this.$el.find(".scratchpad-playbar-timeleft").text(
-            "-" + this.formatTime(this.record.endTime() - time));
+        this.setState({audioCurrentTime: this.record.currentTime()});
     }
 
     // Utility method for formatting time in minutes/seconds
@@ -1162,13 +1107,6 @@ class LiveEditor extends Component {
 
     // Seek the player to a particular time
     seekTo(timeMS) {
-        // Don't update the slider position when seeking
-        // (since this triggers an event on the #progress element)
-        if (!this.record.seeking) {
-            this.$el.find(this.dom.PLAYBAR_PROGRESS)
-                .slider("option", "value", timeMS / 1000);
-        }
-
         // Move the recording and player positions
         if (this.record.seekTo(timeMS) !== false) {
             this.player.setPosition(timeMS);
@@ -1449,7 +1387,7 @@ class LiveEditor extends Component {
                 validate: this.validation || "",
                 noLint: this.noLint,
                 version: this.config.curVersion(),
-                settings: this.settings || {},
+                settings: this.props.settings || {},
                 workersDir: this.workersDir,
                 externalsDir: this.externalsDir,
                 imagesDir: this.imagesDir,
@@ -1484,7 +1422,6 @@ class LiveEditor extends Component {
         // If runCode takes more than 500ms then runDone will be called and we
         // set the state back to "clean".
         if (this.outputState === "clean") {
-            console.log("In markDirty, running code")
             // We will run at the end of this code block
             // This stops replace from trying to execute code
             // between deleting the old code and adding the new code
@@ -1514,14 +1451,14 @@ class LiveEditor extends Component {
     }
 
     updateCanvasSize(width, height) {
-        width = width || this.defaultOutputWidth;
-        height = height || this.defaultOutputHeight;
+        width = width || this.props.outputWidth;
+        height = height || this.props.outputHeight;
 
         this.$el.find(this.dom.CANVAS_WRAP).width(width);
         this.$el.find(this.dom.ALL_OUTPUT).height(height);
 
         // Set the editor height to be the same as the canvas height
-        this.$el.find(this.dom.EDITOR).height(this.editorHeight || height);
+        this.$el.find(this.dom.EDITOR).height(this.props.editorHeight || height);
 
         this.trigger("canvasSizeUpdated", {
             width: width,
@@ -1753,9 +1690,6 @@ const styles = StyleSheet.create({
     },
     editorTabDocument: {
         position: "static",
-    },
-    noBorder: {
-        border: "none",
     },
     inputFrame: {
         height: "100%",

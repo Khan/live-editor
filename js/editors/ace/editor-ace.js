@@ -10,6 +10,7 @@ import {StyleSheet, css} from "aphrodite/no-important";
 
 const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
+import SharedStyles from "../../ui/shared-styles.js";
 require("../../ui/tooltips/color-picker.js");
 //require("../../ui/tooltips/number-scrubber.js");
 //require("../../ui/tooltips/number-scrubber-click.js");
@@ -61,6 +62,7 @@ class AceEditorWrapper extends Component {
         this.record = props.record;
 
         this.handleMouseDown = this.handleMouseDown.bind(this);
+        this.handleClick = this.handleClick.bind(this);
     }
 
     componentDidMount() {
@@ -72,9 +74,7 @@ class AceEditorWrapper extends Component {
 
         // Bind the recording logic first. Should always happen before
         // other events (such as the tooltip engine)
-        if (this.record) {
-           this.bindRecord();
-        }
+        this.bindRecord();
 
         // TODO(bbondy): Support multiple content types for autosuggest.
         if (tooltips[this.props.type].indexOf("autoSuggest") !== -1) {
@@ -131,20 +131,20 @@ class AceEditorWrapper extends Component {
         });
 
         this.editor.on("change", () => {
-            this.props.onChanged(this.text());
+            this.props.onChange(this.text());
             if (this.editor.curOp && this.editor.curOp.command.name) {
-                this.props.onUserChanged(this.text());
+                this.props.onUserChange(this.text());
             }
         });
-        this.editor.on("click", () => {
-            this.props.onClicked();
+        this.editor.on("click", (e) => {
+            this.props.onClick();
         });
         this.editor.selection.on("changeCursor", () => {
-            this.props.onChangedCursor();
+            this.props.onChangeCursor();
             this.handleTooltipableEvent();
         });
         this.editor.selection.on("changeSelection", () => {
-            this.props.onChangedCursor();
+            this.props.onChangeCursor();
         });
         this.editor.session.getDocument().on("change", (e) => {
             if (this.tooltipsEnabled) { // TODO: Where to store/set?
@@ -263,10 +263,11 @@ class AceEditorWrapper extends Component {
                  <div
                     ref={this.editorRef}
                     onMouseDown={this.handleMouseDown}
+                    onClick={this.handleClick}
                     className={classNames(
                         "scratchpad-editor",
                         "scratchpad-ace-editor",
-                        css(styles.inputFrame, styles.noBorder),
+                        css(styles.inputFrame, SharedStyles.noBorder),
                     )}
                     style={{height: "400px"}}
                 />
@@ -277,6 +278,13 @@ class AceEditorWrapper extends Component {
 
     handleMouseDown() {
         this.handleTooltipableEvent({action: "click"});
+    }
+
+    handleClick(e) {
+        if (e.target.classList.contains("ace_error")) {
+            const lineNum = parseInt(e.target.innerText, 10);
+            this.props.onGutterErrorClick(lineNum);
+        }
     }
 
     handleTooltipableEvent(source) {
@@ -300,17 +308,16 @@ class AceEditorWrapper extends Component {
         var record = this.record;
         var doc = editor.session.doc;
 
-        // Track text change events
+        // For recording: track text change events
         doc.on("change", function(eventInfo) {
             var start = eventInfo.start;
             var end = eventInfo.end;
-
             if (eventInfo.action.indexOf("insert") === 0) {
                 var insert = eventInfo.lines || eventInfo.text;
-                self.record.log(eventInfo.lines.action,
+                self.record.log(eventInfo.action,
                     start.row, start.column, end.row, end.column, insert);
             } else {
-                self.record.log(eventInfo.lines.action,
+                self.record.log(eventInfo.action,
                     start.row, start.column, end.row, end.column);
             }
         }, true);
@@ -324,37 +331,41 @@ class AceEditorWrapper extends Component {
         editor.selection.addEventListener("changeSelection",
             this.handleSelect.bind(this), true);
 
-        // Add in record playback handlers
+        // For playback: Add in record command handlers
         var docOperations = [
             "insertText",
             "insertLines",
             "removeText",
             "removeLines"
         ];
-
         docOperations.forEach((op) => {
             record.handlers[op] = function(startRow, startCol, endRow, endCol,
                     data) {
-                var delta = {
+                const delta = {
                     action: op,
-                    range: {
-                        start: {
-                            row: startRow,
-                            column: startCol
-                        },
-                        end: {
-                            row: endRow,
-                            column: endCol
-                        }
+                    start: {
+                        row: startRow,
+                        column: startCol
+                    },
+                    end: {
+                        row: endRow,
+                        column: endCol
                     }
                 };
 
                 if (op === "insertText") {
-                    delta.text = data;
+                    delta.action = "insert";
+                    delta.lines = [data];
+                    if (data === "\n") {
+                        delta.lines = ["", ""]
+                    }
                 } else if (op === "insertLines") {
                     delta.lines = data;
+                    delta.action = "insert";
                 }
-
+                if (op === "removeText" || op === "removeLines") {
+                    delta.action = "remove";
+                }
                 doc.applyDeltas([delta]);
             };
         });
@@ -644,9 +655,6 @@ class AceEditorWrapper extends Component {
 }
 
 const styles = StyleSheet.create({
-    noBorder: {
-        border: "none",
-    },
     inputFrame: {
         height: "100% !important",
         position: "relative",

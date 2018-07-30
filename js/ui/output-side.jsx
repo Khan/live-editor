@@ -1,8 +1,11 @@
 const i18n = require("i18n");
 import classNames from 'classnames';
 import React, {Component} from "react";
+
 import {StyleSheet, css} from "aphrodite/no-important";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
+
+import SharedStyles from "./shared-styles.js";
 
 class OutputSide extends Component {
     static defaultProps = {
@@ -11,7 +14,6 @@ class OutputSide extends Component {
     }
 
     props: {
-        colors: Array<string>,
         execFile: string,
         sandboxProps: string,
         imagesDir: string,
@@ -45,7 +47,8 @@ class OutputSide extends Component {
                 ref={this.props.iframeRef}
                 onLoad={this.props.onOutputFrameLoaded}
                 className={css(
-                    styles.noBorder,
+                    SharedStyles.noBorder,
+                    SharedStyles.outputFullSize,
                     styles.outputFrame,
                     isResizable &&
                         hideEditor &&
@@ -59,17 +62,6 @@ class OutputSide extends Component {
         );
     }
 
-    renderDrawCanvas() {
-        return (
-            <canvas
-                className="scratchpad-draw-canvas"
-                style={{display: "none"}}
-                width={this.props.width}
-                height={this.props.height}
-            />
-        );
-    }
-
     render() {
         const isResizable = this.props.isResizable;
         const hideEditor = this.props.hideEditor;
@@ -79,6 +71,20 @@ class OutputSide extends Component {
             loadingOverlay = <div className={css(styles.loadingIcon)}>
                     <CircularSpinner size="large" />
                 </div>;
+        }
+
+        let disableOverlay;
+        // Show an invisible overlay that blocks interactions with
+        // the editor and canvas areas (preventing the user from
+        // being able to disturb playback)
+        if (this.props.showDisableOverlay) {
+            disableOverlay = <div
+                    className={css(
+                        SharedStyles.overlay,
+                        SharedStyles.disableOverlay,
+                    )}
+                    onClick={this.props.onDisableClick}
+                />;
         }
         return (
             <div
@@ -100,12 +106,8 @@ class OutputSide extends Component {
                     )}
                 >
                     {this.renderOutputFrame()}
-                    {this.renderDrawCanvas()}
-
-                    <div
-                        className="overlay disable-overlay"
-                        style={{display: "none"}}
-                    />
+                    {this.props.drawCanvas}
+                    {disableOverlay}
                     {this.props.errorBuddy}
                     {loadingOverlay}
                 </div>
@@ -117,9 +119,6 @@ class OutputSide extends Component {
 const defaultDim = 400;
 
 const styles = StyleSheet.create({
-    noBorder: {
-        border: "none",
-    },
     output: {
         border: "none",
         margin: "auto",
