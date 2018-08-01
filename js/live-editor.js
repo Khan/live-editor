@@ -6,7 +6,8 @@ const _ = require("lodash");
 
 import classNames from 'classnames';
 import React, {Component} from "react";
-import ReactDOM from "react-dom";
+import Button from "@khanacademy/wonder-blocks-button";
+import IconButton from "@khanacademy/wonder-blocks-icon-button";
 import {StyleSheet, css} from "aphrodite/no-important";
 
 const i18n = require("i18n");
@@ -17,16 +18,14 @@ const ErrorBuddy = require("./ui/tipbar.jsx");
 const ErrorBuddyMini = require("./ui/errorbuddy-mini.jsx");
 const OutputSide = require("./ui/output-side.jsx");
 const RestartButton = require("./ui/restart-button.jsx");
-import SharedStyles from "./ui/shared-styles.js";
 const ScratchpadConfig = require("./shared/config.js");
 const ScratchpadRecordModel = require("./shared/record.js");
 const RecordControls = require("./ui/record-controls.jsx");
 const PlaybackBar = require("./ui/playback-bar.jsx");
 const Structured = require("../external/structuredjs/structured.js");
+const utils = require("./shared/utils.js");
 
 import "../css/ui/flashblock.css";
-import { throws } from "assert";
-import { IncomingMessage } from "http";
 
 // TODO(kevinb) remove after challenges have been converted to use i18n._
 $._ = i18n._;
@@ -55,35 +54,62 @@ const clean = function(str) {
     return String(str).replace(/</g, "&lt;");
 };
 
-const qualifyURL = function(url) {
-    var a = document.createElement("a");
-    a.href = url;
-    return a.href;
-};
-
 const editors = {};
 
+// TODO!
+const dom = {
+    CANVAS_WRAP: ".scratchpad-canvas-wrap",
+    EDITOR: ".scratchpad-editor",
+    OUTPUT_FRAME: "#output-frame",
+    ALL_OUTPUT: "#output, #output-frame"
+}
+
 class LiveEditor extends Component {
+
+    props: {
+        // Basic configuration
+        code: string,
+        editorType: string,
+        outputType: string,
+        // File and folder paths
+        execFile: string,
+        externalsDir: string,
+        imagesDir: string,
+        jshintFile: string,
+        soundsDir: string,
+        workersDir: string,
+        redirectUrl: string,
+        // Additional options
+        outputWidth: number,
+        outputHeight: number,
+        editorHeight: string,
+        version: string,
+        sandboxProps: string,
+        settings: Object,
+        autoFocus: boolean,
+        hideEditor: boolean,
+        cursor: Object,
+        enableLoopProtect: boolean,
+        restartLabel: string,
+        // For talkthroughs
+        recordingInit: Object,
+        recordingCommands: Array,
+        recordingMP3: string,
+        youtubeUrl: string,
+        // For challenges
+        validation: Array,
+        // For recording
+        transloaditAuthKey: string,
+        transloaditTemplate: string,
+        // Parent callbacks
+        onOutputUpdated: Function,
+        onUserChanged: Function,
+        onCodeRun: Function,
+    };
 
     static defaultProps = {
         outputWidth: 400,
         outputHeight: 400
-    }
-
-    props: {
-        hideEditor: boolean,
-        version: string,
-        execFile: string
-    };
-
-    errorCursorRow: null
-    showError: null
-
-    dom: {
-        CANVAS_WRAP: ".scratchpad-canvas-wrap",
-        EDITOR: ".scratchpad-editor",
-        OUTPUT_FRAME: "#output-frame",
-        ALL_OUTPUT: "#output, #output-frame"
     }
 
     constructor(props) {
@@ -117,12 +143,12 @@ class LiveEditor extends Component {
         this.outputState = "dirty";
 
         // Process all the URLs
-        this.workersDir = qualifyURL(props.workersDir);
-        this.externalsDir = qualifyURL(props.externalsDir);
-        this.imagesDir = qualifyURL(props.imagesDir);
+        this.workersDir = utils.qualifyURL(props.workersDir);
+        this.externalsDir = utils.qualifyURL(props.externalsDir);
+        this.imagesDir = utils.qualifyURL(props.imagesDir);
         this.soundsDir = props.soundsDir;
-        this.execFile = props.execFile ? qualifyURL(props.execFile) : "";
-        this.jshintFile = qualifyURL(props.jshintFile ||
+        this.execFile = props.execFile ? utils.qualifyURL(props.execFile) : "";
+        this.jshintFile = utils.qualifyURL(props.jshintFile ||
             this.externalsDir + "jshint/jshint.js");
         this.redirectUrl = props.redirectUrl;
 
@@ -205,11 +231,6 @@ class LiveEditor extends Component {
                     self.editor.once("changeCursor", cursorDirty);
                 }, 0);
             }
-            // This makes sure that we pop up the error
-            // if the user changed the cursor to a new line
-            setTimeout(function() {
-                self.maybeShowErrors();
-            }, 0);
         };
         //this.aceWrapperRef.once("changeCursor", cursorDirty);
 
@@ -222,62 +243,18 @@ class LiveEditor extends Component {
         });
     }
 
-    /**
-     * Returns a boolean determining if the user's code has some non-deterministic
-     * code running (and thus should have the restart button shown).
-     */
-    shouldShowRestart() {
-        const currentCode = this.aceWrapperRef.current.text();
+    componentWillUnmount() {
+        window.removeEventListener("message", this.handleMessages);
+    }
 
-        if (this.props.outputType === "webpage") {
-            if (currentCode.match(/<script>/) || currentCode.match(/animation:/)) {
-                return true;
-            }
-        } else if (this.props.outputType === "pjs") {
-            var checks = [
-                "function(){var draw = function(){};}",
-                "function(){draw = function(){};}",
-                "function(){var mousePressed = function(){};}",
-                "function(){var mouseReleased = function(){};}",
-                "function(){var mouseMoved = function(){};}",
-                "function(){var mouseClicked = function(){};}",
-                "function(){var keyPressed = function(){};}",
-                "function(){mousePressed = function(){};}",
-                "function(){mouseReleased = function(){};}",
-                "function(){mouseMoved = function(){};}",
-                "function(){mouseClicked = function(){};}",
-                "function(){keyPressed = function(){};}",
-                "function(){random();}",
-                "function(){var _ = new Random();}",
-                "function(){var _ = random();}",
-            ];
-
-            try {
-                // Don't worry, StructuredJS caches the parsing of the code and
-                // the structure tests!
-                for (var i = 0; i < checks.length; i++) {
-                    if (Structured.match(currentCode, checks[i])) {
-                        return true;
-                    }
-                }
-                return false;
-            } catch (e) {
-                // Don't have to do anything on syntax error, just ignore it
-                // and leave the restart button in its current state.
-            }
-        }
-
-        return false;
-    };
-
-    renderErrorBuddy () {
+    renderErrorBuddy() {
         const props = {
             errors: this.state.errors,
             errorNum: this.state.errorNum,
             isHidden: !this.state.showErrorPopup,
             onErrorShowRequested: (error) => {
-                this.aceWrapperRef.current.setCursor(error);
-                this.aceWrapperRef.current.setErrorHighlight(true);
+                this.setState({highlightErrorReq: {
+                    error: error, timestamp: Date.now()}});
             },
             onDismissed: (error) => {
                 this.setState({
@@ -328,6 +305,9 @@ class LiveEditor extends Component {
             ref: this.aceWrapperRef,
             code: this.props.code,
             autoFocus: this.props.autoFocus,
+            errors: this.state.errors,
+            warnings: this.state.warnings,
+            highlightErrorReq: this.state.highlightErrorReq,
             cursor: this.props.cursor,
             config: this.config,
             record: this.record,
@@ -347,15 +327,18 @@ class LiveEditor extends Component {
                     this.props.onUserChanged && this.props.onUserChanged(code);
                 }
             },
-            onChangeCursor: () => {
-                this.markDirty();
+            onChangeCursor: (cursor) => {
+                this.setState({editorCursor: cursor});
+                // This makes sure that we pop up the error
+                // if the user changed the cursor to a new line
+                this.maybeShowErrors();
             },
             onClick: () => {
                 // TODO: make big play go away
                 this.setState({editorClicked: true});
             },
-            onGutterErrorClick: (lineNum) => {
-                this.setErrorState(this.gutterDecorations[lineNum]);
+            onGutterErrorClick: (errorNum) => {
+                this.setErrorState(errorNum);
             }
         };
 
@@ -363,10 +346,10 @@ class LiveEditor extends Component {
         // is used in the runCode step so skipping linting won't work in that
         // environment without some more work
         if (this.editorType === "ace_pjs") {
-            props.onScrubbingStarted = () => {
+            props.onScrubbingStart = () => {
                 this.noLint = true;
             };
-            props.onScrubbingEnded = () => {
+            props.onScrubbingEnd = () => {
                 this.noLint = false;
             };
         }
@@ -374,7 +357,7 @@ class LiveEditor extends Component {
         return React.createElement(editors[this.editorType], props);
     }
 
-    renderEditorSide () {
+    renderEditorSide() {
         const extraProps = {
             hasAudio: this.hasAudio(),
             showYoutubeLink: !this.state.isAudioLoaded,
@@ -410,18 +393,18 @@ class LiveEditor extends Component {
                 />
             ]
         }
-        const props = Object.assign({}, this.props, extraProps)
+        const props = Object.assign({}, this.props, extraProps);
         return <EditorSide {...props}/>;
     }
 
-    initResizing () {
+    initResizing() {
         if (this.isResizable()) {
             var minCanvas = 400;
             var minEditor = 410;
 
-            var $handle = $(this.dom.DRAG_HANDLE);
-            var $outputFrame = $(this.dom.OUTPUT_FRAME);
-            var $scratchpadWrap = $(this.dom.SCRATCHPAD_WRAP);
+            var $handle = $(dom.DRAG_HANDLE);
+            var $outputFrame = $(dom.OUTPUT_FRAME);
+            var $scratchpadWrap = $(dom.SCRATCHPAD_WRAP);
 
             $handle.on("mousedown", function(e) {
                 var initialPX = e.pageX;
@@ -604,46 +587,55 @@ class LiveEditor extends Component {
         );
     }
 
-    render() {
-        return (
-            <div
-                className={classNames(
-                    "scratchpad-wrap",
-                    this.props.execFile ? "" : "no-output",
-                    css(
-                        styles.wrap,
-                        this.props.hideEditor &&
-                            isResizable &&
-                            styles.wrapNoEditorResizable,
-                    ),
-                )}
-            >
-            <div
-                className={css(
-                    styles.wrapOuter,
-                    !this.props.hideEditor &&
-                        styles.wrapBorder,
-                )}
-            >
-                <div className={css(styles.wrapInner)}>
-                    {this.renderEditorSide()}
-                    {this.renderDragHandle()}
-                    {this.renderOutputSide()}
-                </div>
-                {this.renderPlaybackBar()}
-                {this.renderRecordColorButtons()}
-                {this.renderRecordButton()}
-                {this.renderRecordControls()}
-            </div>
-        </div>
-        );
-    }
+    /**
+     * Returns a boolean determining if the user's code has some non-deterministic
+     * code running (and thus should have the restart button shown).
+     */
+    shouldShowRestart() {
+        const currentCode = this.aceWrapperRef.current.text();
 
-    componentWillUnmount() {
-        window.removeEventListener("message", this.handleMessages);
-    }
+        if (this.props.outputType === "webpage") {
+            if (currentCode.match(/<script>/) || currentCode.match(/animation:/)) {
+                return true;
+            }
+        } else if (this.props.outputType === "pjs") {
+            var checks = [
+                "function(){var draw = function(){};}",
+                "function(){draw = function(){};}",
+                "function(){var mousePressed = function(){};}",
+                "function(){var mouseReleased = function(){};}",
+                "function(){var mouseMoved = function(){};}",
+                "function(){var mouseClicked = function(){};}",
+                "function(){var keyPressed = function(){};}",
+                "function(){mousePressed = function(){};}",
+                "function(){mouseReleased = function(){};}",
+                "function(){mouseMoved = function(){};}",
+                "function(){mouseClicked = function(){};}",
+                "function(){keyPressed = function(){};}",
+                "function(){random();}",
+                "function(){var _ = new Random();}",
+                "function(){var _ = random();}",
+            ];
 
-    canRecord () {
+            try {
+                // Don't worry, StructuredJS caches the parsing of the code and
+                // the structure tests!
+                for (var i = 0; i < checks.length; i++) {
+                    if (Structured.match(currentCode, checks[i])) {
+                        return true;
+                    }
+                }
+                return false;
+            } catch (e) {
+                // Don't have to do anything on syntax error, just ignore it
+                // and leave the restart button in its current state.
+            }
+        }
+
+        return false;
+    };
+
+    canRecord() {
         return this.props.transloaditAuthKey && this.props.transloaditTemplate;
     }
 
@@ -655,7 +647,7 @@ class LiveEditor extends Component {
         return !!this.props.recordingMP3;
     }
 
-    setupAudio () {
+    setupAudio() {
         if (!this.hasAudio()) {
             return;
         }
@@ -700,7 +692,7 @@ class LiveEditor extends Component {
         this.bindRecordHandlers();
     }
 
-    audioInit () {
+    audioInit() {
         if (!this.hasAudio()) {
             return;
         }
@@ -738,7 +730,7 @@ class LiveEditor extends Component {
             // Hook audio playback into Record command playback
             // Define callbacks rather than sending the function directly so
             // that the scope in the Record methods is correct.
-            onplay: function () {
+            onplay: function() {
                 record.play();
             },
             onresume: function() {
@@ -786,7 +778,7 @@ class LiveEditor extends Component {
         this.bindPlayerHandlers();
     }
 
-    audioReadyToPlay () {
+    audioReadyToPlay() {
         // NOTE(pamela): We can't just check bytesLoaded,
         //  because IE reports null for that
         // (it seems to not get the progress event)
@@ -847,7 +839,7 @@ class LiveEditor extends Component {
         });
     }
 
-    bindRecordHandlers () {
+    bindRecordHandlers() {
         var self = this;
         var record = this.record;
 
@@ -1077,7 +1069,7 @@ class LiveEditor extends Component {
 
     // We call this function multiple times, because the
     // endTime value may change as we load the file
-    updateDurationDisplay () {
+    updateDurationDisplay() {
         // This gets called if we're loading while we're playing,
         // so we need to update with the current time
         this.setState({audioCurrentTime: this.record.currentTime()});
@@ -1174,15 +1166,14 @@ class LiveEditor extends Component {
         }
 
         if (this.editorType.indexOf("ace_") === 0 && data.results) {
-            // Remove previously added markers
-            this.aceWrapperRef.current.removeMarkers();
+
+            let warnings = [];
             if (data.results.assertions || data.results.warnings) {
-                // Add gutter warning markers in the editor. For examples:
+                // Results of assertion failures and lint warnings. For example:
                 //  Write `Program.assertEqual(2, 4);` in ProcessingJS editor
                 //  Write "backgrund: grey" in  webpage editor
-                const annotations =
-                    data.results.assertions.concat(data.results.warnings)
-                    .map((lineMsg) =>{
+                warnings = data.results.assertions.concat(data.results.warnings)
+                    .map((lineMsg) => {
                         return {
                             // Coerce to the expected type
                             row: +lineMsg.row,
@@ -1193,10 +1184,8 @@ class LiveEditor extends Component {
                             type: "warning"
                         }
                     });
-                this.aceWrapperRef.current.showGutterWarnings(annotations);
-            } else {
-                this.aceWrapperRef.current.showGutterWarnings([]);
             }
+            this.setState({warnings});
         }
 
         if (data.results && Array.isArray(data.results.errors)) {
@@ -1226,74 +1215,52 @@ class LiveEditor extends Component {
     }
 
     handleErrors (errors) {
-        // Our new, less-aggressive way of handling errors:
-        // We want to check if the errors we see are caused by the line the
-        // user is currently on, and that they have just typed them, and if so
-        // give the user some time to finish what they were typing.
+        /* Our current less-aggressive way of handling errors:
+         * When a user makes an error, we immediately:
+         *   - show an icon in the gutter
+         *   - underline the current line
+         *   - display a thinking error buddy
+         * We only pop up the error buddy if:
+         *   - they just loaded the editor, and the error was already there
+         *   - they have made an error on the line that they're not currently on
+         *   - a minute has passed since they last typed
+         */
 
-        // When you start with no errors, the errorCursorRow is null.
-        // When you make an error, the errorCursorRow is set to the current row.
-        // When we register another error, we check if the errorCursorRow is the
-        // same as the current row:
-        //  -if it is, we set a timer for one minute of no typing before showing
-        //   you the error so you have a chance to finish what you're doing.
-        //  -if it is not, we show the error right away.
-
-        // Reset the timer
+        // Always clear the timeout
         window.clearTimeout(this.errorTimeout);
 
-        // Remove old gutter markers and decorations
-        this.aceWrapperRef.current.removeGutterErrors();
-
         if (errors.length) {
-            // Show errors in gutter
-            this.gutterDecorations = {};
-            errors.map((error, index) => {
-                // Create a log of which row corresponds with which error
-                // message so that when the user clicks a gutter marker they
-                // are shown the relevant error message.
-                if (this.gutterDecorations[error.row + 1] === null) {
-                    this.gutterDecorations[error.row + 1] = index;
-                }
-            });
-            this.aceWrapperRef.current.showGutterErrors(errors);
-            // Set the errors
+            // This state set triggers the Ace editor to display gutter errors
             this.setState({errors});
             this.maybeShowErrors();
-
         } else {
-            // If there are no errors, remove the gutter decorations that marked
-            // the errors and reset our state.
+            // This state set triggers the Ace editor to remove gutter errors
             this.setState({errors: []});
             this.setHappyState();
-            this.showError = false;
-            this.errorCursorRow = null;
         }
     }
 
-    maybeShowErrors () {
-
-        if (!this.state.errors.length || !this.editor || !this.aceWrapperRef.current.getCursor()) {
+    maybeShowErrors() {
+        if (!this.state.errors.length || !this.state.editorCursor) {
             return;
         }
 
-        var currentRow = this.aceWrapperRef.current.getCursor().row;
-        var onlyErrorsOnThisLine = this.errorCursorRow === null ||
-                                   this.errorCursorRow === currentRow;
-        if (this.errorCursorRow === null) {
-            this.errorCursorRow = currentRow;
-        }
-
+        const currentRow = this.state.editorCursor.row;
+        // Determine if there are errors on lines besides the current row
+        let onlyErrorsOnThisLine = true;
+        this.state.errors.forEach((error) => {
+            if (error.row !== currentRow) {
+                onlyErrorsOnThisLine = false;
+                return;
+            }
+        });
         // If we were already planning to show the error, or if there are
         // errors on more than the current line, or we have errors and the
-        // program was just loaded (i.e. this.showError is null) then we
-        // should show the error now. Otherwise we'll delay showing the
-        // error message to give them time to type.
-        this.showError = this.showError ||
-                         !onlyErrorsOnThisLine ||
-                         this.showError === null;
+        // program was just loaded, then we show the error popup now.
+        // Otherwise we'll delay showing the error message
+        // to give them time to type.
 
-        if (this.showError) {
+        if (this.state.showErrorPopup || !onlyErrorsOnThisLine) {
             // We've already timed out or moved to another line, so show
             // the error.
             this.setErrorState();
@@ -1350,14 +1317,14 @@ class LiveEditor extends Component {
             JSON.stringify(data), this.postFrameOrigin());
     }
 
-    hasFrame () {
+    hasFrame() {
         return !!(this.execFile);
     }
 
     /*
      * Restart the code in the output frame.
      */
-    restartCode () {
+    restartCode() {
         this.postFrame({ restart: true });
     }
 
@@ -1396,7 +1363,7 @@ class LiveEditor extends Component {
         }, 20)(code)
     }
 
-    markDirty () {
+    markDirty() {
         // makeDirty is called when you type something in the editor. When this
         // happens, we want to run the code, but also want to throttle how often
         // we re-run so we can wait for the results of running it to come back.
@@ -1433,7 +1400,7 @@ class LiveEditor extends Component {
 
     // This will either be called when we receive the results
     // Or it will timeout.
-    runDone () {
+    runDone() {
         clearTimeout(this.runTimeout);
         var lastOutputState = this.outputState;
         this.outputState = "clean";
@@ -1446,11 +1413,11 @@ class LiveEditor extends Component {
         width = width || this.props.outputWidth;
         height = height || this.props.outputHeight;
 
-        this.$el.find(this.dom.CANVAS_WRAP).width(width);
-        this.$el.find(this.dom.ALL_OUTPUT).height(height);
+        this.$el.find(dom.CANVAS_WRAP).width(width);
+        this.$el.find(dom.ALL_OUTPUT).height(height);
 
         // Set the editor height to be the same as the canvas height
-        this.$el.find(this.dom.EDITOR).height(this.props.editorHeight || height);
+        this.$el.find(dom.EDITOR).height(this.props.editorHeight || height);
 
         this.trigger("canvasSizeUpdated", {
             width: width,
@@ -1633,6 +1600,42 @@ class LiveEditor extends Component {
         });
 
         return errors;
+    }
+
+
+    render() {
+        return (
+            <div
+                className={classNames(
+                    "scratchpad-wrap",
+                    this.props.execFile ? "" : "no-output",
+                    css(
+                        styles.wrap,
+                        this.props.hideEditor &&
+                            isResizable &&
+                            styles.wrapNoEditorResizable,
+                    ),
+                )}
+            >
+            <div
+                className={css(
+                    styles.wrapOuter,
+                    !this.props.hideEditor &&
+                        styles.wrapBorder,
+                )}
+            >
+                <div className={css(styles.wrapInner)}>
+                    {this.renderEditorSide()}
+                    {this.renderDragHandle()}
+                    {this.renderOutputSide()}
+                </div>
+                {this.renderPlaybackBar()}
+                {this.renderRecordColorButtons()}
+                {this.renderRecordButton()}
+                {this.renderRecordControls()}
+            </div>
+        </div>
+        );
     }
 }
 

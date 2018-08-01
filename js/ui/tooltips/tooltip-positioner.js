@@ -1,7 +1,4 @@
 import React, {Component} from "react";
-const ReactDOM = require("react-dom");
-
-const TooltipUtils = require("./tooltip-utils.js");
 
 class TooltipPositioner extends Component {
 
@@ -46,7 +43,7 @@ class TooltipPositioner extends Component {
                             visibility: visStyle
                             }}>
                     {this.props.children}
-                    <div className="arrow"></div>
+                    <div className="arrow"/>
                 </div>;
     }
 }

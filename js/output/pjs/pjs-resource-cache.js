@@ -11,7 +11,8 @@ const walkAST = require("../shared/ast-walker.js");
 
 const PJSResourceCache = function(options) {
     this.canvas = options.canvas;   // customized Processing instance
-    this.output = options.output;   // LiveEditorOutput instance
+    this.imagesDir = options.imagesDir;
+    this.soundsDir = options.soundsDir;
     this.cache = {};
     this.imageHolder = null;
 
@@ -57,7 +58,7 @@ PJSResourceCache.prototype.loadResource = function(filename) {
 
 PJSResourceCache.prototype.loadImage = function(filename) {
     var deferred = $.Deferred();
-    var path = this.output.imagesDir + filename;
+    var path = this.imagesDir + filename;
     var img = document.createElement("img");
 
     img.onload = function() {
@@ -100,7 +101,7 @@ PJSResourceCache.prototype.loadSound = function(filename) {
         deferred.resolve();
     }.bind(this);
 
-    audio.src = this.output.soundsDir + filename;
+    audio.src = this.soundsDir + filename;
 
     return deferred;
 };

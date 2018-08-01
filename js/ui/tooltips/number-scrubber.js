@@ -102,7 +102,7 @@ const NumberScrubber = TooltipBase.extend({
                 start: function(e, ui) {
                     self.$el.addClass("dragging");
                     $(this).css("visibility", "hidden");
-                    self.props.onScrubbingStarted();
+                    self.props.onScrubbingStart();
                     // The text-to-be-tweaked needs to be the same length at the start and end
                     // of the anti-undo changes.
                     // I could probably just remember the length, but I like putting back the

@@ -15,7 +15,7 @@ const ScratchpadAudioChunks = Backbone.Model.extend({
     },
 
     currentChunkExists: function() {
-        return !_.isNull(this.currentChunk);
+        return this.currentChunk !== null;
     },
 
     startNewChunk: function() {
@@ -39,3 +39,5 @@ const ScratchpadAudioChunks = Backbone.Model.extend({
         return this.audioChunks;
     }
 });
+
+module.exports = ScratchpadAudioChunks;

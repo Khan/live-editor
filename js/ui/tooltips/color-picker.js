@@ -2,7 +2,6 @@
 /* eslint-disable no-var */
 /* TODO: Fix the lint errors */
 import React, {Component} from "react";
-const ReactDOM = require("react-dom");
 import {StyleSheet, css} from "aphrodite/no-important";
 
 const FullColorPicker = require("./color-picker-full.js");
@@ -20,8 +19,8 @@ class ColorPicker extends Component {
         editor: Object,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
-        onScrubbingStarted: Function,
-        onScrubbingEnded: Function,
+        onScrubbingStart: Function,
+        onScrubbingEnd: Function,
         // Specific to ColorPicker
         editorType: string,
 
@@ -46,7 +45,7 @@ class ColorPicker extends Component {
 
     handleMouseEnter = () => {
         this.setState({showFullPicker: true});
-        this.props.onScrubbingStarted();
+        this.props.onScrubbingStart();
     }
 
     handleMouseLeave = () => {

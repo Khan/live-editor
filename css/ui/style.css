@@ -238,11 +238,6 @@ button.hilite {
     padding: 1px 4px;
     text-align: left;
 }
-#test-errors {
-    color: red;
-    position: absolute;
-    z-index: 1000000;
-}
 /**
  * == COMPONENTS ========================================================
  * These styles correspond to self-contained graphical components

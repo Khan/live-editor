@@ -12,11 +12,11 @@ const isAfterAssignment = function(text) {
 
 // Returns true if we're inside an open parenthesis
 const isInParenthesis = function(text) {
-    var parenStack = [];
-    for (var i = 0; i < text.length; i++) {
-        if (text[i] in this.parens) {
+    const parenStack = [];
+    for (let i = 0; i < text.length; i++) {
+        if (text[i] in parens) {
             parenStack.unshift(text[i]);
-        } else if (parenStack && text[i] === this.parens[parenStack[0]]) {
+        } else if (parenStack && text[i] === parens[parenStack[0]]) {
             parenStack.shift();
         }
     }
@@ -39,8 +39,8 @@ const getInfoFromFileMatch = function(event) {
     const pieces = /^(\s*)(["']?[^)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
     const leading = pieces[1];
     const pathStart = paramsStart + leading.length;
-    let path = pieces[2];
-    let closing = pieces[3];
+    const path = pieces[2];
+    const closing = pieces[3];
 
     const shouldFill = (leading.length === 0 &&
             path.length === 0 &&

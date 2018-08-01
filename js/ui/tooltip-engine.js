@@ -1,10 +1,8 @@
 /* eslint-disable no-var */
 /* TODO: Fix the lint errors */
 const _ = require("lodash");
-const $ = require("jquery");
 
 import React, {Component} from "react";
-import ReactDOM from "react-dom";
 
 const ScratchpadAutosuggest = require("../ui/autosuggest.js");
 const TooltipUtils = require("./tooltips/tooltip-utils.js");
@@ -90,11 +88,11 @@ class TooltipEngine extends Component {
                     autofillEnabled: !this.state.autofillEnabled
                 },
                 this.props);
-            childProps.onScrubbingStarted = () => {
-                this.props.onScrubbingStarted(name);
+            childProps.onScrubbingStart = () => {
+                this.props.onScrubbingStart(name);
             };
-            childProps.onScrubbingEnded = () => {
-                this.props.onScrubbingEnded(name);
+            childProps.onScrubbingEnd = () => {
+                this.props.onScrubbingEnd(name);
             };
             childProps.onEventChecked = (foundMatch) => {
                 if (foundMatch) {

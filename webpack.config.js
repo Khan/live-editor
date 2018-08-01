@@ -34,18 +34,12 @@ const config = {
             "./js/shared/sounds.js",
             "./js/shared/config.js"
         ],
-        output_pjs: [
+        output_pjs_deps: [
             "./external/processing-js/processing.js",
-            "./external/jshint/jshint.js",
-            "esprima",
-            "escodegen",
-            "./external/structuredjs/",
-            "./js/output/pjs/pjs-output.js"
+            "./external/jshint/jshint.js"
         ],
-        output_webpage: [
-            "./external/html2canvas/html2canvas.js",
-            "./external/structuredjs/structured.js",
-            "./js/output/webpage/webpage-output.js"
+        output_webpage_deps: [
+            "./external/html2canvas/html2canvas.js"
         ],
         output_sql: [
             "./external/html2canvas/html2canvas.js",
@@ -78,8 +72,17 @@ const config = {
             "./js/editors/ace/editor-ace.global.js"
         ],
         // Used for demos
-        pjs_demo: [
+        demos_pjs: [
             "./demos/simple/pjs.js"
+        ],
+        demos_pjs_output: [
+            "./demos/simple/pjs_output.js"
+        ],
+        demos_webpage: [
+            "./demos/simple/webpage.js"
+        ],
+        demos_webpage_output: [
+            "./demos/simple/webpage_output.js"
         ],
         audio_demo: [
             "./demos/simple/audio.js"

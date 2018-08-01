@@ -1,36 +1,48 @@
 const _ = require("lodash");
 const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
+
+import React, {Component} from "react";
 
 const i18n = require("i18n");
 const ScratchpadConfig = require("../../shared/config.js");
+const utils = require("../../shared/utils.js");
 
 import "../../../css/output/style.css";
 
 // TODO(kevinb) remove after challenges have been converted to use i18n._
 $._ = i18n._;
 
-const LiveEditorOutput = Backbone.View.extend({
-    recording: false,
-    loaded: false,
-    outputs: {},
-    lintErrors: [],
-    runtimeErrors: [],
-    lintWarnings: [],
+const outputs = {};
 
-    initialize: function(options) {
-        this.render();
+class LiveEditorOutput extends Component {
 
-        this.setPaths(options);
+    props: {
+        useDebugger: boolean,
+        imagesDir: string,
+        redirectUrl: string
+    };
+
+    constructor(props) {
+        super(props);
+        this.state = {
+        }
+
+        this.outputTypeRef = React.createRef();
+        this.handleMessage = this.handleMessage.bind(this);
+        this.notifyActiveOnce = _.once(this.notifyActive);
+        this.testThrottled = _.throttle(this.test, 200);
 
         this.config = new ScratchpadConfig({
-            useDebugger: options.useDebugger
+            useDebugger: this.props.useDebugger
         });
 
-        if (options.outputType) {
-            this.setOutput(options);
-        }
+        // TODO: Move these into state
+        this.recording = false;
+        this.loaded = false;
+        this.lintErrors = [];
+        this.runtimeErrors = [];
+        this.lintWarnings = [];
+        this.setPaths(props);
 
         // Add a timestamp property to the lintErrors and runtimeErrors arrays
         // to keep track of which version of the code the errors are for.  A
@@ -43,77 +55,137 @@ const LiveEditorOutput = Backbone.View.extend({
         this.lintErrors.timestamp = 0;
         this.runtimeErrors.timestamp = 0;
         this.lintWarnings.timestamp = 0;
+    }
 
-        this.bind();
-    },
-
-    render: function() {
-        this.$el.html("<div class=\"output\"></div>");
-    },
-
-    bind: function() {
+    componentDidMount() {
         // Handle messages coming in from the parent frame
-        window.addEventListener("message",
-            this.handleMessage.bind(this), false);
-    },
+        window.addEventListener("message", this.handleMessage, false);
+    }
 
-    setOutput: function(options) {
-        const OutputClass = this.outputs[options.outputType];
-        const classOptions = {
-            el: this.$el.find(".output"),
+    renderOutputType() {
+        if (!this.state.readyToInitOutput) {
+            return null;
+        }
+        const props = {
+            ref: this.outputTypeRef,
             config: this.config,
-            output: this,
-            type: options.outputType,
-            enableLoopProtect: options.enableLoopProtect !== false,
-            loopProtectTimeouts: options.loopProtectTimeouts
+            type: this.state.outputType,
+            settings: this.state.settings,
+            soundsDir: this.state.soundsDir,
+            imagesDir: this.state.imagesDir,
+            workersDir: this.state.workersDir,
+            externalsDir: this.state.externalsDir,
+            jshintFile: this.state.jshintFile,
+            redirectUrl: this.props.redirectUrl,
+            mouseActionReq: this.state.mouseActionReq,
+            initDocReq: this.state.initDocReq,
+            screenshotReq: this.state.screenshotReq,
+            enableLoopProtect: this.state.enableLoopProtect !== false,
+            loopProtectTimeouts: this.state.loopProtectTimeouts,
+            lintCodeReq: this.state.lintCodeReq,
+            runCodeReq: this.state.runCodeReq,
+            toggleReq: this.state.toggleReq,
+            onCanvasEvent: (e) => {
+                const offset = utils.getOffset(e.target);
+                // Only log if recording is occurring
+                if (this.recording) {
+                    // Log the command
+                    // Track the x/y coordinates of the event
+                    const x = e.pageX - offset.left;
+                    const y = e.pageY - offset.top;
+                    this.postParent({
+                        log: [name, x, y]
+                    });
+                }
+            },
+            onRestartRequest: () => {
+                this.restart()
+            },
+            onRunTestsRequest: (callback) => {
+                return this.testThrottled(this.getUserCode(), this.validate, [], callback);
+            },
+            onPhoneHomeRequest: () => {
+                this.phoneHome();
+            },
+            onAssertionFail: (row, column, text) => {
+                this.results.assertions.push({row, column, text});
+            },
+            onTestsResults: (name, result) => {
+                this.postParent({
+                    results: {
+                        code: this.getUserCode(),
+                        errors: [],
+                        tests: [{
+                            name: name,
+                            state: result ? "pass" : "fail",
+                            results: []
+                        }]
+                    },
+                    pass: result
+                });
+            },
+            onInfiniteLoopError: (error) => {
+                this.postParent({
+                    results: {
+                        code: this.getUserCode(),
+                        errors: [error]
+                    }
+                });
+            },
+            onScreenshotCreate: (data) => {
+                this.postParent(data);
+            },
+            onCodeLint: (lintResults) => {
+                this.lintErrors = lintResults.errors;
+                this.lintErrors.timestamp = lintResults.timestamp;
+                this.lintWarnings = lintResults.warnings;
+                this.lintWarnings.timestamp = lintResults.timestamp;
+                this.lintDone(lintResults.code, lintResults.timestamp);
+            },
+            onCodeRun: (runResults) => {
+                this.runtimeErrors = runResults.errors;
+                this.runtimeErrors.timestamp = runResults.timestamp;
+                this.buildDone(runResults.code);
+            },
+            onTitleChange: (title) => {
+                this.postParent({
+                    action: "page-info",
+                    title: title
+                });
+            }
         };
-        if (options.workersDir) {
-            classOptions.workersDir = this._qualifyURL(options.workersDir);
-        }
-        if (options.externalsDir) {
-            classOptions.externalsDir = this._qualifyURL(options.externalsDir);
-        }
-        if (options.jshintFile) {
-            classOptions.jshintFile = this._qualifyURL(options.jshintFile);
-        }
-        this.output = new OutputClass(classOptions);
-    },
+        return React.createElement(outputs[this.state.outputType], props);
+    }
 
-    setPaths: function(data) {
+    setPaths(data) {
         if (data.workersDir) {
-            this.workersDir = this._qualifyURL(data.workersDir);
+            this.setState({workersDir: utils.qualifyURL(data.workersDir)});
         }
         if (data.externalsDir) {
-            this.externalsDir = this._qualifyURL(data.externalsDir);
+            this.setState({externalsDir: utils.qualifyURL(data.externalsDir)});
         }
         if (data.imagesDir) {
-            this.imagesDir = this._qualifyURL(data.imagesDir);
+            this.setState({imagesDir: utils.qualifyURL(data.imagesDir)});
         }
         if (data.soundsDir) {
-            this.soundsDir = this._qualifyURL(data.soundsDir);
+            this.setState({soundsDir: utils.qualifyURL(data.soundsDir)});
         }
         if (data.redirectUrl) {
-            this.redirectUrl = data.redirectUrl;
+            this.setState({redirectUrl: data.redirectUrl});
         }
         if (data.jshintFile) {
-            this.jshintFile = this._qualifyURL(data.jshintFile);
+            this.setState({jshintFile: utils.qualifyURL(data.jshintFile)});
         }
-    },
+    }
 
-    _qualifyURL: function(url){
-        const a = document.createElement("a");
-        a.href = url;
-        return a.href;
-    },
-
-    handleMessage: function(event) {
+    handleMessage(event) {
         let data;
 
         this.frameSource = event.source;
         this.frameOrigin = event.origin;
 
         // let the parent know we're up and running
-        this.notifyActive();
+        this.notifyActiveOnce();
 
         // filter out events that are objects
         // currently the only messages that contain objects are messages
@@ -128,28 +200,24 @@ const LiveEditorOutput = Backbone.View.extend({
         } catch (err) {
             return;
         }
-        if (!this.output) {
-            const outputType = data.outputType || _.keys(this.outputs)[0];
-            let enableLoopProtect = true;
-            if (data.enableLoopProtect != null) {
-                enableLoopProtect = data.enableLoopProtect;
-            }
-            let loopProtectTimeouts = {
-                initialTimeout: 2000,
-                frameTimeout: 500
-            };
-            if (data.loopProtectTimeouts != null) {
-                loopProtectTimeouts = data.loopProtectTimeouts;
-            }
-            this.setOutput({
-                outputType,
-                enableLoopProtect,
-                loopProtectTimeouts,
-                workersDir: data.workersDir,
-                externalsDir: data.externalsDir,
-                jshintFile: data.jshintFile
-            });
+
+        const outputType = data.outputType || Object.keys(outputs)[0];
+        let enableLoopProtect = true;
+        if (data.enableLoopProtect != null) {
+            enableLoopProtect = data.enableLoopProtect;
         }
+        let loopProtectTimeouts = {
+            initialTimeout: 2000,
+            frameTimeout: 500
+        };
+        if (data.loopProtectTimeouts != null) {
+            loopProtectTimeouts = data.loopProtectTimeouts;
+        }
+        this.setState({
+            outputType,
+            enableLoopProtect,
+            loopProtectTimeouts
+        });
 
         // filter out debugger events
         // handled by pjs-debugger.js::handleMessage
@@ -167,7 +235,7 @@ const LiveEditorOutput = Backbone.View.extend({
 
         // Settings to initialize
         if (data.settings != null) {
-            this.settings = data.settings;
+            this.setState({settings: data.settings})
         }
 
         // Code to be executed
@@ -194,24 +262,22 @@ const LiveEditorOutput = Backbone.View.extend({
 
         // Take a screenshot of the output
         if (data.screenshot != null) {
-            const screenshotSize = data.screenshotSize || 200;
-            this.output.getScreenshot(screenshotSize, function(data) {
-                // Send back the screenshot data
-                this.postParent(data);
-            }.bind(this));
+            this.setState({screenshotReq: {
+                time: Date.now(),
+                size: data.screenshotSize || 200
+            }});
         }
-
-        if (this.output.messageHandlers) {
-            Object.keys(data).forEach((prop) => {
-                if (prop in this.output.messageHandlers) {
-                    this.output.messageHandlers[prop].call(this.output, data);
-                }
-            });
+        if (data.prop === "mouseAction") {
+            this.setState({mouseActionReq: { time: Date.now(), data}});
         }
-    },
+        if (data.prop === "documentation") {
+            this.setState({docInitReq: { time: Date.now(), data}});
+        }
+        this.setState({readyToInitOutput: true});
+    }
 
     // Send a message back to the parent frame
-    postParent: function(data) {
+    postParent(data) {
         // If there is no frameSource (e.g. we're not embedded in another page)
         // Then we don't need to care about sending the messages anywhere!
         if (this.frameSource) {
@@ -230,15 +296,15 @@ const LiveEditorOutput = Backbone.View.extend({
                 typeof data === "string" ? data : JSON.stringify(data),
                 this.frameOrigin);
         }
-    },
+    }
 
-    notifyActive: _.once(function() {
+    notifyActive () {
         this.postParent({ active: true });
-    }),
+    }
 
     // This function stores the new tests on the validate property
     //  and it executes the test code to see if its valid
-    initTests: function(validate) {
+    initTests(validate) {
         // Only update the tests if they have changed
         if (this.validate === validate) {
             return;
@@ -246,7 +312,7 @@ const LiveEditorOutput = Backbone.View.extend({
 
         // Prime the test queue
         this.validate = validate;
-    },
+    }
 
     /**
      * Converts an error to something that will JSONify usefully
@@ -260,7 +326,7 @@ const LiveEditorOutput = Backbone.View.extend({
      * @param {*} error: the error to JSONify
      * @returns {*}
      */
-    jsonifyError: function(error) {
+    jsonifyError(error) {
         if (typeof error !== "object" || $.isPlainObject(error)) {
             // If we're not an object, or we're a plain object, we don't need
             // to do anything.
@@ -275,7 +341,7 @@ const LiveEditorOutput = Backbone.View.extend({
                 priority: 3,
             };
         }
-    },
+    }
 
     /**
      * Performs all steps necessary to run code.
@@ -290,7 +356,7 @@ const LiveEditorOutput = Backbone.View.extend({
      *
      * TODO(kevinb) return a Deferred and move test related code to test_utils
      */
-    runCode: function(userCode, callback, noLint) {
+    runCode(userCode, callback, noLint) {
         this.currentCode = userCode;
         const timestamp = Date.now();
 
@@ -302,21 +368,15 @@ const LiveEditorOutput = Backbone.View.extend({
             warnings: []
         };
 
+        // Always lint the first time, so that PJS can populate its list of globals
         const skip = noLint && this.firstLint;
 
-        // Always lint the first time, so that PJS can populate its list of globals
-        this.output.lint(userCode, skip).then(function (lintResults) {
-            this.lintErrors = lintResults.errors;
-            this.lintErrors.timestamp = timestamp;
-            this.lintWarnings = lintResults.warnings;
-            this.lintWarnings.timestamp = timestamp;
-            return this.lintDone(userCode, timestamp);
-        }.bind(this)).then(function () {
-            this.buildDone(userCode, callback);
-        }.bind(this));
-
+        this.setState({
+            lintCodeReq: {code: userCode, skip, timestamp},
+            testsCallback: callback
+        });
         this.firstLint = true;
-    },
+    }
 
     /**
      * Runs the code and records runtime errors.  Returns immediately if there
@@ -326,39 +386,21 @@ const LiveEditorOutput = Backbone.View.extend({
      * @param timestamp
      * @returns {$.Deferred}
      */
-    lintDone: function(userCode, timestamp) {
-        const deferred = $.Deferred();
+    lintDone(userCode, timestamp) {
         if (this.lintErrors.length > 0 || this.onlyRunTests) {
-            deferred.resolve();
-            return deferred;
+            this.buildDone(userCode);
         }
-
         // Then run the user's code
-        try {
-            this.output.runCode(userCode, function(runtimeErrors) {
-                this.runtimeErrors = runtimeErrors;
-                this.runtimeErrors.timestamp = timestamp;
-                deferred.resolve();
-            }.bind(this));
-
-        } catch (e) {
-            if (this.outputs.hasOwnProperty('pjs')) {
-                this.runtimeErrors = [e];
-            }
-            console.warn(e); // eslint-disable-line no-console
-            deferred.resolve();
-        }
-        return deferred;
-    },
+        this.setState({runCodeReq: {code: userCode, timestamp}});
+    }
 
     /**
      * Posts results to the the parent frame and runs tests if a callback has
-     * been provided or if the .validate property is set.
+     * been set in state or if the .validate property is set.
      *
      * @param userCode
-     * @param callback
      */
-    buildDone: function(userCode, callback) {
+    buildDone(userCode) {
         let errors = [];
         let warnings = [];
 
@@ -391,74 +433,77 @@ const LiveEditorOutput = Backbone.View.extend({
         this.toggle(!errors.length);
 
         // A callback for working with a test suite
-        if (callback) {
+        if (this.state.testsCallback) {
             //This is synchronous
-            this._test(userCode, this.validate, errors, function(errors, testResults) {
-                callback(errors, testResults);
+            this.test(userCode, this.validate, errors, (errors, testResults) => {
+                this.state.testsCallback(errors, testResults);
             });
             // Normal case
         } else {
             // This is debounced (async)
             if (this.validate !== "") {
-                this.test(userCode, this.validate, errors, function(errors, testResults) {
+                this.testThrottled(userCode, this.validate, errors, (errors, testResults) => {
                     this.results.errors = errors;
                     this.results.tests = testResults;
                     this.phoneHome();
-                }.bind(this));
+                });
             }
         }
-    },
+    }
 
     /**
      * Send the most up to date errors/test results to the parent frame.
      */
-    phoneHome: function() {
+    phoneHome() {
         this.postParent({
             results: this.results
         });
-    },
+    }
 
+    test(userCode, validate, errors, callback) {
+        // TODO: Change to setting testReq in state
+        this.outputTypeRef.current.test(userCode, validate, errors, callback);
+    }
 
-    test: _.throttle(function() {
-        this._test(...arguments);
-    }, 200),
-    _test: function(userCode, validate, errors, callback) {
-        this.output.test(userCode, validate, errors, callback);
-    },
+    lint(userCode, callback) {
+        this.setState({
+            lintCodeReq: {code: userCode, timestamp: Date.now()},
+            testsCallback: callback
+        });
+    }
 
-    lint: function(userCode, callback) {
-        this.output.lint(userCode, callback);
-    },
-
-    getUserCode: function() {
+    getUserCode() {
         return this.currentCode || "";
-    },
+    }
 
-    toggle: function(toggle) {
-        if (this.output.toggle) {
-            this.output.toggle(toggle);
-        }
-    },
+    toggle(doToggle) {
+        this.setState({toggleReq: {timestamp: Date.now(), doToggle: doToggle}});
+    }
 
-    restart: function() {
+    // TODO: Stop referencing the child ref.
+    restart() {
         // This is called on load and it's possible that the output
         // hasn't been set yet.
-        if (!this.output) {
+        if (!this.outputTypeRef.current) {
             return;
         }
 
-        if (this.output.restart) {
-            this.output.restart();
+        if (this.outputTypeRef.current.restart) {
+            this.outputTypeRef.current.restart();
         }
 
         this.runCode(this.getUserCode());
-    },
-});
+    }
+
+    render() {
+        return  <div className="output">
+                {this.renderOutputType()}
+                </div>;
+    }
+}
 
 LiveEditorOutput.registerOutput = function(name, output) {
-    LiveEditorOutput.prototype.outputs[name] = output;
+    outputs[name] = output;
 };
-
-window.LiveEditorOutput = LiveEditorOutput;
 
 module.exports = LiveEditorOutput;

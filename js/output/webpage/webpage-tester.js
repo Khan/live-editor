@@ -9,7 +9,7 @@ class WebpageTester extends OutputTester {
         super();
         this.initialize(options);
         this.bindTestContext();
-        this.testContext.phoneHome = options.output.phoneHome.bind(options.output);
+        this.testContext.phoneHome = options.onPhoneHomeRequest;
     }
 
     test (userCode, validate, errors, callback) {
@@ -152,8 +152,8 @@ Object.assign(WebpageTester.prototype.testMethods, {
     },
 
     /*
-        * Returns the result of matching a structure against the user's HTML
-        */
+    * Returns the result of matching a structure against the user's HTML
+    */
     htmlMatch: function(structure) {
         // If there were syntax errors, don't even try to match it
         if (this.errors.length) {
@@ -167,7 +167,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
             var expected = structure[selector];
             // TODO(jeresig): Maybe find a way to do this such that we can run
             // it in a worker thread.
-            var numFound = $(selector, this.testContext.$docSP).length;
+            var numFound = docSP.querySelectorAll(selector).length;
             if (expected === 0 && numFound !== 0 || numFound < expected) {
                 return {success: false};
             }

@@ -1,9 +1,7 @@
 import React, {Component} from "react";
-const ReactDOM = require("react-dom");
 
 const ImageScroller = require("./image-scroller.jsx")
 const OutputImages = require("../../shared/images.js").OutputImages;
-const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
 const TooltipEngine = require("../../ui/tooltip-engine.js");
 const TooltipPositioner = require("./tooltip-positioner.js");
 const TooltipUtils = require("./tooltip-utils.js");
@@ -14,8 +12,10 @@ class ImagePicker extends Component {
     props: {
         // Common to all tooltips
         isEnabled: boolean,
+        autofillEnabled: boolean,
         eventToCheck: Object,
         aceEditor: Object,
+        onEventChecked: Function,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
         // Specific to ImagePicker
@@ -37,7 +37,7 @@ class ImagePicker extends Component {
         }
     }
 
-    renderImageScroller () {
+    renderImageScroller() {
         const props = {
             currentImage: this.state.currentImage,
             imagesDir: this.props.imagesDir,
@@ -53,17 +53,6 @@ class ImagePicker extends Component {
             }
         };
         return <ImageScroller {...props} />;
-    }
-
-    render () {
-        if (!this.props.isEnabled) {
-            return null;
-        }
-        return <TooltipPositioner
-                    className="mediapicker"
-                    children={this.renderImageScroller()}
-                    aceEditor={this.props.aceEditor}
-                    aceLocation={this.state.aceLocation}/>;
     }
 
     checkEvent(event) {
@@ -136,6 +125,17 @@ class ImagePicker extends Component {
         newLocation.length = newText.length;
         newLocation.tooltipCursor = this.state.aceLocation.start + this.state.aceLocation.length + this.state.closing.length;
         this.setState({aceLocation: newLocation});
+    }
+
+    render() {
+        if (!this.props.isEnabled) {
+            return null;
+        }
+        return <TooltipPositioner
+                    className="mediapicker"
+                    children={this.renderImageScroller()}
+                    aceEditor={this.props.aceEditor}
+                    aceLocation={this.state.aceLocation}/>;
     }
 }
 

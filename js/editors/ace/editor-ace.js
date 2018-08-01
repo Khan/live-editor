@@ -31,9 +31,9 @@ const tooltips = {
         //"numberScrubber"
     ],
     ace_webpage: [
-        "imageModal",
+        //"imageModal",
         "colorPicker",
-        "numberScrubber"
+        //"numberScrubber"
     ],
     ace_sql: [
         "numberScrubber"
@@ -41,6 +41,7 @@ const tooltips = {
 };
 
 class AceEditorWrapper extends Component {
+
     props: {
         config: Object,
         record: Object,
@@ -48,8 +49,24 @@ class AceEditorWrapper extends Component {
         imagesDir: string,
         soundsDir: string,
         code: string,
-        autoFocus: boolean
+        autoFocus: boolean,
+        errors: Array,
+        warnings: Array,
+        highlightErrorReq: Object,
+        // Parent callbacks
+        onChange: Function,
+        onChangeCursor: Function,
+        onClick: Function,
+        onGutterErrorClick: Function,
+        onScrubbingStart: Function,
+        onScrubbingEnd: Function,
+        onUserChange: Function,
     };
+
+    static defaultProps = {
+        errors: [],
+        warnings: []
+    }
 
     constructor(props) {
         super(props);
@@ -66,7 +83,7 @@ class AceEditorWrapper extends Component {
     }
 
     componentDidMount() {
-        // Append tooltip element to body (Its a portal!)
+        // Append tooltip element to body (Its a portal)
         document.body.appendChild(this.tooltipEl);
 
         // Ace editor setup
@@ -84,7 +101,6 @@ class AceEditorWrapper extends Component {
         // Make the editor vertically resizable
         // TODO: Handle with a React plugin instead of jQuery UI plugin
         const $editorRef = $(this.editorRef.current);
-        console.log($editorRef);
         if ($editorRef.resizable) {
             $editorRef.resizable({
                 // Only allow for vertical resizing
@@ -112,8 +128,8 @@ class AceEditorWrapper extends Component {
         });
 
         // Kill default selection on tooltips
+        // TODO!
         $editorRef.on("mousedown", ".tooltip", function(e) {
-            console.log("Got mousedown");
             e.preventDefault();
         });
 
@@ -140,11 +156,11 @@ class AceEditorWrapper extends Component {
             this.props.onClick();
         });
         this.editor.selection.on("changeCursor", () => {
-            this.props.onChangeCursor();
+            this.props.onChangeCursor(this.getCursor());
             this.handleTooltipableEvent();
         });
         this.editor.selection.on("changeSelection", () => {
-            this.props.onChangeCursor();
+            this.props.onChangeCursor(this.getCursor());
         });
         this.editor.session.getDocument().on("change", (e) => {
             if (this.tooltipsEnabled) { // TODO: Where to store/set?
@@ -155,9 +171,10 @@ class AceEditorWrapper extends Component {
             this.config.runVersion(version, this.props.type + "_editor", this);
         });
         const checkBlur = (e) => {
-            const targetEl = e.target;
-            const editorEl = this.editorRef.current;
-            var inEditor = targetEl !== editorEl && editorEl.contains(targetEl);
+            // TODO!
+            //const targetEl = e.target;
+            //const editorEl = this.editorRef.current;
+            // var inEditor = targetEl !== editorEl && editorEl.contains(targetEl);
             this.setState({blurEvent: e});
         };
         document.body.addEventListener("mousedown", checkBlur);
@@ -165,25 +182,40 @@ class AceEditorWrapper extends Component {
 
         this.config.editor = this;
 
-        if (this.props.code !== undefined) {
-            this.text(this.props.code);
-            // Used by recording functionality in webapp
-            this.originalCode = this.props.code;
+        this.reset();
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        const errors = this.props.errors;
+        if (JSON.stringify(errors) !== JSON.stringify(prevProps.errors)) {
+            // Remove old gutter markers and decorations
+            this.removeErrors(prevProps.errors);
+            // Show new gutter errors
+            this.showErrors(errors);
         }
-
-        this.focus();
-
-        if (this.props.cursor) {
-            // Restore the cursor position
-            this.setCursor(options.cursor);
-        } else {
-            // Set an initial starting selection point
-            this.setSelection({
-                start: {row: 0, column: 0},
-                end: {row: 0, column: 0}
-            });
+        const warnings = this.props.warnings;
+        if (JSON.stringify(warnings) !== JSON.stringify(prevProps.warnings)) {
+            // Remove previously added markers
+            this.removeWarnings(prevProps.warnings);
+            // Show new warnings in the editor. For examples:
+            //  Write `Program.assertEqual(2, 4);` in ProcessingJS editor
+            //  Write "backgrund: grey" in  webpage editor
+            this.showWarnings(warnings);
         }
-
+        // Handle requests from the parent to highlight errors
+        // Note that a user could request to highlight the same error
+        // multiple times, like if they close Error Buddy and re-open him,
+        // so we must track timestamps on error requests to differentiate.
+        if (this.props.highlightErrorReq && (!prevProps.highlightErrorReq ||
+            this.props.highlightErrorReq.timestamp > prevProps.highlightErrorReq.timestamp)) {
+            const error = this.props.highlightErrorReq.error;
+            this.setCursor(error);
+            if (error.row > this.editor.getLastVisibleRow() ||
+                error.row < this.editor.getFirstVisibleRow()) {
+                this.editor.scrollToLine(error.row, true);
+            }
+            this.setErrorHighlight(true);
+        }
     }
 
     componentWillUnmount() {
@@ -238,11 +270,11 @@ class AceEditorWrapper extends Component {
                 }
                 this.setSelection(range);
             },
-            onScrubbingStarted: (name) => {
-                this.props.onScrubbingStarted(name);
+            onScrubbingStart: (name) => {
+                this.props.onScrubbingStart(name);
             },
-            onScrubbingEnded: (name) => {
-                this.props.onScrubbingEnded(name);
+            onScrubbingEnd: (name) => {
+                this.props.onScrubbingEnd(name);
             },
             onTextInsertRequest: (aceLocation, newText) => {
                 if (this.record && this.record.playing) {
@@ -257,25 +289,6 @@ class AceEditorWrapper extends Component {
             );
     }
 
-    render() {
-        return (
-            <div>
-                 <div
-                    ref={this.editorRef}
-                    onMouseDown={this.handleMouseDown}
-                    onClick={this.handleClick}
-                    className={classNames(
-                        "scratchpad-editor",
-                        "scratchpad-ace-editor",
-                        css(styles.inputFrame, SharedStyles.noBorder),
-                    )}
-                    style={{height: "400px"}}
-                />
-                {this.renderTooltipEngine()}
-            </div>
-        );
-    }
-
     handleMouseDown() {
         this.handleTooltipableEvent({action: "click"});
     }
@@ -283,7 +296,13 @@ class AceEditorWrapper extends Component {
     handleClick(e) {
         if (e.target.classList.contains("ace_error")) {
             const lineNum = parseInt(e.target.innerText, 10);
-            this.props.onGutterErrorClick(lineNum);
+            let errorNum;
+            this.props.errors.forEach((error, index) => {
+                if (error.row === (lineNum-1)) {
+                    errorNum = index;
+                }
+            });
+            this.props.onGutterErrorClick(errorNum);
         }
     }
 
@@ -438,8 +457,9 @@ class AceEditorWrapper extends Component {
 
         this.config.runCurVersion(this.props.type + "_editor", this);
 
-        // Reset the editor
-        this.text(code);
+        if (code) {
+            this.text(code);
+        }
         this.setCursor({row: 0, column: 0}, focus);
     }
 
@@ -611,46 +631,83 @@ class AceEditorWrapper extends Component {
         this.editor.undo();
     }
 
-    addUnderlineMarker (row) {
+    addUnderlineMarker(row) {
         // Underline the problem line to make it more obvious
         //  if they don't notice the gutter icon
-        var AceRange = ace.require("ace/range").Range;
-        var line = this.editor.session.getDocument().getLine(row);
+        const AceRange = ace.require("ace/range").Range;
+        const line = this.editor.session.getDocument().getLine(row);
         this.editor.session.addMarker(
            new AceRange(row, 0, row, line.length),
            "ace_problem_line", "text", false);
     }
 
-    removeMarkers() {
-        // Remove previously added markers and decorations
-        var session = this.editor.session;
-        var markers = session.getMarkers();
-        Object.entries(markers).forEach((marker, markerId) => {
-            session.removeMarker(markerId);
+    // Remove previously added markers and decorations
+    // @param rowsMap If provided, underline row must match row in map
+    removeUnderlines(rowsMap) {
+        const markers = this.editor.session.getMarkers();
+        Object.values(markers).forEach((marker) => {
+            if (rowsMap && marker.clazz === "ace_problem_line" &&
+                rowsMap[marker.range.start.row]) {
+                this.editor.session.removeMarker(marker.id);
+            } else if (!rowsMap) {
+                this.editor.session.removeMarker(marker.id);
+            }
         });
     }
 
-    // Remove old gutter decorations
-    removeGutterErrors(gutterDecorations) {
-        this.removeMarkers();
-        this.editor.session.$decorations.forEach((decoration, lineInd) => {
-            this.editor.session.removeGutterDecoration(lineInd, "ace_error");
+    // Remove gutter icons and underlines
+    removeErrors(errors) {
+        const errorsMap = {};
+        errors.forEach((error) => {
+            this.editor.session.removeGutterDecoration(error.row, "ace_error");
+            errorsMap[error.row] = true;
         });
+        this.removeUnderlines(errorsMap);
     }
 
-    // Add gutter decorations
-    showGutterErrors(errors) {
+    // Add gutter icons (red X) and squiggly underlines
+    showErrors(errors) {
         errors.forEach((error) => {
             this.editor.session.addGutterDecoration(error.row, "ace_error");
             this.addUnderlineMarker(error.row);
         });
     }
 
-    showGutterWarnings(annotations) {
-        annotations.forEach((annotation) => {
-            this.addUnderlineMarker(annotation.row);
+    // Remove warning-style gutter icons and decorations
+    removeWarnings(warnings) {
+        const warningsMap = {};
+        warnings.forEach((warning) => {
+            warningsMap[warning.row] = true;
         });
-        this.editor.session.setAnnotations(annotations);
+        this.editor.session.setAnnotations([]);
+        this.removeUnderlines(warningsMap);
+    }
+
+    // Show gutter icons (yellow warning sign) and squiggly underlines
+    showWarnings(warnings) {
+        warnings.forEach((warnings) => {
+            this.addUnderlineMarker(warnings.row);
+        });
+        this.editor.session.setAnnotations(warnings);
+    }
+
+    render() {
+        return (
+            <div>
+                 <div
+                    ref={this.editorRef}
+                    onMouseDown={this.handleMouseDown}
+                    onClick={this.handleClick}
+                    className={classNames(
+                        "scratchpad-editor",
+                        "scratchpad-ace-editor",
+                        css(styles.inputFrame, SharedStyles.noBorder),
+                    )}
+                    style={{height: "400px"}}
+                />
+                {this.renderTooltipEngine()}
+            </div>
+        );
     }
 }
 

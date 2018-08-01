@@ -1,16 +1,27 @@
-/* eslint-disable no-empty, no-var, no-console, prefer-const, no-new-func */
+/* eslint-disable no-empty, no-console, prefer-const, no-new-func */
 /* TODO: Fix the lint errors */
-const _ = require("lodash");
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
+import React, {Component} from "react";
+
 const i18n = require("i18n");
 const Slowparse = require("../../../external/slowparse/slowparse.js");
 
-const LiveEditorOutput = require("../shared/output.js");
 const LoopProtector = require("../shared/loop-protect.js");
 const StateScrubber = require("./state-scrubber.js");
 const WebpageTester = require("./webpage-tester.js");
+
+const infiniteLoopError = {
+    text: i18n._("Your javascript is taking too long to run. " +
+                "Perhaps you have a mistake in your code?"),
+    type: "error",
+    source: "timeout",
+};
+
+const runtimeError = {
+    text: i18n._("Your javascript encountered a runtime error. " +
+                "Check your console for more information."),
+    type: "error",
+    source: "timeout",
+};
 
 /**
  * WebpageOutput
@@ -24,58 +35,96 @@ const WebpageTester = require("./webpage-tester.js");
  * so that it can be sandboxed from the main domain,
  * it communicates via postMessage() with liveEditor.
  */
-const WebpageOutput = Backbone.View.extend({
-    initialize: function(options) {
-        this.config = options.config;
-        this.output = options.output;
+class WebpageOutput extends Component {
 
-        this.tester = new WebpageTester(options);
+    props: {
+        config: Object,
+        imagesDir: string,
+        redirectUrl: string,
+        onInfiniteLoopError: Function,
+        onCodeLint: Function,
+        onCodeRun: Function,
+        onTitleChange: Function,
+    };
 
-        this.render();
+    constructor(props) {
+        super(props);
 
+        this.config = props.config;
+
+        this.frameRef = React.createRef();
+
+        this.tester = new WebpageTester(props);
+    }
+
+    componentDidMount() {
         // Load Webpage config options
         this.config.runCurVersion("webpage", this);
 
+        const frameEl = this.frameRef.current;
+
         // Set up infinite loop protection
         this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this));
-        this.$frame.contentWindow.KAInfiniteLoopProtect =
+        frameEl.contentWindow.KAInfiniteLoopProtect =
             this.loopProtector.KAInfiniteLoopProtect;
 
         // In case frame didn't load (like in IE10), this adds it
         //  once the frame has loaded
-        this.$frame.addEventListener("load", function () {
+        frameEl.addEventListener("load", () => {
             try {
                 // If it was successfully assigned, this will error because
                 // strict mode warns about assignming to non-writable props
-                this.$frame.contentWindow.KAInfiniteLoopProtect =
+                frameEl.contentWindow.KAInfiniteLoopProtect =
                     this.loopProtector.KAInfiniteLoopProtect;
             } catch (e) {
             }
-        }.bind(this));
+        });
         // Do this at the end so variables I add to the global scope stay
         // i.e.  KAInfiniteLoopProtect
-        this.stateScrubber = new StateScrubber(this.$frame.contentWindow);
-    },
+        this.stateScrubber = new StateScrubber(frameEl.contentWindow);
 
-    render: function() {
-        this.$el.empty();
-        this.$frame = $("<iframe>")
-            .css({width: "100%", height: "100%", border: "0"})
-            .appendTo(this.el)
-            .show()[0];
-        this.frameDoc = this.$frame.contentDocument;
-    },
+        this.frameDoc = frameEl.contentDocument;
 
-    getScreenshot: function(screenshotSize, callback) {
+        this.handleParentRequests(this.props, {});
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        this.handleParentRequests(this.props, prevProps);
+    }
+
+    handleParentRequests(props, prevProps) {
+        const foundNewRequest = (reqName) => {
+            return props[reqName] &&
+                (!prevProps[reqName] ||
+                props[reqName].timestamp !== prevProps[reqName].timestamp);
+        };
+
+        // Generate a screenshot of current output and send it back
+        if (foundNewRequest("screenshotReq")) {
+            this.getScreenshot(props.screenshotReq.size, (data) => {
+                props.onScreenshotCreate(data);
+            });
+        }
+        if (foundNewRequest("lintCodeReq")) {
+            const req = props.lintCodeReq;
+            this.lint(req.code, req.skip, req.timestamp);
+        }
+        if (foundNewRequest("runCodeReq")) {
+            const req = props.runCodeReq;
+            this.runCode(req.code, req.timestamp);
+        }
+    }
+
+    getScreenshot(screenshotSize, callback) {
         html2canvas(this.frameDoc.body, {
-            imagesDir: this.output.imagesDir,
+            imagesDir: this.props.imagesDir,
             onrendered: function(canvas) {
-                var width = screenshotSize;
-                var height = (screenshotSize / canvas.width) * canvas.height;
+                const width = screenshotSize;
+                const height = (screenshotSize / canvas.width) * canvas.height;
 
                 // We want to resize the image to a thumbnail,
                 // which we can do by creating a temporary canvas
-                var tmpCanvas = document.createElement("canvas");
+                const tmpCanvas = document.createElement("canvas");
                 tmpCanvas.width = screenshotSize;
                 tmpCanvas.height = screenshotSize;
                 tmpCanvas.getContext("2d").drawImage(
@@ -85,49 +134,30 @@ const WebpageOutput = Backbone.View.extend({
                 callback(tmpCanvas.toDataURL("image/png"));
             }
         });
-    },
+    }
 
-    infiniteLoopError: {
-        text: i18n._("Your javascript is taking too long to run. " +
-                    "Perhaps you have a mistake in your code?"),
-        type: "error",
-        source: "timeout",
-    },
-
-    runtimeError: {
-        text: i18n._("Your javascript encountered a runtime error. " +
-                    "Check your console for more information."),
-        type: "error",
-        source: "timeout",
-    },
-
-    infiniteLoopCallback:  function() {
-        this.output.postParent({
-            results: {
-                code: this.output.currentCode,
-                errors: [this.infiniteLoopError]
-            }
-        });
+    infiniteLoopCallback() {
+        this.props.onInfiniteLoopError(infiniteLoopError);
         this.KA_INFINITE_LOOP = true;
-    },
+    }
 
-    lint: function(userCode, skip) {
-        // the deferred isn't required in this case, but we need to match the
-        // same API as the pjs-output.js' lint method.
-        var deferred = $.Deferred();
+    lint(userCode, skip, timestamp) {
+
         if (skip) {
-            deferred.resolve({
+            this.props.onCodeLint({
+                code: userCode,
+                timestamp: timestamp,
                 errors: [],
                 warnings: []
             });
-            return deferred;
+            return;
         }
 
         this.userCode = userCode;
         userCode = userCode || "";
 
         // Lint the user's code, returning any errors in the callback
-        var results = {};
+        let results = {};
         try {
             results = Slowparse.HTML(document, userCode, {
                 scriptPreprocessor: (code) => this.loopProtector.protect(code),
@@ -144,13 +174,13 @@ const WebpageOutput = Backbone.View.extend({
 
         this.slowparseResults = results;
 
-        var error = [];
+        const errors = [];
         if (results.error) {
             let pos = results.error.cursor || 0;
             let previous = userCode.slice(0, pos);
             let column = pos - previous.lastIndexOf("\n") - 1;
             let row = (previous.match(/\n/g) || []).length;
-            error = [{
+            errors.push({
                 row: row,
                 column: column,
                 text: this.getLintMessage(results.error),
@@ -158,17 +188,16 @@ const WebpageOutput = Backbone.View.extend({
                 source: "slowparse",
                 lint: results.error,
                 priority: 2
-            }];
+            });
         }
 
-        var warnings = [];
+        const warnings = [];
         if (results.warnings && results.warnings.length > 0) {
             for (let i = 0; i < results.warnings.length; i++) {
                 let pos = results.warnings[i].parseInfo.cursor || 0;
                 let previous = userCode.slice(0, pos);
                 let column = pos - previous.lastIndexOf("\n") - 1;
                 let row = (previous.match(/\n/g) || []).length;
-
                 warnings.push({
                     row: row,
                     column: column,
@@ -179,20 +208,21 @@ const WebpageOutput = Backbone.View.extend({
             }
         }
 
-        deferred.resolve({
-            errors: error,
+        this.props.onCodeLint({
+            code: userCode,
+            timestamp: timestamp,
+            errors: errors,
             warnings: warnings
         });
-        return deferred;
-    },
+    }
 
-    flattenError: function(plainError, error, base) {
+    flattenError(plainError, error, base) {
         error = error || {};
         base = base || "";
 
-        for (var prop in plainError) {
+        for (let prop in plainError) {
             if (plainError.hasOwnProperty(prop)) {
-                var flatName = (base ? base + "_" + prop : prop);
+                const flatName = (base ? base + "_" + prop : prop);
                 if (typeof plainError[prop] === "object") {
                     this.flattenError(plainError[prop], error, flatName);
                 } else {
@@ -202,10 +232,10 @@ const WebpageOutput = Backbone.View.extend({
         }
 
         return error;
-    },
+    }
 
-    getLintMessage: function(plainError) {
-        var error = this.flattenError(plainError);
+    getLintMessage(plainError) {
+        const error = this.flattenError(plainError);
 
         // Mostly borrowed from:
         // https://github.com/mozilla/thimble.webmaker.org/blob/master/locale/en_US/thimble-dialog-messages.json
@@ -252,30 +282,28 @@ const WebpageOutput = Backbone.View.extend({
             UNKNOWN_SLOWPARSE_ERROR: i18n._("Something's wrong with the HTML, but we're not sure what."),
             JAVASCRIPT_ERROR: i18n._("Javascript Error:\n\"%(message)s\"", error)
         })[error.type];
-    },
+    }
 
-    initTests: function(validate) {
+    initTests(validate) {
         if (!validate) {
             return;
         }
 
         try {
-            var code = "with(arguments[0]){\n" + validate + "\n}";
+            const code = "with(arguments[0]){\n" + validate + "\n}";
             (new Function(code)).apply({}, this.tester.testContext);
         } catch (e) {
             return e;
         }
-    },
+    }
 
-    test: function(userCode, tests, errors, callback) {
-        var errorCount = errors.length;
+    test(userCode, tests, errors, callback) {
+        const errorCount = errors.length;
 
-        _.extend(this.tester.testContext, {
-            $doc: $(this.frameDoc),
-            // Append to a div because jQuery doesn't work on a document fragment
-            $docSP: $("<div>").append(this.slowparseResults.document),
-            cssRules: this.slowparseResults.rules
-        });
+        Object.assign(this.tester.testContext, {
+                docSP: this.slowparseResults.document,
+                cssRules: this.slowparseResults.rules
+            });
 
         this.tester.test(userCode, tests, errors,
             function(errors, testResults) {
@@ -283,86 +311,67 @@ const WebpageOutput = Backbone.View.extend({
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
                     // figure out whether we hit this case.
-                    var message = i18n._("Error: %(message)s",
+                    const message = i18n._("Error: %(message)s",
                         {message: errors[errors.length - 1].message});
-                    // TODO(jeresig): Find a better way to show this
-                    this.output.$el.find(".test-errors").text(message).show();
                     this.tester.testContext.assert(false, message,
                         i18n._("A critical problem occurred in your program " +
                             "making it unable to run."));
                 }
 
                 if (this.foundRunTimeError) {
-                    errors.push(this.runtimeError);
+                    errors.push(runtimeError);
                 }
                 callback(errors, testResults);
 
             }.bind(this));
-    },
+    }
 
     // Prefixes a URL with the URL of a redirecting proxy,
     //  if one has been specified.
-    transformUrl: function(url) {
+    transformUrl(url) {
         if (url.match(/^https?:\/\/([\w\d]+\.)?khanacademy\.org(\/|$)/)) {
             return url;
         }
-        var redirectUrl = this.output.redirectUrl;
+        const redirectUrl = this.props.redirectUrl;
         if (redirectUrl && url.indexOf(redirectUrl) !== 0) {
             return redirectUrl + "?url=" + encodeURIComponent(url);
         }
         return url;
-    },
+    }
 
-    postProcessing: function(oldPageTitle) {
-        var self = this;
+    postProcessing() {
 
         // Change external links to a redirecting proxy
-        $(this.frameDoc).find("a").each(function(ind, a) {
-            var url = $(a).attr("href");
+        this.frameDoc.querySelectorAll("a").forEach((a) => {
+            const url = a.getAttribute("href");
             if (url && url[0] !== "#" && url.substring(0, 10) !== "javascript") {
-                $(a).attr("target", "_blank");
-                $(a).attr("href", this.transformUrl(url));
+                a.setAttribute("target", "_blank");
+                a.setAttribute("href", this.transformUrl(url));
             }
-        }.bind(this));
-
-        // Animate internal links (as otherwise, they don't work in FF)
-        $(this.frameDoc).find("a[href^='#']").on("mouseup", function() {
-            var url = $(this).attr("href");
-            var target = $(self.frameDoc).find(url);
-            // Scroll only if the target exists
-            if (target.length) {
-                $(self.frameDoc).find("html, body").animate({
-                    scrollTop: $(self.frameDoc).find(url).offset().top
-                }, 1000);
-            }
-            return;
         });
 
         // Monitor changes to the title tag
-        var titleTag = $(this.frameDoc).find("head > title");
-        var title = titleTag.first().text();
-        if (titleTag.length >= 0 && this.oldPageTitle !== title) {
-            this.oldPageTitle = title;
-            self.output.postParent({
-                action: "page-info",
-                title: title
-            });
+        const titleTag = this.frameDoc.querySelector("head > title");
+        const titleText = titleTag && titleTag.innerText;
+        if (titleText && titleText !== this.oldPageTitle) {
+            this.oldPageTitle = titleText;
+            this.props.onTitleChange(titleText);
         }
-    },
+    }
 
-    runCode: function(codeObj, callback) {
+    runCode(userCode, timestamp) {
         this.stateScrubber.clearAll();
         this.KA_INFINITE_LOOP = false;
         this.foundRunTimeError = false;
         this.frameDoc.open();
         // It's necessary in FF/IE to redefine KAInfiniteLoopProtect here
         try {
-            this.$frame.contentWindow.KAInfiniteLoopProtect =
+            this.frameRef.current.contentWindow.KAInfiniteLoopProtect =
                     this.loopProtector.KAInfiniteLoopProtect;
         } catch (e) {
             // But it will error in strict mode, if already assigned
         }
-        this.$frame.contentWindow.addEventListener("error", () => {
+        this.frameRef.current.contentWindow.addEventListener("error", () => {
             this.foundRunTimeError = true;
         });
 
@@ -371,23 +380,27 @@ const WebpageOutput = Backbone.View.extend({
 
         this.postProcessing();
 
+        const errors = [];
         if (this.KA_INFINITE_LOOP) {
-            callback([this.infiniteLoopError]);
-        } else {
-            callback([]);
+            errors.push(infiniteLoopError);
         }
+        this.props.onCodeRun({code: userCode, errors: errors, timestamp});
+    }
 
-    },
-
-    clear: function() {
+    clear() {
         // Clear the output
-    },
+    }
 
-    kill: function() {
+    kill() {
         // Completely stop and clear the output
     }
-});
 
-LiveEditorOutput.registerOutput("webpage", WebpageOutput);
+    render() {
+        return <iframe
+                ref={this.frameRef}
+                style={{width: "100%", height: "100%", border: 0}}
+                />
+    }
+}
 
 module.exports = WebpageOutput;

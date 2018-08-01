@@ -1,54 +1,119 @@
 /* eslint-disable no-var, no-redeclare, prefer-const */
 /* TODO: Fix the lint errors */
 const _ = require("lodash");
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
+
+import React, {Component} from "react";
 const iframeOverlay = require("iframe-overlay");
 
 const i18n = require("i18n");
-const LiveEditorOutput = require("../shared/output.js");
 const PJSCodeInjector = require("./pjs-code-injector.js");
 const PJSDebugger = require("./pjs-debugger.js");
 const PJSResourceCache = require("./pjs-resource-cache.js");
 const PJSTester = require("./pjs-tester.js");
 const BabyHint = require("./babyhint.js");
+const utils = require("../../shared/utils.js");
 
-const PJSOutput = Backbone.View.extend({
-    // Canvas mouse events to track
-    // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
-    trackedMouseEvents: ["move", "over", "out", "down", "up"],
+// Allow programs to have some control over the program running
+// Including being able to dynamically force execute of the tests
+// Or even run their own tests.
+const ProgramMethods = {
 
-    // Banned Properties
-    // Prevent certain properties from being exposed
-    bannedProps: {
-        externals: true
+    settings: function() {
+        return this.props.settings || {};
     },
 
-    initialize: function(options) {
+    // Force the program to restart (run again)
+    restart: function() {
+        this.props.onRestartRequest();
+    },
+
+    // Force the tests to run again
+    runTests: function(callback) {
+        return this.props.onRunTestsRequest(callback)
+    },
+
+    assertEqual: function(actual, expected, line, column) {
+        if (_.isEqual(actual, expected)) {
+            return;
+        }
+
+        var msg = i18n._("Assertion failed: " +
+            "%(actual)s is not equal to %(expected)s.", {
+                actual: JSON.stringify(actual),
+                expected: JSON.stringify(expected)
+        });
+        this.props.onAssertionFail(line -1, column, msg);
+    },
+
+    // Run a single test (specified by a function)
+    // and send the results back to the parent frame
+    runTest: function(name, fn) {
+        if (arguments.length === 1) {
+            fn = name;
+            name = "";
+        }
+
+        var result = !!fn();
+
+        this.props.onTestResults(name, result);
+    }
+}
+
+
+class PJSOutput extends Component {
+
+    props: {
+        config: Object,
+        // File and folder paths
+        externalsDir: string,
+        imagesDir: string,
+        jshintFile: string,
+        soundsDir: string,
+        workersDir: string,
+        enableLoopProtect: boolean,
+        loopProtectTimeouts: Object,
+        // Parent callbacks
+        onCanvasEvent: Function,
+        onCodeLint: Function,
+        onCodeRun: Function,
+        onInfiniteLoopError: Function,
+        onRestartRequest: Function,
+    };
+
+    static defaultProps = {
+        settings: {}
+    }
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            width: "auto",
+            height: "auto"
+        }
+
         // Handle recording playback
         this.handlers = {};
 
-        this.config = options.config;
-        this.output = options.output;
+        this.config = props.config;
 
-        this.workersDir = options.workersDir;
-        this.externalsDir = options.externalsDir;
-        this.jshintFile = options.jshintFile;
-        this.tester = new PJSTester(_.extend(options, {
+        this.canvasRef = React.createRef();
+
+        const testerProps = Object.assign({}, this.props, {
             workerFile: "js/live-editor.test_worker.js"
-        }));
+        });
+        this.tester = new PJSTester(testerProps);
+    }
 
-        this.render();
+    componentDidMount() {
         this.bind();
 
         this.build(
-            this.$canvas[0],
-            options.enableLoopProtect,
-            options.loopProtectTimeouts);
+            this.canvasRef.current,
+            this.props.enableLoopProtect,
+            this.props.loopProtectTimeouts);
 
         if (this.config.useDebugger && PJSDebugger) {
-            iframeOverlay.createRelay(this.$canvas[0]);
+            iframeOverlay.createRelay(this.canvasRef.current);
 
             this.debugger = new PJSDebugger({
                 context: this.processing,
@@ -56,26 +121,57 @@ const PJSOutput = Backbone.View.extend({
             });
         }
 
-        this.config.on("versionSwitched", function(e, version) {
+        this.config.on("versionSwitched", (e, version) => {
             this.config.runVersion(version, "processing", this.processing);
-        }.bind(this));
+        });
 
         BabyHint.init({
             context: this.processing
         });
 
-        return this;
-    },
+        this.handleParentRequests(this.props, {});
+    }
 
-    render: function() {
-        this.$el.empty();
-        this.$canvas = $("<canvas>")
-            .attr("id", "output-canvas")
-            .appendTo(this.el)
-            .show();
-    },
+    componentDidUpdate(prevProps, prevState) {
+        this.handleParentRequests(this.props, prevProps);
+    }
 
-    bind: function() {
+    handleParentRequests(props, prevProps) {
+        const foundNewRequest = (reqName) => {
+            return props[reqName] &&
+                (!prevProps[reqName] ||
+                props[reqName].timestamp !== prevProps[reqName].timestamp);
+        };
+
+        // Replay mouse events on the canvas (during talkthrough playback)
+        if (foundNewRequest("mouseActionReq")) {
+            const mouseAction = props.mouseActionReq;
+            this.handlers[mouseAction.name](mouseAction.x, mouseAction.y);
+        }
+        // Populate BabyHint's documentation to give it more info in errors
+        if (foundNewRequest("documentationReq")) {
+            BabyHint.initDocumentation(props.documentationReq);
+        }
+        if (foundNewRequest("toggleReq")) {
+            this.toggle(props.toggleReq.doToggle);
+        }
+        // Generate a screenshot of current output and send it back
+        if (foundNewRequest("screenshotReq")) {
+            this.getScreenshot(props.screenshotReq.size, (data) => {
+                props.onScreenshotCreate(data);
+            });
+        }
+        if (foundNewRequest("lintCodeReq")) {
+            const req = props.lintCodeReq;
+            this.lint(req.code, req.skip, req.timestamp);
+        }
+        if (foundNewRequest("runCodeReq")) {
+            const req = props.runCodeReq;
+            this.runCode(req.code, req.timestamp);
+        }
+    }
+
+    bind() {
         if (window !== window.top) {
             var windowMethods = ["alert", "open", "showModalDialog",
                 "confirm", "prompt", "eval"];
@@ -141,33 +237,21 @@ const PJSOutput = Backbone.View.extend({
             Object.freeze(Object.getPrototypeOf(window));
         }
 
-        var offset = this.$canvas.offset();
+        var offset = utils.getOffset(this.canvasRef.current);
 
         // Go through all of the mouse events to track
-        _.each(this.trackedMouseEvents, function(name) {
-            var eventType = "mouse" + name;
-
-            // Track that event on the Canvas element
-            this.$canvas.on(eventType, function(e) {
-                // Only log if recording is occurring
-                if (this.output.recording) {
-                    // Log the command
-                    // Track the x/y coordinates of the event
-                    var x = e.pageX - offset.left;
-                    var y = e.pageY - offset.top;
-                    this.output.postParent({
-                        log: [name, x, y]
-                    });
-                }
-            }.bind(this));
+        const trackedMouseEvents = ["move", "over", "out", "down", "up"];
+        trackedMouseEvents.forEach((name) => {
+            const eventType = "mouse" + name;
 
             // Handle the command during playback
-            this.handlers[name] = function(x, y) {
+            this.handlers[name] = (x, y) => {
                 // Build the clientX and clientY values
                 var pageX = x + offset.left;
                 var pageY = y + offset.top;
-                var clientX = pageX - $(window).scrollLeft();
-                var clientY = pageY - $(window).scrollTop();
+                const windowEl = window.document.documentElement;
+                var clientX = pageX - windowEl.scrollLeft;
+                var clientY = pageY - windowEl.scrollTop;
 
                 // Construct the simulated mouse event
                 var evt = document.createEvent("MouseEvents");
@@ -180,14 +264,14 @@ const PJSOutput = Backbone.View.extend({
                     0, document.documentElement);
 
                 // And execute it upon the canvas element
-                this.$canvas[0].dispatchEvent(evt);
-            }.bind(this);
-        }.bind(this));
+                this.canvasRef.current.dispatchEvent(evt);
+            }
+        });
 
         // Dynamically set the width and height based upon the size of the
         // window, which could be changed in the parent page
-        $(window).on("resize", this.setDimensions);
-    },
+        window.addEventListener("resize", this.setDimensions);
+    }
 
     /**
      * Create the processing instance, add additional methods, and initialize
@@ -197,7 +281,7 @@ const PJSOutput = Backbone.View.extend({
      * @param {Boolean} enableLoopProtect
      * @param {Object} loopProtectTimeouts
      */
-    build: function(canvas, enableLoopProtect, loopProtectTimeouts) {
+    build(canvas, enableLoopProtect, loopProtectTimeouts) {
         this.processing = new Processing(canvas, (instance) => {
             instance.draw = this.DUMMY;
         });
@@ -208,13 +292,14 @@ const PJSOutput = Backbone.View.extend({
         // for those paths yet.
         var resourceCache = new PJSResourceCache({
             canvas: this.processing,
-            output: this.output
+            imagesDir: this.props.imagesDir,
+            soundsDir: this.props.soundsDir
         });
 
         var additionalMethods = { Program: {} };
 
-        Object.keys(this.ProgramMethods).forEach((key) => {
-            additionalMethods.Program[key] = this.ProgramMethods[key].bind(this);
+        Object.keys(ProgramMethods).forEach((key) => {
+            additionalMethods.Program[key] = ProgramMethods[key].bind(this);
         });
 
         // Load JSHint config options
@@ -228,9 +313,9 @@ const PJSOutput = Backbone.View.extend({
             JSHint: this.JSHint,
             additionalMethods: additionalMethods,
             loopProtectTimeouts: loopProtectTimeouts,
-            workersDir: this.workersDir,
-            externalsDir: this.externalsDir,
-            jshintFile: this.jshintFile
+            workersDir: this.props.workersDir,
+            externalsDir: this.props.externalsDir,
+            jshintFile: this.props.jshintFile
         });
 
         this.config.runCurVersion("processing", this.processing);
@@ -238,129 +323,59 @@ const PJSOutput = Backbone.View.extend({
 
         // Trigger the setting of the canvas size immediately
         this.setDimensions();
-    },
+    }
 
     /**
      * Used as a placeholder function for the .draw() method on the processing
      * instance because processing doesn't like being without a .draw() method.
      */
-    DUMMY: function() {},
+    DUMMY() {
+    }
 
-    setDimensions: function() {
-        var $window = $(window);
-        var width = $window.width();
-        var height = $window.height();
+    setDimensions() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
 
         if (this.processing &&
             (width !== this.processing.width ||
             height !== this.processing.height)) {
             // Set the canvas element to be the right size
-            this.$canvas.width(width).height(height);
+            this.setState({width, height});
 
             // Set the Processing.js canvas to be the right size
             this.processing.size(width, height);
 
             // Restart execution
-            this.output.restart();
+            this.props.onRestartRequest();
         }
-    },
+    }
 
-    messageHandlers: {
-        // Play back mouse actions
-        mouseAction: function(data) {
-            data = data.mouseAction;
-            this.handlers[data.name](data.x, data.y);
-        },
-
-        documentation: function(data) {
-            BabyHint.initDocumentation(data.documentation);
-        }
-    },
-
-    getScreenshot: function(screenshotSize, callback) {
+    getScreenshot(screenshotSize, callback) {
         // We want to resize the image to a thumbnail,
         // which we can do by creating a temporary canvas
         var tmpCanvas = document.createElement("canvas");
         tmpCanvas.width = screenshotSize;
         tmpCanvas.height = screenshotSize;
         tmpCanvas.getContext("2d").drawImage(
-            this.$canvas[0], 0, 0, screenshotSize, screenshotSize);
+            this.canvasRef.current, 0, 0, screenshotSize, screenshotSize);
 
         // Send back the screenshot data
         callback(tmpCanvas.toDataURL("image/png"));
-    },
+    }
 
-    // Allow programs to have some control over the program running
-    // Including being able to dynamically force execute of the tests
-    // Or even run their own tests.
-    ProgramMethods: {
-        settings: function() {
-            return this.output.settings || {};
-        },
-
-        // Force the program to restart (run again)
-        restart: function() {
-            this.output.restart();
-        },
-
-        // Force the tests to run again
-        runTests: function(callback) {
-            return this.output.test(this.output.getUserCode(),
-                this.output.validate, [], callback);
-        },
-
-        assertEqual: function(actual, expected, line, column) {
-            if (_.isEqual(actual, expected)) {
-                return;
-            }
-
-            var msg = i18n._("Assertion failed: " +
-                "%(actual)s is not equal to %(expected)s.", {
-                    actual: JSON.stringify(actual),
-                    expected: JSON.stringify(expected)
-            });
-
-            this.output.results.assertions.push({
-                row: line - 1, column: column, text: msg
-            });
-        },
-
-        // Run a single test (specified by a function)
-        // and send the results back to the parent frame
-        runTest: function(name, fn) {
-            if (arguments.length === 1) {
-                fn = name;
-                name = "";
-            }
-
-            var result = !!fn();
-
-            this.output.postParent({
-                results: {
-                    code: this.output.getUserCode(),
-                    errors: [],
-                    tests: [{
-                        name: name,
-                        state: result ? "pass" : "fail",
-                        results: []
-                    }]
-                },
-                pass: result
-            });
-        }
-    },
-
-    lint: function(userCode, skip) {
+    lint(userCode, skip, timestamp) {
         return this.injector.lint(userCode, skip).then((hintErrors) => {
             let babyErrors = BabyHint.babyErrors(userCode, hintErrors);
-            return {
+            this.props.onCodeLint({
+                code: userCode,
+                timestamp: timestamp,
                 errors: this.mergeErrors(hintErrors, babyErrors),
                 warnings: []
-            };
+            });
         });
-    },
+    }
 
-    mergeErrors: function(jshintErrors, babyErrors) {
+    mergeErrors(jshintErrors, babyErrors) {
         var brokenLines = [];
         var prioritizedChars = {};
         var hintErrors = [];
@@ -452,69 +467,82 @@ const PJSOutput = Backbone.View.extend({
 
         // Stringify objects to compare and de-duplicate.
         return _.uniq(errors, false, (obj) => JSON.stringify(obj, replacer));
-    },
+    }
 
-    test: function(userCode, tests, errors, callback) {
+    test(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
         this.tester.testWorker.exec(userCode, tests, errors,
-            function(errors, testResults) {
+            (errors, testResults) => {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
                     // figure out whether we hit this case.
                     var message = i18n._("Error: %(message)s",
                         {message: errors[errors.length - 1].message});
-                    // TODO(jeresig): Find a better way to show this
-                    this.output.$el.find(".test-errors").text(message).show();
+                    console.warn(message); // eslint-disable-line no-console
                     this.tester.testContext.assert(false, message,
                         i18n._("A critical problem occurred in your program " +
                             "making it unable to run."));
                 }
 
                 callback(errors, testResults);
-            }.bind(this));
-    },
+            });
+    }
 
     // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
-    runCode: function(userCode, callback) {
-        this.injector.runCode(userCode, callback);
-    },
+    runCode(userCode, timestamp) {
+        try {
+            this.injector.runCode(userCode, (runtimeErrors) => {
+                this.props.onCodeRun({code: userCode, errors: runtimeErrors, timestamp});
+            });
+        } catch (e) {
+            console.warn(e); // eslint-disable-line no-console
+            this.props.onCodeRun({code: userCode, errors: [e], timestamp});
+        }
+    }
 
-    restart: function() {
+    restart() {
         this.injector.restart();
-    },
+    }
 
-    toggle: function(doToggle) {
+    toggle(doToggle) {
         if (doToggle) {
             this.processing.loop();
 
         } else {
             this.processing.noLoop();
         }
-    },
+    }
 
-    kill: function() {
+    kill() {
         this.tester.testWorker.kill();
         this.injector.hintWorker.kill();
         this.processing.exit();
-    },
+    }
 
-    initTests: function(validate) {
+    initTests(validate) {
         return this.exec(validate, this.tester.testContext);
-    },
+    }
 
-    infiniteLoopCallback:  function(error) {
-        this.output.postParent({
-            results: {
-                code: this.output.currentCode,
-                errors: [error],
-            }
-        });
+    infiniteLoopCallback(error) {
+        this.props.onInfiniteLoopError(error);
         this.KA_INFINITE_LOOP = true;
     }
-});
 
-LiveEditorOutput.registerOutput("pjs", PJSOutput);
+    render() {
+        return <canvas
+                ref={this.canvasRef}
+                id="output-canvas"
+                width={this.state.width}
+                height={this.state.height}
+                onMouseMove={this.props.onCanvasEvent}
+                onMouseOver={this.props.onCanvasEvent}
+                onMouseOut={this.props.onCanvasEvent}
+                onMouseDown={this.props.onCanvasEvent}
+                onMouseUp={this.props.onCanvasEvent}
+                />;
+    }
+}
 
 module.exports = PJSOutput;

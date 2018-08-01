@@ -1,6 +1,4 @@
-import {StyleSheet, css} from "aphrodite/no-important";
-
-const defaultDim = 400;
+import {StyleSheet} from "aphrodite/no-important";
 
 const styles = StyleSheet.create({
     noBorder: {
