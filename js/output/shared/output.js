@@ -389,6 +389,7 @@ class LiveEditorOutput extends Component {
     lintDone(userCode, timestamp) {
         if (this.lintErrors.length > 0 || this.onlyRunTests) {
             this.buildDone(userCode);
+            return;
         }
         // Then run the user's code
         this.setState({runCodeReq: {code: userCode, timestamp}});

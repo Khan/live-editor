@@ -1,13 +1,24 @@
 import React, {Component} from "react";
 
 class SQLResults extends Component {
+    props: {
+        tables: Array,
+        results: Array,
+        onMounted: Function,
+    };
+
+    componentDidMount() {
+        this.props.onMounted();
+    }
+
     render() {
-        let schemasHeading, resultsHeading;
+        let schemasHeading;
+        let resultsHeading;
         if (this.props.tables) {
-            schemasHeading = <h1>Database Schema</h1>;
+            schemasHeading = <h1 style={styles.h1}>Database Schema</h1>;
         }
         if (this.props.results) {
-            resultsHeading = <h1>Results</h1>;
+            resultsHeading = <h1 style={styles.h1}>Results</h1>;
         }
 
         const schemasTables = this.props.tables.map((table) => {
@@ -17,13 +28,13 @@ class SQLResults extends Component {
             }
             const columnRows = table.columns.map((column) => (
                 <tr key={column.name}>
-                    <td>
+                    <td style={styles.td}>
                         {column.name}
                         {column.pk > 0 && (
-                            <span className="schema-pk">(PK)</span>
+                            <span style={styles.schemaPK}>(PK)</span>
                         )}
-                        <span className="column-type-wrap">
-                            <span className="schema-column-type">
+                        <span style={styles.schemaColumnTypeWrap}>
+                            <span style={styles.schemaColumnType}>
                                 {column.type}
                             </span>
                         </span>
@@ -33,32 +44,32 @@ class SQLResults extends Component {
 
             return (
                 <table
-                    className="sql-schema-table"
+                    style={{...styles.table, ...styles.schemaTable}}
                     data-table-name={table.name}
                     key={table.name}
                 >
-                    <thead>
+                    <thead style={styles.thead}>
                         <tr>
-                            <th>
-                                <a href="javascript:void(0)">{table.name}</a>
-                                <span className="row-count">
+                            <th style={styles.th}>
+                                <strong>{table.name}</strong>
+                                <span style={styles.schemaRowCount}>
                                     {table.rowCount} {rowText}
                                 </span>
                             </th>
                         </tr>
                     </thead>
-                    <tbody>{columnRows}</tbody>
+                    <tbody style={styles.tbody}>{columnRows}</tbody>
                 </table>
             );
         });
 
         const resultsTables = this.props.results.map((result, resultInd) => {
             const columnHeaders = result.columns.map((columnName, colInd) => (
-                <th key={"col" + colInd}>{columnName}</th>
+                <th key={"col" + colInd} style={styles.th}>{columnName}</th>
             ));
             const valuesRows = result.values.map((rowValues, rowInd) => {
                 const valuesCells = rowValues.result.map((value, colInd) => (
-                    <td key={rowInd + "_" + colInd}>
+                    <td key={rowInd + "_" + colInd} style={styles.td}>
                         {value.data === null ? "NULL" : value.data}
                     </td>
                 ));
@@ -66,17 +77,17 @@ class SQLResults extends Component {
             });
 
             return (
-                <table className="sql-result-table" key={"result" + resultInd}>
-                    <thead>
+                <table key={"result" + resultInd} style={styles.table}>
+                    <thead style={styles.thead}>
                         <tr>{columnHeaders}</tr>
                     </thead>
-                    <tbody>{valuesRows}</tbody>
+                    <tbody style={styles.tbody}>{valuesRows}</tbody>
                 </table>
             );
         });
 
         return (
-            <div className="sql-output">
+            <div>
                 {schemasHeading}
                 {schemasTables}
                 {resultsHeading}
@@ -85,5 +96,72 @@ class SQLResults extends Component {
         );
     }
 }
+
+// Note: We cannot use Aphrodite because it inserts the <style> tag
+//  into the parent frame, not the iframe.
+const styles = {
+    table: {
+        borderCollapse: "collapse",
+        borderSpacing: 0,
+        emptyCells: "show",
+        width: "100%",
+        marginBottom: "20px",
+    },
+    schemaTable: {
+        float: "left",
+        marginRight: "10px",
+        width: "auto",
+    },
+    thead: {
+        background: "#e6e6e6",
+        color: "#000",
+        textAlign: "left",
+        verticalAlign: "bottom",
+    },
+    tbody: {
+        border: "1px solid #dbdbdb",
+    },
+    th: {
+        fontFamily: "sans-serif",
+        padding: ".4em 1em",
+    },
+    td: {
+        border: "1px solid #eeeeee",
+        fontFamily: "Monaco, Menlo, Consolas, monospace",
+        fontSize: "inherit",
+        margin: 0,
+        overflow: "visible",
+        padding: ".3em 1em",
+    },
+    h1: {
+        clear: "both",
+        color: "#aaa",
+        fontFamily: "sans-serif",
+        fontSize: "1.1em",
+        fontWeight: "normal",
+        marginTop: "10px",
+        textTransform: "uppercase",
+    },
+    schemaColumnTypeWrap: {
+        float: "right",
+        marginLeft: "20px",
+        minWidth: "70px",
+    },
+    schemaColumnType: {
+        float: "left",
+        color: "#999",
+    },
+    schemaPK: {
+        marginLeft: "8px",
+        color: "#999",
+    },
+    schemaRowCount: {
+        color: "#999",
+        float: "right",
+        marginLeft: "30px",
+        textAlign: "right",
+        fontWeight: "normal",
+    },
+};
 
 module.exports = SQLResults;

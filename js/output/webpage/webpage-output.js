@@ -144,13 +144,12 @@ class WebpageOutput extends Component {
     lint(userCode, skip, timestamp) {
 
         if (skip) {
-            this.props.onCodeLint({
+            return this.props.onCodeLint({
                 code: userCode,
                 timestamp: timestamp,
                 errors: [],
                 warnings: []
             });
-            return;
         }
 
         this.userCode = userCode;
@@ -385,10 +384,6 @@ class WebpageOutput extends Component {
             errors.push(infiniteLoopError);
         }
         this.props.onCodeRun({code: userCode, errors: errors, timestamp});
-    }
-
-    clear() {
-        // Clear the output
     }
 
     kill() {

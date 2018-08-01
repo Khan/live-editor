@@ -2,25 +2,21 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>HTML Live Editor Output</title>
-    <link rel="stylesheet" href="../../build/css/live-editor.output.css"/>
 </head>
 <body>
     <div id="live-editor-output"></div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.5.7/es5-shim.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.3.3/backbone-min.js"></script>
-
+    <!-- Exposes 'i18n' as a global -->
     <script src="../../build/js/live-editor.core_deps.js"></script>
-    <script src="../../build/js/live-editor.shared.js"></script>
-    <script src="../../build/js/live-editor.output.js"></script>
-    <script src="../../build/js/live-editor.output_sql.js"></script>
-    <script>
-    new LiveEditorOutput({
-        el: $("#live-editor-output")[0]
-    });
-    </script>
+    <!-- Exposes html2canvas as global -->
+    <script src="../../build/js/live-editor.output_sql_deps.js"></script>
+    <!-- Exposes SQL as global -->
+    <script src="../../external/sqlitejs/sql.js"></script>
+    <!-- Demo-specific: Sets up the LiveEditorOutput with SQL output type-->
+    <script src="../../build/js/live-editor.demos_sql_output.js"></script>
 </body>
 </html>

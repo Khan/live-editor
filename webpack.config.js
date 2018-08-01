@@ -41,9 +41,11 @@ const config = {
         output_webpage_deps: [
             "./external/html2canvas/html2canvas.js"
         ],
-        output_sql: [
-            "./external/html2canvas/html2canvas.js",
-            "./js/output/sql/sql-output.js"
+        sqljs_only: [
+            "./node_modules/sql.js/js/sql.js"
+        ],
+        output_sql_deps: [
+            "./external/html2canvas/html2canvas.js"
         ],
         // Debugger related: not currently enabled
         debugger: [
@@ -84,6 +86,12 @@ const config = {
         demos_webpage_output: [
             "./demos/simple/webpage_output.js"
         ],
+        demos_sql: [
+            "./demos/simple/sql.js"
+        ],
+        demos_sql_output: [
+            "./demos/simple/sql_output.js"
+        ],
         audio_demo: [
             "./demos/simple/audio.js"
         ],
@@ -120,7 +128,8 @@ const config = {
             $: "jQuery",
             lodash: "_",
             "ace-builds": "ace",
-            i18n: "i18n"
+            i18n: "i18n",
+            "sql.js": "SQL"
         }
     ],
     output: {

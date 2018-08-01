@@ -36,7 +36,7 @@ const tooltips = {
         //"numberScrubber"
     ],
     ace_sql: [
-        "numberScrubber"
+        //"numberScrubber"
     ]
 };
 
