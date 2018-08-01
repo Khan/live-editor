@@ -31,10 +31,7 @@ const liveEditorProps = {
     autoFocus: true,
     workersDir: "../../build/",
     externalsDir: "../../build/external/",
-    imagesDir: "../../build/images/",
-    soundsDir: "../../build/sounds/",
     execFile: "output_sql.html",
-    jshintFile: "../../build/external/jshint/jshint.js",
     onUserChanged: function(code) {
         window.localStorage["test-sql-code"] = code;
     }

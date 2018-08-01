@@ -43,12 +43,12 @@ const tooltips = {
 class AceEditorWrapper extends Component {
 
     props: {
+        code: string,
         config: Object,
         record: Object,
         type: string,
         imagesDir: string,
         soundsDir: string,
-        code: string,
         autoFocus: boolean,
         errors: Array,
         warnings: Array,

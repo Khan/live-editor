@@ -92,6 +92,9 @@ const config = {
         demos_sql_output: [
             "./demos/simple/sql_output.js"
         ],
+        demos_document: [
+            "./demos/simple/document.js"
+        ],
         audio_demo: [
             "./demos/simple/audio.js"
         ],

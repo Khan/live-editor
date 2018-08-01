@@ -2,7 +2,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Live Editor Simple Document Demo</title>
-    <link rel="stylesheet" href="../../build/css/live-editor.core_deps.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.tooltips.css"/>
     <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
     <style>
         body {
@@ -21,31 +21,16 @@
 <body>
     <h1>Document Live Editor Example</h1>
     <div id="sample-live-editor"></a>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.5.7/es5-shim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.3.3/backbone-min.js"></script>
+    <!-- Exposes 'i18n' as a global -->
     <script src="../../build/js/live-editor.core_deps.js"></script>
-    <script src="../../build/js/live-editor.shared.js"></script>
-    <script src="../../build/js/live-editor.ui.js"></script>
-    <script src="../../build/js/live-editor.editor_textarea.js"></script>
-
-    <script>
-        var defaultCode = "This is a simple writing project!";
-
-        window.liveEditor = new LiveEditor({
-            editorType: "textarea_document",
-            outputType: "document",
-            el: $("#sample-live-editor"),
-            code: window.localStorage["test-document-code"] || defaultCode,
-            width: 400,
-            height: 400,
-            editorHeight: "80%",
-            autoFocus: true,
-            workersDir: "../../build/workers/",
-            externalsDir: "../../build/external/",
-            imagesDir: "../../build/images/"
-        });
-        liveEditor.editor.on("change", function() {
-            window.localStorage["test-document-code"] = liveEditor.editor.text();
-        });
-    </script>
+    <!-- Exposes 'SoundManager2' as a global -->
+    <script src="../../build/js/live-editor.audio.js"></script>
+    <!-- Demo-specific: Sets up the LiveEditor with ace_webpage ACE editor -->
+    <script src="../../build/js/live-editor.demos_document.js"></script>
 </body>
 </html>

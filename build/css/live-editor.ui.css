@@ -125,12 +125,6 @@
     unicode-bidi: bidi-override;
 }
 
-.scratchpad-editor .textarea-editor {
-    font-size: 16px;
-    height: 100%;
-    width: 100%;
-}
-
 #output {
     height: 402px;
     position: relative;

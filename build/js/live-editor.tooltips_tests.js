@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 27);
+/******/ 	return __webpack_require__(__webpack_require__.s = 28);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -5985,7 +5985,7 @@ eval("\n\n__webpack_require__(/*! !./node_modules/mocha-loader/web.js */ \"./nod
 
 /***/ }),
 
-/***/ 27:
+/***/ 28:
 /*!*****************************************************************************************************************************************************************************************************************************************!*\
   !*** multi ./tests/tooltips/colorPicker_test.js ./tests/tooltips/numberScrubber_test.js ./tests/tooltips/imagePicker_test.js ./tests/tooltips/imageModal_test.js ./tests/tooltips/soundModal_test.js ./tests/tooltips/tooltips_test.js ***!
   \*****************************************************************************************************************************************************************************************************************************************/
