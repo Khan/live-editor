@@ -198,13 +198,16 @@ window.ScratchpadRecord = Backbone.Model.extend({
             this.cacheRestore(-1 * this.seekCacheInterval);
         }
 
+        // To prevent the screen locking up while seeking ahead, processing
+        // commands, and building the cache, we can use requestAnimationFrame
+        // to process a few commands and cache entries, then see if we need to
+        // update the browser before processing another block of commands.
         let currentOffset = cacheOffset;
         const buildCache = () => {
             const animationStep = 100;
             const steps = Math.min(animationStep, seekPos - currentOffset + 1);
             const newOffset = currentOffset + steps;
 
-            // console.log(`${currentOffset} / ${newOffset} / ${seekPos}`);
             for (; currentOffset < newOffset; currentOffset += 1) {
                 this.runCommand(this.commands[currentOffset]);
                 this.cache(currentOffset);
