@@ -32,6 +32,7 @@ const liveEditorProps = {
     workersDir: "../../build/",
     externalsDir: "../../build/external/",
     execFile: "output_sql.html",
+    imagesDir: "../../build/images/",
     onUserChanged: function(code) {
         window.localStorage["test-sql-code"] = code;
     }

@@ -1,6 +1,4 @@
 /* global ace */
-/* eslint-disable no-var */
-/* TODO: Fix the lint errors */
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
@@ -14,9 +12,11 @@ class ColorPicker extends Component {
 
     props: {
         // Common to all tooltips
+        autofillEnabled: boolean,
         isEnabled: boolean,
         eventToCheck: Object,
         editor: Object,
+        onEventCheck: Function,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
         onScrubbingStart: Function,
@@ -33,7 +33,7 @@ class ColorPicker extends Component {
             closing: "",
             currentColor: "255, 0, 0"
         };
-        var funcs = (this.props.editorType === "ace_webpage") ? "rgb|rgba" : "background|fill|stroke|color";
+        const funcs = (this.props.editorType === "ace_webpage") ? "rgb|rgba" : "background|fill|stroke|color";
         this.regex = RegExp("(\\b(?:"+funcs+")\\s*\\()[^\\)]*$");
     }
 
@@ -51,45 +51,16 @@ class ColorPicker extends Component {
     handleMouseLeave = () => {
         this.setState({showFullPicker: true});
         this.props.aceEditor.focus();
-        this.props.onScrubbingEnded();
+        this.props.onScrubbingEnd();
     }
 
     handleChange = (color) => {
         this.setState({ color: color.rgb })
     }
 
-    render () {
-        if (!this.props.isEnabled) {
-            return null;
-        }
-
-        let colorPicker;
-        if (this.state.showFullPicker) {
-            colorPicker = <div className={css(styles.popover)}>
-                    <FullColorPicker color={this.state.currentColor} onChange={this.handleChange}/>
-                </div>;
-        } else {
-            colorPicker = <div className={css(styles.previewDiv)}>
-                <div className={css(styles.colorDiv)} />
-            </div>
-        }
-        const wrapped = <div
-                            onMouseEnter={ this.handleMouseEnter}
-                            onMouseLeave={ this.handleMouseLeave }>
-                        {colorPicker}
-                        </div>
-
-        return <TooltipPositioner
-                    className="picker"
-                    children={wrapped}
-                    aceEditor={this.props.aceEditor}
-                    aceLocation={this.state.aceLocation}/>;
-
-    }
-
-    checkEvent (event) {
+    checkEvent(event) {
         if (!this.regex.test(event.pre)) {
-            return this.props.onEventChecked(false);
+            return this.props.onEventCheck(false);
         }
         const functionStart = event.col - RegExp.lastMatch.length;
         const paramsStart = functionStart + RegExp.$1.length;
@@ -156,7 +127,7 @@ class ColorPicker extends Component {
 
         this.updateTooltip(rgb);
         this.setState({aceLocation: aceLocation, closing: closing});
-        this.props.onEventChecked(true);
+        this.props.onEventCheck(true);
     }
 
     updateTooltip (rgb) {
@@ -168,9 +139,9 @@ class ColorPicker extends Component {
         if (undoMode === 'startScrub') {
             // TODO: Next 4 lines of code needs refactoring with textAtAceLocation() in number-scrubber.js.
             // TODO: Sort out this, self, ace, to make it callable from both places, and put it in tooltip-engine.js.
-            var Range = ace.require("ace/range").Range;
-            var loc = this.aceLocation;
-            var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
+            const Range = ace.require("ace/range").Range;
+            const loc = this.state.aceLocation;
+            const range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
             this.originalText = this.props.aceEditor.getSession().getTextRange(range);
             this.wasReadOnly = this.props.aceEditor.getReadOnly();
             this.props.aceEditor.setReadOnly(true);
@@ -178,15 +149,46 @@ class ColorPicker extends Component {
         } else if (undoMode === 'midScrub') {
             avoidUndo = true;
         } else if (undoMode === 'stopScrub') {
-            this.props.onTextUpdateRequest(this.aceLocation, this.originalText, undefined, true);
+            this.props.onTextUpdateRequest(this.state.aceLocation, this.originalText, undefined, true);
             this.props.aceEditor.setReadOnly(this.wasReadOnly);
         }
-        this.props.onTextUpdateRequest(this.aceLocation, rgb.r + ", " + rgb.g + ", " + rgb.b, undefined, avoidUndo);
+        const newText = rgb.r + ", " + rgb.g + ", " + rgb.b;
+        this.props.onTextUpdateRequest(this.state.aceLocation, nextText, undefined, avoidUndo);
         // Calculate new location according to new text
         const newLocation = this.state.aceLocation;
         newLocation.length = newText.length;
         newLocation.tooltipCursor = this.state.aceLocation.start + this.state.aceLocation.length + this.state.closing.length;
         this.setState({aceLocation: newLocation});
+    }
+
+
+    render () {
+        if (!this.props.isEnabled) {
+            return null;
+        }
+
+        let colorPicker;
+        if (this.state.showFullPicker) {
+            colorPicker = <div className={css(styles.popover)}>
+                    <FullColorPicker color={this.state.currentColor} onChange={this.handleChange}/>
+                </div>;
+        } else {
+            colorPicker = <div className={css(styles.previewDiv)}>
+                <div className={css(styles.colorDiv)} />
+            </div>
+        }
+        const wrapped = <div
+                            onMouseEnter={ this.handleMouseEnter}
+                            onMouseLeave={ this.handleMouseLeave }>
+                        {colorPicker}
+                        </div>
+
+        return <TooltipPositioner
+                    className="picker"
+                    children={wrapped}
+                    aceEditor={this.props.aceEditor}
+                    aceLocation={this.state.aceLocation}/>;
+
     }
 }
 

@@ -98,6 +98,7 @@
     "react": "^16.4.1",
     "react-color": "^2.14.1",
     "react-dom": "^16.4.1",
+    "react-draggable": "^3.0.5",
     "react-router-dom": "^4.3.1",
     "react-simple-colorpicker": "^1.4.2",
     "react-tabs": "^2.2.2",

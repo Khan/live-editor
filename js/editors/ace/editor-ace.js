@@ -9,10 +9,10 @@ import ReactDOM from "react-dom";
 import {StyleSheet, css} from "aphrodite/no-important";
 
 const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
-const TooltipEngine = require("../../ui/tooltip-engine.js");
 import SharedStyles from "../../ui/shared-styles.js";
+const TooltipEngine = require("../../ui/tooltip-engine.js");
 require("../../ui/tooltips/color-picker.js");
-//require("../../ui/tooltips/number-scrubber.js");
+require("../../ui/tooltips/number-scrubber.js");
 //require("../../ui/tooltips/number-scrubber-click.js");
 require("../../ui/tooltips/image-picker.js");
 //require("../../ui/tooltips/image-modal.js");
@@ -36,7 +36,7 @@ const tooltips = {
         //"numberScrubber"
     ],
     ace_sql: [
-        //"numberScrubber"
+        "numberScrubber"
     ]
 };
 
@@ -58,8 +58,8 @@ class AceEditorWrapper extends Component {
         onChangeCursor: Function,
         onClick: Function,
         onGutterErrorClick: Function,
-        onScrubbingStart: Function,
-        onScrubbingEnd: Function,
+        onScrubbingStart?: Function,
+        onScrubbingEnd?: Function,
         onUserChange: Function,
     };
 
@@ -183,6 +183,8 @@ class AceEditorWrapper extends Component {
         this.config.editor = this;
 
         this.reset();
+
+        this.setState({editor: this.editor});
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -223,13 +225,17 @@ class AceEditorWrapper extends Component {
     }
 
     renderTooltipEngine() {
+        if (!this.state.editor) {
+            return null;
+        }
+
         // Attach the picker tooltips to the editor
         const tooltipEngineProps = {
             tooltips: tooltips[this.props.type],
             type: this.props.type,
             imagesDir: this.props.imagesDir,
             soundsDir: this.props.soundsDir,
-            aceEditor: this.editor,
+            aceEditor: this.state.editor,
             record: this.record,
             event: this.state.tooltipableEvent,
             blurEvent: this.state.blurEvent,
@@ -270,11 +276,18 @@ class AceEditorWrapper extends Component {
                 }
                 this.setSelection(range);
             },
-            onScrubbingStart: (name) => {
-                this.props.onScrubbingStart(name);
+            onScrubbingStart: (name, setReadonly) => {
+                if (setReadonly !== undefined) {
+                    this.wasReadOnly = this.editor.getReadOnly();
+                    this.editor.setReadOnly(true);
+                }
+                this.props.onScrubbingStart && this.props.onScrubbingStart();
             },
-            onScrubbingEnd: (name) => {
-                this.props.onScrubbingEnd(name);
+            onScrubbingEnd: (name, resetReadOnly) => {
+                if (resetReadOnly !== undefined) {
+                    this.editor.setReadOnly(this.wasReadOnly);
+                }
+                this.props.onScrubbingEnd && this.props.onScrubbingEnd();
             },
             onTextInsertRequest: (aceLocation, newText) => {
                 if (this.record && this.record.playing) {

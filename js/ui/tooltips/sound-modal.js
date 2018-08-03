@@ -36,36 +36,6 @@ class SoundModal extends Component {
         }
     }
 
-    renderPreview () {
-        const props = {
-            mediaType: "audio",
-            soundsDir: this.props.soundsDir,
-            mediaClasses: this.files,
-            onFileSelect: (fileInfo) => {
-                this.activeFileInfo = fileInfo;
-            },
-            onModalClose: () => {
-                console.log("Modal closed!");
-                if (!this.activeFileInfo) {return;}
-                const updatePath = this.activeFileInfo.groupAndName;
-                this.updateTooltip(updatePath);
-                this.props.onTextUpdateRequest(this.state.aceLocation, `"${updatePath}"`);
-            }
-        };
-        return <MediaPickerTooltip {...props} />;
-    }
-
-    render () {
-        if (!this.props.isEnabled) {
-            return null;
-        }
-        return <TooltipPositioner
-                    className="mediapicker-preview mediapicker__sound"
-                    children={this.renderPreview()}
-                    aceEditor={this.props.aceEditor}
-                    aceLocation={this.state.aceLocation}/>;
-    }
-
     checkEvent (event) {
         if (!/(\bgetSound\s*\()[^)]*$/.test(event.pre)) {
             return this.props.onEventChecked(false);
@@ -112,6 +82,36 @@ class SoundModal extends Component {
             mediaSrc: foundPath,
             errorMessage: ""
         });
+    }
+
+    renderPreview () {
+        const props = {
+            mediaType: "audio",
+            soundsDir: this.props.soundsDir,
+            mediaClasses: this.files,
+            onFileSelect: (fileInfo) => {
+                this.activeFileInfo = fileInfo;
+            },
+            onModalClose: () => {
+                console.log("Modal closed!");
+                if (!this.activeFileInfo) {return;}
+                const updatePath = this.activeFileInfo.groupAndName;
+                this.updateTooltip(updatePath);
+                this.props.onTextUpdateRequest(this.state.aceLocation, `"${updatePath}"`);
+            }
+        };
+        return <MediaPickerTooltip {...props} />;
+    }
+
+    render () {
+        if (!this.props.isEnabled) {
+            return null;
+        }
+        return <TooltipPositioner
+                    className="mediapicker-preview mediapicker__sound"
+                    children={this.renderPreview()}
+                    aceEditor={this.props.aceEditor}
+                    aceLocation={this.state.aceLocation}/>;
     }
 }
 

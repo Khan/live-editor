@@ -57,23 +57,6 @@ html.playing .tooltip.hide-while-playing {
     opacity: 1;
 }
 
-.tooltip .scrubber, .scrubber-handle {
-    border-radius: 10px;
-    cursor: ew-resize;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
-}
-
-.scrubber-handle {
-    background: black;
-    border-radius: 10px;
-    color: white;
-    text-align: center;
-    font-size: 12px;
-    line-height: 12px;
-    z-index: 100;
-}
-
 .tooltip.picker .arrow {
     border-bottom: 8px solid transparent;
     border-left: none;
@@ -167,19 +150,6 @@ html.playing .tooltip.hide-while-playing {
 
 .tooltip .colorpicker_field {
     display: none;
-}
-
-.scrubber-handle .flipped-arrow {
-    display: inline-block;
-    transform: scaleX(-1.0);
-    -webkit-transform: scaleX(-1.0);
-    -moz-transform: scaleX(-1.0);
-    -ms-transform: scaleX(-1.0);
-    -o-transform: scaleX(-1.0);
-}
-
-.scrubber-handle span[role=button] {
-    cursor: pointer;
 }
 
 .block .tooltip:not(.picker) {

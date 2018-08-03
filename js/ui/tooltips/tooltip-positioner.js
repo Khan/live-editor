@@ -20,7 +20,11 @@ class TooltipPositioner extends Component {
     render () {
         const aceEditor = this.props.aceEditor;
         const aceLocation = this.props.aceLocation;
-        if (aceEditor.getReadOnly()) {
+        // TODO: We should sometimes disable if aceEditor is readonly
+        // But we can't disable always because we actually SET IT to readOnly
+        // during number scrubbing (if aceEditor.isReadOnly())
+        // Maybe only during playback, we disable entirely?
+        if (!aceLocation) {
             return null;
         }
         const editorBB = aceEditor.renderer.scroller.getBoundingClientRect();

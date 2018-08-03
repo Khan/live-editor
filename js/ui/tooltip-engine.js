@@ -4,10 +4,21 @@ const _ = require("lodash");
 
 import React, {Component} from "react";
 
-const ScratchpadAutosuggest = require("../ui/autosuggest.js");
+//const ScratchpadAutosuggest = require("../ui/autosuggest.js");
 const TooltipUtils = require("./tooltips/tooltip-utils.js");
 
 class TooltipEngine extends Component {
+
+    props: {
+        aceEditor: Object,
+        record: Object,
+        event: Object,
+        blurEvent: Object,
+        tooltips: Array,
+        onScrubbingStart: Function,
+        onScrubbingEnd: Function,
+        onTextUpdateRequest: Function,
+    }
 
     constructor(props) {
         super(props);
@@ -73,6 +84,7 @@ class TooltipEngine extends Component {
             this.setState({currentTooltip: null});
             return;
         }
+        console.log("New event", newEvent);
         this.setState({
             eventToCheck: newEvent,
             possibleTooltips: this.props.tooltips
@@ -80,7 +92,6 @@ class TooltipEngine extends Component {
     }
 
     render() {
-
        const tooltipsRendered = this.props.tooltips.map((name) => {
             const childProps = Object.assign({
                     key: name,
@@ -88,13 +99,13 @@ class TooltipEngine extends Component {
                     autofillEnabled: !this.state.autofillEnabled
                 },
                 this.props);
-            childProps.onScrubbingStart = () => {
-                this.props.onScrubbingStart(name);
+            childProps.onScrubbingStart = (readOnly) => {
+                this.props.onScrubbingStart(name, readOnly);
             };
-            childProps.onScrubbingEnd = () => {
-                this.props.onScrubbingEnd(name);
+            childProps.onScrubbingEnd = (readOnly) => {
+                this.props.onScrubbingEnd(name, readOnly);
             };
-            childProps.onEventChecked = (foundMatch) => {
+            childProps.onEventCheck = (foundMatch) => {
                 if (foundMatch) {
                     this.setState({
                         currentTooltip: name,
@@ -110,10 +121,10 @@ class TooltipEngine extends Component {
                 this.props.onTextUpdateRequest(aceLocation, newText, newSelection, avoidUndo);
                 this.ignore = false;
             };
-            childProps.onModalOpened = () => {
+            childProps.onModalOpen = () => {
                 this.setState({modalIsOpen: true});
             };
-            childProps.onModalClosed = () => {
+            childProps.onModalClose = () => {
                 this.setState({modalIsOpen: false});
             };
             if (this.state.currentTooltip === name) {
