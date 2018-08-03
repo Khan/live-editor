@@ -77,16 +77,6 @@ class NumberScrubber extends Component {
         return exp;
     }
 
-    updateNumber(num, evt) {
-        const exp = evt ? this.getExponent(evt) : -this.state.decimals;
-        this.setState({
-            decimals: Math.max(0, -exp),
-            intermediateValue: this.state.value + (num * Math.pow(10, exp))
-        })
-        this.requestTextUpdate(this.state.intermediateValue.toFixed(this.state.decimals));
-        this.updateTooltip(this.state.intermediateValue, this.state.decimals);
-    }
-
     handleDragStart(evt) {
         // The text-to-be-tweaked needs to be the same length at the start and end
         // of the anti-undo changes.
@@ -109,27 +99,37 @@ class NumberScrubber extends Component {
     handleDragStop(evt) {
         const exp = this.getExponent(evt);
         const decimals = Math.max(0, -exp);
-        // First put back the original string from
-        // before we started the un-undo manipulations:
-        this.requestTextUpdate(this.originalString, true);
-        // Then make one undo-able replacement placing the drag's final value:
-        this.requestTextUpdate(this.state.intermediateValue.toFixed(decimals));
-        this.updateTooltip(this.state.intermediateValue, decimals);
+        if (this.state.intermediateValue) {
+            // First put back the original string from
+            // before we started the un-undo manipulations:
+            this.requestTextUpdate(this.originalString, true);
+            // Then make one undo-able replacement placing the drag's final value:
+            this.requestTextUpdate(this.state.intermediateValue.toFixed(decimals));
+            this.updateTooltip(this.state.intermediateValue, decimals);
+        }
         // TODO? use a timeout because $leftButton.click and $rightButton.click
         // are called after stop
         this.setState({ isDragging: false, decimals });
         this.props.onScrubbingEnd(true);
     }
 
+    handleSingleClick(num, evt) {
+        const exp = evt ? this.getExponent(evt) : -this.state.decimals;
+        const decimals = Math.max(0, -exp);
+        const intermediateValue = this.state.value + (num * Math.pow(10, exp));
+        this.requestTextUpdate(intermediateValue.toFixed(decimals));
+        this.updateTooltip(intermediateValue, decimals);
+    }
+
     handleLeftClick(evt) {
         if (!this.state.isDragging) {
-            this.updateNumber(-1, evt);
+            this.handleSingleClick(-1, evt);
         }
     }
 
     handleRightClick(evt) {
-        if (this.state.isDragging) {
-            this.updateNumber(1, evt);
+        if (!this.state.isDragging) {
+            this.handleSingleClick(1, evt);
         }
     }
 

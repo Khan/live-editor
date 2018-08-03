@@ -84,7 +84,6 @@ class TooltipEngine extends Component {
             this.setState({currentTooltip: null});
             return;
         }
-        console.log("New event", newEvent);
         this.setState({
             eventToCheck: newEvent,
             possibleTooltips: this.props.tooltips
