@@ -1,6 +1,6 @@
 /* global ace */
-import React, {Component} from "react";
-import {StyleSheet, css} from "aphrodite/no-important";
+import React, { Component } from "react";
+import { StyleSheet, css } from "aphrodite/no-important";
 import Draggable from "react-draggable";
 
 import TooltipEngine from "../../ui/tooltip-engine.js";
@@ -8,7 +8,7 @@ import TooltipPositioner from "./tooltip-positioner.js";
 
 // Returns the number of decimal places shown in a string representation of
 // a number.
-const decimalCount = function(strNumber) {
+const decimalCount = function (strNumber) {
     const decIndex = strNumber.indexOf(".");
     return decIndex === -1 ? 0 : strNumber.length - (decIndex + 1);
 };
@@ -93,7 +93,7 @@ class NumberScrubber extends Component {
         // I could probably just remember the length, but I like putting back the
         // original string. (It might even matter for i18n.)
         this.originalString = this.getTextAtAceLocation();
-        this.setState({isDragging: true});
+        this.setState({ isDragging: true });
         this.props.onScrubbingStart(true);
     }
 
@@ -103,7 +103,7 @@ class NumberScrubber extends Component {
         const decimals = Math.max(0, -exp);
         const intermediateValue = this.state.value + Math.round(dX / 2.0) * Math.pow(10, exp);
         this.requestTextUpdate(intermediateValue.toFixed(decimals), true);
-        this.setState({decimals, intermediateValue});
+        this.setState({ decimals, intermediateValue });
     }
 
     handleDragStop(evt) {
@@ -117,7 +117,7 @@ class NumberScrubber extends Component {
         this.updateTooltip(this.state.intermediateValue, decimals);
         // TODO? use a timeout because $leftButton.click and $rightButton.click
         // are called after stop
-        this.setState({isDragging: false, decimals});
+        this.setState({ isDragging: false, decimals });
         this.props.onScrubbingEnd(true);
     }
 
@@ -138,7 +138,7 @@ class NumberScrubber extends Component {
         // Matches numbers in any other context. The cursor can be anywhere from just ahead
         // of the (optional) leading negative to just after the last digit.
         if ((/[a-zA-Z]\d+$/.test(event.pre) || (/[a-zA-Z]$/.test(event.pre) && /^\d/.test(event.post))) ||
-                !(/\d$/.test(event.pre) || /^-?\d/.test(event.post))) {
+            !(/\d$/.test(event.pre) || /^-?\d/.test(event.post))) {
             return this.props.onEventCheck(false);
         }
         const reversedPre = event.pre.split("").reverse().join("");
@@ -154,7 +154,7 @@ class NumberScrubber extends Component {
         //TODO: Need? event.stopPropagation();
         this.props.onEventCheck(true);
         //TODO? ScratchpadAutosuggest.enableLiveCompletion(false);
-        this.setState({aceLocation: aceLocation});
+        this.setState({ aceLocation: aceLocation });
     }
 
     requestTextUpdate(newText, avoidUndo) {
@@ -174,16 +174,16 @@ class NumberScrubber extends Component {
             return null;
         }
 
-        const svgProps = {width: "12px", height: "12px", viewBox: "-25, -25, 150, 150"}
+        const svgProps = { width: "12px", height: "12px", viewBox: "-25, -25, 150, 150" }
         const leftArrow = <svg {...svgProps}>
-                <polygon points="0,50 100,0 100, 100" fill="white"/>
-            </svg>;
+            <polygon points="0,50 100,0 100, 100" fill="white" />
+        </svg>;
         const rightArrow = <svg {...svgProps}>
-                <polygon points="0,50 100,0 100, 100" fill="white"/>
-            </svg>;
+            <polygon points="0,50 100,0 100, 100" fill="white" />
+        </svg>;
         const centerDiamond = <svg {...svgProps}>
-                <polygon points="50,0 100,50 50,100 0,50" fill="white"/>
-            </svg>;
+            <polygon points="50,0 100,50 50,100 0,50" fill="white" />
+        </svg>;
 
         const scrubber = (
             <div
@@ -207,16 +207,16 @@ class NumberScrubber extends Component {
                 </span>
             </div>);
 
-        const posProp = this.state.isDragging ? null : {position: {x: 0, y: 0}};
+        const posProp = this.state.isDragging ? null : { position: { x: 0, y: 0 } };
         const draggableScrubber = (
             <Draggable
-              axis="x"
-              onStart={this.handleDragStart}
-              onDrag={this.handleDrag}
-              onStop={this.handleDragStop}
-              {...posProp}
-              >
-              {scrubber}
+                axis="x"
+                onStart={this.handleDragStart}
+                onDrag={this.handleDrag}
+                onStop={this.handleDragStop}
+                {...posProp}
+            >
+                {scrubber}
             </Draggable>
         )
 
@@ -224,7 +224,7 @@ class NumberScrubber extends Component {
             className={css(styles.scrubber)}
             children={draggableScrubber}
             aceEditor={this.props.aceEditor}
-            aceLocation={this.state.aceLocation}/>;
+            aceLocation={this.state.aceLocation} />;
     }
 }
 
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
         cursor: "ew-resize",
         userSelect: "none",
         tapHighlightColor: "rgba(0,0,0,0)",
-        zIndex: 100
+        zIndex: 100,
     },
     button: {
         cursor: "pointer",
