@@ -13,7 +13,13 @@ const getOffset = function(el) {
     };
 };
 
+const getScrollTop = function() {
+    return (document.documentElement && document.documentElement.scrollTop) ||
+        document.body.scrollTop;
+}
+
 module.exports = {
     qualifyURL,
-    getOffset
+    getOffset,
+    getScrollTop
 };

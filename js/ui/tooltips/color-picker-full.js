@@ -1,37 +1,68 @@
 import React from 'react'
+import {StyleSheet, css} from "aphrodite/no-important";
+import Color from 'color';
 
-import { CustomPicker } from 'react-color'
-import { Saturation, Hue } from 'react-color/lib/components/common'
+import HuePicker from "./color-picker-hue.js";
+import SaturationPicker from "./color-picker-saturation.jsx";
 
-class MyColorPicker extends React.Component {
+class ColorPickerFull extends React.Component {
+
+    props: {
+        color: Object, // r, g, b
+        onColorChange: Function,
+    }
+
+    static defaultProps = {
+        mode: "rgb"
+    };
+
+    constructor(props) {
+        super(props);
+        // We use hsl behind the scenes,
+        // but we recieve and send back rgb
+        this.state = {
+            color: Color(props.color).hsl()
+        }
+        this.handleColorChange = this.handleColorChange.bind(this);
+    }
+
+    handleColorChange(newColor, eventType) {
+        const colorToSend = newColor.rgb().object();
+        colorToSend.r = Math.round(colorToSend.r);
+        colorToSend.g = Math.round(colorToSend.g);
+        colorToSend.b = Math.round(colorToSend.b);
+        this.setState({color: newColor});
+        this.props.onColorChange(colorToSend, eventType);
+    }
 
     render() {
         return (
-            <div>
-                <div style={ styles.saturation }>
-                    <Saturation
-                        {...this.props}
+            <div className={css(styles.picker)}>
+                <div>
+                    <HuePicker
+                        color={this.state.color}
+                        onColorChange={this.handleColorChange}
                     />
                 </div>
-                <div style={ styles.hue }>
-                    <Hue {...this.props} />
+                <div className={css(styles.saturation)}>
+                    <SaturationPicker
+                        color={this.state.color}
+                        onColorChange={this.handleColorChange}
+                    />
                 </div>
             </div>
         );
     }
 }
 
-const styles = {
-    saturation: {
-        position: 'relative',
-        width: 150,
-        height: 150
+const styles = StyleSheet.create({
+    picker: {
+        height: "180px",
+        width: "150px",
     },
-    hue: {
-        height: 10,
-        position: 'relative',
-        marginBottom: 10,
-    }
-};
+    saturation: {
+        marginTop: "6px"
+    },
+});
 
-module.exports = CustomPicker(MyColorPicker)
+module.exports = ColorPickerFull;

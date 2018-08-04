@@ -1,23 +1,3 @@
-.tooltip {
-    background: black;
-    border-radius: 7px;
-    box-shadow: 0px 0px 8px #000000;
-    display: block;
-    font-size: 12px;
-    line-height: 12px;
-    margin-left: -28px;
-    margin-top: -37px;
-    opacity: 0.2;
-    padding: 5px;
-    position: absolute;
-    width: 50px;
-    z-index: 100;
-    -webkit-box-sizing: content-box;
-    box-sizing: content-box;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
-}
-
 html.playing .tooltip.hide-while-playing {
     display: none;
 }
@@ -39,32 +19,9 @@ html.playing .tooltip.hide-while-playing {
     width: 196px;
 }
 
-.tooltip:hover {
-    opacity: 1;
-}
-
-.tooltip .arrow {
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 8px solid black;
-    bottom: -8px;
-    left: 21px;
-    position: absolute;
-}
-
 .tooltip.dragging {
     cursor: none;
     opacity: 1;
-}
-
-.tooltip.picker .arrow {
-    border-bottom: 8px solid transparent;
-    border-left: none;
-    border-right: 8px solid black;
-    border-top: 8px solid transparent;
-    bottom: auto;
-    left: -7px;
-    top: 5px;
 }
 
 .tooltip.picker .picker {

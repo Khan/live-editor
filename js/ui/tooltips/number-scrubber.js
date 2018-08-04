@@ -1,6 +1,6 @@
 /* global ace */
-import React, { Component } from "react";
-import { StyleSheet, css } from "aphrodite/no-important";
+import React, {Component} from "react";
+import {StyleSheet, css} from "aphrodite/no-important";
 import Draggable from "react-draggable";
 
 import TooltipEngine from "../../ui/tooltip-engine.js";
@@ -8,7 +8,7 @@ import TooltipPositioner from "./tooltip-positioner.js";
 
 // Returns the number of decimal places shown in a string representation of
 // a number.
-const decimalCount = function (strNumber) {
+const decimalCount = function(strNumber) {
     const decIndex = strNumber.indexOf(".");
     return decIndex === -1 ? 0 : strNumber.length - (decIndex + 1);
 };
@@ -20,11 +20,11 @@ const decimalCount = function (strNumber) {
 //  but if we ever bring that back, please look at the code before my change
 //  and implement accordingly.
 class NumberScrubber extends Component {
-
     props: {
         // Common to all tooltips
         autofillEnabled: boolean,
         isEnabled: boolean,
+        editorScrollTop: number,
         eventToCheck: Object,
         aceEditor: Object,
         onEventCheck: Function,
@@ -57,7 +57,12 @@ class NumberScrubber extends Component {
         const editor = this.props.aceEditor;
         const Range = ace.require("ace/range").Range;
         const loc = this.state.aceLocation;
-        const range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
+        const range = new Range(
+            loc.row,
+            loc.start,
+            loc.row,
+            loc.start + loc.length,
+        );
         return editor.getSession().getTextRange(range);
     }
 
@@ -78,12 +83,7 @@ class NumberScrubber extends Component {
     }
 
     handleDragStart(evt) {
-        // The text-to-be-tweaked needs to be the same length at the start and end
-        // of the anti-undo changes.
-        // I could probably just remember the length, but I like putting back the
-        // original string. (It might even matter for i18n.)
-        this.originalString = this.getTextAtAceLocation();
-        this.setState({ isDragging: true });
+        this.setState({isDragging: true});
         this.props.onScrubbingStart(true);
     }
 
@@ -91,32 +91,39 @@ class NumberScrubber extends Component {
         const dX = data.x;
         const exp = this.getExponent(evt);
         const decimals = Math.max(0, -exp);
-        const intermediateValue = this.state.value + Math.round(dX / 2.0) * Math.pow(10, exp);
+        const intermediateValue =
+            this.state.value + Math.round(dX / 2.0) * Math.pow(10, exp);
         this.requestTextUpdate(intermediateValue.toFixed(decimals), true);
-        this.setState({ decimals, intermediateValue });
+        this.setState({decimals, intermediateValue});
     }
 
-    handleDragStop(evt) {
+    handleDragStop(evt, data) {
         const exp = this.getExponent(evt);
         const decimals = Math.max(0, -exp);
         if (this.state.intermediateValue) {
-            // First put back the original string from
+            // First put back the original value from
             // before we started the un-undo manipulations:
-            this.requestTextUpdate(this.originalString, true);
+            this.requestTextUpdate(this.state.value, true);
             // Then make one undo-able replacement placing the drag's final value:
-            this.requestTextUpdate(this.state.intermediateValue.toFixed(decimals));
+            this.requestTextUpdate(
+                this.state.intermediateValue.toFixed(decimals),
+            );
             this.updateTooltip(this.state.intermediateValue, decimals);
         }
         // TODO? use a timeout because $leftButton.click and $rightButton.click
         // are called after stop
-        this.setState({ isDragging: false, decimals });
+        this.setState({
+            isDragging: false,
+            value: this.state.intermediateValue,
+            decimals,
+        });
         this.props.onScrubbingEnd(true);
     }
 
     handleSingleClick(num, evt) {
         const exp = evt ? this.getExponent(evt) : -this.state.decimals;
         const decimals = Math.max(0, -exp);
-        const intermediateValue = this.state.value + (num * Math.pow(10, exp));
+        const intermediateValue = this.state.value + num * Math.pow(10, exp);
         this.requestTextUpdate(intermediateValue.toFixed(decimals));
         this.updateTooltip(intermediateValue, decimals);
     }
@@ -137,35 +144,40 @@ class NumberScrubber extends Component {
         // Does not match letters followed by numbers "<h1", "var val2", etc.
         // Matches numbers in any other context. The cursor can be anywhere from just ahead
         // of the (optional) leading negative to just after the last digit.
-        if ((/[a-zA-Z]\d+$/.test(event.pre) || (/[a-zA-Z]$/.test(event.pre) && /^\d/.test(event.post))) ||
-            !(/\d$/.test(event.pre) || /^-?\d/.test(event.post))) {
+        if (
+            /[a-zA-Z]\d+$/.test(event.pre) ||
+            (/[a-zA-Z]$/.test(event.pre) && /^\d/.test(event.post)) ||
+            !(/\d$/.test(event.pre) || /^-?\d/.test(event.post))
+        ) {
             return this.props.onEventCheck(false);
         }
-        const reversedPre = event.pre.split("").reverse().join("");
-        const numberStart = event.col - /^[\d.]*(-(?!\s*\w))?/.exec(reversedPre)[0].length;
+        const reversedPre = event.pre
+            .split("")
+            .reverse()
+            .join("");
+        const numberStart =
+            event.col - /^[\d.]*(-(?!\s*\w))?/.exec(reversedPre)[0].length;
         const number = /^-?[\d.]+/.exec(event.line.slice(numberStart))[0];
         const aceLocation = {
             start: numberStart,
             length: number.length,
-            row: event.row
+            row: event.row,
         };
-        aceLocation.tooltipCursor = event.col;
         this.updateTooltip(parseFloat(number), decimalCount(number));
-        //TODO: Need? event.stopPropagation();
-        this.props.onEventCheck(true);
+        this.props.onEventCheck(true, aceLocation);
         //TODO? ScratchpadAutosuggest.enableLiveCompletion(false);
-        this.setState({ aceLocation: aceLocation });
+        this.setState({cursorRow: aceLocation.row, cursorCol: event.col});
     }
 
     requestTextUpdate(newText, avoidUndo) {
-        this.props.onTextUpdateRequest(this.state.aceLocation, newText, null, avoidUndo);
+        this.props.onTextUpdateRequest(newText, null, avoidUndo);
     }
 
     updateTooltip(value, decimals) {
         this.setState({
             value: value,
-            decimals: (decimals <= 5) ? decimals : 5,
-            dragPosition: 0
+            decimals: decimals <= 5 ? decimals : 5,
+            dragPosition: 0,
         });
     }
 
@@ -174,40 +186,48 @@ class NumberScrubber extends Component {
             return null;
         }
 
-        const svgProps = { width: "12px", height: "12px", viewBox: "-25, -25, 150, 150" }
-        const leftArrow = <svg {...svgProps}>
-            <polygon points="0,50 100,0 100, 100" fill="white" />
-        </svg>;
-        const rightArrow = <svg {...svgProps}>
-            <polygon points="0,50 100,0 100, 100" fill="white" />
-        </svg>;
-        const centerDiamond = <svg {...svgProps}>
-            <polygon points="50,0 100,50 50,100 0,50" fill="white" />
-        </svg>;
+        const svgProps = {
+            width: "12px",
+            height: "12px",
+            viewBox: "-25, -25, 150, 150",
+        };
+        const leftArrow = (
+            <svg {...svgProps}>
+                <polygon points="0,50 100,0 100, 100" fill="white" />
+            </svg>
+        );
+        const rightArrow = (
+            <svg {...svgProps}>
+                <polygon points="0,50 100,0 100, 100" fill="white" />
+            </svg>
+        );
+        const centerDiamond = (
+            <svg {...svgProps}>
+                <polygon points="50,0 100,50 50,100 0,50" fill="white" />
+            </svg>
+        );
 
         const scrubber = (
-            <div
-                className={css(styles.handle)}
-                ref={this.scrubberRef}
-            >
-                <span className={css(styles.button)}
+            <div className={css(styles.handle)} ref={this.scrubberRef}>
+                <span
+                    className={css(styles.button)}
                     role="button"
                     onClick={this.handleLeftClick}
                 >
                     {leftArrow}
                 </span>
-                <span>
-                    {centerDiamond}
-                </span>
-                <span className={css(styles.button, styles.flippedArrow)}
+                <span>{centerDiamond}</span>
+                <span
+                    className={css(styles.button, styles.flippedArrow)}
                     role="button"
                     onClick={this.handleRightClick}
                 >
                     {rightArrow}
                 </span>
-            </div>);
+            </div>
+        );
 
-        const posProp = this.state.isDragging ? null : { position: { x: 0, y: 0 } };
+        const posProp = this.state.isDragging ? null : {position: {x: 0, y: 0}};
         const draggableScrubber = (
             <Draggable
                 axis="x"
@@ -218,13 +238,19 @@ class NumberScrubber extends Component {
             >
                 {scrubber}
             </Draggable>
-        )
+        );
 
-        return <TooltipPositioner
-            className={css(styles.scrubber)}
-            children={draggableScrubber}
-            aceEditor={this.props.aceEditor}
-            aceLocation={this.state.aceLocation} />;
+        return (
+            <TooltipPositioner
+                className={css(styles.scrubber)}
+                children={draggableScrubber}
+                aceEditor={this.props.aceEditor}
+                aceLocation={this.state.aceLocation}
+                editorScrollTop={this.props.editorScrollTop}
+                cursorRow={this.state.cursorRow}
+                cursorCol={this.state.cursorCol}
+            />
+        );
     }
 }
 
@@ -255,7 +281,7 @@ const styles = StyleSheet.create({
     flippedArrow: {
         display: "inline-block",
         transform: "scaleX(-1.0)",
-    }
+    },
 });
 
 module.exports = NumberScrubber;

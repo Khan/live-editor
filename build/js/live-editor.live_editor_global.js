@@ -187,7 +187,7 @@ eval("/* WEBPACK VAR INJECTION */(function(_) {\n\n/* eslint-disable no-var, no-
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("\n\nvar qualifyURL = function qualifyURL(url) {\n    var a = document.createElement(\"a\");\n    a.href = url;\n    return a.href;\n};\n\nvar getOffset = function getOffset(el) {\n    var box = el.getBoundingClientRect();\n\n    return {\n        top: box.top + window.pageYOffset - document.documentElement.clientTop,\n        left: box.left + window.pageXOffset - document.documentElement.clientLeft\n    };\n};\n\nmodule.exports = {\n    qualifyURL: qualifyURL,\n    getOffset: getOffset\n};\n\n//# sourceURL=webpack:///./js/shared/utils.js?");
+eval("\n\nvar qualifyURL = function qualifyURL(url) {\n    var a = document.createElement(\"a\");\n    a.href = url;\n    return a.href;\n};\n\nvar getOffset = function getOffset(el) {\n    var box = el.getBoundingClientRect();\n\n    return {\n        top: box.top + window.pageYOffset - document.documentElement.clientTop,\n        left: box.left + window.pageXOffset - document.documentElement.clientLeft\n    };\n};\n\nvar getScrollTop = function getScrollTop() {\n    return document.documentElement && document.documentElement.scrollTop || document.body.scrollTop;\n};\n\nmodule.exports = {\n    qualifyURL: qualifyURL,\n    getOffset: getOffset,\n    getScrollTop: getScrollTop\n};\n\n//# sourceURL=webpack:///./js/shared/utils.js?");
 
 /***/ }),
 

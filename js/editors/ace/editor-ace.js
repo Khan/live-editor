@@ -33,7 +33,7 @@ const tooltips = {
     ace_webpage: [
         //"imageModal",
         "colorPicker",
-        //"numberScrubber"
+        "numberScrubber"
     ],
     ace_sql: [
         "numberScrubber"
@@ -50,6 +50,7 @@ class AceEditorWrapper extends Component {
         imagesDir: string,
         soundsDir: string,
         autoFocus: boolean,
+        readOnly: boolean,
         errors: Array,
         warnings: Array,
         highlightErrorReq: Object,
@@ -167,6 +168,9 @@ class AceEditorWrapper extends Component {
                 this.handleTooltipableEvent(e);
             }
         });
+        this.editor.session.on("changeScrollTop", (scrollTop) => {
+            this.setState({editorScrollTop: scrollTop});
+        });
         this.config.on("versionSwitched", (version) => {
             this.config.runVersion(version, this.props.type + "_editor", this);
         });
@@ -232,10 +236,11 @@ class AceEditorWrapper extends Component {
         // Attach the picker tooltips to the editor
         const tooltipEngineProps = {
             tooltips: tooltips[this.props.type],
-            type: this.props.type,
             imagesDir: this.props.imagesDir,
             soundsDir: this.props.soundsDir,
             aceEditor: this.state.editor,
+            editorType: this.props.type,
+            editorScrollTop: this.state.editorScrollTop,
             record: this.record,
             event: this.state.tooltipableEvent,
             blurEvent: this.state.blurEvent,
@@ -249,15 +254,15 @@ class AceEditorWrapper extends Component {
             //     won't put things back correctly. Thus, use editor.setReadOnly(true) while using this hack.
             //  - I use the session's $fromUndo variable to tell the editor not to save undo's. This
             //     is undocumented. There's currently (7/25/15) a test for it in tooltips_test.js.
-            onTextUpdateRequest: (aceLocation, newText, newSelection, avoidUndo) => {
+            onTextUpdateRequest: (newText, newSelection, avoidUndo) => {
                 if (this.record && this.record.playing) {
                     return;
                 }
                 newText = newText.toString();
                 const Range = ace.require("ace/range").Range;
-                const loc = aceLocation;
-                const range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
-
+                const loc = this.state.tooltipLocation;
+                const range = new Range(loc.row, loc.start,
+                    loc.row, loc.start + loc.length);
                 // We probably could just set it to false when we're done, but
                 // someone else might be trying a similar hack, or... who knows?
                 let undoState;
@@ -275,17 +280,20 @@ class AceEditorWrapper extends Component {
                     range.end.column = loc.start + newSelection.offset + newSelection.length;
                 }
                 this.setSelection(range);
+                // Update location based on length of new text
+                loc.length = newText.length;
+                this.setState({tooltipLocation: loc});
             },
             onScrubbingStart: (name, setReadonly) => {
                 if (setReadonly !== undefined) {
                     this.wasReadOnly = this.editor.getReadOnly();
-                    this.editor.setReadOnly(true);
+                    this.setReadOnly(true);
                 }
                 this.props.onScrubbingStart && this.props.onScrubbingStart();
             },
             onScrubbingEnd: (name, resetReadOnly) => {
                 if (resetReadOnly !== undefined) {
-                    this.editor.setReadOnly(this.wasReadOnly);
+                    this.setReadOnly(!!this.props.readOnly);
                 }
                 this.props.onScrubbingEnd && this.props.onScrubbingEnd();
             },
@@ -294,6 +302,9 @@ class AceEditorWrapper extends Component {
                     return;
                 }
                 this.editor.session.insert(aceLocation, newText);
+            },
+            onTooltipChange: (tooltipName, tooltipLocation) => {
+                this.setState({tooltipName, tooltipLocation});
             }
         };
         return ReactDOM.createPortal(

@@ -104,11 +104,12 @@ class TooltipEngine extends Component {
             childProps.onScrubbingEnd = (readOnly) => {
                 this.props.onScrubbingEnd(name, readOnly);
             };
-            childProps.onEventCheck = (foundMatch) => {
+            childProps.onEventCheck = (foundMatch, aceLocation) => {
                 if (foundMatch) {
                     this.setState({
                         currentTooltip: name,
                         possibleTooltips: []});
+                    this.props.onTooltipChange(name, aceLocation);
                 } else {
                     this.setState((prevState, props) => ({
                         possibleTooltips: prevState.possibleTooltips.filter(e => e !== name)

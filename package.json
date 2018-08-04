@@ -86,6 +86,7 @@
     "backbone": "^1.0.0",
     "bootstrap": "^3.1.1",
     "classnames": "^2.2.6",
+    "color": "^3.0.0",
     "es5-shim": "^3.4.0",
     "escodegen": "^1.11.0",
     "escope": "^1.0.0",

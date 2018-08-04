@@ -7,6 +7,11 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
 const TooltipPositioner = require("./tooltip-positioner.js");
 const TooltipUtils = require("./tooltip-utils.js");
 
+
+const stringifyRGB = function(rgb) {
+    return rgb.r + ", " + rgb.g + ", " + rgb.b;
+}
+
 // A description of general tooltip flow can be found in tooltip-engine.js
 class ColorPicker extends Component {
 
@@ -15,7 +20,9 @@ class ColorPicker extends Component {
         autofillEnabled: boolean,
         isEnabled: boolean,
         eventToCheck: Object,
-        editor: Object,
+        aceEditor: Object,
+        editorScrollTop: number,
+        editorType: string,
         onEventCheck: Function,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
@@ -31,7 +38,7 @@ class ColorPicker extends Component {
         this.state = {
             aceLocation: {},
             closing: "",
-            currentColor: "255, 0, 0"
+            color: {r: 255, g: 0, b:0}
         };
         const funcs = (this.props.editorType === "ace_webpage") ? "rgb|rgba" : "background|fill|stroke|color";
         this.regex = RegExp("(\\b(?:"+funcs+")\\s*\\()[^\\)]*$");
@@ -50,12 +57,12 @@ class ColorPicker extends Component {
 
     handleMouseLeave = () => {
         this.setState({showFullPicker: true});
-        this.props.aceEditor.focus();
+        //TODO:this.props.aceEditor.focus();
         this.props.onScrubbingEnd();
     }
 
-    handleChange = (color) => {
-        this.setState({ color: color.rgb })
+    handleChange = (color, eventType) => {
+        this.updateText(color, eventType);
     }
 
     checkEvent(event) {
@@ -89,11 +96,12 @@ class ColorPicker extends Component {
         };
 
         const aceLocation = {
+            row: event.row,
             start: paramsStart,
             length: paramsEnd - paramsStart,
-            row: event.row
         };
-        aceLocation.tooltipCursor = aceLocation.start + aceLocation.length + closing.length;
+        const maxLen = 13; // Max length of any RGB string
+        const cursorCol = aceLocation.start + maxLen + closing.length;
 
         const name = event.line.substring(functionStart, paramsStart - 1);
         let addSemicolon =
@@ -124,43 +132,31 @@ class ColorPicker extends Component {
                 this.updateText(rgb);
             }
         }
-
-        this.updateTooltip(rgb);
-        this.setState({aceLocation: aceLocation, closing: closing});
-        this.props.onEventCheck(true);
+        this.setState({cursorRow: aceLocation.row, cursorCol, closing, rgb});
+        this.props.onEventCheck(true, aceLocation);
     }
 
-    updateTooltip (rgb) {
-        this.setState({currentColor: rgb});
-    }
-
-    updateText (rgb, undoMode) {
+    updateText (rgb, eventType) {
         let avoidUndo = false;
-        if (undoMode === 'startScrub') {
-            // TODO: Next 4 lines of code needs refactoring with textAtAceLocation() in number-scrubber.js.
-            // TODO: Sort out this, self, ace, to make it callable from both places, and put it in tooltip-engine.js.
-            const Range = ace.require("ace/range").Range;
-            const loc = this.state.aceLocation;
-            const range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
-            this.originalText = this.props.aceEditor.getSession().getTextRange(range);
-            this.wasReadOnly = this.props.aceEditor.getReadOnly();
-            this.props.aceEditor.setReadOnly(true);
+        // This system ensures that when users undo, their undo stack will
+        // only include the colors before and after scrubs, not mid-scrub colors
+        if (eventType === 'startScrub') {
             avoidUndo = true;
-        } else if (undoMode === 'midScrub') {
+            this.props.onScrubbingStart(true);
+        } else if (eventType === 'midScrub') {
             avoidUndo = true;
-        } else if (undoMode === 'stopScrub') {
-            this.props.onTextUpdateRequest(this.state.aceLocation, this.originalText, undefined, true);
-            this.props.aceEditor.setReadOnly(this.wasReadOnly);
+        } else if (eventType === 'stopScrub') {
+            // Update with the pre-scrub RGB, still stored in state
+            this.props.onTextUpdateRequest(stringifyRGB(this.state.rgb), undefined, true);
+            // Now its safe to update the RGB in state
+            this.setState({rgb});
+            this.props.onScrubbingEnd(true);
+        } else if (eventType === 'click') {
+            this.props.onScrubbingEnd(true);
+            this.setState({rgb});
         }
-        const newText = rgb.r + ", " + rgb.g + ", " + rgb.b;
-        this.props.onTextUpdateRequest(this.state.aceLocation, nextText, undefined, avoidUndo);
-        // Calculate new location according to new text
-        const newLocation = this.state.aceLocation;
-        newLocation.length = newText.length;
-        newLocation.tooltipCursor = this.state.aceLocation.start + this.state.aceLocation.length + this.state.closing.length;
-        this.setState({aceLocation: newLocation});
+        this.props.onTextUpdateRequest(stringifyRGB(rgb), undefined, avoidUndo);
     }
-
 
     render () {
         if (!this.props.isEnabled) {
@@ -169,8 +165,11 @@ class ColorPicker extends Component {
 
         let colorPicker;
         if (this.state.showFullPicker) {
-            colorPicker = <div className={css(styles.popover)}>
-                    <FullColorPicker color={this.state.currentColor} onChange={this.handleChange}/>
+            colorPicker = <div className={css(styles.fullDiv)}>
+                    <FullColorPicker
+                        color={this.state.color}
+                        onColorChange={this.handleChange}
+                    />
                 </div>;
         } else {
             colorPicker = <div className={css(styles.previewDiv)}>
@@ -184,10 +183,13 @@ class ColorPicker extends Component {
                         </div>
 
         return <TooltipPositioner
-                    className="picker"
+                    toSide="right"
                     children={wrapped}
                     aceEditor={this.props.aceEditor}
-                    aceLocation={this.state.aceLocation}/>;
+                    editorScrollTop={this.props.editorScrollTop}
+                    cursorRow={this.state.cursorRow}
+                    cursorCol={this.state.cursorCol}
+                    />;
 
     }
 }
@@ -206,7 +208,14 @@ const styles = StyleSheet.create({
         height: '15px',
         borderRadius: '2px',
     },
-    popover: {
+    fullDiv: {
+        borderWidth: 0,
+        height: "160px",
+        marginLeft: "-1px",
+        marginTop: "-1px",
+        overflow: "hidden",
+        position: "relative",
+        width: "152px"
     },
     cover: {
         position: 'fixed',
