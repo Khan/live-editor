@@ -1,4 +1,3 @@
-/* global ace */
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
@@ -26,17 +25,15 @@ class ColorPicker extends Component {
         onEventCheck: Function,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
+        // Specific to a few tooltips
         onScrubbingStart: Function,
         onScrubbingEnd: Function,
-        // Specific to ColorPicker
-        editorType: string,
 
     };
 
     constructor(props) {
         super(props);
         this.state = {
-            aceLocation: {},
             closing: "",
             color: {r: 255, g: 0, b:0}
         };
@@ -183,13 +180,14 @@ class ColorPicker extends Component {
                         </div>
 
         return <TooltipPositioner
-                    toSide="right"
                     children={wrapped}
                     aceEditor={this.props.aceEditor}
                     editorScrollTop={this.props.editorScrollTop}
                     cursorRow={this.state.cursorRow}
                     cursorCol={this.state.cursorCol}
-                    />;
+                    startsOpaque={true}
+                    toSide="right"
+                />;
 
     }
 }

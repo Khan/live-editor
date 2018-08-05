@@ -12,9 +12,26 @@ class MediaPickerModal extends Component {
         mediaClasses: Array<Object>,
         imagesDir: string,
         soundsDir: string,
-        onFileSelect: (info: Object) => void,
         onClose: () => void,
+        onFileSelect: (info: Object) => void,
+        onModalRefCreate: (ref: Object) => void,
     };
+
+    constructor(props) {
+        super(props);
+
+        // This ref is created purely so that it can be passed back
+        //  to TooltipEngine, so that it can determine if blur events
+        //  are outside a modal and should thus close the tooltip
+        // Another approach would be to track modal open/close,
+        //  but wonder-blocks-modal does not expose onOpen yet
+        this.modalRef = React.createRef();
+    }
+
+    componentDidMount() {
+        // TODO: Remove if wonder-blocks adds onOpen for Modal
+        this.props.onModalRefCreate(this.modalRef);
+    }
 
     render() {
         // state: activeClass
@@ -46,10 +63,12 @@ class MediaPickerModal extends Component {
         return (
             <OneColumnModal
                 content={
-                    <Tabs>
-                        <TabList>{classesTabs}</TabList>
-                        {classesTabPanels}
-                    </Tabs>
+                    <div ref={this.modalRef}>
+                        <Tabs>
+                            <TabList>{classesTabs}</TabList>
+                            {classesTabPanels}
+                        </Tabs>
+                    </div>
                 }
                 footer={
                     <Button onClick={this.props.onClose}>{i18n._("Ok")}</Button>

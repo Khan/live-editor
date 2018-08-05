@@ -57,11 +57,18 @@ class TooltipEngine extends Component {
         // First check if a blurEvent means we need to disable current tooltip
         const blurTarget = this.props.blurEvent && this.props.blurEvent.target;
         const prevBlurTarget = prevProps.blurEvent && prevProps.blurEvent.target;
+
+        const isVisible = (e) => {
+            return !!( e.offsetWidth || e.offsetHeight || e.getClientRects().length );
+        }
+
         if (blurTarget &&
             (!prevBlurTarget|| blurTarget !== prevBlurTarget) &&
             this.state.currentTooltip &&
             !this.domRef.current.contains(blurTarget) &&
-            !this.state.modalIsOpen) {
+            (!this.state.modalRef ||
+            !this.state.modalRef.current ||
+            !isVisible(this.state.modalRef.current))) {
             this.setState({currentTooltip: null});
         }
         // Now check for new events that trigger different tooltips
@@ -121,12 +128,9 @@ class TooltipEngine extends Component {
                 this.props.onTextUpdateRequest(aceLocation, newText, newSelection, avoidUndo);
                 this.ignore = false;
             };
-            childProps.onModalOpen = () => {
-                this.setState({modalIsOpen: true});
-            };
-            childProps.onModalClose = () => {
-                this.setState({modalIsOpen: false});
-            };
+            childProps.onModalRefCreate = (ref) => {
+                this.setState({modalRef: ref});
+            }
             if (this.state.currentTooltip === name) {
                 childProps.isEnabled = true;
             }

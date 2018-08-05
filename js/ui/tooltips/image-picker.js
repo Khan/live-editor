@@ -11,11 +11,13 @@ class ImagePicker extends Component {
 
     props: {
         // Common to all tooltips
-        isEnabled: boolean,
         autofillEnabled: boolean,
+        isEnabled: boolean,
         eventToCheck: Object,
         aceEditor: Object,
-        onEventChecked: Function,
+        editorScrollTop: number,
+        editorType: string,
+        onEventCheck: Function,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
         // Specific to ImagePicker
@@ -25,10 +27,10 @@ class ImagePicker extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            currentImage: "cute/None",
-            aceLocation: {},
-            closing: ""
+            closing: "",
+            imageName: "cute/None",
         };
+        this.regex = RegExp(/(\bgetImage\s*\()[^)]*$/);
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
@@ -37,27 +39,9 @@ class ImagePicker extends Component {
         }
     }
 
-    renderImageScroller() {
-        const props = {
-            currentImage: this.state.currentImage,
-            imagesDir: this.props.imagesDir,
-            imageGroups: OutputImages,
-            onMouseLeave: () => {
-                // TODO: Propagate to parent of parent?
-                this.props.aceEditor.clearSelection();
-                this.props.aceEditor.focus();
-            },
-            onImageSelect: (imageName) => {
-                this.updateText(imageName);
-                this.updateTooltip(`"${imageName}"`);
-            }
-        };
-        return <ImageScroller {...props} />;
-    }
-
     checkEvent(event) {
-        if (!/(\bgetImage\s*\()[^)]*$/.test(event.pre)) {
-            return this.props.onEventChecked(false);
+        if (!this.regex.test(event.pre)) {
+            return this.props.onEventCheck(false);
         }
         const functionStart = event.col - RegExp.lastMatch.length;
         const paramsStart = functionStart + RegExp.$1.length;
@@ -66,14 +50,8 @@ class ImagePicker extends Component {
         const pathStart = paramsStart + leadingPadding.length;
         let path = pieces[2];
         let closing = pieces[3];
-        const aceLocation = {
-            start: pathStart,
-            length: path.length,
-            row: event.row
-        };
-        aceLocation.tooltipCursor = aceLocation.start + aceLocation.length + closing.length;
 
-        // TODO(kevinb) extract this into a method on TooltipBase
+        // TODO: De-dupe this with similar code in other tooltips
         if (leadingPadding.length === 0 &&
             path.length === 0 &&
             closing.length === 0 &&
@@ -86,16 +64,23 @@ class ImagePicker extends Component {
                 column: pathStart
             }, closing);
 
-            path = this.state.currentImage;
-            this.updateText(path);
+            path = this.state.imageName;
+            this.props.onTextUpdateRequest(`"${path}"`);
         }
+        const aceLocation = {
+            start: pathStart,
+            length: path.length,
+            row: event.row
+        };
+        const cursorCol = aceLocation.start + aceLocation.length + closing.length;
+
         this.updateTooltip(path);
-        this.setState({aceLocation: aceLocation, closing: closing});
-        this.props.onEventChecked(true);
+        this.setState({ closing, cursorCol, cursorRow: aceLocation.row});
+        this.props.onEventCheck(true, aceLocation);
     }
 
     updateTooltip(rawPath) {
-        let foundPath = this.state.currentImage;
+        let foundPath = this.state.imageName;
 
         const path = /^["']?(.*?)["']?$/.exec(rawPath)[1];
         const pathParts = path.split("/");
@@ -110,21 +95,25 @@ class ImagePicker extends Component {
                 });
             }
         });
-        this.setState({currentImage: foundPath});
+        this.setState({imageName: foundPath});
     }
 
-    updateText(newPath) {
-        // This can be a prop passed along
-        if (!this.props.autofillEnabled) {
-            return;
-        }
-        const newText = '"' + newPath + '"';
-        this.props.onTextUpdateRequest(this.state.aceLocation, newText);
-        // Calculate new location according to new text
-        const newLocation = this.state.aceLocation;
-        newLocation.length = newText.length;
-        newLocation.tooltipCursor = this.state.aceLocation.start + this.state.aceLocation.length + this.state.closing.length;
-        this.setState({aceLocation: newLocation});
+    renderImageScroller() {
+        const props = {
+            imageName: this.state.imageName,
+            imagesDir: this.props.imagesDir,
+            imageGroups: OutputImages,
+            onMouseLeave: () => {
+                // TODO: Propagate to parent of parent?
+                this.props.aceEditor.clearSelection();
+                this.props.aceEditor.focus();
+            },
+            onImageSelect: (imageName) => {
+                this.updateTooltip(`"${imageName}"`);
+                this.props.onTextUpdateRequest(`"${imageName}"`);
+            }
+        };
+        return <ImageScroller {...props} />;
     }
 
     render() {
@@ -132,10 +121,14 @@ class ImagePicker extends Component {
             return null;
         }
         return <TooltipPositioner
-                    className="mediapicker"
-                    children={this.renderImageScroller()}
                     aceEditor={this.props.aceEditor}
-                    aceLocation={this.state.aceLocation}/>;
+                    editorScrollTop={this.props.editorScrollTop}
+                    children={this.renderImageScroller()}
+                    cursorRow={this.state.cursorRow}
+                    cursorCol={this.state.cursorCol}
+                    startsOpaque={true}
+                    toSide="right"
+                />;
     }
 }
 

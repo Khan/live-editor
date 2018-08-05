@@ -32,6 +32,15 @@ class MediaPickerPreview extends Component {
     }
 
     render() {
+        let errorDiv;
+        const errorMessage =
+            this.state.errorMessage || this.props.errorMessage;
+        if (errorMessage) {
+            errorDiv = (
+                <div className={css(styles.error)}>{errorMessage}</div>
+            );
+        }
+
         let mediaPreview;
         if (this.props.mediaType === "audio") {
             mediaPreview = (
@@ -41,7 +50,7 @@ class MediaPickerPreview extends Component {
                         src={this.props.mediaSrc}
                         controls
                     />
-                    <div className={css(styles.error)} />
+                    {errorDiv}
                 </div>
             );
         } else {
@@ -50,21 +59,14 @@ class MediaPickerPreview extends Component {
             if (!this.state.imageLoaded && this.props.mediaSrc) {
                 loadingImg = <CircularSpinner size="small" />;
             }
-            let errorDiv;
-            const errorMessage =
-                this.state.errorMessage || this.props.errorMessage;
-            if (errorMessage) {
-                errorDiv = (
-                    <div className={css(styles.error)}>{errorMessage}</div>
-                );
-            }
+
             mediaPreview = (
                 <div>
                     {loadingImg}
                     <div className={css(styles.imgBox)}>
                         <img
                             className={css(styles.img)}
-                            alt={$._("Selected image file")}
+                            alt={i18n._("Selected image file")}
                             src={this.props.mediaSrc}
                             onLoad={this.handleImageLoad}
                             onError={this.handleImageError}

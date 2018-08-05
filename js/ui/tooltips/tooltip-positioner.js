@@ -11,6 +11,7 @@ class TooltipPositioner extends Component {
         cursorRow: number,
         cursorCol: number,
         editorScrollTop: number,
+        startsOpaque: boolean,
         toSide: string, // What side of the text is the tooltip on? top/right
     };
 
@@ -61,9 +62,10 @@ class TooltipPositioner extends Component {
             return null;
         }
         const visStyle = this.state.isVisible ? "visible" : "hidden";
-        const tooltipSideStyle = styles[this.props.toSide + "Tooltip"];
+        const tooltipStyle = styles[this.props.toSide + "Tooltip"];
+        const opacityStyle = this.props.startsOpaque && styles.tooltipOpaque;
         const arrowSideStyle = styles[this.props.toSide + "TooltipArrow"];
-        return <div className={css(styles.tooltip, tooltipSideStyle)}
+        return <div className={css(styles.tooltip, tooltipStyle, opacityStyle)}
                     style={{top: this.state.top,
                             left: this.state.left,
                             visibility: visStyle
@@ -92,6 +94,9 @@ const styles = StyleSheet.create({
         ":hover": {
             opacity: 1
         }
+    },
+    tooltipOpaque: {
+        opacity: 1
     },
     arrow: {
         position: "absolute"

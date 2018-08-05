@@ -18,11 +18,15 @@ class MediaPickerTooltip extends Component {
         mediaType: string,
         onFileSelect: (info: Object) => void,
         onModalClose: () => void,
+        onModalRefCreate: (ref: Object) => void,
     };
 
     render() {
         const mediaPickerModal = ({closeModal}) => (
-            <MediaPickerModal {...this.props} onClose={closeModal} />
+            <MediaPickerModal
+                {...this.props}
+                onClose={() => { this.props.onModalClose(); closeModal();}}
+            />
         );
 
         const divClass = css(
@@ -36,13 +40,14 @@ class MediaPickerTooltip extends Component {
                 <ModalLauncher
                     modal={mediaPickerModal}
                     onClose={this.props.onModalClose}
+                    onRefCreate={this.props.onModalRefCreate}
                 >
                     {({openModal}) => (
                         <Button
                             onClick={openModal}
                             style={styles.launcherButton}
                         >
-                            {i18n._("Pick file:")}
+                            {i18n._("Choose file")}
                         </Button>
                     )}
                 </ModalLauncher>

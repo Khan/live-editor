@@ -28,10 +28,10 @@ const tooltips = {
         "colorPicker",
         //"numberScrubberClick",
         //"autoSuggest",
-        //"numberScrubber"
+        "numberScrubber"
     ],
     ace_webpage: [
-        //"imageModal",
+        "imageModal",
         "colorPicker",
         "numberScrubber"
     ],

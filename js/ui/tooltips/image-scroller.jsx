@@ -6,7 +6,7 @@ const LazyLoadMedia = require("./lazy-load-media.jsx");
 
 class ImageScroller extends Component {
     props: {
-        currentImage: string,
+        imageName: string,
         imagesDir: string,
         imageGroups: Array<Object>,
         onMouseLeave: () => void,
@@ -16,7 +16,7 @@ class ImageScroller extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            activeImage: this.props.currentImage,
+            activeImage: this.props.imageName,
             scrollTop: 0,
             isHovering: false,
         };
@@ -108,21 +108,21 @@ class ImageScroller extends Component {
             );
         });
 
-        let currentPath = `${this.props.imagesDir}cute/Blank.png`;
-        if (this.props.currentImage) {
-            currentPath = `${this.props.imagesDir}${
-                this.props.currentImage
+        let imagePath = `${this.props.imagesDir}cute/Blank.png`;
+        if (this.props.imageName) {
+            imagePath = `${this.props.imagesDir}${
+                this.props.imageName
             }.png`;
         }
 
-        let currentImageDiv;
+        let previewImageDiv;
         if (!this.state.isHovering) {
-            currentImageDiv = (
+            previewImageDiv = (
                 <div className={css(styles.previewBox)}>
                     <img
                         className={css(styles.previewImg)}
-                        src={currentPath}
-                        alt={this.props.currentImage}
+                        src={imagePath}
+                        alt={this.props.imageName}
                     />
                 </div>
             );
@@ -147,7 +147,7 @@ class ImageScroller extends Component {
                 onMouseEnter={this.handleMouseEnter}
                 onMouseLeave={this.handleMouseLeave}
             >
-                {currentImageDiv}
+                {previewImageDiv}
                 {imageGroupsDiv}
             </div>
         );
@@ -167,6 +167,7 @@ const styles = StyleSheet.create({
         background: "white",
         maxHeight: "300px",
         overflowY: "scroll",
+        width: "343px",
     },
     group: {
         overflow: "auto",

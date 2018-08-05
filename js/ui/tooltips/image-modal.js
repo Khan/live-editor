@@ -1,15 +1,11 @@
 /* global i18n */
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
-const React = require("react");
-const ReactDOM = require("react-dom");
+import React, {Component} from "react";
 
-const ExtendedOutputImages = require("../../shared/images.js").ExtendedOutputImages;
-const MediaPickerTooltip = require("./media-picker-tooltip.jsx");
-const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
-const TooltipBase = require("../../ui/tooltip-base.js");
-const TooltipEngine = require("../../ui/tooltip-engine.js");
+import {ExtendedOutputImages} from "../../shared/images.js";
+import MediaPickerTooltip from "./media-picker-tooltip.jsx";
+import ScratchpadAutosuggest from "../../ui/autosuggest.js";
+import TooltipBase from "../../ui/tooltip-base.js";
+import TooltipEngine from "../../ui/tooltip-engine.js";
 
 /* This file and sound-modal.js are similar, and they both use
  the same React component for file picking.
@@ -17,8 +13,23 @@ const TooltipEngine = require("../../ui/tooltip-engine.js");
  In the future, the imageModal might also be used by programs,
  as students seem to prefer that UI to the imagePicker UI.
  */
-const ImageModal = TooltipBase.extend({
-    initialize: function(options) {
+class ImageModal extends Component {
+
+    props: {
+        isEnabled: boolean,
+        eventToCheck: Object,
+        aceEditor: Object,
+        onTextInsertRequest: Function,
+        onTextUpdateRequest: Function,
+        soundsDir: string,
+    };
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            mediaSrc: ""
+        }
+        /*
         this.options = options;
         this.options.files = ExtendedOutputImages;
         this.parent = options.parent;
@@ -31,10 +42,10 @@ const ImageModal = TooltipBase.extend({
                 "imagemodal.hide": this.hideModal.bind(this),
                 "imagemodal.selectImg": this.selectImg.bind(this)
             });
-        }
-    },
+        }*/
+    }
 
-    detector: function(event) {
+    checkEvent(event) {
         if (!/<img\s+[^>]*?\s*src\s*=\s*["']([^"']*)$/.test(event.pre)) {
             return;
         }
@@ -51,9 +62,9 @@ const ImageModal = TooltipBase.extend({
         this.placeOnScreen();
         event.stopPropagation();
         ScratchpadAutosuggest.enableLiveCompletion(false);
-    },
+    }
 
-    updateTooltip: function(url) {
+    updateTooltip(url) {
         if (url !== this.currentUrl) {
             this.currentUrl = url.trim();
             if (url === "") {
@@ -80,9 +91,9 @@ const ImageModal = TooltipBase.extend({
                 });
             }
         }
-    },
+    }
 
-    renderPreview: function(props) {
+    renderPreview(props) {
         props = props || {};
         props.mediaType = "image";
         props.onFileSelect = (fileInfo) => {
@@ -107,35 +118,35 @@ const ImageModal = TooltipBase.extend({
         ReactDOM.render(
             React.createElement(MediaPickerTooltip, props, null),
             this.$el.find(".media-preview-wrapper")[0]);
-    },
+    }
 
-    render: function() {
+    render() {
         this.$el = $("<div class='tooltip mediapicker-preview'>" +
                     "<div class='media-preview-wrapper'/>" +
                     "<div class='arrow'></div></div>")
             .addClass("mediapicker__image")
             .appendTo("body").hide();
         this.renderPreview();
-    },
+    }
 
-    remove: function() {
+    remove() {
         ReactDOM.unmountComponentAtNode(this.$(".media-preview-wrapper")[0]);
         this.$el.remove();
         this.unbindFromRequestTooltip();
-    },
+    }
 
     // Related to talkthrough playback:
     // TODO
 
-    showModal: function() {
+    showModal() {
         // TODO: how to open programmatically?
     },
 
-    hideModal: function() {
+    hideModal() {
         // TODO: how to hide programmatically?
     },
 
-    selectFile: function(dataPath) {
+    selectFile(dataPath) {
         // TODO: How to update programmatically?
         const $file = this.$(".mediapicker-modal-file[data-path='"+dataPath+"']");
         const $pane = $file.closest(".tab-pane");
@@ -144,18 +155,18 @@ const ImageModal = TooltipBase.extend({
         $pane.find(".mediapicker-modal-content").scrollTop(
             $file.position().top - 100);
         return $file;
-    },
+    }
 
-    selectImg: function(dataPath) {
+    selectImg(dataPath) {
         const $file = this.selectFile(dataPath);
         $file.find("img").click();
-    },
+    }
 
-    logForRecording: function(action, value) {
+    logForRecording(action, value) {
         const logAction = "imagemodal" + action;
         this.options.record && this.options.record.log(logAction, value);
     }
-});
+}
 
 TooltipEngine.registerTooltip("imageModal", ImageModal);
 

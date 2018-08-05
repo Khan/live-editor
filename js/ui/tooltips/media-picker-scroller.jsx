@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     },
     soundPreview: {
         width: "250px",
-        background: "black",
+        background: "white",
     },
     groupsLinksBox: {
         float: "right",
