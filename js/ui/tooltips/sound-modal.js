@@ -20,9 +20,10 @@ class SoundModal extends Component {
         onEventCheck: Function,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
+        // For Sound and Image Modal
+        onModalRefCreate: Function,
         // Specific to SoundModal
         soundsDir: string,
-        onModalRefCreate: Function,
     };
 
     constructor(props) {
@@ -45,6 +46,7 @@ class SoundModal extends Component {
         if (!this.regex.test(event.pre)) {
             return this.props.onEventCheck(false);
         }
+        // eslint-disable-next-line prefer-const
         let {pathStart, functionStart, path, closing, shouldFill} = TooltipUtils.getInfoFromFileMatch(event);
 
         if (shouldFill && this.props.autofillEnabled) {
@@ -92,11 +94,11 @@ class SoundModal extends Component {
 
     renderPreview () {
         const props = {
-            mediaType: "audio",
-            mediaSrc: this.state.mediaSrc,
             errorMessage: this.state.errorMessage,
-            soundsDir: this.props.soundsDir,
             mediaClasses: this.files,
+            mediaDir: this.props.soundsDir,
+            mediaSrc: this.state.mediaSrc,
+            mediaType: "audio",
             onFileSelect: (fileInfo) => {
                 this.activeFileInfo = fileInfo;
             },

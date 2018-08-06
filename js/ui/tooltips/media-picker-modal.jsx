@@ -10,8 +10,7 @@ const MediaPickerScroller = require("./media-picker-scroller.jsx");
 class MediaPickerModal extends Component {
     props: {
         mediaClasses: Array<Object>,
-        imagesDir: string,
-        soundsDir: string,
+        mediaDir: string,
         onClose: () => void,
         onFileSelect: (info: Object) => void,
         onModalRefCreate: (ref: Object) => void,
@@ -51,8 +50,7 @@ class MediaPickerModal extends Component {
                     <TabPanel key={panelKey}>
                         <MediaPickerScroller
                             groups={mediaClass.groups}
-                            imagesDir={this.props.imagesDir}
-                            soundsDir={this.props.soundsDir}
+                            mediaDir={this.props.mediaDir}
                             onFileSelect={this.props.onFileSelect}
                         />
                     </TabPanel>

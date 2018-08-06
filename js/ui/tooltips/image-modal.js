@@ -1,13 +1,13 @@
 /* global i18n */
-import React, {Component} from "react";
+import React, { Component } from "react";
 
-import {ExtendedOutputImages} from "../../shared/images.js";
+import { ExtendedOutputImages } from "../../shared/images.js";
 import MediaPickerTooltip from "./media-picker-tooltip.jsx";
-import ScratchpadAutosuggest from "../../ui/autosuggest.js";
-import TooltipBase from "../../ui/tooltip-base.js";
+import TooltipPositioner from "./tooltip-positioner.js";
 import TooltipEngine from "../../ui/tooltip-engine.js";
 
-/* This file and sound-modal.js are similar, and they both use
+/*
+ This file and sound-modal.js are similar, and they both use
  the same React component for file picking.
  The imageModal is used only in webpages right now.
  In the future, the imageModal might also be used by programs,
@@ -16,12 +16,22 @@ import TooltipEngine from "../../ui/tooltip-engine.js";
 class ImageModal extends Component {
 
     props: {
+        // Common to all tooltips
+        autofillEnabled: boolean,
         isEnabled: boolean,
         eventToCheck: Object,
         aceEditor: Object,
+        editorScrollTop: number,
+        editorType: string,
+        onEventCheck: Function,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
-        soundsDir: string,
+        // For Sound and Image Modal
+        onModalClose: Function,
+        onModalRefCreate: Function,
+        // Specific to Imagemodal
+        imagesDir: string,
+        record: Object,
     };
 
     constructor(props) {
@@ -29,13 +39,10 @@ class ImageModal extends Component {
         this.state = {
             mediaSrc: ""
         }
+        this.files = ExtendedOutputImages;
+        this.regex = RegExp(/<img\s+[^>]*?\s*src\s*=\s*["']([^"']*)$/);
         /*
-        this.options = options;
-        this.options.files = ExtendedOutputImages;
-        this.parent = options.parent;
-        this.autofill = true;
-        this.render();
-        this.bindToRequestTooltip();
+        TODO(pamela):
         if (this.options.record) {
             Object.assign(this.options.record.handlers, {
                 "imagemodal.show": this.showModal.bind(this),
@@ -45,28 +52,33 @@ class ImageModal extends Component {
         }*/
     }
 
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (this.props.eventToCheck) {
+            this.checkEvent(this.props.eventToCheck);
+        }
+    }
+
     checkEvent(event) {
-        if (!/<img\s+[^>]*?\s*src\s*=\s*["']([^"']*)$/.test(event.pre)) {
-            return;
+        if (!this.regex.test(event.pre)) {
+            return this.props.onEventCheck(false);;
         }
         const urlStart = event.col - RegExp.$1.length;
         const url = event.line.slice(urlStart).match(/^[^"']*/)[0];
-        this.aceLocation = {
+        const aceLocation = {
             start: urlStart,
             length: url.length,
             row: event.row
         };
-        this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + 1;
+        const cursorCol = urlStart + url.length + 1;
 
         this.updateTooltip(url);
-        this.placeOnScreen();
-        event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
+        this.setState({cursorCol, cursorRow: event.row});
+        this.props.onEventCheck(true, aceLocation)
     }
 
     updateTooltip(url) {
-        if (url !== this.currentUrl) {
-            this.currentUrl = url.trim();
+        if (url !== this.state.mediaSrc) {
+            url = url.trim();
             if (url === "") {
                     this.renderPreview({
                         mediaSrc: "",
@@ -93,78 +105,54 @@ class ImageModal extends Component {
         }
     }
 
-    renderPreview(props) {
-        props = props || {};
-        props.mediaType = "image";
-        props.onFileSelect = (fileInfo) => {
-            this.activeFileInfo = fileInfo;
-            this.logForRecording("selectImg", fileInfo.groupAndName);
-        };
-        props.onModalShow = () => {
-            this.props.onModalOpened();
-            this.logForRecording("show");
-        };
-        props.onModalClose = () => {
-            this.props.onModalClosed();
-            this.logForRecording("hide");
-            if (!this.activeFileInfo) {return;}
-            const updatePath = this.activeFileInfo.fullImgPath;
-            this.updateTooltip(updatePath);
-            this.updateText(updatePath);
-        }
-        props.imagesDir = this.options.imagesDir;
-        props.mediaClasses = this.options.files;
-
-        ReactDOM.render(
-            React.createElement(MediaPickerTooltip, props, null),
-            this.$el.find(".media-preview-wrapper")[0]);
-    }
-
-    render() {
-        this.$el = $("<div class='tooltip mediapicker-preview'>" +
-                    "<div class='media-preview-wrapper'/>" +
-                    "<div class='arrow'></div></div>")
-            .addClass("mediapicker__image")
-            .appendTo("body").hide();
-        this.renderPreview();
-    }
-
-    remove() {
-        ReactDOM.unmountComponentAtNode(this.$(".media-preview-wrapper")[0]);
-        this.$el.remove();
-        this.unbindFromRequestTooltip();
-    }
-
-    // Related to talkthrough playback:
-    // TODO
-
-    showModal() {
-        // TODO: how to open programmatically?
-    },
-
-    hideModal() {
-        // TODO: how to hide programmatically?
-    },
-
-    selectFile(dataPath) {
-        // TODO: How to update programmatically?
-        const $file = this.$(".mediapicker-modal-file[data-path='"+dataPath+"']");
-        const $pane = $file.closest(".tab-pane");
-        const $tab = this.$("a[href='#"+$pane.attr("id")+"']");
-        $tab.tab("show");
-        $pane.find(".mediapicker-modal-content").scrollTop(
-            $file.position().top - 100);
-        return $file;
-    }
-
-    selectImg(dataPath) {
-        const $file = this.selectFile(dataPath);
-        $file.find("img").click();
-    }
-
+    // TODO: Record in a parent instead, via a prop callback
     logForRecording(action, value) {
         const logAction = "imagemodal" + action;
-        this.options.record && this.options.record.log(logAction, value);
+        this.props.record && this.props.record.log(logAction, value);
+    }
+
+    renderPreview() {
+        const props = {
+            errorMessage: this.state.errorMessage,
+            mediaDir: this.props.imagesDir,
+            mediaClasses: this.files,
+            mediaSrc: this.state.mediaSrc,
+            mediaType: "image",
+            onFileSelect: (fileInfo) => {
+                this.activeFileInfo = fileInfo;
+                this.logForRecording("selectImg", fileInfo.groupAndName);
+            },
+            onModalOpen: () => {
+                // NOTE(pamela): Wonder-blocks model does not currently have onOpen
+                this.logForRecording("show");
+            },
+            onModalClose: () => {
+                this.logForRecording("hide");
+                if (!this.activeFileInfo) {return;}
+                const updatePath = this.activeFileInfo.fullImgPath;
+                this.updateTooltip(updatePath);
+                this.props.onTextUpdateRequest(updatePath);
+            },
+            onModalRefCreate: (ref) => {
+                this.props.onModalRefCreate(ref);
+            },
+        }
+        return <MediaPickerTooltip {...props}/>
+    }
+
+    render () {
+        if (!this.props.isEnabled) {
+            return null;
+        }
+        return <TooltipPositioner
+                    aceEditor={this.props.aceEditor}
+                    editorScrollTop={this.props.editorScrollTop}
+                    children={this.renderPreview()}
+                    cursorRow={this.state.cursorRow}
+                    cursorCol={this.state.cursorCol}
+                    startsOpaque={true}
+                    toSide="right"
+                />;
     }
 }
 

@@ -1,7 +1,7 @@
 /* global i18n */
 
-// Helper functionality for the Scratchpad auto suggest feature
-const ScratchpadAutosuggestData = {
+// Helper functionality for the auto suggest feature
+const AutosuggestData = {
     _keywords: {
         type: i18n._("keyword"),
         whitelist: ["break", "case", "catch", "continue", "default", "delete",
@@ -909,4 +909,4 @@ const ScratchpadAutosuggestData = {
     },
 };
 
-module.exports = ScratchpadAutosuggestData;
+module.exports = AutosuggestData;

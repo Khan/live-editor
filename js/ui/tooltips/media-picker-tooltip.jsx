@@ -11,9 +11,8 @@ class MediaPickerTooltip extends Component {
     // Most of these are for passing on to children
     props: {
         errorMessage: string,
-        imagesDir: string,
-        soundsDir: string,
         mediaClasses: Array<Object>,
+        mediaDir: string,
         mediaSrc: string,
         mediaType: string,
         onFileSelect: (info: Object) => void,

@@ -165,7 +165,6 @@ class NumberScrubber extends Component {
         };
         this.updateTooltip(parseFloat(number), decimalCount(number));
         this.props.onEventCheck(true, aceLocation);
-        //TODO? ScratchpadAutosuggest.enableLiveCompletion(false);
         this.setState({cursorRow: aceLocation.row, cursorCol: event.col});
     }
 
@@ -245,7 +244,6 @@ class NumberScrubber extends Component {
                 className={css(styles.scrubber)}
                 children={draggableScrubber}
                 aceEditor={this.props.aceEditor}
-                aceLocation={this.state.aceLocation}
                 editorScrollTop={this.props.editorScrollTop}
                 cursorRow={this.state.cursorRow}
                 cursorCol={this.state.cursorCol}

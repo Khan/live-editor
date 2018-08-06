@@ -24,12 +24,6 @@ html.playing .tooltip.hide-while-playing {
     opacity: 1;
 }
 
-.tooltip.mediapicker {
-    margin-left: 10px;
-    margin-top: -22px;
-    width: auto;
-}
-
 /** For the media picker preview tool **/
 
 .tooltip.mediapicker-preview {
@@ -114,29 +108,4 @@ body > .scrubber-handle,
     width: auto;
     font-size: 12px;
     font-family: monospace;
-}
-
-.tooltip.autosuggest .autosuggest-error {
-    color: red;
- }
-
-.tooltip.autosuggest .autosuggest-function {
-    cursor: pointer;
-    margin-right: 2px;
- }
-
-.tooltip.autosuggest .autosuggest-highlight {
-    background-color: #FFFF00;
-    color: black;
-}
-
-.tooltip.autosuggest .autosuggest-info {
-    color: #ddd;
-    margin-top: 5px;
-}
-
-.tooltip .current-param {
-    color: lightblue;
-    font-size: 15px;
-    font-weight: 900;
 }

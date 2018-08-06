@@ -13,11 +13,10 @@ import SharedStyles from "../../ui/shared-styles.js";
 const TooltipEngine = require("../../ui/tooltip-engine.js");
 require("../../ui/tooltips/color-picker.js");
 require("../../ui/tooltips/number-scrubber.js");
-//require("../../ui/tooltips/number-scrubber-click.js");
 require("../../ui/tooltips/image-picker.js");
-//require("../../ui/tooltips/image-modal.js");
+require("../../ui/tooltips/image-modal.js");
 require("../../ui/tooltips/sound-modal.js");
-//require("../../ui/tooltips/auto-suggest.js");
+require("../../ui/tooltips/auto-suggest.js");
 
 const tooltips = {
     // The earlier in the list a tooltip appears
@@ -26,8 +25,7 @@ const tooltips = {
         "imagePicker",
         "soundModal",
         "colorPicker",
-        //"numberScrubberClick",
-        //"autoSuggest",
+        "autoSuggest",
         "numberScrubber"
     ],
     ace_webpage: [

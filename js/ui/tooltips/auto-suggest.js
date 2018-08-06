@@ -1,95 +1,163 @@
-/* eslint-disable no-var */
-/* TODO: Fix the lint errors */
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
+import React, {Component} from "react";
+import {StyleSheet, css} from "aphrodite/no-important";
 
-const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
-const TooltipBase = require("../../ui/tooltip-base.js");
-const TooltipEngine = require("../../ui/tooltip-engine.js");
-const TooltipUtils = require("./tooltip-utils.js");
+import AutoSuggestData from "../autosuggest-data.js";
+import AutoSuggestPopup from "./auto-suggest-popup.jsx";
+import TooltipEngine from "../tooltip-engine.js";
+import TooltipPositioner from "./tooltip-positioner.js";
+import TooltipUtils from "./tooltip-utils.js";
 
 // A description of general tooltip flow can be found in tooltip-engine.js
-const AutoSuggest = TooltipBase.extend({
-    initialize: function(options) {
-        this.options = options;
-        this.parent = options.parent;
-        this.render();
-        this.bind();
-        this.mouse = false;
+class AutoSuggest extends Component {
+    props: {
+        // Common to all tooltips
+        autofillEnabled: boolean,
+        isEnabled: boolean,
+        editorScrollTop: number,
+        eventToCheck: Object,
+        aceEditor: Object,
+        onEventCheck: Function,
+        onTextInsertRequest: Function,
+        onTextUpdateRequest: Function,
+        onScrubbingStart: Function,
+        onScrubbingEnd: Function,
+    };
 
-        document.addEventListener("mousedown", () => {
-            this.mouse = true;
-        });
-        document.addEventListener("mouseup", () => {
-            this.mouse = false;
-        });
-    },
+    constructor(props) {
+        super(props);
+        this.state = {
+            aceLocation: {},
+            isHidden: false,
+            mouseDown: false,
+        };
+        this.regex = RegExp(/(\b[^\d\W][\w]*)\s*(\({1}\s*\){1})*\s*([^\]]*)$/);
+        this.handleDocMouseDown = this.handleDocMouseDown.bind(this);
+        this.handleDocMouseUp = this.handleDocMouseUp.bind(this);
+        this.handleMouseDown = this.handleMouseDown.bind(this);
+        this.handleKeyUp = this.handleKeyUp.bind(this);
+    }
 
-    detector: function(event) {
+    componentDidMount() {
+        window.addEventListener("keyup", this.handleKeyup);
+        document.addEventListener("mousedown", this.handleDocMouseDown);
+        document.addEventListener("mouseup", this.handleDocMouseUp);
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (this.props.eventToCheck) {
+            this.checkEvent(this.props.eventToCheck);
+        }
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener("keyup", this.handleKeyup);
+    }
+
+    checkEvent(event) {
+        // TODO(pamela): Disable while playing
+        console.log("Checking event", event);
         // TODO: update this to support auto-suggest tooltip for inner functions passed as params
         // this currently only allows displaying of the tooltip for the outside function, except in cases
         // where the inner function uses one of the other tooltips (e.g. image-picker)
-        if (!/(\b[^\d\W][\w]*)\s*(\({1}\s*\){1})*\s*([^\]]*)$/.test(event.pre)
-            || (this.parent.options.record && this.parent.options.record.playing)) {
-            return;
+        if (!this.regex.test(event.pre) || !TooltipUtils.isInParenthesis(RegExp.$3)) {
+            return this.props.onEventCheck(false);
         }
-        if (!TooltipUtils.isInParenthesis(RegExp.$3)) {
-            return;
+        // Ignore changeCursor events when the mouse button is down,
+        // and ignore click events (as we give those to number-scrubber)
+        if (
+            (event.source &&
+            event.source.type === "changeCursor" &&
+            this.state.mouseDown) ||
+            (event.source &&
+            event.source.action === "click")
+        ) {
+            return this.props.onEventCheck(false);
         }
-        if (event.source && event.source.type === "changeCursor" && this.mouse) {
-            // ignore changeCursor events when the mouse button is down
-            return;
+        console.log("Matched event");
+        const functionName = RegExp.$1;
+        const paramsToCursor = RegExp.$3;
+        const functionData = this.lookupParams(functionName);
+        if (!functionData) {
+            return this.props.onEventCheck(false);
         }
-        var functionCall = RegExp.$1;
-        var paramsToCursor = RegExp.$3;
-        var lookupParams = ScratchpadAutosuggest.lookupParamsSafeHTML(functionCall, paramsToCursor);
-        if (lookupParams) {
-            this.aceLocation = {
-                start: event.col,
-                length: 0,
-                row: event.row
-            };
-
-            this.updateTooltip(lookupParams);
-            this.placeOnScreen();
-            event.stopPropagation();
-            ScratchpadAutosuggest.enableLiveCompletion(false);
-        }
-    },
-
-    render: function() {
-        this.$el = $("<div class='tooltip autosuggest hide-while-playing'><div class='hotsuggest'></div><div class='arrow'></div></div>")
-            .appendTo("body").hide();
-    },
-
-    bind: function() {
-        this.$el.on("mousedown", function() {
-            this.$el.hide();
-            this.options.editor.focus();
-        }.bind(this));
-
-        this.checkForEscape = function(e) {
-            if (e.which === 27 && this.$el) {
-                this.$el.hide();
-            }
-        }.bind(this);
-
-        $(document).on("keyup", this.checkForEscape);
-        this.bindToRequestTooltip();
-    },
-
-    remove: function() {
-        this.$el.remove();
-        $(document).off("keyup", this.checkForEscape);
-        this.unbindFromRequestTooltip();
-    },
-
-    updateTooltip: function(content) {
-        this.$el.find(".hotsuggest").empty().append(content);
+        const aceLocation = {
+            start: event.col,
+            length: 0,
+            row: event.row,
+        };
+        const cursorCol = event.col;
+        console.log("Sending location", aceLocation);
+        this.props.onEventCheck(true, aceLocation);
+        this.setState({
+            cursorRow: aceLocation.row,
+            cursorCol,
+            isHidden: false,
+            functionData,
+            paramsToCursor,
+        });
     }
-});
+
+    /**
+     * Returns the data for the specified function name
+     * @param lookup The function to lookup
+     */
+    lookupParams(lookupFunction) {
+        // This only looks through functions now, it could be extended
+        // in future to look up keywords
+        return AutoSuggestData._pjsFunctions.whitelist.find((func) => {
+            return func.name.split("(")[0] === lookupFunction;
+        });
+    }
+
+    handleDocMouseDown() {
+        this.setState({mouseDown: true});
+    }
+
+    handleDocMouseUp() {
+        this.setState({mouseDown: true});
+    }
+
+    handleKeyUp(e) {
+        if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            this.setState({isHidden: true});
+        }
+    }
+
+    handleMouseDown() {
+        this.setState({isHidden: true});
+        // TODO(pamela): this.options.editor.focus();
+    }
+
+    render() {
+        // TODO(pamela) Hide this tooltip while playing
+        if (!this.props.isEnabled || this.state.isHidden) {
+            return null;
+        }
+        const popup = (
+            <AutoSuggestPopup
+                functionData={this.state.functionData}
+                paramsToCursor={this.state.paramsToCursor}
+            />
+        );
+        return (
+            <TooltipPositioner
+                children={popup}
+                aceEditor={this.props.aceEditor}
+                editorScrollTop={this.props.editorScrollTop}
+                cursorRow={this.state.cursorRow}
+                cursorCol={this.state.cursorCol}
+                startsOpaque={true}
+            />
+        );
+    }
+}
 
 TooltipEngine.registerTooltip("autoSuggest", AutoSuggest);
+
+const styles = StyleSheet.create({
+    popup: {},
+});
 
 module.exports = AutoSuggest;

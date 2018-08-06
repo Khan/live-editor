@@ -7,8 +7,7 @@ const slugify = require("slugify");
 class MediaPickerScroller extends Component {
     props: {
         groups: Array<Object>,
-        imagesDir: string,
-        soundsDir: string,
+        mediaDir: string,
         onFileSelect: (info: Object) => void,
     };
 
@@ -35,10 +34,10 @@ class MediaPickerScroller extends Component {
                 group.images &&
                 group.images.map((fileName) => {
                     return {
-                        fullImgPath: `${this.props.imagesDir}${
+                        fullImgPath: `${this.props.mediaDir}${
                             group.groupName
                         }/${fileName}.png`,
-                        fullThumbPath: `${this.props.imagesDir}${
+                        fullThumbPath: `${this.props.mediaDir}${
                             group.groupName
                         }${thumbsDir}/${fileName}.png`,
                         groupAndName: `${group.groupName}/${fileName}`,
@@ -49,7 +48,7 @@ class MediaPickerScroller extends Component {
                 group.sounds &&
                 group.sounds.map((fileName) => {
                     return {
-                        fullPath: `${this.props.soundsDir}${
+                        fullPath: `${this.props.mediaDir}${
                             group.groupName
                         }/${fileName}.mp3`,
                         groupAndName: `${group.groupName}/${fileName}`,
@@ -99,7 +98,7 @@ class MediaPickerScroller extends Component {
 
     render() {
         const groups = this.props.groups;
-        const spinnerPath = `${this.props.imagesDir}/spinner.gif`;
+        const spinnerPath = `${this.props.mediaDir}/spinner.gif`;
         const scrollMax = this.state.scrollTop + 320 * 2;
 
         const areMultipleGroups = groups.length > 1;

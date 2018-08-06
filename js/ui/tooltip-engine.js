@@ -1,10 +1,7 @@
-/* eslint-disable no-var */
-/* TODO: Fix the lint errors */
 const _ = require("lodash");
 
 import React, {Component} from "react";
 
-//const ScratchpadAutosuggest = require("../ui/autosuggest.js");
 const TooltipUtils = require("./tooltips/tooltip-utils.js");
 
 class TooltipEngine extends Component {
@@ -77,7 +74,7 @@ class TooltipEngine extends Component {
             return;
         }
         const prevEvent = prevProps.event || {};
-        var isDuplicate = (
+        const isDuplicate = (
             newEvent.col === prevEvent.col &&
             newEvent.row === prevEvent.row &&
             newEvent.line === prevEvent.line &&
