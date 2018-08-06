@@ -7,6 +7,7 @@ class TextareaEditor extends Component {
         config: Object,
         type: string,
         autoFocus: boolean,
+        onChange: Function,
     }
 
     constructor(props) {

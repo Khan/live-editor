@@ -15,6 +15,7 @@ class TooltipEngine extends Component {
         onScrubbingStart: Function,
         onScrubbingEnd: Function,
         onTextUpdateRequest: Function,
+        onTooltipChange: Function,
     }
 
     constructor(props) {
@@ -66,6 +67,7 @@ class TooltipEngine extends Component {
             (!this.state.modalRef ||
             !this.state.modalRef.current ||
             !isVisible(this.state.modalRef.current))) {
+            // eslint-disable-next-line react/no-did-update-set-state
             this.setState({currentTooltip: null});
         }
         // Now check for new events that trigger different tooltips
@@ -85,9 +87,11 @@ class TooltipEngine extends Component {
         if (TooltipUtils.isWithinComment(newEvent.pre)) {
             // if selected text is within a comment,
             // hide current tooltip (if any) and return
+            // eslint-disable-next-line react/no-did-update-set-state
             this.setState({currentTooltip: null});
             return;
         }
+        // eslint-disable-next-line react/no-did-update-set-state
         this.setState({
             eventToCheck: newEvent,
             possibleTooltips: this.props.tooltips

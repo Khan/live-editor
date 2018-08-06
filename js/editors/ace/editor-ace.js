@@ -8,7 +8,6 @@ import React, {Component} from "react";
 import ReactDOM from "react-dom";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-const ScratchpadAutosuggest = require("../../ui/autosuggest.js");
 import SharedStyles from "../../ui/shared-styles.js";
 const TooltipEngine = require("../../ui/tooltip-engine.js");
 require("../../ui/tooltips/color-picker.js");
@@ -91,11 +90,6 @@ class AceEditorWrapper extends Component {
         // Bind the recording logic first. Should always happen before
         // other events (such as the tooltip engine)
         this.bindRecord();
-
-        // TODO(bbondy): Support multiple content types for autosuggest.
-        if (tooltips[this.props.type].indexOf("autoSuggest") !== -1) {
-            ScratchpadAutosuggest.init(this.editor);
-        }
 
         // Make the editor vertically resizable
         // TODO: Handle with a React plugin instead of jQuery UI plugin
@@ -185,7 +179,7 @@ class AceEditorWrapper extends Component {
         this.config.editor = this;
 
         this.reset();
-
+        // eslint-disable-next-line react/no-did-mount-set-state
         this.setState({editor: this.editor});
     }
 

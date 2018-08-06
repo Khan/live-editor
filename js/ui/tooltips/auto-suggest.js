@@ -1,5 +1,4 @@
 import React, {Component} from "react";
-import {StyleSheet, css} from "aphrodite/no-important";
 
 import AutoSuggestData from "../autosuggest-data.js";
 import AutoSuggestPopup from "./auto-suggest-popup.jsx";
@@ -55,7 +54,6 @@ class AutoSuggest extends Component {
 
     checkEvent(event) {
         // TODO(pamela): Disable while playing
-        console.log("Checking event", event);
         // TODO: update this to support auto-suggest tooltip for inner functions passed as params
         // this currently only allows displaying of the tooltip for the outside function, except in cases
         // where the inner function uses one of the other tooltips (e.g. image-picker)
@@ -73,7 +71,6 @@ class AutoSuggest extends Component {
         ) {
             return this.props.onEventCheck(false);
         }
-        console.log("Matched event");
         const functionName = RegExp.$1;
         const paramsToCursor = RegExp.$3;
         const functionData = this.lookupParams(functionName);
@@ -86,7 +83,6 @@ class AutoSuggest extends Component {
             row: event.row,
         };
         const cursorCol = event.col;
-        console.log("Sending location", aceLocation);
         this.props.onEventCheck(true, aceLocation);
         this.setState({
             cursorRow: aceLocation.row,
@@ -155,9 +151,5 @@ class AutoSuggest extends Component {
 }
 
 TooltipEngine.registerTooltip("autoSuggest", AutoSuggest);
-
-const styles = StyleSheet.create({
-    popup: {},
-});
 
 module.exports = AutoSuggest;

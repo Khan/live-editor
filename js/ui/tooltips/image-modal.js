@@ -60,7 +60,7 @@ class ImageModal extends Component {
 
     checkEvent(event) {
         if (!this.regex.test(event.pre)) {
-            return this.props.onEventCheck(false);;
+            return this.props.onEventCheck(false);
         }
         const urlStart = event.col - RegExp.$1.length;
         const url = event.line.slice(urlStart).match(/^[^"']*/)[0];
