@@ -102,9 +102,12 @@ class LiveEditor extends Component {
         transloaditAuthKey: string,
         transloaditTemplate: string,
         // Parent callbacks
-        onOutputUpdated: Function,
-        onUserChanged: Function,
+        onOutputData: Function,
+        onEditorUserChange: Function,
+        onCanvasSizeUpdate: Function,
         onCodeRun: Function,
+        onEditorChange: Function,
+        onReadyToPlay: Function,
     };
 
     static defaultProps = {
@@ -208,7 +211,7 @@ class LiveEditor extends Component {
     componentDidMount() {
         // Change the width and height of the output frame if it's been
         // changed by the user, via the query string, or in the settings
-        //TODO:this.updateCanvasSize(this.props.width, this.props.height);
+        //TODO(pamela): this.updateCanvasSize(this.props.width, this.props.height);
 
         window.addEventListener("message", this.handleMessages);
 
@@ -320,11 +323,12 @@ class LiveEditor extends Component {
                 // Whenever the user changes code, execute the code
                 this.markDirty();
                 this.handleChangeDebounced();
+                this.props.onEditorChange && this.props.onEditorChange();
             },
             onUserChange: (code) => {
                 if (!this.record ||
                     (!this.record.recording && !this.record.playing)) {
-                    this.props.onUserChanged && this.props.onUserChanged(code);
+                    this.props.onEditorUserChange && this.props.onEditorUserChange(code);
                 }
             },
             onChangeCursor: (cursor) => {
@@ -762,6 +766,7 @@ class LiveEditor extends Component {
                 // anyway and let the load happen when the
                 // user clicks the play button later on.
                 self.setState({isAudioLoaded: true});
+                self.props.onReadyToPlay();
             }
         });
 
@@ -772,6 +777,7 @@ class LiveEditor extends Component {
             if (this.audioReadyToPlay()) {
                 clearInterval(checkStreaming);
                 this.setState({isAudioLoaded: true});
+                this.props.onReadyToPlay();
             }
         }, 16);
 
@@ -1133,8 +1139,7 @@ class LiveEditor extends Component {
             return;
         }
 
-        // TODO: Change on("update") in webapp
-        this.props.onOutputUpdated && this.props.onOutputUpdated(data);
+        this.props.onOutputData && this.props.onOutputData(data);
 
         // Hide loading overlay if output is loaded
         // We previously just looked at data.loaded,
@@ -1356,7 +1361,6 @@ class LiveEditor extends Component {
                 outputType: this.outputType,
                 enableLoopProtect: this.enableLoopProtect
             };
-            // TODO: Check webapp for "runCode" listeners
             this.props.onCodeRun && this.props.onCodeRun(options);
 
             this.postFrame(options);
@@ -1419,7 +1423,7 @@ class LiveEditor extends Component {
         // Set the editor height to be the same as the canvas height
         this.$el.find(dom.EDITOR).height(this.props.editorHeight || height);
 
-        this.trigger("canvasSizeUpdated", {
+        this.props.onCanvasSizeUpdate({
             width: width,
             height: height
         });

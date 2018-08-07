@@ -49,7 +49,7 @@ class EditorSide extends Component {
                     onClick={(e) => this.setState({closedYoutubeLink: true})}
                 />
                 <a href={this.props.youtubeUrl} target="_blank">
-                    {i18n._("If the audio never loads, reload the page or watch on Youtube.")}
+                    {i18n._("If the audio never loads, reload the page or watch on YouTube.")}
                 </a>
             </div>
         );
