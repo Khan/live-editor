@@ -2,11 +2,10 @@ import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
 export default class EditorToolbar extends Component {
-
     props: {
         leftComponents: Array,
         rightComponents: Array,
-    }
+    };
 
     render() {
         return (

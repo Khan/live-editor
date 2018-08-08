@@ -54,17 +54,19 @@ export default class AutoSuggest extends Component {
         // TODO: update this to support auto-suggest tooltip for inner functions passed as params
         // this currently only allows displaying of the tooltip for the outside function, except in cases
         // where the inner function uses one of the other tooltips (e.g. image-picker)
-        if (!this.regex.test(event.pre) || !tooltipUtils.isInParenthesis(RegExp.$3)) {
+        if (
+            !this.regex.test(event.pre) ||
+            !tooltipUtils.isInParenthesis(RegExp.$3)
+        ) {
             return this.props.onEventCheck(false);
         }
         // Ignore changeCursor events when the mouse button is down,
         // and ignore click events (as we give those to number-scrubber)
         if (
             (event.source &&
-            event.source.type === "changeCursor" &&
-            this.state.mouseDown) ||
-            (event.source &&
-            event.source.action === "click")
+                event.source.type === "changeCursor" &&
+                this.state.mouseDown) ||
+            (event.source && event.source.action === "click")
         ) {
             return this.props.onEventCheck(false);
         }

@@ -1,6 +1,6 @@
-import React, { Component } from "react";
+import React, {Component} from "react";
 
-import { OutputImages } from "../../shared/images.js";
+import {OutputImages} from "../../shared/images.js";
 import TooltipEngine from "../../ui/tooltip-engine.js";
 
 import ImageScroller from "./image-scroller.js";
@@ -9,7 +9,6 @@ import * as tooltipUtils from "./tooltip-utils.js";
 
 // A description of general tooltip flow can be found in tooltip-engine.js
 export default class ImagePicker extends Component {
-
     props: {
         // Common to all tooltips
         autofillEnabled: boolean,
@@ -46,24 +45,38 @@ export default class ImagePicker extends Component {
         }
         const functionStart = event.col - RegExp.lastMatch.length;
         const paramsStart = functionStart + RegExp.$1.length;
-        const pieces = /^(\s*)(["']?[^)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
+        const pieces = /^(\s*)(["']?[^)]*?["']?)\s*(\);?|$)/.exec(
+            event.line.slice(paramsStart),
+        );
         const leadingPadding = pieces[1];
         const pathStart = paramsStart + leadingPadding.length;
         let path = pieces[2];
         let closing = pieces[3];
 
         // TODO: De-dupe this with similar code in other tooltips
-        if (leadingPadding.length === 0 &&
+        if (
+            leadingPadding.length === 0 &&
             path.length === 0 &&
             closing.length === 0 &&
-            event.source && event.source.action === "insert" &&
-            event.source.lines[0].length === 1 && this.props.autofillEnabled) {
-
-            closing = ")" + (tooltipUtils.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
-            this.props.onTextInsertRequest({
-                row: event.row,
-                column: pathStart
-            }, closing);
+            event.source &&
+            event.source.action === "insert" &&
+            event.source.lines[0].length === 1 &&
+            this.props.autofillEnabled
+        ) {
+            closing =
+                ")" +
+                (tooltipUtils.isAfterAssignment(
+                    event.pre.slice(0, functionStart),
+                )
+                    ? ";"
+                    : "");
+            this.props.onTextInsertRequest(
+                {
+                    row: event.row,
+                    column: pathStart,
+                },
+                closing,
+            );
 
             path = this.state.imageName;
             this.props.onTextUpdateRequest(`"${path}"`);
@@ -71,12 +84,13 @@ export default class ImagePicker extends Component {
         const aceLocation = {
             start: pathStart,
             length: path.length,
-            row: event.row
+            row: event.row,
         };
-        const cursorCol = aceLocation.start + aceLocation.length + closing.length;
+        const cursorCol =
+            aceLocation.start + aceLocation.length + closing.length;
 
         this.updateTooltip(path);
-        this.setState({ closing, cursorCol, cursorRow: aceLocation.row});
+        this.setState({closing, cursorCol, cursorRow: aceLocation.row});
         this.props.onEventCheck(true, aceLocation);
     }
 
@@ -112,7 +126,7 @@ export default class ImagePicker extends Component {
             onImageSelect: (imageName) => {
                 this.updateTooltip(`"${imageName}"`);
                 this.props.onTextUpdateRequest(`"${imageName}"`);
-            }
+            },
         };
         return <ImageScroller {...props} />;
     }
@@ -121,15 +135,17 @@ export default class ImagePicker extends Component {
         if (!this.props.isEnabled) {
             return null;
         }
-        return <TooltipPositioner
-                    aceEditor={this.props.aceEditor}
-                    editorScrollTop={this.props.editorScrollTop}
-                    children={this.renderImageScroller()}
-                    cursorRow={this.state.cursorRow}
-                    cursorCol={this.state.cursorCol}
-                    startsOpaque={true}
-                    toSide="right"
-                />;
+        return (
+            <TooltipPositioner
+                aceEditor={this.props.aceEditor}
+                editorScrollTop={this.props.editorScrollTop}
+                children={this.renderImageScroller()}
+                cursorRow={this.state.cursorRow}
+                cursorCol={this.state.cursorCol}
+                startsOpaque={true}
+                toSide="right"
+            />
+        );
     }
 }
 

@@ -1,7 +1,7 @@
 /* global i18n */
-import React, { Component } from "react";
+import React, {Component} from "react";
 
-import { ExtendedOutputImages } from "../../shared/images.js";
+import {ExtendedOutputImages} from "../../shared/images.js";
 import TooltipEngine from "../../ui/tooltip-engine.js";
 
 import MediaPickerTooltip from "./media-picker-tooltip.js";
@@ -15,7 +15,6 @@ import TooltipPositioner from "./tooltip-positioner.js";
  as students seem to prefer that UI to the imagePicker UI.
  */
 export default class ImageModal extends Component {
-
     props: {
         // Common to all tooltips
         autofillEnabled: boolean,
@@ -38,8 +37,8 @@ export default class ImageModal extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            mediaSrc: ""
-        }
+            mediaSrc: "",
+        };
         this.files = ExtendedOutputImages;
         this.regex = RegExp(/<img\s+[^>]*?\s*src\s*=\s*["']([^"']*)$/);
         /*
@@ -68,24 +67,24 @@ export default class ImageModal extends Component {
         const aceLocation = {
             start: urlStart,
             length: url.length,
-            row: event.row
+            row: event.row,
         };
         const cursorCol = urlStart + url.length + 1;
 
         this.updateTooltip(url);
         this.setState({cursorCol, cursorRow: event.row});
-        this.props.onEventCheck(true, aceLocation)
+        this.props.onEventCheck(true, aceLocation);
     }
 
     updateTooltip(url) {
         if (url !== this.state.mediaSrc) {
             url = url.trim();
             if (url === "") {
-                    this.renderPreview({
-                        mediaSrc: "",
-                        errorMessage: i18n._("Enter an image URL."),
-                        errorType: "notice"
-                    });
+                this.renderPreview({
+                    mediaSrc: "",
+                    errorMessage: i18n._("Enter an image URL."),
+                    errorType: "notice",
+                });
                 return;
             }
             const allowedHosts = /(\.|^)?(khanacademy\.org|kastatic\.org|kasandbox\.org|ka-perseus-images\.s3\.amazonaws\.com|wikimedia\.org|localhost:\d+)$/i;
@@ -94,13 +93,15 @@ export default class ImageModal extends Component {
             if (!host || allowedHosts.test(host)) {
                 this.renderPreview({
                     mediaSrc: url,
-                    errorMessage: ""
+                    errorMessage: "",
                 });
             } else {
                 this.renderPreview({
                     mediaSrc: "",
-                    errorMessage: i18n._("Sorry! That server is not permitted."),
-                    errorType: "error"
+                    errorMessage: i18n._(
+                        "Sorry! That server is not permitted.",
+                    ),
+                    errorType: "error",
                 });
             }
         }
@@ -129,7 +130,9 @@ export default class ImageModal extends Component {
             },
             onModalClose: () => {
                 this.logForRecording("hide");
-                if (!this.activeFileInfo) {return;}
+                if (!this.activeFileInfo) {
+                    return;
+                }
                 const updatePath = this.activeFileInfo.fullImgPath;
                 this.updateTooltip(updatePath);
                 this.props.onTextUpdateRequest(updatePath);
@@ -137,23 +140,25 @@ export default class ImageModal extends Component {
             onModalRefCreate: (ref) => {
                 this.props.onModalRefCreate(ref);
             },
-        }
-        return <MediaPickerTooltip {...props}/>
+        };
+        return <MediaPickerTooltip {...props} />;
     }
 
-    render () {
+    render() {
         if (!this.props.isEnabled) {
             return null;
         }
-        return <TooltipPositioner
-                    aceEditor={this.props.aceEditor}
-                    editorScrollTop={this.props.editorScrollTop}
-                    children={this.renderPreview()}
-                    cursorRow={this.state.cursorRow}
-                    cursorCol={this.state.cursorCol}
-                    startsOpaque={true}
-                    toSide="right"
-                />;
+        return (
+            <TooltipPositioner
+                aceEditor={this.props.aceEditor}
+                editorScrollTop={this.props.editorScrollTop}
+                children={this.renderPreview()}
+                cursorRow={this.state.cursorRow}
+                cursorCol={this.state.cursorCol}
+                startsOpaque={true}
+                toSide="right"
+            />
+        );
     }
 }
 

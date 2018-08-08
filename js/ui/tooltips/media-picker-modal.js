@@ -23,11 +23,13 @@ export default class MediaPickerModal extends Component {
     render() {
         let modalContent;
         if (this.props.mediaClasses.length < 2) {
-            modalContent = <MediaPickerScroller
-                        groups={this.props.mediaClasses[0].groups}
-                        mediaDir={this.props.mediaDir}
-                        onFileSelect={this.props.onFileSelect}
-                    />
+            modalContent = (
+                <MediaPickerScroller
+                    groups={this.props.mediaClasses[0].groups}
+                    mediaDir={this.props.mediaDir}
+                    onFileSelect={this.props.onFileSelect}
+                />
+            );
         } else {
             // First make the tabs
             const classesTabs = this.props.mediaClasses.map((mediaClass) => {
@@ -50,19 +52,17 @@ export default class MediaPickerModal extends Component {
                     );
                 },
             );
-            modalContent = <Tabs>
-                <TabList>{classesTabs}</TabList>
-                {classesTabPanels}
-            </Tabs>;
+            modalContent = (
+                <Tabs>
+                    <TabList>{classesTabs}</TabList>
+                    {classesTabPanels}
+                </Tabs>
+            );
         }
 
         return (
             <OneColumnModal
-                content={
-                    <div onClick={this.handleClick}>
-                    {modalContent}
-                    </div>
-                }
+                content={<div onClick={this.handleClick}>{modalContent}</div>}
                 footer={
                     <View>
                         <Button onClick={this.props.onClose}>

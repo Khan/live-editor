@@ -15,22 +15,21 @@ import RecordChunks from "../shared/record-chunks.js";
  *  recording in chunks.
  */
 export default class RecordControls extends Component {
-
     props: {
         editor: Object,
         record: Object,
         config: Object,
         drawCanvas: Object,
         workersDir: string,
-    }
+    };
 
     constructor(props) {
         super(props);
         this.state = {
             newChunkLabel: i18n._("Start new chunk"),
             lastChunkHTML: i18n._("Empty"),
-            allChunksHTML: i18n._("Empty")
-        }
+            allChunksHTML: i18n._("Empty"),
+        };
         this.handleNewClick = this.handleNewClick.bind(this);
         this.handleDiscardClick = this.handleDiscardClick.bind(this);
         this.handleRefreshClick = this.handleRefreshClick.bind(this);
@@ -62,7 +61,8 @@ export default class RecordControls extends Component {
     initializeRecordingAudio() {
         // Start recording the presenter's audio
         this.multirecorder = new MultiRecorder({
-            workerPath: this.props.workersDir + "shared/multirecorder-worker.js"
+            workerPath:
+                this.props.workersDir + "shared/multirecorder-worker.js",
         });
         this.disableChunkButtons(false, true, true, true, true);
     }
@@ -73,7 +73,8 @@ export default class RecordControls extends Component {
      */
     startRecordingAudio() {
         this.lastSavedCode = this.editor.text();
-        this.multirecorder.startRecording(1)
+        this.multirecorder
+            .startRecording(1)
             .progress((seconds) => {
                 this.setState({newChunkLabel: seconds + "..."});
             })
@@ -88,11 +89,10 @@ export default class RecordControls extends Component {
     /* Stop recording audio. Called from ScratchpadUI as a result of the
      *  call to stopRecordingCommands. */
     stopRecordingAudio() {
-        this.multirecorder.stopRecording()
-            .done((recording) => {
-                this.audioChunks.setCurrentChunk(recording);
-                this.setState({lastChunkHTML: recording.createAudioPlayer()});
-            });
+        this.multirecorder.stopRecording().done((recording) => {
+            this.audioChunks.setCurrentChunk(recording);
+            this.setState({lastChunkHTML: recording.createAudioPlayer()});
+        });
     }
 
     /* Display a sound player with all the saved audio chunks. */
@@ -113,7 +113,9 @@ export default class RecordControls extends Component {
      */
     getDurationMsOfSavedAudio() {
         let durationMs = 0;
-        const audioElem = this.savedAudioRef.current.getElementsByTagName("audio");
+        const audioElem = this.savedAudioRef.current.getElementsByTagName(
+            "audio",
+        );
         if (audioElem && audioElem.length > 0) {
             durationMs = audioElem[0].duration * 1000;
         }
@@ -133,7 +135,7 @@ export default class RecordControls extends Component {
             this.config.switchVersion(newVersion);
             this.record.setActualInitData({
                 configVersion: newVersion,
-                code: this.startingCode
+                code: this.startingCode,
             });
         }
 
@@ -159,7 +161,8 @@ export default class RecordControls extends Component {
     /* Return the final audio recording, with all the audio chunks stitched
      *  together. */
     getFinalAudioRecording(callback) {
-        this.multirecorder.combineRecordings(this.audioChunks.getAllChunks())
+        this.multirecorder
+            .combineRecordings(this.audioChunks.getAllChunks())
             .done(callback);
     }
 
@@ -183,7 +186,7 @@ export default class RecordControls extends Component {
         } else {
             // Stop recording the current chunk
             this.recordInProgress = false;
-            this.stopRecordingCommands();  // Leads to stopRecordingAudio
+            this.stopRecordingCommands(); // Leads to stopRecordingAudio
             this.disableChunkButtons(true, false, false, true, true);
             this.setState({newChunkLabel: "Start new chunk"});
         }
@@ -232,7 +235,8 @@ export default class RecordControls extends Component {
         // keep playing until the audio track finishes playing
         if (this.record.commands) {
             this.record.commands.push([
-                this.getDurationMsOfSavedAudio(), "seek"
+                this.getDurationMsOfSavedAudio(),
+                "seek",
             ]);
         }
         // Start the play head at 0
@@ -255,10 +259,19 @@ export default class RecordControls extends Component {
      * Quick way to set the disabled state for lots of recording-related
      *  buttons at once.
      */
-    disableChunkButtons(disableNew, disableDiscard, disableSave, disableRefresh) {
-        this.setState({disableNew, disableDiscard, disableSave, disableRefresh});
+    disableChunkButtons(
+        disableNew,
+        disableDiscard,
+        disableSave,
+        disableRefresh,
+    ) {
+        this.setState({
+            disableNew,
+            disableDiscard,
+            disableSave,
+            disableRefresh,
+        });
     }
-
 
     render() {
         /*

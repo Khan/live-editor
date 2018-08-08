@@ -9,7 +9,6 @@ import TooltipPositioner from "./tooltip-positioner.js";
 import * as tooltipUtils from "./tooltip-utils.js";
 
 export default class SoundModal extends Component {
-
     props: {
         // Common to all tooltips
         autofillEnabled: boolean,
@@ -31,7 +30,7 @@ export default class SoundModal extends Component {
         super(props);
         this.state = {
             closing: "",
-            mediaSrc:  "\"rpg/metal-clink\""
+            mediaSrc: '"rpg/metal-clink"',
         };
         this.files = OutputSounds;
         this.regex = RegExp(/(\bgetSound\s*\()[^)]*$/);
@@ -43,20 +42,32 @@ export default class SoundModal extends Component {
         }
     }
 
-    checkEvent (event) {
+    checkEvent(event) {
         if (!this.regex.test(event.pre)) {
             return this.props.onEventCheck(false);
         }
         // eslint-disable-next-line prefer-const
-        let {pathStart, functionStart, path, closing, shouldFill} = tooltipUtils.getInfoFromFileMatch(event);
+        let {
+            pathStart,
+            functionStart,
+            path,
+            closing,
+            shouldFill,
+        } = tooltipUtils.getInfoFromFileMatch(event);
 
         if (shouldFill && this.props.autofillEnabled) {
-            closing = ")" + (tooltipUtils.isInParenthesis(
-                event.pre.slice(0, functionStart)) ? "" : ";");
-            this.props.onTextInsertRequest({
+            closing =
+                ")" +
+                (tooltipUtils.isInParenthesis(event.pre.slice(0, functionStart))
+                    ? ""
+                    : ";");
+            this.props.onTextInsertRequest(
+                {
                     row: event.row,
-                    column: pathStart
-                }, closing);
+                    column: pathStart,
+                },
+                closing,
+            );
             path = this.state.mediaSrc;
             this.updateText(path);
         }
@@ -69,11 +80,11 @@ export default class SoundModal extends Component {
         const cursorCol = pathStart + path.length + closing.length;
 
         this.updateTooltip(path);
-        this.setState({ closing, cursorCol, cursorRow: aceLocation.row});
+        this.setState({closing, cursorCol, cursorRow: aceLocation.row});
         this.props.onEventCheck(true, aceLocation);
     }
 
-    updateTooltip (partialPath) {
+    updateTooltip(partialPath) {
         let foundPath = this.state.mediaSrc;
         if (partialPath !== foundPath) {
             partialPath = partialPath.replace(/"/g, "");
@@ -81,7 +92,7 @@ export default class SoundModal extends Component {
                 this.setState({
                     mediaSrc: "",
                     errorMessage: i18n._("Invalid sound file."),
-                    errorType: "notice"
+                    errorType: "notice",
                 });
                 return;
             }
@@ -89,11 +100,11 @@ export default class SoundModal extends Component {
         }
         this.setState({
             mediaSrc: foundPath,
-            errorMessage: ""
+            errorMessage: "",
         });
     }
 
-    renderPreview () {
+    renderPreview() {
         const props = {
             errorMessage: this.state.errorMessage,
             mediaClasses: this.files,
@@ -104,7 +115,9 @@ export default class SoundModal extends Component {
                 this.activeFileInfo = fileInfo;
             },
             onModalClose: () => {
-                if (!this.activeFileInfo) {return;}
+                if (!this.activeFileInfo) {
+                    return;
+                }
                 const updatePath = this.activeFileInfo.groupAndName;
                 this.updateTooltip(updatePath);
                 this.props.onTextUpdateRequest(`"${updatePath}"`);
@@ -116,19 +129,21 @@ export default class SoundModal extends Component {
         return <MediaPickerTooltip {...props} />;
     }
 
-    render () {
+    render() {
         if (!this.props.isEnabled) {
             return null;
         }
-        return <TooltipPositioner
-                    aceEditor={this.props.aceEditor}
-                    editorScrollTop={this.props.editorScrollTop}
-                    children={this.renderPreview()}
-                    cursorRow={this.state.cursorRow}
-                    cursorCol={this.state.cursorCol}
-                    startsOpaque={true}
-                    toSide="right"
-                />;
+        return (
+            <TooltipPositioner
+                aceEditor={this.props.aceEditor}
+                editorScrollTop={this.props.editorScrollTop}
+                children={this.renderPreview()}
+                cursorRow={this.state.cursorRow}
+                cursorCol={this.state.cursorCol}
+                startsOpaque={true}
+                toSide="right"
+            />
+        );
     }
 }
 

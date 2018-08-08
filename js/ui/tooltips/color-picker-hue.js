@@ -1,19 +1,18 @@
-import React from 'react'
+import React from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
-import Color from 'color';
+import Color from "color";
 
 export default class HuePicker extends React.Component {
-
     props: {
         color: Object, // h, s, l
         onColorChange: Function,
-    }
+    };
 
     constructor(props) {
         super(props);
         this.state = {
-            color: Color(props.color)
-        }
+            color: Color(props.color),
+        };
         this.hueRef = React.createRef();
         this.handleMouseUp = this.handleMouseUp.bind(this);
         this.handleMouseDown = this.handleMouseDown.bind(this);
@@ -64,24 +63,25 @@ export default class HuePicker extends React.Component {
     }
 
     calculateScrubberLeft() {
-        const xOff = 150 * (this.state.color.object().h/360);
+        const xOff = 150 * (this.state.color.object().h / 360);
         return Math.round(xOff);
     }
 
     calculateVal(e) {
         const container = this.hueRef.current;
         const containerWidth = container.clientWidth;
-        const x = typeof e.pageX === 'number' ? e.pageX : e.touches[0].pageX;
-        const left = x - (container.getBoundingClientRect().left + window.pageXOffset);
+        const x = typeof e.pageX === "number" ? e.pageX : e.touches[0].pageX;
+        const left =
+            x - (container.getBoundingClientRect().left + window.pageXOffset);
 
         let hue;
         if (left < 0) {
-            hue = 0
+            hue = 0;
         } else if (left > containerWidth) {
-            hue = 359
+            hue = 359;
         } else {
-            const percent = (left * 100) / containerWidth
-            hue = ((360 * percent) / 100)
+            const percent = (left * 100) / containerWidth;
+            hue = (360 * percent) / 100;
         }
 
         return hue;
@@ -97,7 +97,8 @@ export default class HuePicker extends React.Component {
                 onMouseMove={this.handleMouseMove}
                 onMouseUp={this.handleMouseUp}
                 onMouseLeave={this.handleMouseLeave}
-                onClick={this.handleClick}>
+                onClick={this.handleClick}
+            >
                 <div
                     className={css(styles.scrubber)}
                     style={{left: scrubberLeft}}
@@ -109,7 +110,8 @@ export default class HuePicker extends React.Component {
 
 const styles = StyleSheet.create({
     container: {
-        background: "linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)",
+        background:
+            "linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)",
         cursor: "crosshair",
         height: "20px",
         position: "relative",
@@ -124,5 +126,5 @@ const styles = StyleSheet.create({
         top: 0,
         transform: "translateX(-2px)",
         width: "4px",
-    }
+    },
 });

@@ -1,4 +1,4 @@
-import _  from "lodash";
+import _ from "lodash";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
@@ -110,9 +110,7 @@ export default class ImageScroller extends Component {
 
         let imagePath = `${this.props.imagesDir}cute/Blank.png`;
         if (this.props.imageName) {
-            imagePath = `${this.props.imagesDir}${
-                this.props.imageName
-            }.png`;
+            imagePath = `${this.props.imagesDir}${this.props.imageName}.png`;
         }
 
         let previewImageDiv;

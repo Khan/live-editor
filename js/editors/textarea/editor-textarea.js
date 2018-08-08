@@ -1,14 +1,13 @@
 import React, {Component} from "react";
 
 export default class TextareaEditor extends Component {
-
     props: {
         code: string,
         config: Object,
         type: string,
         autoFocus: boolean,
         onChange: Function,
-    }
+    };
 
     constructor(props) {
         super(props);
@@ -48,7 +47,7 @@ export default class TextareaEditor extends Component {
     getCursor() {
         return {
             start: this.editorRef.current.selectionStart,
-            end: this.editorRef.current.selectionEnd
+            end: this.editorRef.current.selectionEnd,
         };
     }
 
@@ -60,8 +59,10 @@ export default class TextareaEditor extends Component {
     setCursor(cursorPos, focus) {
         if (this.editorRef.current.setSelectionRange) {
             this.editorRef.current.focus();
-            this.editorRef.current.setSelectionRange(cursorPos.start, cursorPos.end);
-
+            this.editorRef.current.setSelectionRange(
+                cursorPos.start,
+                cursorPos.end,
+            );
         } else if (this.editorRef.current.createTextRange) {
             const range = this.editorRef.current.createTextRange();
             range.collapse(true);
@@ -96,10 +97,12 @@ export default class TextareaEditor extends Component {
     undo() {}
 
     render() {
-        return <textarea
+        return (
+            <textarea
                 ref={this.editorRef}
                 style={{fontSize: "16px", height: "100%", width: "100%"}}
                 onInput={this.handleInput}
-                />;
+            />
+        );
     }
 }

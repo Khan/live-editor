@@ -2,7 +2,7 @@
 /* TODO: Fix the lint errors */
 
 import ace from "ace-builds";
-import classNames from 'classnames';
+import classNames from "classnames";
 import React, {Component} from "react";
 import ReactDOM from "react-dom";
 import {StyleSheet, css} from "aphrodite/no-important";
@@ -16,7 +16,6 @@ import "../../ui/tooltips/image-modal.js";
 import "../../ui/tooltips/sound-modal.js";
 import "../../ui/tooltips/auto-suggest.js";
 
-
 const tooltips = {
     // The earlier in the list a tooltip appears
     // the higher priority it gets.
@@ -25,20 +24,13 @@ const tooltips = {
         "soundModal",
         "colorPicker",
         "autoSuggest",
-        "numberScrubber"
+        "numberScrubber",
     ],
-    ace_webpage: [
-        "imageModal",
-        "colorPicker",
-        "numberScrubber"
-    ],
-    ace_sql: [
-        "numberScrubber"
-    ]
+    ace_webpage: ["imageModal", "colorPicker", "numberScrubber"],
+    ace_sql: ["numberScrubber"],
 };
 
 export default class AceEditorWrapper extends Component {
-
     props: {
         code: string,
         config: Object,
@@ -66,13 +58,12 @@ export default class AceEditorWrapper extends Component {
         errors: [],
         warnings: [],
         height: "400px",
-    }
+    };
 
     constructor(props) {
         super(props);
-        this.tooltipEl = document.createElement('div');
-        this.state = {
-        };
+        this.tooltipEl = document.createElement("div");
+        this.state = {};
         this.editorRef = React.createRef();
 
         this.config = props.config;
@@ -137,7 +128,8 @@ export default class AceEditorWrapper extends Component {
             this.props.onChangeCursor(this.getCursor());
         });
         this.editor.session.getDocument().on("change", (e) => {
-            if (this.tooltipsEnabled) { // TODO: Where to store/set?
+            if (this.tooltipsEnabled) {
+                // TODO: Where to store/set?
                 this.handleTooltipableEvent(e);
             }
         });
@@ -176,12 +168,18 @@ export default class AceEditorWrapper extends Component {
         // Note that a user could request to highlight the same error
         // multiple times, like if they close Error Buddy and re-open him,
         // so we must track timestamps on error requests to differentiate.
-        if (this.props.highlightErrorReq && (!prevProps.highlightErrorReq ||
-            this.props.highlightErrorReq.timestamp > prevProps.highlightErrorReq.timestamp)) {
+        if (
+            this.props.highlightErrorReq &&
+            (!prevProps.highlightErrorReq ||
+                this.props.highlightErrorReq.timestamp >
+                    prevProps.highlightErrorReq.timestamp)
+        ) {
             const error = this.props.highlightErrorReq.error;
             this.setCursor(error);
-            if (error.row > this.editor.getLastVisibleRow() ||
-                error.row < this.editor.getFirstVisibleRow()) {
+            if (
+                error.row > this.editor.getLastVisibleRow() ||
+                error.row < this.editor.getFirstVisibleRow()
+            ) {
                 this.editor.scrollToLine(error.row, true);
             }
             this.setErrorHighlight(true);
@@ -224,8 +222,12 @@ export default class AceEditorWrapper extends Component {
                 newText = newText.toString();
                 const Range = ace.require("ace/range").Range;
                 const loc = this.state.tooltipLocation;
-                const range = new Range(loc.row, loc.start,
-                    loc.row, loc.start + loc.length);
+                const range = new Range(
+                    loc.row,
+                    loc.start,
+                    loc.row,
+                    loc.start + loc.length,
+                );
                 // We probably could just set it to false when we're done, but
                 // someone else might be trying a similar hack, or... who knows?
                 let undoState;
@@ -240,7 +242,8 @@ export default class AceEditorWrapper extends Component {
                 range.end.column = range.start.column + newText.length;
                 if (newSelection) {
                     range.start.column = loc.start + newSelection.offset;
-                    range.end.column = loc.start + newSelection.offset + newSelection.length;
+                    range.end.column =
+                        loc.start + newSelection.offset + newSelection.length;
                 }
                 this.setSelection(range);
                 // Update location based on length of new text
@@ -268,12 +271,12 @@ export default class AceEditorWrapper extends Component {
             },
             onTooltipChange: (tooltipName, tooltipLocation) => {
                 this.setState({tooltipName, tooltipLocation});
-            }
+            },
         };
         return ReactDOM.createPortal(
             React.createElement(TooltipEngine, tooltipEngineProps, null),
             this.tooltipEl,
-            );
+        );
     }
 
     handleMouseDown() {
@@ -285,7 +288,7 @@ export default class AceEditorWrapper extends Component {
             const lineNum = parseInt(e.target.innerText, 10);
             let errorNum;
             this.props.errors.forEach((error, index) => {
-                if (error.row === (lineNum-1)) {
+                if (error.row === lineNum - 1) {
                     errorNum = index;
                 }
             });
@@ -301,7 +304,7 @@ export default class AceEditorWrapper extends Component {
             row: pos.row,
             line: this.editor.session.getDocument().getLine(pos.row),
             selections: selection.getAllRanges(),
-            source: source
+            source: source,
         };
         params.pre = params.line.slice(0, params.col);
         params.post = params.line.slice(params.col);
@@ -315,55 +318,82 @@ export default class AceEditorWrapper extends Component {
         var doc = editor.session.doc;
 
         // For recording: track text change events
-        doc.on("change", function(eventInfo) {
-            var start = eventInfo.start;
-            var end = eventInfo.end;
-            if (eventInfo.action.indexOf("insert") === 0) {
-                var insert = eventInfo.lines || eventInfo.text;
-                self.record.log(eventInfo.action,
-                    start.row, start.column, end.row, end.column, insert);
-            } else {
-                self.record.log(eventInfo.action,
-                    start.row, start.column, end.row, end.column);
-            }
-        }, true);
+        doc.on(
+            "change",
+            function(eventInfo) {
+                var start = eventInfo.start;
+                var end = eventInfo.end;
+                if (eventInfo.action.indexOf("insert") === 0) {
+                    var insert = eventInfo.lines || eventInfo.text;
+                    self.record.log(
+                        eventInfo.action,
+                        start.row,
+                        start.column,
+                        end.row,
+                        end.column,
+                        insert,
+                    );
+                } else {
+                    self.record.log(
+                        eventInfo.action,
+                        start.row,
+                        start.column,
+                        end.row,
+                        end.column,
+                    );
+                }
+            },
+            true,
+        );
 
-        editor.selection.addEventListener("changeCursor", function() {
-            if (editor.selection.isEmpty()) {
-                self.handleSelect();
-            }
-        }, true);
+        editor.selection.addEventListener(
+            "changeCursor",
+            function() {
+                if (editor.selection.isEmpty()) {
+                    self.handleSelect();
+                }
+            },
+            true,
+        );
 
-        editor.selection.addEventListener("changeSelection",
-            this.handleSelect.bind(this), true);
+        editor.selection.addEventListener(
+            "changeSelection",
+            this.handleSelect.bind(this),
+            true,
+        );
 
         // For playback: Add in record command handlers
         var docOperations = [
             "insertText",
             "insertLines",
             "removeText",
-            "removeLines"
+            "removeLines",
         ];
         docOperations.forEach((op) => {
-            record.handlers[op] = function(startRow, startCol, endRow, endCol,
-                    data) {
+            record.handlers[op] = function(
+                startRow,
+                startCol,
+                endRow,
+                endCol,
+                data,
+            ) {
                 const delta = {
                     action: op,
                     start: {
                         row: startRow,
-                        column: startCol
+                        column: startCol,
                     },
                     end: {
                         row: endRow,
-                        column: endCol
-                    }
+                        column: endCol,
+                    },
                 };
 
                 if (op === "insertText") {
                     delta.action = "insert";
                     delta.lines = [data];
                     if (data === "\n") {
-                        delta.lines = ["", ""]
+                        delta.lines = ["", ""];
                     }
                 } else if (op === "insertLines") {
                     delta.lines = data;
@@ -388,12 +418,12 @@ export default class AceEditorWrapper extends Component {
             this.setSelection({
                 start: {
                     row: startRow,
-                    column: startCol
+                    column: startCol,
                 },
                 end: {
                     row: endRow,
-                    column: endCol
-                }
+                    column: endCol,
+                },
             });
         };
 
@@ -405,7 +435,7 @@ export default class AceEditorWrapper extends Component {
                     text: self.text(),
 
                     // Save current editor cursor position
-                    cursor: self.getCursor()
+                    cursor: self.getCursor(),
                 };
             },
 
@@ -415,7 +445,7 @@ export default class AceEditorWrapper extends Component {
 
                 // Restore cursor position
                 self.setCursor(cacheData.cursor);
-            }
+            },
         };
 
         record.on("runSeek", () => {
@@ -456,7 +486,9 @@ export default class AceEditorWrapper extends Component {
         // Delay adding a flash until the active line is shown
         setTimeout(() => {
             // Add the hilite flash
-            const line = this.editorRef.current.querySelector(".ace_gutter-active-line");
+            const line = this.editorRef.current.querySelector(
+                ".ace_gutter-active-line",
+            );
             if (!line) {
                 return;
             }
@@ -512,11 +544,15 @@ export default class AceEditorWrapper extends Component {
             // or if its a small # of characters, most likely symbols
             // that dont exist on their keyboard, or if its a URL
             var isUrl = function(str) {
-                return str.match(/\s*https?:\/\/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)\s*/);
+                return str.match(
+                    /\s*https?:\/\/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)\s*/,
+                );
             };
-            if (clipboardText === aceEditor.lastCopied ||
+            if (
+                clipboardText === aceEditor.lastCopied ||
                 clipboardText.length < 3 ||
-                isUrl(clipboardText)) {
+                isUrl(clipboardText)
+            ) {
                 aceEditor.originalPaste.apply(aceEditor, [clipboardText]);
                 return;
             } else {
@@ -532,12 +568,16 @@ export default class AceEditorWrapper extends Component {
         aceEditor.container.addEventListener("dragend", function() {
             isLocal = false;
         });
-        aceEditor.container.addEventListener("drop", function(e) {
-            if (!isLocal) {
-                chastise();
-                e.stopPropagation();
-            }
-        }, true);
+        aceEditor.container.addEventListener(
+            "drop",
+            function(e) {
+                if (!isLocal) {
+                    chastise();
+                    e.stopPropagation();
+                }
+            },
+            true,
+        );
     }
 
     /*
@@ -561,7 +601,7 @@ export default class AceEditorWrapper extends Component {
 
         return {
             start: doc.positionToIndex(rng.start),
-            end: doc.positionToIndex(rng.end)
+            end: doc.positionToIndex(rng.end),
         };
     }
 
@@ -587,7 +627,10 @@ export default class AceEditorWrapper extends Component {
         if (text != null) {
             this.editor.getSession().setValue(text);
         } else {
-            return this.editor.getSession().getValue().replace(/\r\n/g, "\n");
+            return this.editor
+                .getSession()
+                .getValue()
+                .replace(/\r\n/g, "\n");
         }
 
         return this;
@@ -621,8 +664,11 @@ export default class AceEditorWrapper extends Component {
         const AceRange = ace.require("ace/range").Range;
         const line = this.editor.session.getDocument().getLine(row);
         this.editor.session.addMarker(
-           new AceRange(row, 0, row, line.length),
-           "ace_problem_line", "text", false);
+            new AceRange(row, 0, row, line.length),
+            "ace_problem_line",
+            "text",
+            false,
+        );
     }
 
     // Remove previously added markers and decorations
@@ -630,8 +676,11 @@ export default class AceEditorWrapper extends Component {
     removeUnderlines(rowsMap) {
         const markers = this.editor.session.getMarkers();
         Object.values(markers).forEach((marker) => {
-            if (rowsMap && marker.clazz === "ace_problem_line" &&
-                rowsMap[marker.range.start.row]) {
+            if (
+                rowsMap &&
+                marker.clazz === "ace_problem_line" &&
+                rowsMap[marker.range.start.row]
+            ) {
                 this.editor.session.removeMarker(marker.id);
             } else if (!rowsMap) {
                 this.editor.session.removeMarker(marker.id);
@@ -678,7 +727,7 @@ export default class AceEditorWrapper extends Component {
     render() {
         return (
             <div>
-                 <div
+                <div
                     ref={this.editorRef}
                     onMouseDown={this.handleMouseDown}
                     onClick={this.handleClick}
@@ -704,9 +753,9 @@ const styles = StyleSheet.create({
         width: "100%",
         height: 0,
         position: "absolute",
-        visibility: "hidden"
+        visibility: "hidden",
     },
     hiliteErrorLine: {
-        backgroundColor: "rgba(255, 100, 100, 1) !important"
-    }
+        backgroundColor: "rgba(255, 100, 100, 1) !important",
+    },
 });

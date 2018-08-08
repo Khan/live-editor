@@ -3,7 +3,7 @@
 */
 /* TODO: Fix the lint errors */
 import _ from "lodash";
-import classNames from 'classnames';
+import classNames from "classnames";
 import i18n from "i18n";
 import Button from "@khanacademy/wonder-blocks-button";
 import React, {Component} from "react";
@@ -29,7 +29,7 @@ import "../css/ui/flashblock.css";
 
 // This adds html tags around quoted lines so they can be formatted
 const prettify = function(str) {
-    str = str.split("\"");
+    str = str.split('"');
     var htmlString = "";
     for (var i = 0; i < str.length; i++) {
         if (str[i].length === 0) {
@@ -38,10 +38,10 @@ const prettify = function(str) {
 
         if (i % 2 === 0) {
             //regular text
-            htmlString += "<span class=\"text\">" + str[i] + "</span>";
+            htmlString += '<span class="text">' + str[i] + "</span>";
         } else {
             // text in quotes
-            htmlString += "<span class=\"quote\">" + str[i] + "</span>";
+            htmlString += '<span class="quote">' + str[i] + "</span>";
         }
     }
     return htmlString;
@@ -54,7 +54,6 @@ const clean = function(str) {
 const editors = {};
 
 export default class LiveEditor extends Component {
-
     props: {
         // Basic configuration
         code: string,
@@ -102,7 +101,7 @@ export default class LiveEditor extends Component {
     static defaultProps = {
         outputWidth: "400px",
         outputHeight: "400px",
-    }
+    };
 
     constructor(props) {
         super(props);
@@ -127,7 +126,7 @@ export default class LiveEditor extends Component {
             // Animates the restart dynamically (talkthrough-triggered)
             animateRestartNow: false,
             // Tracks whether audio has loaded enough to begin playing
-            isAudioLoaded: false
+            isAudioLoaded: false,
         };
 
         // This stops us from sending any updates until the current run has finished
@@ -140,8 +139,9 @@ export default class LiveEditor extends Component {
         this.imagesDir = utils.qualifyURL(props.imagesDir);
         this.soundsDir = props.soundsDir;
         this.execFile = props.execFile ? utils.qualifyURL(props.execFile) : "";
-        this.jshintFile = utils.qualifyURL(props.jshintFile ||
-            this.externalsDir + "jshint/jshint.js");
+        this.jshintFile = utils.qualifyURL(
+            props.jshintFile || this.externalsDir + "jshint/jshint.js",
+        );
         this.redirectUrl = props.redirectUrl;
 
         this.outputType = props.outputType || "";
@@ -150,7 +150,7 @@ export default class LiveEditor extends Component {
 
         this.recordingInit = this.props.recordingInit || {
             code: this.props.code,
-            version: this.props.version
+            version: this.props.version,
         };
 
         this.noLint = false;
@@ -158,7 +158,7 @@ export default class LiveEditor extends Component {
         this.render();
 
         this.config = new ScratchpadConfig({
-            version: this.props.version
+            version: this.props.version,
         });
 
         this.record = new ScratchpadRecordModel();
@@ -172,7 +172,7 @@ export default class LiveEditor extends Component {
             this.record.loadRecording({
                 init: this.props.recordingInit,
                 commands: this.props.recordingCommands,
-                multiplier: multiplier
+                multiplier: multiplier,
             });
         }
 
@@ -193,7 +193,7 @@ export default class LiveEditor extends Component {
         this.handleOverlayClick = this.handleOverlayClick.bind(this);
         this.handleRecordColorClick = this.handleRecordColorClick.bind(this);
         this.handleRecordClearClick = this.handleRecordClearClick.bind(this);
-        this.handleChangeDebounced =  _.debounce(this.handleChange, 300);
+        this.handleChangeDebounced = _.debounce(this.handleChange, 300);
         this.handleDraggerMouseDown = this.handleDraggerMouseDown.bind(this);
 
         this.setupAudio();
@@ -210,7 +210,7 @@ export default class LiveEditor extends Component {
         // changes the cursor or the current selection.
         // We use it for tag highlighting in webpages.
         const cursorDirty = () => {
-            if (this.outputState !== "clean" ) {
+            if (this.outputState !== "clean") {
                 // This will fire after markDirty() itself gets a chance to start a new run
                 // So it will just keep resetting itself until one run comes back and there are
                 // no changes waiting
@@ -219,7 +219,7 @@ export default class LiveEditor extends Component {
                 setTimeout(function() {
                     if (self.editor.getSelectionIndices) {
                         self.postFrame({
-                            setCursor: self.editor.getSelectionIndices()
+                            setCursor: self.editor.getSelectionIndices(),
                         });
                     }
                     self.editor.once("changeCursor", cursorDirty);
@@ -247,17 +247,21 @@ export default class LiveEditor extends Component {
             errorNum: this.state.errorNum,
             isHidden: !this.state.showErrorPopup,
             onErrorShowRequested: (error) => {
-                this.setState({highlightErrorReq: {
-                    error: error, timestamp: Date.now()}});
+                this.setState({
+                    highlightErrorReq: {
+                        error: error,
+                        timestamp: Date.now(),
+                    },
+                });
             },
             onDismissed: (error) => {
                 this.setState({
                     errorState: "thinking",
-                    showErrorPopup: false
+                    showErrorPopup: false,
                 });
-            }
-        }
-        return <ErrorBuddy {...props}/>
+            },
+        };
+        return <ErrorBuddy {...props} />;
     }
 
     renderDrawCanvas() {
@@ -265,9 +269,9 @@ export default class LiveEditor extends Component {
             record: this.record,
             onColorSet: (color) => {
                 this.setState({drawingColor: color});
-            }
+            },
         };
-        return <DrawCanvas {...props}/>
+        return <DrawCanvas {...props} />;
     }
 
     renderOutputSide() {
@@ -292,8 +296,8 @@ export default class LiveEditor extends Component {
             onOutputFrameLoad: () => {
                 this.outputState = "clean";
                 this.markDirty();
-            }
-        }
+            },
+        };
         return <OutputSide {...props} />;
     }
 
@@ -320,9 +324,12 @@ export default class LiveEditor extends Component {
                 this.props.onEditorChange && this.props.onEditorChange();
             },
             onUserChange: (code) => {
-                if (!this.record ||
-                    (!this.record.recording && !this.record.playing)) {
-                    this.props.onEditorUserChange && this.props.onEditorUserChange(code);
+                if (
+                    !this.record ||
+                    (!this.record.recording && !this.record.playing)
+                ) {
+                    this.props.onEditorUserChange &&
+                        this.props.onEditorUserChange(code);
                 }
             },
             onChangeCursor: (cursor) => {
@@ -337,7 +344,7 @@ export default class LiveEditor extends Component {
             },
             onGutterErrorClick: (errorNum) => {
                 this.setErrorState(errorNum);
-            }
+            },
         };
 
         // linting in the webpage environment generates slowparseResults which
@@ -365,7 +372,7 @@ export default class LiveEditor extends Component {
                     errorState={this.state.errorState}
                     isHidden={this.state.showErrorPopup}
                     onClick={this.handleMiniClick}
-                />
+                />,
             ],
             rightComponents: [
                 <RestartButton
@@ -375,13 +382,17 @@ export default class LiveEditor extends Component {
                     isHidden={!this.state.showRestart}
                     onClick={this.handleRestartClick}
                     animateNow={this.animateRestartNow}
-                />
+                />,
             ],
             height: this.props.editorHeight || this.state.outputHeight,
             hasAudio: this.hasAudio(),
             showYoutubeLink: !this.state.isAudioLoaded,
-            showAudioPlayButton: this.state.isAudioLoaded && !this.state.isPlaying && !this.state.editorClicked,
-            showAudioSpinner: !this.state.isAudioLoaded && !this.state.editorClicked,
+            showAudioPlayButton:
+                this.state.isAudioLoaded &&
+                !this.state.isPlaying &&
+                !this.state.editorClicked,
+            showAudioSpinner:
+                !this.state.isAudioLoaded && !this.state.editorClicked,
             // During playback, prevent user interaction with editor
             showDisableOverlay: this.state.isPlaying && !this.state.isRecording,
             onBigPlayClick: () => {
@@ -391,23 +402,25 @@ export default class LiveEditor extends Component {
             onEditorCreated: (aceWrapperRef) => {
                 this.aceWrapperRef = aceWrapperRef;
             },
-        }
+        };
         const props = Object.assign({}, this.props, extraProps);
-        return <EditorSide {...props}/>;
+        return <EditorSide {...props} />;
     }
 
     handleDraggerMouseDown(e) {
         const minCanvas = 400;
         const minEditor = 410;
         const initialPX = e.pageX;
-        const initialWidth = this.iframeRef.current.getBoundingClientRect().width;
+        const initialWidth = this.iframeRef.current.getBoundingClientRect()
+            .width;
         const drag = _.throttle((e) => {
             let delta = e.pageX - initialPX;
             if (document.body.getAttribute("dir") === "rtl") {
                 delta = -delta;
             }
             let width = initialWidth - delta;
-            const totalWidth = this.wrapRef.current.getBoundingClientRect().width;
+            const totalWidth = this.wrapRef.current.getBoundingClientRect()
+                .width;
             if (width < minCanvas) {
                 width = minCanvas;
             } else if (totalWidth - width < minEditor) {
@@ -435,10 +448,10 @@ export default class LiveEditor extends Component {
         return (
             <div
                 className={css(
-                        styles.dragHandle,
-                        this.state.isDraggingHandle && styles.dragHandleActive,
-                        this.props.hideEditor && styles.editorHidden,
-                        )}
+                    styles.dragHandle,
+                    this.state.isDraggingHandle && styles.dragHandleActive,
+                    this.props.hideEditor && styles.editorHidden,
+                )}
                 onMouseDown={this.handleDraggerMouseDown}
             />
         );
@@ -448,17 +461,27 @@ export default class LiveEditor extends Component {
         if (!this.canRecord() && !this.state.isRecording) {
             return null;
         }
-        const colors = ["black", "red", "orange", "green", "blue", "lightblue", "violet"];
-        const colorButtons =  colors.map((color) => {
+        const colors = [
+            "black",
+            "red",
+            "orange",
+            "green",
+            "blue",
+            "lightblue",
+            "violet",
+        ];
+        const colorButtons = colors.map((color) => {
             const styles = [{backgroundColor: color}];
             if (color === this.state.drawingColor) {
                 styles.push({border: "2px solid black"});
             }
-            return <Button
-                key={color}
-                style={styles}
-                onClick={() => this.handleRecordColorClick(color)}
-            />
+            return (
+                <Button
+                    key={color}
+                    style={styles}
+                    onClick={() => this.handleRecordColorClick(color)}
+                />
+            );
         });
         return (
             <div>
@@ -476,12 +499,15 @@ export default class LiveEditor extends Component {
             return null;
         }
 
-        return <Button
+        return (
+            <Button
                 id="record"
                 disabled={this.state.isRecording}
-                onClick={this.handleRecordClick}>
-            {i18n._("Record a talkthrough")}
-            </Button>;
+                onClick={this.handleRecordClick}
+            >
+                {i18n._("Record a talkthrough")}
+            </Button>
+        );
     }
 
     renderRecordControls() {
@@ -500,9 +526,9 @@ export default class LiveEditor extends Component {
             editor: this.editor,
             config: this.config,
             workersDir: workersDir,
-            drawCanvas: this.drawCanvas
+            drawCanvas: this.drawCanvas,
         };
-        return <RecordControls {...props}/>
+        return <RecordControls {...props} />;
     }
 
     renderPlaybackBar() {
@@ -553,17 +579,15 @@ export default class LiveEditor extends Component {
                 playing: this.state.isPlaying,
                 readyToPlay: this.state.isAudioLoaded,
                 totalTime: this.state.audioDurationEstimate,
-                youtubeUrl: this.props.youtubeUrl
+                youtubeUrl: this.props.youtubeUrl,
             };
             playbackBar = <PlaybackBar {...props} />;
         } else {
-            playbackBar = <CircularSpinner size="small"/>
+            playbackBar = <CircularSpinner size="small" />;
         }
         return (
             <div className={css(styles.playbar)}>
-                <div className={css(styles.playbackBar)}>
-                    {playbackBar}
-                </div>
+                <div className={css(styles.playbackBar)}>{playbackBar}</div>
             </div>
         );
     }
@@ -576,7 +600,10 @@ export default class LiveEditor extends Component {
         const currentCode = this.aceWrapperRef.current.text();
 
         if (this.props.outputType === "webpage") {
-            if (currentCode.match(/<script>/) || currentCode.match(/animation:/)) {
+            if (
+                currentCode.match(/<script>/) ||
+                currentCode.match(/animation:/)
+            ) {
                 return true;
             }
         } else if (this.props.outputType === "pjs") {
@@ -614,14 +641,16 @@ export default class LiveEditor extends Component {
         }
 
         return false;
-    };
+    }
 
     canRecord() {
         return this.props.transloaditAuthKey && this.props.transloaditTemplate;
     }
 
     isResizable() {
-        return this.editorType === "ace_pjs" || this.editorType === "ace_webpage";
+        return (
+            this.editorType === "ace_pjs" || this.editorType === "ace_webpage"
+        );
     }
 
     hasAudio() {
@@ -666,7 +695,7 @@ export default class LiveEditor extends Component {
                     document.querySelector("#sm2-container div").remove();
                     soundManager.reboot();
                 }, 3000);
-            }
+            },
         });
         soundManager.beginDelayedInit();
 
@@ -691,7 +720,7 @@ export default class LiveEditor extends Component {
             // SoundManager errors if no ID is passed in,
             // even though we don't use it
             // The ID should be a string starting with a letter.
-            id: "sound" + (new Date()).getTime(),
+            id: "sound" + new Date().getTime(),
 
             url: this.props.recordingMP3,
 
@@ -722,13 +751,13 @@ export default class LiveEditor extends Component {
             },
             onload: function() {
                 record.durationEstimate = record.duration = this.duration;
-                self.setState({audioDurationEstimate: this.duration})
+                self.setState({audioDurationEstimate: this.duration});
                 record.trigger("loaded");
             },
             whileloading: function() {
                 record.duration = null;
                 record.durationEstimate = this.durationEstimate;
-                self.setState({audioDurationEstimate: this.durationEstimate})
+                self.setState({audioDurationEstimate: this.durationEstimate});
                 record.trigger("loading");
             },
             // When audio playback is complete, notify everyone listening
@@ -744,7 +773,7 @@ export default class LiveEditor extends Component {
                 // user clicks the play button later on.
                 self.setState({isAudioLoaded: true});
                 self.props.onReadyToPlay();
-            }
+            },
         });
 
         // Wait to start playback until we at least have some
@@ -768,8 +797,9 @@ export default class LiveEditor extends Component {
         // So we've changed it to also check loaded.
         // If we need to, we can reach inside the HTML5 audio element
         //  and check the ranges of the buffered property
-        return this.player &&
-            (this.player.bytesLoaded > 0 || this.player.loaded);
+        return (
+            this.player && (this.player.bytesLoaded > 0 || this.player.loaded)
+        );
     }
 
     togglePlayingState = function() {
@@ -797,8 +827,12 @@ export default class LiveEditor extends Component {
 
                 if (commands) {
                     commands.push([
-                        Math.max(record.endTime(),
-                            commands[commands.length - 1][0]), "seek"]);
+                        Math.max(
+                            record.endTime(),
+                            commands[commands.length - 1][0],
+                        ),
+                        "seek",
+                    ]);
                 }
                 self.updateDurationDisplay();
             },
@@ -809,7 +843,7 @@ export default class LiveEditor extends Component {
                 if (self.player.paused) {
                     self.player.resume();
 
-                // Otherwise we can assume that we need to start playing from the top
+                    // Otherwise we can assume that we need to start playing from the top
                 } else if (self.player.playState === 0) {
                     self.player.play();
                 }
@@ -818,7 +852,7 @@ export default class LiveEditor extends Component {
             // Pause when recording playback pauses
             playPaused: function() {
                 self.player.pause();
-            }
+            },
         });
     }
 
@@ -842,7 +876,10 @@ export default class LiveEditor extends Component {
                 // canvas to its initial state
                 if (!record.recording && !resume) {
                     // Reset the editor
-                    this.aceWrapperRef.current.reset(record.initData.code, false);
+                    this.aceWrapperRef.current.reset(
+                        record.initData.code,
+                        false,
+                    );
 
                     // Clear and hide the drawing area
                     // TODO!!
@@ -886,7 +923,7 @@ export default class LiveEditor extends Component {
             // Recording has begun
             recordStarted: () => {
                 // Let the output know that recording has begun
-                this.postFrame({ recording: true });
+                this.postFrame({recording: true});
 
                 // Allow the editor to be changed
                 this.aceWrapperRef.current.setReadOnly(false);
@@ -907,7 +944,7 @@ export default class LiveEditor extends Component {
             // Recording has ended
             recordEnded: () => {
                 // Let the output know that recording has ended
-                this.postFrame({ recording: false });
+                this.postFrame({recording: false});
 
                 if (record.recordingAudio) {
                     this.recordView.stopRecordingAudio();
@@ -926,7 +963,7 @@ export default class LiveEditor extends Component {
                 // Because we are recording in chunks, do not reset the canvas
                 // to its initial state.
                 this.drawCanvas.endDraw();
-            }
+            },
         });
 
         // ScratchpadCanvas mouse events to track
@@ -939,8 +976,8 @@ export default class LiveEditor extends Component {
                     mouseAction: {
                         name: name,
                         x: x,
-                        y: y
-                    }
+                        y: y,
+                    },
                 });
             };
         });
@@ -953,8 +990,7 @@ export default class LiveEditor extends Component {
 
         // Force the recording to sync to the current time of the audio playback
         record.currentTime = function() {
-            return self.player ?
-                self.player.position : 0;
+            return self.player ? self.player.position : 0;
         };
 
         // Create a function for retreiving the track end time
@@ -987,7 +1023,7 @@ export default class LiveEditor extends Component {
         this.record.pausePlayback();
     }
 
-    handleRecordClick (callback) {
+    handleRecordClick(callback) {
         // If we're already recording, stop
         if (this.record.recording) {
             // Note: We should never hit this case when recording chunks.
@@ -1002,14 +1038,11 @@ export default class LiveEditor extends Component {
         // which is confusing
         if (!saveCode) {
             callback({error: "empty"});
-
         } else if (this.config.curVersion() !== this.config.latestVersion()) {
             callback({error: "outdated"});
-
         } else if (this.canRecord() && !this.hasAudio()) {
             this.startRecording();
             this.aceWrapperRef.focus();
-
         } else {
             callback({error: "exists"});
         }
@@ -1027,7 +1060,7 @@ export default class LiveEditor extends Component {
         this.aceWrapperRef.current.focus();
     }
 
-    saveRecording (callback, steps) {
+    saveRecording(callback, steps) {
         // If no command or audio recording was made, just save the results
         if (!this.record.recorded || !this.record.recordingAudio) {
             return callback();
@@ -1038,11 +1071,13 @@ export default class LiveEditor extends Component {
             templateId: this.props.transloaditTemplate,
             steps: steps,
             successCb: function(results) {
-                this.recordingMP3 =
-                    results.mp3[0].url.replace(/^http:/, "https:");
+                this.recordingMP3 = results.mp3[0].url.replace(
+                    /^http:/,
+                    "https:",
+                );
                 callback(null, this.recordingMP3);
             }.bind(this),
-            errorCb: callback
+            errorCb: callback,
         });
 
         this.recordView.getFinalAudioRecording(function(combined) {
@@ -1059,7 +1094,7 @@ export default class LiveEditor extends Component {
     }
 
     // Utility method for formatting time in minutes/seconds
-    formatTime (time) {
+    formatTime(time) {
         var seconds = time / 1000,
             min = Math.floor(seconds / 60),
             sec = Math.floor(seconds % 60);
@@ -1080,7 +1115,7 @@ export default class LiveEditor extends Component {
         }
     }
 
-    handleMessages (event) {
+    handleMessages(event) {
         // DANGER!  The data coming in from the iframe could be anything,
         // because with some cleverness the author of the program can send an
         // arbitrary message up to us.  We need to be careful to sanitize it
@@ -1148,13 +1183,13 @@ export default class LiveEditor extends Component {
         }
 
         if (this.editorType.indexOf("ace_") === 0 && data.results) {
-
             let warnings = [];
             if (data.results.assertions || data.results.warnings) {
                 // Results of assertion failures and lint warnings. For example:
                 //  Write `Program.assertEqual(2, 4);` in ProcessingJS editor
                 //  Write "backgrund: grey" in  webpage editor
-                warnings = data.results.assertions.concat(data.results.warnings)
+                warnings = data.results.assertions
+                    .concat(data.results.warnings)
                     .map((lineMsg) => {
                         return {
                             // Coerce to the expected type
@@ -1163,8 +1198,8 @@ export default class LiveEditor extends Component {
                             // This is escaped by the gutter annotation display
                             // code, so we don't need to escape it here.
                             text: lineMsg.text.toString(),
-                            type: "warning"
-                        }
+                            type: "warning",
+                        };
                     });
             }
             this.setState({warnings});
@@ -1177,7 +1212,7 @@ export default class LiveEditor extends Component {
         // Set the line visibility in the editor
         if (data.lines !== undefined) {
             // Coerce to the expected type
-            this.aceWrapperRef.current.toggleGutter(data.lines.map(x => +x));
+            this.aceWrapperRef.current.toggleGutter(data.lines.map((x) => +x));
         }
 
         // Restart the execution
@@ -1196,7 +1231,7 @@ export default class LiveEditor extends Component {
         }
     }
 
-    handleErrors (errors) {
+    handleErrors(errors) {
         /* Our current less-aggressive way of handling errors:
          * When a user makes an error, we immediately:
          *   - show an icon in the gutter
@@ -1261,53 +1296,56 @@ export default class LiveEditor extends Component {
         }
     }
 
-    setErrorState (errorNum) {
+    setErrorState(errorNum) {
         this.setState({
             errorState: "error",
             errorNum: errorNum || 0,
-            showErrorPopup: true
+            showErrorPopup: true,
         });
     }
 
     setThinkingState() {
         this.setState({
             errorState: "thinking",
-            showErrorPopup: false
+            showErrorPopup: false,
         });
     }
 
     setHappyState() {
         this.setState({
             errorState: "happy",
-            showErrorPopup: false
+            showErrorPopup: false,
         });
     }
 
     // Extract the origin from the embedded frame location
     postFrameOrigin() {
         var match = /^.*:\/\/[^\/]*/.exec(
-            this.iframeRef.current.getAttribute("data-src"));
+            this.iframeRef.current.getAttribute("data-src"),
+        );
 
-        return match ?
-            match[0] :
-            window.location.protocol + "//" + window.location.host;
+        return match
+            ? match[0]
+            : window.location.protocol + "//" + window.location.host;
     }
 
     postFrame(data) {
         // Send the data to the frame using postMessage
         this.iframeRef.current.contentWindow.postMessage(
-            JSON.stringify(data), this.postFrameOrigin());
+            JSON.stringify(data),
+            this.postFrameOrigin(),
+        );
     }
 
     hasFrame() {
-        return !!(this.execFile);
+        return !!this.execFile;
     }
 
     /*
      * Restart the code in the output frame.
      */
     restartCode() {
-        this.postFrame({ restart: true });
+        this.postFrame({restart: true});
     }
 
     /*
@@ -1323,8 +1361,13 @@ export default class LiveEditor extends Component {
     runCode(code) {
         return _.throttle((code) => {
             var options = {
-                code: arguments.length === 0 ? this.aceWrapperRef.current.text() : code,
-                cursor: this.aceWrapperRef.current.getSelectionIndices ? this.aceWrapperRef.current.getSelectionIndices() : -1,
+                code:
+                    arguments.length === 0
+                        ? this.aceWrapperRef.current.text()
+                        : code,
+                cursor: this.aceWrapperRef.current.getSelectionIndices
+                    ? this.aceWrapperRef.current.getSelectionIndices()
+                    : -1,
                 validate: this.validation || "",
                 noLint: this.noLint,
                 version: this.config.curVersion(),
@@ -1336,12 +1379,12 @@ export default class LiveEditor extends Component {
                 redirectUrl: this.redirectUrl,
                 jshintFile: this.jshintFile,
                 outputType: this.outputType,
-                enableLoopProtect: this.enableLoopProtect
+                enableLoopProtect: this.enableLoopProtect,
             };
             this.props.onCodeRun && this.props.onCodeRun(options);
 
             this.postFrame(options);
-        }, 20)(code)
+        }, 20)(code);
     }
 
     markDirty() {
@@ -1396,10 +1439,10 @@ export default class LiveEditor extends Component {
         this.setState({outputWidth, outputHeight});
 
         this.props.onOutputSizeUpdate &&
-        this.props.onOutputSizeUpdate({
-            width: outputWidth,
-            height: outputHeight
-        });
+            this.props.onOutputSizeUpdate({
+                width: outputWidth,
+                height: outputHeight,
+            });
     }
 
     getScreenshot(callback) {
@@ -1424,8 +1467,8 @@ export default class LiveEditor extends Component {
             text = text.replace(/&lt;|&#60;/g, "<");
             text = text.replace(/&gt;|&#62;/g, ">");
             text = text.replace(/&amp;|&#38;/g, "&");
-            text = text.replace(/&quot;|&#34;/g, "\"");
-            text = text.replace(/&apos;|&#39;/g, "\'");
+            text = text.replace(/&quot;|&#34;/g, '"');
+            text = text.replace(/&apos;|&#39;/g, "'");
 
             var words = text.split(/\s+/);
             var lines = 0;
@@ -1465,7 +1508,7 @@ export default class LiveEditor extends Component {
         window.addEventListener("message", handleScreenshotMessage);
 
         // Ask the frame for a screenshot
-        this.postFrame({ screenshot: true });
+        this.postFrame({screenshot: true});
     }
 
     undo() {
@@ -1474,102 +1517,113 @@ export default class LiveEditor extends Component {
 
     cleanErrors(errors) {
         var loopProtectMessages = {
-            "WhileStatement": i18n._("<code>while</code> loop"),
-            "DoWhileStatement": i18n._("<code>do-while</code> loop"),
-            "ForStatement": i18n._("<code>for</code> loop"),
-            "FunctionDeclaration": i18n._("<code>function</code>"),
-            "FunctionExpression": i18n._("<code>function</code>"),
+            WhileStatement: i18n._("<code>while</code> loop"),
+            DoWhileStatement: i18n._("<code>do-while</code> loop"),
+            ForStatement: i18n._("<code>for</code> loop"),
+            FunctionDeclaration: i18n._("<code>function</code>"),
+            FunctionExpression: i18n._("<code>function</code>"),
         };
 
-        errors = errors.map(function(error) {
-            // These errors come from the user, so we can't trust them.  They
-            // get decoded from JSON, so they will just be plain objects, not
-            // arbitrary classes, but they're still potentially full of HTML
-            // that we need to escape.  So any HTML we want to put in needs to
-            // get put in here, rather than somewhere inside the iframe.
-            delete error.html;
-            // TODO(benkraft): This is a kind of ugly place to put this
-            // processing.  Refactor so that we don't have to do something
-            // quite so ad-hoc here, while still keeping any user input
-            // appropriately sanitized.
-            var loopNodeType = error.infiniteLoopNodeType;
-            if (loopNodeType) {
-                error.html = i18n._(
-                    "A %(type)s is taking too long to run. " +
-                    "Perhaps you have a mistake in your code?", {
-                        type: loopProtectMessages[loopNodeType]
-                });
-            }
+        errors = errors.map(
+            function(error) {
+                // These errors come from the user, so we can't trust them.  They
+                // get decoded from JSON, so they will just be plain objects, not
+                // arbitrary classes, but they're still potentially full of HTML
+                // that we need to escape.  So any HTML we want to put in needs to
+                // get put in here, rather than somewhere inside the iframe.
+                delete error.html;
+                // TODO(benkraft): This is a kind of ugly place to put this
+                // processing.  Refactor so that we don't have to do something
+                // quite so ad-hoc here, while still keeping any user input
+                // appropriately sanitized.
+                var loopNodeType = error.infiniteLoopNodeType;
+                if (loopNodeType) {
+                    error.html = i18n._(
+                        "A %(type)s is taking too long to run. " +
+                            "Perhaps you have a mistake in your code?",
+                        {
+                            type: loopProtectMessages[loopNodeType],
+                        },
+                    );
+                }
 
-            const newError = {};
+                const newError = {};
 
-            // error.html was cleared above, so if it exists it's because we
-            // reset it, and it's safe.
-            if (typeof error === "string") {
-                newError.text = clean(prettify(error));
-            } else if (error.html) {
-                newError.text = prettify(error.html);
-            } else {
-                newError.text = prettify(clean(
-                    error.text || error.message || ""));
-            }
+                // error.html was cleared above, so if it exists it's because we
+                // reset it, and it's safe.
+                if (typeof error === "string") {
+                    newError.text = clean(prettify(error));
+                } else if (error.html) {
+                    newError.text = prettify(error.html);
+                } else {
+                    newError.text = prettify(
+                        clean(error.text || error.message || ""),
+                    );
+                }
 
-            // Coerce anything from the user to the expected types before
-            // copying over
-            if (error.lint !== undefined) {
-                newError.lint = {};
+                // Coerce anything from the user to the expected types before
+                // copying over
+                if (error.lint !== undefined) {
+                    newError.lint = {};
 
-                // TODO(benkraft): Coerce this in a less ad-hoc way, or at
-                // least only pass through the things we'll actually use.
-                // Also, get a stronger guarantee that none of these
-                // strings ever get used unescaped.
-                const numberProps = ["character", "line"];
-                const stringProps = [
-                    "code", "evidence", "id", "raw", "reason", "scope", "type"
-                ];
-                const objectProps = ["openTag"];
+                    // TODO(benkraft): Coerce this in a less ad-hoc way, or at
+                    // least only pass through the things we'll actually use.
+                    // Also, get a stronger guarantee that none of these
+                    // strings ever get used unescaped.
+                    const numberProps = ["character", "line"];
+                    const stringProps = [
+                        "code",
+                        "evidence",
+                        "id",
+                        "raw",
+                        "reason",
+                        "scope",
+                        "type",
+                    ];
+                    const objectProps = ["openTag"];
 
-                numberProps.forEach(prop => {
-                    if (error.lint[prop] != undefined) {
-                        newError.lint[prop] = +error.lint[prop];
-                    }
-                });
+                    numberProps.forEach((prop) => {
+                        if (error.lint[prop] != undefined) {
+                            newError.lint[prop] = +error.lint[prop];
+                        }
+                    });
 
-                stringProps.forEach(prop => {
-                    if (error.lint[prop] != undefined) {
-                        newError.lint[prop] = error.lint[prop].toString();
-                    }
-                });
+                    stringProps.forEach((prop) => {
+                        if (error.lint[prop] != undefined) {
+                            newError.lint[prop] = error.lint[prop].toString();
+                        }
+                    });
 
-                objectProps.forEach(prop => {
-                    if (error.lint[prop] != undefined) {
-                        newError.lint[prop] = error.lint[prop];
-                    }
-                });
-            }
+                    objectProps.forEach((prop) => {
+                        if (error.lint[prop] != undefined) {
+                            newError.lint[prop] = error.lint[prop];
+                        }
+                    });
+                }
 
-            if (error.row != undefined) {
-                newError.row = +error.row;
-            }
+                if (error.row != undefined) {
+                    newError.row = +error.row;
+                }
 
-            if (error.column != undefined) {
-                newError.column = +error.column;
-            }
+                if (error.column != undefined) {
+                    newError.column = +error.column;
+                }
 
-            if (error.type != undefined) {
-                newError.type = error.type.toString();
-            }
+                if (error.type != undefined) {
+                    newError.type = error.type.toString();
+                }
 
-            if (error.source != undefined) {
-                newError.source = error.source.toString();
-            }
+                if (error.source != undefined) {
+                    newError.source = error.source.toString();
+                }
 
-            if (error.priority != undefined) {
-                newError.priority = +error.priority;
-            }
+                if (error.priority != undefined) {
+                    newError.priority = +error.priority;
+                }
 
-            return newError;
-        }.bind(this));
+                return newError;
+            }.bind(this),
+        );
 
         errors = errors.sort(function(a, b) {
             var diff = a.row - b.row;
@@ -1578,7 +1632,6 @@ export default class LiveEditor extends Component {
 
         return errors;
     }
-
 
     render() {
         return (
@@ -1595,24 +1648,23 @@ export default class LiveEditor extends Component {
                 )}
                 ref={this.wrapRef}
             >
-            <div
-                className={css(
-                    styles.wrapOuter,
-                    !this.props.hideEditor &&
-                        styles.wrapBorder,
-                )}
-            >
-                <div className={css(styles.wrapInner)}>
-                    {this.renderEditorSide()}
-                    {this.renderDragHandle()}
-                    {this.renderOutputSide()}
+                <div
+                    className={css(
+                        styles.wrapOuter,
+                        !this.props.hideEditor && styles.wrapBorder,
+                    )}
+                >
+                    <div className={css(styles.wrapInner)}>
+                        {this.renderEditorSide()}
+                        {this.renderDragHandle()}
+                        {this.renderOutputSide()}
+                    </div>
+                    {this.renderPlaybackBar()}
+                    {this.renderRecordColorButtons()}
+                    {this.renderRecordButton()}
+                    {this.renderRecordControls()}
                 </div>
-                {this.renderPlaybackBar()}
-                {this.renderRecordColorButtons()}
-                {this.renderRecordButton()}
-                {this.renderRecordControls()}
             </div>
-        </div>
         );
     }
 }
@@ -1620,7 +1672,6 @@ export default class LiveEditor extends Component {
 LiveEditor.registerEditor = function(name, editor) {
     editors[name] = editor;
 };
-
 
 const defaultDim = 400;
 const defaultBorder = `2px solid #D6D8DA`;

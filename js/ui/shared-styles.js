@@ -9,7 +9,7 @@ const styles = StyleSheet.create({
         top: 0,
         left: "auto",
         bottom: "auto",
-        right: 0
+        right: 0,
     },
     /**
      * Overlays
@@ -29,14 +29,14 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: "0px",
         width: "100%",
-        zIndex: "1000"
+        zIndex: "1000",
     },
     disableOverlay: {
         background: "rgba(255,255,255,0.9)",
         cursor: "pointer",
         opacity: 0,
-        zIndex: "880"
-    }
+        zIndex: "880",
+    },
 });
 
 export default styles;
