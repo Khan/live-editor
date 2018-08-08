@@ -9,10 +9,10 @@ export default class TooltipEngine extends Component {
         aceEditor: Object,
         record: Object,
         event: Object,
-        blurEvent: Object,
         tooltips: Array,
         onScrubbingStart: Function,
         onScrubbingEnd: Function,
+        onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
         onTooltipChange: Function,
     }
@@ -25,6 +25,7 @@ export default class TooltipEngine extends Component {
         this.domRef = React.createRef();
         this.tooltips = {};
         this.ignore = false;
+        this.handleBlurEvent = this.handleBlurEvent.bind(this);
 
         const record = props.record;
         if (record && !record.handlers.hot) {
@@ -50,26 +51,13 @@ export default class TooltipEngine extends Component {
         }
     }
 
+    componentDidMount() {
+        document.body.addEventListener("click", this.handleBlurEvent);
+        //document.body.addEventListener("contextmenu", this.handleBlurEvent);
+    }
+
     componentDidUpdate(prevProps) {
-        // First check if a blurEvent means we need to disable current tooltip
-        const blurTarget = this.props.blurEvent && this.props.blurEvent.target;
-        const prevBlurTarget = prevProps.blurEvent && prevProps.blurEvent.target;
-
-        const isVisible = (e) => {
-            return !!( e.offsetWidth || e.offsetHeight || e.getClientRects().length );
-        }
-
-        if (blurTarget &&
-            (!prevBlurTarget|| blurTarget !== prevBlurTarget) &&
-            this.state.currentTooltip &&
-            !this.domRef.current.contains(blurTarget) &&
-            (!this.state.modalRef ||
-            !this.state.modalRef.current ||
-            !isVisible(this.state.modalRef.current))) {
-            // eslint-disable-next-line react/no-did-update-set-state
-            this.setState({currentTooltip: null});
-        }
-        // Now check for new events that trigger different tooltips
+        // Check for ace editor events that trigger different tooltips
         const newEvent = this.props.event;
         if (this.ignore || !newEvent) {
             return;
@@ -95,6 +83,17 @@ export default class TooltipEngine extends Component {
             eventToCheck: newEvent,
             possibleTooltips: this.props.tooltips
         })
+    }
+
+    handleBlurEvent(e) {
+        const blurTarget = e.target;
+        return;
+        console.log("Got blur event", e);
+        if (blurTarget &&
+            this.state.currentTooltip &&
+            !this.domRef.current.contains(blurTarget)) {
+            this.setState({currentTooltip: null});
+        }
     }
 
     render() {
@@ -126,6 +125,11 @@ export default class TooltipEngine extends Component {
             childProps.onTextUpdateRequest = (aceLocation, newText, newSelection, avoidUndo) => {
                 this.ignore = true;
                 this.props.onTextUpdateRequest(aceLocation, newText, newSelection, avoidUndo);
+                this.ignore = false;
+            };
+            childProps.onTextInsertRequest = (aceLocation, newText) => {
+                this.ignore = true;
+                this.props.onTextInsertRequest(aceLocation, newText);
                 this.ignore = false;
             };
             childProps.onModalRefCreate = (ref) => {

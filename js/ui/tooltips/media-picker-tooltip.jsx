@@ -24,6 +24,7 @@ export default class MediaPickerTooltip extends Component {
         const mediaPickerModal = ({closeModal}) => (
             <MediaPickerModal
                 {...this.props}
+                closeModal={closeModal}
                 onClose={() => { this.props.onModalClose(); closeModal();}}
             />
         );

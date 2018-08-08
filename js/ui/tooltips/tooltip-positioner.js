@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     tooltip: {
         background: "black",
         borderRadius: "7px",
-        boxShadow: "0px 0px 8px #000000",
+        boxShadow: "0 0 4px #000",
         boxSizing: "content-box",
         display: "block",
         fontSize: "12px",

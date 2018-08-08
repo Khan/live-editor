@@ -3,9 +3,9 @@
 */
 /* TODO: Fix the lint errors */
 import _ from "lodash";
-import Button from "@khanacademy/wonder-blocks-button";
 import classNames from 'classnames';
 import i18n from "i18n";
+import Button from "@khanacademy/wonder-blocks-button";
 import React, {Component} from "react";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 import IconButton from "@khanacademy/wonder-blocks-icon-button";
@@ -357,21 +357,7 @@ export default class LiveEditor extends Component {
 
     renderEditorSide() {
         const extraProps = {
-            height: this.props.editorHeight || this.state.outputHeight,
-            hasAudio: this.hasAudio(),
-            showYoutubeLink: !this.state.isAudioLoaded,
-            showAudioPlayButton: this.state.isAudioLoaded && !this.state.isPlaying && !this.state.editorClicked,
-            showAudioSpinner: !this.state.isAudioLoaded && !this.state.editorClicked,
-            // During playback, prevent user interaction with editor
-            showDisableOverlay: this.state.isPlaying && !this.state.isRecording,
             aceEditorWrapper: this.renderAceEditorWrapper(),
-            onDisableClick: this.handleOverlayClick,
-            onEditorCreated: (aceWrapperRef) => {
-                this.aceWrapperRef = aceWrapperRef;
-            },
-            onBigPlayClick: () => {
-                this.togglePlayingState();
-            },
             leftComponents: [
                 <ErrorBuddyMini
                     key="errorBuddyMini"
@@ -390,7 +376,21 @@ export default class LiveEditor extends Component {
                     onClick={this.handleRestartClick}
                     animateNow={this.animateRestartNow}
                 />
-            ]
+            ],
+            height: this.props.editorHeight || this.state.outputHeight,
+            hasAudio: this.hasAudio(),
+            showYoutubeLink: !this.state.isAudioLoaded,
+            showAudioPlayButton: this.state.isAudioLoaded && !this.state.isPlaying && !this.state.editorClicked,
+            showAudioSpinner: !this.state.isAudioLoaded && !this.state.editorClicked,
+            // During playback, prevent user interaction with editor
+            showDisableOverlay: this.state.isPlaying && !this.state.isRecording,
+            onBigPlayClick: () => {
+                this.togglePlayingState();
+            },
+            onDisableClick: this.handleOverlayClick,
+            onEditorCreated: (aceWrapperRef) => {
+                this.aceWrapperRef = aceWrapperRef;
+            },
         }
         const props = Object.assign({}, this.props, extraProps);
         return <EditorSide {...props}/>;

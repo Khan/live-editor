@@ -53,8 +53,8 @@ export default class ColorPicker extends Component {
     }
 
     handleMouseLeave = () => {
-        this.setState({showFullPicker: true});
-        //TODO:this.props.aceEditor.focus();
+        this.setState({showFullPicker: false});
+        //TODO?:this.props.aceEditor.focus();
         this.props.onScrubbingEnd();
     }
 
@@ -169,9 +169,11 @@ export default class ColorPicker extends Component {
                     />
                 </div>;
         } else {
-            colorPicker = <div className={css(styles.previewDiv)}>
-                <div className={css(styles.colorDiv)} />
-            </div>
+            const colorBg = `rgb(${stringifyRGB(this.state.color)})`;
+            colorPicker = <div
+                            className={css(styles.previewDiv)}
+                            style={{backgroundColor: colorBg}}
+                        />;
         }
         const wrapped = <div
                             onMouseEnter={ this.handleMouseEnter}
@@ -194,17 +196,10 @@ export default class ColorPicker extends Component {
 
 const styles = StyleSheet.create({
     previewDiv: {
-        padding: '5px',
-        background: '#000',
-        borderRadius: '1px',
-        boxShadow: '0 0 0 1px rgba(0,0,0,.1)',
-        display: 'inline-block',
+        border: '1px solid white',
         cursor: 'pointer',
-    },
-    colorDiv: {
         width: '15px',
         height: '15px',
-        borderRadius: '2px',
     },
     fullDiv: {
         borderWidth: 0,

@@ -8,7 +8,7 @@ import SaturationPicker from "./color-picker-saturation.jsx";
 export default class ColorPickerFull extends React.Component {
 
     props: {
-        color: Object, // r, g, b
+        color: Object,
         onColorChange: Function,
     }
 

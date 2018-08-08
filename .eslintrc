@@ -10,6 +10,6 @@
       "import/order": ["error", {"newlines-between": "always"}],
       "import/newline-after-import": 2,
       "import/first": 2,
-      "import/no-commonjs": 2,
+      "import/no-commonjs": 2
   }
 }

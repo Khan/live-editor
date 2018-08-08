@@ -1,6 +1,7 @@
 import i18n from "i18n";
 import Button from "@khanacademy/wonder-blocks-button";
 import {OneColumnModal} from "@khanacademy/wonder-blocks-modal";
+import {View} from "@khanacademy/wonder-blocks-core";
 import {Tab, Tabs, TabList, TabPanel} from "react-tabs";
 import React, {Component} from "react";
 import "react-tabs/style/react-tabs.css";
@@ -13,63 +14,62 @@ export default class MediaPickerModal extends Component {
         mediaDir: string,
         onClose: () => void,
         onFileSelect: (info: Object) => void,
-        onModalRefCreate: (ref: Object) => void,
     };
 
-    constructor(props) {
-        super(props);
-
-        // This ref is created purely so that it can be passed back
-        //  to TooltipEngine, so that it can determine if blur events
-        //  are outside a modal and should thus close the tooltip
-        // Another approach would be to track modal open/close,
-        //  but wonder-blocks-modal does not expose onOpen yet
-        this.modalRef = React.createRef();
-    }
-
-    componentDidMount() {
-        // TODO: Remove if wonder-blocks adds onOpen for Modal
-        this.props.onModalRefCreate(this.modalRef);
+    handleClick(e) {
+        console.log("ive been clicked!");
+        e.stopPropagation();
     }
 
     render() {
-        // state: activeClass
-        // props: mediaClasses
+        let modalContent;
+        if (this.props.mediaClasses.length < 2) {
+            modalContent = <MediaPickerScroller
+                        groups={this.props.mediaClasses[0].groups}
+                        mediaDir={this.props.mediaDir}
+                        onFileSelect={this.props.onFileSelect}
+                    />
+        } else {
+            // First make the tabs
+            const classesTabs = this.props.mediaClasses.map((mediaClass) => {
+                const tabKey = `${mediaClass.className}-tab`;
+                return <Tab key={tabKey}>{mediaClass.className}</Tab>;
+            });
 
-        // First make the tabs
-        const classesTabs = this.props.mediaClasses.map((mediaClass) => {
-            const tabKey = `${mediaClass.className}-tab`;
-            return <Tab key={tabKey}>{mediaClass.className}</Tab>;
-        });
-
-        // Now make the tab panels with the media for each class
-        const classesTabPanels = this.props.mediaClasses.map(
-            (mediaClass, ind) => {
-                const panelKey = `${mediaClass.className}-panel`;
-                return (
-                    <TabPanel key={panelKey}>
-                        <MediaPickerScroller
-                            groups={mediaClass.groups}
-                            mediaDir={this.props.mediaDir}
-                            onFileSelect={this.props.onFileSelect}
-                        />
-                    </TabPanel>
-                );
-            },
-        );
+            // Now make the tab panels with the media for each class
+            const classesTabPanels = this.props.mediaClasses.map(
+                (mediaClass, ind) => {
+                    const panelKey = `${mediaClass.className}-panel`;
+                    return (
+                        <TabPanel key={panelKey}>
+                            <MediaPickerScroller
+                                groups={mediaClass.groups}
+                                mediaDir={this.props.mediaDir}
+                                onFileSelect={this.props.onFileSelect}
+                            />
+                        </TabPanel>
+                    );
+                },
+            );
+            modalContent = <Tabs>
+                <TabList>{classesTabs}</TabList>
+                {classesTabPanels}
+            </Tabs>;
+        }
 
         return (
             <OneColumnModal
                 content={
-                    <div ref={this.modalRef}>
-                        <Tabs>
-                            <TabList>{classesTabs}</TabList>
-                            {classesTabPanels}
-                        </Tabs>
+                    <div onClick={this.handleClick}>
+                    {modalContent}
                     </div>
                 }
                 footer={
-                    <Button onClick={this.props.onClose}>{i18n._("Ok")}</Button>
+                    <View>
+                        <Button onClick={this.props.onClose}>
+                            {i18n._("Ok")}
+                        </Button>
+                    </View>
                 }
             />
         );

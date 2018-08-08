@@ -1,7 +1,6 @@
 const path = require('path');
 
 const webpack = require('webpack');
-
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const config = {
@@ -46,17 +45,6 @@ const config = {
         ],
         output_sql_deps: [
             "./external/html2canvas/html2canvas.js"
-        ],
-        // Debugger related: not currently enabled
-        debugger: [
-            "./node_modules/iframe-overlay/dist/iframe-overlay.js",
-            "./js/ui/debugger.js"
-        ],
-        output_debugger: [
-            "./node_modules/iframe-overlay/dist/iframe-overlay.js",
-            "./external/debugger/build/debugger.js",
-            "./external/debugger/build/processing-debugger.js",
-            "./js/output/pjs/pjs-debugger.js"
         ],
         test_worker: [
             "./js/workers/pjs/test-worker.js"

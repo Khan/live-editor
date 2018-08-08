@@ -147,15 +147,6 @@ export default class AceEditorWrapper extends Component {
         this.config.on("versionSwitched", (version) => {
             this.config.runVersion(version, this.props.type + "_editor", this);
         });
-        const checkBlur = (e) => {
-            // TODO!
-            //const targetEl = e.target;
-            //const editorEl = this.editorRef.current;
-            // var inEditor = targetEl !== editorEl && editorEl.contains(targetEl);
-            this.setState({blurEvent: e});
-        };
-        document.body.addEventListener("mousedown", checkBlur);
-        document.body.addEventListener("contextmenu", checkBlur);
 
         this.config.editor = this;
 
@@ -216,7 +207,6 @@ export default class AceEditorWrapper extends Component {
             editorScrollTop: this.state.editorScrollTop,
             record: this.record,
             event: this.state.tooltipableEvent,
-            blurEvent: this.state.blurEvent,
             // Third parameter, if true, tells ACE not to remember this update in the undo chain. Useful in
             // number-scrubbing.
             // THIS IS A PROBLEMATIC HACK.

@@ -17,10 +17,6 @@ export default class AutoSuggest extends Component {
         eventToCheck: Object,
         aceEditor: Object,
         onEventCheck: Function,
-        onTextInsertRequest: Function,
-        onTextUpdateRequest: Function,
-        onScrubbingStart: Function,
-        onScrubbingEnd: Function,
     };
 
     constructor(props) {
