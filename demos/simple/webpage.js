@@ -23,7 +23,7 @@ const liveEditorProps = {
     soundsDir: "../../build/sounds/",
     execFile: "output_webpage.html",
     jshintFile: "../../build/external/jshint/jshint.js",
-    onUserChanged: function(code) {
+    onEditorUserChange: function(code) {
         window.localStorage["test-webpage-code"] = code;
     }
 };
