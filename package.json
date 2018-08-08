@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "eslint js",
     "build": "webpack --mode development",
-    "test": "gulp test"
+    "test": "gulp test",
+    "pretty-quick": "pretty-quick --staged"
   },
   "repository": {
     "type": "git",
@@ -62,7 +63,8 @@
     "mocha-webpack": "git+https://github.com/thomasmichaelwallace/mocha-webpack.git",
     "node-static": "^0.7.4",
     "object-assign": "^3.0.0",
-    "prettier": "1.13.7",
+    "prettier": "^1.13.7",
+    "pretty-quick": "^1.6.0",
     "raw-loader": "^0.5.1",
     "replace-ext": "0.0.1",
     "request": "^2.44.0",
@@ -106,6 +108,7 @@
     "underscore": "^1.4.4"
   },
   "pre-commit": [
-    "lint"
+    "lint",
+    "pretty-quick"
   ]
 }
