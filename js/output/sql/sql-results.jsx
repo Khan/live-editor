@@ -1,3 +1,4 @@
+import i18n from "i18n";
 import React, {Component} from "react";
 
 class SQLResults extends Component {
@@ -22,9 +23,9 @@ class SQLResults extends Component {
         }
 
         const schemasTables = this.props.tables.map((table) => {
-            let rowText = $._("row");
+            let rowText = i18n._("row");
             if (table.columns.length > 1) {
-                rowText = $._("rows");
+                rowText = i18n._("rows");
             }
             const columnRows = table.columns.map((column) => (
                 <tr key={column.name}>

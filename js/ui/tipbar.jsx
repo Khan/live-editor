@@ -4,12 +4,16 @@
  * canvas. Now it powers the error reporting mechanism, which no longer
  * looks like a bar.
  */
-const i18n = require("i18n");
+import i18n from "i18n";
+import Draggable from "react-draggable";
+
 import {icons} from "@khanacademy/wonder-blocks-icon";
 import Button from "@khanacademy/wonder-blocks-button";
 import IconButton from "@khanacademy/wonder-blocks-icon-button";
 import {StyleSheet, css} from "aphrodite/no-important";
 import React, {Component} from "react";
+
+import SharedStyles from "./shared-styles.js"
 
 class TipBar extends Component {
     props: {
@@ -115,49 +119,47 @@ class TipBar extends Component {
             );
         }
 
-        // Make the error dialog draggable
-        // Replace with react-draggable
-        /*
-        if ($.fn.draggable) {
-            this.$el.find(".tipbar").draggable({
-                containment: "parent",
-                handle: ".error-buddy",
-                axis: "y"
-            });
-        }
-        */
-
         return (
-            <div>
-                <div className="overlay error-overlay" />
-                <div className="tipbar">
-                    <div className="speech-arrow" />
-                    <div className="error-buddy" />
-                    <div className="text-wrap">
-                        <IconButton
-                            style={styles.closeButton}
-                            icon={icons.dismiss}
-                            aria-label={i18n._("Close")}
-                            kind="tertiary"
-                            onClick={this.handleCloseClick}
-                        />
-                        <div className={css(styles.ohNoHeader)}>
-                            {i18n._("Oh noes!")}
+            <React.Fragment>
+                <div className={css(SharedStyles.overlay, styles.errorOverlay)}/>
+                <Draggable
+                    axis="y"
+                    handle=".error-buddy"
+                    bounds="parent"
+                >
+                    <div className="tipbar">
+                        <div className="speech-arrow" />
+                        <div className="error-buddy" />
+                        <div className="text-wrap">
+                            <IconButton
+                                style={styles.closeButton}
+                                icon={icons.dismiss}
+                                aria-label={i18n._("Close")}
+                                kind="tertiary"
+                                onClick={this.handleCloseClick}
+                            />
+                            <div className={css(styles.ohNoHeader)}>
+                                {i18n._("Oh noes!")}
+                            </div>
+                            <div
+                                className="message"
+                                dangerouslySetInnerHTML={messageHtml}
+                            />
+                            {showMeDiv}
+                            {navDiv}
                         </div>
-                        <div
-                            className="message"
-                            dangerouslySetInnerHTML={messageHtml}
-                        />
-                        {showMeDiv}
-                        {navDiv}
                     </div>
-                </div>
-            </div>
+                </Draggable>
+            </React.Fragment>
         );
     }
 }
 
 const styles = StyleSheet.create({
+    errorOverlay: {
+        background: "rgba(255,255,255,0.6)",
+        zIndex: "auto",
+    },
     closeButton: {
         float: "right",
     },

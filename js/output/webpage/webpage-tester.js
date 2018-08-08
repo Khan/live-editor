@@ -28,10 +28,12 @@ class WebpageTester extends OutputTester {
         var parser = new DOMParser();
         var doc = parser.parseFromString(userCode, "text/html");
 
-        $(doc).find("script").each(function (index, scriptElement) {
+        var fakeDoc = document.createElement("div");
+        fakeDoc.innerHTML = doc;
+        fakeDoc.querySelectorAll("script").forEach((index, scriptElement) => {
             this.testContext.allScripts += scriptElement.innerHTML;
             this.testContext.allScripts += "\n";
-        }.bind(this));
+        });
 
         this.curTask = null;
         this.curTest = null;

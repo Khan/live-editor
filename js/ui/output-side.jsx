@@ -8,20 +8,24 @@ import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 import SharedStyles from "./shared-styles.js";
 
 class OutputSide extends Component {
-    static defaultProps = {
-        width: 400,
-        height: 400
-    }
 
     props: {
         execFile: string,
         sandboxProps: string,
         imagesDir: string,
+        iframeRef: Object,
         canRecord: boolean,
         isResizable: boolean,
+        drawCanvas: Object,
+        errorBuddy: Object,
         hideEditor: boolean,
-        width: number,
-        height: number
+        disablePointerEvents: boolean,
+        showDisableOverlay: boolean,
+        outputLoaded: boolean,
+        width: string,
+        height: string,
+        onOutputFrameLoad: Function,
+        onDisableClick: Function,
     };
 
     constructor(props) {
@@ -45,7 +49,7 @@ class OutputSide extends Component {
             <iframe
                 id="output-frame"
                 ref={this.props.iframeRef}
-                onLoad={this.props.onOutputFrameLoaded}
+                onLoad={this.props.onOutputFrameLoad}
                 className={css(
                     SharedStyles.noBorder,
                     SharedStyles.outputFullSize,
@@ -53,6 +57,7 @@ class OutputSide extends Component {
                     isResizable &&
                         hideEditor &&
                         styles.outputFrameNoEditorResizable,
+                    this.props.disablePointerEvents && styles.pointerEventsNone
                 )}
                 sandbox={this.props.sandboxProps}
                 src={this.props.execFile}
@@ -95,6 +100,7 @@ class OutputSide extends Component {
                         styles.canvasWrap,
                     ),
                 )}
+                style={{width: this.props.width}}
             >
                 <div
                     id="output"
@@ -104,6 +110,7 @@ class OutputSide extends Component {
                             hideEditor &&
                             styles.outputNoEditorResizable,
                     )}
+                    style={{height: this.props.height}}
                 >
                     {this.renderOutputFrame()}
                     {this.props.drawCanvas}
@@ -152,6 +159,9 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: "30%",
         zIndex: "1000"
+    },
+    pointerEventsNone: {
+        pointerEvents: "none"
     }
 });
 

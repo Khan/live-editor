@@ -19,9 +19,9 @@ if (params.scratchpad) {
     const baseUrl = "https://www.khanacademy.org/api/internal/scratchpads/";
     xhr.open("GET", baseUrl + params.scratchpad, false);
     xhr.addEventListener("load", function() {
-        var scratchpad = JSON.parse(this.responseText);
+        const scratchpad = JSON.parse(this.responseText);
         code = scratchpad.revision.code;
-        var h1 = document.querySelector('h1');
+        const h1 = document.querySelector('h1');
         h1.innerText = scratchpad.title;
     });
     xhr.send();

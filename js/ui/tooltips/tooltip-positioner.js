@@ -39,6 +39,11 @@ class TooltipPositioner extends Component {
         }
     }
 
+    // Cancel default selection on tooltips
+    handleMouseDown(e) {
+        e.preventDefault();
+    }
+
     calculatePosition() {
         const editorBB = this.props.aceEditor.renderer.scroller.getBoundingClientRect();
         const editorHeight = editorBB.height;
@@ -69,7 +74,9 @@ class TooltipPositioner extends Component {
                     style={{top: this.state.top,
                             left: this.state.left,
                             visibility: visStyle
-                            }}>
+                            }}
+                    onMouseDown={this.handleMouseDown}
+                >
                     {this.props.children}
                     <div className={css(styles.arrow, arrowSideStyle)}/>
                 </div>;

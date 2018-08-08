@@ -232,28 +232,3 @@ button.hilite {
     padding: 1px 4px;
     text-align: left;
 }
-/**
- * == COMPONENTS ========================================================
- * These styles correspond to self-contained graphical components
- */
-/**
- * Overlays
- * --------
- *
- * Transparent or translucent overlays placed on top of the editor and/or canvas
- * in order to disable interaction with them. The closest parent with
- * position: relative or position: absolute determines the scope of the page
- * blocked by the overlay.
- */
-.overlay {
-    height: 100%;
-    left: 0px;
-    margin: 0;
-    position: absolute;
-    top: 0px;
-    width: 100%;
-}
-.error-overlay {
-    background: rgba(255, 255, 255, 0.6);
-    z-index: auto;
-}

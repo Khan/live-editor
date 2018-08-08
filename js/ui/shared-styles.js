@@ -11,11 +11,20 @@ const styles = StyleSheet.create({
         bottom: "auto",
         right: 0
     },
+    /**
+     * Overlays
+     * --------
+     *
+     * Transparent or translucent overlays placed on top of the editor and/or canvas
+     * in order to disable interaction with them. The closest parent with
+     * position: relative or position: absolute determines the scope of the page
+     * blocked by the overlay.
+     */
     overlay: {
         height: "100%",
         left: "0px",
         margin: 0,
-        /* Ensure the output can be scrolled behind, like for SQL */
+        /* Ensure the overlay can be scrolled behind, like for SQL */
         pointerEvents: "none",
         position: "absolute",
         top: "0px",

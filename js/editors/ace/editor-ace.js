@@ -1,6 +1,5 @@
 /* eslint-disable no-var, no-useless-escape, no-useless-call */
 /* TODO: Fix the lint errors */
-const $ = require("jquery");
 const ace = require("ace-builds");
 
 import classNames from 'classnames';
@@ -9,7 +8,7 @@ import ReactDOM from "react-dom";
 import {StyleSheet, css} from "aphrodite/no-important";
 
 import SharedStyles from "../../ui/shared-styles.js";
-const TooltipEngine = require("../../ui/tooltip-engine.js");
+import TooltipEngine from "../../ui/tooltip-engine.js";
 require("../../ui/tooltips/color-picker.js");
 require("../../ui/tooltips/number-scrubber.js");
 require("../../ui/tooltips/image-picker.js");
@@ -44,6 +43,7 @@ class AceEditorWrapper extends Component {
         config: Object,
         record: Object,
         type: string,
+        height: string,
         imagesDir: string,
         soundsDir: string,
         autoFocus: boolean,
@@ -63,7 +63,8 @@ class AceEditorWrapper extends Component {
 
     static defaultProps = {
         errors: [],
-        warnings: []
+        warnings: [],
+        height: "400px",
     }
 
     constructor(props) {
@@ -91,21 +92,6 @@ class AceEditorWrapper extends Component {
         // other events (such as the tooltip engine)
         this.bindRecord();
 
-        // Make the editor vertically resizable
-        // TODO: Handle with a React plugin instead of jQuery UI plugin
-        const $editorRef = $(this.editorRef.current);
-        if ($editorRef.resizable) {
-            $editorRef.resizable({
-                // Only allow for vertical resizing
-               handles: "s",
-
-               // While the resize is occurring, resize the Ace editor
-               resize: () => {
-                   this.editor.resize();
-               }
-            });
-        }
-
         const sensorFrame = document.createElement("iframe");
         sensorFrame.className = css(styles.sensorIframe);
         this.editorRef.current.append(sensorFrame);
@@ -118,12 +104,6 @@ class AceEditorWrapper extends Component {
             // size of the editor is too small.
             const width = this.editorRef.current.getBoundingClientRect().width;
             this.editor.setFontSize(width < 400 ? "12px" : "14px");
-        });
-
-        // Kill default selection on tooltips
-        // TODO!
-        $editorRef.on("mousedown", ".tooltip", function(e) {
-            e.preventDefault();
         });
 
         // Stop overriding Cmd/Ctrl-L. It's used to by browser to go to the
@@ -405,28 +385,26 @@ class AceEditorWrapper extends Component {
             };
         });
 
-        $.extend(record.handlers, {
-            select: (startRow, startCol, endRow, endCol) => {
-                if (endRow == null) {
-                    endRow = startRow;
-                }
-
-                if (endCol == null) {
-                    endCol = startCol;
-                }
-
-                this.setSelection({
-                    start: {
-                        row: startRow,
-                        column: startCol
-                    },
-                    end: {
-                        row: endRow,
-                        column: endCol
-                    }
-                });
+        record.handlers.select = (startRow, startCol, endRow, endCol) => {
+            if (endRow == null) {
+                endRow = startRow;
             }
-        });
+
+            if (endCol == null) {
+                endCol = startCol;
+            }
+
+            this.setSelection({
+                start: {
+                    row: startRow,
+                    column: startCol
+                },
+                end: {
+                    row: endRow,
+                    column: endCol
+                }
+            });
+        };
 
         // Handle record seek caching
         record.seekCachers.editor = {
@@ -449,8 +427,8 @@ class AceEditorWrapper extends Component {
             }
         };
 
-        record.on("runSeek", function() {
-            self.reset(record.initData.code);
+        record.on("runSeek", () => {
+            this.reset(record.initData.code);
         });
     }
 
@@ -464,8 +442,7 @@ class AceEditorWrapper extends Component {
         var start = curRange.start;
         var end = curRange.end;
 
-        this.record.log("select", start.row, start.column, end.row,
-            end.column);
+        this.record.log("select", start.row, start.column, end.row, end.column);
     }
 
     reset(code, focus) {
@@ -719,7 +696,7 @@ class AceEditorWrapper extends Component {
                         "scratchpad-ace-editor",
                         css(styles.inputFrame, SharedStyles.noBorder),
                     )}
-                    style={{height: "400px"}}
+                    style={{height: this.props.height}}
                 />
                 {this.renderTooltipEngine()}
             </div>

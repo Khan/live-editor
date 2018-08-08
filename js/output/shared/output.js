@@ -1,5 +1,4 @@
 const _ = require("lodash");
-const $ = require("jquery");
 
 import React, {Component} from "react";
 
@@ -8,9 +7,6 @@ const ScratchpadConfig = require("../../shared/config.js");
 const utils = require("../../shared/utils.js");
 
 import "../../../css/output/style.css";
-
-// TODO(kevinb) remove after challenges have been converted to use i18n._
-$._ = i18n._;
 
 const outputs = {};
 
@@ -384,7 +380,6 @@ class LiveEditorOutput extends Component {
      *
      * @param userCode
      * @param timestamp
-     * @returns {$.Deferred}
      */
     lintDone(userCode, timestamp) {
         if (this.lintErrors.length > 0 || this.onlyRunTests) {

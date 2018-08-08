@@ -132,7 +132,7 @@ const config = {
             lodash: "_",
             "ace-builds": "ace",
             i18n: "i18n",
-            "sql.js": "SQL"
+            "sql.js": "SQL",
         }
     ],
     output: {

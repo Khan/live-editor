@@ -7,11 +7,12 @@ const _ = require("lodash");
 import classNames from 'classnames';
 import React, {Component} from "react";
 import Button from "@khanacademy/wonder-blocks-button";
+import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 import IconButton from "@khanacademy/wonder-blocks-icon-button";
 import {StyleSheet, css} from "aphrodite/no-important";
 
 const i18n = require("i18n");
-import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
+
 const DrawCanvas = require("./ui/draw-canvas.jsx");
 const EditorSide = require("./ui/editor-side.jsx");
 const ErrorBuddy = require("./ui/tipbar.jsx");
@@ -80,8 +81,8 @@ class LiveEditor extends Component {
         workersDir: string,
         redirectUrl: string,
         // Additional options
-        outputWidth: number,
-        outputHeight: number,
+        outputWidth: string,
+        outputHeight: string,
         editorHeight: string,
         version: string,
         sandboxProps: string,
@@ -104,15 +105,15 @@ class LiveEditor extends Component {
         // Parent callbacks
         onOutputData: Function,
         onEditorUserChange: Function,
-        onCanvasSizeUpdate: Function,
+        onOutputSizeUpdate: Function,
         onCodeRun: Function,
         onEditorChange: Function,
         onReadyToPlay: Function,
     };
 
     static defaultProps = {
-        outputWidth: 400,
-        outputHeight: 400
+        outputWidth: "400px",
+        outputHeight: "400px",
     }
 
     constructor(props) {
@@ -195,6 +196,7 @@ class LiveEditor extends Component {
 
         this.aceWrapperRef = React.createRef();
         this.iframeRef = React.createRef();
+        this.wrapRef = React.createRef();
 
         this.handleRecordClick = this.handleRecordClick.bind(this);
         this.handleMessages = this.handleMessages.bind(this);
@@ -204,6 +206,7 @@ class LiveEditor extends Component {
         this.handleRecordColorClick = this.handleRecordColorClick.bind(this);
         this.handleRecordClearClick = this.handleRecordClearClick.bind(this);
         this.handleChangeDebounced =  _.debounce(this.handleChange, 300);
+        this.handleDraggerMouseDown = this.handleDraggerMouseDown.bind(this);
 
         this.setupAudio();
     }
@@ -289,13 +292,16 @@ class LiveEditor extends Component {
             canRecord: this.canRecord(),
             isResizable: this.isResizable(),
             hideEditor: this.props.hideEditor,
+            disablePointerEvents: this.state.isDraggingHandle,
+            height: this.state.outputHeight || this.props.outputHeight,
+            width: this.state.outputWidth || this.props.outputWidth,
             // During playback, prevent user interaction with output side
             showDisableOverlay: this.state.isPlaying && !this.state.isRecording,
             outputLoaded: this.state.outputLoaded,
             drawCanvas: this.renderDrawCanvas(),
             errorBuddy: this.renderErrorBuddy(),
             onDisableClick: this.handleOverlayClick,
-            onOutputFrameLoaded: () => {
+            onOutputFrameLoad: () => {
                 this.outputState = "clean";
                 this.markDirty();
             }
@@ -363,6 +369,7 @@ class LiveEditor extends Component {
 
     renderEditorSide() {
         const extraProps = {
+            height: this.props.editorHeight || this.state.outputHeight,
             hasAudio: this.hasAudio(),
             showYoutubeLink: !this.state.isAudioLoaded,
             showAudioPlayButton: this.state.isAudioLoaded && !this.state.isPlaying && !this.state.editorClicked,
@@ -401,51 +408,35 @@ class LiveEditor extends Component {
         return <EditorSide {...props}/>;
     }
 
-    initResizing() {
-        if (this.isResizable()) {
-            var minCanvas = 400;
-            var minEditor = 410;
+    handleDraggerMouseDown(e) {
+        const minCanvas = 400;
+        const minEditor = 410;
+        const initialPX = e.pageX;
+        const initialWidth = this.iframeRef.current.getBoundingClientRect().width;
+        const drag = _.throttle((e) => {
+            let delta = e.pageX - initialPX;
+            if (document.body.getAttribute("dir") === "rtl") {
+                delta = -delta;
+            }
+            let width = initialWidth - delta;
+            const totalWidth = this.wrapRef.current.getBoundingClientRect().width;
+            if (width < minCanvas) {
+                width = minCanvas;
+            } else if (totalWidth - width < minEditor) {
+                width = totalWidth - minEditor;
+            }
+            this.updateOutputSize(width + "px");
+            return false;
+        }, 30);
 
-            var $handle = $(dom.DRAG_HANDLE);
-            var $outputFrame = $(dom.OUTPUT_FRAME);
-            var $scratchpadWrap = $(dom.SCRATCHPAD_WRAP);
+        this.setState({isDraggingHandle: true});
 
-            $handle.on("mousedown", function(e) {
-                var initialPX = e.pageX;
-                var initialWidth = $outputFrame.width();
-                var drag = _.throttle(function(e) {
-                    var delta = e.pageX - initialPX;
-                    // Because I care <3
-                    if ($scratchpadWrap.css("direction") === "rtl") {
-                        delta = -delta;
-                    }
-                    var width = initialWidth - delta;
-                    var totalWidth = $scratchpadWrap.width();
-                    if (width < minCanvas) {
-                        width = minCanvas;
-                    } else if (totalWidth - width < minEditor) {
-                        width = totalWidth - minEditor;
-                    }
-                    ScratchpadUI.liveEditor.updateCanvasSize(width);
-                    return false;
-                }, 30);
+        document.addEventListener("mousemove", drag);
 
-                $handle.addClass("dragging");
-
-                // Stop the iframe from stealing events during drag
-                $outputFrame.css("pointer-events", "none");
-
-                $(document).on("mousemove", drag);
-                $(document).one("mouseup", function() {
-                    $(document).off("mousemove", drag);
-                    $handle.removeClass("dragging");
-
-                    $outputFrame.css("pointer-events", "auto");
-                });
-            });
-
-            $handle.show();
-        }
+        document.addEventListener("mouseup", () => {
+            document.removeEventListener("mousemove", drag);
+            this.setState({isDraggingHandle: false});
+        });
     }
 
     renderDragHandle() {
@@ -455,17 +446,15 @@ class LiveEditor extends Component {
 
         return (
             <div
-                className={classNames(
-                    "scratchpad-drag-handle",
-                    css(
+                className={css(
                         styles.dragHandle,
+                        this.state.isDraggingHandle && styles.dragHandleActive,
                         this.props.hideEditor && styles.editorHidden,
-                    ),
-                )}
+                        )}
+                onMouseDown={this.handleDraggerMouseDown}
             />
         );
     }
-
 
     renderRecordColorButtons() {
         if (!this.canRecord() && !this.state.isRecording) {
@@ -686,7 +675,7 @@ class LiveEditor extends Component {
                 window.clearTimeout(rebootTimer);
                 rebootTimer = window.setTimeout(function() {
                     // Clear flashblocker divs
-                    self.$el.find("#sm2-container div").remove();
+                    document.querySelector("#sm2-container div").remove();
                     soundManager.reboot();
                 }, 3000);
             }
@@ -1413,23 +1402,19 @@ class LiveEditor extends Component {
         }
     }
 
-    updateCanvasSize(width, height) {
-        width = width || this.props.outputWidth;
-        height = height || this.props.outputHeight;
+    updateOutputSize(outputWidth, outputHeight) {
+        outputWidth = outputWidth || this.props.outputWidth;
+        outputHeight = outputHeight || this.props.outputHeight;
+        this.setState({outputWidth, outputHeight});
 
-        this.$el.find(dom.CANVAS_WRAP).width(width);
-        this.$el.find(dom.ALL_OUTPUT).height(height);
-
-        // Set the editor height to be the same as the canvas height
-        this.$el.find(dom.EDITOR).height(this.props.editorHeight || height);
-
-        this.props.onCanvasSizeUpdate({
-            width: width,
-            height: height
+        this.props.onOutputSizeUpdate &&
+        this.props.onOutputSizeUpdate({
+            width: outputWidth,
+            height: outputHeight
         });
     }
 
-    getScreenshot (callback) {
+    getScreenshot(callback) {
         // If we don't have an output frame then we need to render our
         // own screenshot (so we just use the text in the editor)
         if (!this.hasFrame()) {
@@ -1479,17 +1464,17 @@ class LiveEditor extends Component {
             return;
         }
 
-        // Unbind any handlers this function may have set for previous
-        // screenshots
-        $(window).off("message.getScreenshot");
-
-        // We're only expecting one screenshot back
-        $(window).on("message.getScreenshot", function(e) {
+        const handleScreenshotMessage = function(e) {
             // Only call if the data is actually an image!
             if (/^data:/.test(e.originalEvent.data)) {
                 callback(e.originalEvent.data);
             }
-        });
+        };
+
+        // Unbind event listeners set for previous screenshots
+        window.removeEventListener("message", handleScreenshotMessage);
+        // We're only expecting one screenshot back
+        window.addEventListener("message", handleScreenshotMessage);
 
         // Ask the frame for a screenshot
         this.postFrame({ screenshot: true });
@@ -1620,6 +1605,7 @@ class LiveEditor extends Component {
                             styles.wrapNoEditorResizable,
                     ),
                 )}
+                ref={this.wrapRef}
             >
             <div
                 className={css(
@@ -1659,6 +1645,10 @@ const styles = StyleSheet.create({
         display: "table-cell",
         flexShrink: 0,
         width: 2,
+    },
+    dragHandleActive: {
+        boxShadow: "0 0 4px 1px #444",
+        width: "3px",
     },
     editorWrap: {
         borderRight: defaultBorder,
