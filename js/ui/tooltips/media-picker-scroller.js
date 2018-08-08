@@ -3,7 +3,7 @@ import {StyleSheet, css} from "aphrodite/no-important";
 import React, {Component} from "react";
 import slugify from "slugify";
 
-import LazyLoadMedia from "./lazy-load-media.jsx";
+import LazyLoadMedia from "./lazy-load-media.js";
 
 export default class MediaPickerScroller extends Component {
     props: {

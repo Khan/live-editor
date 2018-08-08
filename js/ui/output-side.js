@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import classNames from "classnames";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
@@ -6,7 +6,6 @@ import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 import SharedStyles from "./shared-styles.js";
 
 export default class OutputSide extends Component {
-
     props: {
         execFile: string,
         sandboxProps: string,
@@ -40,7 +39,7 @@ export default class OutputSide extends Component {
         }
 
         {
-        /* Extra data-src attribute to work around cross-origin access
+            /* Extra data-src attribute to work around cross-origin access
            policies. */
         }
         return (
@@ -55,7 +54,7 @@ export default class OutputSide extends Component {
                     isResizable &&
                         hideEditor &&
                         styles.outputFrameNoEditorResizable,
-                    this.props.disablePointerEvents && styles.pointerEventsNone
+                    this.props.disablePointerEvents && styles.pointerEventsNone,
                 )}
                 sandbox={this.props.sandboxProps}
                 src={this.props.execFile}
@@ -71,9 +70,11 @@ export default class OutputSide extends Component {
 
         let loadingOverlay;
         if (!this.props.outputLoaded) {
-            loadingOverlay = <div className={css(styles.loadingIcon)}>
+            loadingOverlay = (
+                <div className={css(styles.loadingIcon)}>
                     <CircularSpinner size="large" />
-                </div>;
+                </div>
+            );
         }
 
         let disableOverlay;
@@ -81,13 +82,15 @@ export default class OutputSide extends Component {
         // the editor and canvas areas (preventing the user from
         // being able to disturb playback)
         if (this.props.showDisableOverlay) {
-            disableOverlay = <div
+            disableOverlay = (
+                <div
                     className={css(
                         SharedStyles.overlay,
                         SharedStyles.disableOverlay,
                     )}
                     onClick={this.props.onDisableClick}
-                />;
+                />
+            );
         }
         return (
             <div
@@ -156,9 +159,9 @@ const styles = StyleSheet.create({
         left: "40%",
         position: "absolute",
         top: "30%",
-        zIndex: "1000"
+        zIndex: "1000",
     },
     pointerEventsNone: {
-        pointerEvents: "none"
-    }
+        pointerEvents: "none",
+    },
 });

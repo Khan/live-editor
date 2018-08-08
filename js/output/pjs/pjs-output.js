@@ -15,7 +15,6 @@ import PJSTester from "./pjs-tester.js";
 // Including being able to dynamically force execute of the tests
 // Or even run their own tests.
 const ProgramMethods = {
-
     settings: function() {
         return this.props.settings || {};
     },
@@ -27,7 +26,7 @@ const ProgramMethods = {
 
     // Force the tests to run again
     runTests: function(callback) {
-        return this.props.onRunTestsRequest(callback)
+        return this.props.onRunTestsRequest(callback);
     },
 
     assertEqual: function(actual, expected, line, column) {
@@ -35,12 +34,14 @@ const ProgramMethods = {
             return;
         }
 
-        var msg = i18n._("Assertion failed: " +
-            "%(actual)s is not equal to %(expected)s.", {
+        var msg = i18n._(
+            "Assertion failed: " + "%(actual)s is not equal to %(expected)s.",
+            {
                 actual: JSON.stringify(actual),
-                expected: JSON.stringify(expected)
-        });
-        this.props.onAssertionFail(line -1, column, msg);
+                expected: JSON.stringify(expected),
+            },
+        );
+        this.props.onAssertionFail(line - 1, column, msg);
     },
 
     // Run a single test (specified by a function)
@@ -54,12 +55,10 @@ const ProgramMethods = {
         var result = !!fn();
 
         this.props.onTestResults(name, result);
-    }
-}
-
+    },
+};
 
 export default class PJSOutput extends Component {
-
     props: {
         config: Object,
         // File and folder paths
@@ -79,15 +78,15 @@ export default class PJSOutput extends Component {
     };
 
     static defaultProps = {
-        settings: {}
-    }
+        settings: {},
+    };
 
     constructor(props) {
         super(props);
         this.state = {
             width: "auto",
-            height: "auto"
-        }
+            height: "auto",
+        };
 
         // Handle recording playback
         this.handlers = {};
@@ -97,7 +96,7 @@ export default class PJSOutput extends Component {
         this.canvasRef = React.createRef();
 
         const testerProps = Object.assign({}, this.props, {
-            workerFile: "js/live-editor.test_worker.js"
+            workerFile: "js/live-editor.test_worker.js",
         });
         this.tester = new PJSTester(testerProps);
     }
@@ -108,7 +107,8 @@ export default class PJSOutput extends Component {
         this.build(
             this.canvasRef.current,
             this.props.enableLoopProtect,
-            this.props.loopProtectTimeouts);
+            this.props.loopProtectTimeouts,
+        );
 
         /* PJSDebugger not currently supported
         if (this.config.useDebugger) {
@@ -126,7 +126,7 @@ export default class PJSOutput extends Component {
         });
 
         BabyHint.init({
-            context: this.processing
+            context: this.processing,
         });
 
         this.handleParentRequests(this.props, {});
@@ -138,9 +138,11 @@ export default class PJSOutput extends Component {
 
     handleParentRequests(props, prevProps) {
         const foundNewRequest = (reqName) => {
-            return props[reqName] &&
+            return (
+                props[reqName] &&
                 (!prevProps[reqName] ||
-                props[reqName].timestamp !== prevProps[reqName].timestamp);
+                    props[reqName].timestamp !== prevProps[reqName].timestamp)
+            );
         };
 
         // Replay mouse events on the canvas (during talkthrough playback)
@@ -173,21 +175,29 @@ export default class PJSOutput extends Component {
 
     bind() {
         if (window !== window.top) {
-            var windowMethods = ["alert", "open", "showModalDialog",
-                "confirm", "prompt", "eval"];
+            var windowMethods = [
+                "alert",
+                "open",
+                "showModalDialog",
+                "confirm",
+                "prompt",
+                "eval",
+            ];
             const noOp = () => {};
             for (var i = 0, l = windowMethods.length; i < l; i++) {
                 try {
                     window.constructor.prototype[windowMethods[i]] = noOp;
-                } catch(e) {
+                } catch (e) {
                     // In tests, it can't assign them after they've been frozen
                 }
-
             }
         }
 
-        if (window !== window.top && Object.freeze &&
-                Object.getOwnPropertyDescriptor) {
+        if (
+            window !== window.top &&
+            Object.freeze &&
+            Object.getOwnPropertyDescriptor
+        ) {
             // Freezing the whole window, and more specifically
             // window.location, causes a redirect on Safari 6 and 7.
             // Test case: http://ejohn.org/files/freeze-test.html
@@ -207,16 +217,18 @@ export default class PJSOutput extends Component {
                     // nasty console messages when trying to freeze non
                     // configurable properties.
                     try {
-                        var propDescriptor =
-                            Object.getOwnPropertyDescriptor(window, prop);
+                        var propDescriptor = Object.getOwnPropertyDescriptor(
+                            window,
+                            prop,
+                        );
                         if (!propDescriptor || propDescriptor.configurable) {
                             Object.defineProperty(window, prop, {
                                 value: window[prop],
                                 writable: false,
-                                configurable: false
+                                configurable: false,
                             });
                         }
-                    } catch(e) {
+                    } catch (e) {
                         // Couldn't access property for permissions reasons,
                         //  like window.frame
                         // Only happens on prod where it's cross-origin
@@ -258,14 +270,27 @@ export default class PJSOutput extends Component {
 
                 // See: https://developer.mozilla.org/en/DOM/
                 //          event.initMouseEvent
-                evt.initMouseEvent(eventType, true, true, window, 0,
-                    0, 0, clientX, clientY,
-                    false, false, false, false,
-                    0, document.documentElement);
+                evt.initMouseEvent(
+                    eventType,
+                    true,
+                    true,
+                    window,
+                    0,
+                    0,
+                    0,
+                    clientX,
+                    clientY,
+                    false,
+                    false,
+                    false,
+                    false,
+                    0,
+                    document.documentElement,
+                );
 
                 // And execute it upon the canvas element
                 this.canvasRef.current.dispatchEvent(evt);
-            }
+            };
         });
 
         // Dynamically set the width and height based upon the size of the
@@ -293,10 +318,10 @@ export default class PJSOutput extends Component {
         var resourceCache = new PJSResourceCache({
             canvas: this.processing,
             imagesDir: this.props.imagesDir,
-            soundsDir: this.props.soundsDir
+            soundsDir: this.props.soundsDir,
         });
 
-        var additionalMethods = { Program: {} };
+        var additionalMethods = {Program: {}};
 
         Object.keys(ProgramMethods).forEach((key) => {
             additionalMethods.Program[key] = ProgramMethods[key].bind(this);
@@ -315,7 +340,7 @@ export default class PJSOutput extends Component {
             loopProtectTimeouts: loopProtectTimeouts,
             workersDir: this.props.workersDir,
             externalsDir: this.props.externalsDir,
-            jshintFile: this.props.jshintFile
+            jshintFile: this.props.jshintFile,
         });
 
         this.config.runCurVersion("processing", this.processing);
@@ -329,16 +354,17 @@ export default class PJSOutput extends Component {
      * Used as a placeholder function for the .draw() method on the processing
      * instance because processing doesn't like being without a .draw() method.
      */
-    DUMMY() {
-    }
+    DUMMY() {}
 
     setDimensions() {
         var width = window.innerWidth;
         var height = window.innerHeight;
 
-        if (this.processing &&
+        if (
+            this.processing &&
             (width !== this.processing.width ||
-            height !== this.processing.height)) {
+                height !== this.processing.height)
+        ) {
             // Set the canvas element to be the right size
             this.setState({width, height});
 
@@ -356,8 +382,15 @@ export default class PJSOutput extends Component {
         var tmpCanvas = document.createElement("canvas");
         tmpCanvas.width = screenshotSize;
         tmpCanvas.height = screenshotSize;
-        tmpCanvas.getContext("2d").drawImage(
-            this.canvasRef.current, 0, 0, screenshotSize, screenshotSize);
+        tmpCanvas
+            .getContext("2d")
+            .drawImage(
+                this.canvasRef.current,
+                0,
+                0,
+                screenshotSize,
+                screenshotSize,
+            );
 
         // Send back the screenshot data
         callback(tmpCanvas.toDataURL("image/png"));
@@ -370,7 +403,7 @@ export default class PJSOutput extends Component {
                 code: userCode,
                 timestamp: timestamp,
                 errors: this.mergeErrors(hintErrors, babyErrors),
-                warnings: []
+                warnings: [],
             });
         });
     }
@@ -382,18 +415,23 @@ export default class PJSOutput extends Component {
 
         // Find which lines JSHINT broke on
         _.each(jshintErrors, (error) => {
-            if (error && error.line && error.character &&
+            if (
+                error &&
+                error.line &&
+                error.character &&
                 error.reason &&
-                !/unable to continue/i.test(error.reason)) {
+                !/unable to continue/i.test(error.reason)
+            ) {
                 var realErrorLine = error.line - 2;
                 brokenLines.push(realErrorLine);
                 // Errors that override BabyLint errors in the remainder of the
                 // line. Includes: unclosed string (W112)
                 if (error.code === "W112") {
-                    error.character = error.evidence.indexOf("\"");
-                    if (!prioritizedChars[realErrorLine] ||
-                        prioritizedChars[realErrorLine] >
-                        error.character - 1) {
+                    error.character = error.evidence.indexOf('"');
+                    if (
+                        !prioritizedChars[realErrorLine] ||
+                        prioritizedChars[realErrorLine] > error.character - 1
+                    ) {
                         prioritizedChars[realErrorLine] = error.character - 1;
                     }
                 }
@@ -404,41 +442,54 @@ export default class PJSOutput extends Component {
                     type: "error",
                     lint: error,
                     source: "jshint",
-                    priority: 2
+                    priority: 2,
                 });
             }
         });
 
         // Only use baby errors if JSHint also broke on those lines OR
         // we want to prevent the user from making this mistake.
-        babyErrors = babyErrors.filter((error) =>
-            (_.include(brokenLines, error.row) || error.breaksCode) &&
-            (!prioritizedChars[error.row] || prioritizedChars[error.row] > error.column)
-        ).map(error => {
-            return {
-                row: error.row,
-                column: error.column,
-                text: error.text,
-                type: "error",
-                source: error.source,
-                context: error.context,
-                priority: 1
-            };
-        });
+        babyErrors = babyErrors
+            .filter(
+                (error) =>
+                    (_.include(brokenLines, error.row) || error.breaksCode) &&
+                    (!prioritizedChars[error.row] ||
+                        prioritizedChars[error.row] > error.column),
+            )
+            .map((error) => {
+                return {
+                    row: error.row,
+                    column: error.column,
+                    text: error.text,
+                    type: "error",
+                    source: error.source,
+                    context: error.context,
+                    priority: 1,
+                };
+            });
 
         // Check for JSHint and BabyHint errors on the same line and character.
         // Merge error messages where appropriate.
         _.each(hintErrors, (jsError) => {
             _.each(babyErrors, (babyError) => {
-                if (jsError.row === babyError.row &&
-                    jsError.column === babyError.column) {
+                if (
+                    jsError.row === babyError.row &&
+                    jsError.column === babyError.column
+                ) {
                     // Merge if JSLint error says a variable is undefined and
                     // BabyLint has spelling suggestion.
-                    if (jsError.lint.code === "W117" &&
-                        babyError.source === "spellcheck") {
-                        babyError.text = i18n._("\"%(word)s\" is not defined. Maybe you meant to type \"%(keyword)s\", " +
-                            "or you're using a variable you didn't define.",
-                            {word: jsError.lint.a, keyword: babyError.context.keyword});
+                    if (
+                        jsError.lint.code === "W117" &&
+                        babyError.source === "spellcheck"
+                    ) {
+                        babyError.text = i18n._(
+                            '"%(word)s" is not defined. Maybe you meant to type "%(keyword)s", ' +
+                                "or you're using a variable you didn't define.",
+                            {
+                                word: jsError.lint.a,
+                                keyword: babyError.context.keyword,
+                            },
+                        );
                     }
                 }
             });
@@ -446,8 +497,8 @@ export default class PJSOutput extends Component {
 
         // Merge JSHint and BabyHint errors
         let errors = babyErrors;
-        let babyErrorRows = _.uniq(babyErrors.map(error => error.row));
-        hintErrors.forEach(error => {
+        let babyErrorRows = _.uniq(babyErrors.map((error) => error.row));
+        hintErrors.forEach((error) => {
             // Only add JSHint errors if there isn't already a BabyHint error
             // on that line (row).
             if (!_.contains(babyErrorRows, error.row)) {
@@ -472,29 +523,43 @@ export default class PJSOutput extends Component {
     test(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
-        this.tester.testWorker.exec(userCode, tests, errors,
+        this.tester.testWorker.exec(
+            userCode,
+            tests,
+            errors,
             (errors, testResults) => {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
                     // figure out whether we hit this case.
-                    var message = i18n._("Error: %(message)s",
-                        {message: errors[errors.length - 1].message});
+                    var message = i18n._("Error: %(message)s", {
+                        message: errors[errors.length - 1].message,
+                    });
                     console.warn(message); // eslint-disable-line no-console
-                    this.tester.testContext.assert(false, message,
-                        i18n._("A critical problem occurred in your program " +
-                            "making it unable to run."));
+                    this.tester.testContext.assert(
+                        false,
+                        message,
+                        i18n._(
+                            "A critical problem occurred in your program " +
+                                "making it unable to run.",
+                        ),
+                    );
                 }
 
                 callback(errors, testResults);
-            });
+            },
+        );
     }
 
     // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
     runCode(userCode, timestamp) {
         try {
             this.injector.runCode(userCode, (runtimeErrors) => {
-                this.props.onCodeRun({code: userCode, errors: runtimeErrors, timestamp});
+                this.props.onCodeRun({
+                    code: userCode,
+                    errors: runtimeErrors,
+                    timestamp,
+                });
             });
         } catch (e) {
             console.warn(e); // eslint-disable-line no-console
@@ -509,7 +574,6 @@ export default class PJSOutput extends Component {
     toggle(doToggle) {
         if (doToggle) {
             this.processing.loop();
-
         } else {
             this.processing.noLoop();
         }
@@ -531,7 +595,8 @@ export default class PJSOutput extends Component {
     }
 
     render() {
-        return <canvas
+        return (
+            <canvas
                 ref={this.canvasRef}
                 id="output-canvas"
                 width={this.state.width}
@@ -541,6 +606,7 @@ export default class PJSOutput extends Component {
                 onMouseOut={this.props.onCanvasEvent}
                 onMouseDown={this.props.onCanvasEvent}
                 onMouseUp={this.props.onCanvasEvent}
-                />;
+            />
+        );
     }
 }

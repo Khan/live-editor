@@ -1,19 +1,18 @@
-import React from 'react'
+import React from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
-import Color from 'color';
+import Color from "color";
 
 import HuePicker from "./color-picker-hue.js";
-import SaturationPicker from "./color-picker-saturation.jsx";
+import SaturationPicker from "./color-picker-saturation.js";
 
 export default class ColorPickerFull extends React.Component {
-
     props: {
         color: Object,
         onColorChange: Function,
-    }
+    };
 
     static defaultProps = {
-        mode: "rgb"
+        mode: "rgb",
     };
 
     constructor(props) {
@@ -21,8 +20,8 @@ export default class ColorPickerFull extends React.Component {
         // We use hsl behind the scenes,
         // but we recieve and send back rgb
         this.state = {
-            color: Color(props.color).hsl()
-        }
+            color: Color(props.color).hsl(),
+        };
         this.handleColorChange = this.handleColorChange.bind(this);
     }
 
@@ -61,6 +60,6 @@ const styles = StyleSheet.create({
         width: "150px",
     },
     saturation: {
-        marginTop: "6px"
+        marginTop: "6px",
     },
 });

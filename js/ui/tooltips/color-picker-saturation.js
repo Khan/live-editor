@@ -1,21 +1,20 @@
-import React from 'react'
+import React from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
-import Color from 'color';
+import Color from "color";
 
 const containerSize = 150;
 
 export default class SaturationPicker extends React.Component {
-
     props: {
         color: Object, // h, s, l
         onColorChange: Function,
-    }
+    };
 
     constructor(props) {
         super(props);
         this.state = {
-            color: Color(props.color)
-        }
+            color: Color(props.color),
+        };
         this.containerRef = React.createRef();
         this.handleMouseUp = this.handleMouseUp.bind(this);
         this.handleMouseDown = this.handleMouseDown.bind(this);
@@ -33,8 +32,10 @@ export default class SaturationPicker extends React.Component {
 
     handleMouseEvent(e, eventType) {
         const {saturation, lightness} = this.calculateVal(e);
-        if (saturation === this.state.color.object().s &&
-            lightness === this.state.color.object().l) {
+        if (
+            saturation === this.state.color.object().s &&
+            lightness === this.state.color.object().l
+        ) {
             return;
         }
         const newColor = Color.hsl(
@@ -74,17 +75,20 @@ export default class SaturationPicker extends React.Component {
     }
 
     calculateScrubberPos() {
-        const left = containerSize * (this.state.color.object().s/100);
-        const top = containerSize - (containerSize * (this.state.color.object().l/100));
+        const left = containerSize * (this.state.color.object().s / 100);
+        const top =
+            containerSize - containerSize * (this.state.color.object().l / 100);
         return {left: Math.round(left) + "px", top: Math.round(top) + "px"};
     }
 
     calculateVal(e) {
         const container = this.containerRef.current;
-        const x = typeof e.pageX === 'number' ? e.pageX : e.touches[0].pageX;
-        const y = typeof e.pageY === 'number' ? e.pageY : e.touches[0].pageY;
-        let left = x - (container.getBoundingClientRect().left + window.pageXOffset);
-        let top = y - (container.getBoundingClientRect().top + window.pageYOffset);
+        const x = typeof e.pageX === "number" ? e.pageX : e.touches[0].pageX;
+        const y = typeof e.pageY === "number" ? e.pageY : e.touches[0].pageY;
+        let left =
+            x - (container.getBoundingClientRect().left + window.pageXOffset);
+        let top =
+            y - (container.getBoundingClientRect().top + window.pageYOffset);
         if (left < 0) {
             left = 0;
         } else if (left > containerSize) {
@@ -102,11 +106,7 @@ export default class SaturationPicker extends React.Component {
     }
 
     calcBackgroundColor() {
-        return Color.hsl(
-            this.state.color.object().h,
-            100,
-            50
-        ).string();
+        return Color.hsl(this.state.color.object().h, 100, 50).string();
     }
 
     render() {
@@ -119,17 +119,19 @@ export default class SaturationPicker extends React.Component {
                 onMouseMove={this.handleMouseMove}
                 onMouseUp={this.handleMouseUp}
                 onMouseLeave={this.handleMouseLeave}
-                onClick={this.handleClick}>
-                <div className={css(styles.overlay)}
-                     style={{backgroundColor: this.calcBackgroundColor()}}
+                onClick={this.handleClick}
+            >
+                <div
+                    className={css(styles.overlay)}
+                    style={{backgroundColor: this.calcBackgroundColor()}}
                 >
                     <div className={css(styles.overlay, styles.light)}>
-                        <div className={css(styles.overlay, styles.dark)}/>
+                        <div className={css(styles.overlay, styles.dark)} />
                         <div
                             className={css(styles.scrubber)}
                             style={{left, top}}
                         />
-                </div>
+                    </div>
                 </div>
             </div>
         );
@@ -138,7 +140,8 @@ export default class SaturationPicker extends React.Component {
 
 const styles = StyleSheet.create({
     container: {
-        background: "linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)",
+        background:
+            "linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)",
         cursor: "crosshair",
         height: `${containerSize}px`,
         position: "relative",
@@ -152,10 +155,11 @@ const styles = StyleSheet.create({
         right: 0,
     },
     light: {
-        background: "linear-gradient(to right, rgb(255, 255, 255), rgba(255, 255, 255, 0))"
+        background:
+            "linear-gradient(to right, rgb(255, 255, 255), rgba(255, 255, 255, 0))",
     },
     dark: {
-        background: "linear-gradient(to top, rgb(0, 0, 0), rgba(0, 0, 0, 0))"
+        background: "linear-gradient(to top, rgb(0, 0, 0), rgba(0, 0, 0, 0))",
     },
     scrubber: {
         background: "rgb(255, 255, 255)",
@@ -168,5 +172,5 @@ const styles = StyleSheet.create({
         top: 0,
         transform: "translateX(-4px, -4px)",
         width: "8px",
-    }
+    },
 });

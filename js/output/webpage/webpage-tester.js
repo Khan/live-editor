@@ -4,15 +4,14 @@ import OutputTester from "../shared/output-tester.js";
 import PJSTester from "../pjs/pjs-tester.js";
 
 export default class WebpageTester extends OutputTester {
-
-    constructor (options) {
+    constructor(options) {
         super();
         this.initialize(options);
         this.bindTestContext();
         this.testContext.phoneHome = options.onPhoneHomeRequest;
     }
 
-    test (userCode, validate, errors, callback) {
+    test(userCode, validate, errors, callback) {
         var testResults = [];
         errors = this.errors = errors || [];
         this.userCode = userCode;
@@ -51,7 +50,6 @@ export default class WebpageTester extends OutputTester {
 
         callback(errors, testResults);
     }
-
 }
 
 /*
@@ -62,12 +60,15 @@ const constraintPartial = function(callback) {
     return function() {
         return {
             variables: arguments,
-            fn: callback
+            fn: callback,
         };
     };
 };
 
-WebpageTester.prototype.testMethods = Object.assign({}, PJSTester.prototype.testMethods);
+WebpageTester.prototype.testMethods = Object.assign(
+    {},
+    PJSTester.prototype.testMethods,
+);
 
 Object.assign(WebpageTester.prototype.testMethods, {
     scriptTest: function() {
@@ -89,26 +90,29 @@ Object.assign(WebpageTester.prototype.testMethods, {
                 expected: "",
                 meta: {
                     structure: hint,
-                    image: image
-                }
+                    image: image,
+                },
             };
             test.results = [result];
 
-            callback(function(success, message) {
-                var state = success ? "pass" : "fail";
-                test.state = state;
-                result.state = state;
-                delete result.meta.alsoMessage;
-                delete result.meta.alternateMessage;
-                if (message) {
-                    result.meta[success ? "alternateMessage" : "alsoMessage"] = message;
-                }
+            callback(
+                function(success, message) {
+                    var state = success ? "pass" : "fail";
+                    test.state = state;
+                    result.state = state;
+                    delete result.meta.alsoMessage;
+                    delete result.meta.alternateMessage;
+                    if (message) {
+                        result.meta[
+                            success ? "alternateMessage" : "alsoMessage"
+                        ] = message;
+                    }
 
-                if (!this.syncTests) {
-                    this.testContext.phoneHome();
-                }
-
-            }.bind(this));
+                    if (!this.syncTests) {
+                        this.testContext.phoneHome();
+                    }
+                }.bind(this),
+            );
         }.bind(this);
         this.testContext.test(name, fn, "ui");
     },
@@ -125,12 +129,17 @@ Object.assign(WebpageTester.prototype.testMethods, {
     constraint: function(variables, fn) {
         if (!fn) {
             fn = variables;
-            var paramText = /^function\s*[^\(]*\(([^\)]*)\)/.exec(fn.toString())[1];
+            var paramText = /^function\s*[^\(]*\(([^\)]*)\)/.exec(
+                fn.toString(),
+            )[1];
             var variables = paramText.match(/[$_a-zA-z0-9]+/g);
 
             for (var key in variables) {
                 if (variables[key][0] !== "$") {
-                    console.warn("Invalid variable in constraint (should begin with a '$'): ", variables[key]);
+                    console.warn(
+                        "Invalid variable in constraint (should begin with a '$'): ",
+                        variables[key],
+                    );
                     return null;
                 }
             }
@@ -138,7 +147,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
 
         return {
             variables: variables,
-            fn: fn
+            fn: fn,
         };
     },
 
@@ -170,14 +179,13 @@ Object.assign(WebpageTester.prototype.testMethods, {
             // TODO(jeresig): Maybe find a way to do this such that we can run
             // it in a worker thread.
             var numFound = docSP.querySelectorAll(selector).length;
-            if (expected === 0 && numFound !== 0 || numFound < expected) {
+            if ((expected === 0 && numFound !== 0) || numFound < expected) {
                 return {success: false};
             }
         }
 
         return {success: true};
     },
-
 
     /*
         * Returns all of the rules from the user's code,
@@ -200,7 +208,9 @@ Object.assign(WebpageTester.prototype.testMethods, {
             // Parse all properties for this rule into map
             var properties = {};
             rule.declarations.properties.forEach((property) => {
-                var normalized = this.testContext.normalizePropertyValue(property.value.value);
+                var normalized = this.testContext.normalizePropertyValue(
+                    property.value.value,
+                );
                 properties[property.name.value] = normalized;
             });
 
@@ -236,7 +246,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
 
         var css = this.testContext.getCssMap();
         var cssRules = pattern.split("}").slice(0, -1);
-        if (!Array.isArray(callbacks) && typeof(callbacks) !== 'undefined') {
+        if (!Array.isArray(callbacks) && typeof callbacks !== "undefined") {
             callbacks = [callbacks];
         }
         callbacks = callbacks.map((cb) => {
@@ -246,7 +256,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
             return cb;
         });
 
-        var res = this.testContext.testCSSRules(cssRules, css, callbacks , {});
+        var res = this.testContext.testCSSRules(cssRules, css, callbacks, {});
         return res;
     },
 
@@ -256,7 +266,10 @@ Object.assign(WebpageTester.prototype.testMethods, {
         * in rgb(0,0,0) or border: 1px solid black;
         */
     normalizePropertyValue: function(property) {
-        return property.replace(/\s+/g, " ").replace(", ", ",").trim();
+        return property
+            .replace(/\s+/g, " ")
+            .replace(", ", ",")
+            .trim();
     },
 
     /*
@@ -269,7 +282,9 @@ Object.assign(WebpageTester.prototype.testMethods, {
     normalizeSelector: function(selector) {
         selector = selector.replace(/\s+/g, " ").replace(/(>|~|,) /g, "$1");
         var pieces = selector.split(",");
-        pieces = pieces.map(function(s) { return s.trim(); });
+        pieces = pieces.map(function(s) {
+            return s.trim();
+        });
         selector = pieces.sort().join(",");
         return selector;
     },
@@ -302,7 +317,9 @@ Object.assign(WebpageTester.prototype.testMethods, {
                 return;
             }
             var parts = prop.split(":");
-            testProperties[parts[0].trim()] = this.testContext.normalizePropertyValue(parts[1]);
+            testProperties[
+                parts[0].trim()
+            ] = this.testContext.normalizePropertyValue(parts[1]);
         });
 
         var oldWVars = wVars;
@@ -320,22 +337,37 @@ Object.assign(WebpageTester.prototype.testMethods, {
             wVars = Object.create(oldWVars);
 
             // Match selector
-            if (!this.testContext.selectorMatch(testSelector, selector, wVars)) {
+            if (
+                !this.testContext.selectorMatch(testSelector, selector, wVars)
+            ) {
                 continue;
             }
 
             // Match properties
-            var doPropertiesMatch = Object.keys(testProperties).every((prop) => {
-                const value = testProperties[prop];
-                return (prop in css[selector]) &&
-                        this.testContext.wildcardMatch(value, css[selector][prop], wVars);
-            });
+            var doPropertiesMatch = Object.keys(testProperties).every(
+                (prop) => {
+                    const value = testProperties[prop];
+                    return (
+                        prop in css[selector] &&
+                        this.testContext.wildcardMatch(
+                            value,
+                            css[selector][prop],
+                            wVars,
+                        )
+                    );
+                },
+            );
             if (!doPropertiesMatch) {
                 continue;
             }
 
             // Recurse
-            var result = this.testContext.testCSSRules(rules, css, callbacks, wVars);
+            var result = this.testContext.testCSSRules(
+                rules,
+                css,
+                callbacks,
+                wVars,
+            );
             if (result.success) {
                 return result;
             } else {
@@ -345,7 +377,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
 
         // We've exhausted all possibilities in this branch
         rules.unshift(rawRule);
-        return  lastFailureMessage;
+        return lastFailureMessage;
     },
 
     /*
@@ -356,7 +388,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
         if (pattern === "_") {
             return true;
         } else if (pattern[0] === "$") {
-            if (!(pattern  in wVars)) {
+            if (!(pattern in wVars)) {
                 wVars[pattern] = value;
                 return true;
             } else {
@@ -370,7 +402,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
     checkCallbacks: function(callbacks, wVars) {
         for (var i = 0; i < callbacks.length; i++) {
             var cb = callbacks[i];
-            console.log("type of cb.variables", typeof(cb.variables));
+            console.log("type of cb.variables", typeof cb.variables);
             var cbArgs = _.map(cb.variables, function(variable) {
                 if (typeof variable === "string" && variable[0] === "$") {
                     return wVars[variable];
@@ -389,7 +421,11 @@ Object.assign(WebpageTester.prototype.testMethods, {
         return {success: true};
     },
     selectorMatch: function(compositePattern, compositeSelector, wVars) {
-        return this.testContext.multiSelectorMatch(compositePattern.split(","), compositeSelector.split(","), wVars);
+        return this.testContext.multiSelectorMatch(
+            compositePattern.split(","),
+            compositeSelector.split(","),
+            wVars,
+        );
     },
 
     /*
@@ -411,9 +447,20 @@ Object.assign(WebpageTester.prototype.testMethods, {
         for (var key = 0; key < selectors.length; key++) {
             wVars = Object.create(oldWVars);
             var selector = selectors[key];
-            if (this.testContext.singleSelectorMatch(pattern, selector, wVars)) {
-                if (this.testContext.multiSelectorMatch(patterns, selectors.slice(0, key).concat(selectors.slice(key + 1)), wVars)) {
-                    for (key in wVars) { /* jshint forin:false */
+            if (
+                this.testContext.singleSelectorMatch(pattern, selector, wVars)
+            ) {
+                if (
+                    this.testContext.multiSelectorMatch(
+                        patterns,
+                        selectors
+                            .slice(0, key)
+                            .concat(selectors.slice(key + 1)),
+                        wVars,
+                    )
+                ) {
+                    for (key in wVars) {
+                        /* jshint forin:false */
                         // Commit wildcard selections to parent wVars
                         if (!(key in oldWVars)) {
                             oldWVars[key] = wVars[key];
@@ -427,7 +474,6 @@ Object.assign(WebpageTester.prototype.testMethods, {
         return false;
     },
 
-
     /*
         * Check if two CSS selectors match, including wildcards
         * "div" == "div"
@@ -440,7 +486,13 @@ Object.assign(WebpageTester.prototype.testMethods, {
             return false;
         }
         for (var i = 0; i < patternParts.length; i++) {
-            if (!this.testContext.wildcardMatch(patternParts[i], selectorParts[i], wVars)) {
+            if (
+                !this.testContext.wildcardMatch(
+                    patternParts[i],
+                    selectorParts[i],
+                    wVars,
+                )
+            ) {
                 return false;
             }
         }
@@ -458,31 +510,37 @@ Object.assign(WebpageTester.prototype.testMethods, {
     },
 
     notDefaultColor: constraintPartial(function(color) {
-        var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
-                        /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
+        var isRGB =
+            /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
+            /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color);
         var isDefault = color.replace(/\s+/, "") === "rgb(255,0,0)";
         return isRGB && !isDefault;
     }),
 
-    isValidColor:  constraintPartial(function(color) {
+    isValidColor: constraintPartial(function(color) {
         var isValidNum = function(val) {
             var num = parseInt(val, 10);
             return num >= 0 && num <= 255;
         };
-        var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
-                        /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
+        var isRGB =
+            /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
+            /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color);
         if (isRGB) {
             var vals = color.split("(")[1].split(",");
-            return (isValidNum(vals[0]) &&
-                    isValidNum(vals[1]) &&
-                    isValidNum(vals[2]));
+            return (
+                isValidNum(vals[0]) &&
+                isValidNum(vals[1]) &&
+                isValidNum(vals[2])
+            );
         }
 
         // If they're trying to use a color name, it should be at least
         //  three letters long and not equal to rgb
-        return /[a-zA-Z]+/.test(color) &&
+        return (
+            /[a-zA-Z]+/.test(color) &&
             color.length >= 3 &&
-            color.indexOf("rgb") === -1;
+            color.indexOf("rgb") === -1
+        );
     }),
 
     ///////////////////////////////////////////////////////
@@ -511,7 +569,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
             structure: hint ? hint.toString() : "",
             alternateMessage: alternateMessage,
             alsoMessage: alsoMessage,
-            image: image
+            image: image,
         });
     },
 
@@ -523,7 +581,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
         if (this.errors.length) {
             return {
                 success: false,
-                message: i18n._("Syntax error!")
+                message: i18n._("Syntax error!"),
             };
         }
 
@@ -533,29 +591,32 @@ Object.assign(WebpageTester.prototype.testMethods, {
 
         // If we don't see a pattern property, they probably passed in
         // a pattern itself, so we'll turn it into a structure
-        if (structure && typeof(structure.pattern) === "undefined") {
+        if (structure && typeof structure.pattern === "undefined") {
             structure = {pattern: structure};
         }
 
         // If nothing is passed in or the pattern is non-existent, return
         // failure
-        if (!structure || ! structure.pattern) {
+        if (!structure || !structure.pattern) {
             return {
                 success: false,
-                message: ""
+                message: "",
             };
         }
 
         try {
             var callbacks = structure.constraint;
-            var success = Structured.match(this.testContext.allScripts,
-                structure.pattern, {
-                    varCallbacks: callbacks
-                });
+            var success = Structured.match(
+                this.testContext.allScripts,
+                structure.pattern,
+                {
+                    varCallbacks: callbacks,
+                },
+            );
 
             return {
                 success: success,
-                message: callbacks && callbacks.failure
+                message: callbacks && callbacks.failure,
             };
         } catch (e) {
             if (window.console) {
@@ -563,12 +624,13 @@ Object.assign(WebpageTester.prototype.testMethods, {
             }
             return {
                 success: true,
-                message: i18n._("Hm, we're having some trouble " +
-                    "verifying your answer for this step, so we'll give " +
-                    "you the benefit of the doubt as we work to fix it. " +
-                    "Please click \"Report a problem\" to notify us.")
+                message: i18n._(
+                    "Hm, we're having some trouble " +
+                        "verifying your answer for this step, so we'll give " +
+                        "you the benefit of the doubt as we work to fix it. " +
+                        'Please click "Report a problem" to notify us.',
+                ),
             };
         }
     },
-
 });

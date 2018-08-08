@@ -66,7 +66,9 @@ export default class SQLResults extends Component {
 
         const resultsTables = this.props.results.map((result, resultInd) => {
             const columnHeaders = result.columns.map((columnName, colInd) => (
-                <th key={"col" + colInd} style={styles.th}>{columnName}</th>
+                <th key={"col" + colInd} style={styles.th}>
+                    {columnName}
+                </th>
             ));
             const valuesRows = result.values.map((rowValues, rowInd) => {
                 const valuesCells = rowValues.result.map((value, colInd) => (

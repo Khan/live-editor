@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 import SQL from "sql.js";
 
 import SQLTester from "./sql-tester.js";
-import SQLResults from "./sql-results.jsx";
+import SQLResults from "./sql-results.js";
 
 export default class SQLOutput extends Component {
     props: {

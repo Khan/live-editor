@@ -12,7 +12,7 @@ import IconButton from "@khanacademy/wonder-blocks-icon-button";
 import {StyleSheet, css} from "aphrodite/no-important";
 import React, {Component} from "react";
 
-import SharedStyles from "./shared-styles.js"
+import SharedStyles from "./shared-styles.js";
 
 export default class TipBar extends Component {
     props: {
@@ -20,7 +20,7 @@ export default class TipBar extends Component {
         errors: Array<string>,
         errorNum: number,
         onErrorShowRequested: Function,
-        onDismissed: Function
+        onDismissed: Function,
     };
 
     static defaultProps = {
@@ -120,12 +120,10 @@ export default class TipBar extends Component {
 
         return (
             <React.Fragment>
-                <div className={css(SharedStyles.overlay, styles.errorOverlay)}/>
-                <Draggable
-                    axis="y"
-                    handle=".error-buddy"
-                    bounds="parent"
-                >
+                <div
+                    className={css(SharedStyles.overlay, styles.errorOverlay)}
+                />
+                <Draggable axis="y" handle=".error-buddy" bounds="parent">
                     <div className="tipbar">
                         <div className="speech-arrow" />
                         <div className="error-buddy" />

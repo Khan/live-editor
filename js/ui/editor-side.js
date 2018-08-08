@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import classNames from "classnames";
 import i18n from "i18n";
 import React, {Component} from "react";
 import Button from "@khanacademy/wonder-blocks-button";
@@ -7,11 +7,10 @@ import IconButton from "@khanacademy/wonder-blocks-icon-button";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-import EditorToolbar from "./editor-toolbar.jsx";
+import EditorToolbar from "./editor-toolbar.js";
 import SharedStyles from "./shared-styles.js";
 
 export default class EditorSide extends Component {
-
     props: {
         customEditorFontClass: string,
         youtubeUrl: string,
@@ -31,27 +30,29 @@ export default class EditorSide extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            closedYoutubeLink: false
+            closedYoutubeLink: false,
         };
     }
 
     renderYoutubePlaybackLink() {
         // TODO: Trigger after timeout, see webapp
-        if (!(this.props.youtubeUrl && this.props.showYoutubeLink) ||
-            this.state.closedYoutubeLink) {
+        if (
+            !(this.props.youtubeUrl && this.props.showYoutubeLink) ||
+            this.state.closedYoutubeLink
+        ) {
             return null;
         }
         return (
-            <div
-                className={css(styles.youtubeLink)}
-            >
+            <div className={css(styles.youtubeLink)}>
                 <IconButton
                     icon={icons.dismiss}
                     aria-label="Close message"
                     onClick={(e) => this.setState({closedYoutubeLink: true})}
                 />
                 <a href={this.props.youtubeUrl} target="_blank">
-                    {i18n._("If the audio never loads, reload the page or watch on YouTube.")}
+                    {i18n._(
+                        "If the audio never loads, reload the page or watch on YouTube.",
+                    )}
                 </a>
             </div>
         );
@@ -59,22 +60,22 @@ export default class EditorSide extends Component {
 
     renderBigPlayButton() {
         return (
-        <Button
-            style={[styles.middleOfEditor, styles.bigPlayButton]}
-            aria-label={i18n._("Play")}
-            onClick={this.props.onBigPlayClick}
-        >
-            <svg
-                role="img"
-                aria-hidden="true"
-                focusable="false"
-                width="66"
-                height="66"
-                viewBox="0 0 10 10"
+            <Button
+                style={[styles.middleOfEditor, styles.bigPlayButton]}
+                aria-label={i18n._("Play")}
+                onClick={this.props.onBigPlayClick}
             >
-                <path fill="currentColor" d={playIcon}/>
-            </svg>
-        </Button>
+                <svg
+                    role="img"
+                    aria-hidden="true"
+                    focusable="false"
+                    width="66"
+                    height="66"
+                    viewBox="0 0 10 10"
+                >
+                    <path fill="currentColor" d={playIcon} />
+                </svg>
+            </Button>
         );
     }
 
@@ -86,10 +87,9 @@ export default class EditorSide extends Component {
         if (this.props.showAudioPlayButton) {
             playButton = this.renderBigPlayButton();
         } else if (this.props.showAudioSpinner) {
-            playButton = <CircularSpinner
-                    style={[styles.middleOfEditor]}
-                    size="large"
-                />;
+            playButton = (
+                <CircularSpinner style={[styles.middleOfEditor]} size="large" />
+            );
         }
 
         return (
@@ -106,7 +106,7 @@ export default class EditorSide extends Component {
     }
 
     maybeCustomEditorFontClass() {
-        return  ""
+        return "";
     }
 
     render() {
@@ -114,20 +114,22 @@ export default class EditorSide extends Component {
 
         let toolbar;
         if (!this.props.toolbar) {
-            toolbar = <EditorToolbar {...this.props}/>
+            toolbar = <EditorToolbar {...this.props} />;
         }
         let disableOverlay;
         // Show an invisible overlay that blocks interactions with
         // the editor and canvas areas (preventing the user from
         // being able to disturb playback)
         if (this.props.showDisableOverlay) {
-            disableOverlay = <div
+            disableOverlay = (
+                <div
                     className={css(
                         SharedStyles.overlay,
                         SharedStyles.disableOverlay,
                     )}
                     onClick={this.props.onDisableClick}
-                />;
+                />
+            );
         }
         return (
             <div
@@ -165,17 +167,14 @@ export default class EditorSide extends Component {
                     </div>
                 </div>
                 {!this.props.hasAudio && (
-                    <div className={css(styles.toolbarWrap)}>
-                        {toolbar}
-                    </div>
+                    <div className={css(styles.toolbarWrap)}>{toolbar}</div>
                 )}
             </div>
         );
     }
 }
 
-const playIcon =
-        `M1.6,9.9C1.5,10,1.3,10,1.2,10C1.1,10,1,10,0.9,9.9C0.7,9.8,0.6,9.6,
+const playIcon = `M1.6,9.9C1.5,10,1.3,10,1.2,10C1.1,10,1,10,0.9,9.9C0.7,9.8,0.6,9.6,
         0.6,9.4V0.6c0-0.2,0.2-0.4,0.4-0.5C1.1,0,1.4,0,1.6,0.1l7.6,4.5c0.2,0.1,
         0.3,0.3,0.3,0.5c0,0.2-0.1,0.4-0.3,0.5L1.6,9.9z`;
 
@@ -221,7 +220,7 @@ const styles = StyleSheet.create({
         left: "40%",
         position: "absolute",
         top: "30%",
-        zIndex: "1000"
+        zIndex: "1000",
     },
     youtubeLink: {
         left: "20%",
@@ -248,7 +247,7 @@ const styles = StyleSheet.create({
         width: "120px",
         height: "110px",
         ":hover": {
-            opacity: 1.0
-        }
-    }
+            opacity: 1.0,
+        },
+    },
 });

@@ -3,13 +3,12 @@ import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
 export default class ErrorBuddyMini extends Component {
-
     props: {
         isHidden: boolean,
         imagesDir: string,
         errorState: string, // happy or thinking
-        onClick: Function
-    }
+        onClick: Function,
+    };
 
     render() {
         if (this.props.isHidden) {
@@ -18,17 +17,26 @@ export default class ErrorBuddyMini extends Component {
         let errorMood;
 
         if (this.props.errorState === "happy") {
-            errorMood = <div className={css(styles.errorBuddyWrapper)}
+            errorMood = (
+                <div
+                    className={css(styles.errorBuddyWrapper)}
                     style={{height: 15}}
                 >
                     <img
                         alt={i18n._("Error buddy sees no errors")}
-                        src={`${this.props.imagesDir}creatures/OhNoes-Happy.png`}
+                        src={`${
+                            this.props.imagesDir
+                        }creatures/OhNoes-Happy.png`}
                     />
-                </div>;
+                </div>
+            );
         } else {
-            errorMood = <button
-                    className={css(styles.errorBuddyWrapper, styles.wiggleAnimation)}
+            errorMood = (
+                <button
+                    className={css(
+                        styles.errorBuddyWrapper,
+                        styles.wiggleAnimation,
+                    )}
                     onClick={this.props.onClick}
                 >
                     <img
@@ -38,36 +46,34 @@ export default class ErrorBuddyMini extends Component {
                     {/* I18N: The CS error buddy is thinking there might be an
                     * error in your code and is waiting for you to fix it. */}
                     {i18n._("Hmm...")}
-                </button>;
+                </button>
+            );
         }
         return (
             <div className={css(styles.errorBuddyContainer)}>
-                <div className="error-buddy-resting">
-                {errorMood}
-                </div>
+                <div className="error-buddy-resting">{errorMood}</div>
             </div>
         );
     }
 }
 
-
 const wiggleKeyframes = {
-    '0%': {
+    "0%": {
         transform: "translateX(0)",
     },
-    '20%': {
+    "20%": {
         transform: "translateX(-2px)",
     },
-    '40%': {
+    "40%": {
         transform: "translateX(2px)",
     },
-    '60%': {
+    "60%": {
         transform: "translateX(-2px)",
     },
-    '80%': {
+    "80%": {
         transform: "translateX(2px)",
     },
-    '100%': {
+    "100%": {
         transform: "translateX(0)",
     },
 };
@@ -83,10 +89,10 @@ const styles = StyleSheet.create({
         background: "transparent",
         border: "none",
         position: "absolute",
-        textDecoration: "none"
+        textDecoration: "none",
     },
     wiggleAnimation: {
         animationName: [wiggleKeyframes],
-        animationDuration: '1000ms'
-    }
+        animationDuration: "1000ms",
+    },
 });

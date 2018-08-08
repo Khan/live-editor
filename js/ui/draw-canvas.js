@@ -4,7 +4,6 @@ import {css} from "aphrodite/no-important";
 import SharedStyles from "./shared-styles.js";
 
 export default class DrawCanvas extends Component {
-
     props: {
         width: number,
         height: number,
@@ -14,13 +13,13 @@ export default class DrawCanvas extends Component {
 
     static defaultProps = {
         width: 400,
-        height: 400
-    }
+        height: 400,
+    };
 
     constructor(props) {
         super(props);
         this.state = {
-            isDrawing: false
+            isDrawing: false,
         };
 
         this.canvasRef = React.createRef();
@@ -32,7 +31,6 @@ export default class DrawCanvas extends Component {
     }
 
     componentDidMount() {
-
         this.ctx = this.canvasRef.current.getContext("2d");
         this.ctx.shadowBlur = 2;
         this.ctx.lineCap = "round";
@@ -80,7 +78,9 @@ export default class DrawCanvas extends Component {
                 // Copy the canvas contents
                 const tmpCanvas = document.createElement("canvas");
                 tmpCanvas.width = tmpCanvas.height = this.props.width;
-                tmpCanvas.getContext("2d").drawImage(this.canvasRef.current, 0, 0);
+                tmpCanvas
+                    .getContext("2d")
+                    .drawImage(this.canvasRef.current, 0, 0);
 
                 // Store Canvas state
                 return {
@@ -88,7 +88,7 @@ export default class DrawCanvas extends Component {
                     y: this.state.y,
                     down: this.state.down,
                     color: this.state.color,
-                    canvas: tmpCanvas
+                    canvas: tmpCanvas,
                 };
             },
 
@@ -96,7 +96,11 @@ export default class DrawCanvas extends Component {
                 this.startDraw();
 
                 // Restore Canvas state
-                this.setState({x: cacheData.x, y: cacheData.y, down: cacheData.down});
+                this.setState({
+                    x: cacheData.x,
+                    y: cacheData.y,
+                    down: cacheData.down,
+                });
                 this.setColor(cacheData.color);
 
                 // Restore canvas image
@@ -105,11 +109,17 @@ export default class DrawCanvas extends Component {
                 this.ctx.shadowColor = "rgba(0,0,0,0.0)";
                 this.ctx.drawImage(cacheData.canvas, 0, 0);
                 this.ctx.shadowColor = oldShadow;
-            }
+            },
         };
 
         // Initialize playback commands
-        const commands = ["startLine", "drawLine", "endLine", "setColor", "clear"];
+        const commands = [
+            "startLine",
+            "drawLine",
+            "endLine",
+            "setColor",
+            "clear",
+        ];
         commands.forEach((name) => {
             record.handlers[name] = () => {
                 this[name](...arguments);
@@ -119,7 +129,7 @@ export default class DrawCanvas extends Component {
 
     startLine(x, y) {
         if (!this.state.down) {
-            this.setState({x, y, down: true})
+            this.setState({x, y, down: true});
             this.props.record.log("startLine", x, y);
         }
     }
@@ -152,7 +162,7 @@ export default class DrawCanvas extends Component {
             green: [0, 128, 0],
             blue: [0, 0, 255],
             lightblue: [173, 216, 230],
-            violet: [128, 0, 128]
+            violet: [128, 0, 128],
         };
 
         if (color != null) {

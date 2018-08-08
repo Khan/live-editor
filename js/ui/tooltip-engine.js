@@ -4,7 +4,6 @@ import React, {Component} from "react";
 import * as tooltipUtils from "./tooltips/tooltip-utils.js";
 
 export default class TooltipEngine extends Component {
-
     props: {
         aceEditor: Object,
         record: Object,
@@ -15,12 +14,12 @@ export default class TooltipEngine extends Component {
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
         onTooltipChange: Function,
-    }
+    };
 
     constructor(props) {
         super(props);
         this.state = {
-            currentTooltip: null
+            currentTooltip: null,
         };
         this.domRef = React.createRef();
         this.tooltips = {};
@@ -52,7 +51,8 @@ export default class TooltipEngine extends Component {
     }
 
     componentDidMount() {
-        document.body.addEventListener("click", this.handleBlurEvent);
+        // TODO(pamela)
+        //document.body.addEventListener("click", this.handleBlurEvent);
         //document.body.addEventListener("contextmenu", this.handleBlurEvent);
     }
 
@@ -63,11 +63,11 @@ export default class TooltipEngine extends Component {
             return;
         }
         const prevEvent = prevProps.event || {};
-        const isDuplicate = (
+        const isDuplicate =
             newEvent.col === prevEvent.col &&
             newEvent.row === prevEvent.row &&
             newEvent.line === prevEvent.line &&
-            newEvent.source === prevEvent.source);
+            newEvent.source === prevEvent.source;
         if (isDuplicate) {
             return;
         }
@@ -81,29 +81,31 @@ export default class TooltipEngine extends Component {
         // eslint-disable-next-line react/no-did-update-set-state
         this.setState({
             eventToCheck: newEvent,
-            possibleTooltips: this.props.tooltips
-        })
+            possibleTooltips: this.props.tooltips,
+        });
     }
 
     handleBlurEvent(e) {
         const blurTarget = e.target;
-        return;
-        console.log("Got blur event", e);
-        if (blurTarget &&
+        if (
+            blurTarget &&
             this.state.currentTooltip &&
-            !this.domRef.current.contains(blurTarget)) {
+            !this.domRef.current.contains(blurTarget)
+        ) {
             this.setState({currentTooltip: null});
         }
     }
 
     render() {
-       const tooltipsRendered = this.props.tooltips.map((name) => {
-            const childProps = Object.assign({
+        const tooltipsRendered = this.props.tooltips.map((name) => {
+            const childProps = Object.assign(
+                {
                     key: name,
                     isEnabled: false,
-                    autofillEnabled: !this.state.autofillEnabled
+                    autofillEnabled: !this.state.autofillEnabled,
                 },
-                this.props);
+                this.props,
+            );
             childProps.onScrubbingStart = (readOnly) => {
                 this.props.onScrubbingStart(name, readOnly);
             };
@@ -114,17 +116,30 @@ export default class TooltipEngine extends Component {
                 if (foundMatch) {
                     this.setState({
                         currentTooltip: name,
-                        possibleTooltips: []});
+                        possibleTooltips: [],
+                    });
                     this.props.onTooltipChange(name, aceLocation);
                 } else {
                     this.setState((prevState, props) => ({
-                        possibleTooltips: prevState.possibleTooltips.filter(e => e !== name)
+                        possibleTooltips: prevState.possibleTooltips.filter(
+                            (e) => e !== name,
+                        ),
                     }));
                 }
             };
-            childProps.onTextUpdateRequest = (aceLocation, newText, newSelection, avoidUndo) => {
+            childProps.onTextUpdateRequest = (
+                aceLocation,
+                newText,
+                newSelection,
+                avoidUndo,
+            ) => {
                 this.ignore = true;
-                this.props.onTextUpdateRequest(aceLocation, newText, newSelection, avoidUndo);
+                this.props.onTextUpdateRequest(
+                    aceLocation,
+                    newText,
+                    newSelection,
+                    avoidUndo,
+                );
                 this.ignore = false;
             };
             childProps.onTextInsertRequest = (aceLocation, newText) => {
@@ -134,15 +149,21 @@ export default class TooltipEngine extends Component {
             };
             childProps.onModalRefCreate = (ref) => {
                 this.setState({modalRef: ref});
-            }
+            };
             if (this.state.currentTooltip === name) {
                 childProps.isEnabled = true;
             }
-            if (this.state.possibleTooltips && this.state.possibleTooltips[0] === name) {
+            if (
+                this.state.possibleTooltips &&
+                this.state.possibleTooltips[0] === name
+            ) {
                 childProps.eventToCheck = this.state.eventToCheck;
             }
             this.tooltips[name] = React.createElement(
-                TooltipEngine.tooltipClasses[name], childProps, null);
+                TooltipEngine.tooltipClasses[name],
+                childProps,
+                null,
+            );
             return this.tooltips[name];
         });
         return <div ref={this.domRef}>{tooltipsRendered}</div>;

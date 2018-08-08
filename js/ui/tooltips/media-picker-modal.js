@@ -6,7 +6,7 @@ import {Tab, Tabs, TabList, TabPanel} from "react-tabs";
 import React, {Component} from "react";
 import "react-tabs/style/react-tabs.css";
 
-import MediaPickerScroller from "./media-picker-scroller.jsx";
+import MediaPickerScroller from "./media-picker-scroller.js";
 
 export default class MediaPickerModal extends Component {
     props: {
@@ -17,18 +17,19 @@ export default class MediaPickerModal extends Component {
     };
 
     handleClick(e) {
-        console.log("ive been clicked!");
         e.stopPropagation();
     }
 
     render() {
         let modalContent;
         if (this.props.mediaClasses.length < 2) {
-            modalContent = <MediaPickerScroller
-                        groups={this.props.mediaClasses[0].groups}
-                        mediaDir={this.props.mediaDir}
-                        onFileSelect={this.props.onFileSelect}
-                    />
+            modalContent = (
+                <MediaPickerScroller
+                    groups={this.props.mediaClasses[0].groups}
+                    mediaDir={this.props.mediaDir}
+                    onFileSelect={this.props.onFileSelect}
+                />
+            );
         } else {
             // First make the tabs
             const classesTabs = this.props.mediaClasses.map((mediaClass) => {
@@ -51,19 +52,17 @@ export default class MediaPickerModal extends Component {
                     );
                 },
             );
-            modalContent = <Tabs>
-                <TabList>{classesTabs}</TabList>
-                {classesTabPanels}
-            </Tabs>;
+            modalContent = (
+                <Tabs>
+                    <TabList>{classesTabs}</TabList>
+                    {classesTabPanels}
+                </Tabs>
+            );
         }
 
         return (
             <OneColumnModal
-                content={
-                    <div onClick={this.handleClick}>
-                    {modalContent}
-                    </div>
-                }
+                content={<View>{modalContent}</View>}
                 footer={
                     <View>
                         <Button onClick={this.props.onClose}>

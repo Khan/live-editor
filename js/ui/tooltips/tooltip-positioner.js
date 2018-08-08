@@ -4,7 +4,6 @@ import {StyleSheet, css} from "aphrodite/no-important";
 import * as utils from "../../shared/utils.js";
 
 export default class TooltipPositioner extends Component {
-
     props: {
         aceEditor: Object,
         children: Object,
@@ -16,7 +15,7 @@ export default class TooltipPositioner extends Component {
     };
 
     static defaultProps = {
-        toSide: "top"
+        toSide: "top",
     };
 
     constructor(props) {
@@ -32,9 +31,11 @@ export default class TooltipPositioner extends Component {
 
     componentDidUpdate(prevProps) {
         // We only need to re-calculate if the row/col/scrollTop changed
-        if (this.props.cursorCol !== prevProps.cursorCol ||
+        if (
+            this.props.cursorCol !== prevProps.cursorCol ||
             this.props.cursorRow !== prevProps.cursorRow ||
-            this.props.editorScrollTop !== prevProps.editorScrollTop) {
+            this.props.editorScrollTop !== prevProps.editorScrollTop
+        ) {
             this.calculatePosition();
         }
     }
@@ -49,15 +50,16 @@ export default class TooltipPositioner extends Component {
         const editorHeight = editorBB.height;
         const coords = this.props.aceEditor.renderer.textToScreenCoordinates(
             this.props.cursorRow,
-            this.props.cursorCol);
+            this.props.cursorCol,
+        );
         const relativePos = coords.pageY - editorBB.top;
         const top = utils.getScrollTop() + coords.pageY;
         const left = coords.pageX;
         const isVisible = !(relativePos < 0 || relativePos >= editorHeight);
-        this.setState({top, left, isVisible})
+        this.setState({top, left, isVisible});
     }
 
-    render () {
+    render() {
         // TODO: We should sometimes disable if aceEditor is readonly
         // But we can't disable always because we actually SET IT to readOnly
         // during number scrubbing (if aceEditor.isReadOnly())
@@ -70,16 +72,20 @@ export default class TooltipPositioner extends Component {
         const tooltipStyle = styles[this.props.toSide + "Tooltip"];
         const opacityStyle = this.props.startsOpaque && styles.tooltipOpaque;
         const arrowSideStyle = styles[this.props.toSide + "TooltipArrow"];
-        return <div className={css(styles.tooltip, tooltipStyle, opacityStyle)}
-                    style={{top: this.state.top,
-                            left: this.state.left,
-                            visibility: visStyle
-                            }}
-                    onMouseDown={this.handleMouseDown}
-                >
-                    {this.props.children}
-                    <div className={css(styles.arrow, arrowSideStyle)}/>
-                </div>;
+        return (
+            <div
+                className={css(styles.tooltip, tooltipStyle, opacityStyle)}
+                style={{
+                    top: this.state.top,
+                    left: this.state.left,
+                    visibility: visStyle,
+                }}
+                onMouseDown={this.handleMouseDown}
+            >
+                {this.props.children}
+                <div className={css(styles.arrow, arrowSideStyle)} />
+            </div>
+        );
     }
 }
 
@@ -100,14 +106,14 @@ const styles = StyleSheet.create({
         width: "auto",
         zIndex: "100",
         ":hover": {
-            opacity: 1
-        }
+            opacity: 1,
+        },
     },
     tooltipOpaque: {
-        opacity: 1
+        opacity: 1,
     },
     arrow: {
-        position: "absolute"
+        position: "absolute",
     },
     topTooltip: {
         marginLeft: "-28px",
@@ -122,7 +128,7 @@ const styles = StyleSheet.create({
     },
     rightTooltip: {
         marginLeft: "13px",
-        marginTop: "-5px"
+        marginTop: "-5px",
     },
     rightTooltipArrow: {
         borderBottom: "8px solid transparent",
@@ -131,6 +137,6 @@ const styles = StyleSheet.create({
         borderTop: "8px solid transparent",
         bottom: "auto",
         left: "-7px",
-        top: "5px"
+        top: "5px",
     },
 });

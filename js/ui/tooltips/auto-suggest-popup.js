@@ -44,7 +44,11 @@ export default class AutoSuggestPopup extends Component {
         let funcNameEl;
         if (funcData.exampleURL) {
             funcNameEl = (
-                <a className={css(styles.funcName)} href={funcData.exampleURL} target="_blank">
+                <a
+                    className={css(styles.funcName)}
+                    href={funcData.exampleURL}
+                    target="_blank"
+                >
                     {funcName}
                 </a>
             );
@@ -93,7 +97,9 @@ export default class AutoSuggestPopup extends Component {
                     {!!paramI && ", "}
                     <span
                         className={className}
-                        onMouseEnter={(e) => this.handleMouseEnter(paramDescrip, e)}
+                        onMouseEnter={(e) =>
+                            this.handleMouseEnter(paramDescrip, e)
+                        }
                         onMouseLeave={this.handleMouseLeave}
                     >
                         {param}
@@ -138,8 +144,8 @@ const styles = StyleSheet.create({
     funcName: {
         color: "white",
         ":visited": {
-            color: "white"
-        }
+            color: "white",
+        },
     },
     paramsGroup: {
         marginLeft: "2px",

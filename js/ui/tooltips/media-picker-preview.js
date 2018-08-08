@@ -4,7 +4,6 @@ import {StyleSheet, css} from "aphrodite/no-important";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 
 export default class MediaPickerPreview extends Component {
-    // props mediaType, mediaSrc, errorMessage, errorType
     props: {
         errorMessage: string,
         mediaType: string,
@@ -32,12 +31,9 @@ export default class MediaPickerPreview extends Component {
 
     render() {
         let errorDiv;
-        const errorMessage =
-            this.state.errorMessage || this.props.errorMessage;
+        const errorMessage = this.state.errorMessage || this.props.errorMessage;
         if (errorMessage) {
-            errorDiv = (
-                <div className={css(styles.error)}>{errorMessage}</div>
-            );
+            errorDiv = <div className={css(styles.error)}>{errorMessage}</div>;
         }
 
         let mediaPreview;
