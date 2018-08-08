@@ -1,17 +1,15 @@
 /* eslint-disable no-var, no-redeclare, prefer-const */
 /* TODO: Fix the lint errors */
-const _ = require("lodash");
-
+import _ from "lodash";
+import i18n from "i18n";
 import React, {Component} from "react";
-const iframeOverlay = require("iframe-overlay");
 
-const i18n = require("i18n");
-const PJSCodeInjector = require("./pjs-code-injector.js");
-const PJSDebugger = require("./pjs-debugger.js");
-const PJSResourceCache = require("./pjs-resource-cache.js");
-const PJSTester = require("./pjs-tester.js");
-const BabyHint = require("./babyhint.js");
-const utils = require("../../shared/utils.js");
+import * as utils from "../../shared/utils.js";
+
+import BabyHint from "./babyhint.js";
+import PJSCodeInjector from "./pjs-code-injector.js";
+import PJSResourceCache from "./pjs-resource-cache.js";
+import PJSTester from "./pjs-tester.js";
 
 // Allow programs to have some control over the program running
 // Including being able to dynamically force execute of the tests
@@ -60,7 +58,7 @@ const ProgramMethods = {
 }
 
 
-class PJSOutput extends Component {
+export default class PJSOutput extends Component {
 
     props: {
         config: Object,
@@ -112,7 +110,8 @@ class PJSOutput extends Component {
             this.props.enableLoopProtect,
             this.props.loopProtectTimeouts);
 
-        if (this.config.useDebugger && PJSDebugger) {
+        /* PJSDebugger not currently supported
+        if (this.config.useDebugger) {
             iframeOverlay.createRelay(this.canvasRef.current);
 
             this.debugger = new PJSDebugger({
@@ -120,6 +119,7 @@ class PJSOutput extends Component {
                 output: this
             });
         }
+        */
 
         this.config.on("versionSwitched", (e, version) => {
             this.config.runVersion(version, "processing", this.processing);
@@ -544,5 +544,3 @@ class PJSOutput extends Component {
                 />;
     }
 }
-
-module.exports = PJSOutput;

@@ -1,10 +1,9 @@
-const _ = require("lodash");
-
+import _ from "lodash";
 import React, {Component} from "react";
 
-const TooltipUtils = require("./tooltips/tooltip-utils.js");
+import * as tooltipUtils from "./tooltips/tooltip-utils.js";
 
-class TooltipEngine extends Component {
+export default class TooltipEngine extends Component {
 
     props: {
         aceEditor: Object,
@@ -84,7 +83,7 @@ class TooltipEngine extends Component {
         if (isDuplicate) {
             return;
         }
-        if (TooltipUtils.isWithinComment(newEvent.pre)) {
+        if (tooltipUtils.isWithinComment(newEvent.pre)) {
             // if selected text is within a comment,
             // hide current tooltip (if any) and return
             // eslint-disable-next-line react/no-did-update-set-state
@@ -151,5 +150,3 @@ TooltipEngine.tooltipClasses = {};
 TooltipEngine.registerTooltip = function(name, tooltipClass) {
     TooltipEngine.tooltipClasses[name] = tooltipClass;
 };
-
-module.exports = TooltipEngine;

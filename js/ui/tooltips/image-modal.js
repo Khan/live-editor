@@ -2,9 +2,10 @@
 import React, { Component } from "react";
 
 import { ExtendedOutputImages } from "../../shared/images.js";
+import TooltipEngine from "../../ui/tooltip-engine.js";
+
 import MediaPickerTooltip from "./media-picker-tooltip.jsx";
 import TooltipPositioner from "./tooltip-positioner.js";
-import TooltipEngine from "../../ui/tooltip-engine.js";
 
 /*
  This file and sound-modal.js are similar, and they both use
@@ -13,7 +14,7 @@ import TooltipEngine from "../../ui/tooltip-engine.js";
  In the future, the imageModal might also be used by programs,
  as students seem to prefer that UI to the imagePicker UI.
  */
-class ImageModal extends Component {
+export default class ImageModal extends Component {
 
     props: {
         // Common to all tooltips
@@ -157,5 +158,3 @@ class ImageModal extends Component {
 }
 
 TooltipEngine.registerTooltip("imageModal", ImageModal);
-
-module.exports = ImageModal;

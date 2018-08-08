@@ -1,8 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-const AceEditor = require("../../js/editors/ace/editor-ace.js");
-const LiveEditor = require("../../js/live-editor.js");
+import AceEditor from "../../js/editors/ace/editor-ace.js";
+import LiveEditor from "../../js/live-editor.js";
+
 LiveEditor.registerEditor("ace_pjs", AceEditor);
 
 let code = window.localStorage["test-code"] || "rect(10, 10, 100, 100);";

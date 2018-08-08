@@ -4,7 +4,7 @@
  * Helper functionality for the Scratchpad auto suggest feature,
  * parameter information and live documentation.
  */
-const ScratchpadAutosuggestData = require("./autosuggest-data.js");
+import ScratchpadAutosuggestData from "./autosuggest-data.js";
 
 const ScratchpadAutosuggest = {
     /**
@@ -302,4 +302,4 @@ const ScratchpadAutosuggest = {
     }
 };
 
-module.exports = ScratchpadAutosuggest;
+export default ScratchpadAutosuggest;

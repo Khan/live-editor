@@ -3,8 +3,7 @@
 /* We list i18n and lodash as globals instead of require() them
   due to how we load this file in the test-worker */
 /* global i18n, _ */
-
-const PooledWorker = require("./pooled-worker.js");
+import PooledWorker from "./pooled-worker.js";
 
 const OutputTester = function() {};
 
@@ -278,4 +277,4 @@ OutputTester.prototype = {
     }
 };
 
-module.exports = OutputTester;
+export default OutputTester;

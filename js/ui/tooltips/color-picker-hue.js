@@ -2,7 +2,7 @@ import React from 'react'
 import {StyleSheet, css} from "aphrodite/no-important";
 import Color from 'color';
 
-class HuePicker extends React.Component {
+export default class HuePicker extends React.Component {
 
     props: {
         color: Object, // h, s, l
@@ -126,5 +126,3 @@ const styles = StyleSheet.create({
         width: "4px",
     }
 });
-
-module.exports = HuePicker;

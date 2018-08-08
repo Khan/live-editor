@@ -6,12 +6,12 @@ const parens = {
 };
 
 // Returns true if we're after an `=` assignment
-const isAfterAssignment = function(text) {
+export function isAfterAssignment(text) {
     return /(?:^|[^!=])=\s*$/.test(text);
-};
+}
 
 // Returns true if we're inside an open parenthesis
-const isInParenthesis = function(text) {
+export function isInParenthesis(text) {
     const parenStack = [];
     for (let i = 0; i < text.length; i++) {
         if (text[i] in parens) {
@@ -21,11 +21,11 @@ const isInParenthesis = function(text) {
         }
     }
     return parenStack.length > 0;
-};
+}
 
 // Returns true if we're inside a comment
 // This isn't a perfect check, but it is close enough.
-const isWithinComment = function(text) {
+export function isWithinComment(text) {
     // Comments typically start with a / or a * (for multiline C style)
     return text.length && (text[0] === "/" || text[0] === "*");
 };
@@ -33,7 +33,7 @@ const isWithinComment = function(text) {
 // This relies on the global RegExp storing the lastMatch,
 // but we could also use exec and pass it along.
 // Technically exec is said to be slower, however.
-const getInfoFromFileMatch = function(event) {
+export function getInfoFromFileMatch(event) {
     const functionStart = event.col - RegExp.lastMatch.length;
     const paramsStart = functionStart + RegExp.$1.length;
     const pieces = /^(\s*)(["']?[^)]*?["']?)\s*(\);?|$)/.exec(event.line.slice(paramsStart));
@@ -49,11 +49,4 @@ const getInfoFromFileMatch = function(event) {
             event.source.action === "insert" &&
             event.source.lines[0].length === 1);
     return {pathStart, functionStart, path, closing, shouldFill};
-}
-
-module.exports = {
-    isAfterAssignment,
-    isInParenthesis,
-    isWithinComment,
-    getInfoFromFileMatch
 }

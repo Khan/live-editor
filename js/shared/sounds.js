@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 /* TODO: Fix the lint errors */
-const i18n = require("./i18n.js");
+import i18n from "./i18n.js";
 
 if (!i18n._) {
     i18n._ = function(msg) {
@@ -27,4 +27,4 @@ const OutputSounds = [{
     }]
 }];
 
-module.exports = OutputSounds;
+export default OutputSounds;

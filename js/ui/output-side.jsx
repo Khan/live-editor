@@ -1,13 +1,11 @@
-const i18n = require("i18n");
 import classNames from 'classnames';
 import React, {Component} from "react";
-
 import {StyleSheet, css} from "aphrodite/no-important";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 
 import SharedStyles from "./shared-styles.js";
 
-class OutputSide extends Component {
+export default class OutputSide extends Component {
 
     props: {
         execFile: string,
@@ -164,5 +162,3 @@ const styles = StyleSheet.create({
         pointerEvents: "none"
     }
 });
-
-module.exports = OutputSide;

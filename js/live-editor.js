@@ -2,34 +2,30 @@
    prefer-const, no-extra-bind, no-undef, one-var
 */
 /* TODO: Fix the lint errors */
-const _ = require("lodash");
-
-import classNames from 'classnames';
-import React, {Component} from "react";
+import _ from "lodash";
 import Button from "@khanacademy/wonder-blocks-button";
+import classNames from 'classnames';
+import i18n from "i18n";
+import React, {Component} from "react";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 import IconButton from "@khanacademy/wonder-blocks-icon-button";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-const i18n = require("i18n");
+import Structured from "../external/structuredjs/structured.js";
 
-const DrawCanvas = require("./ui/draw-canvas.jsx");
-const EditorSide = require("./ui/editor-side.jsx");
-const ErrorBuddy = require("./ui/tipbar.jsx");
-const ErrorBuddyMini = require("./ui/errorbuddy-mini.jsx");
-const OutputSide = require("./ui/output-side.jsx");
-const RestartButton = require("./ui/restart-button.jsx");
-const ScratchpadConfig = require("./shared/config.js");
-const ScratchpadRecordModel = require("./shared/record.js");
-const RecordControls = require("./ui/record-controls.jsx");
-const PlaybackBar = require("./ui/playback-bar.jsx");
-const Structured = require("../external/structuredjs/structured.js");
-const utils = require("./shared/utils.js");
+import DrawCanvas from "./ui/draw-canvas.jsx";
+import EditorSide from "./ui/editor-side.jsx";
+import ErrorBuddy from "./ui/tipbar.jsx";
+import ErrorBuddyMini from "./ui/errorbuddy-mini.jsx";
+import OutputSide from "./ui/output-side.jsx";
+import PlaybackBar from "./ui/playback-bar.jsx";
+import RecordControls from "./ui/record-controls.jsx";
+import RestartButton from "./ui/restart-button.jsx";
+import ScratchpadConfig from "./shared/config.js";
+import ScratchpadRecordModel from "./shared/record.js";
+import * as utils from "./shared/utils.js";
 
 import "../css/ui/flashblock.css";
-
-// TODO(kevinb) remove after challenges have been converted to use i18n._
-$._ = i18n._;
 
 // This adds html tags around quoted lines so they can be formatted
 const prettify = function(str) {
@@ -57,15 +53,7 @@ const clean = function(str) {
 
 const editors = {};
 
-// TODO!
-const dom = {
-    CANVAS_WRAP: ".scratchpad-canvas-wrap",
-    EDITOR: ".scratchpad-editor",
-    OUTPUT_FRAME: "#output-frame",
-    ALL_OUTPUT: "#output, #output-frame"
-}
-
-class LiveEditor extends Component {
+export default class LiveEditor extends Component {
 
     props: {
         // Basic configuration
@@ -1722,5 +1710,3 @@ const styles = StyleSheet.create({
         display: "flex",
     },
 });
-
-module.exports = LiveEditor;

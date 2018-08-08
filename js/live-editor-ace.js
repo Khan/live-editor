@@ -1,5 +1,5 @@
-const AceEditor = require("./editors/ace/editor-ace.js");
-const LiveEditor = require("./live-editor.js");
+import AceEditor from "./editors/ace/editor-ace.js";
+import LiveEditor from "./live-editor.js";
 
 LiveEditor.registerEditor("ace_pjs", AceEditor);
 LiveEditor.registerEditor("ace_webpage", AceEditor);

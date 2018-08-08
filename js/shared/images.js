@@ -1,4 +1,4 @@
-const i18n = require("i18n");
+import i18n from "i18n";
 
 if (!i18n._) {
     i18n._ = function(msg) {
@@ -8,7 +8,7 @@ if (!i18n._) {
 
 // The master list of acceptable images
 // Build a list of all the available images
-const OutputImages = [
+export const OutputImages = [
     {
         groupName: "avatars",
         images: "aqualine-sapling aqualine-seed aqualine-seedling aqualine-tree aqualine-ultimate avatar-team duskpin-sapling duskpin-seed duskpin-seedling duskpin-tree duskpin-ultimate leaf-blue leaf-green leaf-grey leaf-orange leaf-red leaf-yellow leafers-sapling leafers-seed leafers-seedling leafers-tree leafers-ultimate marcimus marcimus-orange marcimus-purple marcimus-red mr-pants mr-pants-green mr-pants-orange mr-pants-pink mr-pants-purple mr-pants-with-hat mr-pink mr-pink-green mr-pink-orange old-spice-man old-spice-man-blue orange-juice-squid piceratops-sapling piceratops-seed piceratops-seedling piceratops-tree piceratops-ultimate primosaur-sapling primosaur-seed primosaur-seedling primosaur-tree primosaur-ultimate purple-pi purple-pi-pink purple-pi-teal questionmark robot_female_1 robot_female_2 robot_female_3 robot_male_1 robot_male_2 robot_male_3 spunky-sam spunky-sam-green spunky-sam-orange spunky-sam-red starky-sapling starky-seed starky-seedling starky-tree starky-ultimate".split(" ")
@@ -31,7 +31,7 @@ const OutputImages = [
     }
 ];
 
-const ExtendedOutputImages = [
+export const ExtendedOutputImages = [
     {
         className: "Clipart",
         groups: OutputImages
@@ -67,8 +67,3 @@ const ExtendedOutputImages = [
         ]
     }
 ];
-
-module.exports = {
-    OutputImages,
-    ExtendedOutputImages
-}

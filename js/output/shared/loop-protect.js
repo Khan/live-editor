@@ -1,8 +1,8 @@
-const esprima = require("esprima");
-const escodegen = require("escodegen");
+import * as esprima from "esprima";
+import escodegen from "escodegen";
 
-const ASTBuilder = require("./ast-builder.js");
-const walkAST = require("./ast-walker.js");
+import ASTBuilder from "./ast-builder.js";
+import walkAST from "./ast-walker.js";
 
 /**
  * Creates a new LoopProtector object.
@@ -209,4 +209,4 @@ LoopProtector.prototype = {
     }
 };
 
-module.exports = LoopProtector;
+export default LoopProtector;

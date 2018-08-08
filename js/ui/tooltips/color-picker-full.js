@@ -5,7 +5,7 @@ import Color from 'color';
 import HuePicker from "./color-picker-hue.js";
 import SaturationPicker from "./color-picker-saturation.jsx";
 
-class ColorPickerFull extends React.Component {
+export default class ColorPickerFull extends React.Component {
 
     props: {
         color: Object, // r, g, b
@@ -64,5 +64,3 @@ const styles = StyleSheet.create({
         marginTop: "6px"
     },
 });
-
-module.exports = ColorPickerFull;

@@ -1,27 +1,23 @@
-const _ = require("lodash");
-
+import _ from "lodash";
 import React, {Component} from "react";
 
-const i18n = require("i18n");
-const ScratchpadConfig = require("../../shared/config.js");
-const utils = require("../../shared/utils.js");
+import ScratchpadConfig from "../../shared/config.js";
+import * as utils from "../../shared/utils.js";
 
 import "../../../css/output/style.css";
 
 const outputs = {};
 
-class LiveEditorOutput extends Component {
-
+export default class LiveEditorOutput extends Component {
     props: {
         useDebugger: boolean,
         imagesDir: string,
-        redirectUrl: string
+        redirectUrl: string,
     };
 
     constructor(props) {
         super(props);
-        this.state = {
-        }
+        this.state = {};
 
         this.outputTypeRef = React.createRef();
         this.handleMessage = this.handleMessage.bind(this);
@@ -29,7 +25,7 @@ class LiveEditorOutput extends Component {
         this.testThrottled = _.throttle(this.test, 200);
 
         this.config = new ScratchpadConfig({
-            useDebugger: this.props.useDebugger
+            useDebugger: this.props.useDebugger,
         });
 
         // TODO: Move these into state
@@ -90,15 +86,20 @@ class LiveEditorOutput extends Component {
                     const x = e.pageX - offset.left;
                     const y = e.pageY - offset.top;
                     this.postParent({
-                        log: [name, x, y]
+                        log: [name, x, y],
                     });
                 }
             },
             onRestartRequest: () => {
-                this.restart()
+                this.restart();
             },
             onRunTestsRequest: (callback) => {
-                return this.testThrottled(this.getUserCode(), this.validate, [], callback);
+                return this.testThrottled(
+                    this.getUserCode(),
+                    this.validate,
+                    [],
+                    callback,
+                );
             },
             onPhoneHomeRequest: () => {
                 this.phoneHome();
@@ -111,21 +112,23 @@ class LiveEditorOutput extends Component {
                     results: {
                         code: this.getUserCode(),
                         errors: [],
-                        tests: [{
-                            name: name,
-                            state: result ? "pass" : "fail",
-                            results: []
-                        }]
+                        tests: [
+                            {
+                                name: name,
+                                state: result ? "pass" : "fail",
+                                results: [],
+                            },
+                        ],
                     },
-                    pass: result
+                    pass: result,
                 });
             },
             onInfiniteLoopError: (error) => {
                 this.postParent({
                     results: {
                         code: this.getUserCode(),
-                        errors: [error]
-                    }
+                        errors: [error],
+                    },
                 });
             },
             onScreenshotCreate: (data) => {
@@ -146,9 +149,9 @@ class LiveEditorOutput extends Component {
             onTitleChange: (title) => {
                 this.postParent({
                     action: "page-info",
-                    title: title
+                    title: title,
                 });
-            }
+            },
         };
         return React.createElement(outputs[this.state.outputType], props);
     }
@@ -204,7 +207,7 @@ class LiveEditorOutput extends Component {
         }
         let loopProtectTimeouts = {
             initialTimeout: 2000,
-            frameTimeout: 500
+            frameTimeout: 500,
         };
         if (data.loopProtectTimeouts != null) {
             loopProtectTimeouts = data.loopProtectTimeouts;
@@ -212,7 +215,7 @@ class LiveEditorOutput extends Component {
         this.setState({
             outputType,
             enableLoopProtect,
-            loopProtectTimeouts
+            loopProtectTimeouts,
         });
 
         // filter out debugger events
@@ -231,7 +234,7 @@ class LiveEditorOutput extends Component {
 
         // Settings to initialize
         if (data.settings != null) {
-            this.setState({settings: data.settings})
+            this.setState({settings: data.settings});
         }
 
         // Code to be executed
@@ -241,7 +244,7 @@ class LiveEditorOutput extends Component {
         }
 
         if (data.onlyRunTests != null) {
-            this.onlyRunTests = !!(data.onlyRunTests);
+            this.onlyRunTests = !!data.onlyRunTests;
         } else {
             this.onlyRunTests = false;
         }
@@ -258,16 +261,18 @@ class LiveEditorOutput extends Component {
 
         // Take a screenshot of the output
         if (data.screenshot != null) {
-            this.setState({screenshotReq: {
-                time: Date.now(),
-                size: data.screenshotSize || 200
-            }});
+            this.setState({
+                screenshotReq: {
+                    time: Date.now(),
+                    size: data.screenshotSize || 200,
+                },
+            });
         }
         if (data.prop === "mouseAction") {
-            this.setState({mouseActionReq: { time: Date.now(), data}});
+            this.setState({mouseActionReq: {time: Date.now(), data}});
         }
         if (data.prop === "documentation") {
-            this.setState({docInitReq: { time: Date.now(), data}});
+            this.setState({docInitReq: {time: Date.now(), data}});
         }
         this.setState({readyToInitOutput: true});
     }
@@ -290,12 +295,13 @@ class LiveEditorOutput extends Component {
 
             parentWindow.postMessage(
                 typeof data === "string" ? data : JSON.stringify(data),
-                this.frameOrigin);
+                this.frameOrigin,
+            );
         }
     }
 
-    notifyActive () {
-        this.postParent({ active: true });
+    notifyActive() {
+        this.postParent({active: true});
     }
 
     // This function stores the new tests on the validate property
@@ -323,7 +329,7 @@ class LiveEditorOutput extends Component {
      * @returns {*}
      */
     jsonifyError(error) {
-        if (typeof error !== "object" || $.isPlainObject(error)) {
+        if (typeof error !== "object" || utils.isPlainObject(error)) {
             // If we're not an object, or we're a plain object, we don't need
             // to do anything.
             return error;
@@ -361,7 +367,7 @@ class LiveEditorOutput extends Component {
             code: userCode,
             errors: [],
             assertions: [],
-            warnings: []
+            warnings: [],
         };
 
         // Always lint the first time, so that PJS can populate its list of globals
@@ -369,7 +375,7 @@ class LiveEditorOutput extends Component {
 
         this.setState({
             lintCodeReq: {code: userCode, skip, timestamp},
-            testsCallback: callback
+            testsCallback: callback,
         });
         this.firstLint = true;
     }
@@ -417,7 +423,7 @@ class LiveEditorOutput extends Component {
         errors = errors.map(this.jsonifyError);
 
         if (!this.loaded) {
-            this.postParent({ loaded: true });
+            this.postParent({loaded: true});
             this.loaded = true;
         }
 
@@ -431,18 +437,28 @@ class LiveEditorOutput extends Component {
         // A callback for working with a test suite
         if (this.state.testsCallback) {
             //This is synchronous
-            this.test(userCode, this.validate, errors, (errors, testResults) => {
-                this.state.testsCallback(errors, testResults);
-            });
+            this.test(
+                userCode,
+                this.validate,
+                errors,
+                (errors, testResults) => {
+                    this.state.testsCallback(errors, testResults);
+                },
+            );
             // Normal case
         } else {
             // This is debounced (async)
             if (this.validate !== "") {
-                this.testThrottled(userCode, this.validate, errors, (errors, testResults) => {
-                    this.results.errors = errors;
-                    this.results.tests = testResults;
-                    this.phoneHome();
-                });
+                this.testThrottled(
+                    userCode,
+                    this.validate,
+                    errors,
+                    (errors, testResults) => {
+                        this.results.errors = errors;
+                        this.results.tests = testResults;
+                        this.phoneHome();
+                    },
+                );
             }
         }
     }
@@ -452,7 +468,7 @@ class LiveEditorOutput extends Component {
      */
     phoneHome() {
         this.postParent({
-            results: this.results
+            results: this.results,
         });
     }
 
@@ -464,7 +480,7 @@ class LiveEditorOutput extends Component {
     lint(userCode, callback) {
         this.setState({
             lintCodeReq: {code: userCode, timestamp: Date.now()},
-            testsCallback: callback
+            testsCallback: callback,
         });
     }
 
@@ -492,14 +508,10 @@ class LiveEditorOutput extends Component {
     }
 
     render() {
-        return  <div className="output">
-                {this.renderOutputType()}
-                </div>;
+        return <div className="output">{this.renderOutputType()}</div>;
     }
 }
 
 LiveEditorOutput.registerOutput = function(name, output) {
     outputs[name] = output;
 };
-
-module.exports = LiveEditorOutput;

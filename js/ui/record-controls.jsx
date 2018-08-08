@@ -1,5 +1,6 @@
 /* global MultiRecorder */
-
+import i18n from "i18n";
+import Button from "@khanacademy/wonder-blocks-button";
 import React, {Component} from "react";
 
 import RecordChunks from "../shared/record-chunks.js";
@@ -13,7 +14,15 @@ import RecordChunks from "../shared/record-chunks.js";
  *  restore state after a discard, and so any Record bugs also cause bugs in
  *  recording in chunks.
  */
-class RecordControls extends Component {
+export default class RecordControls extends Component {
+
+    props: {
+        editor: Object,
+        record: Object,
+        config: Object,
+        drawCanvas: Object,
+        workersDir: string,
+    }
 
     constructor(props) {
         super(props);
@@ -35,7 +44,7 @@ class RecordControls extends Component {
         this.editor = this.props.editor;
         this.record = this.props.record;
         this.config = this.props.config;
-        this.drawCanvas = options.drawCanvas;
+        this.drawCanvas = this.props.drawCanvas;
         this.audioChunks = new RecordChunks();
 
         // TODO: Move these into state
@@ -47,80 +56,6 @@ class RecordControls extends Component {
 
     componentDidMount() {
         this.initializeRecordingAudio();
-    }
-
-    render() {
-        /*
-        A comment on the chunk buttons:
-
-        These buttons let you record in chunks, rather than
-        having to get everything right in one go. There is no
-        way to edit a chunk once you save it.
-        Also, because command playback has some weird bugs, sometimes
-        discarding a chunk might get you in a bad state.
-        If that happens, just hit "Refresh editor state" and hope for
-        the best. This system is brittle -- just record
-        everything in one chunk if you want the old system back.
-
-        DO NOT TOUCH THE EDITOR (or the canvas) between
-        chunks -- especially not the cursor or selection.
-
-        If you do, you might destroy your whole recording -- try
-        hitting "Refresh Editor State" to recover.
-
-        TODO: Display comments in UI, or improve recording flow.
-        */
-        return (
-            <div className="scratchpad-dev-record">
-                <div className="scratchpad-dev-record-buttons">
-                    <Button
-                        className="scratchpad-dev-new-chunk"
-                        onClick={this.handleNewClick}
-                        disabled={this.state.disableNew}
-                    >
-                        {this.state.newChunkLabel}
-                    </Button>
-                    <Button
-                        className="scratchpad-dev-discard-chunk"
-                        onClick={this.handleDiscardClick}
-                        disabled={this.state.disableDiscard}
-                    >
-                        {i18n._("Discard Recorded Chunk")}
-                    </Button>
-                    <Button
-                        className="scratchpad-dev-save-chunk"
-                        onClick={this.handleSaveClick}
-                        disabled={this.state.disableSave}
-                    >
-                        {i18n._("Save Recorded Chunk")}
-                    </Button>
-                    <Button
-                        className="scratchpad-dev-refresh-editor-state"
-                        onClick={this.handleRefreshClick}
-                        disabled={this.state.disableRefresh}
-                    >
-                        {i18n._("Refresh Editor State")}
-                    </Button>
-                </div>
-                <div className="show-audio-chunks-wrapper">
-                    <p>
-                        <span>{i18n._("Last audio chunk recorded:")}</span>
-                        <span
-                            className="last-audio-chunk"
-                            dangerouslySetInnerHTML={this.state.lastChunkHTML}
-                        />
-                    </p>
-                    <p>
-                        <span>{i18n._("All saved audio chunks:")}</span>
-                        <span
-                            ref={this.savedAudioRef}
-                            className="saved-audio-chunks"
-                            dangerouslySetInnerHTML={this.state.allChunksHTML}
-                        />
-                    </p>
-                </div>
-            </div>
-        );
     }
 
     /* Set up everything and get permission for recording. */
@@ -178,7 +113,7 @@ class RecordControls extends Component {
      */
     getDurationMsOfSavedAudio() {
         let durationMs = 0;
-        const audioElem = savedAudioRef.current.getElementsByTagName("audio");
+        const audioElem = this.savedAudioRef.current.getElementsByTagName("audio");
         if (audioElem && audioElem.length > 0) {
             durationMs = audioElem[0].duration * 1000;
         }
@@ -323,6 +258,79 @@ class RecordControls extends Component {
     disableChunkButtons(disableNew, disableDiscard, disableSave, disableRefresh) {
         this.setState({disableNew, disableDiscard, disableSave, disableRefresh});
     }
-}
 
-module.exports = RecordControls;
+
+    render() {
+        /*
+        A comment on the chunk buttons:
+
+        These buttons let you record in chunks, rather than
+        having to get everything right in one go. There is no
+        way to edit a chunk once you save it.
+        Also, because command playback has some weird bugs, sometimes
+        discarding a chunk might get you in a bad state.
+        If that happens, just hit "Refresh editor state" and hope for
+        the best. This system is brittle -- just record
+        everything in one chunk if you want the old system back.
+
+        DO NOT TOUCH THE EDITOR (or the canvas) between
+        chunks -- especially not the cursor or selection.
+
+        If you do, you might destroy your whole recording -- try
+        hitting "Refresh Editor State" to recover.
+
+        TODO: Display comments in UI, or improve recording flow.
+        */
+        return (
+            <div className="scratchpad-dev-record">
+                <div className="scratchpad-dev-record-buttons">
+                    <Button
+                        className="scratchpad-dev-new-chunk"
+                        onClick={this.handleNewClick}
+                        disabled={this.state.disableNew}
+                    >
+                        {this.state.newChunkLabel}
+                    </Button>
+                    <Button
+                        className="scratchpad-dev-discard-chunk"
+                        onClick={this.handleDiscardClick}
+                        disabled={this.state.disableDiscard}
+                    >
+                        {i18n._("Discard Recorded Chunk")}
+                    </Button>
+                    <Button
+                        className="scratchpad-dev-save-chunk"
+                        onClick={this.handleSaveClick}
+                        disabled={this.state.disableSave}
+                    >
+                        {i18n._("Save Recorded Chunk")}
+                    </Button>
+                    <Button
+                        className="scratchpad-dev-refresh-editor-state"
+                        onClick={this.handleRefreshClick}
+                        disabled={this.state.disableRefresh}
+                    >
+                        {i18n._("Refresh Editor State")}
+                    </Button>
+                </div>
+                <div className="show-audio-chunks-wrapper">
+                    <p>
+                        <span>{i18n._("Last audio chunk recorded:")}</span>
+                        <span
+                            className="last-audio-chunk"
+                            dangerouslySetInnerHTML={this.state.lastChunkHTML}
+                        />
+                    </p>
+                    <p>
+                        <span>{i18n._("All saved audio chunks:")}</span>
+                        <span
+                            ref={this.savedAudioRef}
+                            className="saved-audio-chunks"
+                            dangerouslySetInnerHTML={this.state.allChunksHTML}
+                        />
+                    </p>
+                </div>
+            </div>
+        );
+    }
+}

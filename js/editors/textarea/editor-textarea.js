@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 
-class TextareaEditor extends Component {
+export default class TextareaEditor extends Component {
 
     props: {
         code: string,
@@ -103,5 +103,3 @@ class TextareaEditor extends Component {
                 />;
     }
 }
-
-module.exports = TextareaEditor;

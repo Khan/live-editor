@@ -1,7 +1,7 @@
-const Backbone = require("backbone");
+import { Model } from "backbone-model";
 
 /* Manages the audio chunks as we build up this recording. */
-const ScratchpadAudioChunks = Backbone.Model.extend({
+const ScratchpadAudioChunks = Model.extend({
 
     initialize: function(options) {
         // The saved audio chunks
@@ -40,4 +40,4 @@ const ScratchpadAudioChunks = Backbone.Model.extend({
     }
 });
 
-module.exports = ScratchpadAudioChunks;
+export default ScratchpadAudioChunks;

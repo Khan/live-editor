@@ -1,10 +1,10 @@
-const _ = require("lodash");
+import _  from "lodash";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-const LazyLoadMedia = require("./lazy-load-media.jsx");
+import LazyLoadMedia from "./lazy-load-media.jsx";
 
-class ImageScroller extends Component {
+export default class ImageScroller extends Component {
     props: {
         imageName: string,
         imagesDir: string,
@@ -201,5 +201,3 @@ const styles = StyleSheet.create({
         boxShadow: "rgb(24, 101, 242) 0px 0px 10px 1px",
     },
 });
-
-module.exports = ImageScroller;

@@ -1,18 +1,18 @@
-const i18n = require("i18n");
-
+import i18n from "i18n";
 import Button from "@khanacademy/wonder-blocks-button";
 import Icon from "@khanacademy/wonder-blocks-icon"
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-class RestartButton extends Component {
+export default class RestartButton extends Component {
 
     props: {
         animateNow: boolean,
         isDisabled: boolean,
         isHidden: boolean,
         // The label to use for the restart button, varies per content type
-        labelText: string
+        labelText: string,
+        onClick: Function,
     }
 
     constructor(props) {
@@ -87,5 +87,3 @@ const styles = StyleSheet.create({
         animationIterationCount: "infinite",
     }
 });
-
-module.exports = RestartButton;

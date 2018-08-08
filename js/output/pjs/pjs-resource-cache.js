@@ -1,12 +1,13 @@
 /* eslint-disable prefer-spread, no-extra-bind, no-throw-literal */
 /* TODO: Fix the lint errors */
-const _ = require("lodash");
-const esprima = require("esprima");
-const i18n = require("i18n");
+import _ from "lodash";
+import * as esprima from "esprima";
+import i18n from "i18n";
 
-const ASTTransforms = require("./pjs-ast-transforms.js");
-const OutputSounds = require("../../shared/sounds.js");
-const walkAST = require("../shared/ast-walker.js");
+import OutputSounds from "../../shared/sounds.js";
+import walkAST from "../shared/ast-walker.js";
+
+import ASTTransforms from "./pjs-ast-transforms.js";
 
 const PJSResourceCache = function(options) {
     this.canvas = options.canvas;   // customized Processing instance
@@ -156,4 +157,4 @@ PJSResourceCache.findResources = function(code) {
     return resources;
 };
 
-module.exports = PJSResourceCache;
+export default PJSResourceCache;

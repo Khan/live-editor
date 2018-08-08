@@ -50,4 +50,4 @@ PooledWorker.prototype.kill = function() {
     this.pool = [];
 };
 
-module.exports = PooledWorker;
+export default PooledWorker;

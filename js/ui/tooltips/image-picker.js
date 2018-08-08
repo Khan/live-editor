@@ -1,13 +1,14 @@
-import React, {Component} from "react";
+import React, { Component } from "react";
 
-const ImageScroller = require("./image-scroller.jsx")
-const OutputImages = require("../../shared/images.js").OutputImages;
-const TooltipEngine = require("../../ui/tooltip-engine.js");
-const TooltipPositioner = require("./tooltip-positioner.js");
-const TooltipUtils = require("./tooltip-utils.js");
+import { OutputImages } from "../../shared/images.js";
+import TooltipEngine from "../../ui/tooltip-engine.js";
+
+import ImageScroller from "./image-scroller.jsx";
+import TooltipPositioner from "./tooltip-positioner.js";
+import * as tooltipUtils from "./tooltip-utils.js";
 
 // A description of general tooltip flow can be found in tooltip-engine.js
-class ImagePicker extends Component {
+export default class ImagePicker extends Component {
 
     props: {
         // Common to all tooltips
@@ -58,7 +59,7 @@ class ImagePicker extends Component {
             event.source && event.source.action === "insert" &&
             event.source.lines[0].length === 1 && this.props.autofillEnabled) {
 
-            closing = ")" + (TooltipUtils.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
+            closing = ")" + (tooltipUtils.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
             this.props.onTextInsertRequest({
                 row: event.row,
                 column: pathStart
@@ -133,5 +134,3 @@ class ImagePicker extends Component {
 }
 
 TooltipEngine.registerTooltip("imagePicker", ImagePicker);
-
-module.exports = ImagePicker;

@@ -1,10 +1,9 @@
+import i18n from "i18n";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 
-const i18n = require("i18n");
-
-class MediaPickerPreview extends Component {
+export default class MediaPickerPreview extends Component {
     // props mediaType, mediaSrc, errorMessage, errorType
     props: {
         errorMessage: string,
@@ -106,5 +105,3 @@ const styles = StyleSheet.create({
         paddingTop: "30%",
     },
 });
-
-module.exports = MediaPickerPreview;

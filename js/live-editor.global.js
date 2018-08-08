@@ -1,3 +1,3 @@
-const LiveEditor = require("./live-editor.js");
+import LiveEditor from "./live-editor.js";
 
 export default LiveEditor;

@@ -1,7 +1,7 @@
 /* eslint-disable no-var, no-useless-escape, no-useless-call */
 /* TODO: Fix the lint errors */
-const ace = require("ace-builds");
 
+import ace from "ace-builds";
 import classNames from 'classnames';
 import React, {Component} from "react";
 import ReactDOM from "react-dom";
@@ -9,12 +9,13 @@ import {StyleSheet, css} from "aphrodite/no-important";
 
 import SharedStyles from "../../ui/shared-styles.js";
 import TooltipEngine from "../../ui/tooltip-engine.js";
-require("../../ui/tooltips/color-picker.js");
-require("../../ui/tooltips/number-scrubber.js");
-require("../../ui/tooltips/image-picker.js");
-require("../../ui/tooltips/image-modal.js");
-require("../../ui/tooltips/sound-modal.js");
-require("../../ui/tooltips/auto-suggest.js");
+import "../../ui/tooltips/color-picker.js";
+import "../../ui/tooltips/number-scrubber.js";
+import "../../ui/tooltips/image-picker.js";
+import "../../ui/tooltips/image-modal.js";
+import "../../ui/tooltips/sound-modal.js";
+import "../../ui/tooltips/auto-suggest.js";
+
 
 const tooltips = {
     // The earlier in the list a tooltip appears
@@ -36,7 +37,7 @@ const tooltips = {
     ]
 };
 
-class AceEditorWrapper extends Component {
+export default class AceEditorWrapper extends Component {
 
     props: {
         code: string,
@@ -719,5 +720,3 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255, 100, 100, 1) !important"
     }
 });
-
-module.exports = AceEditorWrapper;

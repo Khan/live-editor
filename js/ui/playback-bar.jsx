@@ -3,13 +3,12 @@
  * as well as playback time. This is _almost_ a purely presentational component,
  * but we keep track of the seek state while the user is dragging the bar.
  */
-const i18n = require("i18n");
+import i18n from "i18n";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 import Button from "@khanacademy/wonder-blocks-button";
 import Color from "@khanacademy/wonder-blocks-color";
 import Icon from "@khanacademy/wonder-blocks-icon";
-import IconButton from "@khanacademy/wonder-blocks-icon-button";
 
 // Get a constrained seek position that accounts for null/zero values
 const getSeekPosition = (current, total) =>
@@ -30,10 +29,7 @@ const getTimeValue = ms => {
     return displayMinutes + ":" + displaySeconds;
 };
 
-class PlaybackBar extends React.Component {
-    static defaultProps = {
-        currentTime: 0,
-    };
+export default class PlaybackBar extends Component {
 
     props: {
         // Current point in playback (ms)
@@ -56,6 +52,10 @@ class PlaybackBar extends React.Component {
         youtubeUrl: string,
     };
 
+    static defaultProps = {
+        currentTime: 0,
+    };
+
     constructor(props) {
         super(props);
         this.state = {
@@ -68,7 +68,6 @@ class PlaybackBar extends React.Component {
     }
 
     handleSeekDown(e) {
-        console.log("handleSeekDown");
         // We're going to release on the next mouseUp event
         this.setState({dragging: true});
         document.addEventListener("mousemove", this.handleSeekMove);
@@ -78,7 +77,6 @@ class PlaybackBar extends React.Component {
         document.body.classList.add(css(bodyStyles.seeking));
         this.handleSeekMove(e);
         if (this.props.onSeekStart) {
-            console.log("Calling seekstart");
             this.props.onSeekStart();
         }
     }
@@ -90,9 +88,7 @@ class PlaybackBar extends React.Component {
             Math.min(1, (e.clientX - bounds.left) / bounds.width),
             0,
         );
-        console.log("Seek position", seekPosition);
         this.setState({seekPosition});
-        console.log("Calling seek", seekPosition * this.props.totalTime);
         this.props.onSeek(seekPosition * this.props.totalTime);
     }
 
@@ -104,7 +100,6 @@ class PlaybackBar extends React.Component {
             dragging: false,
             seekPosition: null,
         });
-        console.log("Calling seek end");
         this.props.onSeekEnd();
     }
 
@@ -113,7 +108,6 @@ class PlaybackBar extends React.Component {
             currentTime,
             onClickPlay,
             playing,
-            playButtonClassName,
             readyToPlay,
             totalTime,
             youtubeUrl,
@@ -139,7 +133,6 @@ class PlaybackBar extends React.Component {
                             ? i18n._("Pause")
                             : i18n._("Play")
                     }
-                    className={playButtonClassName}
                     style={[styles.button, styles.buttonPlay]}
                     onClick={onClickPlay}
                     kind="secondary"
@@ -293,5 +286,3 @@ const styles = StyleSheet.create({
         userSelect: "none",
     },
 });
-
-module.exports = PlaybackBar;

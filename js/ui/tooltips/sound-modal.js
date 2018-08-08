@@ -1,13 +1,14 @@
 /* global i18n */
 import React, {Component} from "react";
 
-import MediaPickerTooltip from "./media-picker-tooltip.jsx";
 import OutputSounds from "../../shared/sounds.js";
 import TooltipEngine from "../../ui/tooltip-engine.js";
-import TooltipPositioner from "./tooltip-positioner.js";
-import TooltipUtils from "./tooltip-utils.js";
 
-class SoundModal extends Component {
+import MediaPickerTooltip from "./media-picker-tooltip.jsx";
+import TooltipPositioner from "./tooltip-positioner.js";
+import * as tooltipUtils from "./tooltip-utils.js";
+
+export default class SoundModal extends Component {
 
     props: {
         // Common to all tooltips
@@ -47,10 +48,10 @@ class SoundModal extends Component {
             return this.props.onEventCheck(false);
         }
         // eslint-disable-next-line prefer-const
-        let {pathStart, functionStart, path, closing, shouldFill} = TooltipUtils.getInfoFromFileMatch(event);
+        let {pathStart, functionStart, path, closing, shouldFill} = tooltipUtils.getInfoFromFileMatch(event);
 
         if (shouldFill && this.props.autofillEnabled) {
-            closing = ")" + (TooltipUtils.isInParenthesis(
+            closing = ")" + (tooltipUtils.isInParenthesis(
                 event.pre.slice(0, functionStart)) ? "" : ";");
             this.props.onTextInsertRequest({
                     row: event.row,
@@ -132,5 +133,3 @@ class SoundModal extends Component {
 }
 
 TooltipEngine.registerTooltip("soundModal", SoundModal);
-
-module.exports = SoundModal;

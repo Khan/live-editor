@@ -1,6 +1,7 @@
 /* global ProcessingDebugger */
 
-const Backbone = require("backbone");
+import Backbone from "backbone";
+
 Backbone.$ = require("jquery");
 
 const PJSDebugger = Backbone.View.extend({
@@ -130,4 +131,4 @@ const PJSDebugger = Backbone.View.extend({
     }
 });
 
-module.exports = PJSDebugger;
+export default PJSDebugger;

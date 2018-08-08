@@ -1,10 +1,11 @@
-const _ = require("lodash");
+import _ from "lodash";
 import {StyleSheet, css} from "aphrodite/no-important";
-const LazyLoadMedia = require("./lazy-load-media.jsx");
 import React, {Component} from "react";
-const slugify = require("slugify");
+import slugify from "slugify";
 
-class MediaPickerScroller extends Component {
+import LazyLoadMedia from "./lazy-load-media.jsx";
+
+export default class MediaPickerScroller extends Component {
     props: {
         groups: Array<Object>,
         mediaDir: string,
@@ -342,5 +343,3 @@ const styles = StyleSheet.create({
         backgroundColor: "#0088cc",
     },
 });
-
-module.exports = MediaPickerScroller;

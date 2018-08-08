@@ -67,4 +67,4 @@ const walkAST = function(node, path, visitors) {
     return step;
 };
 
-module.exports = walkAST;
+export default walkAST;

@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 
-class LazyLoadMedia extends Component {
+export default class LazyLoadMedia extends Component {
     props: {
         parentScrollMax: number,
         placeholderSrc: string,
@@ -65,5 +65,3 @@ class LazyLoadMedia extends Component {
         return media;
     }
 }
-
-module.exports = LazyLoadMedia;

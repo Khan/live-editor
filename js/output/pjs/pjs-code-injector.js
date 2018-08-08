@@ -1,18 +1,19 @@
 /* eslint-disable max-lines, no-var, no-throw-literal, one-var, prefer-const,
    no-empty, prefer-spread, no-extra-bind, no-new-func */
 /* TODO: Fix the lint errors */
-const _ = require("lodash");
-const esprima = require("esprima");
-const escodegen = require("escodegen");
+import _ from "lodash";
+import * as esprima from "esprima";
+import escodegen from "escodegen";
+import i18n from "i18n";
 
-const ASTTransforms = require("./pjs-ast-transforms.js");
-const i18n = require("i18n");
-const LoopProtector = require("../shared/loop-protect.js");
-const OutputSounds = require("../../shared/sounds.js");
-const PJSResourceCache = require("./pjs-resource-cache.js");
-const PJSUtils = require("./pjs-utils.js");
-const PooledWorker = require("../shared/pooled-worker.js");
-const walkAST = require("../shared/ast-walker.js");
+import LoopProtector from "../shared/loop-protect.js";
+import OutputSounds from "../../shared/sounds.js";
+import PooledWorker from "../shared/pooled-worker.js";
+import walkAST from "../shared/ast-walker.js";
+
+import ASTTransforms from "./pjs-ast-transforms.js";
+import PJSResourceCache from "./pjs-resource-cache.js";
+import PJSUtils from "./pjs-utils.js";
 
 /**
  * The CodeInjector object is responsible for running code, determining what
@@ -20,7 +21,7 @@ const walkAST = require("../shared/ast-walker.js");
  * appropriate state in the processing object in order to make live editing
  * of processing-js programs work correctly.
  */
-class PJSCodeInjector {
+export default class PJSCodeInjector {
 
     /**
      * Create a new processing-js code injector.
@@ -1330,5 +1331,3 @@ class PJSCodeInjector {
 }
 
 PJSCodeInjector.instances = [];
-
-module.exports = PJSCodeInjector;

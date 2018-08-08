@@ -16,9 +16,8 @@
  *                      the same line)
  * }
  */
-const _ = require("lodash");
-
-const i18n = require("i18n");
+import _ from "lodash";
+import i18n from "i18n";
 
 const BabyHint = {
 
@@ -714,4 +713,4 @@ const BabyHint = {
     }
 };
 
-module.exports = BabyHint;
+export default BabyHint;

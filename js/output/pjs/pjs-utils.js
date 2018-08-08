@@ -32,4 +32,4 @@ const PJSUtils = {
     }
 };
 
-module.exports = PJSUtils;
+export default PJSUtils;

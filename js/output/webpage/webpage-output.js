@@ -1,13 +1,13 @@
 /* eslint-disable no-empty, no-console, prefer-const, no-new-func */
 /* TODO: Fix the lint errors */
+import i18n from "i18n";
 import React, {Component} from "react";
 
-const i18n = require("i18n");
-const Slowparse = require("../../../external/slowparse/slowparse.js");
+import LoopProtector from "../shared/loop-protect.js";
+import Slowparse from "../../../external/slowparse/slowparse.js";
 
-const LoopProtector = require("../shared/loop-protect.js");
-const StateScrubber = require("./state-scrubber.js");
-const WebpageTester = require("./webpage-tester.js");
+import StateScrubber from "./state-scrubber.js";
+import WebpageTester from "./webpage-tester.js";
 
 const infiniteLoopError = {
     text: i18n._("Your javascript is taking too long to run. " +
@@ -35,7 +35,7 @@ const runtimeError = {
  * so that it can be sandboxed from the main domain,
  * it communicates via postMessage() with liveEditor.
  */
-class WebpageOutput extends Component {
+export default class WebpageOutput extends Component {
 
     props: {
         config: Object,
@@ -397,5 +397,3 @@ class WebpageOutput extends Component {
                 />
     }
 }
-
-module.exports = WebpageOutput;

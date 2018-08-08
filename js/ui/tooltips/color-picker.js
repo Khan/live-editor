@@ -1,18 +1,18 @@
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-const FullColorPicker = require("./color-picker-full.js");
-const TooltipEngine = require("../../ui/tooltip-engine.js");
-const TooltipPositioner = require("./tooltip-positioner.js");
-const TooltipUtils = require("./tooltip-utils.js");
+import TooltipEngine from "../../ui/tooltip-engine.js";
 
+import FullColorPicker from "./color-picker-full.js";
+import TooltipPositioner from "./tooltip-positioner.js";
+import * as tooltipUtils from "./tooltip-utils.js";
 
 const stringifyRGB = function(rgb) {
     return rgb.r + ", " + rgb.g + ", " + rgb.b;
 }
 
 // A description of general tooltip flow can be found in tooltip-engine.js
-class ColorPicker extends Component {
+export default class ColorPicker extends Component {
 
     props: {
         // Common to all tooltips
@@ -102,7 +102,7 @@ class ColorPicker extends Component {
 
         const name = event.line.substring(functionStart, paramsStart - 1);
         let addSemicolon =
-            TooltipUtils.isAfterAssignment(event.pre.slice(0, functionStart));
+            tooltipUtils.isAfterAssignment(event.pre.slice(0, functionStart));
         if (['fill', 'stroke', 'background'].includes(name)) {
             addSemicolon = true;
         }
@@ -225,5 +225,3 @@ const styles = StyleSheet.create({
 });
 
 TooltipEngine.registerTooltip("colorPicker", ColorPicker);
-
-module.exports = ColorPicker;

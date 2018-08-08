@@ -909,4 +909,4 @@ const AutosuggestData = {
     },
 };
 
-module.exports = AutosuggestData;
+export default AutosuggestData;

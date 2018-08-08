@@ -124,4 +124,4 @@ const ASTBuilder = {
     }
 };
 
-module.exports = ASTBuilder;
+export default ASTBuilder;

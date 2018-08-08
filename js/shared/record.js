@@ -1,9 +1,9 @@
 /* eslint-disable no-var, no-undef, no-redeclare, no-console */
 /* TODO: Fix the lint errors */
-const Backbone = require("backbone");
+import { Model } from "backbone-model";
 
 // Note: All time measurements are handled in milliseconds
-const ScratchpadRecordModel = Backbone.Model.extend({
+const ScratchpadRecordModel = Model.extend({
     initialize: function() {
         // Instance variables, not attributes.
         // Recording handlers, handle both recording and playback
@@ -362,4 +362,4 @@ const ScratchpadRecordModel = Backbone.Model.extend({
     }
 });
 
-module.exports = ScratchpadRecordModel;
+export default ScratchpadRecordModel;

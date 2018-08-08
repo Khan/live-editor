@@ -1,22 +1,21 @@
-/* eslint-disable no-var */
-/* TODO: Fix the lint errors */
 import React, {Component} from "react";
-import {StyleSheet, css} from "aphrodite/no-important";
+import {css} from "aphrodite/no-important";
 
 import SharedStyles from "./shared-styles.js";
 
-class DrawCanvas extends Component {
+export default class DrawCanvas extends Component {
+
+    props: {
+        width: number,
+        height: number,
+        onColorSet: Function,
+        record: Object,
+    };
 
     static defaultProps = {
         width: 400,
         height: 400
     }
-
-    props: {
-        width: number,
-        height: number,
-        onColorSet: Function
-    };
 
     constructor(props) {
         super(props);
@@ -43,7 +42,7 @@ class DrawCanvas extends Component {
         this.clear(true);
     }
 
-    handleMouseDown() {
+    handleMouseDown(e) {
         // Left mouse button
         if (this.props.record.recording && e.button === 0) {
             this.startLine(e.offsetX, e.offsetY);
@@ -51,33 +50,16 @@ class DrawCanvas extends Component {
         }
     }
 
-    handleMouseMove() {
+    handleMouseMove(e) {
         if (this.props.record.recording) {
             this.drawLine(e.offsetX, e.offsetY);
         }
     }
 
-    handleMouseAway() {
+    handleMouseAway(e) {
         if (this.props.record.recording) {
             this.endLine();
         }
-    }
-
-    render() {
-        const displayProp = this.state.isDrawing ? "block" : "none";
-        return (
-            <canvas
-                ref={this.canvasRef}
-                className={css(SharedStyles.outputFullSize)}
-                style={{display: displayProp}}
-                width={this.props.width}
-                height={this.props.height}
-                onMouseDown={this.handleMouseDown}
-                onMouseMove={this.handleMouseMove}
-                onMouseUp={this.handleMouseAway}
-                onMouseOut={this.handleMouseAway}
-            />
-        );
     }
 
     bindRecordView() {
@@ -129,9 +111,9 @@ class DrawCanvas extends Component {
         // Initialize playback commands
         const commands = ["startLine", "drawLine", "endLine", "setColor", "clear"];
         commands.forEach((name) => {
-            record.handlers[name] = function() {
-                this[name].apply(this, arguments);
-            }.bind(this);
+            record.handlers[name] = () => {
+                this[name](...arguments);
+            };
         });
     }
 
@@ -217,6 +199,21 @@ class DrawCanvas extends Component {
         this.setState({isDrawing: false});
         this.setColor(null);
     }
-}
 
-module.exports = DrawCanvas;
+    render() {
+        const displayProp = this.state.isDrawing ? "block" : "none";
+        return (
+            <canvas
+                ref={this.canvasRef}
+                className={css(SharedStyles.outputFullSize)}
+                style={{display: displayProp}}
+                width={this.props.width}
+                height={this.props.height}
+                onMouseDown={this.handleMouseDown}
+                onMouseMove={this.handleMouseMove}
+                onMouseUp={this.handleMouseAway}
+                onMouseOut={this.handleMouseAway}
+            />
+        );
+    }
+}

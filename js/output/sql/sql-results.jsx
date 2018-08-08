@@ -1,7 +1,7 @@
 import i18n from "i18n";
 import React, {Component} from "react";
 
-class SQLResults extends Component {
+export default class SQLResults extends Component {
     props: {
         tables: Array,
         results: Array,
@@ -164,5 +164,3 @@ const styles = {
         fontWeight: "normal",
     },
 };
-
-module.exports = SQLResults;

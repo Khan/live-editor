@@ -5,7 +5,7 @@
  * Resets the global javascript state in the browser
  * (timeouts, intervals and global variables)
  */
-class StateScrubber {
+export default class StateScrubber {
 
     constructor (target) {
         this.target = target;
@@ -74,5 +74,3 @@ class StateScrubber {
     	this.clearTimeoutsAndIntervals();
     }
 }
-
-module.exports = StateScrubber;

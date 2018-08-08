@@ -471,6 +471,5 @@
     }
 ];
 
-    module.exports = AllImages;
-
+    export default AllImages;
     

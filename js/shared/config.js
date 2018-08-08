@@ -4,9 +4,9 @@
 // Have them be versioned and attached to the ScratchpadRevision so that
 // later config changes don't break old code.
 /* jshint unused:false */
-const Backbone = require("backbone");
+import { Model } from "backbone-model";
 
-const ScratchpadConfig = Backbone.Model.extend({
+const ScratchpadConfig = Model.extend({
     version: null,
 
     initialize: function(options) {
@@ -463,4 +463,4 @@ const ScratchpadConfig = Backbone.Model.extend({
     ]
 });
 
-module.exports = ScratchpadConfig;
+export default ScratchpadConfig;

@@ -1,5 +1,9 @@
 /* eslint-disable no-var, no-undef */
 /* TODO: Fix the lint errors */
+import "es5-shim";
+
+import PJSTester from "../../output/pjs/pjs-tester.js";
+
 // Mock out $._, since we don't use any of the sprintf functionality
 var i18n = {};
 i18n._ = function(str) { return str; };
@@ -7,8 +11,7 @@ i18n._ = function(str) { return str; };
 var $ = {};
 $._ = i18n._;
 
-// We set window to self so that StructuredJS can find Esprima and
-// Underscore
+// We set window to self so that StructuredJS can find Esprima and Underscore
 if (typeof window === "undefined") {
     /*global window:true */
     //window = self;
@@ -17,10 +20,6 @@ if (typeof window === "undefined") {
 var init = false;
 
 var tester;
-
-require("es5-shim");
-
-const PJSTester = require("../../output/pjs/pjs-tester.js");
 
 self.onmessage = function(event) {
     if (!init) {

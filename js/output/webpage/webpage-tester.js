@@ -1,9 +1,9 @@
 /* eslint-disable */
 /* TODO: Fix the lint errors */
-const OutputTester = require("../shared/output-tester.js");
-const PJSTester = require("../pjs/pjs-tester.js");
+import OutputTester from "../shared/output-tester.js";
+import PJSTester from "../pjs/pjs-tester.js";
 
-class WebpageTester extends OutputTester {
+export default class WebpageTester extends OutputTester {
 
     constructor (options) {
         super();
@@ -572,5 +572,3 @@ Object.assign(WebpageTester.prototype.testMethods, {
     },
 
 });
-
-module.exports = WebpageTester;

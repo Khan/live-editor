@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-class AutoSuggestPopup extends Component {
+export default class AutoSuggestPopup extends Component {
     props: {
         functionData: Object, // Function data - name, exampleURL, description, params
         paramsToCursor: string, // The params specified so far
@@ -79,7 +79,7 @@ class AutoSuggestPopup extends Component {
                 </div>
             );
         }
-        console.log("paramNames", paramNames);
+
         // Render the params, specially styling the one the user just typed
         const paramEls = paramNames.map((param, paramI) => {
             const isCurrent = paramI === lastParamInd;
@@ -163,5 +163,3 @@ const styles = StyleSheet.create({
         marginTop: "5px",
     },
 });
-
-module.exports = AutoSuggestPopup;

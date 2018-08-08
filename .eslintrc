@@ -1,5 +1,15 @@
 {
+  "plugins": [
+      "import"
+  ],
   "extends": [
       "./eslint/eslintrc"
-  ]
+  ],
+  "rules": {
+      "react/jsx-handler-names": 2,
+      "import/order": ["error", {"newlines-between": "always"}],
+      "import/newline-after-import": 2,
+      "import/first": 2,
+      "import/no-commonjs": 2,
+  }
 }

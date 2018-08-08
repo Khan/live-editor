@@ -1,13 +1,14 @@
 import React, {Component} from "react";
 
 import AutoSuggestData from "../autosuggest-data.js";
-import AutoSuggestPopup from "./auto-suggest-popup.jsx";
 import TooltipEngine from "../tooltip-engine.js";
+
+import AutoSuggestPopup from "./auto-suggest-popup.jsx";
 import TooltipPositioner from "./tooltip-positioner.js";
-import TooltipUtils from "./tooltip-utils.js";
+import * as tooltipUtils from "./tooltip-utils.js";
 
 // A description of general tooltip flow can be found in tooltip-engine.js
-class AutoSuggest extends Component {
+export default class AutoSuggest extends Component {
     props: {
         // Common to all tooltips
         autofillEnabled: boolean,
@@ -57,7 +58,7 @@ class AutoSuggest extends Component {
         // TODO: update this to support auto-suggest tooltip for inner functions passed as params
         // this currently only allows displaying of the tooltip for the outside function, except in cases
         // where the inner function uses one of the other tooltips (e.g. image-picker)
-        if (!this.regex.test(event.pre) || !TooltipUtils.isInParenthesis(RegExp.$3)) {
+        if (!this.regex.test(event.pre) || !tooltipUtils.isInParenthesis(RegExp.$3)) {
             return this.props.onEventCheck(false);
         }
         // Ignore changeCursor events when the mouse button is down,
@@ -151,5 +152,3 @@ class AutoSuggest extends Component {
 }
 
 TooltipEngine.registerTooltip("autoSuggest", AutoSuggest);
-
-module.exports = AutoSuggest;

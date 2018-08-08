@@ -1,4 +1,4 @@
-/* eslint-disable no-var, one-var */
+/* eslint-disable no-var, one-var, import/no-commonjs */
 /* TODO: Fix the lint errors */
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");

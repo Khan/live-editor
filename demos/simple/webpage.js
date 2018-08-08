@@ -1,11 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-const AceEditor = require("../../js/editors/ace/editor-ace.js");
-const LiveEditor = require("../../js/live-editor.js");
+import AceEditor from "../../js/editors/ace/editor-ace.js";
+import LiveEditor from "../../js/live-editor.js";
+
 LiveEditor.registerEditor("ace_webpage", AceEditor);
 
-let code = window.localStorage["test-webpage-code"] ||
+const code = window.localStorage["test-webpage-code"] ||
     "<!DOCTYPE html>\n<strong>Hello</strong>, world!";
 
 const liveEditorProps = {

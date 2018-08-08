@@ -6,7 +6,6 @@
  */
 import i18n from "i18n";
 import Draggable from "react-draggable";
-
 import {icons} from "@khanacademy/wonder-blocks-icon";
 import Button from "@khanacademy/wonder-blocks-button";
 import IconButton from "@khanacademy/wonder-blocks-icon-button";
@@ -15,7 +14,7 @@ import React, {Component} from "react";
 
 import SharedStyles from "./shared-styles.js"
 
-class TipBar extends Component {
+export default class TipBar extends Component {
     props: {
         isHidden: boolean,
         errors: Array<string>,
@@ -179,5 +178,3 @@ const styles = StyleSheet.create({
         paddingBottom: "10px",
     },
 });
-
-module.exports = TipBar;

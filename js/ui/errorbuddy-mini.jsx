@@ -1,11 +1,12 @@
-const i18n = require("i18n");
+import i18n from "i18n";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-class ErrorBuddyMini extends Component {
+export default class ErrorBuddyMini extends Component {
 
     props: {
         isHidden: boolean,
+        imagesDir: string,
         errorState: string, // happy or thinking
         onClick: Function
     }
@@ -26,9 +27,8 @@ class ErrorBuddyMini extends Component {
                     />
                 </div>;
         } else {
-            errorMood = <a
+            errorMood = <button
                     className={css(styles.errorBuddyWrapper, styles.wiggleAnimation)}
-                    href="javascript:void(0);"
                     onClick={this.props.onClick}
                 >
                     <img
@@ -38,7 +38,7 @@ class ErrorBuddyMini extends Component {
                     {/* I18N: The CS error buddy is thinking there might be an
                     * error in your code and is waiting for you to fix it. */}
                     {i18n._("Hmm...")}
-                </a>;
+                </button>;
         }
         return (
             <div className={css(styles.errorBuddyContainer)}>
@@ -90,5 +90,3 @@ const styles = StyleSheet.create({
         animationDuration: '1000ms'
     }
 });
-
-module.exports = ErrorBuddyMini;

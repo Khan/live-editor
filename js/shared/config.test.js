@@ -1,4 +1,4 @@
-const ScratchpadConfig = require("./config.js");
+import ScratchpadConfig from "./config.js";
 
 describe("ScratchpadConfig", function() {
     it("should use version 4 or greater", function() {

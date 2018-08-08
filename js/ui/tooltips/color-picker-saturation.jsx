@@ -4,7 +4,7 @@ import Color from 'color';
 
 const containerSize = 150;
 
-class SaturationPicker extends React.Component {
+export default class SaturationPicker extends React.Component {
 
     props: {
         color: Object, // h, s, l
@@ -26,14 +26,13 @@ class SaturationPicker extends React.Component {
 
     componentDidUpdate(prevProps) {
         if (this.props.color.string() !== prevProps.color.string()) {
-            console.log("Got a new color");
+            // eslint-disable-next-line react/no-did-update-set-state
             this.setState({color: Color(this.props.color)});
         }
     }
 
     handleMouseEvent(e, eventType) {
         const {saturation, lightness} = this.calculateVal(e);
-        console.log("Calcd s l", saturation, lightness);
         if (saturation === this.state.color.object().s &&
             lightness === this.state.color.object().l) {
             return;
@@ -43,7 +42,6 @@ class SaturationPicker extends React.Component {
             saturation,
             lightness,
         );
-        console.log("newColor", newColor);
         this.setState({color: newColor});
         this.props.onColorChange(newColor, eventType);
     }
@@ -76,21 +74,17 @@ class SaturationPicker extends React.Component {
     }
 
     calculateScrubberPos() {
-        console.log("scubberPos", this.state.color.object());
         const left = containerSize * (this.state.color.object().s/100);
         const top = containerSize - (containerSize * (this.state.color.object().l/100));
-        console.log(left, top);
         return {left: Math.round(left) + "px", top: Math.round(top) + "px"};
     }
 
     calculateVal(e) {
-        console.log('calculateVal', e);
         const container = this.containerRef.current;
         const x = typeof e.pageX === 'number' ? e.pageX : e.touches[0].pageX;
         const y = typeof e.pageY === 'number' ? e.pageY : e.touches[0].pageY;
         let left = x - (container.getBoundingClientRect().left + window.pageXOffset);
         let top = y - (container.getBoundingClientRect().top + window.pageYOffset);
-        console.log(left, top);
         if (left < 0) {
             left = 0;
         } else if (left > containerSize) {
@@ -104,7 +98,6 @@ class SaturationPicker extends React.Component {
 
         const saturation = (left * 100) / containerSize;
         const lightness = -((top * 100) / containerSize) + 100;
-        console.log(saturation, lightness);
         return {saturation, lightness};
     }
 
@@ -177,5 +170,3 @@ const styles = StyleSheet.create({
         width: "8px",
     }
 });
-
-module.exports = SaturationPicker;

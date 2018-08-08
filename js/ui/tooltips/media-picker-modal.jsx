@@ -1,13 +1,13 @@
+import i18n from "i18n";
 import Button from "@khanacademy/wonder-blocks-button";
 import {OneColumnModal} from "@khanacademy/wonder-blocks-modal";
 import {Tab, Tabs, TabList, TabPanel} from "react-tabs";
 import React, {Component} from "react";
 import "react-tabs/style/react-tabs.css";
 
-const i18n = require("i18n");
-const MediaPickerScroller = require("./media-picker-scroller.jsx");
+import MediaPickerScroller from "./media-picker-scroller.jsx";
 
-class MediaPickerModal extends Component {
+export default class MediaPickerModal extends Component {
     props: {
         mediaClasses: Array<Object>,
         mediaDir: string,
@@ -75,5 +75,3 @@ class MediaPickerModal extends Component {
         );
     }
 }
-
-module.exports = MediaPickerModal;

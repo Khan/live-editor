@@ -1,8 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-const LiveEditorOutput = require("../../js/output/shared/output.js");
-const PJSOutput = require("../../js/output/pjs/pjs-output.js");
+import LiveEditorOutput from "../../js/output/shared/output.js";
+import PJSOutput from "../../js/output/pjs/pjs-output.js";
+
 LiveEditorOutput.registerOutput("pjs", PJSOutput);
 
 ReactDOM.render(React.createElement(LiveEditorOutput, {}),

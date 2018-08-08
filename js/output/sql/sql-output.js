@@ -1,14 +1,12 @@
-import SQL from "sql.js";
-
+import i18n from "i18n";
 import React, {Component} from "react";
 import ReactDOM from "react-dom";
+import SQL from "sql.js";
 
-const i18n = require("i18n");
+import SQLTester from "./sql-tester.js";
+import SQLResults from "./sql-results.jsx";
 
-const SQLTester = require("./sql-tester.js");
-const SQLResults = require("./sql-results.jsx");
-
-class SQLOutput extends Component {
+export default class SQLOutput extends Component {
     props: {
         config: Object,
         onCodeLint: Function,
@@ -477,5 +475,3 @@ SQLOutput.isSupported = function() {
     // Check to make sure the typed arrays dependency is supported.
     return "Uint8ClampedArray" in window;
 };
-
-module.exports = SQLOutput;

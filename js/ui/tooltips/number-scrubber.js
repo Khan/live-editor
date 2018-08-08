@@ -1,9 +1,10 @@
 /* global ace */
+import Draggable from "react-draggable";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
-import Draggable from "react-draggable";
 
 import TooltipEngine from "../../ui/tooltip-engine.js";
+
 import TooltipPositioner from "./tooltip-positioner.js";
 
 // Returns the number of decimal places shown in a string representation of
@@ -19,7 +20,7 @@ const decimalCount = function(strNumber) {
 //  I have removed that mode since we're no longer maintaining StructuredBlocks,
 //  but if we ever bring that back, please look at the code before my change
 //  and implement accordingly.
-class NumberScrubber extends Component {
+export default class NumberScrubber extends Component {
     props: {
         // Common to all tooltips
         autofillEnabled: boolean,
@@ -281,5 +282,3 @@ const styles = StyleSheet.create({
         transform: "scaleX(-1.0)",
     },
 });
-
-module.exports = NumberScrubber;

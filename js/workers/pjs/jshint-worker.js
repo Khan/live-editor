@@ -1,9 +1,10 @@
 /* eslint-disable no-var, no-undef */
 /* TODO: Fix the lint errors */
-var init = false;
+import "es5-shim";
 
-require("es5-shim");
-const JSHINT = require("../../../external/jshint/jshint.js").JSHINT;
+import { JSHINT } from "../../../external/jshint/jshint.js";
+
+var init = false;
 
 self.onmessage = function(event) {
     // We don't import JSHint on load as we need to know which language

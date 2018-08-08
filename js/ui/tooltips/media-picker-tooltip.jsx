@@ -1,13 +1,13 @@
+import i18n from "i18n";
 import Button from "@khanacademy/wonder-blocks-button";
 import {ModalLauncher} from "@khanacademy/wonder-blocks-modal";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-const i18n = require("i18n");
-const MediaPickerModal = require("./media-picker-modal.jsx");
-const MediaPickerPreview = require("./media-picker-preview.jsx");
+import MediaPickerModal from "./media-picker-modal.jsx";
+import MediaPickerPreview from "./media-picker-preview.jsx";
 
-class MediaPickerTooltip extends Component {
+export default class MediaPickerTooltip extends Component {
     // Most of these are for passing on to children
     props: {
         errorMessage: string,
@@ -74,5 +74,3 @@ const styles = StyleSheet.create({
         margin: "5px auto",
     },
 });
-
-module.exports = MediaPickerTooltip;

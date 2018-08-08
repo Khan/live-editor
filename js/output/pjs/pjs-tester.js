@@ -4,8 +4,8 @@
   due to how we load this file in the test-worker */
 /* global i18n, _ */
 
-const OutputTester = require("../shared/output-tester.js");
-const Structured = require("../../../external/structuredjs/structured.js");
+import OutputTester from "../shared/output-tester.js";
+import Structured from "../../../external/structuredjs/structured.js";
 
 const PJSTester = function(options) {
     this.initialize(options);
@@ -472,4 +472,4 @@ PJSTester.prototype.testMethods = {
     }
 };
 
-module.exports = PJSTester;
+export default PJSTester;

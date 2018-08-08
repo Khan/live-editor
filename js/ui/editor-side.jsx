@@ -1,17 +1,16 @@
-const i18n = require("i18n");
-
 import classNames from 'classnames';
+import i18n from "i18n";
 import React, {Component} from "react";
 import Button from "@khanacademy/wonder-blocks-button";
-import Icon, {icons} from "@khanacademy/wonder-blocks-icon";
+import {icons} from "@khanacademy/wonder-blocks-icon";
 import IconButton from "@khanacademy/wonder-blocks-icon-button";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-const EditorToolbar = require("./editor-toolbar.jsx");
+import EditorToolbar from "./editor-toolbar.jsx";
 import SharedStyles from "./shared-styles.js";
 
-class EditorSide extends Component {
+export default class EditorSide extends Component {
 
     props: {
         customEditorFontClass: string,
@@ -23,7 +22,10 @@ class EditorSide extends Component {
         showDisableOverlay: boolean,
         contentType: string,
         onDisableClick: Function,
-        onBigPlayClick: Function
+        onBigPlayClick: Function,
+        showYoutubeLink: boolean,
+        toolbar: Object,
+        aceEditorWrapper: Object,
     };
 
     constructor(props) {
@@ -250,6 +252,3 @@ const styles = StyleSheet.create({
         }
     }
 });
-
-
-module.exports = EditorSide;

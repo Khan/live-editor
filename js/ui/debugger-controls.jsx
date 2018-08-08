@@ -2,7 +2,7 @@ import React, {Component} from "react";
 
 import "../../css/ui/debugger.css";
 
-class DebuggerControls extends Component {
+export default class DebuggerControls extends Component {
     render() {
         // This is just a very simple port from Handlebars
         // If KA/anyone decides to enable debugger in the future,
@@ -76,5 +76,3 @@ class DebuggerControls extends Component {
         );
     }
 }
-
-module.exports = DebuggerControls;

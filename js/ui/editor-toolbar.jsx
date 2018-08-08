@@ -1,8 +1,12 @@
-const i18n = require("i18n");
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-class EditorToolbar extends Component {
+export default class EditorToolbar extends Component {
+
+    props: {
+        leftComponents: Array,
+        rightComponents: Array,
+    }
 
     render() {
         return (
@@ -36,5 +40,3 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
 });
-
-module.exports = EditorToolbar;

@@ -1,13 +1,12 @@
 /* eslint-disable no-var, prefer-const, no-throw-literal */
 /* TODO: Fix the lint errors */
-const escodegen = require("escodegen");
+import escodegen from "escodegen";
 
-const AllImages = require("../../shared/all-images.js");
-const OutputSounds = require("../../shared/sounds.js");
+import b from "../shared/ast-builder.js";
+import AllImages from "../../shared/all-images.js";
+import OutputSounds from "../../shared/sounds.js";
 
 const ASTTransforms = {};
-
-let b = require("../shared/ast-builder.js");
 
 /**
  * Visitor object which adds line and column information as additional args,
@@ -324,4 +323,4 @@ ASTTransforms.rewriteNewExpressions = function(envName) {
     }
 };
 
-module.exports = ASTTransforms;
+export default ASTTransforms;

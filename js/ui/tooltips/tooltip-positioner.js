@@ -1,9 +1,9 @@
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-import Utils from "../../shared/utils.js";
+import * as utils from "../../shared/utils.js";
 
-class TooltipPositioner extends Component {
+export default class TooltipPositioner extends Component {
 
     props: {
         aceEditor: Object,
@@ -51,7 +51,7 @@ class TooltipPositioner extends Component {
             this.props.cursorRow,
             this.props.cursorCol);
         const relativePos = coords.pageY - editorBB.top;
-        const top = Utils.getScrollTop() + coords.pageY;
+        const top = utils.getScrollTop() + coords.pageY;
         const left = coords.pageX;
         const isVisible = !(relativePos < 0 || relativePos >= editorHeight);
         this.setState({top, left, isVisible})
@@ -82,6 +82,7 @@ class TooltipPositioner extends Component {
                 </div>;
     }
 }
+
 const styles = StyleSheet.create({
     tooltip: {
         background: "black",
@@ -133,5 +134,3 @@ const styles = StyleSheet.create({
         top: "5px"
     },
 });
-
-module.exports = TooltipPositioner;
