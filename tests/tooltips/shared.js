@@ -1,3 +1,9 @@
+const AceEditor = require("../../js/editors/ace/editor-ace.js");
+const ScratchpadAutosuggest = require("../../js/ui/autosuggest.js");
+const ScratchpadConfig = require("../../js/shared/config.js");
+const ScratchpadRecordModel = require("../../js/shared/record.js");
+const TooltipEngine = require("../../js/ui/tooltip-engine.js");
+
 var mockObject = function(obj, mocks) {
     _.each(mocks, function(method) {
         obj[method] = sinon.spy();
@@ -5,36 +11,41 @@ var mockObject = function(obj, mocks) {
     return obj;
 };
 
-window.tooltipClasses = TooltipEngine.classes;
+const tooltipClasses = TooltipEngine.tooltipClasses;
 
-window.ACE = new AceEditor({ //Initializes TooltipEngine internally
-    el: "#faux_editor",
-    autoFocus: true,
-    config: new ScratchpadConfig({
-        version: 3
-    }),
-    imagesDir: "../../build/images/",
-    externalsDir: "",
-    workersDir: "",
-    record: new ScratchpadRecord(),
-    type: "ace_pjs"
-});
+var uniqueEditor = function() {
+    var elem = document.createElement('div');
+    document.body.appendChild(elem);
+    var ace = new AceEditor({ //Initializes TooltipEngine internally
+        el: elem,
+        autoFocus: true,
+        config: new ScratchpadConfig({
+            version: 3
+        }),
+        imagesDir: "../../build/images/",
+        externalsDir: "",
+        workersDir: "",
+        record: new ScratchpadRecordModel(),
+        type: "ace_pjs"
+    });
+    ScratchpadAutosuggest.init(ace.editor);
+    ace.editor.focus();
+    ace.setSelection({
+        start: {
+            row: 0,
+            column: 0
+        },
+        end: {
+            row: 0,
+            column: 0
+        }
+    });
+    return ace;
+};
 
-window.editor = ACE.editor;
-window.TTE = ACE.tooltipEngine;
-
-ScratchpadAutosuggest.init(editor);
-editor.focus();
-ACE.setSelection({
-    start: {
-        row: 0,
-        column: 0
-    },
-    end: {
-        row: 0,
-        column: 0
-    }
-});
+const ACE = uniqueEditor();
+const editor = ACE.editor;
+const TTE = ACE.tooltipEngine;
 
 for (var TooltipName in TooltipEngine.prototype.classes) {
     var Tooltip = TooltipEngine.classes[TooltipName];
@@ -53,7 +64,7 @@ var TTEoptions = {
 var getMockedTooltip = function(Tooltip, whiteList, blackList) {
     if (whiteList) {
         blackList = [];
-        for (method in Tooltip.prototype) {
+        for (let method in Tooltip.prototype) {
             if (!_.contains(whiteList, method) && method !== "constructor") {
                 blackList.push(method);
             }
@@ -106,7 +117,7 @@ var testMockedTooltipDetection = function(tooltip, line, pre) {
 
 function testReplace(tooltip, line, pre, updates, result) {
     var event = getTooltipRequestEvent(line, pre);
-    newLine = line;
+    var newLine = line;
     var oldReplace = editor.session.replace;
     editor.session.replace = sinon.spy(function(range, newText) {
         newLine = applyReplace(newLine, range, newText);
@@ -158,3 +169,16 @@ function getLine() {
 function dumpDocument() {
     console.log(JSON.stringify(editor.session.getDocument().$lines, null, 2));
 }
+
+module.exports = {
+    editor,
+    TTE,
+    tooltipClasses,
+    uniqueEditor,
+    getMockedTooltip,
+    getTooltipRequestEvent,
+    testMockedTooltipDetection,
+    testReplace,
+    typeLine,
+    getLine
+};

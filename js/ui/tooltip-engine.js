@@ -1,294 +1,156 @@
-window.TooltipEngine = Backbone.View.extend({
-    initialize: function(options) {
-        this.options = options;
-        this.editor = options.editor;
-        var record = this.options.record;
+import _ from "lodash";
+import React, {Component} from "react";
 
-        this.tooltips = {};
-        var childOptions = _.defaults({
-            parent: this
-        }, options);
+import * as tooltipUtils from "./tooltips/tooltip-utils.js";
 
-        _.each(options.tooltips, function(name) {
-            this.tooltips[name] = new TooltipEngine.classes[name](childOptions);
-            this.tooltips[name].on("scrubbingStarted", function() {
-                this.trigger("scrubbingStarted", name);
-            }.bind(this));
-            this.tooltips[name].on("scrubbingEnded", function() {
-                this.trigger("scrubbingEnded", name);
-            }.bind(this));
-        }.bind(this));
+export default class TooltipEngine extends Component {
 
-        if (record && !record.handlers.hot) {
-            record.handlers.hot = function(e) {
-                if (this.currentTooltip) {
-                    TooltipBase.prototype.updateText.call(this.currentTooltip, e.hot);
-                }
-            }.bind(this);
-        }
+    props: {
+        aceEditor: Object,
+        record: Object,
+        event: Object,
+        tooltips: Array,
+        onScrubbingStart: Function,
+        onScrubbingEnd: Function,
+        onTextInsertRequest: Function,
+        onTextUpdateRequest: Function,
+        onTooltipChange: Function,
+    }
 
-        this.currentTooltip = undefined;
-        this.ignore = false;
-        this.bind();
-    },
-
-    bind: function(){
-        if (this.callbacks) {
-            return;
-        }
-
-        var checkBlur = function(e) {
-            var inEditor = $.contains(this.editor.container, e.target);
-            var inTooltip = (this.currentTooltip && $.contains(this.currentTooltip.$el[0], e.target));
-            var modalOpen = (this.currentTooltip && this.currentTooltip.modal &&
-                                this.currentTooltip.modal.$el.is(":visible"));
-            if (this.currentTooltip && !(inEditor || inTooltip || modalOpen)) {
-                this.currentTooltip.$el.hide();
-                this.currentTooltip = undefined;
-            }
-        }.bind(this);
-
-        this.callbacks = [{
-            target: this.editor.selection,
-            event: "changeCursor",
-            fn: this.doRequestTooltip.bind(this)
-        }, {
-            target: this.editor.session.getDocument(),
-            event: "change",
-            fn: function(e) {
-                this.doRequestTooltip(e.data);
-            }.bind(this)
-        }, {
-            target: this.editor.session,
-            event: "changeScrollTop",
-            fn: function() {
-                if (this.currentTooltip) {
-                    this.currentTooltip.placeOnScreen();
-                }
-            }.bind(this)
-        }, {
-            target: $(document),
-            event: "mousedown",
-            fn: checkBlur
-        }, {
-            target: $(document),
-            event: "contextmenu",
-            fn: checkBlur
-        }, {
-            target: $(this.editor.container),
-            event: "mousedown",
-            fn: function() {
-                this.doRequestTooltip({
-                    action: "click"
-                });
-            }.bind(this)
-        }];
-
-        _.each(this.callbacks, function(cb){
-            cb.target.on(cb.event, cb.fn);
-        });
-
-        
-        this.requestTooltipDefaultCallback = function() {  //Fallback to hiding
-            ScratchpadAutosuggest.enableLiveCompletion(true);
-            if (this.currentTooltip && this.currentTooltip.$el) {
-                this.currentTooltip.$el.hide();
-                this.currentTooltip = undefined;
-            }
-        }.bind(this);
-
-        this.editor.on("requestTooltip", this.requestTooltipDefaultCallback);   
-    },
-
-    remove: function() {
-        _.each(this.callbacks, function(cb) {
-            cb.target.off(cb.event, cb.fn);
-        });
-        _.each(this.tooltips, function(tooltip) {
-            tooltip.remove();
-        });
-        
-        this.editor.off("requestTooltip", this.requestTooltipDefaultCallback);
-    },
-
-    doRequestTooltip: function(source) {
-        if (this.ignore) {
-            return;
-        }
-        this.last = this.last || {};
-
-        var selection = this.editor.selection;
-        var pos = selection.getCursor();
-        var params = {
-            col: pos.column,
-            row: pos.row,
-            line: this.editor.session.getDocument().getLine(pos.row),
-            selections: selection.getAllRanges(),
-            source: source
+    constructor(props) {
+        super(props);
+        this.state = {
+            currentTooltip: null
         };
-        params.pre = params.line.slice(0, params.col);
-        params.post = params.line.slice(params.col);
+        this.domRef = React.createRef();
+        this.tooltips = {};
+        this.ignore = false;
+        this.handleBlurEvent = this.handleBlurEvent.bind(this);
 
-        var duplicate = (params.col === this.last.col &&
-            params.row === this.last.row && params.line === this.last.line);
+        const record = props.record;
+        if (record && !record.handlers.hot) {
+            record.handlers.hot = (e) => {
+                if (this.state.currentTooltip) {
+                    //TODO: TooltipBase.prototype.updateText.call(this.tooltip, e.hot);
+                }
+            };
 
-        if (duplicate && !source) {
-            return false;
+            // disable autofill when playback or seeking has started
+            ["playStarted", "runSeek"].forEach((event) => {
+                record.on(event, () => {
+                    this.setState({autofillEnabled: false});
+                });
+            });
+
+            // enable autofill when playback or seeking has stopped
+            ["playPaused", "playStopped", "seekDone"].forEach((event) => {
+                record.on(event, () => {
+                    this.setState({autofillEnabled: true});
+                });
+            });
         }
-        if (this.isWithinComment(params.pre)){
-            return false;
-        }
-        this.last = params;
-
-        this.editor._emit("requestTooltip", params);
-    }, 
-
-    // Returns true if we're inside a comment
-    // This isn't a perfect check, but it is close enough.
-    isWithinComment: function(text) {
-        // Comments typically start with a / or a * (for multiline C style)
-        return text.length && (text[0] === "/" || text[0] === "*");
     }
-});
 
-TooltipEngine.classes = {};
-
- /*
-  * This is the base that we build all of the tooltips on
-  *
-  * Every Tooltip has the following major parts:
-  * - initialize(), just accepts options and then tries to attach
-  *   the html for the tooltip by callin render() and bind() as required
-  * 
-  * - render() and bind() to set up the HTML
-  * 
-  * - A detector function. The detector functions are all bound to the 
-  *   requestTooltip event in their respective bind() method. They receive an event with 
-  *   information about where the cursor is and whether it got there because of a click, 
-  *   selection character added, etc. It chooses to either load its tooltip or let the 
-  *   event keep bubbling
-  *   > The detector function also sets aceLocation, which saves what portion of the
-  *     text the selector is active for.
-  *   
-  * - updateText replaces whatever text is specified by the aceLocation 
-  *   with the new text. It is common for tooltips to override this function
-  *   so that they can accept a value in a different format, make it into a string 
-  *   and then pass the formatted value back to the function defined in TooltipBase
-  *   to do the actual replace
-  * 
-  * - placeOnScreen which determines where the HTML needs to be moved to in order
-  *   for it to show up on by the cursor. This also pulls information from aceLocation
-  *
-  */
-
-window.TooltipBase = Backbone.View.extend({
-    bindToRequestTooltip: function() {
-        if (this.parent) {
-            this.callback = this.detector.bind(this);
-            this.parent.editor.on("requestTooltip", this.callback);
-        }
-    },
-
-    unbindFromRequestTooltip: function() {
-        if (this.parent) {
-            this.parent.editor.off("requestTooltip", this.callback);
-        }
-    },
-
-    placeOnScreen: function() {
-        // don't show tool tips when the editor is in readonly mode
-        if (this.parent.editor.getReadOnly()) {
-            return;
-        }
-        var parent = this.parent;
-        if (parent.currentTooltip && parent.currentTooltip !== this) {
-            parent.currentTooltip.$el.hide();
-        }
-        parent.currentTooltip = this;
-
-        var editor = parent.editor;
-        var loc = this.aceLocation;
-        var pos = editor.selection.getCursor();
-        var editorBB = editor.renderer.scroller.getBoundingClientRect();
-        var editorHeight = editorBB.height;
-        if (typeof loc.tooltipCursor !== "number") {
-            loc.tooltipCursor = loc.start + loc.length;
-        }
-        var coords = editor.renderer.textToScreenCoordinates(loc.row, loc.tooltipCursor);
-        var relativePos = coords.pageY - editorBB.top;
-
-        this.$el
-            .css({
-                top: $(window).scrollTop() + coords.pageY,
-                left: coords.pageX
-            })
-            .toggle(!(relativePos < 0 || relativePos >= editorHeight));
-    },
-
-    updateText: function(newText, customSelection) {
-        if (!this.parent || this.parent.options.record.playing) {
-            return;
-        }
-        var parent = this.parent;
-        var editor = parent.editor;
-
-        parent.ignore = true;
-        newText = newText.toString();
-        var Range = ace.require("ace/range").Range;
-        var loc = this.aceLocation;
-        var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
-
-        editor.session.replace(range, newText);
-
-        range.end.column = range.start.column + newText.length;
-        if (customSelection) {
-            range.start.column = loc.start + customSelection.offset;
-            range.end.column = loc.start + customSelection.offset + customSelection.length;
-        }
-        editor.selection.setSelectionRange(range);
-
-        parent.ignore = false;
-        this.aceLocation.length = newText.length;
-    },
-
-    insert: function() {
-        if (this.parent.options.record.playing) {
-            return;
-        }
-        this.parent.editor.session.insert.apply(this.parent.editor.session, arguments);
-    },
-
-    parens: {
-        "(": ")",
-        "{": "}",
-        "[": "]"
-    },
-
-    // Returns true if we're inside an open parenthesis
-    isInParenthesis: function(text) {
-        var parenStack = [];
-        for (var i = 0; i < text.length; i++) {
-            if (text[i] in this.parens) {
-                parenStack.unshift(text[i]);
-            } else if (parenStack && text[i] === this.parens[parenStack[0]]) {
-                parenStack.shift();
-            }
-        }
-        return parenStack.length > 0;
-    },
-
-    // Returns true if we're inside a string
-    isWithinString: function(text) {
-        var withinString = false;
-        var lastQuoteChar;
-        for (var i = 0; i < text.length; i++) {
-            if (withinString && text[i] === lastQuoteChar) {
-                withinString = false;
-            } else if (!withinString && text[i] === "'" || text[i] === "\"") {
-                lastQuoteChar = text[i];
-                withinString = true;
-            }
-        }
-        return withinString;
+    componentDidMount() {
+        document.body.addEventListener("click", this.handleBlurEvent);
+        //document.body.addEventListener("contextmenu", this.handleBlurEvent);
     }
-});
+
+    componentDidUpdate(prevProps) {
+        // Check for ace editor events that trigger different tooltips
+        const newEvent = this.props.event;
+        if (this.ignore || !newEvent) {
+            return;
+        }
+        const prevEvent = prevProps.event || {};
+        const isDuplicate = (
+            newEvent.col === prevEvent.col &&
+            newEvent.row === prevEvent.row &&
+            newEvent.line === prevEvent.line &&
+            newEvent.source === prevEvent.source);
+        if (isDuplicate) {
+            return;
+        }
+        if (tooltipUtils.isWithinComment(newEvent.pre)) {
+            // if selected text is within a comment,
+            // hide current tooltip (if any) and return
+            // eslint-disable-next-line react/no-did-update-set-state
+            this.setState({currentTooltip: null});
+            return;
+        }
+        // eslint-disable-next-line react/no-did-update-set-state
+        this.setState({
+            eventToCheck: newEvent,
+            possibleTooltips: this.props.tooltips
+        })
+    }
+
+    handleBlurEvent(e) {
+        const blurTarget = e.target;
+        return;
+        console.log("Got blur event", e);
+        if (blurTarget &&
+            this.state.currentTooltip &&
+            !this.domRef.current.contains(blurTarget)) {
+            this.setState({currentTooltip: null});
+        }
+    }
+
+    render() {
+       const tooltipsRendered = this.props.tooltips.map((name) => {
+            const childProps = Object.assign({
+                    key: name,
+                    isEnabled: false,
+                    autofillEnabled: !this.state.autofillEnabled
+                },
+                this.props);
+            childProps.onScrubbingStart = (readOnly) => {
+                this.props.onScrubbingStart(name, readOnly);
+            };
+            childProps.onScrubbingEnd = (readOnly) => {
+                this.props.onScrubbingEnd(name, readOnly);
+            };
+            childProps.onEventCheck = (foundMatch, aceLocation) => {
+                if (foundMatch) {
+                    this.setState({
+                        currentTooltip: name,
+                        possibleTooltips: []});
+                    this.props.onTooltipChange(name, aceLocation);
+                } else {
+                    this.setState((prevState, props) => ({
+                        possibleTooltips: prevState.possibleTooltips.filter(e => e !== name)
+                    }));
+                }
+            };
+            childProps.onTextUpdateRequest = (aceLocation, newText, newSelection, avoidUndo) => {
+                this.ignore = true;
+                this.props.onTextUpdateRequest(aceLocation, newText, newSelection, avoidUndo);
+                this.ignore = false;
+            };
+            childProps.onTextInsertRequest = (aceLocation, newText) => {
+                this.ignore = true;
+                this.props.onTextInsertRequest(aceLocation, newText);
+                this.ignore = false;
+            };
+            childProps.onModalRefCreate = (ref) => {
+                this.setState({modalRef: ref});
+            }
+            if (this.state.currentTooltip === name) {
+                childProps.isEnabled = true;
+            }
+            if (this.state.possibleTooltips && this.state.possibleTooltips[0] === name) {
+                childProps.eventToCheck = this.state.eventToCheck;
+            }
+            this.tooltips[name] = React.createElement(
+                TooltipEngine.tooltipClasses[name], childProps, null);
+            return this.tooltips[name];
+        });
+        return <div ref={this.domRef}>{tooltipsRendered}</div>;
+    }
+}
+
+TooltipEngine.tooltipClasses = {};
+
+TooltipEngine.registerTooltip = function(name, tooltipClass) {
+    TooltipEngine.tooltipClasses[name] = tooltipClass;
+};

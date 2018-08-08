@@ -142,9 +142,115 @@ describe("Linting", function() {
         "INSERT INTO characters VALUES (1, 'RicK');" +
         "INSERT INTO character_episodes VALUES (1, 73);");
 
-    // Test that extra context is given other than the SQLite error
-    failingTest("Testing for extra context",
+    // Tests for extra syntax checks
+
+    failingTest("Testing for extra context, missing FROM",
         "CREATE TABLE characters (name TEXT);" +
         "SELECT name WHERE name = 3;",
         ["Are you missing a FROM clause?"]);
+
+    failingTest("Testing for misspelling INTEGER",
+        "CREATE TABLE books(id INTERGER PRIMARY KEY, name TEXT);",
+        ["Is INTEGER spelled correctly?"]);
+
+    failingTest("Testing for wrong order of PRIMARY KEY",
+        "CREATE TABLE books (id PRIMARY KEY INTEGER,name TEXT,rating INTEGER );",
+        ["Did you mean to put PRIMARY KEY after INTEGER?"]);
+
+    failingTest("Testing for missing parenthesis",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY, name TEXT, rating INTEGER; ",
+        ["Are you missing a parenthesis?"]);
+
+    failingTest("Testing for extra comma at end",
+        "CREATE TABLE books(id INTEGER PRIMARY KEY, name TEXT, );",
+        ["Do you have an extra comma?"]);
+
+    failingTest("Testing for bad CREATE syntax",
+        "CREATE TABLE books(id INTEGER PRIMARY KEY name TEXT);",
+        ["There's a syntax error near "]);
+
+    failingTest("Testing for CREATE missing TABLE",
+        "CREATE books(id INTEGER PRIMARY KEY name TEXT);",
+        ["You may be missing what to create. For example, CREATE TABLE..."]);
+
+    failingTest("Testing for bad table name",
+        "CREATE TABLE favorite books (name TEXT);" +
+        "SELECT name WHERE name = 3;",
+        ["You can't have a space in your table name."]);
+    
+    failingTest("Testing for missing table name",
+        "CREATE TABLE (name TEXT);",
+        ["Are you missing the table name?"]);
+
+    failingTest("Testing for extra commas in column types",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY,name,TEXT,rating INTEGER);",
+        ["Do you have an extra comma between the name and type?"]);
+
+    failingTest("Testing for extra commas in column types #2",
+        "CREATE TABLE booklist (id, INTEGER PRIMARY KEY, name TEXT, rating INTEGER);",
+        ["Do you have an extra comma between the name and type?"]);
+
+    failingTest("Testing for space in column name",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY, title TEXT, rating out of ten INTEGER);",
+        ["You can't have a space in your column name."]);
+ 
+    failingTest("Testing for missing quotes #1",
+        "INSERT INTO FavBooks VALUES (1, Beautiful Creatures, 10);",
+        ["Are you missing quotes around text values?"]);
+    failingTest("Testing for missing quotes #2",
+        "insert into Books VALUES(1,\"Harry Potter\",5 star); ",
+        ["Are you missing quotes around text values?"]);
+
+    failingTest("Testing for missing semi-colon #1",
+        "CREATE TABLE books (name TEXT)" +
+        "INSERT INTO books VALUES (1, 'book a', 100)" + 
+        "INSERT INTO books VALUES (2, 'book b', 110)" + 
+        "INSERT INTO books VALUES (3, 'book c', 1)",
+        ["Do you have a semi-colon after each statement?"]);
+    failingTest("Testing for missing semi-colon #2",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY, bookname TEXT, ratingoutof5 INTEGER);\n" +
+        "INSERT INTO books VALUES (1, 'Harry Potter', 5)\n" + 
+        "INSERT INTO books VALUES (2, 'Percy Jackson and the Olympians', 5)\n" + 
+        "INSERT INTO books VALUES (3, 'The Hunger Games', 5)\n",
+        ["Do you have a semi-colon after each statement?"]);
+    failingTest("Testing for missing semi-colon #3",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY, name TEXT, rating INTEGER)" + 
+        "INSERT INTO books VALUES (1 , 'Rumo', 5);",
+        ["Do you have a semi-colon after each statement?"]);
+    failingTest("Testing for missing semi-colon #4",
+        "CREATE TABLE books (id INTEGER PRIMARY KEY, name TEXT, rating INTEGER)\n" + 
+        "     INSERT INTO books VALUES (1 , 'Rumo', 5);",
+        ["Do you have a semi-colon after each statement?"]);
+    failingTest("Testing for missing semi-colon #5",
+        "SELECT * FROM movies\n" + 
+        " SELECT * FROM movies WHERE release_year > 1999;",
+        ["Do you have a semi-colon after each statement?"]);
+    failingTest("Testing for missing semi-colon #6",
+        "CREATE TABLE customers (id INTEGER\n" +
+        "PRIMARY KEY, name TEXT, rating INTEGER)\n" +
+        "INSERT INTO customers VALUES (73, \"Brian\", 33);",
+        ["Do you have a semi-colon after each statement?"]);
+    /* TODO(pamela): Add tests to make sure the following *don't* generate the message
+        SELECT SUM(minutes INTEGER) FROM todo_list; 
+        SELECT minutes SUM(quantity) FROM todo_list ORDER BY minutes;
+        SELECT minutes SUM(item) FROM todo_list GROUP BY minutes;
+        SELECT minutes SUM(quantity), FROM todo_list;
+    */
+
+    failingTest("Testing for extra comma",
+        "CREATE TABLE books (id INTEGER, name TEXT, rating INTEGER);" +
+        "INSERT, INTO books VALUES (1, \"gone with the wind\", 1)",
+        ["There shouldn't be a comma after INSERT."]);
+
+
+    failingTest("Testing for UNIQUE constraint",
+        "CREATE TABLE customers (id INTEGER PRIMARY KEY);\n" + 
+        "INSERT INTO customers VALUES (1);" +
+        "INSERT INTO customers VALUES (1);",
+        ["Are you specifying a different value for each row?"]);
+
+    failingTest("Testing for duplicate column name",
+        "CREATE TABLE customers (id INTEGER PRIMARY KEY, id TEXT);",
+        ["You have multiple columns named `id` - column names must be unique."]);
+
 });

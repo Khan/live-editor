@@ -1,6 +1,15 @@
-/* Provides debugging support for live-editor */
+/* eslint-disable no-var, one-var, import/no-commonjs */
+/* TODO: Fix the lint errors */
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+const iframeOverlay = require("iframe-overlay");
+const React = require("react");
+const ReactDOM = require("react-dom");
 
-window.ScratchpadDebugger = Backbone.View.extend({
+const DebuggerControls = require("./debugger-controls.jsx");
+
+/* Provides debugging support for live-editor */
+const ScratchpadDebugger = Backbone.View.extend({
 
     el: ".scratchpad-debugger",
 
@@ -13,11 +22,14 @@ window.ScratchpadDebugger = Backbone.View.extend({
     },
 
     render: function() {
-        this.$el.html(Handlebars.templates["debugger"]({
-            execFile: this.execFile,
-            imagesDir: this.imagesDir,
-            colors: this.colors
-        }));
+        ReactDOM.render(
+            React.createElement(DebuggerControls, {}, null),
+            this.el);
+    },
+
+    remove: function() {
+        ReactDOM.unmountComponentAtNode(this.$el[0]);
+        this.$el.remove();
     },
 
     postFrame: function(data) {
@@ -26,7 +38,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
     bind: function() {
         // create the overlay first before binding any event handlers because
-        // createOverlay moves the iframe's position in the DOM tree which 
+        // createOverlay moves the iframe's position in the DOM tree which
         // unbinds existing event handlers
         var iframe = $("iframe").get(0);
         this.overlay = iframeOverlay.createOverlay(iframe);
@@ -149,7 +161,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         // set/clear breakpoints by clicking in the gutter
         this.editor.on("guttermousedown", function(e) {
             var target = e.domEvent.target;
-            if (target.className.indexOf("ace_gutter-cell") == -1) {
+            if (target.className.indexOf("ace_gutter-cell") === -1) {
                 return;
             }
 
@@ -191,7 +203,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
             var delta = e.data;
             var range = delta.range;
-            if (range.end.row == range.start.row) {
+            if (range.end.row === range.start.row) {
                 return;
             }
 
@@ -227,6 +239,11 @@ window.ScratchpadDebugger = Backbone.View.extend({
     },
 
     listenMessages: function(e) {
+        // DANGER!  The data coming in from the iframe could be anything,
+        // because with some cleverness the author of the program can send an
+        // arbitrary message up to us.  We need to be careful to sanitize it
+        // before doing anything with it, to avoid XSS attacks.  For more
+        // information, see the comment in handleMessages in live-editor.js.
         var event = e.originalEvent;
         var data;
 
@@ -250,9 +267,10 @@ window.ScratchpadDebugger = Backbone.View.extend({
             this.disableButtons();
             editor.setHighlightActiveLine(false);
         } else if (data.action === "step") {
-            if (data.line > 0) {
+            // Coerce to number just in case
+            if (+data.line > 0) {
                 this.enableButtons();
-                editor.gotoLine(data.line);
+                editor.gotoLine(+data.line);
                 editor.setHighlightActiveLine(true);
                 this.overlay.pause();
             } else {
@@ -283,3 +301,5 @@ window.ScratchpadDebugger = Backbone.View.extend({
         this.$el.find(".debug-continue").attr("disabled", "");
     }
 });
+
+module.exports = ScratchpadDebugger;

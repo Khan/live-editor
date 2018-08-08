@@ -6,6 +6,14 @@
     display: none;
 }
 
+.scratchpad-wrap.no-output .scratchpad-canvas-wrap {
+    display: none;
+}
+
+.scratchpad-wrap.no-output .scratchpad-editor-wrap {
+    margin-right: 0;
+}
+
 .scratchpad-wrap .scratchpad-canvas-wrap {
     float: right;
 }
@@ -17,13 +25,11 @@
 }
 
 .scratchpad-wrap .scratchpad-editor-wrap {
-    margin-right: 412px;
     position: relative;
 }
 
 .scratchpad-wrap .scratchpad-editor-wrap .scratchpad-editor-tabs,
 .scratchpad-wrap .scratchpad-editor-wrap .scratchpad-toolbar {
-    margin-right: @row-spacing;
     position: relative;
 }
 
@@ -41,36 +47,42 @@
     margin-right: 5px;
 }
 
-.scratchpad-wrap .scratchpad-toolbar .simple-button.pull-left {
+.scratchpad-wrap .scratchpad-toolbar .simple-button.pull-right {
     float: right;
     margin-left: 5px;
 }
 
+.scratchpad-wrap .error-buddy-resting {
+    color: #4A7040;
+    display: inline-block;
+    height: 35px;
+    position: relative;
+    white-space: nowrap;
+}
+.scratchpad-wrap .error-buddy-resting .error-buddy-happy,
+.scratchpad-wrap .error-buddy-resting .error-buddy-thinking {
+    background: transparent;
+    border: none;
+    position: absolute;
+    text-decoration: none;
+}
+
+.scratchpad-wrap .error-buddy-resting .error-buddy-thinking {
+    cursor: pointer;
+}
+
+.scratchpad-wrap .error-buddy-resting img {
+    height: 35px;
+    vertical-align: middle;
+}
+
 .scratchpad-editor-bigplay-button,
 .scratchpad-editor-bigplay-loading,
-.scratchpad-canvas-loading,
 #sm2-container.swf_timedout {
     left: 40%;
     position: absolute;
     top: 30%;
     z-index: 1000;
-}
-
-.scratchpad-editor-bigplay-button {
-    background: #ddd;
-    border: none;
-    border-radius: 10px;
-    box-shadow: none;
-    color: white;
-    cursor: pointer;
-    font-size: 66px;
-    line-height: 1em;
-    opacity: .7;
-    padding: 20px 13px 20px 40px;
-}
-
-.scratchpad-editor-bigplay-button:hover {
-    opacity: 1.0;
 }
 
 .scratchpad-ace-editor {
@@ -108,67 +120,9 @@
     transition: background 200ms ease-in-out;
 }
 
-.scratchpad-ace-editor .ace_active_line.hilite {
-    background: rgba(255, 100, 100, 1);
-}
-
 .scratchpad-ace-editor .ace_line {
     direction: ltr;
     unicode-bidi: bidi-override;
-}
-
-.scratchpad-playbar {
-    height: 30px;
-    position: relative;
-}
-
-.scratchpad-playbar .scratchpad-playbar-play {
-    position: absolute;
-    left: 0;
-}
-
-.scratchpad-playbar .scratchpad-playbar-play .ui-button-text {
-    // override default of .4em so play button will fit in an iframe
-    padding: 5px;
-}
-
-.scratchpad-playbar .scratchpad-playbar-timeleft {
-    font-family: monospace;
-    font-size: 11px;
-    position: absolute;
-    right: 45px;
-    top: 4px;
-}
-
-.scratchpad-playbar .scratchpad-playbar-progress {
-    margin: 0 80px 0 45px;
-    position: relative;
-    top: 8px;
-}
-
-.scratchpad-playbar .scratchpad-playbar-progress .ui-slider-handle {
-    width: 9px;
-}
-
-.scratchpad-playbar .scratchpad-playbar-progress .ui-slider-range-min {
-    background: #678D00;
-}
-
-.scratchpad-playbar .scratchpad-playbar-options {
-    position: absolute;
-    right: 0px;
-    top: 0px;
-}
-
-.scratchpad-playbar .scratchpad-playbar-options .dropdown-toggle {
-    height: 25px;
-    padding: 5px;
-}
-
-.scratchpad-playbar .loading-msg {
-    background: url(../images/throbber.gif) no-repeat 7px center;
-    line-height: 30px;
-    padding-left: 30px;
 }
 
 #output {
@@ -182,23 +136,10 @@
     border: 1px solid #D4CCB0;
 }
 
-.scratchpad-draw-canvas,
-#output-frame {
-    width: 400px;
-    top: 0;
-    left: auto;
-    bottom: auto;
-    right: 0;
-}
-
 #output-frame {
     box-sizing: border-box;
     height: 100%;
     overflow: hidden;
-}
-
-#draw-widgets {
-    margin-bottom: 10px;
 }
 
 .scratchpad-wrap .overlay {
@@ -217,13 +158,6 @@
     position: relative;
 }
 
-.scratchpad-wrap .disable-overlay {
-    background: rgba(255,255,255,0.9);
-    cursor: pointer;
-    opacity: 0;
-    z-index: 880;
-}
-
 button {
     transition: box-shadow 200ms ease-in-out;
     box-shadow: 0 0 0px green;
@@ -231,4 +165,70 @@ button {
 
 button.hilite {
     box-shadow: 0 0 20px green;
+}
+
+/** Tipbar CSS (Error Buddy **/
+
+/**
+ * Code Error Reporting
+ * --------------------
+ *
+ * Indicates to users if something is wrong in the code. Overlays on top
+ * of the canvases.
+ */
+ .tipbar {
+    border-radius: 10px;
+    /* Needs to match the background image */
+    background: #F9F9F9;
+    border: 1px solid #EEE;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+    color: #000;
+    font-family: Helvetica;
+    font-weight: normal;
+    left: 125px;
+    margin: auto;
+    min-height: 40px;
+    position: absolute;
+    top: 100px;
+    width: 260px;
+}
+.tipbar .error-buddy {
+    background: url(../images/scratchpads/error-buddy.png);
+    cursor: move;
+    height: 116px;
+    left: -140px;
+    opacity: 0.75;
+    position: absolute;
+    top: -12px;
+    width: 130px;
+}
+.tipbar .speech-arrow {
+    background-image: url(../images/scratchpads/speech-arrow.png);
+    background-repeat: no-repeat;
+    height: 24px;
+    left: -14px;
+    position: absolute;
+    top: 40px;
+    width: 14px;
+}
+.tipbar .text-wrap {
+    line-height: 1.4em;
+    margin: 8px;
+}
+.tipbar .text-wrap .message {
+    line-height: 20px;
+    margin: 10px 0px;
+    text-align: left;
+}
+.tipbar .text-wrap .message .quote {
+    border-radius: 5px;
+    background: #fff;
+    border: 1px solid #EEE;
+    display: inline-block;
+    font-family: Consolas, Courier New, monospace;
+    font-size: 14px;
+    line-height: 22px;
+    margin: 0px 2px;
+    padding: 1px 4px;
+    text-align: left;
 }

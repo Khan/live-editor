@@ -1,4 +1,12 @@
-window.OutputTester = function() {};
+/* eslint-disable no-var, no-redeclare, no-new-func */
+/* TODO: Fix the lint errors */
+/* We list i18n and lodash as globals instead of require() them
+  due to how we load this file in the test-worker */
+/* global i18n, lodash */
+
+const PooledWorker = require("./pooled-worker.js");
+
+const OutputTester = function() {};
 
 OutputTester.prototype = {
     initialize: function(options) {
@@ -13,14 +21,15 @@ OutputTester.prototype = {
             }
         }
 
-        for (var prop in this.defaultTestContext) {
+        for (var prop in this.defaultTestContext) { /* jshint forin:false */
             if (!(prop in this.testContext)) {
                 this.testContext[prop] = this.defaultTestContext[prop];
             }
         }
 
-        // This won't be defined inside a web worker itself (that's ok)
-        if (typeof PooledWorker === "undefined") {
+        // When we call this from a worker, we don't specify a workerFile,
+        // and that signifies that we don't need to spawn a worker
+        if (!options || !options.workerFile) {
             return;
         }
 
@@ -28,16 +37,15 @@ OutputTester.prototype = {
          * The worker that runs the tests in the background, if possible.
          */
         this.testWorker = new PooledWorker(
-            options.workerFile,
+            options.workerFile, options.workersDir,
             function(code, validate, errors, callback) {
-                var self = this;
-
                 // If there are syntax errors in the tests themselves,
                 //  then we ignore the request to test.
                 try {
                     tester.exec(validate);
                 } catch(e) {
                     if (window.console) {
+                        // eslint-disable-next-line no-console
                         console.warn(e.message);
                     }
                     return;
@@ -56,7 +64,7 @@ OutputTester.prototype = {
 
                 var worker = this.getWorkerFromPool();
 
-                worker.onmessage = function(event) {
+                worker.onmessage = (event) => {
                     if (event.data.type === "test") {
                         // PJSOutput.prototype.kill() is called synchronously
                         // from callback so if we want test workers to be
@@ -66,19 +74,18 @@ OutputTester.prototype = {
                         // from the PooledWorker's pool so we don't have to
                         // worry about returning workers to the pool before
                         // calling kill()
-                        self.addWorkerToPool(worker);
-                        if (self.isCurrentWorker(worker)) {
+                        this.addWorkerToPool(worker);
+                        if (this.isCurrentWorker(worker)) {
                             var data = event.data.message;
                             callback(data.errors, data.testResults);
                         }
                     }
                 };
-
                 worker.postMessage({
                     code: code,
                     validate: validate,
                     errors: errors,
-                    externalsDir: this.externalsDir
+                    externalsDir: options.externalsDir
                 });
             }
         );
@@ -149,7 +156,7 @@ OutputTester.prototype = {
         test: function(name, fn, type) {
             if (!fn) {
                 fn = name;
-                name = $._("Test Case");
+                name = i18n._("Test Case");
             }
 
             this.tests.push({
@@ -162,6 +169,7 @@ OutputTester.prototype = {
                         return fn.apply(this, arguments);
                     } catch (e) {
                         if (window.console) {
+                            // eslint-disable-next-line no-console
                             console.warn(e);
                         }
                     }
@@ -269,3 +277,5 @@ OutputTester.prototype = {
         }
     }
 };
+
+module.exports = OutputTester;

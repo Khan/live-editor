@@ -1,4 +1,13 @@
-window.PJSTester = function(options) {
+/* eslint-disable no-var, one-var, curly */
+/* TODO: Fix the lint errors */
+/* We list i18n and lodash as globals instead of require() them
+  due to how we load this file in the test-worker */
+/* global i18n, _ */
+
+import OutputTester from "../shared/output-tester.js";
+import Structured from "../../../external/structuredjs/structured.js";
+
+const PJSTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
 };
@@ -26,7 +35,7 @@ PJSTester.prototype.testMethods = {
         }
 
         this.testContext.assert(false,
-            $._("Expected function call to '%(name)s' was not made.",
+            i18n._("Expected function call to '%(name)s' was not made.",
             {name: name}));
     },
 
@@ -48,7 +57,7 @@ PJSTester.prototype.testMethods = {
         }
 
         this.testContext.assert(false,
-            $._("Expected function call to '%(name)s' was not made.",
+            i18n._("Expected function call to '%(name)s' was not made.",
             {name: calls[callPos][0]}));
     },
 
@@ -78,7 +87,7 @@ PJSTester.prototype.testMethods = {
 
         if (pass) {
             this.testContext.assert(true,
-                $._("Correct function call made to %(name)s.",
+                i18n._("Correct function call made to %(name)s.",
                 {name: name}));
         }
 
@@ -92,7 +101,7 @@ PJSTester.prototype.testMethods = {
     _assertVarName: function(str) {
         if (!this.testContext._isVarName(str)) {
             throw new Error(
-                $._("Expected '%(name)s' to be a valid variable name.",
+                i18n._("Expected '%(name)s' to be a valid variable name.",
                     {name: str}));
         }
     },
@@ -177,7 +186,7 @@ PJSTester.prototype.testMethods = {
                     predicate(first, b.value));
             };
         } else {
-            throw new Error($._("Expected either '%(first)s' or '%(second)s'" +
+            throw new Error(i18n._("Expected either '%(first)s' or '%(second)s'" +
                 " to be a valid variable name.",
                 {first: first, second: second}));
         }
@@ -338,7 +347,7 @@ PJSTester.prototype.testMethods = {
         if (this.errors.length) {
             return {
                 success: false,
-                message: $._("Syntax error!")
+                message: i18n._("Syntax error!")
             };
         }
 
@@ -374,11 +383,11 @@ PJSTester.prototype.testMethods = {
             };
         } catch (e) {
             if (window.console) {
-                console.warn(e);
+                console.warn(e); // eslint-disable-line no-console
             }
             return {
                 success: true,
-                message: $._("Hm, we're having some trouble " +
+                message: i18n._("Hm, we're having some trouble " +
                     "verifying your answer for this step, so we'll give " +
                     "you the benefit of the doubt as we work to fix it. " +
                     "Please click \"Report a problem\" to notify us.")
@@ -396,47 +405,51 @@ PJSTester.prototype.testMethods = {
         return this.testContext.match(structure).success;
     },
 
+    _checkSyntaxErrors: function(syntaxChecks) {
+        if (!syntaxChecks) return;
+
+        // If we found any syntax errors or warnings, we'll send it
+        // through the special syntax checks
+        var foundErrors = _.any(this.errors, function(error) {
+            return error.lint;
+        });
+
+        if (foundErrors) {
+            _.each(syntaxChecks, function(syntaxCheck) {
+                // Check if we find the regex anywhere in the code
+                var foundCheck = this.userCode.search(syntaxCheck.re);
+                var rowNum = -1, colNum = -1, errorMsg;
+                if (foundCheck > -1) {
+                    errorMsg = syntaxCheck.msg;
+
+                    // Find line number and character
+                    var lines = this.userCode.split("\n");
+                    var totalChars = 0;
+                    _.each(lines, function(line, num) {
+                        if (rowNum === -1 &&
+                            foundCheck < totalChars + line.length) {
+                            rowNum = num;
+                            colNum = foundCheck - totalChars;
+                        }
+                        totalChars += line.length;
+                    });
+
+                    this.errors.splice(0, 1, {
+                        text: errorMsg,
+                        row: rowNum,
+                        col: colNum,
+                        type: "error"
+                    });
+                }
+            }.bind(this));
+        }
+    },
+
     /*
-     * Creates a new test result (i.e. new challenge tab)
+     * Creates a new test result (i.e. new challenge step)
      */
     assertMatch: function(result, description, hint, image, syntaxChecks) {
-        if (syntaxChecks) {
-            // If we found any syntax errors or warnings, we'll send it
-            // through the special syntax checks
-            var foundErrors = _.any(this.errors, function(error) {
-                return error.lint;
-            });
-
-            if (foundErrors) {
-                _.each(syntaxChecks, function(syntaxCheck) {
-                    // Check if we find the regex anywhere in the code
-                    var foundCheck = this.userCode.search(syntaxCheck.re);
-                    var rowNum = -1, colNum = -1, errorMsg;
-                    if (foundCheck > -1) {
-                        errorMsg = syntaxCheck.msg;
-
-                        // Find line number and character
-                        var lines = this.userCode.split("\n");
-                        var totalChars = 0;
-                        _.each(lines, function(line, num) {
-                            if (rowNum === -1 &&
-                                foundCheck < totalChars + line.length) {
-                                rowNum = num;
-                                colNum = foundCheck - totalChars;
-                            }
-                            totalChars += line.length;
-                        });
-
-                        this.errors.splice(0, 1, {
-                            text: errorMsg,
-                            row: rowNum,
-                            col: colNum,
-                            type: "error"
-                        });
-                    }
-                }.bind(this));
-            }
-        }
+        this.testContext._checkSyntaxErrors(syntaxChecks);
 
         var alternateMessage;
         var alsoMessage;
@@ -458,3 +471,5 @@ PJSTester.prototype.testMethods = {
         });
     }
 };
+
+export default PJSTester;

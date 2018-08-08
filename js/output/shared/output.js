@@ -1,87 +1,195 @@
-window.LiveEditorOutput = Backbone.View.extend({
-    recording: false,
-    loaded: false,
-    outputs: {},
+import _ from "lodash";
+import React, {Component} from "react";
 
-    initialize: function(options) {
-        this.render();
+import ScratchpadConfig from "../../shared/config.js";
+import * as utils from "../../shared/utils.js";
 
-        this.setPaths(options);
+import "../../../css/output/style.css";
+
+const outputs = {};
+
+export default class LiveEditorOutput extends Component {
+    props: {
+        useDebugger: boolean,
+        imagesDir: string,
+        redirectUrl: string,
+    };
+
+    constructor(props) {
+        super(props);
+        this.state = {};
+
+        this.outputTypeRef = React.createRef();
+        this.handleMessage = this.handleMessage.bind(this);
+        this.notifyActiveOnce = _.once(this.notifyActive);
+        this.testThrottled = _.throttle(this.test, 200);
 
         this.config = new ScratchpadConfig({
-            useDebugger: options.useDebugger
+            useDebugger: this.props.useDebugger,
         });
 
-        if (options.outputType) {
-            this.setOutput(options.outputType);
-        }
-        
-        this.bind();
-    },
+        // TODO: Move these into state
+        this.recording = false;
+        this.loaded = false;
+        this.lintErrors = [];
+        this.runtimeErrors = [];
+        this.lintWarnings = [];
+        this.setPaths(props);
 
-    render: function() {
-        this.$el.html("<div class=\"output\"></div>");
-    },
+        // Add a timestamp property to the lintErrors and runtimeErrors arrays
+        // to keep track of which version of the code the errors are for.  A
+        // new timestamp is created when runCode is called and is assigned to
+        // lintErrors and runtimeErrors (if there is no lint) when linting and
+        // running of the code complete.  The timestamps are used later to
+        // ensure we're not report stale errors that have already been fixed
+        // to the parent.  Adding properties to an array works because Array is
+        // essentially a special subclass of Object.
+        this.lintErrors.timestamp = 0;
+        this.runtimeErrors.timestamp = 0;
+        this.lintWarnings.timestamp = 0;
+    }
 
-    bind: function() {
+    componentDidMount() {
         // Handle messages coming in from the parent frame
-        window.addEventListener("message",
-            this.handleMessage.bind(this), false);
-    },
+        window.addEventListener("message", this.handleMessage, false);
+    }
 
-    setOutput: function(outputType) {
-        var OutputClass = this.outputs[outputType];
-        this.output = new OutputClass({
-            el: this.$el.find(".output"),
+    renderOutputType() {
+        if (!this.state.readyToInitOutput) {
+            return null;
+        }
+        const props = {
+            ref: this.outputTypeRef,
             config: this.config,
-            output: this,
-            type: outputType
-        });
-    },
+            type: this.state.outputType,
+            settings: this.state.settings,
+            soundsDir: this.state.soundsDir,
+            imagesDir: this.state.imagesDir,
+            workersDir: this.state.workersDir,
+            externalsDir: this.state.externalsDir,
+            jshintFile: this.state.jshintFile,
+            redirectUrl: this.props.redirectUrl,
+            mouseActionReq: this.state.mouseActionReq,
+            initDocReq: this.state.initDocReq,
+            screenshotReq: this.state.screenshotReq,
+            enableLoopProtect: this.state.enableLoopProtect !== false,
+            loopProtectTimeouts: this.state.loopProtectTimeouts,
+            lintCodeReq: this.state.lintCodeReq,
+            runCodeReq: this.state.runCodeReq,
+            toggleReq: this.state.toggleReq,
+            onCanvasEvent: (e) => {
+                const offset = utils.getOffset(e.target);
+                // Only log if recording is occurring
+                if (this.recording) {
+                    // Log the command
+                    // Track the x/y coordinates of the event
+                    const x = e.pageX - offset.left;
+                    const y = e.pageY - offset.top;
+                    this.postParent({
+                        log: [name, x, y],
+                    });
+                }
+            },
+            onRestartRequest: () => {
+                this.restart();
+            },
+            onRunTestsRequest: (callback) => {
+                return this.testThrottled(
+                    this.getUserCode(),
+                    this.validate,
+                    [],
+                    callback,
+                );
+            },
+            onPhoneHomeRequest: () => {
+                this.phoneHome();
+            },
+            onAssertionFail: (row, column, text) => {
+                this.results.assertions.push({row, column, text});
+            },
+            onTestsResults: (name, result) => {
+                this.postParent({
+                    results: {
+                        code: this.getUserCode(),
+                        errors: [],
+                        tests: [
+                            {
+                                name: name,
+                                state: result ? "pass" : "fail",
+                                results: [],
+                            },
+                        ],
+                    },
+                    pass: result,
+                });
+            },
+            onInfiniteLoopError: (error) => {
+                this.postParent({
+                    results: {
+                        code: this.getUserCode(),
+                        errors: [error],
+                    },
+                });
+            },
+            onScreenshotCreate: (data) => {
+                this.postParent(data);
+            },
+            onCodeLint: (lintResults) => {
+                this.lintErrors = lintResults.errors;
+                this.lintErrors.timestamp = lintResults.timestamp;
+                this.lintWarnings = lintResults.warnings;
+                this.lintWarnings.timestamp = lintResults.timestamp;
+                this.lintDone(lintResults.code, lintResults.timestamp);
+            },
+            onCodeRun: (runResults) => {
+                this.runtimeErrors = runResults.errors;
+                this.runtimeErrors.timestamp = runResults.timestamp;
+                this.buildDone(runResults.code);
+            },
+            onTitleChange: (title) => {
+                this.postParent({
+                    action: "page-info",
+                    title: title,
+                });
+            },
+        };
+        return React.createElement(outputs[this.state.outputType], props);
+    }
 
-    setPaths: function(data) {
+    setPaths(data) {
         if (data.workersDir) {
-            this.workersDir = this._qualifyURL(data.workersDir);
-            PooledWorker.prototype.workersDir = this.workersDir;
+            this.setState({workersDir: utils.qualifyURL(data.workersDir)});
         }
         if (data.externalsDir) {
-            this.externalsDir = this._qualifyURL(data.externalsDir);
-            PooledWorker.prototype.externalsDir = this.externalsDir;
+            this.setState({externalsDir: utils.qualifyURL(data.externalsDir)});
         }
         if (data.imagesDir) {
-            this.imagesDir = this._qualifyURL(data.imagesDir);
+            this.setState({imagesDir: utils.qualifyURL(data.imagesDir)});
         }
         if (data.soundsDir) {
-            this.soundsDir = this._qualifyURL(data.soundsDir);
+            this.setState({soundsDir: utils.qualifyURL(data.soundsDir)});
         }
         if (data.redirectUrl) {
-            this.redirectUrl = data.redirectUrl;
+            this.setState({redirectUrl: data.redirectUrl});
         }
         if (data.jshintFile) {
-            this.jshintFile = this._qualifyURL(data.jshintFile);
-            PooledWorker.prototype.jshintFile = this.jshintFile;
+            this.setState({jshintFile: utils.qualifyURL(data.jshintFile)});
         }
-    },
+    }
 
-    _qualifyURL: function(url){
-        var a = document.createElement("a");
-        a.href = url;
-        return a.href;
-    },
-
-    handleMessage: function(event) {
-        var data;
+    handleMessage(event) {
+        let data;
 
         this.frameSource = event.source;
         this.frameOrigin = event.origin;
 
         // let the parent know we're up and running
-        this.notifyActive();
+        this.notifyActiveOnce();
 
         // filter out events that are objects
         // currently the only messages that contain objects are messages
         // being sent by Poster instances being used by the iframeOverlay
-        // in pjs-output.js and ui/debugger.js 
+        // in pjs-output.js and ui/debugger.js
         if (typeof event.data === "object") {
             return;
         }
@@ -91,10 +199,24 @@ window.LiveEditorOutput = Backbone.View.extend({
         } catch (err) {
             return;
         }
-        if (!this.output) {
-            var outputType = data.outputType || _.keys(this.outputs)[0];
-            this.setOutput(outputType);
+
+        const outputType = data.outputType || Object.keys(outputs)[0];
+        let enableLoopProtect = true;
+        if (data.enableLoopProtect != null) {
+            enableLoopProtect = data.enableLoopProtect;
         }
+        let loopProtectTimeouts = {
+            initialTimeout: 2000,
+            frameTimeout: 500,
+        };
+        if (data.loopProtectTimeouts != null) {
+            loopProtectTimeouts = data.loopProtectTimeouts;
+        }
+        this.setState({
+            outputType,
+            enableLoopProtect,
+            loopProtectTimeouts,
+        });
 
         // filter out debugger events
         // handled by pjs-debugger.js::handleMessage
@@ -112,17 +234,17 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Settings to initialize
         if (data.settings != null) {
-            this.settings = data.settings;
+            this.setState({settings: data.settings});
         }
 
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code, undefined, data.cursor, data.noLint);
+            this.runCode(data.code, undefined, data.noLint);
         }
 
         if (data.onlyRunTests != null) {
-            this.onlyRunTests = !!(data.onlyRunTests);
+            this.onlyRunTests = !!data.onlyRunTests;
         } else {
             this.onlyRunTests = false;
         }
@@ -139,40 +261,52 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Take a screenshot of the output
         if (data.screenshot != null) {
-            var screenshotSize = data.screenshotSize || 200;
-            this.output.getScreenshot(screenshotSize, function(data) {
-                // Send back the screenshot data
-                this.postParent(data);
-            }.bind(this));
+            this.setState({
+                screenshotReq: {
+                    time: Date.now(),
+                    size: data.screenshotSize || 200,
+                },
+            });
         }
-
-        if (this.output.messageHandlers) {
-            for (var prop in data) {
-                if (prop in this.output.messageHandlers) {
-                    this.output.messageHandlers[prop].call(this.output, data);
-                }
-            }
+        if (data.prop === "mouseAction") {
+            this.setState({mouseActionReq: {time: Date.now(), data}});
         }
-    },
+        if (data.prop === "documentation") {
+            this.setState({docInitReq: {time: Date.now(), data}});
+        }
+        this.setState({readyToInitOutput: true});
+    }
 
     // Send a message back to the parent frame
-    postParent: function(data) {
+    postParent(data) {
         // If there is no frameSource (e.g. we're not embedded in another page)
         // Then we don't need to care about sending the messages anywhere!
         if (this.frameSource) {
-            this.frameSource.postMessage(
-                typeof data === "string" ? data : JSON.stringify(data),
-                this.frameOrigin);
-        }
-    },
+            let parentWindow = this.frameSource;
+            // In Chrome on dev when postFrame is called from webapp's
+            // scratchpad package it is somehow executed from the iframe
+            // instead, so frameSource is not really the parent frame.  We
+            // detect that here and fix it.
+            // TODO(james): Figure out why this is and if there is a better
+            // place to put a fix.
+            if (this.frameSource === window) {
+                parentWindow = this.frameSource.parent;
+            }
 
-    notifyActive: _.once(function() {
-        this.postParent({ active: true });
-    }),
+            parentWindow.postMessage(
+                typeof data === "string" ? data : JSON.stringify(data),
+                this.frameOrigin,
+            );
+        }
+    }
+
+    notifyActive() {
+        this.postParent({active: true});
+    }
 
     // This function stores the new tests on the validate property
     //  and it executes the test code to see if its valid
-    initTests: function(validate) {
+    initTests(validate) {
         // Only update the tests if they have changed
         if (this.validate === validate) {
             return;
@@ -180,194 +314,204 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         // Prime the test queue
         this.validate = validate;
-    },
+    }
 
-    runCode: function(userCode, callback, cursor, noLint) {
+    /**
+     * Converts an error to something that will JSONify usefully
+     *
+     * JS error objects JSONify to an empty object, so we need to convert them
+     * to a plain object ourselves first.  Since we'll end up doing some
+     * conversion of the format to better match jshint errors anyway, we'll
+     * just do that here too.  But sanitization will happen outside the iframe,
+     * since any code here can be bypassed by the user.
+     *
+     * @param {*} error: the error to JSONify
+     * @returns {*}
+     */
+    jsonifyError(error) {
+        if (typeof error !== "object" || utils.isPlainObject(error)) {
+            // If we're not an object, or we're a plain object, we don't need
+            // to do anything.
+            return error;
+        } else {
+            return {
+                row: error.lineno ? error.lineno - 2 : -1,
+                column: 0,
+                text: error.message,
+                type: "error",
+                source: "native",
+                priority: 3,
+            };
+        }
+    }
+
+    /**
+     * Performs all steps necessary to run code.
+     * - lint
+     * - actually run the code
+     * - manage lint and runtime errors
+     * - call the callback (via buildDone) to run tests
+     *
+     * @param userCode: code to run
+     * @param callback: used by the tests
+     * @param noLint: disables linting if true, first run still lints
+     *
+     * TODO(kevinb) return a Deferred and move test related code to test_utils
+     */
+    runCode(userCode, callback, noLint) {
         this.currentCode = userCode;
+        const timestamp = Date.now();
 
         this.results = {
+            timestamp: timestamp,
             code: userCode,
             errors: [],
-            assertions: []
+            assertions: [],
+            warnings: [],
         };
-        this.lastSent = undefined;
 
-        var buildDone = function(errors) {
-            errors = this.cleanErrors(errors || []);
+        // Always lint the first time, so that PJS can populate its list of globals
+        const skip = noLint && this.firstLint;
 
-            if (!this.loaded) {
-                this.postParent({ loaded: true });
-                this.loaded = true;
-            }
+        this.setState({
+            lintCodeReq: {code: userCode, skip, timestamp},
+            testsCallback: callback,
+        });
+        this.firstLint = true;
+    }
 
-            // Update results
-            this.results.errors = errors;
-            this.phoneHome();
+    /**
+     * Runs the code and records runtime errors.  Returns immediately if there
+     * are any lint errors.
+     *
+     * @param userCode
+     * @param timestamp
+     */
+    lintDone(userCode, timestamp) {
+        if (this.lintErrors.length > 0 || this.onlyRunTests) {
+            this.buildDone(userCode);
+            return;
+        }
+        // Then run the user's code
+        this.setState({runCodeReq: {code: userCode, timestamp}});
+    }
 
-            this.toggle(!errors.length);
+    /**
+     * Posts results to the the parent frame and runs tests if a callback has
+     * been set in state or if the .validate property is set.
+     *
+     * @param userCode
+     */
+    buildDone(userCode) {
+        let errors = [];
+        let warnings = [];
 
-            // A callback for working with a test suite
-            if (callback) {
-                //This is synchronous
-                this._test(userCode, this.validate, errors, function(errors, testResults) {
-                    callback(errors, testResults);
-                    return;
-                });
+        // only use lint errors if the timestamp isn't stale
+        if (this.results.timestamp === this.lintErrors.timestamp) {
+            errors = errors.concat(this.lintErrors);
+        }
+        // only use runtime errors if the timestamp isn't stale
+        if (this.results.timestamp === this.runtimeErrors.timestamp) {
+            errors = errors.concat(this.runtimeErrors);
+        }
+        // only use lint warnings if the timestamp isn't stale
+        if (this.results.timestamp === this.lintWarnings.timestamp) {
+            warnings = warnings.concat(this.lintWarnings);
+        }
+
+        errors = errors || [];
+        errors = errors.map(this.jsonifyError);
+
+        if (!this.loaded) {
+            this.postParent({loaded: true});
+            this.loaded = true;
+        }
+
+        // Update results
+        this.results.errors = errors;
+        this.results.warnings = warnings;
+        this.phoneHome();
+
+        this.toggle(!errors.length);
+
+        // A callback for working with a test suite
+        if (this.state.testsCallback) {
+            //This is synchronous
+            this.test(
+                userCode,
+                this.validate,
+                errors,
+                (errors, testResults) => {
+                    this.state.testsCallback(errors, testResults);
+                },
+            );
             // Normal case
-            } else {
-                // This is debounced (async)
-                if (this.validate !== "") {
-                    this.test(userCode, this.validate, errors, function(errors, testResults) {
+        } else {
+            // This is debounced (async)
+            if (this.validate !== "") {
+                this.testThrottled(
+                    userCode,
+                    this.validate,
+                    errors,
+                    (errors, testResults) => {
                         this.results.errors = errors;
                         this.results.tests = testResults;
                         this.phoneHome();
-                    }.bind(this));   
-                }
+                    },
+                );
             }
-        }.bind(this);
-
-        var lintDone = function(errors) {
-            if (errors.length > 0 || this.onlyRunTests) {
-                return buildDone(errors);
-            }
-
-            // Then run the user's code
-            try {
-                this.output.runCode(userCode, function(errors) {
-                    buildDone(errors);
-                }, cursor);
-
-            } catch (e) {
-                buildDone([e]);
-            }
-        }.bind(this);
-
-        // Always lint the first time, so that PJS can populate its list of globals
-        if (noLint && this.firstLint) {
-            lintDone([]);
-        } else {
-            this.lint(userCode, lintDone);
-            this.firstLint = true;
         }
-    },
+    }
 
     /**
-     * Send the most up to date errors/test results to the parent frame
+     * Send the most up to date errors/test results to the parent frame.
      */
-    phoneHome: function() {
-        // Our handling of errors is leaky.
-        // In the old design errors were passed from function to function 
-        // via arguments to callbacks. Recently I have added asynchronous sources 
-        // of errors such as those from breaking out of an infinite loop.
-        // These two different mechanisms mean that it's possible for errors to 
-        // get lost, but it can't be fixed without rewriting how all of the callbacks
-        // work. As a work around if we ever see an error, never erase it.
-        // I made the judgement that rather than trying to merge the two it's ok if 
-        // earlier errors cover newer ones, since once the user fixes the earlier errors 
-        // the new ones will appear, meaning we never leave the user stuck wondering what to do. 
-        // I expect that to be good enough compromise.
-        if (this.lastSent && this.lastSent.errors && this.lastSent.errors.length) {
-            this.results.errors = this.lastSent.errors;
-        } 
+    phoneHome() {
         this.postParent({
-            results: this.results
+            results: this.results,
         });
-        this.lastSent = JSON.parse(JSON.stringify(this.results));
-    },
+    }
 
+    test(userCode, validate, errors, callback) {
+        // TODO: Change to setting testReq in state
+        this.outputTypeRef.current.test(userCode, validate, errors, callback);
+    }
 
-    test: _.throttle(function() {
-        this._test.apply(this, arguments);
-    }, 200),
-    _test: function(userCode, validate, errors, callback) {
-        this.output.test(userCode, validate, errors, callback);
-    },
+    lint(userCode, callback) {
+        this.setState({
+            lintCodeReq: {code: userCode, timestamp: Date.now()},
+            testsCallback: callback,
+        });
+    }
 
-    lint: function(userCode, callback) {
-        this.output.lint(userCode, callback);
-    },
-
-    getUserCode: function() {
+    getUserCode() {
         return this.currentCode || "";
-    },
+    }
 
-    toggle: function(toggle) {
-        if (this.output.toggle) {
-            this.output.toggle(toggle);
-        }
-    },
+    toggle(doToggle) {
+        this.setState({toggleReq: {timestamp: Date.now(), doToggle: doToggle}});
+    }
 
-    restart: function() {
+    // TODO: Stop referencing the child ref.
+    restart() {
         // This is called on load and it's possible that the output
         // hasn't been set yet.
-        if (!this.output) {
+        if (!this.outputTypeRef.current) {
             return;
         }
 
-        if (this.output.restart) {
-            this.output.restart();
+        if (this.outputTypeRef.current.restart) {
+            this.outputTypeRef.current.restart();
         }
 
         this.runCode(this.getUserCode());
-    },
-
-    cleanErrors: function(errors) {
-        errors = errors.map(function(error) {
-            if (!$.isPlainObject(error)) {
-                return {
-                    row: error.lineno ? error.lineno - 2 : -1,
-                    column: 0,
-                    text: this.clean(error.message),
-                    type: "error",
-                    source: "native",
-                    priority: 3
-                };
-            }
-
-            return {
-                row: error.row,
-                column: error.column,
-                text: _.compose(this.prettify, this.clean)(
-                    error.text || error.message || ""),
-                type: error.type,
-                lint: error.lint,
-                source: error.source
-            };
-        }.bind(this));
-
-        errors = errors.sort(function(a, b) {
-            var diff = a.row - b.row;
-            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
-        });
-
-        return errors;
-    },
-
-    // This adds html tags around quoted lines so they can be formatted
-    prettify: function(str) {
-        str = str.split("\"");
-        var htmlString = "";
-        for (var i = 0; i < str.length; i++) {
-            if (str[i].length === 0) {
-                continue;
-            }
-
-            if (i % 2 === 0) {
-                //regular text
-                htmlString += "<span class=\"text\">" + str[i] + "</span>";
-            } else {
-                // text in quotes
-                htmlString += "<span class=\"quote\">" + str[i] + "</span>";
-            }
-        }
-        return htmlString;
-    },
-
-    clean: function(str) {
-        return String(str).replace(/</g, "&lt;");
     }
-});
+
+    render() {
+        return <div className="output">{this.renderOutputType()}</div>;
+    }
+}
 
 LiveEditorOutput.registerOutput = function(name, output) {
-    LiveEditorOutput.prototype.outputs[name] = output;
+    outputs[name] = output;
 };

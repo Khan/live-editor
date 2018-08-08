@@ -1,23 +1,16 @@
-var SQLTester = function(options) {
+/* eslint-disable no-empty, no-var, no-throw-literal, no-redeclare, no-useless-escape */
+/* TODO: Fix the lint errors */
+import _ from "lodash";
+import SQL from "sql.js";
+
+import OutputTester from "../shared/output-tester.js";
+
+const SQLTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
 };
 
 SQLTester.prototype = new OutputTester();
-
-
-/*
- * Returns a callback which will accept arguments and make a constriant
- * used internally to create shorthand functions that accept arguments
- */
-var constraintPartial = function(callback) {
-    return function() {
-        return {
-            variables: arguments,
-            fn: callback
-        };
-    };
-};
 
 /**
  * Small collection of some utility functions to tack onto the function
@@ -50,7 +43,6 @@ SQLTester.Util = {
             return {
                 name: table,
                 rowCount: rowCount,
-                hasSingleRow: rowCount === 1, // lame, for handlebars :(
                 columns: v.map(function(v) {
                     return {
                         cid: v[0],
@@ -257,9 +249,10 @@ SQLTester.prototype.testMethods = {
             .exec(callback.toString())[1];
         var params = paramText.match(/[$_a-zA-z0-9]+/g);
 
-        for (key in params) {
+        for (var key in params) {
             if (params[key][0] !== "$") {
                 if (window.console) {
+                    // eslint-disable-next-line no-console
                     console.warn("Invalid parameter in constraint " +
                             "(should begin with a '$'): ", params[key]);
                 }
@@ -286,7 +279,9 @@ SQLTester.prototype.testMethods = {
     },
 
     /*
-     * Returns the result of matching a structure against the user's SQL
+     *
+     * @return {success} if the user DB has at least as many tables as
+     *  the comparison DB
      */
     matchTableCount: function(templateDBInfo) {
         // If there were errors from linting, don't even try to match it
@@ -304,7 +299,12 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
-    matchTableRowCount: function(templateDBInfo) {
+    /**
+     * @param templateDBOrCount: Either a template DB to match rows against
+     *  or an integer of the amount to match against
+     * @return {success} if user table contains same # of rows
+     */
+    matchTableRowCount: function(templateDBOrCount) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
             return {success: false};
@@ -312,22 +312,75 @@ SQLTester.prototype.testMethods = {
 
         var dbInfo = this.userCode;
         var tables = dbInfo.tables;
-        var templateTables = templateDBInfo.tables;
 
-        // Make sure we have similar table info
-        for (var i = 0; i < tables.length; i++) {
-            var table = tables[i];
-            var templateTable = templateTables[i];
-            // This checks the actual row count of the whole table which
-            // may be different from the result set rows.
-            if (table.rowCount !== templateTable.rowCount) {
-                return { success: false };
+        if (templateDBOrCount.tables) {
+            var templateTables = templateDBOrCount.tables;
+            // Make sure we have similar table info
+            for (var i = 0; i < tables.length; i++) {
+                var table = tables[i];
+                var templateTable = templateTables[i];
+                // This checks the actual row count of the whole table which
+                // may be different from the result set rows.
+                if (templateTable && table.rowCount !== templateTable.rowCount) {
+                    return { success: false };
+                }
+            }
+        } else {
+            for (var i = 0; i < tables.length; i++) {
+                var table = tables[i];
+                if (table.rowCount !== templateDBOrCount) {
+                    return { success: false };
+                }
             }
         }
         return { success: true };
     },
 
-    matchTableColumnCount: function(templateDBInfo) {
+    /**
+     * @param templateDBOrCount: Either a template DB to match rows against
+     *  or an integer of the amount to match against
+     * @return {success} if user table contains same # of columns
+     */
+    matchTableColumnCount: function(templateDBOrCount) {
+        // If there were errors from linting, don't even try to match it
+        if (this.errors.length) {
+            return {success: false};
+        }
+
+        var dbInfo = this.userCode;
+        var tables = dbInfo.tables;
+
+        if (templateDBOrCount.tables) {
+            var templateTables = templateDBOrCount.tables;
+
+            for (var i = 0; i < tables.length; i++) {
+                var table = tables[i];
+                var templateTable = templateTables[i];
+
+                if (templateTable &&
+                    table.columns.length !== templateTable.columns.length) {
+                    return { success: false };
+                }
+            }
+        } else {
+            for (var i = 0; i < tables.length; i++) {
+                var table = tables[i];
+                if (table.columns.length !== templateDBOrCount) {
+                    return { success: false };
+                }
+            }
+        }
+
+        return { success: true };
+    },
+
+    /**
+     * @param templateDBInfo: A template DB to match column names
+     * @return {success} if user table contains same column names
+     *   Note - it could also contain other names,
+     *   use matchTableColumnCount if you need to be exact.
+     */
+    matchTableColumnNames: function(templateDBInfo) {
         // If there were errors from linting, don't even try to match it
         if (this.errors.length) {
             return {success: false};
@@ -337,11 +390,19 @@ SQLTester.prototype.testMethods = {
         var tables = dbInfo.tables;
         var templateTables = templateDBInfo.tables;
 
+        if (!tables.length) {
+            return { success: false };
+        }
         for (var i = 0; i < tables.length; i++) {
             var table = tables[i];
+            var tableColumns = table.columns.map(function(obj) {
+                return obj.name;
+            });
             var templateTable = templateTables[i];
-            if (table.columns.length !== templateTable.columns.length) {
-                return { success: false };
+            for (var c = 0; c < templateTable.columns.length; c++) {
+                if (!tableColumns.includes(templateTable.columns[c].name)) {
+                    return { success: false };
+                }
             }
         }
         return { success: true };
@@ -359,6 +420,153 @@ SQLTester.prototype.testMethods = {
 
         if (results.length !== templateResults.length) {
             return { success: false };
+        }
+        return { success: true };
+    },
+
+    /**
+     * @param resultIndex: The index of the result to check
+     * @param templateDBOrCount: Either a template DB to match rows against
+     *  or an integer of the amount to match against
+     */
+    matchResultRowCount: function(resultIndex, templateDBOrCount) {
+        if (this.errors.length) {
+            return {success: false};
+        }
+
+        var dbInfo = this.userCode;
+        var results = dbInfo.results;
+
+        if (results.length < (resultIndex + 1)) {
+            return {success: false};
+        }
+        if (templateDBOrCount.results && !templateDBOrCount.results[resultIndex]) {
+            return {success: false};
+        }
+
+        var res = results[resultIndex];
+        var targetCount;
+        if (templateDBOrCount.results) {
+            targetCount = templateDBOrCount.results[resultIndex].values.length;
+        } else {
+            targetCount = templateDBOrCount;
+        }
+
+        if (res.values.length !== targetCount) {
+            return { success: false };
+        }
+        return {success: true};
+    },
+
+    /**
+     * @param resultIndex: The index of the result to check
+     * @param templateDBOrCount: Either a template DB to match columns against
+     *  or an integer of the amount to match against
+     */
+    matchResultColumnCount: function(resultIndex, templateDBOrCount) {
+        if (this.errors.length) {
+            return {success: false};
+        }
+
+        var dbInfo = this.userCode;
+        var results = dbInfo.results;
+
+        if (results.length < (resultIndex + 1)) {
+            return {success: false};
+        }
+        if (templateDBOrCount.results && !templateDBOrCount.results[resultIndex]) {
+            return {success: false};
+        }
+
+        var res = results[resultIndex];
+        var targetCount;
+        if (templateDBOrCount.results) {
+            targetCount = templateDBOrCount.results[resultIndex].columns.length;
+        } else {
+            targetCount = templateDBOrCount;
+        }
+
+        if (res.columns.length !== targetCount) {
+            return { success: false };
+        }
+        return {success: true};
+    },
+
+    /**
+     * @param resultIndex: The index of the result to check
+     * @param templateDB: The templateDB to match row values against
+     */
+    matchResultRowValues: function(resultIndex, templateDB, options) {
+        if (this.errors.length) {
+            return {success: false};
+        }
+
+        var dbInfo = this.userCode;
+        var results = dbInfo.results;
+        options = options || {};
+
+        if (results.length < (resultIndex + 1)) {
+            return {success: false};
+        }
+        if (templateDB.results && !templateDB.results[resultIndex]) {
+            return {success: false};
+        }
+        var result = results[resultIndex];
+        var templateResult = templateDB.results[resultIndex];
+        if (options.ignoreOrder) {
+            // To compare rows while ignoring order,
+            // we stringify each row and sort the array of rows,
+            // then do an equality check.
+            var resultStringified = result.values.map(function(value) {
+                return JSON.stringify(value);
+            }).sort();
+            var templateStringified = templateResult.values.map(function(value) {
+                return JSON.stringify(value);
+            }).sort();
+            if (!_.isEqual(resultStringified, templateStringified)) {
+                return { success: false };
+            }
+        } else {
+            for (var i = 0; i < result.values.length; i++) {
+                if (!_.isEqual(result.values[i], templateResult.values[i])) {
+                    return { success: false };
+                }
+            }
+        }
+
+        return {success: true};
+    },
+
+    /**
+     * @param resultIndex: The index of the result to check
+     * @param templateDB: The templateDB to match column names against
+     */
+    matchResultColumnNames: function(resultIndex, templateDB) {
+        // If there were errors from linting, don't even try to match it
+        if (this.errors.length) {
+            return {success: false};
+        }
+
+        var dbInfo = this.userCode;
+        var results = dbInfo.results;
+        var templateResults = templateDB.results;
+
+        if (results.length < templateResults.length) {
+            return { success: false };
+        }
+
+        var result = results[resultIndex];
+        var templateResult = templateResults[resultIndex];
+        if (result.columns.length !== templateResult.columns.length) {
+            return { success: false };
+        }
+        for (var c = 0; c < result.columns.length; c++) {
+            var col = result.columns[c].toLowerCase().replace(/ /g,'');
+            var templateCol =
+                templateResult.columns[c].toLowerCase().replace(/ /g,'');
+            if (col !== templateCol) {
+                return { success: false };
+            }
         }
         return { success: true };
     },
@@ -383,7 +591,8 @@ SQLTester.prototype.testMethods = {
         for (var i = 0; i < numResults; i++) {
             var res = results[i];
             var templateRes = templateResults[i];
-            if (res.columns.length !== templateRes.columns.length) {
+            if (!templateRes ||
+                (res.columns.length !== templateRes.columns.length)) {
                 return { success: false };
             }
             for (var c = 0; c < res.columns.length; c++) {
@@ -414,14 +623,14 @@ SQLTester.prototype.testMethods = {
 
         // This allows us to check Step 1 results even if
         //  Step 2 results are not correct, for example.
-        numResults = numResults || results.length; 
-        
+        numResults = numResults || results.length;
+
         // Make sure we have similar results
         for (var i = 0; i < numResults; i++) {
             var res = results[i];
             var templateRes = templateResults[i];
-
-            if (res.values.length !== templateRes.values.length) {
+            if (!templateRes ||
+                (res.values.length !== templateRes.values.length)) {
                 return { success: false };
             }
             if (exactValues) {
@@ -436,10 +645,17 @@ SQLTester.prototype.testMethods = {
         return { success: true };
     },
 
+    moreResultsThan(num) {
+        var dbInfo = this.userCode;
+        var results = dbInfo.results;
+        return { success: (results.length > num) };
+    },
+
     /*
      * Creates a new test result (i.e. new challenge tab)
      */
     assertMatch: function(result, description, hint, image) {
+
         var alternateMessage;
         var alsoMessage;
 
@@ -458,4 +674,4 @@ SQLTester.prototype.testMethods = {
     },
 };
 
-
+export default SQLTester;

@@ -1,0 +1,25 @@
+// These are rules that apply to node.js scripts.  We use a recent
+// version of node.js that provides most, but not all, ES6 constructs.
+// So we inherit from the javascript-file eslintrc, which includes
+// ES6.  (It also includes a bunch of react stuff, which is not
+// relevant for node.js scripts but also not harmful.)
+//
+// The major differences are that console statements are welcome
+// in node scripts!  Also, the list of globals is different.
+// TODO(csilvers): turn off es6 lint-rules for features that are
+// not supported by node yet.
+//
+// In general, you should be adjusting eslintrc or eslintrc.shared
+// instead of this file.  Only adjust this file if you are making
+// a change that accounts for some quirks in node.js in particular.
+
+{
+    "rules": {
+        "no-console": 0
+    },
+    "globals": {},
+    "env": {
+        "node": true
+    },
+    "extends": "./eslintrc"
+}

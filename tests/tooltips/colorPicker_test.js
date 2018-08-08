@@ -1,3 +1,14 @@
+const {
+    editor,
+    TTE,
+    tooltipClasses,
+    getMockedTooltip,
+    testMockedTooltipDetection,
+    testReplace,
+    typeLine,
+    getLine
+} = require("./shared.js");
+
 describe("colorPicker - detection", function() {
     var mockedColorPicker = getMockedTooltip(tooltipClasses.colorPicker, ["detector", "initialize"]);
 

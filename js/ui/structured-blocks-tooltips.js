@@ -1,3 +1,5 @@
+/* eslint-disable no-var, no-extra-bind */
+/* TODO: Fix the lint errors */
 (function() {
     var ESC = 27;
 

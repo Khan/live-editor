@@ -1,8 +1,12 @@
+/* eslint-disable no-var, no-undef, no-extra-bind, no-redeclare, one-var */
+/* TODO: Fix the lint errors */
 /**
  * Helper functionality for the Scratchpad auto suggest feature,
  * parameter information and live documentation.
  */
-window.ScratchpadAutosuggest = {
+import ScratchpadAutosuggestData from "./autosuggest-data.js";
+
+const ScratchpadAutosuggest = {
     /**
      * Initializes the autosuggest functionality and adds/modifies the
      * completers to be applicable to KA.
@@ -10,7 +14,7 @@ window.ScratchpadAutosuggest = {
     init: function(editor) {
         this.initialized = true;
         this.editor = editor;
-        this.enableLiveCompletion(true);
+        this.enableLiveCompletion(window.localStorage["autosuggest"] || true);
         var langTools = ace.require("ace/ext/language_tools");
 
         var customCompleters = [ScratchpadAutosuggestData._keywords,
@@ -297,3 +301,5 @@ window.ScratchpadAutosuggest = {
                            .append(autosuggestDescription);
     }
 };
+
+export default ScratchpadAutosuggest;

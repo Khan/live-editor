@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 var fs = require("fs");
 
 var Mapper = function(oldData) {
@@ -6,7 +7,7 @@ var Mapper = function(oldData) {
     oldData.forEach(function(e) {
         for (var prop in e) {
             if (prop in this) {
-                this[prop].call(this, e);
+                this[prop](this, e);
                 break;
             }
         }
@@ -62,7 +63,7 @@ Mapper.prototype = {
             e.insertText.start.column,
             e.insertText.end.row,
             e.insertText.end.column,
-            e.text
+            e.text,
         ]);
     },
 
@@ -74,7 +75,7 @@ Mapper.prototype = {
             e.insertLines.start.column,
             e.insertLines.end.row,
             e.insertLines.end.column,
-            e.lines
+            e.lines,
         ]);
     },
 
@@ -85,7 +86,7 @@ Mapper.prototype = {
             e.removeText.start.row,
             e.removeText.start.column,
             e.removeText.end.row,
-            e.removeText.end.column
+            e.removeText.end.column,
         ]);
     },
 
@@ -96,7 +97,7 @@ Mapper.prototype = {
             e.removeLines.start.row,
             e.removeLines.start.column,
             e.removeLines.end.row,
-            e.removeLines.end.column
+            e.removeLines.end.column,
         ]);
     },
 
@@ -126,21 +127,21 @@ Mapper.prototype = {
                 e.start.row,
                 e.start.column,
                 e.end.row,
-                e.end.column
+                e.end.column,
             ]);
         } else {
             this.log.push([
                 e.time,
                 "select",
                 e.start.row,
-                e.start.column
+                e.start.column,
             ]);
         }
     },
 
     restart: function(e) {
         this.log.push([e.time, "restart"]);
-    }
+    },
 };
 
 console.log("Reading in data...");
@@ -149,9 +150,11 @@ var output = {};
 
 console.log("Mapping old data format to new format...");
 for (var id in input) {
-    var mapped = new Mapper(input[id].commands);
-    output[id] = input[id];
-    output[id].commands = mapped.log;
+    if (input.hasOwnProperty(id)) {
+        var mapped = new Mapper(input[id].commands);
+        output[id] = input[id];
+        output[id].commands = mapped.log;
+    }
 }
 
 console.log("Writing out data...");

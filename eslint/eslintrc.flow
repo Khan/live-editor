@@ -1,0 +1,34 @@
+// Flow static typing lint rules
+// https://github.com/gajus/eslint-plugin-flowtype
+// https://flowtype.org/
+{
+    "rules": {
+        "flowtype/boolean-style": [2, "boolean"],
+        "flowtype/define-flow-type": 1, // suppress no-undef on flow types
+        "flowtype/no-dupe-keys": 2,
+        "flowtype/no-weak-types": 0,    // allow 'any' for now
+        // flow may still require parameter types in certain situations
+        "flowtype/require-parameter-type": 0,
+        "flowtype/require-return-type": 0,
+        "flowtype/require-valid-file-annotation": [
+            2,
+            "always", {
+                "annotationStyle": "line"
+            }
+        ],
+        "flowtype/sort": 0,
+        "flowtype/type-id-match": 0,
+        "flowtype/use-flow-type": 1,  // suppress no-unused-vars on flow types
+    },
+    "settings": {
+        "flowtype": {
+            "onlyFilesWithFlowAnnotation": true
+        }
+    },
+    "extends": [
+        "prettier/flowtype"
+    ],
+    "plugins": [
+        "flowtype"
+    ]
+}

@@ -1,4 +1,9 @@
+/* eslint-disable no-var, no-undef */
+/* TODO: Fix the lint errors */
 var init = false;
+
+require("es5-shim");
+const JSHINT = require("../../../external/jshint/jshint.js").JSHINT;
 
 self.onmessage = function(event) {
     // We don't import JSHint on load as we need to know which language
@@ -6,15 +11,6 @@ self.onmessage = function(event) {
     // we just use the normal file.
     if (!init) {
         init = true;
-
-        importScripts(event.data.externalsDir +
-            "es5-shim/es5-shim.js?cachebust=" + (new Date()).toDateString());
-
-        importScripts(event.data.jshintFile +
-            "?cachebust=" + (new Date()).toDateString());
-
-        importScripts(event.data.externalsDir +
-            "underscore/underscore.js?cachebust=" + (new Date()).toDateString());
     }
 
     // Evaluate the code using JSHint

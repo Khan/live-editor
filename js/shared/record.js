@@ -1,5 +1,9 @@
+/* eslint-disable no-var, no-undef, no-redeclare, no-console */
+/* TODO: Fix the lint errors */
+import { Model } from "backbone-model";
+
 // Note: All time measurements are handled in milliseconds
-window.ScratchpadRecord = Backbone.Model.extend({
+const ScratchpadRecordModel = Model.extend({
     initialize: function() {
         // Instance variables, not attributes.
         // Recording handlers, handle both recording and playback
@@ -336,7 +340,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
             // Specifically this applies to replace (which is a remove and an insert back to back)
             if (this.synchronizedTime === undefined) {
                 this.synchronizedTime = Math.floor((new Date).getTime() - this.startTime);
-                setTimeout(function() { 
+                setTimeout(function() {
                     this.synchronizedTime = undefined;
                 }.bind(this), 0);
             }
@@ -357,3 +361,5 @@ window.ScratchpadRecord = Backbone.Model.extend({
         this.recording = this.oldRecording;
     }
 });
+
+export default ScratchpadRecordModel;

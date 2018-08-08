@@ -1,3 +1,6 @@
+/* eslint-disable */
+/* TODO: Fix the lint errors */
+/* global Blockly, patternMatch, goog */
 /*
  Missing but want to add:
  -----------------------------
@@ -610,7 +613,7 @@ Blockly.JavaScript["image_picker"] = function(block) {
 Object.keys(Blockly.p5js).forEach(function(catName) {
     var vars = Blockly.p5js[catName];
 
-    
+
     Object.keys(vars).forEach(function(name) {
         var props = vars[name];
 
@@ -622,7 +625,7 @@ Object.keys(Blockly.p5js).forEach(function(catName) {
                 if (props.type === "Event") {
                     this.setColour(typeColors[props.type]);
                     this.appendStatementInput("DO")
-                    .appendField($._("Run"));
+                    .appendField(i18n._("Run"));
                 } else if (props.type) {
                     this.setColour(typeColors[props.type]);
                     this.setOutput(true, props.type);
@@ -732,6 +735,7 @@ Blockly.JavaScript.colour_picker = function(block) {
 };
 
 var findDefByName = function(fnName) {
+    /* jshint forin:false */
     for (var catName in Blockly.p5js) {
         var vars = Blockly.p5js[catName];
         if (fnName in vars) {
@@ -746,29 +750,29 @@ var findDefByName = function(fnName) {
 
 
 // modify the blockly block definition
-var _super_procedures_defnoreturn_init = Blockly.core.Language.procedures_defnoreturn.init
+var _super_procedures_defnoreturn_init = Blockly.core.Language.procedures_defnoreturn.init;
 Blockly.core.Language.procedures_defnoreturn.init = function() {
   _super_procedures_defnoreturn_init.apply(this, arguments);
   this.setPreviousStatement(true);
   this.setNextStatement(true);
-}
+};
 
 var functionBlockTemplate = function(node, matchedProps) {
     // generate code
-    var output = ''
-    output += '<block type="procedures_defnoreturn">'
-    output += '<mutation>'
+    var output = '';
+    output += '<block type="procedures_defnoreturn">';
+    output += '<mutation>';
     matchedProps.params.forEach(function(param,index) {
-    output += '<arg name="'+param.name+'"/>'
-    })
-    output += '</mutation>'
-    output += '<field name="NAME">'+matchedProps.name+'</field>'
-    output += '<statement name="STACK">'
-    output += Blockly.util.convertAstNodeToBlocks(matchedProps.body)
-    output += '</statement>'
-    output += '</block>'
-    return output
-}
+    output += '<arg name="'+param.name+'"/>';
+    });
+    output += '</mutation>';
+    output += '<field name="NAME">'+matchedProps.name+'</field>';
+    output += '<statement name="STACK">';
+    output += Blockly.util.convertAstNodeToBlocks(matchedProps.body);
+    output += '</statement>';
+    output += '</block>';
+    return output;
+};
 
 //_tree('var a = function(){}')
   // ├─ type: VariableDeclaration
@@ -852,7 +856,7 @@ Blockly.util.registerBlockSignature(
                 body: patternMatch.var("body"),
             },
         }
-        
+
     },
     functionBlockTemplate
 );
@@ -875,12 +879,12 @@ Blockly.core.JavaScript.procedures_defnoreturn = function() {
           Blockly.core.Variables.NAME_TYPE);
     }
     var funcName = this.getFieldValue('NAME');
-    var code = new String()
-    code += 'var '+funcName
-    code += ' = function(' + args.join(', ') + ') {\n'
+    var code = "";
+    code += 'var '+ funcName;
+    code += ' = function(' + args.join(', ') + ') {\n';
     code += branch + returnValue + '};\n';
 
-    return code
+    return code;
 };
 
 //
@@ -920,16 +924,16 @@ Blockly.util.registerBlockSignature(
             },
             arguments: patternMatch.var("params"),
         }
-        
+
     },
     function(node, matchedProps) {
-        var output = ''
-        output += '<block type="procedures_callnoreturn">'
+        var output = '';
+        output += '<block type="procedures_callnoreturn">';
 
-        
-        output += '<mutation name="'+matchedProps.name+'">'
-        var proc = Blockly.getUserDefinedFunction(matchedProps.name)
-        
+
+        output += '<mutation name="'+matchedProps.name+'">';
+        var proc = Blockly.getUserDefinedFunction(matchedProps.name);
+
         matchedProps.params.forEach(function(param,index) {
             var label;
             // try to use the recorded method's arg names
@@ -937,21 +941,21 @@ Blockly.util.registerBlockSignature(
                 label = proc.params[index].name;
             // fallback to labeling the args with the index
             } catch (error) {
-                matchedProps.name
+                matchedProps.name;
                 label = index;
             }
 
-            output += '<arg name="'+label+'"/>'
-        })
-        output += '</mutation>'
+            output += '<arg name="'+label+'"/>';
+        });
+        output += '</mutation>';
 
         matchedProps.params.forEach(function(param,index) {
-            output += '<value name="ARG'+index+'">'
-            output += Blockly.util.convertAstNodeToBlocks(param)
-            output += '</value>'
-        })
-        output += '</block>'
-        return output
+            output += '<value name="ARG'+index+'">';
+            output += Blockly.util.convertAstNodeToBlocks(param);
+            output += '</value>';
+        });
+        output += '</block>';
+        return output;
     }
 );
 
@@ -981,7 +985,7 @@ Blockly.util.registerBlockSignature(
 
         var callBlock = "";
         callBlock += "<block type='p5js_" + matchedProps.callee_name + "'>";
-        
+
         var processArgs = function(startInd) {
             // We should still add other values
             matchedProps.arguments.forEach(function(arg, i) {
@@ -1044,19 +1048,19 @@ Blockly.util.registerBlockSignature(
         declarations: patternMatch.var("declarations")
     },
     function(node, matchedProps) {
-        var output;
+        var output, decBlock;
 
         matchedProps.declarations.reverse().forEach(function(dec) {
             var props = findDefByName(dec.id.name);
             if (props && props.type === "Event" && dec.init && dec.init.body) {
-                var decBlock = "<block type='p5js_" + dec.id.name + "'></block>";
+                decBlock = "<block type='p5js_" + dec.id.name + "'></block>";
                 // Append initialization to DO if present
                 if (dec.init) {
                     var decInit = Blockly.util.convertAstNodeToBlocks(dec.init.body);
                     decBlock = Blockly.util.appendTagDeep(decBlock, decInit, "value", "DO");
                 }
             } else {
-                var decBlock = "<block type='variables_declare'>";
+                decBlock = "<block type='variables_declare'>";
                 decBlock += "<field name='VAR'>" + dec.id.name + "</field>";
                 decBlock += "</block>";
                 // Append initialization to VALUE if present
@@ -1192,6 +1196,8 @@ Blockly.util.registerBlockSignature(
     },
     function(node, matchedProps) {
         var opString = matchedProps.test.operator;
+        var name, from;
+
         var by = matchedProps.update.operator === "++" ? 1 :
             matchedProps.update.operator === "--" ? -1 :
             matchedProps.update.operator === "+=" ? matchedProps.update.right :
@@ -1199,11 +1205,11 @@ Blockly.util.registerBlockSignature(
             matchedProps.update.operator === "-=" ? matchedProps.update.right : 1;
 
         if (matchedProps.init.declarations) {
-            var name = matchedProps.init.declarations[0].id.name;
-            var from = matchedProps.init.declarations[0].init;
+            name = matchedProps.init.declarations[0].id.name;
+            from = matchedProps.init.declarations[0].init;
         } else {
-            var name = matchedProps.init.left.name;
-            var from = matchedProps.init.right;
+            name = matchedProps.init.left.name;
+            from = matchedProps.init.right;
         }
 
         var opName = "LT";
@@ -1363,7 +1369,7 @@ var OPERATOR_MAP = {
 Blockly.JavaScript['logic_compare'] = function(block) {
   // Comparison operator.
   var operator = OPERATOR_MAP[block.getFieldValue('OP')];
-  var order = (operator == '===' || operator == '!==') ?
+  var order = (operator === '===' || operator === '!==') ?
       Blockly.JavaScript.ORDER_EQUALITY : Blockly.JavaScript.ORDER_RELATIONAL;
   var argument0 = Blockly.JavaScript.valueToCode(block, 'A', order) || '0';
   var argument1 = Blockly.JavaScript.valueToCode(block, 'B', order) || '0';

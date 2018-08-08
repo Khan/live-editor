@@ -1,237 +1,216 @@
-window.LiveEditor = Backbone.View.extend({
-    dom: {
-        DRAW_CANVAS: ".scratchpad-draw-canvas",
-        DRAW_COLOR_BUTTONS: "#draw-widgets a.draw-color-button",
-        CANVAS_WRAP: ".scratchpad-canvas-wrap",
-        EDITOR: ".scratchpad-editor",
-        CANVAS_LOADING: ".scratchpad-canvas-loading",
-        BIG_PLAY_LOADING: ".scratchpad-editor-bigplay-loading",
-        BIG_PLAY_BUTTON: ".scratchpad-editor-bigplay-button",
-        PLAYBAR: ".scratchpad-playbar",
-        PLAYBAR_AREA: ".scratchpad-playbar-area",
-        PLAYBAR_OPTIONS: ".scratchpad-playbar-options",
-        PLAYBAR_LOADING: ".scratchpad-playbar .loading-msg",
-        PLAYBAR_PROGRESS: ".scratchpad-playbar-progress",
-        PLAYBAR_PLAY: ".scratchpad-playbar-play",
-        PLAYBAR_TIMELEFT: ".scratchpad-playbar-timeleft",
-        PLAYBAR_UI: ".scratchpad-playbar-play, .scratchpad-playbar-progress",
-        OUTPUT_FRAME: "#output-frame",
-        OUTPUT_DIV: "#output",
-        ALL_OUTPUT: "#output, #output-frame",
-        RESTART_BUTTON: "#restart-code"
-    },
+/* eslint-disable max-lines, no-var, no-useless-escape, eqeqeq, prefer-spread,
+   prefer-const, no-extra-bind, no-undef, one-var
+*/
+/* TODO: Fix the lint errors */
+import _ from "lodash";
+import classNames from 'classnames';
+import i18n from "i18n";
+import Button from "@khanacademy/wonder-blocks-button";
+import React, {Component} from "react";
+import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
+import IconButton from "@khanacademy/wonder-blocks-icon-button";
+import {StyleSheet, css} from "aphrodite/no-important";
 
-    mouseCommands: ["move", "over", "out", "down", "up"],
-    colors: ["black", "red", "orange", "green", "blue", "lightblue", "violet"],
+import Structured from "../external/structuredjs/structured.js";
 
-    defaultOutputWidth: 400,
-    defaultOutputHeight: 400,
+import DrawCanvas from "./ui/draw-canvas.jsx";
+import EditorSide from "./ui/editor-side.jsx";
+import ErrorBuddy from "./ui/tipbar.jsx";
+import ErrorBuddyMini from "./ui/errorbuddy-mini.jsx";
+import OutputSide from "./ui/output-side.jsx";
+import PlaybackBar from "./ui/playback-bar.jsx";
+import RecordControls from "./ui/record-controls.jsx";
+import RestartButton from "./ui/restart-button.jsx";
+import ScratchpadConfig from "./shared/config.js";
+import ScratchpadRecordModel from "./shared/record.js";
+import * as utils from "./shared/utils.js";
 
-    editors: {},
+import "../css/ui/flashblock.css";
 
-    initialize: function(options) {
-        this.workersDir = this._qualifyURL(options.workersDir);
-        this.externalsDir = this._qualifyURL(options.externalsDir);
-        this.imagesDir = this._qualifyURL(options.imagesDir);
-        this.soundsDir = options.soundsDir;
-        this.execFile = this._qualifyURL(options.execFile);
-        this.jshintFile = this._qualifyURL(options.jshintFile ||
-            this.externalsDir + "jshint/jshint.js");
-        this.redirectUrl = options.redirectUrl;
+// This adds html tags around quoted lines so they can be formatted
+const prettify = function(str) {
+    str = str.split("\"");
+    var htmlString = "";
+    for (var i = 0; i < str.length; i++) {
+        if (str[i].length === 0) {
+            continue;
+        }
 
-        this.outputType = options.outputType || "";
-        this.editorType = options.editorType || _.keys(this.editors)[0];
-        this.editorHeight = options.editorHeight;
-        this.initialCode = options.code;
-        this.initialVersion = options.version;
-        this.settings = options.settings;
-        this.validation = options.validation;
+        if (i % 2 === 0) {
+            //regular text
+            htmlString += "<span class=\"text\">" + str[i] + "</span>";
+        } else {
+            // text in quotes
+            htmlString += "<span class=\"quote\">" + str[i] + "</span>";
+        }
+    }
+    return htmlString;
+};
 
-        this.recordingCommands = options.recordingCommands;
-        this.recordingMP3 = options.recordingMP3;
-        this.recordingInit = options.recordingInit || {
-            code: this.initialCode,
-            version: this.initialVersion
+const clean = function(str) {
+    return String(str).replace(/</g, "&lt;");
+};
+
+const editors = {};
+
+export default class LiveEditor extends Component {
+
+    props: {
+        // Basic configuration
+        code: string,
+        editorType: string,
+        outputType: string,
+        // File and folder paths
+        execFile: string,
+        externalsDir: string,
+        imagesDir: string,
+        jshintFile: string,
+        soundsDir: string,
+        workersDir: string,
+        redirectUrl: string,
+        // Additional options
+        outputWidth: string,
+        outputHeight: string,
+        editorHeight: string,
+        version: string,
+        sandboxProps: string,
+        settings: Object,
+        autoFocus: boolean,
+        hideEditor: boolean,
+        cursor: Object,
+        enableLoopProtect: boolean,
+        restartLabel: string,
+        // For talkthroughs
+        recordingInit: Object,
+        recordingCommands: Array,
+        recordingMP3: string,
+        youtubeUrl: string,
+        // For challenges
+        validation: Array,
+        // For recording
+        transloaditAuthKey: string,
+        transloaditTemplate: string,
+        // Parent callbacks
+        onOutputData: Function,
+        onEditorUserChange: Function,
+        onOutputSizeUpdate: Function,
+        onCodeRun: Function,
+        onEditorChange: Function,
+        onReadyToPlay: Function,
+    };
+
+    static defaultProps = {
+        outputWidth: "400px",
+        outputHeight: "400px",
+    }
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            // This is the current error state of Oh Noes Guy.
+            // His state can be one of:
+            // - happy (no errors)
+            // - thinking (the ambigous state where there may be an error in what the
+            //             typer is currently typing)
+            // - error (there is an error that we want to display prominently)
+            errorState: "happy",
+            errors: [],
+            // Start off by showing any errors in popup error buddy
+            showErrorPopup: true,
+            // This is set to true once we have our first result back from
+            //  the output window
+            outputLoaded: false,
+            // Enables the restart button
+            enableRestart: true,
+            // Shows the restart button at all
+            showRestart: false,
+            // Animates the restart dynamically (talkthrough-triggered)
+            animateRestartNow: false,
+            // Tracks whether audio has loaded enough to begin playing
+            isAudioLoaded: false
         };
 
-        this.transloaditTemplate = options.transloaditTemplate;
-        this.transloaditAuthKey = options.transloaditAuthKey;
+        // This stops us from sending any updates until the current run has finished
+        // Reset output state to clean as a part of the frame load handler
+        this.outputState = "dirty";
+
+        // Process all the URLs
+        this.workersDir = utils.qualifyURL(props.workersDir);
+        this.externalsDir = utils.qualifyURL(props.externalsDir);
+        this.imagesDir = utils.qualifyURL(props.imagesDir);
+        this.soundsDir = props.soundsDir;
+        this.execFile = props.execFile ? utils.qualifyURL(props.execFile) : "";
+        this.jshintFile = utils.qualifyURL(props.jshintFile ||
+            this.externalsDir + "jshint/jshint.js");
+        this.redirectUrl = props.redirectUrl;
+
+        this.outputType = props.outputType || "";
+        this.editorType = props.editorType || Object.keys(editors)[0];
+        this.validation = props.validation;
+
+        this.recordingInit = this.props.recordingInit || {
+            code: this.props.code,
+            version: this.props.version
+        };
+
+        this.noLint = false;
 
         this.render();
 
         this.config = new ScratchpadConfig({
-            version: options.version
+            version: this.props.version
         });
 
-        this.record = new ScratchpadRecord();
-
-        // Set up the Canvas drawing area
-        this.drawCanvas = new ScratchpadDrawCanvas({
-            el: this.dom.DRAW_CANVAS,
-            record: this.record
-        });
-
-        this.drawCanvas.on({
-            // Drawing has started
-            drawStarted: function() {
-                // Activate the canvas
-                this.$el.find(this.dom.DRAW_CANVAS).show();
-            }.bind(this),
-
-            // Drawing has ended
-            drawEnded: function() {
-                // Hide the canvas
-                this.$el.find(this.dom.DRAW_CANVAS).hide();
-            }.bind(this),
-
-            // A color has been chosen
-            colorSet: function(color) {
-                // Deactivate all the color buttons
-                this.$el.find(this.dom.DRAW_COLOR_BUTTONS)
-                    .removeClass("ui-state-active");
-
-                // If a new color has actually been chosen
-                if (color !== null) {
-                    // Select that color and activate the button
-                    this.$el.find("#" + color).addClass("ui-state-active");
-                }
-            }.bind(this)
-        });
-
-        // Set up the editor
-        this.editor = new this.editors[this.editorType]({
-            el: this.dom.EDITOR,
-            code: this.initialCode,
-            autoFocus: options.autoFocus,
-            config: this.config,
-            record: this.record,
-            imagesDir: this.imagesDir,
-            soundsDir: this.soundsDir,
-            externalsDir: this.externalsDir,
-            workersDir: this.workersDir,
-            type: this.editorType
-        });
-
-        // linting in the webpage environment generates slowparseResults which 
-        // is used in the runCode step so skipping linting won't work in that 
-        // environment without some more work
-        if (this.editorType === "ace_pjs") {
-            this.noLint = false;
-            this.editor.on("scrubbingStarted", function() {
-                this.noLint = true;
-            }.bind(this));
-
-            this.editor.on("scrubbingEnded", function() {
-                this.noLint = false;
-            }.bind(this));
-        }
-
-        this.tipbar = new TipBar({
-            el: this.$(this.dom.OUTPUT_DIV),
-            liveEditor: this
-        });
-
-        // Set up the debugger;
-        if (options.useDebugger) {
-            this.debugger = new ScratchpadDebugger({
-                liveEditor: this,
-                editor: this.editor.editor
+        this.record = new ScratchpadRecordModel();
+        // Load the recording playback commands as well, if applicable
+        if (this.props.recordingCommands) {
+            // Check the filename to see if a multiplier is specified,
+            // of the form audio_x1.3.mp3, which means it's 1.3x as slow
+            const url = this.props.recordingMP3;
+            const matches = /_x(1.\d+).mp3/.exec(url);
+            const multiplier = parseFloat(matches && matches[1]) || 1;
+            this.record.loadRecording({
+                init: this.props.recordingInit,
+                commands: this.props.recordingCommands,
+                multiplier: multiplier
             });
-            this.debugger.on("enabled", function (enabled) {
-                if (enabled) {
-                    this.$el.find(this.dom.RESTART_BUTTON).attr("disabled", "");
-                } else {
-                    this.$el.find(this.dom.RESTART_BUTTON).removeAttr("disabled");
-                }
-            }, this);
         }
 
-        var code = options.code;
-
-        // Load the text into the editor
-        if (code !== undefined) {
-            this.editor.text(code);
-            this.editor.originalCode = code;
-        }
-
-        // Focus on the editor
-        this.editor.focus();
-
-        if (options.cursor) {
-            // Restore the cursor position
-            this.editor.setCursor(options.cursor);
-
+        if (props.enableLoopProtect != null) {
+            this.enableLoopProtect = props.enableLoopProtect;
         } else {
-            // Set an initial starting selection point
-            this.editor.setSelection({
-                start: {row: 0, column: 0},
-                end: {row: 0, column: 0}
-            });
+            this.enableLoopProtect = true;
         }
 
-        // Hide the overlay
-        this.$el.find("#page-overlay").hide();
+        this.aceWrapperRef = React.createRef();
+        this.iframeRef = React.createRef();
+        this.wrapRef = React.createRef();
 
+        this.handleRecordClick = this.handleRecordClick.bind(this);
+        this.handleMessages = this.handleMessages.bind(this);
+        this.handleMiniClick = this.handleMiniClick.bind(this);
+        this.handleRestartClick = this.handleRestartClick.bind(this);
+        this.handleOverlayClick = this.handleOverlayClick.bind(this);
+        this.handleRecordColorClick = this.handleRecordColorClick.bind(this);
+        this.handleRecordClearClick = this.handleRecordClearClick.bind(this);
+        this.handleChangeDebounced =  _.debounce(this.handleChange, 300);
+        this.handleDraggerMouseDown = this.handleDraggerMouseDown.bind(this);
+
+        this.setupAudio();
+    }
+
+    componentDidMount() {
         // Change the width and height of the output frame if it's been
         // changed by the user, via the query string, or in the settings
-        this.updateCanvasSize(options.width, options.height);
+        //TODO(pamela): this.updateCanvasSize(this.props.width, this.props.height);
 
-        if (this.canRecord()) {
-            this.$el.find("#record").show();
-        }
+        window.addEventListener("message", this.handleMessages);
 
-        this.bind();
-        this.setupAudio();
-    },
-
-    render: function() {
-        this.$el.html(Handlebars.templates["live-editor"]({
-            execFile: this.execFile,
-            imagesDir: this.imagesDir,
-            colors: this.colors
-        }));
-    },
-
-    bind: function() {
-        var self = this;
-        var $el = this.$el;
-        var dom = this.dom;
-
-        // Make sure that disabled buttons can't still be used
-        $el.delegate(".simple-button.disabled, .ui-state-disabled", "click", function(e) {
-            e.stopImmediatePropagation();
-            return false;
-        });
-
-        // Handle the restart button
-        $el.delegate(this.dom.RESTART_BUTTON, "click",
-            this.restartCode.bind(this));
-
-        this.handleMessagesBound = this.handleMessages.bind(this);
-        $(window).on("message", this.handleMessagesBound);
-
-        $el.find("#output-frame").on("load", function() {
-            this.outputState = "clean";
-            this.markDirty();
-        }.bind(this));
-
-        // Whenever the user changes code, execute the code
-        this.editor.on("change", function() {
-            this.markDirty();
-        }.bind(this));
-
-        this.editor.on("userChangedCode", function() {
-            if (!this.record.recording && !this.record.playing) {
-              this.trigger("userChangedCode");
-            }
-        }.bind(this));
-
-        this.on("runDone", this.runDone.bind(this));
-
-        // This function will fire once after each synchrynous block which changes the cursor
-        // or the current selection. We use it for tag highlighting in webpages.
-        var cursorDirty = function() {
-            if (self.outputState !== "clean" ) {
+        // This function will fire once after each synchronous block which
+        // changes the cursor or the current selection.
+        // We use it for tag highlighting in webpages.
+        const cursorDirty = () => {
+            if (this.outputState !== "clean" ) {
                 // This will fire after markDirty() itself gets a chance to start a new run
                 // So it will just keep resetting itself until one run comes back and there are
                 // no changes waiting
@@ -244,199 +223,412 @@ window.LiveEditor = Backbone.View.extend({
                         });
                     }
                     self.editor.once("changeCursor", cursorDirty);
-                }, 0);                
+                }, 0);
             }
         };
-        this.editor.once("changeCursor", cursorDirty);
+        //this.aceWrapperRef.once("changeCursor", cursorDirty);
 
-        this.config.on("versionSwitched", function(e, version) {
+        this.config.on("versionSwitched", (e, version) => {
             // Re-run the code after a version switch
             this.markDirty();
 
             // Run the JSHint config
             this.config.runVersion(version, "jshint");
-        }.bind(this));
-
-        if (this.hasAudio()) {
-            $el.find(".overlay").show();
-            $el.find(dom.BIG_PLAY_LOADING).show();
-            $el.find(dom.PLAYBAR).show();
-        }
-
-        // Set up color button handling
-        $el.find(dom.DRAW_COLOR_BUTTONS).each(function() {
-            $(this).addClass("ui-button")
-                .children().css("background", this.id);
         });
+    }
 
-        // Set up toolbar buttons
-        if (jQuery.fn.buttonize) {
-            $el.buttonize();
-        }
+    componentWillUnmount() {
+        window.removeEventListener("message", this.handleMessages);
+    }
 
-        // Handle color button clicks during recording
-        $el.on("buttonClick", "a.draw-color-button", function() {
-            self.drawCanvas.setColor(this.id);
-            self.editor.focus();
-        });
-
-        // If the user clicks the disable overlay (which is laid over
-        // the editor and canvas on playback) then pause playback.
-        $el.on("click", ".disable-overlay", function() {
-            self.record.pausePlayback();
-        });
-
-        // Set up the playback progress bar
-        $el.find(dom.PLAYBAR_PROGRESS).slider({
-            range: "min",
-            value: 0,
-            min: 0,
-            max: 100,
-
-            // Bind events to the progress playback bar
-            // When a user has started dragging the slider
-            start: function() {
-                // Prevent slider manipulation while recording
-                if (self.record.recording) {
-                    return false;
-                }
-
-                self.record.seeking = true;
-
-                // Pause playback and remember if we were playing or were paused
-                self.wasPlaying = self.record.playing;
-                self.record.pausePlayback();
+    renderErrorBuddy() {
+        const props = {
+            errors: this.state.errors,
+            errorNum: this.state.errorNum,
+            isHidden: !this.state.showErrorPopup,
+            onErrorShowRequested: (error) => {
+                this.setState({highlightErrorReq: {
+                    error: error, timestamp: Date.now()}});
             },
-
-            // While the user is dragging the slider
-            slide: function(e, ui) {
-                // Slider position is set in seconds
-                var sliderPos = ui.value * 1000;
-
-                // Seek the player and update the time indicator
-                // Ignore values that match endTime - sometimes the
-                // slider jumps and we should ignore those jumps
-                // It's ok because endTime is still captured on 'change'
-                if (sliderPos !== self.record.endTime()) {
-                    self.updateTimeLeft(sliderPos);
-                    self.seekTo(sliderPos);
-                }
-            },
-
-            // When the sliding has stopped
-            stop: function(e, ui) {
-                self.record.seeking = false;
-                self.updateTimeLeft(ui.value * 1000);
-
-                // If we were playing when we started sliding, resume playing
-                if (self.wasPlaying) {
-                    // Set the timeout to give time for the events to catch up
-                    // to the present -- if we start before the events have
-                    // finished, the scratchpad editor code will be in a bad
-                    // state. Wait roughly a second for events to settle down.
-                    setTimeout(function() {
-                        self.record.play();
-                    }, 1000);
-                }
+            onDismissed: (error) => {
+                this.setState({
+                    errorState: "thinking",
+                    showErrorPopup: false
+                });
             }
-        });
+        }
+        return <ErrorBuddy {...props}/>
+    }
 
-        var handlePlayClick = function() {
-            if (self.record.playing) {
-                self.record.pausePlayback();
-            } else {
-                self.record.play();
+    renderDrawCanvas() {
+        const props = {
+            record: this.record,
+            onColorSet: (color) => {
+                this.setState({drawingColor: color});
+            }
+        };
+        return <DrawCanvas {...props}/>
+    }
+
+    renderOutputSide() {
+        const props = {
+            execFile: this.execFile,
+            iframeRef: this.iframeRef,
+            sandboxProps: this.props.sandboxProps,
+            imagesDir: this.imagesDir,
+            colors: this.colors,
+            canRecord: this.canRecord(),
+            isResizable: this.isResizable(),
+            hideEditor: this.props.hideEditor,
+            disablePointerEvents: this.state.isDraggingHandle,
+            height: this.state.outputHeight || this.props.outputHeight,
+            width: this.state.outputWidth || this.props.outputWidth,
+            // During playback, prevent user interaction with output side
+            showDisableOverlay: this.state.isPlaying && !this.state.isRecording,
+            outputLoaded: this.state.outputLoaded,
+            drawCanvas: this.renderDrawCanvas(),
+            errorBuddy: this.renderErrorBuddy(),
+            onDisableClick: this.handleOverlayClick,
+            onOutputFrameLoad: () => {
+                this.outputState = "clean";
+                this.markDirty();
+            }
+        }
+        return <OutputSide {...props} />;
+    }
+
+    renderAceEditorWrapper() {
+        const props = {
+            ref: this.aceWrapperRef,
+            code: this.props.code,
+            autoFocus: this.props.autoFocus,
+            errors: this.state.errors,
+            warnings: this.state.warnings,
+            highlightErrorReq: this.state.highlightErrorReq,
+            cursor: this.props.cursor,
+            config: this.config,
+            record: this.record,
+            imagesDir: this.props.imagesDir,
+            soundsDir: this.props.soundsDir,
+            externalsDir: this.props.externalsDir,
+            workersDir: this.props.workersDir,
+            type: this.editorType,
+            onChange: () => {
+                // Whenever the user changes code, execute the code
+                this.markDirty();
+                this.handleChangeDebounced();
+                this.props.onEditorChange && this.props.onEditorChange();
+            },
+            onUserChange: (code) => {
+                if (!this.record ||
+                    (!this.record.recording && !this.record.playing)) {
+                    this.props.onEditorUserChange && this.props.onEditorUserChange(code);
+                }
+            },
+            onChangeCursor: (cursor) => {
+                this.setState({editorCursor: cursor});
+                // This makes sure that we pop up the error
+                // if the user changed the cursor to a new line
+                this.maybeShowErrors();
+            },
+            onClick: () => {
+                // TODO: make big play go away
+                this.setState({editorClicked: true});
+            },
+            onGutterErrorClick: (errorNum) => {
+                this.setErrorState(errorNum);
             }
         };
 
-        // Handle the play button
-        $el.find(dom.PLAYBAR_PLAY)
-            .off("click.play-button")
-            .on("click.play-button", handlePlayClick);
-
-        var handlePlayButton = function() {
-            // Show the playback bar and hide the loading message
-            $el.find(dom.PLAYBAR_LOADING).hide();
-            $el.find(dom.PLAYBAR_AREA).show();
-
-            // Handle the big play button click event
-            $el.find(dom.BIG_PLAY_BUTTON)
-                .off("click.big-play-button")
-                .on("click.big-play-button", function() {
-                $el.find(dom.BIG_PLAY_BUTTON).hide();
-                handlePlayClick();
-            });
-
-            $el.find(dom.PLAYBAR_PLAY).on("click", function() {
-                $el.find(dom.BIG_PLAY_BUTTON).hide();
-            });
-
-            // Hide upon interaction with the editor
-            $el.find(dom.EDITOR).on("click", function() {
-                $el.find(dom.BIG_PLAY_BUTTON).hide();
-            });
-
-            // Switch from loading to play
-            $el.find(dom.BIG_PLAY_LOADING).hide();
-            $el.find(dom.BIG_PLAY_BUTTON).show();
-
-            self.off("readyToPlay", handlePlayButton);
-        };
-
-        // Set up all the big play button interactions
-        this.on("readyToPlay", handlePlayButton);
-
-        // Handle the clear button click during recording
-        $el.on("buttonClick", "#draw-clear-button", function() {
-            self.drawCanvas.clear();
-            self.drawCanvas.endDraw();
-            self.editor.focus();
-        });
-
-        // Handle the restart button
-        $el.on("click", this.dom.RESTART_BUTTON, function() {
-            self.record.log("restart");
-        });
-
-        // Bind the handler to start a new recording
-        $el.find("#record").on("click", function() {
-            self.recordHandler(function(err) {
-                if (err) {
-                    // TODO: Change this:
-                    console.error(err);
-                }
-            });
-        });
-
-        // Load the recording playback commands as well, if applicable
-        if (this.recordingCommands) {
-            // Check the filename to see if a multiplier is specified,
-            // of the form audio_x1.3.mp3, which means it's 1.3x as slow
-            var url = this.recordingMP3;
-            var matches = /_x(1.\d+).mp3/.exec(url);
-            var multiplier = parseFloat(matches && matches[1]) || 1;
-            this.record.loadRecording({
-                init: this.recordingInit,
-                commands: this.recordingCommands,
-                multiplier: multiplier
-            });
+        // linting in the webpage environment generates slowparseResults which
+        // is used in the runCode step so skipping linting won't work in that
+        // environment without some more work
+        if (this.editorType === "ace_pjs") {
+            props.onScrubbingStart = () => {
+                this.noLint = true;
+            };
+            props.onScrubbingEnd = () => {
+                this.noLint = false;
+            };
         }
-    },
 
-    remove: function() {
-        $(window).off("message", this.handleMessagesBound);
-        this.editor.remove();
-    },
+        return React.createElement(editors[this.editorType], props);
+    }
 
-    canRecord: function() {
-        return this.transloaditAuthKey && this.transloaditTemplate;
-    },
+    renderEditorSide() {
+        const extraProps = {
+            aceEditorWrapper: this.renderAceEditorWrapper(),
+            leftComponents: [
+                <ErrorBuddyMini
+                    key="errorBuddyMini"
+                    imagesDir={this.imagesDir}
+                    errorState={this.state.errorState}
+                    isHidden={this.state.showErrorPopup}
+                    onClick={this.handleMiniClick}
+                />
+            ],
+            rightComponents: [
+                <RestartButton
+                    key="restartButton"
+                    labelText={this.props.restartLabel}
+                    isDisabled={this.state.isPlaying}
+                    isHidden={!this.state.showRestart}
+                    onClick={this.handleRestartClick}
+                    animateNow={this.animateRestartNow}
+                />
+            ],
+            height: this.props.editorHeight || this.state.outputHeight,
+            hasAudio: this.hasAudio(),
+            showYoutubeLink: !this.state.isAudioLoaded,
+            showAudioPlayButton: this.state.isAudioLoaded && !this.state.isPlaying && !this.state.editorClicked,
+            showAudioSpinner: !this.state.isAudioLoaded && !this.state.editorClicked,
+            // During playback, prevent user interaction with editor
+            showDisableOverlay: this.state.isPlaying && !this.state.isRecording,
+            onBigPlayClick: () => {
+                this.togglePlayingState();
+            },
+            onDisableClick: this.handleOverlayClick,
+            onEditorCreated: (aceWrapperRef) => {
+                this.aceWrapperRef = aceWrapperRef;
+            },
+        }
+        const props = Object.assign({}, this.props, extraProps);
+        return <EditorSide {...props}/>;
+    }
 
-    hasAudio: function() {
-        return !!this.recordingMP3;
-    },
+    handleDraggerMouseDown(e) {
+        const minCanvas = 400;
+        const minEditor = 410;
+        const initialPX = e.pageX;
+        const initialWidth = this.iframeRef.current.getBoundingClientRect().width;
+        const drag = _.throttle((e) => {
+            let delta = e.pageX - initialPX;
+            if (document.body.getAttribute("dir") === "rtl") {
+                delta = -delta;
+            }
+            let width = initialWidth - delta;
+            const totalWidth = this.wrapRef.current.getBoundingClientRect().width;
+            if (width < minCanvas) {
+                width = minCanvas;
+            } else if (totalWidth - width < minEditor) {
+                width = totalWidth - minEditor;
+            }
+            this.updateOutputSize(width + "px");
+            return false;
+        }, 30);
 
-    setupAudio: function() {
+        this.setState({isDraggingHandle: true});
+
+        document.addEventListener("mousemove", drag);
+
+        document.addEventListener("mouseup", () => {
+            document.removeEventListener("mousemove", drag);
+            this.setState({isDraggingHandle: false});
+        });
+    }
+
+    renderDragHandle() {
+        if (!this.isResizable()) {
+            return null;
+        }
+
+        return (
+            <div
+                className={css(
+                        styles.dragHandle,
+                        this.state.isDraggingHandle && styles.dragHandleActive,
+                        this.props.hideEditor && styles.editorHidden,
+                        )}
+                onMouseDown={this.handleDraggerMouseDown}
+            />
+        );
+    }
+
+    renderRecordColorButtons() {
+        if (!this.canRecord() && !this.state.isRecording) {
+            return null;
+        }
+        const colors = ["black", "red", "orange", "green", "blue", "lightblue", "violet"];
+        const colorButtons =  colors.map((color) => {
+            const styles = [{backgroundColor: color}];
+            if (color === this.state.drawingColor) {
+                styles.push({border: "2px solid black"});
+            }
+            return <Button
+                key={color}
+                style={styles}
+                onClick={() => this.handleRecordColorClick(color)}
+            />
+        });
+        return (
+            <div>
+                <IconButton
+                    icon={icons.dismiss}
+                    onClick={this.handleRecordClearClick}
+                />
+                {colorButtons}
+            </div>
+        );
+    }
+
+    renderRecordButton() {
+        if (!this.canRecord()) {
+            return null;
+        }
+
+        return <Button
+                id="record"
+                disabled={this.state.isRecording}
+                onClick={this.handleRecordClick}>
+            {i18n._("Record a talkthrough")}
+            </Button>;
+    }
+
+    renderRecordControls() {
+        if (!this.canRecord() || !this.state.isRecording) {
+            return null;
+        }
+        // NOTE(jeresig): Unfortunately we need to do this to make sure
+        // that we load the web worker from the same domain as the rest
+        // of the site (instead of the domain that the "exec" page is on).
+        // This is a KA-specific bit of functionality that we
+        // should change, somehow.
+        const workersDir = this.workersDir.replace(/^https?:\/\/[^\/]*/, "");
+
+        const props = {
+            record: this.record,
+            editor: this.editor,
+            config: this.config,
+            workersDir: workersDir,
+            drawCanvas: this.drawCanvas
+        };
+        return <RecordControls {...props}/>
+    }
+
+    renderPlaybackBar() {
+        if (!this.hasAudio() || this.state.isRecording) {
+            return null;
+        }
+        let playbackBar;
+        if (this.state.isAudioLoaded) {
+            const props = {
+                currentTime: this.state.audioCurrentTime,
+                onClickPlay: () => {
+                    this.togglePlayingState();
+                },
+                onSeekStart: () => {
+                    // Prevent slider manipulation while recording
+                    if (this.record.recording) {
+                        return;
+                    }
+                    this.record.seeking = true;
+                    // Pause playback and remember if we were playing or were paused
+                    this.wasPlaying = this.state.isPlaying;
+                    this.record.pausePlayback();
+                },
+                onSeek: (time) => {
+                    // Seek the player and update the time indicator
+                    // Ignore values that match endTime - sometimes the
+                    // slider jumps and we should ignore those jumps
+                    // It's ok because endTime is still captured on 'change'
+                    if (time !== this.record.endTime()) {
+                        this.setState({audioCurrentTime: time});
+                        this.seekTo(time);
+                    }
+                },
+                onSeekEnd: () => {
+                    this.record.seeking = false;
+
+                    // If we were playing when we started sliding, resume playing
+                    if (this.wasPlaying) {
+                        // Set the timeout to give time for the events to catch up
+                        // to the present -- if we start before the events have
+                        // finished, the scratchpad editor code will be in a bad
+                        // state. Wait roughly a second for events to settle down.
+                        setTimeout(() => {
+                            this.record.play();
+                        }, 1000);
+                    }
+                },
+                playing: this.state.isPlaying,
+                readyToPlay: this.state.isAudioLoaded,
+                totalTime: this.state.audioDurationEstimate,
+                youtubeUrl: this.props.youtubeUrl
+            };
+            playbackBar = <PlaybackBar {...props} />;
+        } else {
+            playbackBar = <CircularSpinner size="small"/>
+        }
+        return (
+            <div className={css(styles.playbar)}>
+                <div className={css(styles.playbackBar)}>
+                    {playbackBar}
+                </div>
+            </div>
+        );
+    }
+
+    /**
+     * Returns a boolean determining if the user's code has some non-deterministic
+     * code running (and thus should have the restart button shown).
+     */
+    shouldShowRestart() {
+        const currentCode = this.aceWrapperRef.current.text();
+
+        if (this.props.outputType === "webpage") {
+            if (currentCode.match(/<script>/) || currentCode.match(/animation:/)) {
+                return true;
+            }
+        } else if (this.props.outputType === "pjs") {
+            var checks = [
+                "function(){var draw = function(){};}",
+                "function(){draw = function(){};}",
+                "function(){var mousePressed = function(){};}",
+                "function(){var mouseReleased = function(){};}",
+                "function(){var mouseMoved = function(){};}",
+                "function(){var mouseClicked = function(){};}",
+                "function(){var keyPressed = function(){};}",
+                "function(){mousePressed = function(){};}",
+                "function(){mouseReleased = function(){};}",
+                "function(){mouseMoved = function(){};}",
+                "function(){mouseClicked = function(){};}",
+                "function(){keyPressed = function(){};}",
+                "function(){random();}",
+                "function(){var _ = new Random();}",
+                "function(){var _ = random();}",
+            ];
+
+            try {
+                // Don't worry, StructuredJS caches the parsing of the code and
+                // the structure tests!
+                for (var i = 0; i < checks.length; i++) {
+                    if (Structured.match(currentCode, checks[i])) {
+                        return true;
+                    }
+                }
+                return false;
+            } catch (e) {
+                // Don't have to do anything on syntax error, just ignore it
+                // and leave the restart button in its current state.
+            }
+        }
+
+        return false;
+    };
+
+    canRecord() {
+        return this.props.transloaditAuthKey && this.props.transloaditTemplate;
+    }
+
+    isResizable() {
+        return this.editorType === "ace_pjs" || this.editorType === "ace_webpage";
+    }
+
+    hasAudio() {
+        return !!this.props.recordingMP3;
+    }
+
+    setupAudio() {
         if (!this.hasAudio()) {
             return;
         }
@@ -449,12 +641,12 @@ window.LiveEditor = Backbone.View.extend({
             debugMode: false,
             // Un-comment this to test Flash on FF:
             // debugFlash: true, preferFlash: true, useHTML5Audio: false,
-            // See sm2-container in play-page.handlebars and flashblock.css
+            // See sm2-container in editor-wrapper.jsx and flashblock.css
             useFlashBlock: true,
             // Sometimes when Flash is blocked or the browser is slower,
             //  soundManager will fail to initialize at first,
             //  claiming no response from the Flash file.
-            // To handle that, we attempt a reboot 3 seconds after each 
+            // To handle that, we attempt a reboot 3 seconds after each
             //  timeout, clearing the timer if we get an onready during
             //  that time (which happens if user un-blocks flash).
             onready: function() {
@@ -471,7 +663,7 @@ window.LiveEditor = Backbone.View.extend({
                 window.clearTimeout(rebootTimer);
                 rebootTimer = window.setTimeout(function() {
                     // Clear flashblocker divs
-                    self.$el.find("#sm2-container div").remove();
+                    document.querySelector("#sm2-container div").remove();
                     soundManager.reboot();
                 }, 3000);
             }
@@ -479,15 +671,15 @@ window.LiveEditor = Backbone.View.extend({
         soundManager.beginDelayedInit();
 
         this.bindRecordHandlers();
-    },
+    }
 
-    audioInit: function() {
+    audioInit() {
         if (!this.hasAudio()) {
             return;
         }
 
-        var self = this;
-        var record = this.record;
+        const self = this;
+        const record = this.record;
 
         // Reset the wasPlaying tracker
         this.wasPlaying = undefined;
@@ -501,7 +693,7 @@ window.LiveEditor = Backbone.View.extend({
             // The ID should be a string starting with a letter.
             id: "sound" + (new Date()).getTime(),
 
-            url: this.recordingMP3,
+            url: this.props.recordingMP3,
 
             // Load the audio automatically
             autoLoad: true,
@@ -509,16 +701,12 @@ window.LiveEditor = Backbone.View.extend({
             // While the audio is playing update the position on the progress
             // bar and update the time indicator
             whileplaying: function() {
-                self.updateTimeLeft(record.currentTime());
-
                 if (!record.seeking) {
-                    // Slider takes values in seconds
-                    self.$el.find(self.dom.PLAYBAR_PROGRESS)
-                        .slider("option", "value", record.currentTime() / 1000);
+                    // TODO: Make sure user can seek while its playing!
                 }
-
+                self.setState({audioCurrentTime: record.currentTime()});
                 record.trigger("playUpdate");
-            }.bind(this),
+            },
 
             // Hook audio playback into Record command playback
             // Define callbacks rather than sending the function directly so
@@ -534,11 +722,13 @@ window.LiveEditor = Backbone.View.extend({
             },
             onload: function() {
                 record.durationEstimate = record.duration = this.duration;
+                self.setState({audioDurationEstimate: this.duration})
                 record.trigger("loaded");
             },
             whileloading: function() {
                 record.duration = null;
                 record.durationEstimate = this.durationEstimate;
+                self.setState({audioDurationEstimate: this.durationEstimate})
                 record.trigger("loading");
             },
             // When audio playback is complete, notify everyone listening
@@ -549,38 +739,48 @@ window.LiveEditor = Backbone.View.extend({
             },
             onsuspend: function() {
                 // Suspend happens when the audio can't be loaded automatically
-                // (such is the case on iOS devices). Thus we trigger a
-                // readyToPlay event anyway and let the load happen when the
+                // (such is the case on iOS devices). Thus we start playing
+                // anyway and let the load happen when the
                 // user clicks the play button later on.
-                self.trigger("readyToPlay");
+                self.setState({isAudioLoaded: true});
+                self.props.onReadyToPlay();
             }
         });
 
         // Wait to start playback until we at least have some
         // bytes from the server (otherwise the player breaks)
-        var checkStreaming = setInterval(function() {
+        var checkStreaming = setInterval(() => {
             // We've loaded enough to start playing
-            if (self.audioReadyToPlay()) {
+            if (this.audioReadyToPlay()) {
                 clearInterval(checkStreaming);
-                self.trigger("readyToPlay");
+                this.setState({isAudioLoaded: true});
+                this.props.onReadyToPlay();
             }
         }, 16);
 
         this.bindPlayerHandlers();
-    },
+    }
 
-    audioReadyToPlay: function() {
+    audioReadyToPlay() {
         // NOTE(pamela): We can't just check bytesLoaded,
-        //  because IE reports null for that 
+        //  because IE reports null for that
         // (it seems to not get the progress event)
         // So we've changed it to also check loaded.
         // If we need to, we can reach inside the HTML5 audio element
         //  and check the ranges of the buffered property
         return this.player &&
             (this.player.bytesLoaded > 0 || this.player.loaded);
-    },
+    }
 
-    bindPlayerHandlers: function() {
+    togglePlayingState = function() {
+        if (this.record.playing) {
+            this.record.pausePlayback();
+        } else {
+            this.record.play();
+        }
+    };
+
+    bindPlayerHandlers() {
         var self = this;
         var record = this.record;
 
@@ -620,9 +820,9 @@ window.LiveEditor = Backbone.View.extend({
                 self.player.pause();
             }
         });
-    },
+    }
 
-    bindRecordHandlers: function() {
+    bindRecordHandlers() {
         var self = this;
         var record = this.record;
 
@@ -633,159 +833,109 @@ window.LiveEditor = Backbone.View.extend({
 
         record.bind({
             // Playback of a recording has begun
-            playStarted: function(e, resume) {
+            playStarted: (e, resume) => {
                 // Re-init if the recording version is different from
                 // the scratchpad's normal version
-                self.config.switchVersion(record.getVersion());
+                this.config.switchVersion(record.getVersion());
 
                 // We're starting over so reset the editor and
                 // canvas to its initial state
                 if (!record.recording && !resume) {
                     // Reset the editor
-                    self.editor.reset(record.initData.code, false);
+                    this.aceWrapperRef.current.reset(record.initData.code, false);
 
                     // Clear and hide the drawing area
-                    self.drawCanvas.clear(true);
-                    self.drawCanvas.endDraw();
+                    // TODO!!
+                    //self.drawCanvas.clear(true);
+                    //self.drawCanvas.endDraw();
                 }
-
-                if (!record.recording) {
-                    // Disable the record button during playback
-                    self.$el.find("#record").addClass("disabled");
-                }
-
-                // During playback disable the restart button
-                self.$el.find(self.dom.RESTART_BUTTON).addClass("disabled");
+                this.aceWrapperRef.current.unfold();
 
                 if (!record.recording) {
                     // Turn on playback-related styling
-                    $("html").addClass("playing");
-
-                    // Show an invisible overlay that blocks interactions with
-                    // the editor and canvas areas (preventing the user from
-                    // being able to disturb playback)
-                    self.$el.find(".disable-overlay").show();
+                    document.querySelector("html").classList.add("playing");
                 }
 
-                self.editor.unfold();
-
-                // Activate the play button
-                self.$el.find(self.dom.PLAYBAR_PLAY)
-                    .find("span")
-                    .removeClass("glyphicon-play icon-play")
-                    .addClass("glyphicon-pause icon-pause");
+                this.setState({isPlaying: true});
+                // During playback, disable recording
+                // TODO: Can probably remove this, if this is entirely
+                //  a function of isPlaying
+                this.setState({enableRecording: false});
             },
 
-            playEnded: function() {
+            playEnded: () => {
                 // Re-init if the recording version is different from
                 // the scratchpad's normal version
-                self.config.switchVersion(this.initialVersion);
+                this.config.switchVersion(this.props.version);
+                this.setState({isPlaying: false});
             },
 
             // Playback of a recording has been paused
-            playPaused: function() {
+            playPaused: () => {
+                this.setState({isPlaying: false});
+
+                // Re-enable recording after playback
+                // TODO: Can probably remove this, if this is entirely
+                //  a function of isPlaying
+                this.setState({enableRecording: true});
+
                 // Turn off playback-related styling
-                $("html").removeClass("playing");
-
-                // Disable the blocking overlay
-                self.$el.find(".disable-overlay").hide();
-
-                // Allow the user to restart the code again
-                self.$el.find(self.dom.RESTART_BUTTON).removeClass("disabled");
-
-                // Re-enable the record button after playback
-                self.$el.find("#record").removeClass("disabled");
-
-                // Deactivate the play button
-                self.$el.find(self.dom.PLAYBAR_PLAY)
-                    .find("span")
-                    .addClass("glyphicon-play icon-play")
-                    .removeClass("glyphicon-pause icon-pause");
+                document.querySelector("html").classList.remove("playing");
             },
 
             // Recording has begun
-            recordStarted: function() {
+            recordStarted: () => {
                 // Let the output know that recording has begun
-                self.postFrame({ recording: true });
-
-                self.$el.find("#draw-widgets").removeClass("hidden").show();
-
-                // Hides the invisible overlay that blocks interactions with the
-                // editor and canvas areas (preventing the user from being able
-                // to disturb the recording)
-                self.$el.find(".disable-overlay").hide();
+                this.postFrame({ recording: true });
 
                 // Allow the editor to be changed
-                self.editor.setReadOnly(false);
+                this.aceWrapperRef.current.setReadOnly(false);
 
                 // Turn off playback-related styling
                 // (hides hot numbers, for example)
-                $("html").removeClass("playing");
+                document.querySelector("html").classList.remove("playing");
 
                 // Reset the canvas to its initial state only if this is the
                 // very first chunk we are recording.
                 if (record.hasNoChunks()) {
-                    self.drawCanvas.clear(true);
-                    self.drawCanvas.endDraw();
+                    // TODO: Use ref or props
+                    this.drawCanvas.clear(true);
+                    this.drawCanvas.endDraw();
                 }
-
-                // Disable the save button
-                self.$el.find("#save-button, #fork-button")
-                    .addClass("disabled");
-
-                // Activate the recording button
-                self.$el.find("#record").addClass("toggled");
             },
 
             // Recording has ended
-            recordEnded: function() {
+            recordEnded: () => {
                 // Let the output know that recording has ended
-                self.postFrame({ recording: false });
+                this.postFrame({ recording: false });
 
                 if (record.recordingAudio) {
-                    self.recordView.stopRecordingAudio();
+                    this.recordView.stopRecordingAudio();
                 }
-
-                // Re-enable the save button
-                self.$el.find("#save-button, #fork-button")
-                    .removeClass("disabled");
-
-                // Enable playbar UI
-                self.$el.find(self.dom.PLAYBAR_UI)
-                    .removeClass("ui-state-disabled");
-
-                // Return the recording button to normal
-                self.$el.find("#record").removeClass("toggled disabled");
 
                 // Stop any sort of user playback
                 record.stopPlayback();
 
-                // Show an invisible overlay that blocks interactions with the
-                // editor and canvas areas (preventing the user from being able
-                // to disturb the recording)
-                self.$el.find(".disable-overlay").show();
-
                 // Turn on playback-related styling (hides hot numbers, for
                 // example)
-                $("html").addClass("playing");
+                document.querySelector("html").classList.add("playing");
 
                 // Prevent the editor from being changed
-                self.editor.setReadOnly(true);
-
-                self.$el.find("#draw-widgets").addClass("hidden").hide();
+                this.aceWrapperRef.current.setReadOnly(true);
 
                 // Because we are recording in chunks, do not reset the canvas
                 // to its initial state.
-                self.drawCanvas.endDraw();
+                this.drawCanvas.endDraw();
             }
         });
 
         // ScratchpadCanvas mouse events to track
         // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
-        _.each(this.mouseCommands, function(name) {
+        const mouseCommands = ["move", "over", "out", "down", "up"];
+        mouseCommands.forEach((name) => {
             // Handle the command during playback
-            record.handlers[name] = function(x, y) {
-                self.postFrame({
+            record.handlers[name] = (x, y) => {
+                this.postFrame({
                     mouseAction: {
                         name: name,
                         x: x,
@@ -796,16 +946,8 @@ window.LiveEditor = Backbone.View.extend({
         });
 
         // When a restart occurs during playback, restart the output
-        record.handlers.restart = function() {
-            var $restart = self.$el.find(self.dom.RESTART_BUTTON);
-
-            if (!$restart.hasClass("hilite")) {
-                $restart.addClass("hilite green");
-                setTimeout(function() {
-                    $restart.removeClass("hilite green");
-                }, 300);
-            }
-
+        record.handlers.restart = () => {
+            this.setState({animateRestartNow: true});
             self.postFrame({restart: true});
         };
 
@@ -822,9 +964,30 @@ window.LiveEditor = Backbone.View.extend({
         record.endTime = function() {
             return this.duration || this.durationEstimate;
         };
-    },
+    }
 
-    recordHandler: function(callback) {
+    // This is debounced in the constructor,
+    // so we use this for things we can wait a bit on
+    handleChange() {
+        this.setState({showRestart: this.shouldShowRestart()});
+    }
+
+    handleMiniClick() {
+        this.setErrorState(0);
+    }
+
+    handleRestartClick() {
+        this.restartCode();
+        this.record && this.record.log("restart");
+    }
+
+    handleOverlayClick() {
+        // If the user clicks the disable overlay (which is laid over
+        // the editor and canvas on playback) then pause playback.
+        this.record.pausePlayback();
+    }
+
+    handleRecordClick (callback) {
         // If we're already recording, stop
         if (this.record.recording) {
             // Note: We should never hit this case when recording chunks.
@@ -832,7 +995,7 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
-        var saveCode = this.editor.text();
+        var saveCode = this.aceWrapperRef.text();
 
         // You must have some code in the editor before you start recording
         // otherwise the student will be starting with a blank editor,
@@ -845,52 +1008,34 @@ window.LiveEditor = Backbone.View.extend({
 
         } else if (this.canRecord() && !this.hasAudio()) {
             this.startRecording();
-            this.editor.focus();
+            this.aceWrapperRef.focus();
 
         } else {
             callback({error: "exists"});
         }
-    },
+    }
 
-    startRecording: function() {
-        this.bindRecordHandlers();
+    handleRecordColorClick(color) {
+        this.setState({drawingColor: color});
+        this.aceWrapperRef.current.focus();
+    }
 
-        if (!this.recordView) {
-            var $el = this.$el;
+    handleRecordClearClick() {
+        this.setState({drawingColor: null});
+        this.drawCanvas.clear();
+        this.drawCanvas.endDraw();
+        this.aceWrapperRef.current.focus();
+    }
 
-            // NOTE(jeresig): Unfortunately we need to do this to make sure
-            // that we load the web worker from the same domain as the rest
-            // of the site (instead of the domain that the "exec" page is on).
-            // This is dumb and a KA-specific bit of functionality that we
-            // should change, somehow.
-            var workersDir = this.workersDir.replace(/^https?:\/\/[^\/]*/, "");
-
-            this.recordView = new ScratchpadRecordView({
-                el: $el.find(".scratchpad-dev-record-row"),
-                recordButton: $el.find("#record"),
-                saveButton: $el.find("#save-button"),
-                record: this.record,
-                editor: this.editor,
-                config: this.config,
-                workersDir: workersDir,
-                drawCanvas: this.drawCanvas,
-                transloaditTemplate: this.transloaditTemplate,
-                transloaditAuthKey: this.transloaditAuthKey
-            });
-        }
-
-        this.recordView.initializeRecordingAudio();
-    },
-
-    saveRecording: function(callback, steps) {
+    saveRecording (callback, steps) {
         // If no command or audio recording was made, just save the results
         if (!this.record.recorded || !this.record.recordingAudio) {
             return callback();
         }
 
         var transloadit = new TransloaditXhr({
-            authKey: this.transloaditAuthKey,
-            templateId: this.transloaditTemplate,
+            authKey: this.props.transloaditAuthKey,
+            templateId: this.props.transloaditTemplate,
             steps: steps,
             successCb: function(results) {
                 this.recordingMP3 =
@@ -903,32 +1048,18 @@ window.LiveEditor = Backbone.View.extend({
         this.recordView.getFinalAudioRecording(function(combined) {
             transloadit.uploadFile(combined.wav);
         });
-    },
+    }
 
     // We call this function multiple times, because the
     // endTime value may change as we load the file
-    updateDurationDisplay: function() {
-        // Do things that are dependent on knowing duration
-
+    updateDurationDisplay() {
         // This gets called if we're loading while we're playing,
         // so we need to update with the current time
-        this.updateTimeLeft(this.record.currentTime());
-
-        // Set the duration of the progress bar based upon the track duration
-        // Slider position is set in seconds
-        this.$el.find(this.dom.PLAYBAR_PROGRESS).slider("option", "max",
-            this.record.endTime() / 1000);
-    },
-
-    // Update the time left in playback of the track
-    updateTimeLeft: function(time) {
-        // Update the time indicator with a nicely formatted time
-        this.$el.find(".scratchpad-playbar-timeleft").text(
-            "-" + this.formatTime(this.record.endTime() - time));
-    },
+        this.setState({audioCurrentTime: this.record.currentTime()});
+    }
 
     // Utility method for formatting time in minutes/seconds
-    formatTime: function(time) {
+    formatTime (time) {
         var seconds = time / 1000,
             min = Math.floor(seconds / 60),
             sec = Math.floor(seconds % 60);
@@ -939,26 +1070,32 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         return min + ":" + (sec < 10 ? "0" : "") + sec;
-    },
+    }
 
     // Seek the player to a particular time
-    seekTo: function(timeMS) {
-        // Don't update the slider position when seeking
-        // (since this triggers an event on the #progress element)
-        if (!this.record.seeking) {
-            this.$el.find(this.dom.PLAYBAR_PROGRESS)
-                .slider("option", "value", timeMS / 1000);
-        }
-
+    seekTo(timeMS) {
         // Move the recording and player positions
         if (this.record.seekTo(timeMS) !== false) {
             this.player.setPosition(timeMS);
         }
-    },
+    }
 
-    handleMessages: function(e) {
-        var event = e.originalEvent;
-        var data;
+    handleMessages (event) {
+        // DANGER!  The data coming in from the iframe could be anything,
+        // because with some cleverness the author of the program can send an
+        // arbitrary message up to us.  We need to be careful to sanitize it
+        // before doing anything with it, to avoid XSS attacks.  For some
+        // examples, see https://hackerone.com/reports/103989 or
+        // https://app.asana.com/0/44063710579000/71736430394249.
+        // TODO(benkraft): Right now that sanitization is spread over a number
+        // of different places; some things get sanitized here, while others
+        // get passed around and sanitized elsewhere.  Put all the sanitization
+        // in one place so it's easier to reason about its correctness, since
+        // any gap leaves us open to XSS attacks.
+        // TODO(benkraft): Write some tests that send arbitrary messages up
+        // from the iframe, and assert that they don't end up displaying
+        // arbitrary HTML to the user outside the iframe.
+        let data;
 
         try {
             data = JSON.parse(event.data);
@@ -970,12 +1107,16 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
+        if (typeof data !== "object") {
+            return;
+        }
+
         if (data.type === "debugger") {
             // these messages are handled by ui/debugger.js:listenMessages
             return;
         }
 
-        this.trigger("update", data);
+        this.props.onOutputData && this.props.onOutputData(data);
 
         // Hide loading overlay if output is loaded
         // We previously just looked at data.loaded,
@@ -983,62 +1124,60 @@ window.LiveEditor = Backbone.View.extend({
         // so now we also hide if we see data.results
 
         if (data.loaded || data.results) {
-            this.$el.find(this.dom.CANVAS_LOADING).hide();
+            this.setState({outputLoaded: true});
         }
 
         // Set the code in the editor
         if (data.code !== undefined) {
-            this.editor.text(data.code);
-            this.editor.originalCode = data.code;
+            // TODO(benkraft): This is technically not unsafe, in that
+            // this.aceWrapperRef.text() does not render its argument as HTML, but it
+            // does mean that a user can write a program which modifies its own
+            // code (perhaps on another user's computer).  Not directly a
+            // security risk, but it would be nice if it weren't possible.
+            this.aceWrapperRef.current.text(data.code);
             this.restartCode();
         }
 
         // Testing/validation code is being set
-        if (data.validate != null) {
+        if (data.validate !== undefined && data.validate !== null) {
             this.validation = data.validate;
         }
-        
+
         if (data.results) {
-            this.trigger("runDone");
+            this.runDone();
         }
 
-        if (this.editorType.indexOf("ace_") === 0 && data.results &&
-                data.results.assertions) {
-            // Remove previously added markers
-            var markers = this.editor.editor.session.getMarkers();
-            _.each(markers, function(marker, markerId) {
-                this.editor.editor.session.removeMarker(markerId);
-            }.bind(this));
+        if (this.editorType.indexOf("ace_") === 0 && data.results) {
 
-            var annotations = [];
-            for (var i = 0; i < data.results.assertions.length; i++) { 
-                var unitTest = data.results.assertions[i];
-                annotations.push({
-                    row: unitTest.row, 
-                    column: unitTest.column, 
-                    text: unitTest.text,
-                    type: "warning" 
-                });
-                // Underline the problem line to make it more obvious
-                //  if they don't notice the gutter icon
-                var AceRange = ace.require("ace/range").Range;
-                var line = this.editor.editor.session
-                    .getDocument().getLine(unitTest.row);
-                this.editor.editor.session.addMarker(
-                   new AceRange(unitTest.row, 0, unitTest.row, line.length),
-                   "ace_problem_line", "text", false);
-           }
-
-           this.editor.editor.session.setAnnotations(annotations);
+            let warnings = [];
+            if (data.results.assertions || data.results.warnings) {
+                // Results of assertion failures and lint warnings. For example:
+                //  Write `Program.assertEqual(2, 4);` in ProcessingJS editor
+                //  Write "backgrund: grey" in  webpage editor
+                warnings = data.results.assertions.concat(data.results.warnings)
+                    .map((lineMsg) => {
+                        return {
+                            // Coerce to the expected type
+                            row: +lineMsg.row,
+                            column: +lineMsg.column,
+                            // This is escaped by the gutter annotation display
+                            // code, so we don't need to escape it here.
+                            text: lineMsg.text.toString(),
+                            type: "warning"
+                        }
+                    });
+            }
+            this.setState({warnings});
         }
 
-        if (data.results && _.isArray(data.results.errors)) {
-            this.tipbar.toggleErrors(data.results.errors);
+        if (data.results && Array.isArray(data.results.errors)) {
+            this.handleErrors(this.cleanErrors(data.results.errors));
         }
 
         // Set the line visibility in the editor
         if (data.lines !== undefined) {
-            this.editor.toggleGutter(data.lines);
+            // Coerce to the expected type
+            this.aceWrapperRef.current.toggleGutter(data.lines.map(x => +x));
         }
 
         // Restart the execution
@@ -1048,68 +1187,180 @@ window.LiveEditor = Backbone.View.extend({
 
         // Log the recorded action
         if (data.log) {
+            // TODO(benkraft): I think passing unsanitized data to any of our
+            // record handlers is currently safe, but it would be nice to not
+            // depend on that always being true.  Do something to sanitize
+            // this, or at least make it more clear that the data coming in may
+            // be unsanitized.
             this.record.log.apply(this.record, data.log);
         }
-    },
+    }
+
+    handleErrors (errors) {
+        /* Our current less-aggressive way of handling errors:
+         * When a user makes an error, we immediately:
+         *   - show an icon in the gutter
+         *   - underline the current line
+         *   - display a thinking error buddy
+         * We only pop up the error buddy if:
+         *   - they just loaded the editor, and the error was already there
+         *   - they have made an error on the line that they're not currently on
+         *   - a minute has passed since they last typed
+         */
+
+        // Always clear the timeout
+        window.clearTimeout(this.errorTimeout);
+
+        if (errors.length) {
+            // This state set triggers the Ace editor to display gutter errors
+            this.setState({errors});
+            this.maybeShowErrors();
+        } else {
+            // This state set triggers the Ace editor to remove gutter errors
+            this.setState({errors: []});
+            this.setHappyState();
+        }
+    }
+
+    maybeShowErrors() {
+        if (!this.state.errors.length || !this.state.editorCursor) {
+            return;
+        }
+
+        const currentRow = this.state.editorCursor.row;
+        // Determine if there are errors on lines besides the current row
+        let onlyErrorsOnThisLine = true;
+        this.state.errors.forEach((error) => {
+            if (error.row !== currentRow) {
+                onlyErrorsOnThisLine = false;
+                return;
+            }
+        });
+        // If we were already planning to show the error, or if there are
+        // errors on more than the current line, or we have errors and the
+        // program was just loaded, then we show the error popup now.
+        // Otherwise we'll delay showing the error message
+        // to give them time to type.
+
+        if (this.state.showErrorPopup || !onlyErrorsOnThisLine) {
+            // We've already timed out or moved to another line, so show
+            // the error.
+            this.setErrorState();
+        } else if (onlyErrorsOnThisLine) {
+            // There are new errors caused by typing on this line, so let's
+            // give the typer time to finish what they were writing. We'll
+            // show the tipbar if 1 minute has gone by without typing.
+            this.setThinkingState();
+            // Make doubly sure that we clear the timeout
+            window.clearTimeout(this.errorTimeout);
+            this.errorTimeout = setTimeout(() => {
+                if (this.state.errors.length) {
+                    this.setErrorState();
+                }
+            }, 60000);
+        }
+    }
+
+    setErrorState (errorNum) {
+        this.setState({
+            errorState: "error",
+            errorNum: errorNum || 0,
+            showErrorPopup: true
+        });
+    }
+
+    setThinkingState() {
+        this.setState({
+            errorState: "thinking",
+            showErrorPopup: false
+        });
+    }
+
+    setHappyState() {
+        this.setState({
+            errorState: "happy",
+            showErrorPopup: false
+        });
+    }
 
     // Extract the origin from the embedded frame location
-    postFrameOrigin: function() {
+    postFrameOrigin() {
         var match = /^.*:\/\/[^\/]*/.exec(
-            this.$el.find("#output-frame").attr("data-src"));
+            this.iframeRef.current.getAttribute("data-src"));
 
         return match ?
             match[0] :
             window.location.protocol + "//" + window.location.host;
-    },
+    }
 
-    postFrame: function(data) {
+    postFrame(data) {
         // Send the data to the frame using postMessage
-        this.$el.find("#output-frame")[0].contentWindow.postMessage(
+        this.iframeRef.current.contentWindow.postMessage(
             JSON.stringify(data), this.postFrameOrigin());
-    },
+    }
+
+    hasFrame() {
+        return !!(this.execFile);
+    }
 
     /*
      * Restart the code in the output frame.
      */
-    restartCode: function() {
+    restartCode() {
         this.postFrame({ restart: true });
-    },
+    }
 
     /*
      * Execute some code in the output frame.
      *
      * A note about the throttling:
      * This limits updates to 50FPS. No point in updating faster than that.
-     * 
+     *
      * DO NOT CALL THIS DIRECTLY
      * Instead call markDirty because it will handle
      * throttling requests properly.
      */
-    runCode: _.throttle(function(code) {
-        var options = {
-            code: arguments.length === 0 ? this.editor.text() : code,
-            cursor: this.editor.getSelectionIndices ? this.editor.getSelectionIndices() : -1,
-            validate: this.validation || "",
-            noLint: this.noLint,
-            version: this.config.curVersion(),
-            settings: this.settings || {},
-            workersDir: this.workersDir,
-            externalsDir: this.externalsDir,
-            imagesDir: this.imagesDir,
-            soundsDir: this.soundsDir,
-            redirectUrl: this.redirectUrl,
-            jshintFile: this.jshintFile,
-            outputType: this.outputType
-        };
+    runCode(code) {
+        return _.throttle((code) => {
+            var options = {
+                code: arguments.length === 0 ? this.aceWrapperRef.current.text() : code,
+                cursor: this.aceWrapperRef.current.getSelectionIndices ? this.aceWrapperRef.current.getSelectionIndices() : -1,
+                validate: this.validation || "",
+                noLint: this.noLint,
+                version: this.config.curVersion(),
+                settings: this.props.settings || {},
+                workersDir: this.workersDir,
+                externalsDir: this.externalsDir,
+                imagesDir: this.imagesDir,
+                soundsDir: this.soundsDir,
+                redirectUrl: this.redirectUrl,
+                jshintFile: this.jshintFile,
+                outputType: this.outputType,
+                enableLoopProtect: this.enableLoopProtect
+            };
+            this.props.onCodeRun && this.props.onCodeRun(options);
 
-        this.trigger("runCode", options);
+            this.postFrame(options);
+        }, 20)(code)
+    }
 
-        this.postFrame(options);
-    }, 20),
-    
-    markDirty: function() {
-        // They're typing. Hide the tipbar to give them a chance to fix things up
-        this.tipbar.hide();
+    markDirty() {
+        // makeDirty is called when you type something in the editor. When this
+        // happens, we want to run the code, but also want to throttle how often
+        // we re-run so we can wait for the results of running it to come back.
+        // We keep track of the state using clean/running/dirty markers.
+
+        // The state of the output starts out "clean": the editor and the output
+        // are in sync.
+        // When you type, markDirty gets called, which will mark the state as
+        // "running" and starts of runCode in the background. Since runCode is
+        // async, if you type again while it's running then the output state
+        // will get set to "dirty".
+        // When runCode finishes it will call runDone, which will either set the
+        // state back to clean (if it was running before), or will run again if
+        // the state was dirty.
+        // If runCode takes more than 500ms then runDone will be called and we
+        // set the state back to "clean".
         if (this.outputState === "clean") {
             // We will run at the end of this code block
             // This stops replace from trying to execute code
@@ -1117,88 +1368,345 @@ window.LiveEditor = Backbone.View.extend({
             setTimeout(this.runCode.bind(this), 0);
             this.outputState = "running";
 
-            // 500ms is an arbitrary timeout. Hopefully long enough for reasonable programs
-            // to execute, but short enough for editor to not freeze
-            this.runTimeout = setTimeout(function() { this.trigger("runDone"); }.bind(this), 500);
+            // 500ms is an arbitrary timeout. Hopefully long enough for
+            // reasonable programs to execute, but short enough for editor to
+            // not freeze.
+            this.runTimeout = setTimeout(() => {
+                this.runDone();
+            }, 500);
         } else {
             this.outputState = "dirty";
         }
-    },
+    }
+
     // This will either be called when we receive the results
     // Or it will timeout.
-    runDone: function() {
+    runDone() {
         clearTimeout(this.runTimeout);
         var lastOutputState = this.outputState;
         this.outputState = "clean";
         if (lastOutputState === "dirty") {
             this.markDirty();
         }
-    },
-    // This stops us from sending  any updates until
-    // Reset output state to clean as a part of the frame load handler
-    outputState: "dirty",
-
-    getScreenshot: function(callback) {
-        // Unbind any handlers this function may have set for previous
-        // screenshots
-        $(window).unbind("message.getScreenshot");
-
-        // We're only expecting one screenshot back
-        $(window).bind("message.getScreenshot", function(e) {
-            // Only call if the data is actually an image!
-            if (/^data:/.test(e.originalEvent.data)) {
-                callback(e.originalEvent.data);
-            }
-        });
-
-        // Ask the frame for a screenshot
-        this.postFrame({ screenshot: true });
-    },
-
-    updateCanvasSize: function(width, height) {
-        width = width || this.defaultOutputWidth;
-        height = height || this.defaultOutputHeight;
-
-        this.$el.find(this.dom.CANVAS_WRAP).width(width);
-        this.$el.find(this.dom.ALL_OUTPUT).height(height);
-
-        // Set the editor height to be the same as the canvas height
-        this.$el.find(this.dom.EDITOR).height(this.editorHeight || height);
-
-        this.trigger("canvasSizeUpdated", {
-            width: width,
-            height: height
-        });
-    },
-
-    getScreenshot: function(callback) {
-        // Unbind any handlers this function may have set for previous
-        // screenshots
-        $(window).off("message.getScreenshot");
-    
-        // We're only expecting one screenshot back
-        $(window).on("message.getScreenshot", function(e) {
-            // Only call if the data is actually an image!
-            if (/^data:/.test(e.originalEvent.data)) {
-                callback(e.originalEvent.data);
-            }
-        });
-    
-        // Ask the frame for a screenshot
-        this.postFrame({ screenshot: true });
-    },
-
-    undo: function() {
-        this.editor.undo();
-    },
-
-    _qualifyURL: function(url) {
-        var a = document.createElement("a");
-        a.href = url;
-        return a.href;
     }
-});
+
+    updateOutputSize(outputWidth, outputHeight) {
+        outputWidth = outputWidth || this.props.outputWidth;
+        outputHeight = outputHeight || this.props.outputHeight;
+        this.setState({outputWidth, outputHeight});
+
+        this.props.onOutputSizeUpdate &&
+        this.props.onOutputSizeUpdate({
+            width: outputWidth,
+            height: outputHeight
+        });
+    }
+
+    getScreenshot(callback) {
+        // If we don't have an output frame then we need to render our
+        // own screenshot (so we just use the text in the editor)
+        if (!this.hasFrame()) {
+            var canvas = document.createElement("canvas");
+            canvas.width = 200;
+            canvas.height = 200;
+            var ctx = canvas.getContext("2d");
+
+            // Default sizing, we also use a 5px margin
+            var lineHeight = 24;
+            var maxWidth = 190;
+
+            // We go through all of this so that the text will wrap nicely
+            var text = this.aceWrapperRef.current.text();
+
+            // Remove all HTML markup and un-escape entities
+            text = text.replace(/<[^>]+>/g, "");
+            text = text.replace(/&nbsp;|&#160;/g, " ");
+            text = text.replace(/&lt;|&#60;/g, "<");
+            text = text.replace(/&gt;|&#62;/g, ">");
+            text = text.replace(/&amp;|&#38;/g, "&");
+            text = text.replace(/&quot;|&#34;/g, "\"");
+            text = text.replace(/&apos;|&#39;/g, "\'");
+
+            var words = text.split(/\s+/);
+            var lines = 0;
+            var currentLine = words[0];
+
+            ctx.font = lineHeight + "px serif";
+
+            for (var i = 1; i < words.length; i++) {
+                var word = words[i];
+                var width = ctx.measureText(currentLine + " " + word).width;
+                if (width < maxWidth) {
+                    currentLine += " " + word;
+                } else {
+                    lines += 1;
+                    ctx.fillText(currentLine, 5, (lineHeight + 5) * lines);
+                    currentLine = word;
+                }
+            }
+            lines += 1;
+            ctx.fillText(currentLine, 5, (lineHeight + 5) * lines + 5);
+
+            // Render it to an image and we're done!
+            callback(canvas.toDataURL("image/png"));
+            return;
+        }
+
+        const handleScreenshotMessage = function(e) {
+            // Only call if the data is actually an image!
+            if (/^data:/.test(e.originalEvent.data)) {
+                callback(e.originalEvent.data);
+            }
+        };
+
+        // Unbind event listeners set for previous screenshots
+        window.removeEventListener("message", handleScreenshotMessage);
+        // We're only expecting one screenshot back
+        window.addEventListener("message", handleScreenshotMessage);
+
+        // Ask the frame for a screenshot
+        this.postFrame({ screenshot: true });
+    }
+
+    undo() {
+        this.aceWrapperRef.current.undo();
+    }
+
+    cleanErrors(errors) {
+        var loopProtectMessages = {
+            "WhileStatement": i18n._("<code>while</code> loop"),
+            "DoWhileStatement": i18n._("<code>do-while</code> loop"),
+            "ForStatement": i18n._("<code>for</code> loop"),
+            "FunctionDeclaration": i18n._("<code>function</code>"),
+            "FunctionExpression": i18n._("<code>function</code>"),
+        };
+
+        errors = errors.map(function(error) {
+            // These errors come from the user, so we can't trust them.  They
+            // get decoded from JSON, so they will just be plain objects, not
+            // arbitrary classes, but they're still potentially full of HTML
+            // that we need to escape.  So any HTML we want to put in needs to
+            // get put in here, rather than somewhere inside the iframe.
+            delete error.html;
+            // TODO(benkraft): This is a kind of ugly place to put this
+            // processing.  Refactor so that we don't have to do something
+            // quite so ad-hoc here, while still keeping any user input
+            // appropriately sanitized.
+            var loopNodeType = error.infiniteLoopNodeType;
+            if (loopNodeType) {
+                error.html = i18n._(
+                    "A %(type)s is taking too long to run. " +
+                    "Perhaps you have a mistake in your code?", {
+                        type: loopProtectMessages[loopNodeType]
+                });
+            }
+
+            const newError = {};
+
+            // error.html was cleared above, so if it exists it's because we
+            // reset it, and it's safe.
+            if (typeof error === "string") {
+                newError.text = clean(prettify(error));
+            } else if (error.html) {
+                newError.text = prettify(error.html);
+            } else {
+                newError.text = prettify(clean(
+                    error.text || error.message || ""));
+            }
+
+            // Coerce anything from the user to the expected types before
+            // copying over
+            if (error.lint !== undefined) {
+                newError.lint = {};
+
+                // TODO(benkraft): Coerce this in a less ad-hoc way, or at
+                // least only pass through the things we'll actually use.
+                // Also, get a stronger guarantee that none of these
+                // strings ever get used unescaped.
+                const numberProps = ["character", "line"];
+                const stringProps = [
+                    "code", "evidence", "id", "raw", "reason", "scope", "type"
+                ];
+                const objectProps = ["openTag"];
+
+                numberProps.forEach(prop => {
+                    if (error.lint[prop] != undefined) {
+                        newError.lint[prop] = +error.lint[prop];
+                    }
+                });
+
+                stringProps.forEach(prop => {
+                    if (error.lint[prop] != undefined) {
+                        newError.lint[prop] = error.lint[prop].toString();
+                    }
+                });
+
+                objectProps.forEach(prop => {
+                    if (error.lint[prop] != undefined) {
+                        newError.lint[prop] = error.lint[prop];
+                    }
+                });
+            }
+
+            if (error.row != undefined) {
+                newError.row = +error.row;
+            }
+
+            if (error.column != undefined) {
+                newError.column = +error.column;
+            }
+
+            if (error.type != undefined) {
+                newError.type = error.type.toString();
+            }
+
+            if (error.source != undefined) {
+                newError.source = error.source.toString();
+            }
+
+            if (error.priority != undefined) {
+                newError.priority = +error.priority;
+            }
+
+            return newError;
+        }.bind(this));
+
+        errors = errors.sort(function(a, b) {
+            var diff = a.row - b.row;
+            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
+        });
+
+        return errors;
+    }
+
+
+    render() {
+        return (
+            <div
+                className={classNames(
+                    "scratchpad-wrap",
+                    this.props.execFile ? "" : "no-output",
+                    css(
+                        styles.wrap,
+                        this.props.hideEditor &&
+                            isResizable &&
+                            styles.wrapNoEditorResizable,
+                    ),
+                )}
+                ref={this.wrapRef}
+            >
+            <div
+                className={css(
+                    styles.wrapOuter,
+                    !this.props.hideEditor &&
+                        styles.wrapBorder,
+                )}
+            >
+                <div className={css(styles.wrapInner)}>
+                    {this.renderEditorSide()}
+                    {this.renderDragHandle()}
+                    {this.renderOutputSide()}
+                </div>
+                {this.renderPlaybackBar()}
+                {this.renderRecordColorButtons()}
+                {this.renderRecordButton()}
+                {this.renderRecordControls()}
+            </div>
+        </div>
+        );
+    }
+}
 
 LiveEditor.registerEditor = function(name, editor) {
-    LiveEditor.prototype.editors[name] = editor;
+    editors[name] = editor;
 };
+
+
+const defaultDim = 400;
+const defaultBorder = `2px solid #D6D8DA`;
+const defaultBorderRadius = 5;
+
+const styles = StyleSheet.create({
+    dragHandle: {
+        background: "#D6D8DA",
+        cursor: "ew-resize",
+        display: "table-cell",
+        flexShrink: 0,
+        width: 2,
+    },
+    dragHandleActive: {
+        boxShadow: "0 0 4px 1px #444",
+        width: "3px",
+    },
+    editorWrap: {
+        borderRight: defaultBorder,
+        display: "flex",
+        flexDirection: "column",
+        marginRight: "auto",
+        minHeight: defaultDim,
+        flexGrow: 1,
+        flexShrink: 1,
+    },
+    editorHidden: {
+        display: "none",
+    },
+    editorContainer: {
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        flexShrink: 1,
+        position: "relative",
+    },
+    // This is ambiguously named -- refers to the contents of a tab, *NOT*
+    // the tab button or buttons at the top of the challenge content editor.
+    editorTab: {
+        position: "absolute",
+        padding: 0,
+        height: "100%",
+        width: "100%",
+    },
+    editorTabDocument: {
+        position: "static",
+    },
+    inputFrame: {
+        height: "100%",
+        position: "relative",
+    },
+    playbar: {
+        borderTop: defaultBorder,
+        display: "flex",
+        padding: 5,
+    },
+    playbackBar: {
+        flex: "1 0 0",
+    },
+    toolbarWrap: {
+        borderTop: defaultBorder,
+        padding: 5,
+    },
+    wrap: {
+        // These two make .wrapInner hide border-radius overflow *shrug*
+        position: "relative",
+        zIndex: 0,
+        flexGrow: 1,
+        display: "flex",
+        flexDirection: "row",
+        minWidth: defaultDim,
+    },
+    wrapNoEditorResizable: {
+        minWidth: "100%",
+    },
+    wrapOuter: {
+        flexGrow: 1,
+    },
+    wrapBorder: {
+        borderRadius: defaultBorderRadius,
+        border: defaultBorder,
+        overflow: "auto",
+        // Also required to make the border-radius overflow work
+        transform: "scale(1)",
+    },
+    wrapInner: {
+        display: "flex",
+    },
+});

@@ -1,7 +1,8 @@
-var PooledWorker = function(filename, onExec) {
+const PooledWorker = function(filename, workersDir, onExec) {
     this.pool = [];
     this.curID = 0;
     this.filename = filename;
+    this.workersDir = workersDir;
     this.onExec = onExec || function() {};
 };
 
@@ -17,7 +18,7 @@ PooledWorker.prototype.getWorkerFromPool = function() {
     // potential to use a lot of workers. We want to re-use as many of
     // them as possible as their creation can be expensive. (Chrome
     // seems to freak out, use lots of memory, and sometimes crash.)
-    var worker = this.pool.shift();
+    let worker = this.pool.shift();
     if (!worker) {
         worker = new window.Worker(this.getURL());
     }
@@ -39,7 +40,7 @@ PooledWorker.prototype.addWorkerToPool = function(worker) {
 };
 
 PooledWorker.prototype.exec = function() {
-    this.onExec.apply(this, arguments);
+    this.onExec(...arguments);
 };
 
 PooledWorker.prototype.kill = function() {
@@ -48,3 +49,5 @@ PooledWorker.prototype.kill = function() {
     }, this);
     this.pool = [];
 };
+
+export default PooledWorker;

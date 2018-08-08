@@ -10,39 +10,30 @@
     <body>
         <div id="mocha"></div>
         <div id="output-area"></div>
+
+        <!-- External dependencies:
+            These are not bundled by live-editor because the Khan Academy code
+            provides them outside the live-editor bundle.
+        -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.5.7/es5-shim.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.3.3/backbone-min.js"></script>
+
         <script src="../../../build/js/live-editor.core_deps.js"></script>
-        <script>
-        // Works around this issue in PhantomJS:
-        // https://github.com/ariya/phantomjs/pull/12307
-        // Remove once PhantomJS pushes out a new release that fixes this!
-        (function() {
-            var oldSplice = Array.prototype.splice;
-            Array.prototype.splice = function(num) {
-                if (arguments.length === 1) {
-                    return Array.prototype.slice.call(this, num);
-                }
-                return oldSplice.apply(this, arguments);
-            };
-        })();
-        </script>
         <script src="../../../build/js/live-editor.shared.js"></script>
         <script src="../../../build/js/live-editor.output.js"></script>
         <script src="../../../build/js/live-editor.output_sql_deps.js"></script>
         <script src="../../../build/js/live-editor.output_sql.js"></script>
         <script src="../../../node_modules/mocha/mocha.js"></script>
         <script src="../../../node_modules/expect.js/index.js"></script>
-        <script>mocha.setup("bdd");</script>
+        <script src="../../../testutil/json-reporter.js"></script>
         <script src="test_utils.js"></script>
-        <script src="output_test.js"></script>
-        <script src="assert_test.js"></script>
+        <script src="../../shared_utils.js"></script>
         <script>
-            onload = function(){
-                if (window.mochaPhantomJS) {
-                    mochaPhantomJS.run();
-                } else {
-                    mocha.run();
-                }
-            };
+            runTestFiles([
+                "output_test.js",
+                "assert_test.js"
+            ]);
         </script>
     </body>
 </html>

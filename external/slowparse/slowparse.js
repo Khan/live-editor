@@ -167,6 +167,17 @@
       return obj;
     },
     // These are HTML errors.
+    NO_DOCTYPE_FOUND: function() {},
+    HTML_NOT_ROOT_ELEMENT: function(parser) {
+      var currentNode = parser.domBuilder.currentNode.firstElementChild,
+          openTag = this._combine({
+            name: currentNode.nodeName.toLowerCase()
+          }, currentNode.parseInfo.openTag);
+      return {
+        openTag: openTag,
+        cursor: openTag.start
+      };
+    },
     UNCLOSED_TAG: function(parser) {
       var currentNode = parser.domBuilder.currentNode,
           openTag = this._combine({
@@ -194,6 +205,15 @@
         openTag: openTag,
         cursor: openTag.start
       };
+    },
+    OBSOLETE_HTML_TAG: function(tagName, token) {
+      var openTag = this._combine({
+          name: tagName
+        }, token.interval);
+      return {
+        openTag: openTag,
+        cursor: openTag.start
+      }
     },
     ELEMENT_NOT_ALLOWED: function(tagName, token) {
       var openTag = this._combine({
@@ -421,6 +441,29 @@
         cursor: attribute.value.start
       };
     },
+    //Special error type for urls that start with www
+    INVALID_URL: function(parser, nameTok, valueTok) {
+      var currentNode = parser.domBuilder.currentNode,
+          openTag = this._combine({
+            name: currentNode.nodeName.toLowerCase()
+          }, currentNode.parseInfo.openTag),
+          attribute = {
+            name: {
+              value: nameTok.value,
+              start: nameTok.interval.start,
+              end: nameTok.interval.end
+            },
+            value: {
+              start: valueTok.interval.start + 1,
+              end: valueTok.interval.end - 1
+            }
+          };
+      return {
+        openTag: openTag,
+        attribute: attribute,
+        cursor: attribute.value.start
+      };
+    },
     // These are CSS errors.
     UNKOWN_CSS_KEYWORD: function(parser, start, end, value) {
       return {
@@ -502,6 +545,16 @@
       };
     },
     UNFINISHED_CSS_VALUE: function(parser, start, end, value) {
+      return {
+        cssValue: {
+          start: start,
+          end: end,
+          value: value
+        },
+        cursor: start
+      };
+    },
+    IMPROPER_CSS_VALUE: function(parser, start, end, value) {
       return {
         cssValue: {
           start: start,
@@ -1175,7 +1228,6 @@
       if(token === null) {
         throw new ParseError("MISSING_CSS_VALUE", this, propertyStart, propertyStart+property.length, property);
       }
-
       var next = (!this.stream.end() ? this.stream.next() : "end of stream"),
           errorMsg = "[_parseValue] Expected }, <, or ;, instead found "+next;
 
@@ -1186,6 +1238,17 @@
 
       if (value === '') {
         throw new ParseError("MISSING_CSS_VALUE", this, this.stream.pos-1, this.stream.pos);
+      }
+
+      // If value has a newline, the tokenizer ate the next pair, so we're missing a ;
+      if (value.indexOf('\n') > -1) {
+        value = value.substr(0, value.indexOf('\n'));
+        this.warnings.push(new ParseError("UNFINISHED_CSS_VALUE", this, valueStart, valueEnd, value));
+      }
+
+      // if value matches this regex, then there's a space between
+      if (value.match(/(#|rgb|rgba|hsl|hsla)\s+\(/)) {
+        this.warnings.push(new ParseError("IMPROPER_CSS_VALUE", this, valueStart, valueEnd, value));
       }
 
       // At this point we can fill in the *value* part of the current
@@ -1217,6 +1280,7 @@
       }
       else if (next === '}') {
         // This is block level termination; try to read a new selector.
+        this.warnings.push(new ParseError("UNFINISHED_CSS_VALUE", this, valueStart, valueEnd, value));
         this.currentRule.declarations.end = this.stream.pos;
         this._bindCurrentRule();
         this.stream.markTokenStartAfterSpace();
@@ -1325,8 +1389,9 @@
     // We also keep a list of HTML elements that are now obsolete, but
     // may still be encountered in the wild on popular sites.
     obsoleteHtmlElements: ["acronym", "applet", "basefont", "big", "center",
-                           "dir", "font", "isindex", "listing", "noframes",
-                           "plaintext", "s", "strike", "tt", "xmp"],
+                           "dir", "font", "isindex", "listing", "marquee",
+                           "noframes", "plaintext", "s", "strike", "tt",
+                           "xmp"],
 
     webComponentElements: ["template", "shadow", "content"],
 
@@ -1359,6 +1424,12 @@
     },
 
     // This is a helper function to determine whether a given string
+    // is an obsolete HTML element tag
+    _knownObsoleteHTMLElement: function(tagName) {
+      return this.obsoleteHtmlElements.indexOf(tagName) > -1;
+    },
+
+    // This is a helper function to determine whether a given string
     // is a HTML element tag which can optional omit its close tag.
     _knownOmittableCloseTagHtmlElement: function(tagName) {
       return this.omittableCloseTagHtmlElements.indexOf(tagName) > -1;
@@ -1388,13 +1459,16 @@
       // First we check to see if the beginning of our stream is
       // an HTML5 doctype tag. We're currently quite strict and don't
       // parse XHTML or other doctypes.
-      if (this.stream.match(this.html5Doctype, true, true))
+      if (this.stream.match(this.html5Doctype, true, true)) {
         this.domBuilder.fragment.parseInfo = {
           doctype: {
             start: 0,
             end: this.stream.pos
           }
         };
+      } else {
+        this.warnings.push(new ParseError("NO_DOCTYPE_FOUND"));
+      }
 
       // Next, we parse "tag soup", creating text nodes and diving into
       // tags as we find them.
@@ -1412,6 +1486,11 @@
       // we test for that.
       if (this.domBuilder.currentNode != this.domBuilder.fragment)
         throw new ParseError("UNCLOSED_TAG", this);
+
+      if (this.domBuilder.currentNode.children &&
+        (this.domBuilder.currentNode.children.length !== 1 || this.domBuilder.currentNode.firstElementChild.tagName !== "HTML")) {
+        this.warnings.push(new ParseError("HTML_NOT_ROOT_ELEMENT", this));
+      }
 
       return {
         warnings: (this.warnings.length > 0 ? this.warnings : false)
@@ -1477,8 +1556,11 @@
         if (tagName) {
           var badSVG = this.parsingSVG && !this._knownSVGElement(tagName);
           var badHTML = !this.parsingSVG && !this._knownHTMLElement(tagName) && !this._isCustomElement(tagName);
+          var obsoleteHTML = this._knownObsoleteHTMLElement(tagName);
           if (badSVG || badHTML) {
             throw new ParseError("INVALID_TAG_NAME", tagName, token);
+          } else if (obsoleteHTML) {
+            this.warnings.push(new ParseError("OBSOLETE_HTML_TAG", tagName, token));
           } else if (this.options.noScript && tagName === "script") {
             throw new ParseError("SCRIPT_ELEMENT_NOT_ALLOWED", tagName, token);
           } else if (this.options.disableTags) {
@@ -1720,11 +1802,33 @@
         }
         var valueTok = this.stream.makeToken();
 
-        //Add a new validator to check if there is a http link in a https page
+        // Add a new validator to check if there is a http link in a https page
         if (checkMixedContent && valueTok.value.match(/http:/) && isActiveContent(tagName, nameTok.value)) {
           this.warnings.push(
             new ParseError("HTTP_LINK_FROM_HTTPS_PAGE", this, nameTok, valueTok)
           );
+        }
+
+        // Add a new validator to check if there is invalid link content
+        // Cheers to Diego Perini: https://gist.github.com/dperini/729294, modified to include protocol-relative links
+        var regexp = /^(?:((?:https?|ftp):\/\/)|\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/i;
+
+        // Remove quotes from string literal
+        var url = valueTok.value.substring(1, valueTok.value.length-1);
+        if (!url.match(regexp)) {
+          if (nameTok.value === "src"){
+            this.warnings.push(
+              new ParseError("INVALID_URL", this, nameTok, valueTok)
+            );
+          } else if (nameTok.value === "href") {
+            if (url.charAt(0) !== "#" &&
+                url.substring(0, 10) !== "javascript" &&
+                url.substring(0, 7) !== "mailto:") {
+              this.warnings.push(
+                new ParseError("INVALID_URL", this, nameTok, valueTok)
+              );
+            }
+          }
         }
 
         var unquotedValue = replaceEntityRefs(valueTok.value.slice(1, -1));
@@ -1756,17 +1860,17 @@
   //
   // The DOM builder is given a single document DOM object that will
   // be used to create all necessary DOM nodes.
-  function DOMBuilder(sourceCode, disallowActiveAttributes, scriptPreprocessor) { 
-    this.disallowActiveAttributes = disallowActiveAttributes; 
-    this.scriptPreprocessor = scriptPreprocessor; 
+  function DOMBuilder(sourceCode, disallowActiveAttributes, scriptPreprocessor) {
+    this.disallowActiveAttributes = disallowActiveAttributes;
+    this.scriptPreprocessor = scriptPreprocessor;
     this.document = document;
-    this.sourceCode = sourceCode; 
-    this.code = ""; 
+    this.sourceCode = sourceCode;
+    this.code = "";
     this.fragment = document.createDocumentFragment();
     this.currentNode = this.fragment;
     this.contexts = [];
     this.rules = [];
-    this.last = 0; 
+    this.last = 0;
     this.pushContext("html", 0);
   }
 
@@ -1819,44 +1923,44 @@
     },
     // This method appends a text node to the currently active element.
     text: function(text, parseInfo) {
-      if (this.currentNode && this.currentNode.attributes) { 
+      if (this.currentNode && this.currentNode.attributes) {
         var type = this.currentNode.attributes.type || "";
         if (type.toLowerCase) {
             type = type.toLowerCase();
         } else if (type.nodeValue) { // button type="submit"
             type = type.nodeValue;
         }
-        if (this.currentNode.nodeName.toLowerCase() === "script" && (!type || type === "text/javascript")) { 
-          this.javascript(text, parseInfo); 
+        if (this.currentNode.nodeName.toLowerCase() === "script" && (!type || type === "text/javascript")) {
+          this.javascript(text, parseInfo);
           // Don't actually add javascript to the DOM we're building
           // because it will execute and we don't want that.
           return;
         } else if (this.currentNode.nodeName.toLowerCase() === "style") {
           this.rules.push.apply(this.rules, parseInfo.rules);
-        } 
-      } 
+        }
+      }
       var textNode = this.document.createTextNode(text);
       textNode.parseInfo = parseInfo;
       this.currentNode.appendChild(textNode);
     },
-    javascript: function(text, parseInfo) { 
-      try { 
-        text = this.scriptPreprocessor(text); 
-      } catch(err) { 
-        // This is meant to handle esprima errors 
-        if (err.index && err.description && err.message) { 
-          var cursor = this.currentNode.parseInfo.openTag.end + err.index; 
-          throw {parseInfo: {type: "JAVASCRIPT_ERROR", message: err.description, cursor: cursor} }; 
-        } else { 
-          throw err; 
-        } 
-      } 
-      this.code += this.sourceCode.slice(this.last, parseInfo.start); 
-      this.code += text; 
-      this.last = parseInfo.end; 
+    javascript: function(text, parseInfo) {
+      try {
+        text = this.scriptPreprocessor(text);
+      } catch(err) {
+        // This is meant to handle esprima errors
+        if (err.index && err.description && err.message) {
+          var cursor = this.currentNode.parseInfo.openTag.end + err.index;
+          throw {parseInfo: {type: "JAVASCRIPT_ERROR", message: err.description, cursor: cursor} };
+        } else {
+          throw err;
+        }
+      }
+      this.code += this.sourceCode.slice(this.last, parseInfo.start);
+      this.code += text;
+      this.last = parseInfo.end;
     },
     close: function() {
-      this.code += this.sourceCode.slice(this.last); 
+      this.code += this.sourceCode.slice(this.last);
     }
   };
 
@@ -1907,9 +2011,9 @@
           errorDetectors = options.errorDetectors || [],
           disallowActiveAttributes = (typeof options.disallowActiveAttributes === "undefined") ? false : options.disallowActiveAttributes;
 
-      var scriptPreprocessor = options.scriptPreprocessor || function(x) {return x;}; 
-      var domBuilder = new DOMBuilder(html, disallowActiveAttributes, scriptPreprocessor); 
-      var parser = new HTMLParser(stream, domBuilder, options); 
+      var scriptPreprocessor = options.scriptPreprocessor || function(x) {return x;};
+      var domBuilder = new DOMBuilder(html, disallowActiveAttributes, scriptPreprocessor);
+      var parser = new HTMLParser(stream, domBuilder, options);
 
       try {
         var _ = parser.parse();

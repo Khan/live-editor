@@ -1,3 +1,14 @@
+const {
+    editor,
+    TTE,
+    tooltipClasses,
+    getMockedTooltip,
+    testMockedTooltipDetection,
+    testReplace,
+    typeLine,
+    getLine
+} = require("./shared.js");
+
 describe("soundModal - detection", function() {
     var mockedSoundModal = getMockedTooltip(tooltipClasses.soundModal, ["detector"]);
 
