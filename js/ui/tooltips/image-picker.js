@@ -3,7 +3,7 @@ import React, { Component } from "react";
 import { OutputImages } from "../../shared/images.js";
 import TooltipEngine from "../../ui/tooltip-engine.js";
 
-import ImageScroller from "./image-scroller.jsx";
+import ImageScroller from "./image-scroller.js";
 import TooltipPositioner from "./tooltip-positioner.js";
 import * as tooltipUtils from "./tooltip-utils.js";
 

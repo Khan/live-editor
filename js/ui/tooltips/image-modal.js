@@ -4,7 +4,7 @@ import React, { Component } from "react";
 import { ExtendedOutputImages } from "../../shared/images.js";
 import TooltipEngine from "../../ui/tooltip-engine.js";
 
-import MediaPickerTooltip from "./media-picker-tooltip.jsx";
+import MediaPickerTooltip from "./media-picker-tooltip.js";
 import TooltipPositioner from "./tooltip-positioner.js";
 
 /*

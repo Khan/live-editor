@@ -13,14 +13,14 @@ import {StyleSheet, css} from "aphrodite/no-important";
 
 import Structured from "../external/structuredjs/structured.js";
 
-import DrawCanvas from "./ui/draw-canvas.jsx";
-import EditorSide from "./ui/editor-side.jsx";
-import ErrorBuddy from "./ui/tipbar.jsx";
-import ErrorBuddyMini from "./ui/errorbuddy-mini.jsx";
-import OutputSide from "./ui/output-side.jsx";
-import PlaybackBar from "./ui/playback-bar.jsx";
-import RecordControls from "./ui/record-controls.jsx";
-import RestartButton from "./ui/restart-button.jsx";
+import DrawCanvas from "./ui/draw-canvas.js";
+import EditorSide from "./ui/editor-side.js";
+import ErrorBuddy from "./ui/tipbar.js";
+import ErrorBuddyMini from "./ui/errorbuddy-mini.js";
+import OutputSide from "./ui/output-side.js";
+import PlaybackBar from "./ui/playback-bar.js";
+import RecordControls from "./ui/record-controls.js";
+import RestartButton from "./ui/restart-button.js";
 import ScratchpadConfig from "./shared/config.js";
 import ScratchpadRecordModel from "./shared/record.js";
 import * as utils from "./shared/utils.js";
@@ -641,7 +641,7 @@ export default class LiveEditor extends Component {
             debugMode: false,
             // Un-comment this to test Flash on FF:
             // debugFlash: true, preferFlash: true, useHTML5Audio: false,
-            // See sm2-container in editor-wrapper.jsx and flashblock.css
+            // See sm2-container in editor-wrapper.js and flashblock.css
             useFlashBlock: true,
             // Sometimes when Flash is blocked or the browser is slower,
             //  soundManager will fail to initialize at first,

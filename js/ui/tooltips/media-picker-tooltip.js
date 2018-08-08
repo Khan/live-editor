@@ -4,8 +4,8 @@ import {ModalLauncher} from "@khanacademy/wonder-blocks-modal";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-import MediaPickerModal from "./media-picker-modal.jsx";
-import MediaPickerPreview from "./media-picker-preview.jsx";
+import MediaPickerModal from "./media-picker-modal.js";
+import MediaPickerPreview from "./media-picker-preview.js";
 
 export default class MediaPickerTooltip extends Component {
     // Most of these are for passing on to children

@@ -3,7 +3,7 @@ import React, {Component} from "react";
 import AutoSuggestData from "../autosuggest-data.js";
 import TooltipEngine from "../tooltip-engine.js";
 
-import AutoSuggestPopup from "./auto-suggest-popup.jsx";
+import AutoSuggestPopup from "./auto-suggest-popup.js";
 import TooltipPositioner from "./tooltip-positioner.js";
 import * as tooltipUtils from "./tooltip-utils.js";
 

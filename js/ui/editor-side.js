@@ -7,7 +7,7 @@ import IconButton from "@khanacademy/wonder-blocks-icon-button";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-import EditorToolbar from "./editor-toolbar.jsx";
+import EditorToolbar from "./editor-toolbar.js";
 import SharedStyles from "./shared-styles.js";
 
 export default class EditorSide extends Component {

@@ -6,7 +6,7 @@ import {Tab, Tabs, TabList, TabPanel} from "react-tabs";
 import React, {Component} from "react";
 import "react-tabs/style/react-tabs.css";
 
-import MediaPickerScroller from "./media-picker-scroller.jsx";
+import MediaPickerScroller from "./media-picker-scroller.js";
 
 export default class MediaPickerModal extends Component {
     props: {
@@ -17,7 +17,6 @@ export default class MediaPickerModal extends Component {
     };
 
     handleClick(e) {
-        console.log("ive been clicked!");
         e.stopPropagation();
     }
 

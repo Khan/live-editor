@@ -52,7 +52,8 @@ export default class TooltipEngine extends Component {
     }
 
     componentDidMount() {
-        document.body.addEventListener("click", this.handleBlurEvent);
+        // TODO(pamela)
+        //document.body.addEventListener("click", this.handleBlurEvent);
         //document.body.addEventListener("contextmenu", this.handleBlurEvent);
     }
 
@@ -87,8 +88,6 @@ export default class TooltipEngine extends Component {
 
     handleBlurEvent(e) {
         const blurTarget = e.target;
-        return;
-        console.log("Got blur event", e);
         if (blurTarget &&
             this.state.currentTooltip &&
             !this.domRef.current.contains(blurTarget)) {

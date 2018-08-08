@@ -4,7 +4,7 @@
   "description": "Live Code Editor",
   "main": "dist/live-editor.js",
   "scripts": {
-    "lint": "eslint --ext .js --ext .jsx js",
+    "lint": "eslint js",
     "build": "webpack --mode development",
     "test": "gulp test"
   },

@@ -2,7 +2,7 @@ import _  from "lodash";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 
-import LazyLoadMedia from "./lazy-load-media.jsx";
+import LazyLoadMedia from "./lazy-load-media.js";
 
 export default class ImageScroller extends Component {
     props: {
