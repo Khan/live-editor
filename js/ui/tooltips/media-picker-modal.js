@@ -62,7 +62,7 @@ export default class MediaPickerModal extends Component {
 
         return (
             <OneColumnModal
-                content={<View>{modalContent}</View>}
+                content={modalContent}
                 footer={
                     <View>
                         <Button onClick={this.props.onClose}>

@@ -1,7 +1,7 @@
-import _ from "lodash";
-import {StyleSheet, css} from "aphrodite/no-important";
-import React, {Component} from "react";
 import slugify from "slugify";
+import React, {Component} from "react";
+import {StyleSheet, css} from "aphrodite/no-important";
+import Color from "@khanacademy/wonder-blocks-color";
 
 import LazyLoadMedia from "./lazy-load-media.js";
 
@@ -20,9 +20,8 @@ export default class MediaPickerScroller extends Component {
             activeFileInfo: {},
         };
 
-        this.handleScroll = this.handleScroll.bind(this);
-        this.throttledOnScroll = _.throttle(this.handleScroll, 200);
         this.scrollerRef = React.createRef();
+        this.handleScroll = this.handleScroll.bind(this);
         this.handleFileSelect = this.handleFileSelect.bind(this);
 
         // Add link IDs and node refs to each group
@@ -61,6 +60,14 @@ export default class MediaPickerScroller extends Component {
 
     componentDidMount() {
         this.calculateDomPosition();
+        // Ideally, this would be an onScroll event, but the modal parent
+        //  is actually the one recieving that event, so we use
+        //  our dear old friend, window.setInterval
+        this.checkScrollTimer = window.setInterval(this.handleScroll, 300);
+    }
+
+    componentWillUnmount() {
+        window.clearInterval(this.checkScrollTimer);
     }
 
     handleFileSelect(fileInfo) {
@@ -68,31 +75,38 @@ export default class MediaPickerScroller extends Component {
         this.props.onFileSelect(fileInfo);
     }
 
-    handleScroll() {
+    handleScroll(e) {
         this.calculateDomPosition();
+    }
+
+    handleGroupClick(group) {
+        this.setState({visibleGroup: group});
     }
 
     calculateDomPosition() {
         if (!this.scrollerRef.current) {
             return;
         }
-
-        const scrollTop = this.scrollerRef.current.scrollTop;
+        // The offsetParent's offsetParent is the one that it's scrolling inside
+        // TODO(pamela): Compute this in a less hard-coded way
+        const scrollParent = this.scrollerRef.current.offsetParent.offsetParent;
+        const scrollTop = scrollParent.scrollTop;
+        const parentHeight = scrollParent.getBoundingClientRect().height;
 
         // Figure out which is the last visible group
-        let visibleGroup;
+        let visibleGroup = this.props.groups[0].groupName;
         this.props.groups.forEach((group) => {
             // There will be no nodeRef for a single-group scroller
             if (
                 group.nodeRef.current &&
-                group.nodeRef.current.offsetTop <= scrollTop
+                group.nodeRef.current.offsetTop < scrollTop
             ) {
                 visibleGroup = group.groupName;
             }
         });
 
         this.setState({
-            scrollTop: scrollTop,
+            scrollMax: scrollTop + parentHeight * 1.5,
             visibleGroup: visibleGroup,
         });
     }
@@ -100,8 +114,6 @@ export default class MediaPickerScroller extends Component {
     render() {
         const groups = this.props.groups;
         const spinnerPath = `${this.props.mediaDir}/spinner.gif`;
-        const scrollMax = this.state.scrollTop + 320 * 2;
-
         const areMultipleGroups = groups.length > 1;
 
         // Build list of sidebar links if multiple groups
@@ -122,7 +134,13 @@ export default class MediaPickerScroller extends Component {
                 const liKey = `${group.groupName}-link`;
                 return (
                     <li key={liKey} className={css(styles.groupsLinksItem)}>
-                        <a href={`#${group.linkId}`} className={aClassName}>
+                        <a
+                            href={`#${group.linkId}`}
+                            className={aClassName}
+                            onClick={(e) =>
+                                this.handleGroupClick(group.groupName, e)
+                            }
+                        >
                             {group.groupName}
                         </a>
                     </li>
@@ -150,8 +168,8 @@ export default class MediaPickerScroller extends Component {
             let citeLink;
             if (group.cite) {
                 citeLink = (
-                    <p>
-                        <a href="{group.cite}" target="_blank">
+                    <p style={styles.cite}>
+                        <a href={group.cite} target="_blank">
                             {group.cite}
                         </a>
                     </p>
@@ -186,7 +204,7 @@ export default class MediaPickerScroller extends Component {
                                     alt={info.name}
                                     src={info.fullThumbPath}
                                     placeholderSrc={spinnerPath}
-                                    parentScrollMax={scrollMax}
+                                    parentScrollMax={this.state.scrollMax}
                                 />
                             </figure>
                         </div>
@@ -203,8 +221,6 @@ export default class MediaPickerScroller extends Component {
                         styles.soundBox,
                         isActive && styles.fileBoxActive,
                     );
-                    // TODO:
-                    // Treat playing an audio file like a selection, add onPlay
                     return (
                         <div
                             className={divClass}
@@ -216,7 +232,7 @@ export default class MediaPickerScroller extends Component {
                                 type="audio"
                                 src={info.fullPath}
                                 placeholderSrc=""
-                                parentScrollMax={scrollMax}
+                                parentScrollMax={this.state.scrollMax}
                             />
                             <span className={css(styles.soundCaption)}>
                                 {info.name}
@@ -240,7 +256,7 @@ export default class MediaPickerScroller extends Component {
         // Note that position:relative is inlined so that offsetParent
         // is calculated properly for the lazy-loaded images
         return (
-            <div>
+            <div onScroll={this.handleScroll}>
                 <div className={css(styles.groupsLinksBox)}>{groupsLinks}</div>
                 <div
                     className={css(styles.scrollArea)}
@@ -258,13 +274,14 @@ export default class MediaPickerScroller extends Component {
 const styles = StyleSheet.create({
     scrollArea: {
         color: "rgb(85, 85, 85)",
-        width: "520px",
-        height: "320px",
+        //width: "520px",
+        //height: "320px",
         overflowY: "auto",
         float: "left",
         position: "relative",
         boxSizing: "border-box",
         padding: "0 120px 0 20px",
+        width: "90%",
     },
     mediaGrid: {
         display: "flex",
@@ -317,29 +334,39 @@ const styles = StyleSheet.create({
         width: "250px",
         background: "white",
     },
+    cite: {
+        fontSize: "12px"
+    },
     groupsLinksBox: {
         float: "right",
-        width: "100px",
+        position: "sticky",
         top: "10px",
         right: "20px",
+        width: "10%",
     },
     groupsLinksList: {
-        marginLeft: "0",
-        marginBottom: "20px",
         listStyle: "none",
+        marginLeft: "0",
+        padding: "0px",
     },
     groupsLinksItem: {
-        float: "left",
+        display: "inline-block",
     },
     groupsLinksItemA: {
-        borderRadius: "5px",
+        borderRadius: "4px",
+        borderColor: Color.offBlack50,
+        borderWidth: "1px",
+        borderStyle: "solid",
+        color: Color.blue,
         display: "block",
         lineHeight: "14px",
-        margin: "2px 2px 2px 0px",
+        margin: "2px 2px 15px 0px",
         padding: "8px 12px",
+        textDecoration: "none",
+        width: "40px",
     },
     groupsLinksItemActiveA: {
-        color: "#ffffff",
-        backgroundColor: "#0088cc",
+        borderColor: Color.blue,
+        borderWidth: 2,
     },
 });
