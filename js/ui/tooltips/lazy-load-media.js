@@ -1,17 +1,16 @@
 import React, {Component} from "react";
+import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 
 export default class LazyLoadMedia extends Component {
     props: {
         parentScrollMax: number,
-        placeholderSrc: string,
+        spinnerClassName: string,
         src: string,
         type: string,
         className: string,
         alt: string,
     };
 
-    // props: scrollposition, src, placeholdrsrc, type (audio or image)
-    // state: isloaded
     constructor(props) {
         super(props);
         this.state = {
@@ -19,6 +18,7 @@ export default class LazyLoadMedia extends Component {
         };
         this.mediaRef = React.createRef();
     }
+
     componentDidMount() {
         this.calculateVisibility();
     }
@@ -38,29 +38,31 @@ export default class LazyLoadMedia extends Component {
     }
 
     render() {
-        let mediaSrc = this.props.placeholderSrc;
-        if (this.state.isVisible) {
-            mediaSrc = this.props.src;
-        }
         let media;
-        if (this.props.type === "audio") {
-            media = (
-                <audio
-                    className={this.props.className}
-                    ref={this.mediaRef}
-                    src={mediaSrc}
-                    controls
-                />
-            );
+        if (!this.state.isVisible) {
+            media = <div ref={this.mediaRef} className={this.props.spinnerClassName}>
+                        <CircularSpinner size="small"/>
+                    </div>
         } else {
-            media = (
-                <img
-                    className={this.props.className}
-                    ref={this.mediaRef}
-                    src={mediaSrc}
-                    alt={this.props.alt}
-                />
-            );
+            if (this.props.type === "audio") {
+                media = (
+                    <audio
+                        className={this.props.className}
+                        ref={this.mediaRef}
+                        src={this.props.src}
+                        controls
+                    />
+                );
+            } else {
+                media = (
+                    <img
+                        className={this.props.className}
+                        ref={this.mediaRef}
+                        src={this.props.src}
+                        alt={this.props.alt}
+                    />
+                );
+            }
         }
         return media;
     }

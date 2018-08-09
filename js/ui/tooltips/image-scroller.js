@@ -92,7 +92,6 @@ export default class ImageScroller extends Component {
                             alt={fileName}
                             src={imagePath}
                             className={css(styles.img)}
-                            placeholderSrc={spinnerPath}
                             parentScrollMax={scrollMax}
                         />
                         <span>{fileName}</span>
