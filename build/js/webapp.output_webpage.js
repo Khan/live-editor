@@ -24483,9 +24483,7 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", {
-            name: name
-        }));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: name }));
     },
 
     orderedFnCalls: function orderedFnCalls(calls) {
@@ -24503,9 +24501,7 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", {
-            name: calls[callPos][0]
-        }));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
     },
 
     checkFn: function checkFn(fnCall, name, check) {
@@ -24542,9 +24538,7 @@ PJSTester.prototype.testMethods = {
 
     _assertVarName: function _assertVarName(str) {
         if (!this.testContext._isVarName(str)) {
-            throw new Error(i18n._("Expected '%(name)s' to be a valid variable name.", {
-                name: str
-            }));
+            throw new Error(i18n._("Expected '%(name)s' to be a valid variable name.", { name: str }));
         }
     },
 
@@ -24818,7 +24812,7 @@ PJSTester.prototype.testMethods = {
             }
             return {
                 success: true,
-                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + 'Please click "Report a problem" to notify us.')
+                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
             };
         }
     },

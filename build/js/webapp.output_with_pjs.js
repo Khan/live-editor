@@ -18410,9 +18410,7 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", {
-            name: name
-        }));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: name }));
     },
 
     orderedFnCalls: function orderedFnCalls(calls) {
@@ -18430,9 +18428,7 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", {
-            name: calls[callPos][0]
-        }));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
     },
 
     checkFn: function checkFn(fnCall, name, check) {
@@ -18469,9 +18465,7 @@ PJSTester.prototype.testMethods = {
 
     _assertVarName: function _assertVarName(str) {
         if (!this.testContext._isVarName(str)) {
-            throw new Error(i18n._("Expected '%(name)s' to be a valid variable name.", {
-                name: str
-            }));
+            throw new Error(i18n._("Expected '%(name)s' to be a valid variable name.", { name: str }));
         }
     },
 
@@ -18745,7 +18739,7 @@ PJSTester.prototype.testMethods = {
             }
             return {
                 success: true,
-                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + 'Please click "Report a problem" to notify us.')
+                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
             };
         }
     },
@@ -28715,9 +28709,7 @@ PJSResourceCache.prototype.loadSound = function (filename) {
         var audio = document.createElement("audio");
         var parts = filename.split("/");
 
-        var group = _lodash2.default.findWhere(_sounds2.default[0].groups, {
-            groupName: parts[0]
-        });
+        var group = _lodash2.default.findWhere(_sounds2.default[0].groups, { groupName: parts[0] });
         var hasSound = group && group.sounds.includes(parts[1].replace(".mp3", ""));
         if (!hasSound) {
             resolve();
@@ -28757,11 +28749,7 @@ PJSResourceCache.prototype.getImage = function (filename) {
     var image = this.cache[filename + ".png"];
 
     if (!image) {
-        throw {
-            message: i18n._("Image '%(file)s' was not found.", {
-                file: filename
-            })
-        };
+        throw { message: i18n._("Image '%(file)s' was not found.", { file: filename }) };
     }
 
     // cache <img> instead of PImage until we investigate how caching
@@ -28778,11 +28766,7 @@ PJSResourceCache.prototype.getSound = function (filename) {
     var sound = this.cache[filename + ".mp3"];
 
     if (!sound) {
-        throw {
-            message: i18n._("Sound '%(file)s' was not found.", {
-                file: filename
-            })
-        };
+        throw { message: i18n._("Sound '%(file)s' was not found.", { file: filename }) };
     }
 
     return sound;
@@ -30161,6 +30145,7 @@ var _lodash2 = _interopRequireDefault(_lodash);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var BabyHint = {
+
     EDIT_DISTANCE_THRESHOLD: 2,
 
     // We'll get function names from the global context
@@ -30177,49 +30162,49 @@ var BabyHint = {
     // We'll get most of these from the global context,
     // so these are just the overrides.
     functionParamCount: {
-        acos: 1,
-        asin: 1,
-        atan: 1,
-        atan2: 2,
-        background: [1, 3, 4],
-        beginShape: [0, 1],
-        bezier: 8,
-        bezierVertex: [6],
-        box: [1, 2, 3],
-        color: [1, 2, 3, 4],
-        colorMode: [1, 2, 4, 5],
-        createFont: [1, 2],
-        cos: 1,
-        curve: 8,
-        cursor: [0, 1, 2, 3],
-        endShape: [0, 1],
-        dist: 4,
-        fill: [1, 3, 4],
-        filter: [1, 2],
-        get: [2, 3, 4, 5],
-        image: [3, 5],
-        line: 4,
-        loadImage: [1, 3],
-        getImage: 1,
-        mag: [2, 3],
-        max: 2,
-        min: 2,
-        noise: [1, 2, 3],
-        PVector: [0, 2, 3],
-        random: [0, 1, 2],
-        RegExp: [1, 2],
-        rect: [4, 5],
-        scale: [1, 2],
-        set: [3, 4],
-        sin: 1,
-        stroke: [1, 3, 4],
-        tan: 1,
-        text: [3, 5],
-        textAlign: [1, 2],
-        textFont: [1, 2],
-        translate: [2, 3],
-        vertex: [2, 4],
-        Date: [0, 1, 2, 3, 4, 5, 6, 7]
+        "acos": 1,
+        "asin": 1,
+        "atan": 1,
+        "atan2": 2,
+        "background": [1, 3, 4],
+        "beginShape": [0, 1],
+        "bezier": 8,
+        "bezierVertex": [6],
+        "box": [1, 2, 3],
+        "color": [1, 2, 3, 4],
+        "colorMode": [1, 2, 4, 5],
+        "createFont": [1, 2],
+        "cos": 1,
+        "curve": 8,
+        "cursor": [0, 1, 2, 3],
+        "endShape": [0, 1],
+        "dist": 4,
+        "fill": [1, 3, 4],
+        "filter": [1, 2],
+        "get": [2, 3, 4, 5],
+        "image": [3, 5],
+        "line": 4,
+        "loadImage": [1, 3],
+        "getImage": 1,
+        "mag": [2, 3],
+        "max": 2,
+        "min": 2,
+        "noise": [1, 2, 3],
+        "PVector": [0, 2, 3],
+        "random": [0, 1, 2],
+        "RegExp": [1, 2],
+        "rect": [4, 5],
+        "scale": [1, 2],
+        "set": [3, 4],
+        "sin": 1,
+        "stroke": [1, 3, 4],
+        "tan": 1,
+        "text": [3, 5],
+        "textAlign": [1, 2],
+        "textFont": [1, 2],
+        "translate": [2, 3],
+        "vertex": [2, 4],
+        "Date": [0, 1, 2, 3, 4, 5, 6, 7]
     },
 
     // A mapping from function name to an example usage of the function
@@ -30227,8 +30212,8 @@ var BabyHint = {
     functionFormSuggestion: {
         // forms that don't have documentation scratchpads
         // or weird formatting
-        function: "var drawWinston = function() { ... };",
-        while: "while (x < 20) { ... };"
+        "function": "var drawWinston = function() { ... };",
+        "while": "while (x < 20) { ... };"
     },
 
     // functions in the global context that we want
@@ -30397,12 +30382,12 @@ var BabyHint = {
             var letter = line[i];
             if (openIndex === -1) {
                 // look for any type of quotes
-                if (letter === '"') {
+                if (letter === "\"") {
                     openIndex = i;
-                    quoteType = '"';
-                } else if (letter === "'") {
+                    quoteType = "\"";
+                } else if (letter === "\'") {
                     openIndex = i;
-                    quoteType = "'";
+                    quoteType = "\'";
                 }
             } else if (letter === quoteType) {
                 // replace string contents with whitespace
@@ -30423,7 +30408,7 @@ var BabyHint = {
             var error = {
                 row: lineNumber,
                 column: line.indexOf(fun),
-                text: i18n._('If you want to define a function, you should use "var %(name)s = function() {}; " instead!', { name: name }),
+                text: i18n._("If you want to define a function, you should use \"var %(name)s = function() {}; \" instead!", { name: name }),
                 breaksCode: true,
                 source: "funcdeclaration",
                 context: { name: name }
@@ -30470,7 +30455,7 @@ var BabyHint = {
                     var error = {
                         row: lineNumber,
                         column: checkedChar,
-                        text: i18n._('Did you mean to type "%(keyword)s" instead of "%(word)s"?', { keyword: keyword, word: word }),
+                        text: i18n._("Did you mean to type \"%(keyword)s\" instead of \"%(word)s\"?", { keyword: keyword, word: word }),
                         breaksCode: false,
                         source: "spellcheck",
                         context: { keyword: keyword, word: word }
@@ -30478,9 +30463,7 @@ var BabyHint = {
 
                     // if we have usage forms, display them as well.
                     if (BabyHint.functionFormSuggestion[keyword]) {
-                        error.text += " " + i18n._('In case you forgot, you can use it like "%(usage)s"', {
-                            usage: BabyHint.functionFormSuggestion[keyword]
-                        });
+                        error.text += " " + i18n._("In case you forgot, you can use it like \"%(usage)s\"", { usage: BabyHint.functionFormSuggestion[keyword] });
                     }
 
                     errors.push(error);
@@ -30514,6 +30497,7 @@ var BabyHint = {
         var minDist = Infinity;
         var minWord = "";
         _lodash2.default.each(BabyHint.keywords.concat(BabyHint.variables), function (keyword) {
+
             // Take care of words being precisely the same
             if (keyword === wordOrig) {
                 minDist = 0;
@@ -30583,7 +30567,7 @@ var BabyHint = {
             var error = {
                 row: lineNumber,
                 column: line.search(regex) + 3,
-                text: i18n._('Did you forget a space between "var" and "%(variable)s"?', { variable: variableName }),
+                text: i18n._("Did you forget a space between \"var\" and \"%(variable)s\"?", { variable: variableName }),
                 breaksCode: false
             };
             errors.push(error);
@@ -30602,7 +30586,7 @@ var BabyHint = {
             var error = {
                 row: lineNumber,
                 column: i,
-                text: i18n._('You can\'t end a line with "="'),
+                text: i18n._("You can't end a line with \"=\""),
                 breaksCode: true
             };
             errors.push(error);
@@ -30653,7 +30637,7 @@ var BabyHint = {
                     var error = {
                         row: lineNumber,
                         column: i,
-                        text: i18n._('It looks like you have an extra ")"'),
+                        text: i18n._("It looks like you have an extra \")\""),
                         breaksCode: false,
                         source: "paramschecker",
                         context: {}
@@ -30672,7 +30656,7 @@ var BabyHint = {
             var _error = {
                 row: lineNumber,
                 column: stack.pop(),
-                text: i18n._('It looks like you are missing a ")" - does every "(" have a corresponding closing ")"?'),
+                text: i18n._("It looks like you are missing a \")\" - does every \"(\" have a corresponding closing \")\"?"),
                 breaksCode: false,
                 source: "paramschecker",
                 context: {}
@@ -30748,11 +30732,13 @@ var BabyHint = {
                 var functionCall;
 
                 if (typeof expectedParams !== "undefined") {
-                    functionCall = '"' + functionName + '()"';
+                    functionCall = "\"" + functionName + "()\"";
 
                     if (typeof expectedParams === "number" && numParams !== expectedParams) {
+
                         text = i18n.ngettext("%(name)s takes 1 parameter, not %(given)s!", "%(name)s takes %(num)s parameters, not %(given)s!", expectedParams, { name: functionCall, given: numParams });
                     } else if (typeof expectedParams !== "number" && !_lodash2.default.include(expectedParams, numParams)) {
+
                         var listOfParams = "" + expectedParams[0];
 
                         for (var j = 1; j < expectedParams.length - 1; j++) {
@@ -30761,21 +30747,14 @@ var BabyHint = {
 
                         listOfParams += " " + i18n._("or") + " " + expectedParams[expectedParams.length - 1];
 
-                        text = i18n._("%(name)s takes %(list)s parameters, not %(given)s!", {
-                            name: functionCall,
-                            list: listOfParams,
-                            given: numParams
-                        });
+                        text = i18n._("%(name)s takes %(list)s parameters, not %(given)s!", { name: functionCall, list: listOfParams, given: numParams });
                     }
                 }
 
                 if (text) {
                     var functionForm = BabyHint.functionFormSuggestion[functionName];
                     if (functionForm) {
-                        text = i18n._("It looks like you're trying to use %(name)s. In case you forgot, you can use it like: %(usage)s", {
-                            name: functionCall,
-                            usage: '"' + functionForm + '"'
-                        });
+                        text = i18n._("It looks like you're trying to use %(name)s. In case you forgot, you can use it like: %(usage)s", { name: functionCall, usage: "\"" + functionForm + "\"" });
                     }
                 }
 
@@ -30889,6 +30868,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * of processing-js programs work correctly.
  */
 var PJSCodeInjector = function () {
+
     /**
      * Create a new processing-js code injector.
      *
@@ -30914,7 +30894,7 @@ var PJSCodeInjector = function () {
 
         var defaultOptions = {
             sandboxed: true,
-            envName: "__env__"
+            envName: '__env__'
         };
 
         Object.assign(this, defaultOptions, options);
@@ -31066,6 +31046,7 @@ var PJSCodeInjector = function () {
             // this.props holds the names of the properties which
             // are to be exposed by Processing.js to the user.
             var externalProps = this.props = {},
+
 
             // this.safeCalls holds the names of the properties
             // which are functions which appear to not have any
@@ -31243,6 +31224,7 @@ var PJSCodeInjector = function () {
                 // Build a string of options to feed into JSHint
                 // All properties are defined in the config
                 var hintCode = "/*jshint " + _this3.propListString(_this3.JSHint) + " */" + (
+
                 // Build a string of variables names to feed into JSHint
                 // This lets JSHint know which variables are globally exposed
                 // and which can be overridden, more details:
@@ -31250,6 +31232,7 @@ var PJSCodeInjector = function () {
                 // propName: true (is a global property, but can be overridden)
                 // propName: false (is a global property, cannot be overridden)
                 "/*global " + _this3.propListString(_this3.props) + " */\n") +
+
                 // The user's code to execute
                 userCode;
 
@@ -31635,6 +31618,7 @@ var PJSCodeInjector = function () {
                         // last extraction or that the value of the property has
                         // changed.
                         if (_this5.lastGrab && externalProps[prop] !== false && (!(prop in _this5.lastGrab) || grabAll[prop] !== _this5.lastGrab[prop])) {
+
                             // If we hit a function we need to re-execute the code
                             // by injecting it. Preserves the closure.
                             if (typeof val === "function") {
@@ -31988,9 +31972,7 @@ var PJSCodeInjector = function () {
                     return new Promise(function (resolve) {
                         var audio = document.createElement("audio");
                         var parts = filename.split("/");
-                        var group = _lodash2.default.findWhere(_sounds2.default[0].groups, {
-                            groupName: parts[0]
-                        });
+                        var group = _lodash2.default.findWhere(_sounds2.default[0].groups, { groupName: parts[0] });
                         if (!group || group.sounds.indexOf(parts[1].replace(".mp3", "")) === -1) {
                             resolve();
                             return;
@@ -32018,7 +32000,7 @@ var PJSCodeInjector = function () {
                 });
 
                 Promise.all(promises).then(function () {
-                    var canvas = document.createElement("canvas");
+                    var canvas = document.createElement('canvas');
                     canvas.width = 400;
                     canvas.height = 400;
 
@@ -32050,7 +32032,7 @@ var PJSCodeInjector = function () {
                         p.loop();
                     }
                 });
-            })) + "\n";
+            })) + '\n';
 
             return helperCode.replace(/\/\/ __USERCODE__/g, transformedCode).replace(/\/\/ __IMAGEDIR__/g, "var imageDir = \"" + imageDir + "\"").replace(/\/\/ __SOUNDDIR__/g, "var soundDir = \"" + soundDir + "\"");
         }
