@@ -4,7 +4,7 @@
  * canvas. Now it powers the error reporting mechanism, which no longer
  * looks like a bar.
  */
-import i18n from "i18n";
+/* globals i18n */
 import Draggable from "react-draggable";
 import {icons} from "@khanacademy/wonder-blocks-icon";
 import Button from "@khanacademy/wonder-blocks-button";

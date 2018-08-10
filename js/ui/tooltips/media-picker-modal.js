@@ -1,4 +1,4 @@
-import i18n from "i18n";
+/* globals i18n */
 import Button from "@khanacademy/wonder-blocks-button";
 import {OneColumnModal} from "@khanacademy/wonder-blocks-modal";
 import {View} from "@khanacademy/wonder-blocks-core";

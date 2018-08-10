@@ -1,10 +1,10 @@
 /* eslint-disable max-lines, no-var, no-throw-literal, one-var, prefer-const,
    no-empty, prefer-spread, no-extra-bind, no-new-func */
 /* TODO: Fix the lint errors */
+/* globals i18n */
 import _ from "lodash";
 import * as esprima from "esprima";
 import escodegen from "escodegen";
-import i18n from "i18n";
 
 import LoopProtector from "../shared/loop-protect.js";
 import OutputSounds from "../../shared/sounds.js";
@@ -52,6 +52,7 @@ export default class PJSCodeInjector {
         Object.assign(this, defaultOptions, options);
         this.DUMMY = this.processing.draw;  // initially draw is a DUMMY method
         this.seed = null;
+        this.globals = {};
 
         this.addMethods(this.additionalMethods);
         this.reseedRandom();

@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 7);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -97,7 +97,7 @@ eval("/*\n html2canvas 0.4.1 <http://html2canvas.hertzen.com>\n Copyright (c) 20
 
 /***/ }),
 
-/***/ 7:
+/***/ 4:
 /*!***************************************************!*\
   !*** multi ./external/html2canvas/html2canvas.js ***!
   \***************************************************/

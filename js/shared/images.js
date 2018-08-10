@@ -1,4 +1,4 @@
-import i18n from "i18n";
+/* globals i18n */
 
 if (!i18n._) {
     i18n._ = function(msg) {

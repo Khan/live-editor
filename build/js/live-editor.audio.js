@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -108,7 +108,7 @@ eval("module.exports = function(module) {\n\tif (!module.webpackPolyfill) {\n\t\
 
 /***/ }),
 
-/***/ 4:
+/***/ 2:
 /*!******************************************************************!*\
   !*** multi ./node_modules/soundmanager2/script/soundmanager2.js ***!
   \******************************************************************/

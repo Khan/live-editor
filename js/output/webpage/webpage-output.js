@@ -1,6 +1,6 @@
 /* eslint-disable no-empty, no-console, prefer-const, no-new-func */
 /* TODO: Fix the lint errors */
-import i18n from "i18n";
+/* globals i18n */
 import React, {Component} from "react";
 
 import LoopProtector from "../shared/loop-protect.js";

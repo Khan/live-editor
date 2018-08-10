@@ -5,9 +5,11 @@
   "main": "dist/live-editor.js",
   "scripts": {
     "lint": "eslint js",
-    "build": "webpack --mode development",
+    "build-local": "webpack --config webpack.config.js",
+    "build-webapp": "webpack --config webpack-webapp.config.js",
+    "build": "npm run build-local && npm run build-webapp",
     "test": "gulp test",
-    "pretty-quick": "pretty-quick --staged"
+    "pretty-quick": "pretty-quick --staged js/"
   },
   "repository": {
     "type": "git",
@@ -63,6 +65,7 @@
     "mocha-webpack": "git+https://github.com/thomasmichaelwallace/mocha-webpack.git",
     "node-static": "^0.7.4",
     "object-assign": "^3.0.0",
+    "pre-commit": "^1.2.2",
     "prettier": "^1.14.1",
     "pretty-quick": "^1.6.0",
     "raw-loader": "^0.5.1",
@@ -109,6 +112,7 @@
   },
   "pre-commit": [
     "lint",
-    "pretty-quick"
+    "build",
+    "build-webapp"
   ]
 }

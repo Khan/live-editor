@@ -2,14 +2,15 @@
    prefer-const, no-extra-bind, no-undef, one-var
 */
 /* TODO: Fix the lint errors */
+/* globals i18n */
 import _ from "lodash";
-import classNames from "classnames";
-import i18n from "i18n";
-import Button from "@khanacademy/wonder-blocks-button";
 import React, {Component} from "react";
+import classNames from "classnames";
+import {StyleSheet, css} from "aphrodite/no-important";
+import Button from "@khanacademy/wonder-blocks-button";
+import {icons} from "@khanacademy/wonder-blocks-icon";
 import {CircularSpinner} from "@khanacademy/wonder-blocks-progress-spinner";
 import IconButton from "@khanacademy/wonder-blocks-icon-button";
-import {StyleSheet, css} from "aphrodite/no-important";
 
 import Structured from "../external/structuredjs/structured.js";
 
@@ -358,7 +359,6 @@ export default class LiveEditor extends Component {
                 this.noLint = false;
             };
         }
-
         return React.createElement(editors[this.editorType], props);
     }
 

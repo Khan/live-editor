@@ -16,8 +16,8 @@
  *                      the same line)
  * }
  */
+/* globals i18n */
 import _ from "lodash";
-import i18n from "i18n";
 
 const BabyHint = {
 

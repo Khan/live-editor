@@ -1,5 +1,5 @@
+/* globals i18n */
 import classNames from "classnames";
-import i18n from "i18n";
 import React, {Component} from "react";
 import Button from "@khanacademy/wonder-blocks-button";
 import {icons} from "@khanacademy/wonder-blocks-icon";

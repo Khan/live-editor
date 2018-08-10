@@ -1,7 +1,6 @@
 /* eslint-disable no-var, no-useless-escape, no-useless-call */
 /* TODO: Fix the lint errors */
-
-import ace from "ace-builds";
+/* globals ace */
 import classNames from "classnames";
 import React, {Component} from "react";
 import ReactDOM from "react-dom";
@@ -726,7 +725,7 @@ export default class AceEditorWrapper extends Component {
 
     render() {
         return (
-            <div>
+            <React.Fragment>
                 <div
                     ref={this.editorRef}
                     onMouseDown={this.handleMouseDown}
@@ -739,7 +738,7 @@ export default class AceEditorWrapper extends Component {
                     style={{height: this.props.height}}
                 />
                 {this.renderTooltipEngine()}
-            </div>
+            </React.Fragment>
         );
     }
 }

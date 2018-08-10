@@ -1,5 +1,4 @@
-/* global MultiRecorder */
-import i18n from "i18n";
+/* global i18n, MultiRecorder */
 import Button from "@khanacademy/wonder-blocks-button";
 import React, {Component} from "react";
 

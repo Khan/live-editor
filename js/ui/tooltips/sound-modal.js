@@ -46,14 +46,9 @@ export default class SoundModal extends Component {
         if (!this.regex.test(event.pre)) {
             return this.props.onEventCheck(false);
         }
-        // eslint-disable-next-line prefer-const
-        let {
-            pathStart,
-            functionStart,
-            path,
-            closing,
-            shouldFill,
-        } = tooltipUtils.getInfoFromFileMatch(event);
+        const info = tooltipUtils.getInfoFromFileMatch(event);
+        const {pathStart, functionStart, shouldFill} = info;
+        let {path, closing} = info;
 
         if (shouldFill && this.props.autofillEnabled) {
             closing =

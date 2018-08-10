@@ -1,7 +1,7 @@
 /* eslint-disable no-var, no-redeclare, prefer-const */
 /* TODO: Fix the lint errors */
+/* globals i18n */
 import _ from "lodash";
-import i18n from "i18n";
 import React, {Component} from "react";
 
 import * as utils from "../../shared/utils.js";

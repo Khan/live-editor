@@ -61,7 +61,6 @@ export default class ImageScroller extends Component {
     }
 
     render() {
-        const spinnerPath = `${this.props.imagesDir}spinner.gif`;
         const scrollMax = this.state.scrollTop + 300 * 2;
 
         const groupsDivs = this.props.imageGroups.map((group) => {

@@ -1,4 +1,4 @@
-import i18n from "i18n";
+/* globals i18n */
 import Button from "@khanacademy/wonder-blocks-button";
 import {ModalLauncher} from "@khanacademy/wonder-blocks-modal";
 import React, {Component} from "react";

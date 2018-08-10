@@ -3,7 +3,7 @@
  * as well as playback time. This is _almost_ a purely presentational component,
  * but we keep track of the seek state while the user is dragging the bar.
  */
-import i18n from "i18n";
+/* globals i18n */
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 import Button from "@khanacademy/wonder-blocks-button";

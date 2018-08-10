@@ -2,7 +2,10 @@ import slugify from "slugify";
 import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 import Color from "@khanacademy/wonder-blocks-color";
-import {HeadingSmall, HeadingXSmall} from "@khanacademy/wonder-blocks-typography";
+import {
+    HeadingSmall,
+    HeadingXSmall,
+} from "@khanacademy/wonder-blocks-typography";
 
 import LazyLoadMedia from "./lazy-load-media.js";
 
@@ -27,7 +30,7 @@ export default class MediaPickerScroller extends Component {
         this.calculateDomPosition = this.calculateDomPosition.bind(this);
 
         // Add link IDs and node refs to each group
-        this.props.mediaClasses.forEach((mediaClass) =>{
+        this.props.mediaClasses.forEach((mediaClass) => {
             mediaClass.groups.forEach((group) => {
                 group.linkId = "im-group-" + slugify(group.groupName);
                 group.nodeRef = React.createRef();
@@ -67,7 +70,10 @@ export default class MediaPickerScroller extends Component {
         // Ideally, this would be an onScroll event, but the modal parent
         //  is actually the one recieving that event, so we use
         //  our dear old friend, window.setInterval
-        this.checkScrollTimer = window.setInterval(this.calculateDomPosition, 300);
+        this.checkScrollTimer = window.setInterval(
+            this.calculateDomPosition,
+            300,
+        );
     }
 
     componentWillUnmount() {
@@ -142,18 +148,22 @@ export default class MediaPickerScroller extends Component {
                     </a>
                 </li>
             );
-
         });
-        return (<div key={mediaClass.className}>
+        return (
+            <div key={mediaClass.className}>
                 <HeadingXSmall>{mediaClass.className}</HeadingXSmall>
                 <ul className={css(styles.groupsLinksList)}>{sidebarItems}</ul>
-            </div>);
+            </div>
+        );
     }
 
     renderScrollersForClass(mediaClass) {
-        const spinnerPath = `${this.props.mediaDir}/spinner.gif`;
         const groupsDivs = mediaClass.groups.map((group) => {
-            const groupHeader = <HeadingSmall style={styles.groupHeading}>{group.groupName}</HeadingSmall>;
+            const groupHeader = (
+                <HeadingSmall style={styles.groupHeading}>
+                    {group.groupName}
+                </HeadingSmall>
+            );
             let citeLink;
             if (group.cite) {
                 citeLink = (
@@ -231,7 +241,12 @@ export default class MediaPickerScroller extends Component {
                 });
             const divKey = `${group.groupName}-wrapper`;
             return (
-                <div key={divKey} ref={group.nodeRef} id={group.linkId} className={css(styles.groupBox)}>
+                <div
+                    key={divKey}
+                    ref={group.nodeRef}
+                    id={group.linkId}
+                    className={css(styles.groupBox)}
+                >
                     {groupHeader}
                     {citeLink}
                     <div className={css(styles.mediaGrid)}>
@@ -256,10 +271,7 @@ export default class MediaPickerScroller extends Component {
         return (
             <div>
                 <div className={css(styles.groupsLinksBox)}>{sidebars}</div>
-                <div
-                    ref={this.scrollerRef}
-                    className={css(styles.scrollArea)}
-                >
+                <div ref={this.scrollerRef} className={css(styles.scrollArea)}>
                     {scrollers}
                 </div>
             </div>
@@ -282,7 +294,7 @@ const styles = StyleSheet.create({
         paddingTop: "20px", // Looks better when you click a sidebar link
     },
     groupHeading: {
-        marginBottom: "12px"
+        marginBottom: "12px",
     },
     mediaGrid: {
         display: "flex",
@@ -346,7 +358,7 @@ const styles = StyleSheet.create({
         width: "250px",
     },
     cite: {
-        fontSize: "12px"
+        fontSize: "12px",
     },
     groupsLinksBox: {
         float: "right",

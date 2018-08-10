@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 /* TODO: Fix the lint errors */
-import i18n from "./i18n.js";
+/* globals i18n */
 
 if (!i18n._) {
     i18n._ = function(msg) {

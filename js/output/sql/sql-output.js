@@ -1,4 +1,4 @@
-import i18n from "i18n";
+/* globals i18n */
 import React, {Component} from "react";
 import ReactDOM from "react-dom";
 import SQL from "sql.js";

@@ -1,8 +1,8 @@
 /* eslint-disable prefer-spread, no-extra-bind, no-throw-literal */
 /* TODO: Fix the lint errors */
+/* globals i18n */
 import _ from "lodash";
 import * as esprima from "esprima";
-import i18n from "i18n";
 
 import OutputSounds from "../../shared/sounds.js";
 import walkAST from "../shared/ast-walker.js";
