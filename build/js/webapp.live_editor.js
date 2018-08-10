@@ -31675,7 +31675,7 @@ var LiveEditor = function (_Component) {
             var props = {
                 ref: this.aceWrapperRef,
                 code: this.props.code,
-                folds: this.props.folds,
+                folds: this.props.editorFolds,
                 autoFocus: this.props.autoFocus,
                 errors: this.state.errors,
                 warnings: this.state.warnings,

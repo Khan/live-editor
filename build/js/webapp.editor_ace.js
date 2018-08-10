@@ -23087,6 +23087,7 @@ var AceEditorWrapper = function (_Component) {
 
             this.reset();
             this.setFolds(this.props.folds);
+
             // eslint-disable-next-line react/no-did-mount-set-state
             this.setState({ editor: this.editor });
         }
@@ -23188,13 +23189,13 @@ var AceEditorWrapper = function (_Component) {
                 onScrubbingStart: function onScrubbingStart(name, setReadonly) {
                     if (setReadonly !== undefined) {
                         _this3.wasReadOnly = _this3.editor.getReadOnly();
-                        _this3.setReadOnly(true);
+                        //this.setReadOnly(true);
                     }
                     _this3.props.onScrubbingStart && _this3.props.onScrubbingStart();
                 },
                 onScrubbingEnd: function onScrubbingEnd(name, resetReadOnly) {
                     if (resetReadOnly !== undefined) {
-                        _this3.setReadOnly(!!_this3.props.readOnly);
+                        //this.setReadOnly(!!this.props.readOnly);
                     }
                     _this3.props.onScrubbingEnd && _this3.props.onScrubbingEnd();
                 },

@@ -118,6 +118,13 @@ export default class AceEditorWrapper extends Component {
             }
         });
         this.editor.on("click", (e) => {
+            // Check if the user clicked on a position that puts the cursor
+            // at the end of the line.  If so, add a new line if one doesn't
+            // already exist.  Some younger users try to click to go to the
+            // next line.  Don't do this when recording nor playing.
+            if (!(this.record.playing || this.record.recording)) {
+                this.insertNewlineIfCursorAtEnd();
+            }
             this.props.onClick();
         });
         this.editor.selection.on("changeCursor", () => {
@@ -516,6 +523,7 @@ export default class AceEditorWrapper extends Component {
     }
 
     setFolds(folds) {
+        folds = folds || [];
         folds.forEach((fold) => {
             this.editor.session.foldAll(fold[0], fold[1], 0);
         });
