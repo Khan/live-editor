@@ -23086,6 +23086,7 @@ var AceEditorWrapper = function (_Component) {
             this.config.editor = this;
 
             this.reset();
+            this.setFolds(this.props.folds);
             // eslint-disable-next-line react/no-did-mount-set-state
             this.setState({ editor: this.editor });
         }

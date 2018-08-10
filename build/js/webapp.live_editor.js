@@ -31675,6 +31675,7 @@ var LiveEditor = function (_Component) {
             var props = {
                 ref: this.aceWrapperRef,
                 code: this.props.code,
+                folds: this.props.folds,
                 autoFocus: this.props.autoFocus,
                 errors: this.state.errors,
                 warnings: this.state.warnings,
@@ -31817,7 +31818,7 @@ var LiveEditor = function (_Component) {
         value: function renderRecordColorButtons() {
             var _this9 = this;
 
-            if (!this.canRecord() && !this.state.isRecording) {
+            if (!this.canRecord() || !this.state.isRecording) {
                 return null;
             }
             var colors = ["black", "red", "orange", "green", "blue", "lightblue", "violet"];
@@ -31989,7 +31990,7 @@ var LiveEditor = function (_Component) {
     }, {
         key: "canRecord",
         value: function canRecord() {
-            return this.props.transloaditAuthKey && this.props.transloaditTemplate;
+            return this.props.enableRecording && this.props.transloaditAuthKey && this.props.transloaditTemplate;
         }
     }, {
         key: "isResizable",

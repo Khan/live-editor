@@ -76,6 +76,7 @@ export default class LiveEditor extends Component {
         sandboxProps: string,
         settings: Object,
         autoFocus: boolean,
+        editorFolds: Array,
         hideEditor: boolean,
         cursor: Object,
         enableLoopProtect: boolean,
@@ -88,6 +89,7 @@ export default class LiveEditor extends Component {
         // For challenges
         validation: Array,
         // For recording
+        enableRecording: boolean,
         transloaditAuthKey: string,
         transloaditTemplate: string,
         // Parent callbacks
@@ -306,6 +308,7 @@ export default class LiveEditor extends Component {
         const props = {
             ref: this.aceWrapperRef,
             code: this.props.code,
+            folds: this.props.editorFolds,
             autoFocus: this.props.autoFocus,
             errors: this.state.errors,
             warnings: this.state.warnings,
@@ -458,7 +461,7 @@ export default class LiveEditor extends Component {
     }
 
     renderRecordColorButtons() {
-        if (!this.canRecord() && !this.state.isRecording) {
+        if (!this.canRecord() || !this.state.isRecording) {
             return null;
         }
         const colors = [
@@ -644,7 +647,8 @@ export default class LiveEditor extends Component {
     }
 
     canRecord() {
-        return this.props.transloaditAuthKey && this.props.transloaditTemplate;
+        return this.props.enableRecording && this.props.transloaditAuthKey &&
+            this.props.transloaditTemplate;
     }
 
     isResizable() {

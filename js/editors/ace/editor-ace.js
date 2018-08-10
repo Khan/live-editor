@@ -33,6 +33,7 @@ export default class AceEditorWrapper extends Component {
     props: {
         code: string,
         config: Object,
+        folds: Array, // Array of arrays of 2 numbers each, start and end
         record: Object,
         type: string,
         height: string,
@@ -142,6 +143,8 @@ export default class AceEditorWrapper extends Component {
         this.config.editor = this;
 
         this.reset();
+        this.setFolds(this.props.folds);
+
         // eslint-disable-next-line react/no-did-mount-set-state
         this.setState({editor: this.editor});
     }
@@ -252,13 +255,13 @@ export default class AceEditorWrapper extends Component {
             onScrubbingStart: (name, setReadonly) => {
                 if (setReadonly !== undefined) {
                     this.wasReadOnly = this.editor.getReadOnly();
-                    this.setReadOnly(true);
+                    //this.setReadOnly(true);
                 }
                 this.props.onScrubbingStart && this.props.onScrubbingStart();
             },
             onScrubbingEnd: (name, resetReadOnly) => {
                 if (resetReadOnly !== undefined) {
-                    this.setReadOnly(!!this.props.readOnly);
+                    //this.setReadOnly(!!this.props.readOnly);
                 }
                 this.props.onScrubbingEnd && this.props.onScrubbingEnd();
             },
