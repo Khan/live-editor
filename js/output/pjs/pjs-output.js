@@ -151,8 +151,8 @@ export default class PJSOutput extends Component {
             this.handlers[mouseAction.name](mouseAction.x, mouseAction.y);
         }
         // Populate BabyHint's documentation to give it more info in errors
-        if (foundNewRequest("documentationReq")) {
-            BabyHint.initDocumentation(props.documentationReq);
+        if (foundNewRequest("docInitReq")) {
+            BabyHint.initDocumentation(props.docInitReq.data.documentation);
         }
         if (foundNewRequest("toggleReq")) {
             this.toggle(props.toggleReq.doToggle);

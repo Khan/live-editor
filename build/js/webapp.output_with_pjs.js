@@ -29023,7 +29023,7 @@ var LiveEditorOutput = function (_Component) {
                 jshintFile: this.state.jshintFile,
                 redirectUrl: this.props.redirectUrl,
                 mouseActionReq: this.state.mouseActionReq,
-                initDocReq: this.state.initDocReq,
+                docInitReq: this.state.docInitReq,
                 screenshotReq: this.state.screenshotReq,
                 enableLoopProtect: this.state.enableLoopProtect !== false,
                 loopProtectTimeouts: this.state.loopProtectTimeouts,
@@ -29144,6 +29144,7 @@ var LiveEditorOutput = function (_Component) {
 
             try {
                 data = JSON.parse(event.data);
+                console.log(data);
             } catch (err) {
                 return;
             }
@@ -29219,7 +29220,8 @@ var LiveEditorOutput = function (_Component) {
             if (data.prop === "mouseAction") {
                 this.setState({ mouseActionReq: { time: Date.now(), data: data } });
             }
-            if (data.prop === "documentation") {
+            if (data.documentation != null) {
+                console.log("Output got docs!", data);
                 this.setState({ docInitReq: { time: Date.now(), data: data } });
             }
             this.setState({ readyToInitOutput: true });
@@ -29704,8 +29706,9 @@ var PJSOutput = function (_Component) {
                 this.handlers[mouseAction.name](mouseAction.x, mouseAction.y);
             }
             // Populate BabyHint's documentation to give it more info in errors
-            if (foundNewRequest("documentationReq")) {
-                _babyhint2.default.initDocumentation(props.documentationReq);
+            if (foundNewRequest("docInitReq")) {
+                console.log("Telling babbyhint", props.docInitReq);
+                _babyhint2.default.initDocumentation(props.docInitReq.data.documentation);
             }
             if (foundNewRequest("toggleReq")) {
                 this.toggle(props.toggleReq.doToggle);
@@ -30247,6 +30250,7 @@ var BabyHint = {
     },
 
     initDocumentation: function initDocumentation(docTitles) {
+        console.log("Got doc titles", docTitles);
         for (var i = 0; i < docTitles.length; i++) {
             var usage = docTitles[i];
 
@@ -30262,6 +30266,7 @@ var BabyHint = {
                 BabyHint.functionFormSuggestion[name] = usage;
             }
         }
+        console.log(BabyHint.functionFormSuggestion);
     },
 
     babyErrors: function babyErrors(source, hintErrors) {

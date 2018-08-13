@@ -31492,7 +31492,7 @@ var LiveEditor = function (_Component) {
         _this.externalsDir = utils.qualifyURL(props.externalsDir);
         _this.imagesDir = utils.qualifyURL(props.imagesDir);
         _this.soundsDir = props.soundsDir;
-        _this.execFile = props.execFile ? utils.qualifyURL(props.execFile) : "";
+        _this.execFile = props.outputExecFile ? utils.qualifyURL(props.outputExecFile) : "";
         _this.jshintFile = utils.qualifyURL(props.jshintFile || _this.externalsDir + "jshint/jshint.js");
         _this.redirectUrl = props.redirectUrl;
 
@@ -31594,6 +31594,14 @@ var LiveEditor = function (_Component) {
             });
         }
     }, {
+        key: "componentDidUpdate",
+        value: function componentDidUpdate(prevProps) {
+            if (this.props.documentation && !prevProps.documentation) {
+                console.log("Sending documentation data", this.props.documentation);
+                this.postFrame({ documentation: this.props.documentation });
+            }
+        }
+    }, {
         key: "componentWillUnmount",
         value: function componentWillUnmount() {
             window.removeEventListener("message", this.handleMessages);
@@ -31645,7 +31653,7 @@ var LiveEditor = function (_Component) {
             var props = {
                 execFile: this.execFile,
                 iframeRef: this.iframeRef,
-                sandboxProps: this.props.sandboxProps,
+                sandboxProps: this.props.outputSandboxProps,
                 imagesDir: this.imagesDir,
                 colors: this.colors,
                 canRecord: this.canRecord(),
@@ -31674,13 +31682,13 @@ var LiveEditor = function (_Component) {
 
             var props = {
                 ref: this.aceWrapperRef,
-                code: this.props.code,
+                code: this.props.editorCode,
                 folds: this.props.editorFolds,
-                autoFocus: this.props.autoFocus,
+                autoFocus: this.props.editorAutoFocus,
                 errors: this.state.errors,
                 warnings: this.state.warnings,
                 highlightErrorReq: this.state.highlightErrorReq,
-                cursor: this.props.cursor,
+                cursor: this.props.editorCursor,
                 config: this.config,
                 record: this.record,
                 imagesDir: this.props.imagesDir,
@@ -32993,7 +33001,7 @@ var LiveEditor = function (_Component) {
             return _react2.default.createElement(
                 "div",
                 {
-                    className: (0, _classnames2.default)("scratchpad-wrap", this.props.execFile ? "" : "no-output", (0, _noImportant.css)(styles.wrap, this.props.hideEditor && isResizable && styles.wrapNoEditorResizable)),
+                    className: (0, _classnames2.default)("scratchpad-wrap", this.hasFrame() ? "" : "no-output", (0, _noImportant.css)(styles.wrap, this.props.hideEditor && isResizable && styles.wrapNoEditorResizable)),
                     ref: this.wrapRef
                 },
                 _react2.default.createElement(

@@ -112,6 +112,7 @@
   },
   "pre-commit": [
     "lint",
+    "pretty-quick",
     "build"
   ]
 }

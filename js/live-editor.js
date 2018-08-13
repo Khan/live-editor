@@ -61,7 +61,7 @@ export default class LiveEditor extends Component {
         editorType: string,
         outputType: string,
         // File and folder paths
-        execFile: string,
+        outputExecFile: string,
         externalsDir: string,
         imagesDir: string,
         jshintFile: string,
@@ -71,16 +71,17 @@ export default class LiveEditor extends Component {
         // Additional options
         outputWidth: string,
         outputHeight: string,
+        editorAutoFocus: boolean,
+        editorCursor: Object,
+        editorFolds: Array,
         editorHeight: string,
         version: string,
-        sandboxProps: string,
+        outputSandboxProps: string,
         settings: Object,
-        autoFocus: boolean,
-        editorFolds: Array,
         hideEditor: boolean,
-        cursor: Object,
         enableLoopProtect: boolean,
         restartLabel: string,
+        documentation: Array, // Array of strings
         // For talkthroughs
         recordingInit: Object,
         recordingCommands: Array,
@@ -141,7 +142,9 @@ export default class LiveEditor extends Component {
         this.externalsDir = utils.qualifyURL(props.externalsDir);
         this.imagesDir = utils.qualifyURL(props.imagesDir);
         this.soundsDir = props.soundsDir;
-        this.execFile = props.execFile ? utils.qualifyURL(props.execFile) : "";
+        this.execFile = props.outputExecFile
+            ? utils.qualifyURL(props.outputExecFile)
+            : "";
         this.jshintFile = utils.qualifyURL(
             props.jshintFile || this.externalsDir + "jshint/jshint.js",
         );
@@ -240,6 +243,12 @@ export default class LiveEditor extends Component {
         });
     }
 
+    componentDidUpdate(prevProps) {
+        if (this.props.documentation && !prevProps.documentation) {
+            this.postFrame({documentation: this.props.documentation});
+        }
+    }
+
     componentWillUnmount() {
         window.removeEventListener("message", this.handleMessages);
     }
@@ -281,7 +290,7 @@ export default class LiveEditor extends Component {
         const props = {
             execFile: this.execFile,
             iframeRef: this.iframeRef,
-            sandboxProps: this.props.sandboxProps,
+            sandboxProps: this.props.outputSandboxProps,
             imagesDir: this.imagesDir,
             colors: this.colors,
             canRecord: this.canRecord(),
@@ -309,11 +318,11 @@ export default class LiveEditor extends Component {
             ref: this.aceWrapperRef,
             code: this.props.code,
             folds: this.props.editorFolds,
-            autoFocus: this.props.autoFocus,
+            autoFocus: this.props.editorAutoFocus,
             errors: this.state.errors,
             warnings: this.state.warnings,
             highlightErrorReq: this.state.highlightErrorReq,
-            cursor: this.props.cursor,
+            cursor: this.props.editorCursor,
             config: this.config,
             record: this.record,
             imagesDir: this.props.imagesDir,
@@ -647,8 +656,11 @@ export default class LiveEditor extends Component {
     }
 
     canRecord() {
-        return this.props.enableRecording && this.props.transloaditAuthKey &&
-            this.props.transloaditTemplate;
+        return (
+            this.props.enableRecording &&
+            this.props.transloaditAuthKey &&
+            this.props.transloaditTemplate
+        );
     }
 
     isResizable() {
@@ -1642,7 +1654,7 @@ export default class LiveEditor extends Component {
             <div
                 className={classNames(
                     "scratchpad-wrap",
-                    this.props.execFile ? "" : "no-output",
+                    this.hasFrame() ? "" : "no-output",
                     css(
                         styles.wrap,
                         this.props.hideEditor &&

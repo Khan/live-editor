@@ -70,7 +70,7 @@ export default class LiveEditorOutput extends Component {
             jshintFile: this.state.jshintFile,
             redirectUrl: this.props.redirectUrl,
             mouseActionReq: this.state.mouseActionReq,
-            initDocReq: this.state.initDocReq,
+            docInitReq: this.state.docInitReq,
             screenshotReq: this.state.screenshotReq,
             enableLoopProtect: this.state.enableLoopProtect !== false,
             loopProtectTimeouts: this.state.loopProtectTimeouts,
@@ -271,7 +271,7 @@ export default class LiveEditorOutput extends Component {
         if (data.prop === "mouseAction") {
             this.setState({mouseActionReq: {time: Date.now(), data}});
         }
-        if (data.prop === "documentation") {
+        if (data.documentation != null) {
             this.setState({docInitReq: {time: Date.now(), data}});
         }
         this.setState({readyToInitOutput: true});
