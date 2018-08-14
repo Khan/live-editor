@@ -18,11 +18,9 @@ export default class ErrorBuddyMini extends Component {
 
         if (this.props.errorState === "happy") {
             errorMood = (
-                <div
-                    className={css(styles.errorBuddyWrapper)}
-                    style={{height: 15}}
-                >
+                <div className={css(styles.errorBuddyWrapper)}>
                     <img
+                        height="35"
                         alt={i18n._("Error buddy sees no errors")}
                         src={`${
                             this.props.imagesDir
@@ -40,19 +38,20 @@ export default class ErrorBuddyMini extends Component {
                     onClick={this.props.onClick}
                 >
                     <img
+                        height="35"
                         alt={i18n._("Error buddy sees a possible error")}
                         src={`${this.props.imagesDir}creatures/OhNoes-Hmm.png`}
                     />
-                    {/* I18N: The CS error buddy is thinking there might be an
+                    <div className={css(styles.hmmIng)}>
+                        {/* I18N: The CS error buddy is thinking there might be an
                     * error in your code and is waiting for you to fix it. */}
-                    {i18n._("Hmm...")}
+                        {i18n._("Hmm...")}
+                    </div>
                 </button>
             );
         }
         return (
-            <div className={css(styles.errorBuddyContainer)}>
-                <div className="error-buddy-resting">{errorMood}</div>
-            </div>
+            <div className={css(styles.errorBuddyContainer)}>{errorMood}</div>
         );
     }
 }
@@ -83,13 +82,19 @@ const styles = StyleSheet.create({
         display: "inline-block",
         marginLeft: 5,
         marginRight: 5,
-        position: "relative",
+        overflow: "hidden",
     },
     errorBuddyWrapper: {
+        alignItems: "center",
         background: "transparent",
         border: "none",
-        position: "absolute",
+        display: "flex",
         textDecoration: "none",
+        verticalAlign: "middle",
+    },
+    hmmIng: {
+        display: "inline-block",
+        marginLeft: "3px",
     },
     wiggleAnimation: {
         animationName: [wiggleKeyframes],

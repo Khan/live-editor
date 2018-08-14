@@ -82,6 +82,8 @@ export default class LiveEditor extends Component {
         enableLoopProtect: boolean,
         restartLabel: string,
         documentation: Array, // Array of strings
+        toolbarLeftComponents: Array, // Array of components
+        toolbarRightComponents: Array,
         // For talkthroughs
         recordingInit: Object,
         recordingCommands: Array,
@@ -95,16 +97,20 @@ export default class LiveEditor extends Component {
         transloaditTemplate: string,
         // Parent callbacks
         onOutputData: Function,
-        onEditorUserChange: Function,
+        onCodeChange: Function,
         onOutputSizeUpdate: Function,
         onCodeRun: Function,
         onEditorChange: Function,
+        onCursorChange: Function,
+        onPlayingChange: Function,
         onReadyToPlay: Function,
     };
 
     static defaultProps = {
         outputWidth: "400px",
         outputHeight: "400px",
+        toolbarLeftComponents: [],
+        toolbarRightComponents: [],
     };
 
     constructor(props) {
@@ -251,6 +257,8 @@ export default class LiveEditor extends Component {
 
     componentWillUnmount() {
         window.removeEventListener("message", this.handleMessages);
+        this.player && this.player.destruct();
+        this.record && this.record.stopPlayback();
     }
 
     renderErrorBuddy() {
@@ -341,15 +349,15 @@ export default class LiveEditor extends Component {
                     !this.record ||
                     (!this.record.recording && !this.record.playing)
                 ) {
-                    this.props.onEditorUserChange &&
-                        this.props.onEditorUserChange(code);
+                    this.props.onCodeChange && this.props.onCodeChange(code);
                 }
             },
-            onChangeCursor: (cursor) => {
+            onCursorChange: (cursor) => {
                 this.setState({editorCursor: cursor});
                 // This makes sure that we pop up the error
                 // if the user changed the cursor to a new line
                 this.maybeShowErrors();
+                this.props.onCursorChange && this.props.onCursorChange(cursor);
             },
             onClick: () => {
                 // TODO: make big play go away
@@ -375,27 +383,31 @@ export default class LiveEditor extends Component {
     }
 
     renderEditorSide() {
+        const errorBuddy = (
+            <ErrorBuddyMini
+                key="errorBuddyMini"
+                imagesDir={this.imagesDir}
+                errorState={this.state.errorState}
+                isHidden={this.state.showErrorPopup}
+                onClick={this.handleMiniClick}
+            />
+        );
+        const restartButton = (
+            <RestartButton
+                key="restartButton"
+                labelText={this.props.restartLabel}
+                isDisabled={this.state.isPlaying}
+                isHidden={!this.state.showRestart}
+                onClick={this.handleRestartClick}
+                animateNow={this.animateRestartNow}
+            />
+        );
         const extraProps = {
             aceEditorWrapper: this.renderAceEditorWrapper(),
-            leftComponents: [
-                <ErrorBuddyMini
-                    key="errorBuddyMini"
-                    imagesDir={this.imagesDir}
-                    errorState={this.state.errorState}
-                    isHidden={this.state.showErrorPopup}
-                    onClick={this.handleMiniClick}
-                />,
-            ],
-            rightComponents: [
-                <RestartButton
-                    key="restartButton"
-                    labelText={this.props.restartLabel}
-                    isDisabled={this.state.isPlaying}
-                    isHidden={!this.state.showRestart}
-                    onClick={this.handleRestartClick}
-                    animateNow={this.animateRestartNow}
-                />,
-            ],
+            leftComponents: this.props.toolbarLeftComponents.concat(errorBuddy),
+            rightComponents: [restartButton].concat(
+                this.props.toolbarRightComponents,
+            ),
             height: this.props.editorHeight || this.state.outputHeight,
             hasAudio: this.hasAudio(),
             showYoutubeLink: !this.state.isAudioLoaded,
@@ -914,6 +926,7 @@ export default class LiveEditor extends Component {
                 // TODO: Can probably remove this, if this is entirely
                 //  a function of isPlaying
                 this.setState({enableRecording: false});
+                this.props.onPlayingChange && this.props.onPlayingChange(true);
             },
 
             playEnded: () => {
@@ -921,6 +934,7 @@ export default class LiveEditor extends Component {
                 // the scratchpad's normal version
                 this.config.switchVersion(this.props.version);
                 this.setState({isPlaying: false});
+                this.props.onPlayingChange && this.props.onPlayingChange(false);
             },
 
             // Playback of a recording has been paused
@@ -934,6 +948,8 @@ export default class LiveEditor extends Component {
 
                 // Turn off playback-related styling
                 document.querySelector("html").classList.remove("playing");
+
+                this.props.onPlayingChange && this.props.onPlayingChange(false);
             },
 
             // Recording has begun
@@ -1527,7 +1543,11 @@ export default class LiveEditor extends Component {
         this.postFrame({screenshot: true});
     }
 
-    undo() {
+    requestEditorCodeChange(code) {
+        this.aceWrapperRef.current.text(code);
+    }
+
+    requestEditorUndo() {
         this.aceWrapperRef.current.undo();
     }
 
@@ -1749,7 +1769,7 @@ const styles = StyleSheet.create({
     },
     toolbarWrap: {
         borderTop: defaultBorder,
-        padding: 5,
+        padding: 10,
     },
     wrap: {
         // These two make .wrapInner hide border-radius overflow *shrug*

@@ -37,47 +37,6 @@
     overflow: hidden;
 }
 
-.scratchpad-wrap .scratchpad-toolbar {
-    margin-top: 10px;
-    min-height: 30px;
-}
-
-.scratchpad-wrap .scratchpad-toolbar .simple-button.pull-left {
-    float: left;
-    margin-right: 5px;
-}
-
-.scratchpad-wrap .scratchpad-toolbar .simple-button.pull-right {
-    float: right;
-    margin-left: 5px;
-}
-
-.scratchpad-wrap .error-buddy-resting {
-    color: #4A7040;
-    display: inline-block;
-    height: 35px;
-    position: relative;
-    white-space: nowrap;
-}
-.scratchpad-wrap .error-buddy-resting .error-buddy-happy,
-.scratchpad-wrap .error-buddy-resting .error-buddy-thinking {
-    background: transparent;
-    border: none;
-    position: absolute;
-    text-decoration: none;
-}
-
-.scratchpad-wrap .error-buddy-resting .error-buddy-thinking {
-    cursor: pointer;
-}
-
-.scratchpad-wrap .error-buddy-resting img {
-    height: 35px;
-    vertical-align: middle;
-}
-
-.scratchpad-editor-bigplay-button,
-.scratchpad-editor-bigplay-loading,
 #sm2-container.swf_timedout {
     left: 40%;
     position: absolute;
@@ -156,15 +115,6 @@
 
 .scratchpad-wrap .overlay-container {
     position: relative;
-}
-
-button {
-    transition: box-shadow 200ms ease-in-out;
-    box-shadow: 0 0 0px green;
-}
-
-button.hilite {
-    box-shadow: 0 0 20px green;
 }
 
 /** Tipbar CSS (Error Buddy **/

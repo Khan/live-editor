@@ -86,7 +86,7 @@ export default class TipBar extends Component {
             // it could be undefined, null, or -1
             showMeDiv = (
                 <Button
-                    className={css(styles.showMeButton)}
+                    style={styles.showMeButton}
                     onClick={this.handleShowMeClick}
                     kind="tertiary"
                 >

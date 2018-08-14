@@ -23,19 +23,19 @@ export default class EditorToolbar extends Component {
 
 const styles = StyleSheet.create({
     left: {
+        alignItems: "center",
         alignSelf: "flex-start",
         display: "flex",
         marginRight: "auto",
-        height: 38,
     },
     right: {
         alignSelf: "flex-end",
         display: "flex",
         marginLeft: "auto",
-        height: 38,
     },
     toolbar: {
-        display: "flex",
         alignItems: "center",
+        display: "flex",
+        height: "40px",
     },
 });

@@ -46,7 +46,7 @@ export default class AceEditorWrapper extends Component {
         highlightErrorReq: Object,
         // Parent callbacks
         onChange: Function,
-        onChangeCursor: Function,
+        onCursorChange: Function,
         onClick: Function,
         onGutterErrorClick: Function,
         onScrubbingStart?: Function,
@@ -128,11 +128,11 @@ export default class AceEditorWrapper extends Component {
             this.props.onClick();
         });
         this.editor.selection.on("changeCursor", () => {
-            this.props.onChangeCursor(this.getCursor());
+            this.props.onCursorChange(this.getCursor());
             this.handleTooltipableEvent();
         });
         this.editor.selection.on("changeSelection", () => {
-            this.props.onChangeCursor(this.getCursor());
+            this.props.onCursorChange(this.getCursor());
         });
         this.editor.session.getDocument().on("change", (e) => {
             if (this.tooltipsEnabled) {

@@ -45,6 +45,7 @@ const config = {
             i18n: "i18n",
             react: "react",
             "react-dom": "react-dom",
+            aphrodite: "aphrodite",
             "aphrodite/no-important": "aphrodite",
             // Separated into their own build files (Subject to change!)
             "ace-builds": "ace",

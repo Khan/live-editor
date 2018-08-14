@@ -30,16 +30,16 @@ if (params.scratchpad) {
 
 const liveEditorProps = {
     code: code,
-    width: 400,
-    height: 400,
     editorHeight: "50%",
-    autoFocus: true,
+    editorAutoFocus: true,
+    outputExecFile: "output.html",
+    outputHeight: 400,
+    outputWidth: 400,
     outputType: "pjs",
     workersDir: "../../build/",
     externalsDir: "../../build/external/",
     imagesDir: "../../build/images/",
     soundsDir: "../../build/sounds/",
-    execFile: "output.html",
     jshintFile: "../../build/external/jshint/jshint.js",
     onEditorUserChange: function(code) {
         window.localStorage["test-code"] = code;
