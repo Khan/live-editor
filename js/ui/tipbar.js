@@ -66,6 +66,21 @@ export default class TipBar extends Component {
         this.props.onLoseFocus();
     }
 
+    renderMessage(errorMsg) {
+        const messageParts = errorMsg.split('"').map((str, i) => {
+            if (str.length === 0) {
+                return;
+            }
+            if (i % 2 === 0) {
+                return <span>{str}</span>;
+            } else {
+                // text inside quotes, used for suggesting how to use functions
+                return <span className={css(styles.quoted)}>{str}</span>;
+            }
+        });
+        return <div className={css(styles.message)}>{messageParts}</div>;
+    }
+
     render() {
         if (this.props.isHidden || !this.props.errors.length) {
             return null;
@@ -75,9 +90,7 @@ export default class TipBar extends Component {
             errors[this.state.errorNum] == null ? 0 : this.state.errorNum;
         const currentError = errors[errorNum];
 
-        const messageHtml = {
-            __html: currentError.text || currentError || "",
-        };
+        const message = currentError.text || currentError || "";
 
         let showMeDiv;
         if (currentError.row > -1) {
@@ -129,10 +142,10 @@ export default class TipBar extends Component {
                     enableUserSelectHack={false}
                     handle=".error-buddy"
                 >
-                    <div className="tipbar">
-                        <div className="speech-arrow" />
-                        <div className="error-buddy" />
-                        <div className="text-wrap">
+                    <div className={css(styles.errorBuddyWrapper)}>
+                        <div className={css(styles.speechArrow)} />
+                        <div className={css(styles.errorBuddyImg)} />
+                        <div className={css(styles.messageBubble)}>
                             <IconButton
                                 style={styles.closeButton}
                                 icon={icons.dismiss}
@@ -143,10 +156,7 @@ export default class TipBar extends Component {
                             <div className={css(styles.ohNoHeader)}>
                                 {i18n._("Oh noes!")}
                             </div>
-                            <div
-                                className="message"
-                                dangerouslySetInnerHTML={messageHtml}
-                            />
+                            {this.renderMessage(message)}
                             {showMeDiv}
                             {navDiv}
                         </div>
@@ -161,6 +171,62 @@ const styles = StyleSheet.create({
     errorOverlay: {
         background: "rgba(255,255,255,0.6)",
         zIndex: "auto",
+    },
+    errorBuddyWrapper: {
+        borderRadius: "10px",
+        /* Needs to match the background image */
+        background: "#F9F9F9",
+        border: "1px solid #EEE",
+        boxShadow: "2px 2px 5px rgba(0, 0, 0, 0.5)",
+        color: "#000",
+        fontFamily: "Helvetica, sans-serif",
+        fontWeight: "normal",
+        left: "125px",
+        margin: "auto",
+        minHeight: "40px",
+        position: "absolute",
+        top: "100px",
+        width: "260px",
+    },
+    errorBuddyImg: {
+        background: "url(../../images/scratchpads/error-buddy.png)",
+        cursor: "move",
+        height: "116px",
+        left: "-140px",
+        opacity: 0.75,
+        position: "absolute",
+        top: "-12px",
+        width: "130px",
+    },
+    speechArrow: {
+        backgroundImage: "url(../../images/scratchpads/speech-arrow.png)",
+        backgroundRepeat: "no-repeat",
+        height: "24px",
+        left: "-14px",
+        position: "absolute",
+        top: "40px",
+        width: "14px",
+    },
+    messageBubble: {
+        lineHeight: "1.4em",
+        margin: "8px",
+    },
+    quoted: {
+        background: "#fff",
+        border: "1px solid #EEE",
+        borderRadius: "5px",
+        display: "inline-block",
+        fontFamily: "Consolas, Courier New, monospace",
+        fontSize: "14px",
+        lineHeight: "22px",
+        margin: "0px 2px",
+        padding: "1px 4px",
+        textAlign: "left",
+    },
+    message: {
+        lineHeight: "20px",
+        margin: "10px 0px",
+        textAlign: "left",
     },
     closeButton: {
         float: "right",

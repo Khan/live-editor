@@ -87,8 +87,9 @@ describe("PJSCodeInjector AST Transforms", function() {
 
         var expectedCode = cleanupCode(
             getCodeFromOptions(function() {
-                __env__.draw = function() {
-                    var mouseClicked = function() {};
+                __env__.draw = function () {
+                    var mouseClicked = function () {
+                    };
                 };
             }),
         );
@@ -107,8 +108,9 @@ describe("PJSCodeInjector AST Transforms", function() {
 
         var expectedCode = cleanupCode(
             getCodeFromOptions(function() {
-                __env__.draw = function() {
-                    __env__.mouseClicked = function() {};
+                __env__.draw = function () {
+                    __env__.mouseClicked = function () {
+                    };
                 };
             }),
         );
@@ -133,7 +135,7 @@ describe("PJSCodeInjector AST Transforms", function() {
                 __env__.x = undefined;
                 __env__.y = Infinity;
                 __env__.z = NaN;
-                __env__.foo = function() {
+                __env__.foo = function () {
                     __env__.console.log(arguments);
                 };
             }),
@@ -155,10 +157,10 @@ describe("PJSCodeInjector AST Transforms", function() {
 
         var expectedCode = cleanupCode(
             getCodeFromOptions(function() {
-                __env__.print("hello");
+                __env__.print('hello');
                 __env__.x = 5;
                 __env__.y = 10;
-                __env__.print("goodbye");
+                __env__.print('goodbye');
             }),
         );
 
@@ -176,12 +178,8 @@ describe("PJSCodeInjector AST Transforms", function() {
 
         var expectedCode = cleanupCode(
             getCodeFromOptions(function() {
-                for (
-                    __env__.i = 0, __env__.j = 0;
-                    __env__.i * __env__.j < 100;
-                    __env__.i++, __env__.j++
-                ) {
-                    __env__.print("i = " + __env__.i + ", j = " + __env__.j);
+                for (__env__.i = 0, __env__.j = 0; __env__.i * __env__.j < 100; __env__.i++, __env__.j++) {
+                    __env__.print('i = ' + __env__.i + ', j = ' + __env__.j);
                 }
             }),
         );
@@ -202,9 +200,10 @@ describe("PJSCodeInjector AST Transforms", function() {
 
         var expectedCode = cleanupCode(
             getCodeFromOptions(function() {
-                __env__.draw = function() {
+                __env__.draw = function () {
                     var x = 5;
-                    var mouseClicked = function() {};
+                    var mouseClicked = function () {
+                    };
                     var y = 10;
                 };
             }),
@@ -229,11 +228,12 @@ describe("PJSCodeInjector AST Transforms", function() {
 
         var expectedCode = cleanupCode(
             getCodeFromOptions(function() {
-                __env__.draw = function() {
-                    var mouseClicked = function() {};
-                    var test = function() {
-                        mouseClicked = function() {
-                            println("If this ever prints: Bad times!");
+                __env__.draw = function () {
+                    var mouseClicked = function () {
+                    };
+                    var test = function () {
+                        mouseClicked = function () {
+                            println('If this ever prints: Bad times!');
                         };
                     };
                 };
@@ -262,7 +262,7 @@ describe("PJSCodeInjector AST Transforms", function() {
                 __env__.obj = {
                     a: 1,
                     b: 2,
-                    c: 3,
+                    c: 3
                 };
                 for (__env__.i in __env__.obj) {
                     __env__.print(__env__.i);
@@ -295,15 +295,15 @@ describe("PJSCodeInjector AST Transforms", function() {
             getCodeFromOptions(function() {
                 __env__.a = 0;
                 switch (__env__.a) {
-                    case 0:
-                        __env__.myFunc = function() {
-                            __env__.print("Hello, world!");
-                        };
+                case 0:
+                    __env__.myFunc = function () {
+                        __env__.print('Hello, world!');
+                    };
 
-                        __env__.myFunc();
-                        break;
-                    default:
-                        break;
+                    __env__.myFunc();
+                    break;
+                default:
+                    break;
                 }
             }),
         );

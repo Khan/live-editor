@@ -28,26 +28,6 @@ import * as utils from "./shared/utils.js";
 
 import "../css/ui/flashblock.css";
 
-// This adds html tags around quoted lines so they can be formatted
-const prettify = function(str) {
-    str = str.split('"');
-    var htmlString = "";
-    for (var i = 0; i < str.length; i++) {
-        if (str[i].length === 0) {
-            continue;
-        }
-
-        if (i % 2 === 0) {
-            //regular text
-            htmlString += '<span class="text">' + str[i] + "</span>";
-        } else {
-            // text in quotes
-            htmlString += '<span class="quote">' + str[i] + "</span>";
-        }
-    }
-    return htmlString;
-};
-
 const clean = function(str) {
     return String(str).replace(/</g, "&lt;");
 };
@@ -1601,13 +1581,11 @@ export default class LiveEditor extends Component {
                 // error.html was cleared above, so if it exists it's because we
                 // reset it, and it's safe.
                 if (typeof error === "string") {
-                    newError.text = clean(prettify(error));
+                    newError.text = clean(error);
                 } else if (error.html) {
-                    newError.text = prettify(error.html);
+                    newError.text = error.html;
                 } else {
-                    newError.text = prettify(
-                        clean(error.text || error.message || ""),
-                    );
+                    newError.text = clean(error.text || error.message || "");
                 }
 
                 // Coerce anything from the user to the expected types before

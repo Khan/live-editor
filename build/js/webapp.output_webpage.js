@@ -82,7 +82,7 @@ module.exports =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 225);
+/******/ 	return __webpack_require__(__webpack_require__.s = 223);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -618,15 +618,15 @@ exports.computeSourceURL = computeSourceURL;
 
 /***/ }),
 
-/***/ 225:
+/***/ 223:
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(226);
+module.exports = __webpack_require__(224);
 
 
 /***/ }),
 
-/***/ 226:
+/***/ 224:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -644,19 +644,19 @@ var _react = __webpack_require__(1);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _loopProtect = __webpack_require__(97);
+var _loopProtect = __webpack_require__(96);
 
 var _loopProtect2 = _interopRequireDefault(_loopProtect);
 
-var _slowparse = __webpack_require__(227);
+var _slowparse = __webpack_require__(225);
 
 var _slowparse2 = _interopRequireDefault(_slowparse);
 
-var _stateScrubber = __webpack_require__(228);
+var _stateScrubber = __webpack_require__(226);
 
 var _stateScrubber2 = _interopRequireDefault(_stateScrubber);
 
-var _webpageTester = __webpack_require__(229);
+var _webpageTester = __webpack_require__(227);
 
 var _webpageTester2 = _interopRequireDefault(_webpageTester);
 
@@ -771,7 +771,7 @@ var WebpageOutput = function (_Component) {
             }
             if (foundNewRequest("testCodeReq")) {
                 var _req2 = props.testCodeReq;
-                this.test(_req2.code, _req2.tests, _req2.errors);
+                this.test(_req2.code, _req2.tests, _req2.errors, _req2.timestamp);
             }
         }
     }, {
@@ -965,15 +965,15 @@ var WebpageOutput = function (_Component) {
         }
     }, {
         key: "test",
-        value: function test(userCode, tests, errors, callback) {
+        value: function test(code, tests, errors, timestamp) {
+            var _this4 = this;
+
             var errorCount = errors.length;
 
-            Object.assign(this.tester.testContext, {
-                docSP: this.slowparseResults.document,
-                cssRules: this.slowparseResults.rules
-            });
+            this.tester.testContext.docSP = this.slowparseResults.document;
+            this.tester.testContext.cssRules = this.slowparseResults.rules;
 
-            this.tester.test(userCode, tests, errors, function (errors, testResults) {
+            this.tester.test(code, tests, errors, function (errors, results) {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
@@ -981,14 +981,16 @@ var WebpageOutput = function (_Component) {
                     var message = i18n._("Error: %(message)s", {
                         message: errors[errors.length - 1].message
                     });
-                    this.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
+                    _this4.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
                 }
 
-                if (this.foundRunTimeError) {
-                    errors.push(runtimeError);
-                }
-                callback(errors, testResults);
-            }.bind(this));
+                _this4.props.onCodeTest({
+                    code: code,
+                    errors: errors,
+                    results: results,
+                    timestamp: timestamp
+                });
+            });
         }
 
         // Prefixes a URL with the URL of a redirecting proxy,
@@ -1009,14 +1011,14 @@ var WebpageOutput = function (_Component) {
     }, {
         key: "postProcessing",
         value: function postProcessing() {
-            var _this4 = this;
+            var _this5 = this;
 
             // Change external links to a redirecting proxy
             this.frameDoc.querySelectorAll("a").forEach(function (a) {
                 var url = a.getAttribute("href");
                 if (url && url[0] !== "#" && url.substring(0, 10) !== "javascript") {
                     a.setAttribute("target", "_blank");
-                    a.setAttribute("href", _this4.transformUrl(url));
+                    a.setAttribute("href", _this5.transformUrl(url));
                 }
             });
 
@@ -1031,7 +1033,9 @@ var WebpageOutput = function (_Component) {
     }, {
         key: "runCode",
         value: function runCode(userCode, timestamp) {
-            var _this5 = this;
+            var _this6 = this;
+
+            var errors = [];
 
             this.stateScrubber.clearAll();
             this.KA_INFINITE_LOOP = false;
@@ -1043,8 +1047,8 @@ var WebpageOutput = function (_Component) {
             } catch (e) {
                 // But it will error in strict mode, if already assigned
             }
-            this.frameRef.current.contentWindow.addEventListener("error", function () {
-                _this5.foundRunTimeError = true;
+            this.frameRef.current.contentWindow.addEventListener("error", function (e) {
+                _this6.foundRunTimeError = true;
             });
 
             this.frameDoc.write(this.slowparseResults.code);
@@ -1052,10 +1056,13 @@ var WebpageOutput = function (_Component) {
 
             this.postProcessing();
 
-            var errors = [];
             if (this.KA_INFINITE_LOOP) {
                 errors.push(infiniteLoopError);
             }
+            if (this.foundRunTimeError) {
+                errors.push(runtimeError);
+            }
+
             this.props.onCodeRun({ code: userCode, errors: errors, timestamp: timestamp });
         }
     }, {
@@ -1080,7 +1087,7 @@ exports.default = WebpageOutput;
 
 /***/ }),
 
-/***/ 227:
+/***/ 225:
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;// This is a version of slowparse modified for KA. It is based off this file:
@@ -3146,7 +3153,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;// This is a version of slowparse modified for
 
 /***/ }),
 
-/***/ 228:
+/***/ 226:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3214,7 +3221,9 @@ var StateScrubber = function () {
                     // This should get rid of variables which cannot be deleted
                     // http://perfectionkills.com/understanding-delete/
                     this.target[prop] = undefined;
-                    delete this.target[prop];
+                    // delete operator throws an error in strict mode,
+                    // so we use ES6 deleteProperty instead
+                    Reflect.deleteProperty(this.target, prop);
                 }
             }
         }
@@ -3248,7 +3257,7 @@ exports.default = StateScrubber;
 
 /***/ }),
 
-/***/ 229:
+/***/ 227:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3258,15 +3267,17 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _outputTester = __webpack_require__(24);
+var _structured = __webpack_require__(29);
+
+var _structured2 = _interopRequireDefault(_structured);
+
+var _outputTester = __webpack_require__(34);
 
 var _outputTester2 = _interopRequireDefault(_outputTester);
 
-var _pjsTester = __webpack_require__(51);
+var _pjsTester = __webpack_require__(97);
 
 var _pjsTester2 = _interopRequireDefault(_pjsTester);
 
@@ -3288,6 +3299,7 @@ var WebpageTester = function (_OutputTester) {
 
         var _this = _possibleConstructorReturn(this, (WebpageTester.__proto__ || Object.getPrototypeOf(WebpageTester)).call(this));
 
+        options = options || {};
         _this.initialize(options);
         _this.bindTestContext();
         _this.testContext.phoneHome = options.onPhoneHomeRequest;
@@ -3308,7 +3320,6 @@ var WebpageTester = function (_OutputTester) {
             //  referencing functions like staticTest and that
             //  function will fill in this.tests
             this.exec(validate);
-
             this.testContext.allScripts = "";
 
             var parser = new DOMParser();
@@ -3459,7 +3470,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
             var expected = structure[selector];
             // TODO(jeresig): Maybe find a way to do this such that we can run
             // it in a worker thread.
-            var numFound = docSP.querySelectorAll(selector).length;
+            var numFound = this.testContext.docSP.querySelectorAll(selector).length;
             if (expected === 0 && numFound !== 0 || numFound < expected) {
                 return { success: false };
             }
@@ -3538,7 +3549,6 @@ Object.assign(WebpageTester.prototype.testMethods, {
             }
             return cb;
         });
-
         var res = this.testContext.testCSSRules(cssRules, css, callbacks, {});
         return res;
     },
@@ -3666,7 +3676,6 @@ Object.assign(WebpageTester.prototype.testMethods, {
     checkCallbacks: function checkCallbacks(callbacks, wVars) {
         for (var i = 0; i < callbacks.length; i++) {
             var cb = callbacks[i];
-            console.log("type of cb.variables", _typeof(cb.variables));
             var cbArgs = _.map(cb.variables, function (variable) {
                 if (typeof variable === "string" && variable[0] === "$") {
                     return wVars[variable];
@@ -3744,8 +3753,8 @@ Object.assign(WebpageTester.prototype.testMethods, {
     },
 
     /*
-        * Returns true if match() succeeds
-        */
+    * Returns true if match() succeeds
+    */
     htmlMatches: function htmlMatches(structure) {
         return this.testContext.htmlMatch.apply(this, arguments).success;
     },
@@ -3839,7 +3848,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
 
         try {
             var callbacks = structure.constraint;
-            var success = Structured.match(this.testContext.allScripts, structure.pattern, {
+            var success = _structured2.default.match(this.testContext.allScripts, structure.pattern, {
                 varCallbacks: callbacks
             });
 
@@ -3861,362 +3870,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
 
 /***/ }),
 
-/***/ 23:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-var PooledWorker = function PooledWorker(filename, workersDir, onExec) {
-    this.pool = [];
-    this.curID = 0;
-    this.filename = filename;
-    this.workersDir = workersDir;
-    this.onExec = onExec || function () {};
-};
-
-PooledWorker.prototype.getURL = function () {
-    return this.workersDir + this.filename + "?cachebust=G" + new Date().toDateString();
-};
-
-PooledWorker.prototype.getWorkerFromPool = function () {
-    // NOTE(jeresig): This pool of workers is used to cut down on the
-    // number of new web workers that we need to create. If the user
-    // is typing really fast, or scrubbing numbers, it has the
-    // potential to use a lot of workers. We want to re-use as many of
-    // them as possible as their creation can be expensive. (Chrome
-    // seems to freak out, use lots of memory, and sometimes crash.)
-    var worker = this.pool.shift();
-    if (!worker) {
-        worker = new window.Worker(this.getURL());
-    }
-    // Keep track of what number worker we're running so that we know
-    // if any new hint workers have been started after this one
-    this.curID += 1;
-    worker.id = this.curID;
-    return worker;
-};
-
-/* Returns true if the passed in worker is the most recently created */
-PooledWorker.prototype.isCurrentWorker = function (worker) {
-    return this.curID === worker.id;
-};
-
-PooledWorker.prototype.addWorkerToPool = function (worker) {
-    // Return the worker back to the pool
-    this.pool.push(worker);
-};
-
-PooledWorker.prototype.exec = function () {
-    this.onExec.apply(this, arguments);
-};
-
-PooledWorker.prototype.kill = function () {
-    this.pool.forEach(function (worker) {
-        worker.terminate();
-    }, this);
-    this.pool = [];
-};
-
-exports.default = PooledWorker;
-
-/***/ }),
-
-/***/ 24:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* eslint-disable no-var, no-redeclare, no-new-func, no-unused-vars, no-undef */
-/* TODO: Fix the lint errors */
-/* We list i18n and lodash as globals instead of require() them
-  due to how we load this file in the test-worker */
-/* global i18n, _ */
-
-
-var _pooledWorker = __webpack_require__(23);
-
-var _pooledWorker2 = _interopRequireDefault(_pooledWorker);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var OutputTester = function OutputTester() {};
-
-OutputTester.prototype = {
-    initialize: function initialize(options) {
-        var tester = this;
-
-        this.tests = [];
-        this.testContext = {};
-
-        for (var prop in this.testMethods) {
-            if (this.testMethods.hasOwnProperty(prop)) {
-                this.testContext[prop] = this.testMethods[prop];
-            }
-        }
-
-        for (var prop in this.defaultTestContext) {
-            /* jshint forin:false */
-            if (!(prop in this.testContext)) {
-                this.testContext[prop] = this.defaultTestContext[prop];
-            }
-        }
-
-        // When we call this from a worker, we don't specify a workerFile,
-        // and that signifies that we don't need to spawn a worker
-        if (!options || !options.workerFile) {
-            return;
-        }
-
-        /*
-         * The worker that runs the tests in the background, if possible.
-         */
-        this.testWorker = new _pooledWorker2.default(options.workerFile, options.workersDir, function (code, validate, errors, callback) {
-            var _this = this;
-
-            // If there are syntax errors in the tests themselves,
-            //  then we ignore the request to test.
-            try {
-                tester.exec(validate);
-            } catch (e) {
-                // eslint-disable-next-line no-console
-                console && console.warn(e.message);
-                return;
-            }
-
-            // If there's no Worker support *or* there
-            //  are syntax errors in user code, we do the testing in
-            //  the browser instead.
-            // We do it in-browser in the latter case as
-            //  the code is often in a syntax-error state,
-            //  and the browser doesn't like creating that many workers,
-            //  and the syntax error tests that we have are fast.
-            if (!window.Worker || errors.length > 0) {
-                return tester.test(code, validate, errors, callback);
-            }
-
-            var worker = this.getWorkerFromPool();
-
-            worker.onmessage = function (event) {
-                if (event.data.type === "test") {
-                    // PJSOutput.prototype.kill() is called synchronously
-                    // from callback so if we want test workers to be
-                    // cleaned up properly we need to add them back to the
-                    // pool first.
-                    // TODO(kevinb) track workers that have been removed
-                    // from the PooledWorker's pool so we don't have to
-                    // worry about returning workers to the pool before
-                    // calling kill()
-                    _this.addWorkerToPool(worker);
-                    if (_this.isCurrentWorker(worker)) {
-                        var data = event.data.message;
-                        callback(data.errors, data.testResults);
-                    }
-                }
-            };
-            worker.postMessage({
-                code: code,
-                validate: validate,
-                errors: errors,
-                externalsDir: options.externalsDir
-            });
-        });
-    },
-
-    bindTestContext: function bindTestContext(obj) {
-        obj = obj || this.testContext;
-
-        /* jshint forin:false */
-        for (var prop in obj) {
-            if (_typeof(obj[prop]) === "object") {
-                this.bindTestContext(obj[prop]);
-            } else if (typeof obj[prop] === "function") {
-                obj[prop] = obj[prop].bind(this);
-            }
-        }
-    },
-
-    test: function test(userCode, validate, errors, callback) {
-        var testResults = [];
-        errors = this.errors = errors || [];
-        this.userCode = userCode;
-        this.tests = [];
-
-        // This will also fill in tests, as it will end up
-        // referencing functions like staticTest and that
-        // function will fill in this.tests
-        this.exec(validate);
-
-        this.curTask = null;
-        this.curTest = null;
-
-        for (var i = 0; i < this.tests.length; i++) {
-            testResults.push(this.runTest(this.tests[i], i));
-        }
-
-        callback(errors, testResults);
-    },
-
-    runTest: function runTest(test, i) {
-        var result = {
-            name: test.name,
-            state: "pass",
-            results: []
-        };
-
-        this.curTest = result;
-
-        test.fn.call(this);
-
-        this.curTest = null;
-
-        return result;
-    },
-
-    exec: function exec(code) {
-        if (!code) {
-            return true;
-        }
-
-        code = "with(arguments[0]){\n" + code + "\n}";
-        new Function(code).call({}, this.testContext);
-
-        return true;
-    },
-
-    defaultTestContext: {
-        test: function test(name, _fn, type) {
-            if (!_fn) {
-                _fn = name;
-                name = i18n._("Test Case");
-            }
-
-            this.tests.push({
-                name: name,
-
-                type: type || "default",
-
-                fn: function fn() {
-                    try {
-                        return _fn.apply(this, arguments);
-                    } catch (e) {
-                        // eslint-disable-next-line no-console
-                        console && console.warn(e);
-                    }
-                }
-            });
-        },
-
-        staticTest: function staticTest(name, fn) {
-            this.testContext.test(name, fn, "static");
-        },
-
-        log: function log(msg, state, expected, type, meta) {
-            type = type || "info";
-
-            var item = {
-                type: type,
-                msg: msg,
-                state: state,
-                expected: expected,
-                meta: meta || {}
-            };
-
-            if (this.curTest) {
-                if (state !== "pass") {
-                    this.curTest.state = state;
-                }
-
-                this.curTest.results.push(item);
-            }
-
-            return item;
-        },
-
-        task: function task(msg, tip) {
-            this.curTask = this.testContext.log(msg, "pass", tip, "task");
-            this.curTask.results = [];
-        },
-
-        endTask: function endTask() {
-            this.curTask = null;
-        },
-
-        assert: function assert(pass, msg, expected, meta) {
-            pass = !!pass;
-            this.testContext.log(msg, pass ? "pass" : "fail", expected, "assertion", meta);
-            return pass;
-        },
-
-        isEqual: function isEqual(a, b, msg) {
-            return this.testContext.assert(a === b, msg, [a, b]);
-        },
-
-        /*
-         * Returns a pass result with an optional message
-         */
-        pass: function pass(message) {
-            return {
-                success: true,
-                message: message
-            };
-        },
-
-        /*
-         * Returns a fail result with an optional message
-         */
-        fail: function fail(message) {
-            return {
-                success: false,
-                message: message
-            };
-        },
-
-        /*
-         * If any of results passes, returns the first pass. Otherwise, returns
-         * the first fail.
-         */
-        anyPass: function anyPass() {
-            return _.find(arguments, this.testContext.passes) || arguments[0] || this.testContext.fail();
-        },
-
-        /*
-         * If any of results fails, returns the first fail. Otherwise, returns
-         * the first pass.
-         */
-        allPass: function allPass() {
-            return _.find(arguments, this.testContext.fails) || arguments[0] || this.testContext.pass();
-        },
-
-        /*
-         * Returns true if the result represents a pass.
-         */
-        passes: function passes(result) {
-            return result.success;
-        },
-
-        /*
-         * Returns true if the result represents a fail.
-         */
-        fails: function fails(result) {
-            return !result.success;
-        }
-    }
-};
-
-exports.default = OutputTester;
-
-/***/ }),
-
-/***/ 26:
+/***/ 29:
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {/*
@@ -4241,8 +3895,8 @@ exports.default = OutputTester;
 
     if (typeof module !== "undefined" && module.exports) {
         exports = module.exports = {};
-        esprima = __webpack_require__(27);
-        _ = __webpack_require__(28);
+        esprima = __webpack_require__(39);
+        _ = __webpack_require__(40);
     } else {
         exports = this.Structured = {};
         esprima = global.esprima;
@@ -5285,7 +4939,362 @@ exports.default = OutputTester;
 
 /***/ }),
 
-/***/ 27:
+/***/ 33:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+var PooledWorker = function PooledWorker(filename, workersDir, onExec) {
+    this.pool = [];
+    this.curID = 0;
+    this.filename = filename;
+    this.workersDir = workersDir;
+    this.onExec = onExec || function () {};
+};
+
+PooledWorker.prototype.getURL = function () {
+    return this.workersDir + this.filename + "?cachebust=G" + new Date().toDateString();
+};
+
+PooledWorker.prototype.getWorkerFromPool = function () {
+    // NOTE(jeresig): This pool of workers is used to cut down on the
+    // number of new web workers that we need to create. If the user
+    // is typing really fast, or scrubbing numbers, it has the
+    // potential to use a lot of workers. We want to re-use as many of
+    // them as possible as their creation can be expensive. (Chrome
+    // seems to freak out, use lots of memory, and sometimes crash.)
+    var worker = this.pool.shift();
+    if (!worker) {
+        worker = new window.Worker(this.getURL());
+    }
+    // Keep track of what number worker we're running so that we know
+    // if any new hint workers have been started after this one
+    this.curID += 1;
+    worker.id = this.curID;
+    return worker;
+};
+
+/* Returns true if the passed in worker is the most recently created */
+PooledWorker.prototype.isCurrentWorker = function (worker) {
+    return this.curID === worker.id;
+};
+
+PooledWorker.prototype.addWorkerToPool = function (worker) {
+    // Return the worker back to the pool
+    this.pool.push(worker);
+};
+
+PooledWorker.prototype.exec = function () {
+    this.onExec.apply(this, arguments);
+};
+
+PooledWorker.prototype.kill = function () {
+    this.pool.forEach(function (worker) {
+        worker.terminate();
+    }, this);
+    this.pool = [];
+};
+
+exports.default = PooledWorker;
+
+/***/ }),
+
+/***/ 34:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* eslint-disable no-var, no-redeclare, no-new-func, no-unused-vars, no-undef */
+/* TODO: Fix the lint errors */
+/* We list i18n and lodash as globals instead of require() them
+  due to how we load this file in the test-worker */
+/* global i18n, _ */
+
+
+var _pooledWorker = __webpack_require__(33);
+
+var _pooledWorker2 = _interopRequireDefault(_pooledWorker);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var OutputTester = function OutputTester() {};
+
+OutputTester.prototype = {
+    initialize: function initialize(options) {
+        var tester = this;
+
+        this.tests = [];
+        this.testContext = {};
+
+        for (var prop in this.testMethods) {
+            if (this.testMethods.hasOwnProperty(prop)) {
+                this.testContext[prop] = this.testMethods[prop];
+            }
+        }
+
+        for (var prop in this.defaultTestContext) {
+            /* jshint forin:false */
+            if (!(prop in this.testContext)) {
+                this.testContext[prop] = this.defaultTestContext[prop];
+            }
+        }
+
+        // When we call this from a worker, we don't specify a workerFile,
+        // and that signifies that we don't need to spawn a worker
+        if (!options || !options.workerFile) {
+            return;
+        }
+
+        /*
+         * The worker that runs the tests in the background, if possible.
+         */
+        this.testWorker = new _pooledWorker2.default(options.workerFile, options.workersDir, function (code, validate, errors, callback) {
+            var _this = this;
+
+            // If there are syntax errors in the tests themselves,
+            //  then we ignore the request to test.
+            try {
+                tester.exec(validate);
+            } catch (e) {
+                // eslint-disable-next-line no-console
+                console && console.warn(e.message);
+                return;
+            }
+
+            // If there's no Worker support *or* there
+            //  are syntax errors in user code, we do the testing in
+            //  the browser instead.
+            // We do it in-browser in the latter case as
+            //  the code is often in a syntax-error state,
+            //  and the browser doesn't like creating that many workers,
+            //  and the syntax error tests that we have are fast.
+            if (!window.Worker || errors.length > 0) {
+                return tester.test(code, validate, errors, callback);
+            }
+
+            var worker = this.getWorkerFromPool();
+
+            worker.onmessage = function (event) {
+                if (event.data.type === "test") {
+                    // PJSOutput.prototype.kill() is called synchronously
+                    // from callback so if we want test workers to be
+                    // cleaned up properly we need to add them back to the
+                    // pool first.
+                    // TODO(kevinb) track workers that have been removed
+                    // from the PooledWorker's pool so we don't have to
+                    // worry about returning workers to the pool before
+                    // calling kill()
+                    _this.addWorkerToPool(worker);
+                    if (_this.isCurrentWorker(worker)) {
+                        var data = event.data.message;
+                        callback(data.errors, data.testResults);
+                    }
+                }
+            };
+            worker.postMessage({
+                code: code,
+                validate: validate,
+                errors: errors,
+                externalsDir: options.externalsDir
+            });
+        });
+    },
+
+    bindTestContext: function bindTestContext(obj) {
+        obj = obj || this.testContext;
+
+        /* jshint forin:false */
+        for (var prop in obj) {
+            if (_typeof(obj[prop]) === "object") {
+                this.bindTestContext(obj[prop]);
+            } else if (typeof obj[prop] === "function") {
+                obj[prop] = obj[prop].bind(this);
+            }
+        }
+    },
+
+    test: function test(userCode, validate, errors, callback) {
+        var testResults = [];
+        errors = this.errors = errors || [];
+        this.userCode = userCode;
+        this.tests = [];
+
+        // This will also fill in tests, as it will end up
+        // referencing functions like staticTest and that
+        // function will fill in this.tests
+        this.exec(validate);
+
+        this.curTask = null;
+        this.curTest = null;
+
+        for (var i = 0; i < this.tests.length; i++) {
+            testResults.push(this.runTest(this.tests[i], i));
+        }
+
+        callback(errors, testResults);
+    },
+
+    runTest: function runTest(test, i) {
+        var result = {
+            name: test.name,
+            state: "pass",
+            results: []
+        };
+
+        this.curTest = result;
+
+        test.fn.call(this);
+
+        this.curTest = null;
+
+        return result;
+    },
+
+    exec: function exec(code) {
+        if (!code) {
+            return true;
+        }
+        code = code.replace(/\$\._/g, "i18n._");
+        code = "with(arguments[0]){\n" + code + "\n}";
+        new Function(code).call({}, this.testContext);
+
+        return true;
+    },
+
+    defaultTestContext: {
+        test: function test(name, _fn, type) {
+            if (!_fn) {
+                _fn = name;
+                name = i18n._("Test Case");
+            }
+
+            this.tests.push({
+                name: name,
+
+                type: type || "default",
+
+                fn: function fn() {
+                    try {
+                        return _fn.apply(this, arguments);
+                    } catch (e) {
+                        // eslint-disable-next-line no-console
+                        console && console.warn(e);
+                    }
+                }
+            });
+        },
+
+        staticTest: function staticTest(name, fn) {
+            this.testContext.test(name, fn, "static");
+        },
+
+        log: function log(msg, state, expected, type, meta) {
+            type = type || "info";
+
+            var item = {
+                type: type,
+                msg: msg,
+                state: state,
+                expected: expected,
+                meta: meta || {}
+            };
+
+            if (this.curTest) {
+                if (state !== "pass") {
+                    this.curTest.state = state;
+                }
+
+                this.curTest.results.push(item);
+            }
+
+            return item;
+        },
+
+        task: function task(msg, tip) {
+            this.curTask = this.testContext.log(msg, "pass", tip, "task");
+            this.curTask.results = [];
+        },
+
+        endTask: function endTask() {
+            this.curTask = null;
+        },
+
+        assert: function assert(pass, msg, expected, meta) {
+            pass = !!pass;
+            this.testContext.log(msg, pass ? "pass" : "fail", expected, "assertion", meta);
+            return pass;
+        },
+
+        isEqual: function isEqual(a, b, msg) {
+            return this.testContext.assert(a === b, msg, [a, b]);
+        },
+
+        /*
+         * Returns a pass result with an optional message
+         */
+        pass: function pass(message) {
+            return {
+                success: true,
+                message: message
+            };
+        },
+
+        /*
+         * Returns a fail result with an optional message
+         */
+        fail: function fail(message) {
+            return {
+                success: false,
+                message: message
+            };
+        },
+
+        /*
+         * If any of results passes, returns the first pass. Otherwise, returns
+         * the first fail.
+         */
+        anyPass: function anyPass() {
+            return _.find(arguments, this.testContext.passes) || arguments[0] || this.testContext.fail();
+        },
+
+        /*
+         * If any of results fails, returns the first fail. Otherwise, returns
+         * the first pass.
+         */
+        allPass: function allPass() {
+            return _.find(arguments, this.testContext.fails) || arguments[0] || this.testContext.pass();
+        },
+
+        /*
+         * Returns true if the result represents a pass.
+         */
+        passes: function passes(result) {
+            return result.success;
+        },
+
+        /*
+         * Returns true if the result represents a fail.
+         */
+        fails: function fails(result) {
+            return !result.success;
+        }
+    }
+};
+
+exports.default = OutputTester;
+
+/***/ }),
+
+/***/ 39:
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
@@ -9029,7 +9038,7 @@ parseStatement: true, parseSourceElement: true */
 
 /***/ }),
 
-/***/ 28:
+/***/ 40:
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.9.1
@@ -17508,8 +17517,8 @@ return /******/ (function(modules) { // webpackBootstrap
         FORMAT_MINIFY,
         FORMAT_DEFAULTS;
 
-    estraverse = __webpack_require__(84);
-    esutils = __webpack_require__(86);
+    estraverse = __webpack_require__(83);
+    esutils = __webpack_require__(85);
 
     Syntax = estraverse.Syntax;
 
@@ -19989,7 +19998,7 @@ return /******/ (function(modules) { // webpackBootstrap
             if (!exports.browser) {
                 // We assume environment is node.js
                 // And prevent from including source-map by browserify
-                SourceNode = __webpack_require__(89).SourceNode;
+                SourceNode = __webpack_require__(88).SourceNode;
             } else {
                 SourceNode = global.sourceMap.SourceNode;
             }
@@ -20036,7 +20045,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
     FORMAT_DEFAULTS = getDefaultOptions().format;
 
-    exports.version = __webpack_require__(96).version;
+    exports.version = __webpack_require__(95).version;
     exports.generate = generate;
     exports.attachComments = estraverse.attachComments;
     exports.Precedence = updateDeeply({}, Precedence);
@@ -20205,7 +20214,7 @@ return /******/ (function(modules) { // webpackBootstrap
 var base64VLQ = __webpack_require__(48);
 var util = __webpack_require__(16);
 var ArraySet = __webpack_require__(49).ArraySet;
-var MappingList = __webpack_require__(91).MappingList;
+var MappingList = __webpack_require__(90).MappingList;
 
 /**
  * An instance of the SourceMapGenerator represents a source map which is
@@ -20664,7 +20673,7 @@ exports.SourceMapGenerator = SourceMapGenerator;
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var base64 = __webpack_require__(90);
+var base64 = __webpack_require__(89);
 
 // A single base 64 digit can contain 6 bits of data. For the base 64 variable
 // length quantities we use in the source map spec, the first bit is the sign,
@@ -21006,472 +21015,7 @@ exports.default = walkAST;
 
 /***/ }),
 
-/***/ 51:
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* eslint-disable no-var, one-var, curly */
-/* TODO: Fix the lint errors */
-/* We list i18n and lodash as globals instead of require() them
-  due to how we load this file in the test-worker */
-/* globals i18n, _ */
-
-var _outputTester = __webpack_require__(24);
-
-var _outputTester2 = _interopRequireDefault(_outputTester);
-
-var _structured = __webpack_require__(26);
-
-var _structured2 = _interopRequireDefault(_structured);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var PJSTester = function PJSTester(options) {
-    this.initialize(options);
-    this.bindTestContext();
-};
-
-PJSTester.prototype = new _outputTester2.default();
-
-PJSTester.prototype.testMethods = {
-    /*
-     * See if any of the patterns match the code
-     */
-    firstMatchingPattern: function firstMatchingPattern(patterns) {
-        return _.find(patterns, _.bind(function (pattern) {
-            return this.testContext.matches(pattern);
-        }, this));
-    },
-
-    hasFnCall: function hasFnCall(name, check) {
-        for (var i = 0, l = this.fnCalls.length; i < l; i++) {
-            var retVal = this.testContext.checkFn(this.fnCalls[i], name, check);
-
-            if (retVal === true) {
-                return;
-            }
-        }
-
-        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: name }));
-    },
-
-    orderedFnCalls: function orderedFnCalls(calls) {
-        var callPos = 0;
-
-        for (var i = 0, l = this.fnCalls.length; i < l; i++) {
-            var retVal = this.testContext.checkFn(this.fnCalls[i], calls[callPos][0], calls[callPos][1]);
-
-            if (retVal === true) {
-                callPos += 1;
-
-                if (callPos === calls.length) {
-                    return;
-                }
-            }
-        }
-
-        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
-    },
-
-    checkFn: function checkFn(fnCall, name, check) {
-        if (fnCall.name !== name) {
-            return;
-        }
-
-        var pass = true;
-
-        if ((typeof check === "undefined" ? "undefined" : _typeof(check)) === "object") {
-            if (check.length !== fnCall.args.length) {
-                pass = false;
-            } else {
-                for (var c = 0; c < check.length; c++) {
-                    if (check[c] !== null && check[c] !== fnCall.args[c]) {
-                        pass = false;
-                    }
-                }
-            }
-        } else if (typeof check === "function") {
-            pass = check(fnCall);
-        }
-
-        if (pass) {
-            this.testContext.assert(true, i18n._("Correct function call made to %(name)s.", { name: name }));
-        }
-
-        return pass;
-    },
-
-    _isVarName: function _isVarName(str) {
-        return _.isString(str) && str.length > 0 && str[0] === "$";
-    },
-
-    _assertVarName: function _assertVarName(str) {
-        if (!this.testContext._isVarName(str)) {
-            throw new Error(i18n._("Expected '%(name)s' to be a valid variable name.", { name: str }));
-        }
-    },
-
-    /*
-     * Satisfied when predicate(var) is true.
-     */
-    unaryOp: function unaryOp(varName, predicate) {
-        this.testContext._assertVarName(varName);
-        return this.testContext.constraint([varName], function (ast) {
-            return !!(ast && !_.isUndefined(ast.value) && predicate(ast.value));
-        });
-    },
-
-    /*
-     * Satisfied when var is any literal.
-     */
-    isLiteral: function isLiteral(varName) {
-        function returnsTrue() {
-            return true;
-        }
-
-        return this.testContext.unaryOp(varName, returnsTrue);
-    },
-
-    /*
-     * Satisfied when var is a number.
-     */
-    isNumber: function isNumber(varName) {
-        return this.testContext.unaryOp(varName, _.isNumber);
-    },
-
-    /*
-     * Satisfied when var is an identifier
-     */
-    isIdentifier: function isIdentifier(varName) {
-        return this.testContext.constraint([varName], function (ast) {
-            return !!(ast && ast.type && ast.type === "Identifier");
-        });
-    },
-
-    /*
-     * Satisfied when var is a boolean.
-     */
-    isBoolean: function isBoolean(varName) {
-        return this.testContext.unaryOp(varName, _.isBoolean);
-    },
-
-    /*
-     * Satisfied when var is a string.
-     */
-    isString: function isString(varName) {
-        return this.testContext.unaryOp(varName, _.isString);
-    },
-
-    /*
-     * Satisfied when pred(first, second) is true.
-     */
-    binaryOp: function binaryOp(first, second, predicate) {
-        var variables = [];
-        var fn;
-        if (this.testContext._isVarName(first)) {
-            variables.push(first);
-            if (this.testContext._isVarName(second)) {
-                variables.push(second);
-                fn = function fn(a, b) {
-                    return !!(a && b && !_.isUndefined(a.value) && !_.isUndefined(b.value) && predicate(a.value, b.value));
-                };
-            } else {
-                fn = function fn(a) {
-                    return !!(a && !_.isUndefined(a.value) && predicate(a.value, second));
-                };
-            }
-        } else if (this.testContext._isVarName(second)) {
-            variables.push(second);
-            fn = function fn(b) {
-                return !!(b && !_.isUndefined(b.value) && predicate(first, b.value));
-            };
-        } else {
-            throw new Error(i18n._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
-        }
-
-        return this.testContext.constraint(variables, fn);
-    },
-
-    /*
-     * Satisfied when a < b
-     */
-    lessThan: function lessThan(a, b) {
-        return this.testContext.binaryOp(a, b, function (a, b) {
-            return a < b;
-        });
-    },
-
-    /*
-     * Satisfied when a <= b
-     */
-    lessThanOrEqual: function lessThanOrEqual(a, b) {
-        return this.testContext.binaryOp(a, b, function (a, b) {
-            return a <= b;
-        });
-    },
-
-    /*
-     * Satisfied when a > b
-     */
-    greaterThan: function greaterThan(a, b) {
-        return this.testContext.binaryOp(a, b, function (a, b) {
-            return a > b;
-        });
-    },
-
-    /*
-     * Satisfied when a > 0
-     */
-    positive: function positive(a) {
-        return this.testContext.unaryOp(a, function (a) {
-            return a > 0;
-        });
-    },
-
-    /*
-     * Satisfied when a > 0
-     */
-    negative: function negative(a) {
-        return this.testContext.unaryOp(a, function (a) {
-            return a < 0;
-        });
-    },
-
-    /*
-     * Satisfied when a >= b
-     */
-    greaterThanOrEqual: function greaterThanOrEqual(a, b) {
-        return this.testContext.binaryOp(a, b, function (a, b) {
-            return a >= b;
-        });
-    },
-
-    /*
-     * Satisfied when min <= val <= max
-     */
-    inRange: function inRange(val, min, max) {
-        return this.testContext.and(this.testContext.greaterThanOrEqual(val, min), this.testContext.lessThanOrEqual(val, max));
-    },
-
-    /*
-     * Satisfied when a === b
-     */
-    equal: function equal(a, b) {
-        return this.testContext.binaryOp(a, b, function (a, b) {
-            return a === b;
-        });
-    },
-
-    /*
-     * Satisfied when a !== b
-     */
-    notEqual: function notEqual(a, b) {
-        return this.testContext.binaryOp(a, b, function (a, b) {
-            return a !== b;
-        });
-    },
-
-    /*
-     * Satisfied when constraint is not satisfied
-     */
-    not: function not(constraint) {
-        return this.testContext.constraint(constraint.variables, function () {
-            return !constraint.fn.apply({}, arguments);
-        });
-    },
-
-    _naryShortCircuitingOp: function _naryShortCircuitingOp(allOrAny, args) {
-        var variables = _.union.apply({}, _.pluck(args, "variables"));
-
-        var argNameToIndex = _.object(_.map(variables, function (item, i) {
-            return [item, i];
-        }));
-
-        return this.testContext.constraint(variables, function () {
-            var constraintArgs = arguments;
-            return allOrAny(args, function (constraint) {
-                var fnArgs = _.map(constraint.variables, function (varName) {
-                    return constraintArgs[argNameToIndex[varName]];
-                });
-
-                return constraint.fn.apply({}, fnArgs);
-            });
-        });
-    },
-
-    /*
-     * Satisfied when all of the input constraints are satisfied
-     */
-    and: function and() {
-        return this.testContext._naryShortCircuitingOp(_.all, arguments);
-    },
-
-    /*
-     * Satisfied when any of the input constraints are satisfied
-     */
-    or: function or() {
-        return this.testContext._naryShortCircuitingOp(_.any, arguments);
-    },
-
-    /*
-     * Returns a new structure from the combination of a pattern and a
-     * constraint
-     */
-    structure: function structure(pattern, constraint) {
-        return {
-            pattern: pattern,
-            constraint: constraint
-        };
-    },
-
-    /*
-     * Creates a new variable constraint
-     */
-    constraint: function constraint(variables, fn) {
-        return {
-            variables: variables,
-            fn: fn
-        };
-    },
-
-    /*
-     * Returns the result of matching a structure against the user's code
-     */
-    match: function match(structure) {
-        // If there were syntax errors, don't even try to match it
-        if (this.errors.length) {
-            return {
-                success: false,
-                message: i18n._("Syntax error!")
-            };
-        }
-
-        // At the top, we take care of some "alternative" uses of this
-        // function. For ease of challenge developing, we return a
-        // failure() instead of disallowing these uses altogether
-
-        // If we don't see a pattern property, they probably passed in
-        // a pattern itself, so we'll turn it into a structure
-        if (structure && _.isUndefined(structure.pattern)) {
-            structure = { pattern: structure };
-        }
-
-        // If nothing is passed in or the pattern is non-existent, return
-        // failure
-        if (!structure || !structure.pattern) {
-            return {
-                success: false,
-                message: ""
-            };
-        }
-
-        try {
-            var callbacks = structure.constraint;
-            var success = _structured2.default.match(this.userCode, structure.pattern, {
-                varCallbacks: callbacks
-            });
-
-            return {
-                success: success,
-                message: callbacks && callbacks.failure
-            };
-        } catch (e) {
-            console && console.warn(e); // eslint-disable-line no-console
-            return {
-                success: true,
-                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
-            };
-        }
-    },
-
-    /*
-     * Returns true if the structure matches the user's code
-     */
-    matches: function matches(structure) {
-        if ((typeof structure === "undefined" ? "undefined" : _typeof(structure)) !== "object") {
-            structure = this.testContext.structure(structure);
-        }
-        return this.testContext.match(structure).success;
-    },
-
-    _checkSyntaxErrors: function _checkSyntaxErrors(syntaxChecks) {
-        if (!syntaxChecks) return;
-
-        // If we found any syntax errors or warnings, we'll send it
-        // through the special syntax checks
-        var foundErrors = _.any(this.errors, function (error) {
-            return error.lint;
-        });
-
-        if (foundErrors) {
-            _.each(syntaxChecks, function (syntaxCheck) {
-                // Check if we find the regex anywhere in the code
-                var foundCheck = this.userCode.search(syntaxCheck.re);
-                var rowNum = -1,
-                    colNum = -1,
-                    errorMsg;
-                if (foundCheck > -1) {
-                    errorMsg = syntaxCheck.msg;
-
-                    // Find line number and character
-                    var lines = this.userCode.split("\n");
-                    var totalChars = 0;
-                    _.each(lines, function (line, num) {
-                        if (rowNum === -1 && foundCheck < totalChars + line.length) {
-                            rowNum = num;
-                            colNum = foundCheck - totalChars;
-                        }
-                        totalChars += line.length;
-                    });
-
-                    this.errors.splice(0, 1, {
-                        text: errorMsg,
-                        row: rowNum,
-                        col: colNum,
-                        type: "error"
-                    });
-                }
-            }.bind(this));
-        }
-    },
-
-    /*
-     * Creates a new test result (i.e. new challenge step)
-     */
-    assertMatch: function assertMatch(result, description, hint, image, syntaxChecks) {
-        this.testContext._checkSyntaxErrors(syntaxChecks);
-
-        var alternateMessage;
-        var alsoMessage;
-
-        if (result.success) {
-            alternateMessage = result.message;
-        } else {
-            alsoMessage = result.message;
-        }
-
-        this.testContext.assert(result.success, description, "", {
-            // We can accept string hints here because
-            //  we never match against them anyway
-            structure: _.isString(hint) ? "function() {" + hint + "}" : hint.toString(),
-            alternateMessage: alternateMessage,
-            alsoMessage: alsoMessage,
-            image: image
-        });
-    }
-};
-
-exports.default = PJSTester;
-
-/***/ }),
-
-/***/ 60:
+/***/ 59:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21624,7 +21168,7 @@ exports.default = ASTBuilder;
 
 /***/ }),
 
-/***/ 84:
+/***/ 83:
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -22463,7 +22007,7 @@ exports.default = ASTBuilder;
         return tree;
     }
 
-    exports.version = __webpack_require__(85).version;
+    exports.version = __webpack_require__(84).version;
     exports.Syntax = Syntax;
     exports.traverse = traverse;
     exports.replace = replace;
@@ -22480,14 +22024,14 @@ exports.default = ASTBuilder;
 
 /***/ }),
 
-/***/ 85:
+/***/ 84:
 /***/ (function(module) {
 
 module.exports = {"_from":"estraverse@^4.0.0","_id":"estraverse@4.2.0","_inBundle":false,"_integrity":"sha1-De4/7TH81GlhjOc0IJn8GvoL2xM=","_location":"/estraverse","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"estraverse@^4.0.0","name":"estraverse","escapedName":"estraverse","rawSpec":"^4.0.0","saveSpec":null,"fetchSpec":"^4.0.0"},"_requiredBy":["/babel-core","/escope","/eslint","/esrecurse"],"_resolved":"https://registry.npmjs.org/estraverse/-/estraverse-4.2.0.tgz","_shasum":"0dee3fed31fcd469618ce7342099fc1afa0bdb13","_spec":"estraverse@^4.0.0","_where":"/Users/pamelafox/khan/live-editor/node_modules/babel-core","bugs":{"url":"https://github.com/estools/estraverse/issues"},"bundleDependencies":false,"deprecated":false,"description":"ECMAScript JS AST traversal functions","devDependencies":{"babel-preset-es2015":"^6.3.13","babel-register":"^6.3.13","chai":"^2.1.1","espree":"^1.11.0","gulp":"^3.8.10","gulp-bump":"^0.2.2","gulp-filter":"^2.0.0","gulp-git":"^1.0.1","gulp-tag-version":"^1.2.1","jshint":"^2.5.6","mocha":"^2.1.0"},"engines":{"node":">=0.10.0"},"homepage":"https://github.com/estools/estraverse","license":"BSD-2-Clause","main":"estraverse.js","maintainers":[{"name":"Yusuke Suzuki","email":"utatane.tea@gmail.com","url":"http://github.com/Constellation"}],"name":"estraverse","repository":{"type":"git","url":"git+ssh://git@github.com/estools/estraverse.git"},"scripts":{"lint":"jshint estraverse.js","test":"npm run-script lint && npm run-script unit-test","unit-test":"mocha --compilers js:babel-register"},"version":"4.2.0"};
 
 /***/ }),
 
-/***/ 86:
+/***/ 85:
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -22518,16 +22062,16 @@ module.exports = {"_from":"estraverse@^4.0.0","_id":"estraverse@4.2.0","_inBundl
 (function () {
     'use strict';
 
-    exports.ast = __webpack_require__(87);
+    exports.ast = __webpack_require__(86);
     exports.code = __webpack_require__(46);
-    exports.keyword = __webpack_require__(88);
+    exports.keyword = __webpack_require__(87);
 }());
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 
 /***/ }),
 
-/***/ 87:
+/***/ 86:
 /***/ (function(module, exports) {
 
 /*
@@ -22678,7 +22222,7 @@ module.exports = {"_from":"estraverse@^4.0.0","_id":"estraverse@4.2.0","_inBundl
 
 /***/ }),
 
-/***/ 88:
+/***/ 87:
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -22850,7 +22394,7 @@ module.exports = {"_from":"estraverse@^4.0.0","_id":"estraverse@4.2.0","_inBundl
 
 /***/ }),
 
-/***/ 89:
+/***/ 88:
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -22859,40 +22403,13 @@ module.exports = {"_from":"estraverse@^4.0.0","_id":"estraverse@4.2.0","_inBundl
  * http://opensource.org/licenses/BSD-3-Clause
  */
 exports.SourceMapGenerator = __webpack_require__(47).SourceMapGenerator;
-exports.SourceMapConsumer = __webpack_require__(92).SourceMapConsumer;
-exports.SourceNode = __webpack_require__(95).SourceNode;
+exports.SourceMapConsumer = __webpack_require__(91).SourceMapConsumer;
+exports.SourceNode = __webpack_require__(94).SourceNode;
 
 
 /***/ }),
 
-/***/ 9:
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1, eval)("this");
-} catch (e) {
-	// This works if the window reference is available
-	if (typeof window === "object") g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-
-/***/ 90:
+/***/ 89:
 /***/ (function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -22966,7 +22483,34 @@ exports.decode = function (charCode) {
 
 /***/ }),
 
-/***/ 91:
+/***/ 9:
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1, eval)("this");
+} catch (e) {
+	// This works if the window reference is available
+	if (typeof window === "object") g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+
+/***/ 90:
 /***/ (function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -23052,7 +22596,7 @@ exports.MappingList = MappingList;
 
 /***/ }),
 
-/***/ 92:
+/***/ 91:
 /***/ (function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -23063,10 +22607,10 @@ exports.MappingList = MappingList;
  */
 
 var util = __webpack_require__(16);
-var binarySearch = __webpack_require__(93);
+var binarySearch = __webpack_require__(92);
 var ArraySet = __webpack_require__(49).ArraySet;
 var base64VLQ = __webpack_require__(48);
-var quickSort = __webpack_require__(94).quickSort;
+var quickSort = __webpack_require__(93).quickSort;
 
 function SourceMapConsumer(aSourceMap, aSourceMapURL) {
   var sourceMap = aSourceMap;
@@ -24204,7 +23748,7 @@ exports.IndexedSourceMapConsumer = IndexedSourceMapConsumer;
 
 /***/ }),
 
-/***/ 93:
+/***/ 92:
 /***/ (function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -24322,7 +23866,7 @@ exports.search = function search(aNeedle, aHaystack, aCompare, aBias) {
 
 /***/ }),
 
-/***/ 94:
+/***/ 93:
 /***/ (function(module, exports) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -24443,7 +23987,7 @@ exports.quickSort = function (ary, comparator) {
 
 /***/ }),
 
-/***/ 95:
+/***/ 94:
 /***/ (function(module, exports, __webpack_require__) {
 
 /* -*- Mode: js; js-indent-level: 2; -*- */
@@ -24863,14 +24407,14 @@ exports.SourceNode = SourceNode;
 
 /***/ }),
 
-/***/ 96:
+/***/ 95:
 /***/ (function(module) {
 
 module.exports = {"_from":"escodegen@1.11.0","_id":"escodegen@1.11.0","_inBundle":false,"_integrity":"sha512-IeMV45ReixHS53K/OmfKAIztN/igDHzTJUhZM3k1jMhIZWjk45SMwAtBsEXiJp3vSPmTcu6CXn7mDvFHRN66fw==","_location":"/escodegen","_phantomChildren":{},"_requested":{"type":"version","registry":true,"raw":"escodegen@1.11.0","name":"escodegen","escapedName":"escodegen","rawSpec":"1.11.0","saveSpec":null,"fetchSpec":"1.11.0"},"_requiredBy":["#USER","/"],"_resolved":"https://registry.npmjs.org/escodegen/-/escodegen-1.11.0.tgz","_shasum":"b27a9389481d5bfd5bec76f7bb1eb3f8f4556589","_spec":"escodegen@1.11.0","_where":"/Users/pamelafox/khan/live-editor","bin":{"esgenerate":"./bin/esgenerate.js","escodegen":"./bin/escodegen.js"},"bugs":{"url":"https://github.com/estools/escodegen/issues"},"bundleDependencies":false,"dependencies":{"esprima":"^3.1.3","estraverse":"^4.2.0","esutils":"^2.0.2","optionator":"^0.8.1","source-map":"~0.6.1"},"deprecated":false,"description":"ECMAScript code generator","devDependencies":{"acorn":"^4.0.4","bluebird":"^3.4.7","bower-registry-client":"^1.0.0","chai":"^3.5.0","commonjs-everywhere":"^0.9.7","gulp":"^3.8.10","gulp-eslint":"^3.0.1","gulp-mocha":"^3.0.1","semver":"^5.1.0"},"engines":{"node":">=4.0"},"files":["LICENSE.BSD","README.md","bin","escodegen.js","package.json"],"homepage":"http://github.com/estools/escodegen","license":"BSD-2-Clause","main":"escodegen.js","maintainers":[{"name":"Yusuke Suzuki","email":"utatane.tea@gmail.com","url":"http://github.com/Constellation"}],"name":"escodegen","optionalDependencies":{"source-map":"~0.6.1"},"repository":{"type":"git","url":"git+ssh://git@github.com/estools/escodegen.git"},"scripts":{"build":"cjsify -a path: tools/entry-point.js > escodegen.browser.js","build-min":"cjsify -ma path: tools/entry-point.js > escodegen.browser.min.js","lint":"gulp lint","release":"node tools/release.js","test":"gulp travis","unit-test":"gulp test"},"version":"1.11.0"};
 
 /***/ }),
 
-/***/ 97:
+/***/ 96:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24888,7 +24432,7 @@ var _escodegen = __webpack_require__(45);
 
 var _escodegen2 = _interopRequireDefault(_escodegen);
 
-var _astBuilder = __webpack_require__(60);
+var _astBuilder = __webpack_require__(59);
 
 var _astBuilder2 = _interopRequireDefault(_astBuilder);
 
@@ -25073,6 +24617,471 @@ LoopProtector.prototype = {
 };
 
 exports.default = LoopProtector;
+
+/***/ }),
+
+/***/ 97:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* eslint-disable no-var, one-var, curly */
+/* TODO: Fix the lint errors */
+/* We list i18n and lodash as globals instead of require() them
+  due to how we load this file in the test-worker */
+/* globals i18n, _ */
+
+var _outputTester = __webpack_require__(34);
+
+var _outputTester2 = _interopRequireDefault(_outputTester);
+
+var _structured = __webpack_require__(29);
+
+var _structured2 = _interopRequireDefault(_structured);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var PJSTester = function PJSTester(options) {
+    this.initialize(options);
+    this.bindTestContext();
+};
+
+PJSTester.prototype = new _outputTester2.default();
+
+PJSTester.prototype.testMethods = {
+    /*
+     * See if any of the patterns match the code
+     */
+    firstMatchingPattern: function firstMatchingPattern(patterns) {
+        return _.find(patterns, _.bind(function (pattern) {
+            return this.testContext.matches(pattern);
+        }, this));
+    },
+
+    hasFnCall: function hasFnCall(name, check) {
+        for (var i = 0, l = this.fnCalls.length; i < l; i++) {
+            var retVal = this.testContext.checkFn(this.fnCalls[i], name, check);
+
+            if (retVal === true) {
+                return;
+            }
+        }
+
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: name }));
+    },
+
+    orderedFnCalls: function orderedFnCalls(calls) {
+        var callPos = 0;
+
+        for (var i = 0, l = this.fnCalls.length; i < l; i++) {
+            var retVal = this.testContext.checkFn(this.fnCalls[i], calls[callPos][0], calls[callPos][1]);
+
+            if (retVal === true) {
+                callPos += 1;
+
+                if (callPos === calls.length) {
+                    return;
+                }
+            }
+        }
+
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
+    },
+
+    checkFn: function checkFn(fnCall, name, check) {
+        if (fnCall.name !== name) {
+            return;
+        }
+
+        var pass = true;
+
+        if ((typeof check === "undefined" ? "undefined" : _typeof(check)) === "object") {
+            if (check.length !== fnCall.args.length) {
+                pass = false;
+            } else {
+                for (var c = 0; c < check.length; c++) {
+                    if (check[c] !== null && check[c] !== fnCall.args[c]) {
+                        pass = false;
+                    }
+                }
+            }
+        } else if (typeof check === "function") {
+            pass = check(fnCall);
+        }
+
+        if (pass) {
+            this.testContext.assert(true, i18n._("Correct function call made to %(name)s.", { name: name }));
+        }
+
+        return pass;
+    },
+
+    _isVarName: function _isVarName(str) {
+        return _.isString(str) && str.length > 0 && str[0] === "$";
+    },
+
+    _assertVarName: function _assertVarName(str) {
+        if (!this.testContext._isVarName(str)) {
+            throw new Error(i18n._("Expected '%(name)s' to be a valid variable name.", { name: str }));
+        }
+    },
+
+    /*
+     * Satisfied when predicate(var) is true.
+     */
+    unaryOp: function unaryOp(varName, predicate) {
+        this.testContext._assertVarName(varName);
+        return this.testContext.constraint([varName], function (ast) {
+            return !!(ast && !_.isUndefined(ast.value) && predicate(ast.value));
+        });
+    },
+
+    /*
+     * Satisfied when var is any literal.
+     */
+    isLiteral: function isLiteral(varName) {
+        function returnsTrue() {
+            return true;
+        }
+
+        return this.testContext.unaryOp(varName, returnsTrue);
+    },
+
+    /*
+     * Satisfied when var is a number.
+     */
+    isNumber: function isNumber(varName) {
+        return this.testContext.unaryOp(varName, _.isNumber);
+    },
+
+    /*
+     * Satisfied when var is an identifier
+     */
+    isIdentifier: function isIdentifier(varName) {
+        return this.testContext.constraint([varName], function (ast) {
+            return !!(ast && ast.type && ast.type === "Identifier");
+        });
+    },
+
+    /*
+     * Satisfied when var is a boolean.
+     */
+    isBoolean: function isBoolean(varName) {
+        return this.testContext.unaryOp(varName, _.isBoolean);
+    },
+
+    /*
+     * Satisfied when var is a string.
+     */
+    isString: function isString(varName) {
+        return this.testContext.unaryOp(varName, _.isString);
+    },
+
+    /*
+     * Satisfied when pred(first, second) is true.
+     */
+    binaryOp: function binaryOp(first, second, predicate) {
+        var variables = [];
+        var fn;
+        if (this.testContext._isVarName(first)) {
+            variables.push(first);
+            if (this.testContext._isVarName(second)) {
+                variables.push(second);
+                fn = function fn(a, b) {
+                    return !!(a && b && !_.isUndefined(a.value) && !_.isUndefined(b.value) && predicate(a.value, b.value));
+                };
+            } else {
+                fn = function fn(a) {
+                    return !!(a && !_.isUndefined(a.value) && predicate(a.value, second));
+                };
+            }
+        } else if (this.testContext._isVarName(second)) {
+            variables.push(second);
+            fn = function fn(b) {
+                return !!(b && !_.isUndefined(b.value) && predicate(first, b.value));
+            };
+        } else {
+            throw new Error(i18n._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
+        }
+
+        return this.testContext.constraint(variables, fn);
+    },
+
+    /*
+     * Satisfied when a < b
+     */
+    lessThan: function lessThan(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
+            return a < b;
+        });
+    },
+
+    /*
+     * Satisfied when a <= b
+     */
+    lessThanOrEqual: function lessThanOrEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
+            return a <= b;
+        });
+    },
+
+    /*
+     * Satisfied when a > b
+     */
+    greaterThan: function greaterThan(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
+            return a > b;
+        });
+    },
+
+    /*
+     * Satisfied when a > 0
+     */
+    positive: function positive(a) {
+        return this.testContext.unaryOp(a, function (a) {
+            return a > 0;
+        });
+    },
+
+    /*
+     * Satisfied when a > 0
+     */
+    negative: function negative(a) {
+        return this.testContext.unaryOp(a, function (a) {
+            return a < 0;
+        });
+    },
+
+    /*
+     * Satisfied when a >= b
+     */
+    greaterThanOrEqual: function greaterThanOrEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
+            return a >= b;
+        });
+    },
+
+    /*
+     * Satisfied when min <= val <= max
+     */
+    inRange: function inRange(val, min, max) {
+        return this.testContext.and(this.testContext.greaterThanOrEqual(val, min), this.testContext.lessThanOrEqual(val, max));
+    },
+
+    /*
+     * Satisfied when a === b
+     */
+    equal: function equal(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
+            return a === b;
+        });
+    },
+
+    /*
+     * Satisfied when a !== b
+     */
+    notEqual: function notEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
+            return a !== b;
+        });
+    },
+
+    /*
+     * Satisfied when constraint is not satisfied
+     */
+    not: function not(constraint) {
+        return this.testContext.constraint(constraint.variables, function () {
+            return !constraint.fn.apply({}, arguments);
+        });
+    },
+
+    _naryShortCircuitingOp: function _naryShortCircuitingOp(allOrAny, args) {
+        var variables = _.union.apply({}, _.pluck(args, "variables"));
+
+        var argNameToIndex = _.object(_.map(variables, function (item, i) {
+            return [item, i];
+        }));
+
+        return this.testContext.constraint(variables, function () {
+            var constraintArgs = arguments;
+            return allOrAny(args, function (constraint) {
+                var fnArgs = _.map(constraint.variables, function (varName) {
+                    return constraintArgs[argNameToIndex[varName]];
+                });
+
+                return constraint.fn.apply({}, fnArgs);
+            });
+        });
+    },
+
+    /*
+     * Satisfied when all of the input constraints are satisfied
+     */
+    and: function and() {
+        return this.testContext._naryShortCircuitingOp(_.all, arguments);
+    },
+
+    /*
+     * Satisfied when any of the input constraints are satisfied
+     */
+    or: function or() {
+        return this.testContext._naryShortCircuitingOp(_.any, arguments);
+    },
+
+    /*
+     * Returns a new structure from the combination of a pattern and a
+     * constraint
+     */
+    structure: function structure(pattern, constraint) {
+        return {
+            pattern: pattern,
+            constraint: constraint
+        };
+    },
+
+    /*
+     * Creates a new variable constraint
+     */
+    constraint: function constraint(variables, fn) {
+        return {
+            variables: variables,
+            fn: fn
+        };
+    },
+
+    /*
+     * Returns the result of matching a structure against the user's code
+     */
+    match: function match(structure) {
+        // If there were syntax errors, don't even try to match it
+        if (this.errors.length) {
+            return {
+                success: false,
+                message: i18n._("Syntax error!")
+            };
+        }
+
+        // At the top, we take care of some "alternative" uses of this
+        // function. For ease of challenge developing, we return a
+        // failure() instead of disallowing these uses altogether
+
+        // If we don't see a pattern property, they probably passed in
+        // a pattern itself, so we'll turn it into a structure
+        if (structure && _.isUndefined(structure.pattern)) {
+            structure = { pattern: structure };
+        }
+
+        // If nothing is passed in or the pattern is non-existent, return
+        // failure
+        if (!structure || !structure.pattern) {
+            return {
+                success: false,
+                message: ""
+            };
+        }
+
+        try {
+            var callbacks = structure.constraint;
+            var success = _structured2.default.match(this.userCode, structure.pattern, {
+                varCallbacks: callbacks
+            });
+
+            return {
+                success: success,
+                message: callbacks && callbacks.failure
+            };
+        } catch (e) {
+            console && console.warn(e); // eslint-disable-line no-console
+            return {
+                success: true,
+                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
+            };
+        }
+    },
+
+    /*
+     * Returns true if the structure matches the user's code
+     */
+    matches: function matches(structure) {
+        if ((typeof structure === "undefined" ? "undefined" : _typeof(structure)) !== "object") {
+            structure = this.testContext.structure(structure);
+        }
+        return this.testContext.match(structure).success;
+    },
+
+    _checkSyntaxErrors: function _checkSyntaxErrors(syntaxChecks) {
+        if (!syntaxChecks) return;
+
+        // If we found any syntax errors or warnings, we'll send it
+        // through the special syntax checks
+        var foundErrors = _.any(this.errors, function (error) {
+            return error.lint;
+        });
+
+        if (foundErrors) {
+            _.each(syntaxChecks, function (syntaxCheck) {
+                // Check if we find the regex anywhere in the code
+                var foundCheck = this.userCode.search(syntaxCheck.re);
+                var rowNum = -1,
+                    colNum = -1,
+                    errorMsg;
+                if (foundCheck > -1) {
+                    errorMsg = syntaxCheck.msg;
+
+                    // Find line number and character
+                    var lines = this.userCode.split("\n");
+                    var totalChars = 0;
+                    _.each(lines, function (line, num) {
+                        if (rowNum === -1 && foundCheck < totalChars + line.length) {
+                            rowNum = num;
+                            colNum = foundCheck - totalChars;
+                        }
+                        totalChars += line.length;
+                    });
+
+                    this.errors.splice(0, 1, {
+                        text: errorMsg,
+                        row: rowNum,
+                        col: colNum,
+                        type: "error"
+                    });
+                }
+            }.bind(this));
+        }
+    },
+
+    /*
+     * Creates a new test result (i.e. new challenge step)
+     */
+    assertMatch: function assertMatch(result, description, hint, image, syntaxChecks) {
+        this.testContext._checkSyntaxErrors(syntaxChecks);
+
+        var alternateMessage;
+        var alsoMessage;
+
+        if (result.success) {
+            alternateMessage = result.message;
+        } else {
+            alsoMessage = result.message;
+        }
+
+        this.testContext.assert(result.success, description, "", {
+            // We can accept string hints here because
+            //  we never match against them anyway
+            structure: _.isString(hint) ? "function() {" + hint + "}" : hint.toString(),
+            alternateMessage: alternateMessage,
+            alsoMessage: alsoMessage,
+            image: image
+        });
+    }
+};
+
+exports.default = PJSTester;
 
 /***/ })
 

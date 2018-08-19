@@ -130,7 +130,7 @@ export default class AutoSuggest extends Component {
     }
 
     render() {
-        // TODO(pamela) Hide this tooltip while playing
+        // STOPSHIP(pamela): Hide this tooltip while playing
         if (!this.props.isEnabled || this.state.isHidden) {
             return null;
         }

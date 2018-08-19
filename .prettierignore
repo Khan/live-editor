@@ -2,6 +2,10 @@
 *.md
 *.css
 build
+# This test checks that AST transforms code as expected,
+# and it will fail if prettier changes the expected code formatting:
+js/output/pjs/pjs-code-injector.test.js
+# The remaining files are old files that can be prettified in future:
 js/output/pjs/babyhint.js
 js/output/pjs/pjs-ast-transforms.js
 js/output/pjs/pjs-code-injector.js

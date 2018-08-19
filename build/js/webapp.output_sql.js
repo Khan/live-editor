@@ -82,7 +82,7 @@ module.exports =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 230);
+/******/ 	return __webpack_require__(__webpack_require__.s = 229);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -94,7 +94,7 @@ module.exports = require("react");
 
 /***/ }),
 
-/***/ 124:
+/***/ 121:
 /***/ (function(module, exports) {
 
 module.exports = require("SQL");
@@ -108,79 +108,15 @@ module.exports = require("underscore");
 
 /***/ }),
 
-/***/ 23:
+/***/ 229:
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+module.exports = __webpack_require__(230);
 
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-var PooledWorker = function PooledWorker(filename, workersDir, onExec) {
-    this.pool = [];
-    this.curID = 0;
-    this.filename = filename;
-    this.workersDir = workersDir;
-    this.onExec = onExec || function () {};
-};
-
-PooledWorker.prototype.getURL = function () {
-    return this.workersDir + this.filename + "?cachebust=G" + new Date().toDateString();
-};
-
-PooledWorker.prototype.getWorkerFromPool = function () {
-    // NOTE(jeresig): This pool of workers is used to cut down on the
-    // number of new web workers that we need to create. If the user
-    // is typing really fast, or scrubbing numbers, it has the
-    // potential to use a lot of workers. We want to re-use as many of
-    // them as possible as their creation can be expensive. (Chrome
-    // seems to freak out, use lots of memory, and sometimes crash.)
-    var worker = this.pool.shift();
-    if (!worker) {
-        worker = new window.Worker(this.getURL());
-    }
-    // Keep track of what number worker we're running so that we know
-    // if any new hint workers have been started after this one
-    this.curID += 1;
-    worker.id = this.curID;
-    return worker;
-};
-
-/* Returns true if the passed in worker is the most recently created */
-PooledWorker.prototype.isCurrentWorker = function (worker) {
-    return this.curID === worker.id;
-};
-
-PooledWorker.prototype.addWorkerToPool = function (worker) {
-    // Return the worker back to the pool
-    this.pool.push(worker);
-};
-
-PooledWorker.prototype.exec = function () {
-    this.onExec.apply(this, arguments);
-};
-
-PooledWorker.prototype.kill = function () {
-    this.pool.forEach(function (worker) {
-        worker.terminate();
-    }, this);
-    this.pool = [];
-};
-
-exports.default = PooledWorker;
 
 /***/ }),
 
 /***/ 230:
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(231);
-
-
-/***/ }),
-
-/***/ 231:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -196,19 +132,19 @@ var _react = __webpack_require__(1);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _reactDom = __webpack_require__(29);
+var _reactDom = __webpack_require__(24);
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
 
-var _sql = __webpack_require__(124);
+var _sql = __webpack_require__(121);
 
 var _sql2 = _interopRequireDefault(_sql);
 
-var _sqlTester = __webpack_require__(232);
+var _sqlTester = __webpack_require__(231);
 
 var _sqlTester2 = _interopRequireDefault(_sqlTester);
 
-var _sqlResults = __webpack_require__(233);
+var _sqlResults = __webpack_require__(232);
 
 var _sqlResults2 = _interopRequireDefault(_sqlResults);
 
@@ -253,6 +189,14 @@ var SQLOutput = function (_Component) {
             this.handleParentRequests(this.props, prevProps);
         }
     }, {
+        key: "componentWillUnmount",
+        value: function componentWillUnmount() {
+            var doc = this.getDocument();
+            if (doc.body && doc.body.children[0]) {
+                _reactDom2.default.unmountComponentAtNode(doc.body.children[0]);
+            }
+        }
+    }, {
         key: "handleParentRequests",
         value: function handleParentRequests(props, prevProps) {
             var foundNewRequest = function foundNewRequest(reqName) {
@@ -275,7 +219,7 @@ var SQLOutput = function (_Component) {
             }
             if (foundNewRequest("testCodeReq")) {
                 var _req2 = props.testCodeReq;
-                this.test(_req2.code, _req2.tests, _req2.errors);
+                this.test(_req2.code, _req2.tests, _req2.errors, _req2.timestamp);
             }
         }
     }, {
@@ -287,7 +231,7 @@ var SQLOutput = function (_Component) {
         key: "getScreenshot",
         value: function getScreenshot(screenshotSize, callback) {
             html2canvas(this.getDocument().body, {
-                imagesDir: this.output.imagesDir,
+                imagesDir: this.props.imagesDir,
                 onrendered: function onrendered(canvas) {
                     // Note: this code is the same in webpage-output.js
                     var width = screenshotSize;
@@ -502,12 +446,12 @@ var SQLOutput = function (_Component) {
         }
     }, {
         key: "test",
-        value: function test(userCode, tests, errors, callback) {
+        value: function test(code, tests, errors, timestamp) {
             var _this3 = this;
 
             var errorCount = errors.length;
 
-            this.tester.test(this.dbInfo, tests, errors, function (errors, testResults) {
+            this.tester.test(this.dbInfo, tests, errors, function (errors, results) {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
@@ -517,16 +461,20 @@ var SQLOutput = function (_Component) {
                     });
                     _this3.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
                 }
-
-                callback(errors, testResults);
+                _this3.props.onCodeTest({
+                    code: code,
+                    errors: errors,
+                    results: results,
+                    timestamp: timestamp
+                });
             });
         }
     }, {
         key: "runCode",
-        value: function runCode(userCode, timestamp) {
+        value: function runCode(code, timestamp) {
             if (!SQLOutput.isSupported()) {
                 return this.props.onCodeRun({
-                    code: userCode,
+                    code: code,
                     errors: [],
                     timestamp: timestamp
                 });
@@ -534,7 +482,7 @@ var SQLOutput = function (_Component) {
 
             var db = new _sql2.default.Database();
 
-            var results = _sqlTester2.default.Util.execWithResults(db, userCode);
+            var results = _sqlTester2.default.Util.execWithResults(db, code);
             var tables = _sqlTester2.default.Util.getTables(db);
             db.close();
 
@@ -552,7 +500,7 @@ var SQLOutput = function (_Component) {
             doc.close();
 
             this.props.onCodeRun({
-                code: userCode,
+                code: code,
                 errors: [],
                 timestamp: timestamp
             });
@@ -596,7 +544,7 @@ SQLOutput.isSupported = function () {
 
 /***/ }),
 
-/***/ 232:
+/***/ 231:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -610,11 +558,11 @@ var _lodash = __webpack_require__(13);
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
-var _sql = __webpack_require__(124);
+var _sql = __webpack_require__(121);
 
 var _sql2 = _interopRequireDefault(_sql);
 
-var _outputTester = __webpack_require__(24);
+var _outputTester = __webpack_require__(34);
 
 var _outputTester2 = _interopRequireDefault(_outputTester);
 
@@ -1284,7 +1232,7 @@ exports.default = SQLTester;
 
 /***/ }),
 
-/***/ 233:
+/***/ 232:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1330,18 +1278,18 @@ var SQLResults = function (_Component) {
         value: function render() {
             var schemasHeading = void 0;
             var resultsHeading = void 0;
-            if (this.props.tables) {
+            if (this.props.tables.length > 0) {
                 schemasHeading = _react2.default.createElement(
                     "h1",
                     { style: styles.h1 },
-                    "Database Schema"
+                    i18n._("Database Schema")
                 );
             }
-            if (this.props.results) {
+            if (this.props.results.length > 0) {
                 resultsHeading = _react2.default.createElement(
                     "h1",
                     { style: styles.h1 },
-                    "Results"
+                    i18n._("Results")
                 );
             }
 
@@ -1457,7 +1405,6 @@ var SQLResults = function (_Component) {
                     )
                 );
             });
-
             return _react2.default.createElement(
                 "div",
                 null,
@@ -1476,6 +1423,10 @@ var SQLResults = function (_Component) {
 //  into the parent frame, not the iframe.
 
 
+SQLResults.defaultProps = {
+    tables: [],
+    results: []
+};
 exports.default = SQLResults;
 var styles = {
     table: {
@@ -1545,6 +1496,77 @@ var styles = {
 /***/ }),
 
 /***/ 24:
+/***/ (function(module, exports) {
+
+module.exports = require("react-dom");
+
+/***/ }),
+
+/***/ 33:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+var PooledWorker = function PooledWorker(filename, workersDir, onExec) {
+    this.pool = [];
+    this.curID = 0;
+    this.filename = filename;
+    this.workersDir = workersDir;
+    this.onExec = onExec || function () {};
+};
+
+PooledWorker.prototype.getURL = function () {
+    return this.workersDir + this.filename + "?cachebust=G" + new Date().toDateString();
+};
+
+PooledWorker.prototype.getWorkerFromPool = function () {
+    // NOTE(jeresig): This pool of workers is used to cut down on the
+    // number of new web workers that we need to create. If the user
+    // is typing really fast, or scrubbing numbers, it has the
+    // potential to use a lot of workers. We want to re-use as many of
+    // them as possible as their creation can be expensive. (Chrome
+    // seems to freak out, use lots of memory, and sometimes crash.)
+    var worker = this.pool.shift();
+    if (!worker) {
+        worker = new window.Worker(this.getURL());
+    }
+    // Keep track of what number worker we're running so that we know
+    // if any new hint workers have been started after this one
+    this.curID += 1;
+    worker.id = this.curID;
+    return worker;
+};
+
+/* Returns true if the passed in worker is the most recently created */
+PooledWorker.prototype.isCurrentWorker = function (worker) {
+    return this.curID === worker.id;
+};
+
+PooledWorker.prototype.addWorkerToPool = function (worker) {
+    // Return the worker back to the pool
+    this.pool.push(worker);
+};
+
+PooledWorker.prototype.exec = function () {
+    this.onExec.apply(this, arguments);
+};
+
+PooledWorker.prototype.kill = function () {
+    this.pool.forEach(function (worker) {
+        worker.terminate();
+    }, this);
+    this.pool = [];
+};
+
+exports.default = PooledWorker;
+
+/***/ }),
+
+/***/ 34:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1561,7 +1583,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 /* global i18n, _ */
 
 
-var _pooledWorker = __webpack_require__(23);
+var _pooledWorker = __webpack_require__(33);
 
 var _pooledWorker2 = _interopRequireDefault(_pooledWorker);
 
@@ -1704,7 +1726,7 @@ OutputTester.prototype = {
         if (!code) {
             return true;
         }
-
+        code = code.replace(/\$\._/g, "i18n._");
         code = "with(arguments[0]){\n" + code + "\n}";
         new Function(code).call({}, this.testContext);
 
@@ -1832,13 +1854,6 @@ OutputTester.prototype = {
 };
 
 exports.default = OutputTester;
-
-/***/ }),
-
-/***/ 29:
-/***/ (function(module, exports) {
-
-module.exports = require("react-dom");
 
 /***/ })
 
