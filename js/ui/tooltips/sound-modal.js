@@ -34,12 +34,36 @@ export default class SoundModal extends Component {
         };
         this.files = OutputSounds;
         this.regex = RegExp(/(\bgetSound\s*\()[^)]*$/);
+
+        this.handleFileSelect = this.handleFileSelect.bind(this);
+        this.handleModalClose = this.handleModalClose.bind(this);
     }
 
+    // Note: this code is redundant with other tooltips
     componentDidUpdate(prevProps, prevState, snapshot) {
-        if (this.props.eventToCheck) {
-            this.checkEvent(this.props.eventToCheck);
+        const currentEvent = this.props.eventToCheck;
+        if (!currentEvent) {
+            return;
         }
+        if (
+            !prevProps.eventToCheck ||
+            currentEvent.timestamp > prevProps.eventToCheck.timestamp
+        ) {
+            this.checkEvent(currentEvent);
+        }
+    }
+
+    handleFileSelect(fileInfo) {
+        this.activeFileInfo = fileInfo;
+    }
+
+    handleModalClose() {
+        if (!this.activeFileInfo) {
+            return;
+        }
+        const updatePath = this.activeFileInfo.groupAndName;
+        this.updateTooltip(updatePath);
+        this.props.onTextUpdateRequest(`"${updatePath}"`);
     }
 
     checkEvent(event) {
@@ -47,8 +71,8 @@ export default class SoundModal extends Component {
             return this.props.onEventCheck(false);
         }
         const info = tooltipUtils.getInfoFromFileMatch(event);
-        const {pathStart, functionStart, shouldFill} = info;
-        let {path, closing} = info;
+        const {path, pathStart, functionStart, shouldFill} = info;
+        let {closing} = info;
 
         if (shouldFill && this.props.autofillEnabled) {
             closing =
@@ -63,8 +87,7 @@ export default class SoundModal extends Component {
                 },
                 closing,
             );
-            path = this.state.mediaSrc;
-            this.updateText(path);
+            this.props.onTextUpdateRequest(`"rpg/metal-clink"`);
         }
 
         const aceLocation = {
@@ -106,20 +129,9 @@ export default class SoundModal extends Component {
             mediaDir: this.props.soundsDir,
             mediaSrc: this.state.mediaSrc,
             mediaType: "audio",
-            onFileSelect: (fileInfo) => {
-                this.activeFileInfo = fileInfo;
-            },
-            onModalClose: () => {
-                if (!this.activeFileInfo) {
-                    return;
-                }
-                const updatePath = this.activeFileInfo.groupAndName;
-                this.updateTooltip(updatePath);
-                this.props.onTextUpdateRequest(`"${updatePath}"`);
-            },
-            onModalRefCreate: (ref) => {
-                this.props.onModalRefCreate(ref);
-            },
+            onFileSelect: this.handleFileSelect,
+            onModalClose: this.handleModalClose,
+            onModalRefCreate: this.props.onModalRefCreate,
         };
         return <MediaPickerTooltip {...props} />;
     }

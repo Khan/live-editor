@@ -789,10 +789,8 @@ OutputTester.prototype = {
             try {
                 tester.exec(validate);
             } catch (e) {
-                if (window.console) {
-                    // eslint-disable-next-line no-console
-                    console.warn(e.message);
-                }
+                // eslint-disable-next-line no-console
+                console && console.warn(e.message);
                 return;
             }
 
@@ -912,10 +910,8 @@ OutputTester.prototype = {
                     try {
                         return _fn.apply(this, arguments);
                     } catch (e) {
-                        if (window.console) {
-                            // eslint-disable-next-line no-console
-                            console.warn(e);
-                        }
+                        // eslint-disable-next-line no-console
+                        console && console.warn(e);
                     }
                 }
             });
@@ -18716,9 +18712,7 @@ PJSTester.prototype.testMethods = {
                 message: callbacks && callbacks.failure
             };
         } catch (e) {
-            if (window.console) {
-                console.warn(e); // eslint-disable-line no-console
-            }
+            console && console.warn(e); // eslint-disable-line no-console
             return {
                 success: true,
                 message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
@@ -28899,6 +28893,8 @@ Object.defineProperty(exports, "__esModule", {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _lodash = __webpack_require__(13);
@@ -28934,13 +28930,18 @@ var outputs = {};
 var LiveEditorOutput = function (_Component) {
     _inherits(LiveEditorOutput, _Component);
 
+    // For most of these props, they are often sent from the parent editor,
+    // so are stored in state once recieved
     function LiveEditorOutput(props) {
         _classCallCheck(this, LiveEditorOutput);
 
         var _this = _possibleConstructorReturn(this, (LiveEditorOutput.__proto__ || Object.getPrototypeOf(LiveEditorOutput)).call(this, props));
 
-        _this.state = {};
-
+        _this.state = _extends({}, _this.getPaths(props), {
+            outputType: props.outputType,
+            loopProtectTimeouts: props.loopProtectTimeouts
+        });
+        console.log("initial", _this.state);
         _this.outputTypeRef = _react2.default.createRef();
         _this.handleMessage = _this.handleMessage.bind(_this);
         _this.notifyActiveOnce = _lodash2.default.once(_this.notifyActive);
@@ -28950,13 +28951,12 @@ var LiveEditorOutput = function (_Component) {
             useDebugger: _this.props.useDebugger
         });
 
-        // TODO: Move these into state
+        // TODO(pamela): Move these into state
         _this.recording = false;
         _this.loaded = false;
         _this.lintErrors = [];
         _this.runtimeErrors = [];
         _this.lintWarnings = [];
-        _this.setPaths(props);
 
         // Add a timestamp property to the lintErrors and runtimeErrors arrays
         // to keep track of which version of the code the errors are for.  A
@@ -28983,7 +28983,7 @@ var LiveEditorOutput = function (_Component) {
         value: function renderOutputType() {
             var _this2 = this;
 
-            if (!this.state.readyToInitOutput) {
+            if (!this.state.outputType) {
                 return null;
             }
             var props = {
@@ -29004,6 +29004,7 @@ var LiveEditorOutput = function (_Component) {
                 loopProtectTimeouts: this.state.loopProtectTimeouts,
                 lintCodeReq: this.state.lintCodeReq,
                 runCodeReq: this.state.runCodeReq,
+                testCodeReq: this.state.testCodeReq,
                 toggleReq: this.state.toggleReq,
                 onCanvasEvent: function onCanvasEvent(e) {
                     var offset = utils.getOffset(e.target);
@@ -29067,6 +29068,13 @@ var LiveEditorOutput = function (_Component) {
                     _this2.runtimeErrors.timestamp = runResults.timestamp;
                     _this2.buildDone(runResults.code);
                 },
+                onCodeTest: function onCodeTest(testResults) {
+                    _this2.results.errors = testResults.errors;
+                    _this2.results.tests = testResults.results;
+                    if (_this2.state.testsCallback) {
+                        _this2.state.testsCallback(_this2.results.errors, _this2.results.assertions, _this2.results.tests);
+                    }
+                },
                 onTitleChange: function onTitleChange(title) {
                     _this2.postParent({
                         action: "page-info",
@@ -29077,26 +29085,28 @@ var LiveEditorOutput = function (_Component) {
             return _react2.default.createElement(outputs[this.state.outputType], props);
         }
     }, {
-        key: "setPaths",
-        value: function setPaths(data) {
+        key: "getPaths",
+        value: function getPaths(data) {
+            var pathsState = {};
             if (data.workersDir) {
-                this.setState({ workersDir: utils.qualifyURL(data.workersDir) });
+                pathsState.workersDir = utils.qualifyURL(data.workersDir);
             }
             if (data.externalsDir) {
-                this.setState({ externalsDir: utils.qualifyURL(data.externalsDir) });
+                pathsState.externalsDir = utils.qualifyURL(data.externalsDir);
             }
             if (data.imagesDir) {
-                this.setState({ imagesDir: utils.qualifyURL(data.imagesDir) });
+                pathsState.imagesDir = utils.qualifyURL(data.imagesDir);
             }
             if (data.soundsDir) {
-                this.setState({ soundsDir: utils.qualifyURL(data.soundsDir) });
+                pathsState.soundsDir = utils.qualifyURL(data.soundsDir);
             }
             if (data.redirectUrl) {
-                this.setState({ redirectUrl: data.redirectUrl });
+                pathsState.redirectUrl = data.redirectUrl;
             }
             if (data.jshintFile) {
-                this.setState({ jshintFile: utils.qualifyURL(data.jshintFile) });
+                pathsState.jshintFile = utils.qualifyURL(data.jshintFile);
             }
+            return pathsState;
         }
     }, {
         key: "handleMessage",
@@ -29123,53 +29133,58 @@ var LiveEditorOutput = function (_Component) {
                 return;
             }
 
-            var outputType = data.outputType || Object.keys(outputs)[0];
-            var enableLoopProtect = true;
+            // Make changes to the state based on incoming messages
+            var stateChanges = {};
+
+            if (data.outputType) {
+                stateChanges.outputType = data.outputType;
+            }
+
             if (data.enableLoopProtect != null) {
-                enableLoopProtect = data.enableLoopProtect;
+                stateChanges.enableLoopProtect = data.enableLoopProtect;
             }
-            var loopProtectTimeouts = {
-                initialTimeout: 2000,
-                frameTimeout: 500
-            };
             if (data.loopProtectTimeouts != null) {
-                loopProtectTimeouts = data.loopProtectTimeouts;
-            }
-            this.setState({
-                outputType: outputType,
-                enableLoopProtect: enableLoopProtect,
-                loopProtectTimeouts: loopProtectTimeouts
-            });
-
-            // filter out debugger events
-            // handled by pjs-debugger.js::handleMessage
-            if (data.type === "debugger") {
-                return;
+                stateChanges.loopProtectTimeouts = data.loopProtectTimeouts;
             }
 
-            // Set the paths from the incoming data, if they exist
-            this.setPaths(data);
+            // Settings to initialize
+            if (data.settings != null) {
+                stateChanges.settings = data.settings;
+            }
+
+            // Take a screenshot of the output
+            if (data.screenshot != null) {
+                stateChanges.screenshotReq = {
+                    time: Date.now(),
+                    size: data.screenshotSize || 200
+                };
+            }
+            if (data.prop === "mouseAction") {
+                stateChanges.mouseActionReq = { time: Date.now(), data: data };
+            }
+            if (data.documentation != null) {
+                stateChanges.docInitReq = { time: Date.now(), data: data };
+            }
+            //this.setState({readyToInitOutput: true});
+
+            this.setState(_extends({}, this.getPaths(data), stateChanges));
+
+            // Now make non-state related changes
+            if (data.onlyRunTests != null) {
+                this.onlyRunTests = !!data.onlyRunTests;
+            } else {
+                this.onlyRunTests = false;
+            }
 
             // Validation code to run
             if (data.validate != null) {
                 this.initTests(data.validate);
             }
 
-            // Settings to initialize
-            if (data.settings != null) {
-                this.setState({ settings: data.settings });
-            }
-
             // Code to be executed
             if (data.code != null) {
                 this.config.switchVersion(data.version);
                 this.runCode(data.code, undefined, data.noLint);
-            }
-
-            if (data.onlyRunTests != null) {
-                this.onlyRunTests = !!data.onlyRunTests;
-            } else {
-                this.onlyRunTests = false;
             }
 
             // Restart the output
@@ -29181,23 +29196,6 @@ var LiveEditorOutput = function (_Component) {
             if (data.recording != null) {
                 this.recording = data.recording;
             }
-
-            // Take a screenshot of the output
-            if (data.screenshot != null) {
-                this.setState({
-                    screenshotReq: {
-                        time: Date.now(),
-                        size: data.screenshotSize || 200
-                    }
-                });
-            }
-            if (data.prop === "mouseAction") {
-                this.setState({ mouseActionReq: { time: Date.now(), data: data } });
-            }
-            if (data.documentation != null) {
-                this.setState({ docInitReq: { time: Date.now(), data: data } });
-            }
-            this.setState({ readyToInitOutput: true });
         }
 
         // Send a message back to the parent frame
@@ -29292,6 +29290,7 @@ var LiveEditorOutput = function (_Component) {
     }, {
         key: "runCode",
         value: function runCode(userCode, callback, noLint) {
+            console.log("runCode called", userCode);
             this.currentCode = userCode;
             var timestamp = Date.now();
 
@@ -29324,6 +29323,7 @@ var LiveEditorOutput = function (_Component) {
     }, {
         key: "lintDone",
         value: function lintDone(userCode, timestamp) {
+            console.log("lintDone");
             if (this.lintErrors.length > 0 || this.onlyRunTests) {
                 this.buildDone(userCode);
                 return;
@@ -29342,8 +29342,7 @@ var LiveEditorOutput = function (_Component) {
     }, {
         key: "buildDone",
         value: function buildDone(userCode) {
-            var _this3 = this;
-
+            console.log("Build done");
             var errors = [];
             var warnings = [];
 
@@ -29375,21 +29374,14 @@ var LiveEditorOutput = function (_Component) {
 
             this.toggle(!errors.length);
 
-            // A callback for working with a test suite
+            // A callback for working with a mocha test suite
             if (this.state.testsCallback) {
-                //This is synchronous
-                this.test(userCode, this.validate, errors, function (errors, testResults) {
-                    _this3.state.testsCallback(errors, testResults);
-                });
+                this.test(userCode, errors);
                 // Normal case
             } else {
                 // This is debounced (async)
                 if (this.validate !== "") {
-                    this.testThrottled(userCode, this.validate, errors, function (errors, testResults) {
-                        _this3.results.errors = errors;
-                        _this3.results.tests = testResults;
-                        _this3.phoneHome();
-                    });
+                    this.testThrottled(userCode, errors);
                 }
             }
         }
@@ -29407,15 +29399,16 @@ var LiveEditorOutput = function (_Component) {
         }
     }, {
         key: "test",
-        value: function test(userCode, validate, errors, callback) {
-            // TODO: Change to setting testReq in state
-            this.outputTypeRef.current.test(userCode, validate, errors, callback);
+        value: function test(code, errors) {
+            this.setState({
+                testCodeReq: { code: code, errors: errors, tests: this.validate, timestamp: Date.now() }
+            });
         }
     }, {
         key: "lint",
-        value: function lint(userCode, callback) {
+        value: function lint(code, callback) {
             this.setState({
-                lintCodeReq: { code: userCode, timestamp: Date.now() },
+                lintCodeReq: { code: code, timestamp: Date.now() },
                 testsCallback: callback
             });
         }
@@ -29430,7 +29423,7 @@ var LiveEditorOutput = function (_Component) {
             this.setState({ toggleReq: { timestamp: Date.now(), doToggle: doToggle } });
         }
 
-        // TODO: Stop referencing the child ref.
+        // TODO(pamela): Stop referencing the child ref.
 
     }, {
         key: "restart",
@@ -29461,6 +29454,12 @@ var LiveEditorOutput = function (_Component) {
     return LiveEditorOutput;
 }(_react.Component);
 
+LiveEditorOutput.defaultProps = {
+    loopProtectTimeouts: {
+        initialTimeout: 2000,
+        frameTimeout: 500
+    }
+};
 exports.default = LiveEditorOutput;
 
 
@@ -29669,6 +29668,7 @@ var PJSOutput = function (_Component) {
     }, {
         key: "handleParentRequests",
         value: function handleParentRequests(props, prevProps) {
+            console.log(props);
             var foundNewRequest = function foundNewRequest(reqName) {
                 return props[reqName] && (!prevProps[reqName] || props[reqName].timestamp !== prevProps[reqName].timestamp);
             };
@@ -29698,6 +29698,10 @@ var PJSOutput = function (_Component) {
             if (foundNewRequest("runCodeReq")) {
                 var _req = props.runCodeReq;
                 this.runCode(_req.code, _req.timestamp);
+            }
+            if (foundNewRequest("testCodeReq")) {
+                var _req2 = props.testCodeReq;
+                this.test(_req2.code, _req2.tests, _req2.errors);
             }
         }
     }, {
@@ -30004,12 +30008,12 @@ var PJSOutput = function (_Component) {
         }
     }, {
         key: "test",
-        value: function test(userCode, tests, errors, callback) {
+        value: function test(userCode, tests, errors, timestamp) {
             var _this6 = this;
 
             var errorCount = errors.length;
 
-            this.tester.testWorker.exec(userCode, tests, errors, function (errors, testResults) {
+            this.tester.testWorker.exec(userCode, tests, errors, function (errors, results) {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
@@ -30021,7 +30025,12 @@ var PJSOutput = function (_Component) {
                     _this6.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
                 }
 
-                callback(errors, testResults);
+                _this6.props.onCodeTest({
+                    code: userCode,
+                    errors: errors,
+                    results: results,
+                    timestamp: timestamp
+                });
             });
         }
 

@@ -1,4 +1,8 @@
+/* eslint-disable */
+import {assertTest, createLiveEditorOutput, removeLiveEditorOutput, runTest} from "./test_utils.js";
+
 // TODO(kevinb) remove after challenges have been converted to use i18n._
+const $ = {};
 $._ = i18n._;
 
 describe("Challenge Assertions - HTML", function() {
@@ -70,7 +74,7 @@ describe("Challenge Assertions - HTML Scripting", function() {
     var xTest = (function() {
         staticTest("Set X", function() {
             var result = pass();
-            if ($("iframe")[0].contentWindow.x !== 4) {
+            if (document.querySelector("iframe").contentWindow.x !== 4) {
                 result = fail("Did you set x to 4?");
             }
             var descrip = "I don't really care";
@@ -82,7 +86,7 @@ describe("Challenge Assertions - HTML Scripting", function() {
         title: "Scripting Works",
         code: "<div><script>window.x = 4;</script></div>",
         validate: xTest,
-    }); 
+    });
 
     assertTest({
         title: "Scripting Test fails",
@@ -170,7 +174,7 @@ describe("scriptTest tests", function() {
         title: "scriptTest reports success for matching code",
         code: "<div><script>var x = 4;</script></div>",
         validate: xTest,
-    }); 
+    });
 
     assertTest({
         title: "scriptTest reports failure for not matching code",
@@ -183,44 +187,6 @@ describe("scriptTest tests", function() {
         title: "scriptTest reports failure for not matching code",
         code: "<div><script>var y = 4;</script></div>",
         validate: xTest,
-    }); 
-});
-
-describe("CSS selector matching with wildcards", function() {
-    var output;
-
-    before(function() {
-        output = new LiveEditorOutput({
-            el: $("#output-area")[0],
-            outputType: "webpage",
-            workersDir: "../../../build/workers/",
-            externalsDir: "../../../build/external/",
-            imagesDir: "../../../build/images/",
-            jshintFile: "../../../build/external/jshint/jshint.js"
-        });
-    });
-
-    var selectorTests = [
-        [true, "div", "div"],
-        [false, "div", "li"],
-        [true, "_", "div"],
-        [false, "_", "a a"],
-        [true, "_ _", "a b"],
-        [true, "$1 div, $1 li", ".home div, .home li"],
-        [true, "$1 div, $1 li, _ div", ".home div, #foo li, #foo div"],
-        [false, "_", "table, li"],
-    ];
-    _.each(selectorTests, function(test) {
-        var goal = test[0];
-        var pattern = test[1];
-        var selector = test[2];
-        var title = "\"" + pattern.substring(0, 50) + "\" " + (goal ? "=" : "!") + "= \"" + selector.substring(0, 50) + "\"";
-        it(title, function() {
-            var P = output.output.tester.testContext.normalizeSelector(pattern);
-            var S = output.output.tester.testContext.normalizeSelector(selector);
-            var result = output.output.tester.testContext.selectorMatch(P, S);
-            expect(result == goal).to.be.ok();
-        });
     });
 });
 
@@ -353,18 +319,18 @@ describe("Full CSS matching with wildcards", function() {
         css: "h1 { color: (0, 10, 20); }",
         callbacks: 'isValidColor("$1")'
     }, {
-        res: true, 
+        res: true,
         title: "Concatenating multiple stylesheets",
         pat: "h1{color: red} h2{color: black}",
-        html: "<style>h1{color: red}</style><style>h2{color: black}</style>", 
+        html: "<style>h1{color: red}</style><style>h2{color: black}</style>",
     }, {
-        res: false, 
+        res: false,
         title: "Later styles override earlier styles",
         pat: "h1{color: red}",
         html: "<style>h1{color: red}</style><style>h1{color: black}</style>"
     }];
 
-    _.each(CSSTests, function(options) {
+    CSSTests.forEach(function(options) {
         if (!options.title) {
             options.title = "\"" + options.pat.substring(0, 50) + "\" " + (options.res ? "=" : "!") + "= \"" +
                   options.css.substring(0, 50) + "\"" + (options.callbacks ? "+ callbacks" : "");
@@ -390,7 +356,7 @@ describe("Full CSS matching with wildcards", function() {
             title: options.title,
             validate: options.validate,
             code: options.html,
-            test: function (output, errors, testResults) {
+            test: function (outputRef, errors, testResults) {
                 expect(testResults[0].state !== "fail").to.be.equal(options.res);
             }
         });

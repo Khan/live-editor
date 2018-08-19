@@ -9,8 +9,10 @@ import SQLResults from "./sql-results.js";
 export default class SQLOutput extends Component {
     props: {
         config: Object,
+        imagesDir: string,
         onCodeLint: Function,
         onCodeRun: Function,
+        onCodeTest: Function,
     };
 
     constructor(props) {
@@ -36,6 +38,12 @@ export default class SQLOutput extends Component {
         this.handleParentRequests(this.props, prevProps);
     }
 
+    componentWillUnmount() {
+        const doc = this.getDocument();
+        if (doc.body && doc.body.children[0]) {
+            ReactDOM.unmountComponentAtNode(doc.body.children[0]);
+        }
+    }
     handleParentRequests(props, prevProps) {
         const foundNewRequest = (reqName) => {
             return (
@@ -59,6 +67,10 @@ export default class SQLOutput extends Component {
             const req = props.runCodeReq;
             this.runCode(req.code, req.timestamp);
         }
+        if (foundNewRequest("testCodeReq")) {
+            const req = props.testCodeReq;
+            this.test(req.code, req.tests, req.errors, req.timestamp);
+        }
     }
 
     getDocument() {
@@ -67,7 +79,7 @@ export default class SQLOutput extends Component {
 
     getScreenshot(screenshotSize, callback) {
         html2canvas(this.getDocument().body, {
-            imagesDir: this.output.imagesDir,
+            imagesDir: this.props.imagesDir,
             onrendered: function(canvas) {
                 // Note: this code is the same in webpage-output.js
                 const width = screenshotSize;
@@ -382,10 +394,10 @@ export default class SQLOutput extends Component {
         }
     }
 
-    test(userCode, tests, errors, callback) {
+    test(code, tests, errors, timestamp) {
         const errorCount = errors.length;
 
-        this.tester.test(this.dbInfo, tests, errors, (errors, testResults) => {
+        this.tester.test(this.dbInfo, tests, errors, (errors, results) => {
             if (errorCount !== errors.length) {
                 // Note: Scratchpad challenge checks against the exact
                 // translated text "A critical problem occurred..." to
@@ -402,15 +414,19 @@ export default class SQLOutput extends Component {
                     ),
                 );
             }
-
-            callback(errors, testResults);
+            this.props.onCodeTest({
+                code,
+                errors,
+                results,
+                timestamp,
+            });
         });
     }
 
-    runCode(userCode, timestamp) {
+    runCode(code, timestamp) {
         if (!SQLOutput.isSupported()) {
             return this.props.onCodeRun({
-                code: userCode,
+                code,
                 errors: [],
                 timestamp,
             });
@@ -418,7 +434,7 @@ export default class SQLOutput extends Component {
 
         const db = new SQL.Database();
 
-        const results = SQLTester.Util.execWithResults(db, userCode);
+        const results = SQLTester.Util.execWithResults(db, code);
         const tables = SQLTester.Util.getTables(db);
         db.close();
 
@@ -441,7 +457,7 @@ export default class SQLOutput extends Component {
         doc.close();
 
         this.props.onCodeRun({
-            code: userCode,
+            code,
             errors: [],
             timestamp,
         });

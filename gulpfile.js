@@ -1,3 +1,4 @@
+/* eslint-disable */
 var http = require("http");
 var zlib = require("zlib");
 var fs = require("fs");
@@ -47,12 +48,14 @@ var failureCount = 0;
 
 // We run tests in groups so that we don't require as much memory to run them
 // in Travis-CI.
-var pjs_tests = ["output", "output", "assert", "async"];
+const testPre = "../../../build/js/live-editor.tests_output_";
+
+const pjs_tests = ["pjs_output", "pjs_assert", "pjs_async", "pjs_jshint"];
 
 pjs_tests.forEach(function(test) {
     gulp.task("test_output_pjs_" + test, function() {
         return gulp.src("tests/output/pjs/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js"}))
+            .pipe(mochaRunner({ test: testPre + test + ".js"}))
             .on("error", function (err) {
                 failureCount += parseInt(err.message);
                 this.emit("end");
@@ -68,12 +71,12 @@ gulp.task("test_output_pjs", function(callback) {
     runSequence.apply(null, sequence);
 });
 
-var webpage_tests = ["assert", "output"];
+var webpage_tests = ["webpage_assert", "webpage_output"];
 
 webpage_tests.forEach(function(test) {
     gulp.task("test_output_webpage_" + test, function() {
         return gulp.src("tests/output/webpage/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js" }))
+            .pipe(mochaRunner({ test: testPre + test + ".js" }))
             .on("error", function (err) {
                 failureCount += parseInt(err.message);
                 this.emit("end");
@@ -134,7 +137,7 @@ gulp.task("test_record", ["test_record_data"],
 
 gulp.task("test", function(callback) {
     runSequence("test_output_pjs", "test_output_webpage", "test_output_sql",
-        "test_tooltips", "test_modules", "check_errors", callback);
+            "test_tooltips", "test_modules", "check_errors", callback);
 });
 
 gulp.task("default", ["watch", "build"]);

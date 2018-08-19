@@ -1,89 +1,60 @@
-const AceEditor = require("../../js/editors/ace/editor-ace.js");
-const ScratchpadAutosuggest = require("../../js/ui/autosuggest.js");
-const ScratchpadConfig = require("../../js/shared/config.js");
-const ScratchpadRecordModel = require("../../js/shared/record.js");
-const TooltipEngine = require("../../js/ui/tooltip-engine.js");
+/* eslint-disable */
+import React from "react";
+import ReactDOM from "react-dom";
 
-var mockObject = function(obj, mocks) {
-    _.each(mocks, function(method) {
-        obj[method] = sinon.spy();
-    });
-    return obj;
-};
+import AceEditor from "../../js/editors/ace/editor-ace.js";
+import LiveEditor from "../../js/live-editor.js";
 
-const tooltipClasses = TooltipEngine.tooltipClasses;
+LiveEditor.registerEditor("ace_pjs", AceEditor);
 
-var uniqueEditor = function() {
-    var elem = document.createElement('div');
-    document.body.appendChild(elem);
-    var ace = new AceEditor({ //Initializes TooltipEngine internally
-        el: elem,
-        autoFocus: true,
-        config: new ScratchpadConfig({
-            version: 3
-        }),
+export function renderLiveEditor(extraProps) {
+    const ref = React.createRef();
+
+    const props = Object.assign({}, {
+        ref,
+        editorAutoFocus: true,
+        outputType: "pjs",
+        workersDir: "../../build/",
+        externalsDir: "../../build/external/",
         imagesDir: "../../build/images/",
-        externalsDir: "",
-        workersDir: "",
-        record: new ScratchpadRecordModel(),
-        type: "ace_pjs"
-    });
-    ScratchpadAutosuggest.init(ace.editor);
-    ace.editor.focus();
-    ace.setSelection({
-        start: {
-            row: 0,
-            column: 0
-        },
-        end: {
-            row: 0,
-            column: 0
-        }
-    });
-    return ace;
+        soundsDir: "../../build/sounds/",
+    }, extraProps || {});
+
+    ReactDOM.render(React.createElement(LiveEditor, props),
+        document.getElementById("live-editor"));
+    return ref;
 };
 
-const ACE = uniqueEditor();
-const editor = ACE.editor;
-const TTE = ACE.tooltipEngine;
-
-for (var TooltipName in TooltipEngine.prototype.classes) {
-    var Tooltip = TooltipEngine.classes[TooltipName];
-    Tooltip.prototype = Tooltip.oldPrototype;
+export function removeLiveEditor() {
+    ReactDOM.unmountComponentAtNode(
+        document.getElementById("live-editor"));
 }
 
-var TTEoptions = {
-    parent: TTE,
-    editor: editor,
-    imagesDir: "",
-    record: {
-        handlers: {}
-    }
-};
+function getEditor(liveEditorRef) {
+    return liveEditorRef.current.aceWrapperRef.current.editor;
+}
 
-var getMockedTooltip = function(Tooltip, whiteList, blackList) {
-    if (whiteList) {
-        blackList = [];
-        for (let method in Tooltip.prototype) {
-            if (!_.contains(whiteList, method) && method !== "constructor") {
-                blackList.push(method);
-            }
-        }
-    }
-    var oldPrototype = Tooltip.prototype;
-    Tooltip.prototype = mockObject(_.clone(Tooltip.prototype), blackList);
-    Tooltip.prototype.render = function () {
-        this.modal = {
-            show: sinon.spy(),
-            selectImg: sinon.spy()
-        };
-    };
-    var tooltip = new Tooltip(TTEoptions);
-    Tooltip.prototype = oldPrototype;
-    return tooltip;
-};
+export function typeLine(liveEditorRef, text) {
+    const editor = getEditor(liveEditorRef);
+    editor.gotoLine(Infinity);
+    editor.onTextInput("\n");
+    text.split('').forEach((c) => {
+        editor.onTextInput(c);
+    });
+}
 
-var getTooltipRequestEvent = function(line, pre) {
+export function getLine(liveEditorRef) {
+    const editor = getEditor(liveEditorRef);
+    return editor.session.getDocument().getLine(
+        editor.selection.getCursor().row);
+}
+
+export function getCurrentTooltip(liveEditorRef) {
+    const state = liveEditorRef.current.aceWrapperRef.current.state;
+    return state.tooltipName;
+}
+
+export function getTooltipEvent(line, pre, source) {
     expect(line.slice(0, pre.length)).to.be.equal(pre);
     return {
         line: line,
@@ -91,94 +62,39 @@ var getTooltipRequestEvent = function(line, pre) {
         post: line.slice(pre.length),
         col: pre.length,
         row: 1,
-        selections: [{
-            start: {
-                row: 1,
-                column: pre.length
+        timestamp: Date.now(),
+        selections: [
+            {
+                start: {
+                    row: 1,
+                    column: pre.length,
+                },
+                end: {
+                    row: 1,
+                    column: pre.length,
+                },
             },
-            end: {
-                row: 1,
-                column: pre.length
-            }
-        }],
+        ],
+        source: source && {
+            action: "insert",
+            lines: pre.substr(pre.length - 2),
+        },
         stopPropagation: function() {
             this.propagationStopped = true;
-        }
+        },
     };
-};
+}
 
-
-var testMockedTooltipDetection = function(tooltip, line, pre) {
-    var event = getTooltipRequestEvent(line, pre);
-    tooltip.placeOnScreen = sinon.spy();
-    tooltip.detector(event);
-    return !!tooltip.placeOnScreen.called;
-};
-
-function testReplace(tooltip, line, pre, updates, result) {
-    var event = getTooltipRequestEvent(line, pre);
-    var newLine = line;
-    var oldReplace = editor.session.replace;
-    editor.session.replace = sinon.spy(function(range, newText) {
-        newLine = applyReplace(newLine, range, newText);
+export function clickEditor(leRef, row, col) {
+    const aceEditor = leRef.current.aceWrapperRef.current.editor;
+    const editorEl = aceEditor.container;
+    const coords = aceEditor.renderer.textToScreenCoordinates(row, col);
+    const evt = new MouseEvent('mousedown', {
+        'view': window,
+        'bubbles': true,
+        'cancelable': true,
+        'clientX': coords.pageX,
+        'clientY': coords.pageY
     });
-
-    tooltip.detector(event);
-    for (var key in updates) {
-        var update = updates[key];
-        tooltip.updateText(update);
-    }
-
-    editor.session.replace = oldReplace;
-
-    expect(newLine).to.be.equal(result);
+   editorEl.dispatchEvent(evt);
 }
-
-function applyReplace(line, range, newText) {
-    return line.slice(0, range.start.column) + newText + line.slice(range.end.column);
-}
-
-function typeChars(text) {
-    _.each(text, function(c) {
-        editor.onTextInput(c);
-    });
-}
-
-/*
-// This is for testing only
-// This allows you to see the text sent to typeChars being typed
-// into ace at a regular pace to see exactly what happens.
-function typeChars(text) {
-    if (text) {
-        editor.onTextInput(text[0]);
-        setTimeout(function(){ typeChars(text.slice(1)) }, 100);
-    }
-}
-/**/
-
-function typeLine(text) {
-    editor.gotoLine(Infinity);
-    editor.onTextInput("\n");
-    typeChars(text);
-}
-
-function getLine() {
-    return editor.session.getDocument().getLine(editor.selection.getCursor().row);
-}
-
-function dumpDocument() {
-    console.log(JSON.stringify(editor.session.getDocument().$lines, null, 2));
-}
-
-module.exports = {
-    editor,
-    TTE,
-    tooltipClasses,
-    uniqueEditor,
-    getMockedTooltip,
-    getTooltipRequestEvent,
-    testMockedTooltipDetection,
-    testReplace,
-    typeLine,
-    getLine
-};

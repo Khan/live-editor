@@ -1,4 +1,13 @@
+/* eslint-disable */
 /*jshint unused: false*/
+import React from "react";
+import ReactDOM from "react-dom";
+
+import LiveEditorOutput from "../../../js/output/shared/output.js";
+import PJSOutput from "../../../js/output/pjs/pjs-output.js";
+
+LiveEditorOutput.registerOutput("pjs", PJSOutput);
+
 /* Possibly options:
  *  code: First code to run
  *  code2: Code to run after
@@ -14,7 +23,7 @@
  *  teardown: custom teardown callback, takes a single argument: output
  *  wait: time to wait after first code run, this allows "draw" to be called
  */
-var runTest = function(options) {
+export function runTest(options) {
     if ((!options.errors || !options.errors.length) && !options.noLint) {
         var noLintOpts = _.extend({}, options);
         noLintOpts.noLint = true;
@@ -36,31 +45,49 @@ var runTest = function(options) {
     }
 
     itFunc(displayTitle, function(done) {
-        var output = new LiveEditorOutput({
-            outputType: "pjs",
-            workersDir: "../../../build/",
-            externalsDir: "../../../build/external/",
-            imagesDir: "../../../build/images/",
-            soundsDir: "../../../sounds/",
-            jshintFile: "../../../build/external/jshint/jshint.js",
-            useDebugger: useDebugger,
-            loopProtectTimeouts: {
-                initialTimeout: 1000,
-                frameTimeout: 500
-            },
+
+        let runNum = 1;
+        const outputRef = createLiveEditorOutput({
+            validate: options.validate,
+            onAllDone: (runResults) => {
+                const errors = runResults.errors;
+                const assertions = runResults.assertions;
+                const testResults = runResults.tests;
+
+                // Run a custom defined test function
+                if (options.test) {
+                    options.test(outputRef, errors, testResults, function() {
+                        finishTest(done, outputRef, options);
+                    });
+                    return;
+                }
+                // Otherwise, proceed with running the code and checking errors
+                let errorsToMatch = options.errors;
+                let assertionsToMatch = options.assertions;
+                if (runNum === 2) {
+                    errorsToMatch = options.errors2;
+                    assertionsToMatch = options.assertions2;
+                }
+                checkErrors(errorsToMatch, errors);
+                checkAssertions(assertionsToMatch, assertions);
+                options.simulateClick && simulateClick(outputRef);
+
+                if (runNum === 1 && code2) {
+                    outputRef.current.runCode(code2);
+                } else {
+                    finishTest(done, outputRef, options);
+                }
+                runNum++;
+            }
         });
 
         // Switch to the Scratchpad's version
         if (options.version) {
-            output.config.switchVersion(options.version);
-        }
-
-        if (options.validate) {
-            output.initTests(options.validate);
+            outputRef.current.config.switchVersion(options.version);
         }
 
         if (options.setup) {
-            options.setup(output);
+            options.setup(outputRef);
         }
 
         // Used to check assertions (caused by Program.assertEqual())
@@ -93,59 +120,28 @@ var runTest = function(options) {
                 }
             }
         };
-
-
-        // Run once to make sure that no errors are thrown
-        // during execution
-        output.runCode(code1, function(errors, testResults) {
-            if (options.test) {
-                options.test(output, errors, testResults, function() {
-                    finishTest(done, output, options);
-                });
-                return;
-            }
-
-            checkErrors(options.errors, errors);
-            checkAssertions(options.assertions, output.results.assertions);
-            options.simulateClick && simulateClick(output);
-
-            if (code2) {
-                output.runCode(code2, function(errors) {
-                    checkErrors(options.errors2, errors);
-                    checkAssertions(options.assertions2,
-                        output.results.assertions);
-                    options.simulateClick && simulateClick(output);
-
-                    finishTest(done, output, options);
-                });
-            } else {
-                finishTest(done, output, options);
-            }
-        });
+        outputRef.current.runCode(code1);
     });
 };
 
 
-var finishTest = function(done, output, options) {
-    if (options.wait) {
-        setTimeout(function () {
-            if (options.teardown) {
-                options.teardown(output);
-            }
-            output.output.kill();
-            done();
-        }, options.wait);
-    } else {
+var finishTest = function(done, outputRef, options) {
+    const tearDown = () => {
         if (options.teardown) {
-            options.teardown(output);
+            options.teardown(outputRef);
         }
-        output.output.kill();
+        removeLiveEditorOutput();
         done();
+    }
+    if (options.wait) {
+        setTimeout(tearDown, options.wait);
+    } else {
+        tearDown();
     }
 };
 
 
-var assertTest = function(options) {
+export function assertTest(options) {
     options.test = function(output, errors, testResults, callback) {
         if (!options.reason) {
             expect(errors.length).to.be.equal(0);
@@ -165,8 +161,10 @@ var assertTest = function(options) {
                     expect(errors[0].lint.reason)
                         .to.be.equal(options.reason);
                 } else {
-                    var $html = $("<div>" + errors[0].text + "</div>");
-                    expect($html.text()).to.be.equal(options.reason);
+                    // Strip HTML tags from message before comparing them
+                    const errorDiv = document.createElement("div");
+                    errorDiv.innerHTML = errors[0].text;
+                    expect(errorDiv.innerText).to.be.equal(options.reason);
                 }
             }
         }
@@ -182,7 +180,7 @@ var assertTest = function(options) {
  *  title: Title of test
  *  code: Code to be run through linter, output is compared to reason
  */
-var allErrorsTest = function(options) {
+export function allErrorsTest(options) {
     options.test = function(output, errors, testResults, callback) {
             if (options.reasons.length === 0) {
                 expect(errors.length).to.be.equal(0);
@@ -216,7 +214,7 @@ var allErrorsTest = function(options) {
         runTest(options);
 };
 
-var test = function(title, code, code2) {
+export function test(title, code, code2) {
     runTest({
         title: title,
         code: code,
@@ -225,7 +223,7 @@ var test = function(title, code, code2) {
     });
 };
 
-var failingTest = function(title, code, code2, errors) {
+export function failingTest(title, code, code2, errors) {
     runTest({
         title: title,
         code: code,
@@ -234,12 +232,12 @@ var failingTest = function(title, code, code2, errors) {
     });
 };
 
-var supportsMpegAudio = function() {
+export function supportsMpegAudio() {
     var a = document.createElement('audio');
     return !!(a.canPlayType && a.canPlayType('audio/mpeg;').replace(/no/, ''));
 };
 
-var getCodeFromOptions = function(code) {
+export function getCodeFromOptions(code) {
     // Assume the code is a string, by default
     // If not then we assume that it's a function so we need to
     // extract the code to run from the serialized function
@@ -251,18 +249,38 @@ var getCodeFromOptions = function(code) {
     return code;
 };
 
-var simulateClick = function(output) {
-    output.output.$canvas.mouseup();
+export function simulateClick(outputRef) {
+    const outputEl = ReactDOM.findDOMNode(outputRef.current);
+    const canvasEl = outputEl.querySelector("canvas");
+
+    const evt = document.createEvent("MouseEvents");
+    evt.initEvent("mouseup", true, true);
+    canvasEl.dispatchEvent(evt)
 };
 
-var createLiveEditorOutput = function() {
-    return new LiveEditorOutput({
+export function createLiveEditorOutput(extraProps) {
+    const ref = React.createRef();
+
+    const props = Object.assign({}, {
+        ref,
         outputType: "pjs",
         workersDir: "../../../build/",
         externalsDir: "../../../build/external/",
         imagesDir: "../../../build/images/",
         soundsDir: "../../../sounds/",
         jshintFile: "../../../build/external/jshint/jshint.js",
-        useDebugger: false
-    });
+        loopProtectTimeouts: {
+            initialTimeout: 1000,
+            frameTimeout: 500
+        },
+    }, extraProps || {});
+
+    ReactDOM.render(React.createElement(LiveEditorOutput, props),
+        document.getElementById("live-editor-output"));
+    return ref;
 };
+
+export function removeLiveEditorOutput() {
+    ReactDOM.unmountComponentAtNode(
+        document.getElementById("live-editor-output"));
+}

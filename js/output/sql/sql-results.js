@@ -8,6 +8,11 @@ export default class SQLResults extends Component {
         onMounted: Function,
     };
 
+    static defaultProps = {
+        tables: [],
+        results: [],
+    };
+
     componentDidMount() {
         this.props.onMounted();
     }
@@ -15,11 +20,13 @@ export default class SQLResults extends Component {
     render() {
         let schemasHeading;
         let resultsHeading;
-        if (this.props.tables) {
-            schemasHeading = <h1 style={styles.h1}>Database Schema</h1>;
+        if (this.props.tables.length > 0) {
+            schemasHeading = (
+                <h1 style={styles.h1}>{i18n._("Database Schema")}</h1>
+            );
         }
-        if (this.props.results) {
-            resultsHeading = <h1 style={styles.h1}>Results</h1>;
+        if (this.props.results.length > 0) {
+            resultsHeading = <h1 style={styles.h1}>{i18n._("Results")}</h1>;
         }
 
         const schemasTables = this.props.tables.map((table) => {
@@ -88,7 +95,6 @@ export default class SQLResults extends Component {
                 </table>
             );
         });
-
         return (
             <div>
                 {schemasHeading}

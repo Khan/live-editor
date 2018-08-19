@@ -41,8 +41,14 @@ export default class ImageModal extends Component {
         };
         this.files = ExtendedOutputImages;
         this.regex = RegExp(/<img\s+[^>]*?\s*src\s*=\s*["']([^"']*)$/);
+
+        this.handleFileSelect = this.handleFileSelect.bind(this);
+        this.handleModalClose = this.handleModalClose.bind(this);
+        this.handleModalOpen = this.handleModalOpen.bind(this);
         /*
-        TODO(pamela):
+        STOPSHIP(pamela):
+        Once WonderBlocks modals support programmatic show and hide,
+        implement this so that talk-throughs script the modal:
         if (this.options.record) {
             Object.assign(this.options.record.handlers, {
                 "imagemodal.show": this.showModal.bind(this),
@@ -52,10 +58,39 @@ export default class ImageModal extends Component {
         }*/
     }
 
+    // Note: this code is redundant with other tooltips
     componentDidUpdate(prevProps, prevState, snapshot) {
-        if (this.props.eventToCheck) {
-            this.checkEvent(this.props.eventToCheck);
+        const currentEvent = this.props.eventToCheck;
+        if (!currentEvent) {
+            return;
         }
+        if (
+            !prevProps.eventToCheck ||
+            currentEvent.timestamp > prevProps.eventToCheck.timestamp
+        ) {
+            this.checkEvent(currentEvent);
+        }
+    }
+
+    handleFileSelect(fileInfo) {
+        this.activeFileInfo = fileInfo;
+        this.logForRecording("selectImg", fileInfo.groupAndName);
+    }
+
+    handleModalClose() {
+        this.logForRecording("hide");
+        if (!this.activeFileInfo) {
+            return;
+        }
+        const updatePath = this.activeFileInfo.fullImgPath;
+        this.updateTooltip(updatePath);
+        this.props.onTextUpdateRequest(updatePath);
+    }
+
+    handleModalOpen() {
+        // NOTE(pamela): This does not work yet,
+        // we are waiting for WB modal to add an onOpen
+        this.logForRecording("show");
     }
 
     checkEvent(event) {
@@ -80,7 +115,7 @@ export default class ImageModal extends Component {
         if (url !== this.state.mediaSrc) {
             url = url.trim();
             if (url === "") {
-                this.renderPreview({
+                this.setState({
                     mediaSrc: "",
                     errorMessage: i18n._("Enter an image URL."),
                     errorType: "notice",
@@ -91,12 +126,12 @@ export default class ImageModal extends Component {
             const match = /\/\/([^/]*)(?:\/|\?|#|$)/.exec(url);
             const host = match ? match[1] : "";
             if (!host || allowedHosts.test(host)) {
-                this.renderPreview({
+                this.setState({
                     mediaSrc: url,
                     errorMessage: "",
                 });
             } else {
-                this.renderPreview({
+                this.setState({
                     mediaSrc: "",
                     errorMessage: i18n._(
                         "Sorry! That server is not permitted.",
@@ -113,33 +148,17 @@ export default class ImageModal extends Component {
         this.props.record && this.props.record.log(logAction, value);
     }
 
-    renderPreview() {
+    renderPicker() {
         const props = {
             errorMessage: this.state.errorMessage,
             mediaDir: this.props.imagesDir,
             mediaClasses: this.files,
             mediaSrc: this.state.mediaSrc,
             mediaType: "image",
-            onFileSelect: (fileInfo) => {
-                this.activeFileInfo = fileInfo;
-                this.logForRecording("selectImg", fileInfo.groupAndName);
-            },
-            onModalOpen: () => {
-                // NOTE(pamela): Wonder-blocks model does not currently have onOpen
-                this.logForRecording("show");
-            },
-            onModalClose: () => {
-                this.logForRecording("hide");
-                if (!this.activeFileInfo) {
-                    return;
-                }
-                const updatePath = this.activeFileInfo.fullImgPath;
-                this.updateTooltip(updatePath);
-                this.props.onTextUpdateRequest(updatePath);
-            },
-            onModalRefCreate: (ref) => {
-                this.props.onModalRefCreate(ref);
-            },
+            onFileSelect: this.handleFileSelect,
+            onModalClose: this.handleModalClose,
+            onModalOpen: this.handleModalOpen,
+            onModalRefCreate: this.props.onModalRefCreate,
         };
         return <MediaPickerTooltip {...props} />;
     }
@@ -152,7 +171,7 @@ export default class ImageModal extends Component {
             <TooltipPositioner
                 aceEditor={this.props.aceEditor}
                 editorScrollTop={this.props.editorScrollTop}
-                children={this.renderPreview()}
+                children={this.renderPicker()}
                 cursorRow={this.state.cursorRow}
                 cursorCol={this.state.cursorCol}
                 startsOpaque={true}

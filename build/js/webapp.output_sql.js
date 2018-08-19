@@ -273,6 +273,10 @@ var SQLOutput = function (_Component) {
                 var _req = props.runCodeReq;
                 this.runCode(_req.code, _req.timestamp);
             }
+            if (foundNewRequest("testCodeReq")) {
+                var _req2 = props.testCodeReq;
+                this.test(_req2.code, _req2.tests, _req2.errors);
+            }
         }
     }, {
         key: "getDocument",
@@ -1602,10 +1606,8 @@ OutputTester.prototype = {
             try {
                 tester.exec(validate);
             } catch (e) {
-                if (window.console) {
-                    // eslint-disable-next-line no-console
-                    console.warn(e.message);
-                }
+                // eslint-disable-next-line no-console
+                console && console.warn(e.message);
                 return;
             }
 
@@ -1725,10 +1727,8 @@ OutputTester.prototype = {
                     try {
                         return _fn.apply(this, arguments);
                     } catch (e) {
-                        if (window.console) {
-                            // eslint-disable-next-line no-console
-                            console.warn(e);
-                        }
+                        // eslint-disable-next-line no-console
+                        console && console.warn(e);
                     }
                 }
             });

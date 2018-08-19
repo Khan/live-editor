@@ -24,7 +24,7 @@ export default class TooltipPositioner extends Component {
     }
 
     componentDidMount() {
-        if (this.props.cursorRow && this.props.cursorCol) {
+        if (this.props.cursorRow > -1 && this.props.cursorCol > -1) {
             this.calculatePosition();
         }
     }
@@ -46,6 +46,11 @@ export default class TooltipPositioner extends Component {
     }
 
     calculatePosition() {
+        // This should only happen during testing
+        if (!this.props.aceEditor) {
+            this.setState({top: 0, left: 0, isVisible: true});
+            return;
+        }
         const editorBB = this.props.aceEditor.renderer.scroller.getBoundingClientRect();
         const editorHeight = editorBB.height;
         const coords = this.props.aceEditor.renderer.textToScreenCoordinates(
@@ -64,7 +69,6 @@ export default class TooltipPositioner extends Component {
         // But we can't disable always because we actually SET IT to readOnly
         // during number scrubbing (if aceEditor.isReadOnly())
         // Maybe only during playback, we disable entirely?
-
         if (this.state.top === undefined) {
             return null;
         }

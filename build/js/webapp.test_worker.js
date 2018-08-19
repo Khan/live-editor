@@ -1650,10 +1650,8 @@ OutputTester.prototype = {
             try {
                 tester.exec(validate);
             } catch (e) {
-                if (window.console) {
-                    // eslint-disable-next-line no-console
-                    console.warn(e.message);
-                }
+                // eslint-disable-next-line no-console
+                console && console.warn(e.message);
                 return;
             }
 
@@ -1773,10 +1771,8 @@ OutputTester.prototype = {
                     try {
                         return _fn.apply(this, arguments);
                     } catch (e) {
-                        if (window.console) {
-                            // eslint-disable-next-line no-console
-                            console.warn(e);
-                        }
+                        // eslint-disable-next-line no-console
+                        console && console.warn(e);
                     }
                 }
             });
@@ -8837,9 +8833,7 @@ PJSTester.prototype.testMethods = {
                 message: callbacks && callbacks.failure
             };
         } catch (e) {
-            if (window.console) {
-                console.warn(e); // eslint-disable-line no-console
-            }
+            console && console.warn(e); // eslint-disable-line no-console
             return {
                 success: true,
                 message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")

@@ -18,6 +18,7 @@ export default class ImagePicker extends Component {
         editorScrollTop: number,
         editorType: string,
         onEventCheck: Function,
+        onLoseFocus: Function,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
         // Specific to ImagePicker
@@ -31,11 +32,22 @@ export default class ImagePicker extends Component {
             imageName: "cute/None",
         };
         this.regex = RegExp(/(\bgetImage\s*\()[^)]*$/);
+
+        this.handleImageSelect = this.handleImageSelect.bind(this);
+        this.handleMouseLeave = this.handleMouseLeave.bind(this);
     }
 
+    // Note: this code is redundant with other tooltips
     componentDidUpdate(prevProps, prevState, snapshot) {
-        if (this.props.eventToCheck) {
-            this.checkEvent(this.props.eventToCheck);
+        const currentEvent = this.props.eventToCheck;
+        if (!currentEvent) {
+            return;
+        }
+        if (
+            !prevProps.eventToCheck ||
+            currentEvent.timestamp > prevProps.eventToCheck.timestamp
+        ) {
+            this.checkEvent(currentEvent);
         }
     }
 
@@ -113,20 +125,24 @@ export default class ImagePicker extends Component {
         this.setState({imageName: foundPath});
     }
 
+    handleMouseLeave() {
+        // TODO: This may not be needed here
+        this.props.onLoseFocus();
+        // TODO? this.props.aceEditor.clearSelection();
+    }
+
+    handleImageSelect(imageName) {
+        this.updateTooltip(`"${imageName}"`);
+        this.props.onTextUpdateRequest(`"${imageName}"`);
+    }
+
     renderImageScroller() {
         const props = {
             imageName: this.state.imageName,
             imagesDir: this.props.imagesDir,
             imageGroups: OutputImages,
-            onMouseLeave: () => {
-                // TODO: Propagate to parent of parent?
-                this.props.aceEditor.clearSelection();
-                this.props.aceEditor.focus();
-            },
-            onImageSelect: (imageName) => {
-                this.updateTooltip(`"${imageName}"`);
-                this.props.onTextUpdateRequest(`"${imageName}"`);
-            },
+            onMouseLeave: this.handleMouseLeave,
+            onImageSelect: this.handleImageSelect,
         };
         return <ImageScroller {...props} />;
     }

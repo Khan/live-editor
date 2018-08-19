@@ -9,15 +9,40 @@ import "../../../css/output/style.css";
 const outputs = {};
 
 export default class LiveEditorOutput extends Component {
+    // For most of these props, they are often sent from the parent editor,
+    // so are stored in state once recieved
     props: {
-        useDebugger: boolean,
+        externalsDir: string,
         imagesDir: string,
+        jshintFile: string,
+        loopProtectTimeouts: Object,
+        onAllDone: Function,
+        onLintDone: Function,
+        onRunDone: Function,
+        outputType: string,
         redirectUrl: string,
+        soundsDir: string,
+        useDebugger: boolean,
+        validate: string,
+        workersDir: string,
+    };
+
+    static defaultProps = {
+        loopProtectTimeouts: {
+            initialTimeout: 2000,
+            frameTimeout: 500,
+        },
     };
 
     constructor(props) {
         super(props);
-        this.state = {};
+
+        this.state = {
+            ...this.getPaths(props),
+            outputType: props.outputType,
+            tests: props.validate,
+            loopProtectTimeouts: props.loopProtectTimeouts,
+        };
 
         this.outputTypeRef = React.createRef();
         this.handleMessage = this.handleMessage.bind(this);
@@ -28,13 +53,12 @@ export default class LiveEditorOutput extends Component {
             useDebugger: this.props.useDebugger,
         });
 
-        // TODO: Move these into state
+        // TODO(pamela): Move these into state
         this.recording = false;
         this.loaded = false;
         this.lintErrors = [];
         this.runtimeErrors = [];
         this.lintWarnings = [];
-        this.setPaths(props);
 
         // Add a timestamp property to the lintErrors and runtimeErrors arrays
         // to keep track of which version of the code the errors are for.  A
@@ -54,8 +78,17 @@ export default class LiveEditorOutput extends Component {
         window.addEventListener("message", this.handleMessage, false);
     }
 
+    componentDidUpdate(prevProps) {
+        // This pretty much only happens in tests,
+        // since typically the tests are being posted from the parent frame
+        if (this.props.validate && this.props.validate !== prevProps.validate) {
+            // eslint-disable-next-line react/no-did-update-set-state
+            this.setState({tests: this.props.validate});
+        }
+    }
+
     renderOutputType() {
-        if (!this.state.readyToInitOutput) {
+        if (!this.state.outputType) {
             return null;
         }
         const props = {
@@ -76,6 +109,7 @@ export default class LiveEditorOutput extends Component {
             loopProtectTimeouts: this.state.loopProtectTimeouts,
             lintCodeReq: this.state.lintCodeReq,
             runCodeReq: this.state.runCodeReq,
+            testCodeReq: this.state.testCodeReq,
             toggleReq: this.state.toggleReq,
             onCanvasEvent: (e) => {
                 const offset = utils.getOffset(e.target);
@@ -96,7 +130,7 @@ export default class LiveEditorOutput extends Component {
             onRunTestsRequest: (callback) => {
                 return this.testThrottled(
                     this.getUserCode(),
-                    this.validate,
+                    this.state.tests,
                     [],
                     callback,
                 );
@@ -146,6 +180,11 @@ export default class LiveEditorOutput extends Component {
                 this.runtimeErrors.timestamp = runResults.timestamp;
                 this.buildDone(runResults.code);
             },
+            onCodeTest: (testResults) => {
+                this.results.errors = testResults.errors;
+                this.results.tests = testResults.results;
+                this.props.onAllDone && this.props.onAllDone(this.results);
+            },
             onTitleChange: (title) => {
                 this.postParent({
                     action: "page-info",
@@ -156,25 +195,27 @@ export default class LiveEditorOutput extends Component {
         return React.createElement(outputs[this.state.outputType], props);
     }
 
-    setPaths(data) {
+    getPaths(data) {
+        const pathsState = {};
         if (data.workersDir) {
-            this.setState({workersDir: utils.qualifyURL(data.workersDir)});
+            pathsState.workersDir = utils.qualifyURL(data.workersDir);
         }
         if (data.externalsDir) {
-            this.setState({externalsDir: utils.qualifyURL(data.externalsDir)});
+            pathsState.externalsDir = utils.qualifyURL(data.externalsDir);
         }
         if (data.imagesDir) {
-            this.setState({imagesDir: utils.qualifyURL(data.imagesDir)});
+            pathsState.imagesDir = utils.qualifyURL(data.imagesDir);
         }
         if (data.soundsDir) {
-            this.setState({soundsDir: utils.qualifyURL(data.soundsDir)});
+            pathsState.soundsDir = utils.qualifyURL(data.soundsDir);
         }
         if (data.redirectUrl) {
-            this.setState({redirectUrl: data.redirectUrl});
+            pathsState.redirectUrl = data.redirectUrl;
         }
         if (data.jshintFile) {
-            this.setState({jshintFile: utils.qualifyURL(data.jshintFile)});
+            pathsState.jshintFile = utils.qualifyURL(data.jshintFile);
         }
+        return pathsState;
     }
 
     handleMessage(event) {
@@ -200,53 +241,59 @@ export default class LiveEditorOutput extends Component {
             return;
         }
 
-        const outputType = data.outputType || Object.keys(outputs)[0];
-        let enableLoopProtect = true;
+        // Make changes to the state based on incoming messages
+        const stateChanges = {};
+
+        if (data.outputType) {
+            stateChanges.outputType = data.outputType;
+        }
+
         if (data.enableLoopProtect != null) {
-            enableLoopProtect = data.enableLoopProtect;
+            stateChanges.enableLoopProtect = data.enableLoopProtect;
         }
-        let loopProtectTimeouts = {
-            initialTimeout: 2000,
-            frameTimeout: 500,
-        };
         if (data.loopProtectTimeouts != null) {
-            loopProtectTimeouts = data.loopProtectTimeouts;
-        }
-        this.setState({
-            outputType,
-            enableLoopProtect,
-            loopProtectTimeouts,
-        });
-
-        // filter out debugger events
-        // handled by pjs-debugger.js::handleMessage
-        if (data.type === "debugger") {
-            return;
-        }
-
-        // Set the paths from the incoming data, if they exist
-        this.setPaths(data);
-
-        // Validation code to run
-        if (data.validate != null) {
-            this.initTests(data.validate);
+            stateChanges.loopProtectTimeouts = data.loopProtectTimeouts;
         }
 
         // Settings to initialize
         if (data.settings != null) {
-            this.setState({settings: data.settings});
+            stateChanges.settings = data.settings;
+        }
+
+        // Take a screenshot of the output
+        if (data.screenshot != null) {
+            stateChanges.screenshotReq = {
+                time: Date.now(),
+                size: data.screenshotSize || 200,
+            };
+        }
+        if (data.prop === "mouseAction") {
+            stateChanges.mouseActionReq = {time: Date.now(), data};
+        }
+        if (data.documentation != null) {
+            stateChanges.docInitReq = {time: Date.now(), data};
+        }
+        // Validation tests to run
+        if (data.validate != null) {
+            stateChanges.tests = data.validate;
+        }
+
+        this.setState({
+            ...this.getPaths(data),
+            ...stateChanges,
+        });
+
+        // Now make non-state related changes
+        if (data.onlyRunTests != null) {
+            this.onlyRunTests = !!data.onlyRunTests;
+        } else {
+            this.onlyRunTests = false;
         }
 
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code, undefined, data.noLint);
-        }
-
-        if (data.onlyRunTests != null) {
-            this.onlyRunTests = !!data.onlyRunTests;
-        } else {
-            this.onlyRunTests = false;
+            this.runCode(data.code, data.noLint);
         }
 
         // Restart the output
@@ -258,23 +305,6 @@ export default class LiveEditorOutput extends Component {
         if (data.recording != null) {
             this.recording = data.recording;
         }
-
-        // Take a screenshot of the output
-        if (data.screenshot != null) {
-            this.setState({
-                screenshotReq: {
-                    time: Date.now(),
-                    size: data.screenshotSize || 200,
-                },
-            });
-        }
-        if (data.prop === "mouseAction") {
-            this.setState({mouseActionReq: {time: Date.now(), data}});
-        }
-        if (data.documentation != null) {
-            this.setState({docInitReq: {time: Date.now(), data}});
-        }
-        this.setState({readyToInitOutput: true});
     }
 
     // Send a message back to the parent frame
@@ -302,18 +332,6 @@ export default class LiveEditorOutput extends Component {
 
     notifyActive() {
         this.postParent({active: true});
-    }
-
-    // This function stores the new tests on the validate property
-    //  and it executes the test code to see if its valid
-    initTests(validate) {
-        // Only update the tests if they have changed
-        if (this.validate === validate) {
-            return;
-        }
-
-        // Prime the test queue
-        this.validate = validate;
     }
 
     /**
@@ -349,34 +367,32 @@ export default class LiveEditorOutput extends Component {
      * Performs all steps necessary to run code.
      * - lint
      * - actually run the code
-     * - manage lint and runtime errors
-     * - call the callback (via buildDone) to run tests
+     * - merge lint and runtime errors
+     * - run tests if they exists
      *
-     * @param userCode: code to run
-     * @param callback: used by the tests
+     * @param code: code to run
      * @param noLint: disables linting if true, first run still lints
-     *
-     * TODO(kevinb) return a Deferred and move test related code to test_utils
      */
-    runCode(userCode, callback, noLint) {
-        this.currentCode = userCode;
+    runCode(code, noLint) {
+        this.currentCode = code;
         const timestamp = Date.now();
 
         this.results = {
             timestamp: timestamp,
-            code: userCode,
+            code,
             errors: [],
             assertions: [],
             warnings: [],
+            tests: [],
         };
 
         // Always lint the first time, so that PJS can populate its list of globals
         const skip = noLint && this.firstLint;
 
         this.setState({
-            lintCodeReq: {code: userCode, skip, timestamp},
-            testsCallback: callback,
+            lintCodeReq: {code, skip, timestamp},
         });
+
         this.firstLint = true;
     }
 
@@ -384,25 +400,27 @@ export default class LiveEditorOutput extends Component {
      * Runs the code and records runtime errors.  Returns immediately if there
      * are any lint errors.
      *
-     * @param userCode
+     * @param code
      * @param timestamp
      */
-    lintDone(userCode, timestamp) {
+    lintDone(code, timestamp) {
+        this.props.onLintDone &&
+            this.props.onLintDone(this.lintErrors, this.lintWarnings);
         if (this.lintErrors.length > 0 || this.onlyRunTests) {
-            this.buildDone(userCode);
-            return;
+            this.buildDone(code);
+        } else {
+            // Then run the user's code
+            this.setState({runCodeReq: {code, timestamp}});
         }
-        // Then run the user's code
-        this.setState({runCodeReq: {code: userCode, timestamp}});
     }
 
     /**
-     * Posts results to the the parent frame and runs tests if a callback has
-     * been set in state or if the .validate property is set.
+     * Posts results to the the parent frame and runs tests
+     * if the .validate property is set.
      *
-     * @param userCode
+     * @param code
      */
-    buildDone(userCode) {
+    buildDone(code) {
         let errors = [];
         let warnings = [];
 
@@ -433,33 +451,12 @@ export default class LiveEditorOutput extends Component {
         this.phoneHome();
 
         this.toggle(!errors.length);
-
-        // A callback for working with a test suite
-        if (this.state.testsCallback) {
-            //This is synchronous
-            this.test(
-                userCode,
-                this.validate,
-                errors,
-                (errors, testResults) => {
-                    this.state.testsCallback(errors, testResults);
-                },
-            );
-            // Normal case
+        this.props.onRunDone && this.props.onRunDone(this.results);
+        // This is debounced (async)
+        if (this.state.tests) {
+            this.testThrottled(code, errors);
         } else {
-            // This is debounced (async)
-            if (this.validate !== "") {
-                this.testThrottled(
-                    userCode,
-                    this.validate,
-                    errors,
-                    (errors, testResults) => {
-                        this.results.errors = errors;
-                        this.results.tests = testResults;
-                        this.phoneHome();
-                    },
-                );
-            }
+            this.props.onAllDone && this.props.onAllDone(this.results);
         }
     }
 
@@ -472,15 +469,20 @@ export default class LiveEditorOutput extends Component {
         });
     }
 
-    test(userCode, validate, errors, callback) {
-        // TODO: Change to setting testReq in state
-        this.outputTypeRef.current.test(userCode, validate, errors, callback);
+    test(code, errors) {
+        this.setState({
+            testCodeReq: {
+                code,
+                errors,
+                tests: this.state.tests,
+                timestamp: Date.now(),
+            },
+        });
     }
 
-    lint(userCode, callback) {
+    lint(code) {
         this.setState({
-            lintCodeReq: {code: userCode, timestamp: Date.now()},
-            testsCallback: callback,
+            lintCodeReq: {code, timestamp: Date.now()},
         });
     }
 
@@ -492,7 +494,7 @@ export default class LiveEditorOutput extends Component {
         this.setState({toggleReq: {timestamp: Date.now(), doToggle: doToggle}});
     }
 
-    // TODO: Stop referencing the child ref.
+    // TODO(pamela): Stop referencing the child ref.
     restart() {
         // This is called on load and it's possible that the output
         // hasn't been set yet.

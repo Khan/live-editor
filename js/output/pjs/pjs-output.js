@@ -73,6 +73,7 @@ export default class PJSOutput extends Component {
         onCanvasEvent: Function,
         onCodeLint: Function,
         onCodeRun: Function,
+        onCodeTest: Function,
         onInfiniteLoopError: Function,
         onRestartRequest: Function,
     };
@@ -170,6 +171,10 @@ export default class PJSOutput extends Component {
         if (foundNewRequest("runCodeReq")) {
             const req = props.runCodeReq;
             this.runCode(req.code, req.timestamp);
+        }
+        if (foundNewRequest("testCodeReq")) {
+            const req = props.testCodeReq;
+            this.test(req.code, req.tests, req.errors, req.timestamp);
         }
     }
 
@@ -520,14 +525,14 @@ export default class PJSOutput extends Component {
         return _.uniq(errors, false, (obj) => JSON.stringify(obj, replacer));
     }
 
-    test(userCode, tests, errors, callback) {
+    test(code, tests, errors, timestamp) {
         var errorCount = errors.length;
 
         this.tester.testWorker.exec(
-            userCode,
+            code,
             tests,
             errors,
-            (errors, testResults) => {
+            (errors, results) => {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
@@ -546,24 +551,29 @@ export default class PJSOutput extends Component {
                     );
                 }
 
-                callback(errors, testResults);
+                this.props.onCodeTest({
+                    code,
+                    errors,
+                    results,
+                    timestamp,
+                });
             },
         );
     }
 
     // TODO(kevinb) pass scrubbing location and value so that we can skip parsing
-    runCode(userCode, timestamp) {
+    runCode(code, timestamp) {
         try {
-            this.injector.runCode(userCode, (runtimeErrors) => {
+            this.injector.runCode(code, (runtimeErrors) => {
                 this.props.onCodeRun({
-                    code: userCode,
+                    code,
                     errors: runtimeErrors,
                     timestamp,
                 });
             });
         } catch (e) {
             console.warn(e); // eslint-disable-line no-console
-            this.props.onCodeRun({code: userCode, errors: [e], timestamp});
+            this.props.onCodeRun({code, errors: [e], timestamp});
         }
     }
 

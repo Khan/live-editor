@@ -47,6 +47,7 @@ export default class WebpageOutput extends Component {
         onInfiniteLoopError: Function,
         onCodeLint: Function,
         onCodeRun: Function,
+        onCodeTest: Function,
         onTitleChange: Function,
     };
 
@@ -116,6 +117,10 @@ export default class WebpageOutput extends Component {
         if (foundNewRequest("runCodeReq")) {
             const req = props.runCodeReq;
             this.runCode(req.code, req.timestamp);
+        }
+        if (foundNewRequest("testCodeReq")) {
+            const req = props.testCodeReq;
+            this.test(req.code, req.tests, req.errors, req.timestamp);
         }
     }
 
@@ -419,42 +424,37 @@ export default class WebpageOutput extends Component {
         }
     }
 
-    test(userCode, tests, errors, callback) {
+    test(code, tests, errors, timestamp) {
         const errorCount = errors.length;
 
-        Object.assign(this.tester.testContext, {
-            docSP: this.slowparseResults.document,
-            cssRules: this.slowparseResults.rules,
+        this.tester.testContext.docSP = this.slowparseResults.document;
+        this.tester.testContext.cssRules = this.slowparseResults.rules;
+
+        this.tester.test(code, tests, errors, (errors, results) => {
+            if (errorCount !== errors.length) {
+                // Note: Scratchpad challenge checks against the exact
+                // translated text "A critical problem occurred..." to
+                // figure out whether we hit this case.
+                const message = i18n._("Error: %(message)s", {
+                    message: errors[errors.length - 1].message,
+                });
+                this.tester.testContext.assert(
+                    false,
+                    message,
+                    i18n._(
+                        "A critical problem occurred in your program " +
+                            "making it unable to run.",
+                    ),
+                );
+            }
+
+            this.props.onCodeTest({
+                code,
+                errors,
+                results,
+                timestamp,
+            });
         });
-
-        this.tester.test(
-            userCode,
-            tests,
-            errors,
-            function(errors, testResults) {
-                if (errorCount !== errors.length) {
-                    // Note: Scratchpad challenge checks against the exact
-                    // translated text "A critical problem occurred..." to
-                    // figure out whether we hit this case.
-                    const message = i18n._("Error: %(message)s", {
-                        message: errors[errors.length - 1].message,
-                    });
-                    this.tester.testContext.assert(
-                        false,
-                        message,
-                        i18n._(
-                            "A critical problem occurred in your program " +
-                                "making it unable to run.",
-                        ),
-                    );
-                }
-
-                if (this.foundRunTimeError) {
-                    errors.push(runtimeError);
-                }
-                callback(errors, testResults);
-            }.bind(this),
-        );
     }
 
     // Prefixes a URL with the URL of a redirecting proxy,
@@ -494,6 +494,8 @@ export default class WebpageOutput extends Component {
     }
 
     runCode(userCode, timestamp) {
+        const errors = [];
+
         this.stateScrubber.clearAll();
         this.KA_INFINITE_LOOP = false;
         this.foundRunTimeError = false;
@@ -504,7 +506,7 @@ export default class WebpageOutput extends Component {
         } catch (e) {
             // But it will error in strict mode, if already assigned
         }
-        this.frameRef.current.contentWindow.addEventListener("error", () => {
+        this.frameRef.current.contentWindow.addEventListener("error", (e) => {
             this.foundRunTimeError = true;
         });
 
@@ -513,10 +515,13 @@ export default class WebpageOutput extends Component {
 
         this.postProcessing();
 
-        const errors = [];
         if (this.KA_INFINITE_LOOP) {
             errors.push(infiniteLoopError);
         }
+        if (this.foundRunTimeError) {
+            errors.push(runtimeError);
+        }
+
         this.props.onCodeRun({code: userCode, errors: errors, timestamp});
     }
 

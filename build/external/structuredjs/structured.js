@@ -5,12 +5,11 @@
  *
  * Dependencies: esprima.js, underscore.js
  */
-const _ = require("underscore");
-const esprima = require("./external/esprima.js");
-
 (function(global) {
     /* Detect npm versus browser usage */
     var exports;
+    var esprima;
+    var _;
 
     // Cache all the structure tests
     var structureCache = {};
@@ -19,7 +18,15 @@ const esprima = require("./external/esprima.js");
     var cachedCode;
     var cachedCodeTree;
 
-    exports = module.exports = {};
+    if (typeof module !== "undefined" && module.exports) {
+        exports = module.exports = {};
+        esprima = require("./external/esprima.js");
+        _ = require("underscore");
+    } else {
+        exports = this.Structured = {};
+        esprima = global.esprima;
+        _ = global._;
+    }
 
     if (!esprima || !_) {
         throw "Error: Both Esprima and UnderscoreJS are required dependencies.";
@@ -47,7 +54,7 @@ const esprima = require("./external/esprima.js");
             fn: callback
         };
     }
-
+    
     /*
      * return true if n2 < n1 (according to relatively arbitrary criteria)
      */
@@ -132,13 +139,13 @@ const esprima = require("./external/esprima.js");
 			}
 		    }
 		} break;
-        case "Literal":
-            r.raw = tree.raw
-                .replace(/^(?:\"(.*?)\"|\'(.*?)\')$/, function(match, p1, p2) {
-                    return "\"" + ((p1 || "") + (p2 || ""))
-                        .replace(/"|'/g, "\"") + "\"";
-                });
-            console.log(r.raw); break;
+            case "Literal":
+                r.raw = tree.raw
+                    .replace(/^(?:\"(.*?)\"|\'(.*?)\')$/, function(match, p1, p2) {
+                        return "\"" + ((p1 || "") + (p2 || ""))
+                            .replace(/"|'/g, "\"") + "\"";
+                    });
+                break;
 	    default:
 	        for (var key in tree) {
 		    if (!tree.hasOwnProperty(key) || !_.isObject(tree[key])) {
@@ -201,15 +208,15 @@ const esprima = require("./external/esprima.js");
         options = options || {};
         // Many possible inputs formats are accepted for varCallbacks
         // Constraints can be:
-        // 1. a function (from which we will extract the variables)
+        // 1. a function (from which we will extract the variables)  
         // 2. an objects (which already has separate .fn and .variables properties)
         //
         // It will also accept a list of either of the above (or a mix of the two).
-        // Finally it can accept an object for which the keys are the variables and
+        // Finally it can accept an object for which the keys are the variables and 
         // the values are the callbacks (This option is mainly for historical reasons)
         var varCallbacks = options.varCallbacks || [];
-        // We need to keep a hold of the original varCallbacks object because
-        // When structured first came out it returned the failure message by
+        // We need to keep a hold of the original varCallbacks object because 
+        // When structured first came out it returned the failure message by 
         // changing the .failure property on the varCallbacks object and some uses rely on that.
         // We hope to get rid of this someday.
         // TODO: Change over the code so to have a better API

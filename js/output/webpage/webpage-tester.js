@@ -1,11 +1,14 @@
 /* eslint-disable */
 /* TODO: Fix the lint errors */
+import Structured from "../../../external/structuredjs/structured.js";
+
 import OutputTester from "../shared/output-tester.js";
 import PJSTester from "../pjs/pjs-tester.js";
 
 export default class WebpageTester extends OutputTester {
     constructor(options) {
         super();
+        options = options || {};
         this.initialize(options);
         this.bindTestContext();
         this.testContext.phoneHome = options.onPhoneHomeRequest;
@@ -21,7 +24,6 @@ export default class WebpageTester extends OutputTester {
         //  referencing functions like staticTest and that
         //  function will fill in this.tests
         this.exec(validate);
-
         this.testContext.allScripts = "";
 
         var parser = new DOMParser();
@@ -33,6 +35,7 @@ export default class WebpageTester extends OutputTester {
             this.testContext.allScripts += scriptElement.innerHTML;
             this.testContext.allScripts += "\n";
         });
+
 
         this.curTask = null;
         this.curTest = null;
@@ -178,7 +181,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
             var expected = structure[selector];
             // TODO(jeresig): Maybe find a way to do this such that we can run
             // it in a worker thread.
-            var numFound = docSP.querySelectorAll(selector).length;
+            var numFound = this.testContext.docSP.querySelectorAll(selector).length;
             if ((expected === 0 && numFound !== 0) || numFound < expected) {
                 return {success: false};
             }
@@ -255,7 +258,6 @@ Object.assign(WebpageTester.prototype.testMethods, {
             }
             return cb;
         });
-
         var res = this.testContext.testCSSRules(cssRules, css, callbacks, {});
         return res;
     },
@@ -402,7 +404,6 @@ Object.assign(WebpageTester.prototype.testMethods, {
     checkCallbacks: function(callbacks, wVars) {
         for (var i = 0; i < callbacks.length; i++) {
             var cb = callbacks[i];
-            console.log("type of cb.variables", typeof cb.variables);
             var cbArgs = _.map(cb.variables, function(variable) {
                 if (typeof variable === "string" && variable[0] === "$") {
                     return wVars[variable];
@@ -500,8 +501,8 @@ Object.assign(WebpageTester.prototype.testMethods, {
     },
 
     /*
-        * Returns true if match() succeeds
-        */
+    * Returns true if match() succeeds
+    */
     htmlMatches: function(structure) {
         return this.testContext.htmlMatch.apply(this, arguments).success;
     },

@@ -1065,7 +1065,8 @@ export default class PJSCodeInjector {
 
         // TODO(kevinb) generate this code once (once webpack is in place)
         helperCode += `var resources = ${JSON.stringify(resources)};\n`;
-        helperCode += `var OutputSounds = ${JSON.stringify(OutputSounds)};\n`;
+        // We rename it to OutputSounds2 so that webpack doesn't rewrite it
+        helperCode += `var OutputSounds2 = ${JSON.stringify(OutputSounds)};\n`;
         helperCode += PJSUtils.cleanupCode(
             PJSUtils.codeFromFunction(function () {
                 var resourceCache = [];
@@ -1096,12 +1097,16 @@ export default class PJSCodeInjector {
                         resourceCache[filename] = img;
                     });
                 };
-
+                var findWhere = function(array, criteria) {
+                    return array.find(item => Object.keys(criteria).every(
+                        key => item[key] === criteria[key]))
+                };
                 var loadSound = function(filename) {
                     return new Promise((resolve) => {
                         var audio = document.createElement("audio");
                         var parts = filename.split("/");
-                        var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
+                        // eslint-disable-next-line no-undef
+                        var group = findWhere(OutputSounds2[0].groups, { groupName: parts[0] });
                         if (!group || group.sounds.indexOf(parts[1].replace(".mp3", "")) === -1) {
                             resolve();
                             return;

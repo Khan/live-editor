@@ -50,7 +50,9 @@ export default class StateScrubber {
                 // This should get rid of variables which cannot be deleted
                 // http://perfectionkills.com/understanding-delete/
                 this.target[prop] = undefined;
-                delete this.target[prop];
+                // delete operator throws an error in strict mode,
+                // so we use ES6 deleteProperty instead
+                Reflect.deleteProperty(this.target, prop);
             }
         }
     }
@@ -70,7 +72,7 @@ export default class StateScrubber {
     }
 
     clearAll () {
-    	this.clearGlobals();
+        this.clearGlobals();
     	this.clearTimeoutsAndIntervals();
     }
 }

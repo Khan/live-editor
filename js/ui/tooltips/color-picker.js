@@ -22,6 +22,7 @@ export default class ColorPicker extends Component {
         editorScrollTop: number,
         editorType: string,
         onEventCheck: Function,
+        onLoseFocus: Function,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
         // Specific to a few tooltips
@@ -42,9 +43,17 @@ export default class ColorPicker extends Component {
         this.regex = RegExp("(\\b(?:" + funcs + ")\\s*\\()[^\\)]*$");
     }
 
+    // Note: this code is redundant with other tooltips
     componentDidUpdate(prevProps, prevState, snapshot) {
-        if (this.props.eventToCheck) {
-            this.checkEvent(this.props.eventToCheck);
+        const currentEvent = this.props.eventToCheck;
+        if (!currentEvent) {
+            return;
+        }
+        if (
+            !prevProps.eventToCheck ||
+            currentEvent.timestamp > prevProps.eventToCheck.timestamp
+        ) {
+            this.checkEvent(currentEvent);
         }
     }
 
@@ -55,11 +64,12 @@ export default class ColorPicker extends Component {
 
     handleMouseLeave = () => {
         this.setState({showFullPicker: false});
-        //TODO?:this.props.aceEditor.focus();
         this.props.onScrubbingEnd();
+        this.props.onLoseFocus();
     };
 
     handleChange = (color, eventType) => {
+        this.setState({color});
         this.updateText(color, eventType);
     };
 
@@ -98,6 +108,8 @@ export default class ColorPicker extends Component {
             start: paramsStart,
             length: paramsEnd - paramsStart,
         };
+        this.props.onEventCheck(true, aceLocation);
+
         const maxLen = 13; // Max length of any RGB string
         const cursorCol = aceLocation.start + maxLen + closing.length;
 
@@ -139,7 +151,6 @@ export default class ColorPicker extends Component {
             }
         }
         this.setState({cursorRow: aceLocation.row, cursorCol, closing, rgb});
-        this.props.onEventCheck(true, aceLocation);
     }
 
     updateText(rgb, eventType) {

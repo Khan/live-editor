@@ -1,5 +1,6 @@
 *.json
 *.md
+*.css
 build
 js/output/pjs/babyhint.js
 js/output/pjs/pjs-ast-transforms.js
@@ -29,3 +30,6 @@ js/ui/debugger.js
 js/ui/structured-blocks-tooltips.js
 js/editors/structured-blocks
 workers
+tests
+testutil
+gulpfile.js

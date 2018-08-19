@@ -27,10 +27,10 @@ const config = {
         output_webpage: ["./js/output/webpage/webpage-output.js"],
         output_webpage_deps: ["./external/html2canvas/html2canvas.js"],
         output_sql: ["./js/output/sql/sql-output.js"],
-        sqljs_only: ["./node_modules/sql.js/js/sql.js"],
-        output_sql_deps: ["./external/html2canvas/html2canvas.js"],
-        test_worker: ["./js/workers/pjs/test-worker.js"],
-        jshint_worker: ["./js/workers/pjs/jshint-worker.js"],
+        output_sql_deps: [
+            "./external/html2canvas/html2canvas.js",
+            "./node_modules/sql.js/js/sql.js",
+        ],
     },
     externals: [
         {

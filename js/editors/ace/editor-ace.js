@@ -117,6 +117,7 @@ export default class AceEditorWrapper extends Component {
                 this.props.onUserChange(this.text());
             }
         });
+
         this.editor.on("click", (e) => {
             // Check if the user clicked on a position that puts the cursor
             // at the end of the line.  If so, add a new line if one doesn't
@@ -127,19 +128,22 @@ export default class AceEditorWrapper extends Component {
             }
             this.props.onClick();
         });
-        this.editor.selection.on("changeCursor", () => {
+
+        this.editor.selection.on("changeCursor", (source) => {
             this.props.onCursorChange(this.getCursor());
-            this.handleTooltipableEvent();
+            this.handleTooltipableEvent(source);
         });
+
         this.editor.selection.on("changeSelection", () => {
             this.props.onCursorChange(this.getCursor());
         });
+
         this.editor.session.getDocument().on("change", (e) => {
-            if (this.tooltipsEnabled) {
-                // TODO: Where to store/set?
-                this.handleTooltipableEvent(e);
-            }
+            // TODO: Turn off if tooltips disabled, like from recording?
+            // See https://github.com/Khan/live-editor/blob/51c89d39f2055f5e8437e7a6f012d07fc2792631/js/ui/tooltip-engine.js#L78
+            this.handleTooltipableEvent(e);
         });
+
         this.editor.session.on("changeScrollTop", (scrollTop) => {
             this.setState({editorScrollTop: scrollTop});
         });
@@ -214,6 +218,28 @@ export default class AceEditorWrapper extends Component {
             editorScrollTop: this.state.editorScrollTop,
             record: this.record,
             event: this.state.tooltipableEvent,
+            onLoseFocus: () => {
+                this.editor.focus();
+            },
+            onScrubbingStart: (name, setReadonly) => {
+                if (setReadonly !== undefined) {
+                    this.wasReadOnly = this.editor.getReadOnly();
+                    //this.setReadOnly(true);
+                }
+                this.props.onScrubbingStart && this.props.onScrubbingStart();
+            },
+            onScrubbingEnd: (name, resetReadOnly) => {
+                if (resetReadOnly !== undefined) {
+                    //this.setReadOnly(!!this.props.readOnly);
+                }
+                this.props.onScrubbingEnd && this.props.onScrubbingEnd();
+            },
+            onTextInsertRequest: (aceLocation, newText) => {
+                if (this.record && this.record.playing) {
+                    return;
+                }
+                this.editor.session.insert(aceLocation, newText);
+            },
             // Third parameter, if true, tells ACE not to remember this update in the undo chain. Useful in
             // number-scrubbing.
             // THIS IS A PROBLEMATIC HACK.
@@ -258,25 +284,6 @@ export default class AceEditorWrapper extends Component {
                 // Update location based on length of new text
                 loc.length = newText.length;
                 this.setState({tooltipLocation: loc});
-            },
-            onScrubbingStart: (name, setReadonly) => {
-                if (setReadonly !== undefined) {
-                    this.wasReadOnly = this.editor.getReadOnly();
-                    //this.setReadOnly(true);
-                }
-                this.props.onScrubbingStart && this.props.onScrubbingStart();
-            },
-            onScrubbingEnd: (name, resetReadOnly) => {
-                if (resetReadOnly !== undefined) {
-                    //this.setReadOnly(!!this.props.readOnly);
-                }
-                this.props.onScrubbingEnd && this.props.onScrubbingEnd();
-            },
-            onTextInsertRequest: (aceLocation, newText) => {
-                if (this.record && this.record.playing) {
-                    return;
-                }
-                this.editor.session.insert(aceLocation, newText);
             },
             onTooltipChange: (tooltipName, tooltipLocation) => {
                 this.setState({tooltipName, tooltipLocation});

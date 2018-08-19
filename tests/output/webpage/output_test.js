@@ -1,9 +1,13 @@
+/* eslint-disable */
+import {failingTest, isFirefox, runTest, test, warningTest} from "./test_utils.js";
+
 describe("Output Methods", function() {
     runTest({
         title: "getScreenshot",
         code: "<!DOCTYPE html><html><body></body></html>",
-        test: function(output, errors, testResults, callback) {
-            output.output.getScreenshot(200, function(data) {
+        test: function(outputRef, errors, testResults, callback) {
+            const webpageOutput = outputRef.current.outputTypeRef.current;
+            webpageOutput.getScreenshot(200, function(data) {
                 // Testing with a truncated base64 png
                 expect(data).to.contain("data:image/png;base64,iVBOR");
                 callback();
@@ -14,8 +18,9 @@ describe("Output Methods", function() {
     runTest({
         title: "transformUrl",
         code: "<!DOCTYPE html><html><body></body></html>",
-        test: function(output, errors, testResults) {
-            expect(output.output.transformUrl("http://www.g.com"))
+        test: function(outputRef, errors, testResults) {
+            const webpageOutput = outputRef.current.outputTypeRef.current;
+            expect(webpageOutput.transformUrl("http://www.g.com"))
                 .to.be.equal("http://ka.org/r?url=http%3A%2F%2Fwww.g.com");
         }
     });
@@ -23,8 +28,9 @@ describe("Output Methods", function() {
     runTest({
         title: "transformUrl",
         code: "<!DOCTYPE html><html><body></body></html>",
-        test: function(output, errors, testResults) {
-            expect(output.output.transformUrl("http://khanacademy.org.mn"))
+        test: function(outputRef, errors, testResults) {
+            const webpageOutput = outputRef.current.outputTypeRef.current;
+            expect(webpageOutput.transformUrl("http://khanacademy.org.mn"))
                 .to.be.equal(
                     "http://ka.org/r?url=http%3A%2F%2Fkhanacademy.org.mn");
         }
@@ -33,8 +39,9 @@ describe("Output Methods", function() {
     runTest({
         title: "transformUrl",
         code: "<!DOCTYPE html><html><body></body></html>",
-        test: function(output, errors, testResults) {
-            expect(output.output.transformUrl("http://www.khanacademy.org/m"))
+        test: function(outputRef, errors, testResults) {
+            const webpageOutput = outputRef.current.outputTypeRef.current;
+            expect(webpageOutput.transformUrl("http://www.khanacademy.org/m"))
                 .to.be.equal("http://www.khanacademy.org/m");
         }
     });
@@ -42,8 +49,9 @@ describe("Output Methods", function() {
     runTest({
         title: "postProcessing",
         code: "<!DOCTYPE html><html><body><a href='http://www.g.com'>G</a></body></html>",
-        test: function(output, errors, testResults) {
-            var body = output.output.frameDoc.body;
+        test: function(outputRef, errors, testResults) {
+            const webpageOutput = outputRef.current.outputTypeRef.current;
+            var body = webpageOutput.frameDoc.body;
             var a = body.querySelector('a');
 
             expect(a.getAttribute('target')).to.be.equal('_blank');

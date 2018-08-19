@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * A gulp plugin that runs mocha tests in phantomjs.
  *
@@ -104,7 +105,6 @@ var plugin = function (options) {
             });
 
             Runtime.consoleAPICalled(({logType, args}) => {
-
                 // Our mocha JSONReporter console.log()s strings of JSON for
                 // testing status and results (start/pass/fail/end)
                 // In that case, the logType is "log" and the args look like
@@ -193,6 +193,7 @@ var plugin = function (options) {
             if (options.test) {
                 fileUrl += "?tests=" + options.test
             }
+            console.log(fileUrl);
             Page.navigate({url: fileUrl});
         })();
     }

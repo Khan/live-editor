@@ -106,7 +106,7 @@ export default class ImageScroller extends Component {
             );
         });
 
-        let imagePath = `${this.props.imagesDir}cute/Blank.png`;
+        let imagePath = `${this.props.imagesDir}cute/None.png`;
         if (this.props.imageName) {
             imagePath = `${this.props.imagesDir}${this.props.imageName}.png`;
         }

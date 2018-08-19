@@ -9,6 +9,7 @@ export default class TooltipEngine extends Component {
         record: Object,
         event: Object,
         tooltips: Array,
+        onLoseFocus: Function,
         onScrubbingStart: Function,
         onScrubbingEnd: Function,
         onTextInsertRequest: Function,
@@ -72,12 +73,13 @@ export default class TooltipEngine extends Component {
             return;
         }
         if (tooltipUtils.isWithinComment(newEvent.pre)) {
-            // if selected text is within a comment,
+            // If selected text is within a comment,
             // hide current tooltip (if any) and return
             // eslint-disable-next-line react/no-did-update-set-state
             this.setState({currentTooltip: null});
             return;
         }
+        newEvent.timestamp = Date.now();
         // eslint-disable-next-line react/no-did-update-set-state
         this.setState({
             eventToCheck: newEvent,
@@ -106,12 +108,7 @@ export default class TooltipEngine extends Component {
                 },
                 this.props,
             );
-            childProps.onScrubbingStart = (readOnly) => {
-                this.props.onScrubbingStart(name, readOnly);
-            };
-            childProps.onScrubbingEnd = (readOnly) => {
-                this.props.onScrubbingEnd(name, readOnly);
-            };
+
             childProps.onEventCheck = (foundMatch, aceLocation) => {
                 if (foundMatch) {
                     this.setState({
@@ -120,22 +117,39 @@ export default class TooltipEngine extends Component {
                     });
                     this.props.onTooltipChange(name, aceLocation);
                 } else {
+                    // If this tooltip doesn't match the current event:
+                    // - Disable this tooltip if it was the active tooltip
+                    // - Remove this tooltip from list of possible tooltips
                     this.setState((prevState, props) => ({
+                        currentTooltip:
+                            prevState.currentTooltip === name
+                                ? null
+                                : prevState.currentTooltip,
                         possibleTooltips: prevState.possibleTooltips.filter(
                             (e) => e !== name,
                         ),
                     }));
                 }
             };
+
+            childProps.onLoseFocus = () => {
+                this.props.onLoseFocus && this.props.onLoseFocus();
+            };
+
+            childProps.onScrubbingStart = (readOnly) => {
+                this.props.onScrubbingStart(name, readOnly);
+            };
+            childProps.onScrubbingEnd = (readOnly) => {
+                this.props.onScrubbingEnd(name, readOnly);
+            };
+
             childProps.onTextUpdateRequest = (
-                aceLocation,
                 newText,
                 newSelection,
                 avoidUndo,
             ) => {
                 this.ignore = true;
                 this.props.onTextUpdateRequest(
-                    aceLocation,
                     newText,
                     newSelection,
                     avoidUndo,
@@ -147,9 +161,11 @@ export default class TooltipEngine extends Component {
                 this.props.onTextInsertRequest(aceLocation, newText);
                 this.ignore = false;
             };
+
             childProps.onModalRefCreate = (ref) => {
                 this.setState({modalRef: ref});
             };
+
             if (this.state.currentTooltip === name) {
                 childProps.isEnabled = true;
             }
@@ -159,6 +175,7 @@ export default class TooltipEngine extends Component {
             ) {
                 childProps.eventToCheck = this.state.eventToCheck;
             }
+
             this.tooltips[name] = React.createElement(
                 TooltipEngine.tooltipClasses[name],
                 childProps,

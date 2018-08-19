@@ -247,6 +247,8 @@ export default class LiveEditor extends Component {
             // Run the JSHint config
             this.config.runVersion(version, "jshint");
         });
+
+        this._isMounted = true;
     }
 
     componentDidUpdate(prevProps) {
@@ -259,6 +261,7 @@ export default class LiveEditor extends Component {
         window.removeEventListener("message", this.handleMessages);
         this.player && this.player.destruct();
         this.record && this.record.stopPlayback();
+        this._isMounted = false;
     }
 
     renderErrorBuddy() {
@@ -273,6 +276,9 @@ export default class LiveEditor extends Component {
                         timestamp: Date.now(),
                     },
                 });
+            },
+            onLoseFocus: () => {
+                this.aceWrapperRef.current.editor.focus();
             },
             onDismissed: (error) => {
                 this.setState({
@@ -621,6 +627,10 @@ export default class LiveEditor extends Component {
      * code running (and thus should have the restart button shown).
      */
     shouldShowRestart() {
+        // TODO(pamela): Stop using a ref here
+        if (!this.aceWrapperRef.current) {
+            return null;
+        }
         const currentCode = this.aceWrapperRef.current.text();
 
         if (this.props.outputType === "webpage") {
@@ -1037,6 +1047,9 @@ export default class LiveEditor extends Component {
     // This is debounced in the constructor,
     // so we use this for things we can wait a bit on
     handleChange() {
+        if (!this._isMounted) {
+            return;
+        }
         this.setState({showRestart: this.shouldShowRestart()});
     }
 
@@ -1214,6 +1227,10 @@ export default class LiveEditor extends Component {
             this.runDone();
         }
 
+        if (data.results && Array.isArray(data.results.errors)) {
+            this.handleErrors(this.cleanErrors(data.results.errors));
+        }
+
         if (this.editorType.indexOf("ace_") === 0 && data.results) {
             let warnings = [];
             if (data.results.assertions || data.results.warnings) {
@@ -1235,10 +1252,6 @@ export default class LiveEditor extends Component {
                     });
             }
             this.setState({warnings});
-        }
-
-        if (data.results && Array.isArray(data.results.errors)) {
-            this.handleErrors(this.cleanErrors(data.results.errors));
         }
 
         // Set the line visibility in the editor

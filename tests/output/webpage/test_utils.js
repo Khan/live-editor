@@ -1,4 +1,36 @@
-var runTest = function(options) {
+/* eslint-disable */
+import React from "react";
+import ReactDOM from "react-dom";
+
+import LiveEditorOutput from "../../../js/output/shared/output.js";
+import WebpageOutput from "../../../js/output/webpage/webpage-output.js";
+
+LiveEditorOutput.registerOutput("webpage", WebpageOutput);
+
+export function createLiveEditorOutput(extraProps) {
+    const ref = React.createRef();
+
+    const props = Object.assign({}, {
+        ref,
+        outputType: "webpage",
+        workersDir: "../../../build/",
+        externalsDir: "../../../build/external/",
+        imagesDir: "../../../build/images/",
+        jshintFile: "../../../build/external/jshint/jshint.js",
+        redirectUrl: "http://ka.org/r"
+    }, extraProps || {});
+
+    ReactDOM.render(React.createElement(LiveEditorOutput, props),
+        document.getElementById("live-editor-output"));
+    return ref;
+};
+
+export function removeLiveEditorOutput() {
+    ReactDOM.unmountComponentAtNode(
+        document.getElementById("live-editor-output"));
+}
+
+export function runTest(options) {
 
     var displayTitle = options.title;
 
@@ -7,68 +39,66 @@ var runTest = function(options) {
 
     // Start an asynchronous test
     it(displayTitle, function(done) {
-        var output = new LiveEditorOutput({
-            el: $("#output-area")[0],
-            outputType: "webpage",
-            workersDir: "../../../build/workers/",
-            externalsDir: "../../../build/external/",
-            imagesDir: "../../../build/images/",
-            jshintFile: "../../../build/external/jshint/jshint.js",
-            redirectUrl: "http://ka.org/r"
-        });
 
-        if (options.validate) {
-            output.initTests(options.validate);
-        }
+        const outputRef = createLiveEditorOutput({
+            validate: options.validate,
+            onAllDone: (runResults) => {
+                const errors = runResults.errors;
+                const testResults = runResults.tests;
+                const warnings = runResults.warnings;
 
-        // Run once to make sure that no errors are thrown
-        // during execution
-        output.runCode(code, function(errors, testResults) {
-            // Catch errors and forward them to Mocha
-            // Otherwise output.js sometimes swallows them
-            try {
-                if (options.expected) {
-                    expect(errors).to.have.length(0);
-                } else {
-                    expect(errors).to.not.equal([]);
-                    // In some cases, we actually verify number and line # of errors
-                    if (options.errors) {
-                        expect(errors.length).to.be.equal(options.errors.length);
-                        expect(errors[0].row)
-                            .to.be.equal(options.errors[0].row);
-                        expect(errors[0].column)
-                            .to.be.equal(options.errors[0].column);
-                        if (options.errors[0].lint) {
-                            expect(errors[0].lint.type)
-                                .to.be.equal(options.errors[0].lint.type);
-                        }
-                        if (options.errors[0].text) {
-                            expect(errors[0].text)
-                                .to.be.equal(options.errors[0].text);
-                        }
-                    } else if (options.warnings) {
-                        checkWarnings(options.warnings, output.results.warnings);
-                    }
-                }
-
-                if (options.test) {
-                    if (options.test.length === 4) {
-                        options.test(output, errors, testResults, done);
+                // Catch errors and forward them to Mocha
+                // Otherwise output.js sometimes swallows them
+                try {
+                    if (options.expected) {
+                        expect(errors).to.have.length(0);
                     } else {
-                        options.test(output, errors, testResults);
+                        expect(errors).to.not.equal([]);
+                        // In some cases, we actually verify number and line # of errors
+                        if (options.errors) {
+                            expect(errors.length)
+                                .to.be.equal(options.errors.length);
+                            expect(errors[0].row)
+                                .to.be.equal(options.errors[0].row);
+                            expect(errors[0].column)
+                                .to.be.equal(options.errors[0].column);
+                            if (options.errors[0].lint) {
+                                expect(errors[0].lint.type)
+                                    .to.be.equal(options.errors[0].lint.type);
+                            }
+                            if (options.errors[0].text) {
+                                expect(errors[0].text)
+                                    .to.be.equal(options.errors[0].text);
+                            }
+                        } else if (options.warnings) {
+                            checkWarnings(options.warnings, warnings);
+                        }
+                    }
+
+                    if (options.test) {
+                        if (options.test.length === 4) {
+                            options.test(outputRef, errors, testResults, done);
+                        } else {
+                            options.test(outputRef, errors, testResults);
+                            removeLiveEditorOutput();
+                            done();
+                        }
+                    } else {
+                        removeLiveEditorOutput();
                         done();
                     }
-                } else {
-                    done();
+                } catch (e) {
+                    removeLiveEditorOutput();
+                    done(e);
                 }
-            } catch (e) {
-                done(e);
             }
         });
+
+        outputRef.current.runCode(code);
     });
 };
 
-var test = function(title, code) {
+export function test(title, code) {
     if (typeof code === "object") {
         code.forEach(function(userCode) {
             test(title, userCode);
@@ -83,7 +113,7 @@ var test = function(title, code) {
     });
 };
 
-var failingTest = function(title, code, errors) {
+export function failingTest(title, code, errors) {
     runTest({
         title: title,
         code: code,
@@ -92,7 +122,7 @@ var failingTest = function(title, code, errors) {
     });
 };
 
-var warningTest = function(title, code, warnings) {
+export function warningTest(title, code, warnings) {
     if (typeof code === "object") {
         code.forEach(function(userCode, i) {
             warningTest(title, userCode, warnings[i]);
@@ -107,7 +137,7 @@ var warningTest = function(title, code, warnings) {
     });
 }
 
-var assertTest = function(options) {
+export function assertTest(options) {
     options.test = function(output, errors, testResults, callback) {
         if (!options.reason) {
             expect(errors.length).to.be.equal(0);
@@ -124,8 +154,10 @@ var assertTest = function(options) {
                     expect(errors[0].lint.reason)
                         .to.be.equal(options.reason);
                 } else {
-                    var $html = $("<div>" + errors[0].text + "</div>");
-                    expect($html.text()).to.be.equal(options.reason);
+                    // Strip HTML tags from message before comparing them
+                    const errorDiv = document.createElement("div");
+                    errorDiv.innerHTML = errors[0].text;
+                    expect(errorDiv.innerText).to.be.equal(options.reason);
                 }
             }
         }
@@ -145,6 +177,6 @@ var checkWarnings = function(expectedWarnings, outputWarnings) {
     }
 };
 
-var isFirefox = function() {
+export function isFirefox() {
     return navigator.userAgent.indexOf('Firefox') !== -1;
 };

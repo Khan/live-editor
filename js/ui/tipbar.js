@@ -20,6 +20,7 @@ export default class TipBar extends Component {
         errors: Array<string>,
         errorNum: number,
         onErrorShowRequested: Function,
+        onLoseFocus: Function,
         onDismissed: Function,
     };
 
@@ -52,8 +53,7 @@ export default class TipBar extends Component {
         this.setState((prevState, props) => ({
             errorNum: Math.max(0, prevState.errorNum - 1),
         }));
-        // TODO: It's unclear why the editor needs to be focus'd here
-        //this.props.liveEditor.editor.focus();
+        this.props.onLoseFocus();
     }
 
     handleNextClick() {
@@ -63,15 +63,13 @@ export default class TipBar extends Component {
                 this.props.errors.length - 1,
             ),
         }));
-        // TODO: It's unclear why the editor needs to be focus'd here
-        //this.props.liveEditor.editor.focus();
+        this.props.onLoseFocus();
     }
 
     render() {
         if (this.props.isHidden || !this.props.errors.length) {
             return null;
         }
-
         const errors = this.props.errors;
         const errorNum =
             errors[this.state.errorNum] == null ? 0 : this.state.errorNum;
@@ -117,13 +115,20 @@ export default class TipBar extends Component {
                 </div>
             );
         }
-
+        // Note: enableUserSelectHack below is very important.
+        // Without it, the editor loses focus whenever this component unmounts.
+        // See https://github.com/mzabriskie/react-draggable/issues/315
         return (
             <React.Fragment>
                 <div
                     className={css(SharedStyles.overlay, styles.errorOverlay)}
                 />
-                <Draggable axis="y" handle=".error-buddy" bounds="parent">
+                <Draggable
+                    axis="y"
+                    bounds="parent"
+                    enableUserSelectHack={false}
+                    handle=".error-buddy"
+                >
                     <div className="tipbar">
                         <div className="speech-arrow" />
                         <div className="error-buddy" />

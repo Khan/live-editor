@@ -71,11 +71,15 @@ PJSResourceCache.prototype.loadImage = function(filename) {
 };
 
 PJSResourceCache.prototype.loadSound = function(filename) {
+    const findWhere = function(array, criteria) {
+        return array.find(item => Object.keys(criteria).every(key => item[key] === criteria[key]))
+    };
+
     return new Promise((resolve) => {
         const audio = document.createElement("audio");
         const parts = filename.split("/");
 
-        const group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
+        const group = findWhere(OutputSounds[0].groups, { groupName: parts[0] });
         const hasSound = group && group.sounds.includes(parts[1].replace(".mp3", ""));
         if (!hasSound) {
             resolve();

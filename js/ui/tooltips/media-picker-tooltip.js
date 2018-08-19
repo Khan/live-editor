@@ -13,7 +13,6 @@ export default class MediaPickerTooltip extends Component {
         errorMessage: string,
         mediaClasses: Array<Object>,
         mediaDir: string,
-        mediaSrc: string,
         mediaType: string,
         onFileSelect: (info: Object) => void,
         onModalClose: () => void,

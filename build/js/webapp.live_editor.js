@@ -29230,7 +29230,6 @@ var LiveEditor = function (_Component) {
 
         // Process all the URLs
         _this.workersDir = utils.qualifyURL(props.workersDir);
-        console.log("live-editor workersDir", _this.workersDir);
         _this.externalsDir = utils.qualifyURL(props.externalsDir);
         _this.imagesDir = utils.qualifyURL(props.imagesDir);
         _this.soundsDir = props.soundsDir;
@@ -31799,9 +31798,7 @@ var ErrorBuddyMini = function (_Component) {
             if (this.props.errorState === "happy") {
                 errorMood = _react2.default.createElement(
                     "div",
-                    {
-                        className: (0, _noImportant.css)(styles.errorBuddyWrapper)
-                    },
+                    { className: (0, _noImportant.css)(styles.errorBuddyWrapper) },
                     _react2.default.createElement("img", {
                         height: "35",
                         alt: i18n._("Error buddy sees no errors"),

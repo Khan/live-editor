@@ -382,9 +382,7 @@ PJSTester.prototype.testMethods = {
                 message: callbacks && callbacks.failure
             };
         } catch (e) {
-            if (window.console) {
-                console.warn(e); // eslint-disable-line no-console
-            }
+            console && console.warn(e); // eslint-disable-line no-console
             return {
                 success: true,
                 message: i18n._("Hm, we're having some trouble " +

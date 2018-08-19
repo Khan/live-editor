@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 var runTestFiles = function(defaultFiles) {
     var isHeadless = /HeadlessChrome/.test(navigator.userAgent);
 

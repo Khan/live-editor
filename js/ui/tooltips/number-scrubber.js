@@ -29,10 +29,11 @@ export default class NumberScrubber extends Component {
         eventToCheck: Object,
         aceEditor: Object,
         onEventCheck: Function,
+        onLoseFocus?: Function,
+        onScrubbingStart?: Function,
+        onScrubbingEnd?: Function,
         onTextInsertRequest: Function,
         onTextUpdateRequest: Function,
-        onScrubbingStart: Function,
-        onScrubbingEnd: Function,
     };
 
     constructor(props) {
@@ -49,8 +50,15 @@ export default class NumberScrubber extends Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        if (this.props.eventToCheck) {
-            this.checkEvent(this.props.eventToCheck);
+        const currentEvent = this.props.eventToCheck;
+        if (!currentEvent) {
+            return;
+        }
+        if (
+            !prevProps.eventToCheck ||
+            currentEvent.timestamp > prevProps.eventToCheck.timestamp
+        ) {
+            this.checkEvent(currentEvent);
         }
     }
 
@@ -111,14 +119,14 @@ export default class NumberScrubber extends Component {
             );
             this.updateTooltip(this.state.intermediateValue, decimals);
         }
-        // TODO? use a timeout because $leftButton.click and $rightButton.click
-        // are called after stop
         this.setState({
             isDragging: false,
             value: this.state.intermediateValue,
             decimals,
         });
         this.props.onScrubbingEnd(true);
+        // TODO: This may not be needed here
+        this.props.onLoseFocus && this.props.onLoseFocus();
     }
 
     handleSingleClick(num, evt) {
@@ -170,7 +178,7 @@ export default class NumberScrubber extends Component {
     }
 
     requestTextUpdate(newText, avoidUndo) {
-        this.props.onTextUpdateRequest(newText, null, avoidUndo);
+        this.props.onTextUpdateRequest(String(newText), null, !!avoidUndo);
     }
 
     updateTooltip(value, decimals) {
@@ -231,6 +239,7 @@ export default class NumberScrubber extends Component {
         const draggableScrubber = (
             <Draggable
                 axis="x"
+                enableUserSelectHack={false}
                 onStart={this.handleDragStart}
                 onDrag={this.handleDrag}
                 onStop={this.handleDragStop}

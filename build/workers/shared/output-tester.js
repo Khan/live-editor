@@ -1,10 +1,9 @@
-/* eslint-disable no-var, no-redeclare, no-new-func */
+/* eslint-disable no-var, no-redeclare, no-new-func, no-unused-vars, no-undef */
 /* TODO: Fix the lint errors */
 /* We list i18n and lodash as globals instead of require() them
   due to how we load this file in the test-worker */
-/* global i18n, lodash */
-
-const PooledWorker = require("./pooled-worker.js");
+/* global i18n, _ */
+import PooledWorker from "./pooled-worker.js";
 
 const OutputTester = function() {};
 
@@ -21,7 +20,8 @@ OutputTester.prototype = {
             }
         }
 
-        for (var prop in this.defaultTestContext) { /* jshint forin:false */
+        for (var prop in this.defaultTestContext) {
+            /* jshint forin:false */
             if (!(prop in this.testContext)) {
                 this.testContext[prop] = this.defaultTestContext[prop];
             }
@@ -37,17 +37,16 @@ OutputTester.prototype = {
          * The worker that runs the tests in the background, if possible.
          */
         this.testWorker = new PooledWorker(
-            options.workerFile, options.workersDir,
+            options.workerFile,
+            options.workersDir,
             function(code, validate, errors, callback) {
                 // If there are syntax errors in the tests themselves,
                 //  then we ignore the request to test.
                 try {
                     tester.exec(validate);
-                } catch(e) {
-                    if (window.console) {
-                        // eslint-disable-next-line no-console
-                        console.warn(e.message);
-                    }
+                } catch (e) {
+                    // eslint-disable-next-line no-console
+                    console && console.warn(e.message);
                     return;
                 }
 
@@ -85,9 +84,9 @@ OutputTester.prototype = {
                     code: code,
                     validate: validate,
                     errors: errors,
-                    externalsDir: options.externalsDir
+                    externalsDir: options.externalsDir,
                 });
-            }
+            },
         );
     },
 
@@ -129,7 +128,7 @@ OutputTester.prototype = {
         var result = {
             name: test.name,
             state: "pass",
-            results: []
+            results: [],
         };
 
         this.curTest = result;
@@ -145,9 +144,9 @@ OutputTester.prototype = {
         if (!code) {
             return true;
         }
-
+        code = code.replace(/\$\._/g, "i18n._");
         code = "with(arguments[0]){\n" + code + "\n}";
-        (new Function(code)).call({}, this.testContext);
+        new Function(code).call({}, this.testContext);
 
         return true;
     },
@@ -168,12 +167,10 @@ OutputTester.prototype = {
                     try {
                         return fn.apply(this, arguments);
                     } catch (e) {
-                        if (window.console) {
-                            // eslint-disable-next-line no-console
-                            console.warn(e);
-                        }
+                        // eslint-disable-next-line no-console
+                        console && console.warn(e);
                     }
-                }
+                },
             });
         },
 
@@ -189,7 +186,7 @@ OutputTester.prototype = {
                 msg: msg,
                 state: state,
                 expected: expected,
-                meta: meta || {}
+                meta: meta || {},
             };
 
             if (this.curTest) {
@@ -204,8 +201,7 @@ OutputTester.prototype = {
         },
 
         task: function(msg, tip) {
-            this.curTask = this.testContext.log(msg,
-                "pass", tip, "task");
+            this.curTask = this.testContext.log(msg, "pass", tip, "task");
             this.curTask.results = [];
         },
 
@@ -215,8 +211,13 @@ OutputTester.prototype = {
 
         assert: function(pass, msg, expected, meta) {
             pass = !!pass;
-            this.testContext.log(msg, pass ? "pass" : "fail",
-                expected, "assertion", meta);
+            this.testContext.log(
+                msg,
+                pass ? "pass" : "fail",
+                expected,
+                "assertion",
+                meta,
+            );
             return pass;
         },
 
@@ -230,7 +231,7 @@ OutputTester.prototype = {
         pass: function(message) {
             return {
                 success: true,
-                message: message
+                message: message,
             };
         },
 
@@ -240,7 +241,7 @@ OutputTester.prototype = {
         fail: function(message) {
             return {
                 success: false,
-                message: message
+                message: message,
             };
         },
 
@@ -249,8 +250,11 @@ OutputTester.prototype = {
          * the first fail.
          */
         anyPass: function() {
-            return _.find(arguments, this.testContext.passes) || arguments[0] ||
-                this.testContext.fail();
+            return (
+                _.find(arguments, this.testContext.passes) ||
+                arguments[0] ||
+                this.testContext.fail()
+            );
         },
 
         /*
@@ -258,8 +262,11 @@ OutputTester.prototype = {
          * the first pass.
          */
         allPass: function() {
-            return _.find(arguments, this.testContext.fails) || arguments[0] ||
-                this.testContext.pass();
+            return (
+                _.find(arguments, this.testContext.fails) ||
+                arguments[0] ||
+                this.testContext.pass()
+            );
         },
 
         /*
@@ -274,8 +281,8 @@ OutputTester.prototype = {
          */
         fails: function(result) {
             return !result.success;
-        }
-    }
+        },
+    },
 };
 
-module.exports = OutputTester;
+export default OutputTester;

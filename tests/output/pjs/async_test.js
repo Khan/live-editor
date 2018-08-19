@@ -1,3 +1,7 @@
+/* eslint-disable */
+import {createLiveEditorOutput, getCodeFromOptions, removeLiveEditorOutput} from "./test_utils.js";
+import LoopProtector from "../../../js/output/shared/loop-protect.js";
+
 /**
  * This file contains tests that are difficult to write using the normal test
  * helpers from test_utils.js.  The tests require custom asynchronous code in
@@ -9,208 +13,120 @@
 // ensure that the errors we getting in the callback don't include stale errors
 // so that we can avoid the issue raised in
 // https://github.com/Khan/live-editor/issues/285
-describe("async error order tests", function () {
-
-    var output;
-
-    beforeEach(function () {
-        output = createLiveEditorOutput();
-    });
-
-    it("should work without any errors", function (done) {
-
-        var lintStub = sinon.stub(output.output, "lint");
-        var runCodeStub = sinon.stub(output.output, "runCode").callsFake(function(userCode, callback) {
-            callback([]); // no runtime errors
-        });
-
-        var deferred = $.Deferred();
-        lintStub.returns(deferred);
-        deferred.resolve({
-          errors: [],
-          warnings: []
-        });  // lint errors
-
-        output.runCode("var a = 5;", function(errors, testResults) {
-            expect(errors.length).to.be(0);
-            expect(lintStub.called).to.be(true);
-            expect(runCodeStub.called).to.be(true);
-
-            done();
-        });
-    });
-
-    it("should work with runtime errors only", function (done) {
-
-        var lintStub = sinon.stub(output.output, "lint");
-        var runCodeStub = sinon.stub(output.output, "runCode").callsFake(function(userCode, callback) {
-            callback(["runtime error"]);    // runtime errors
-        });
-
-        var deferred = $.Deferred();
-        lintStub.returns(deferred);
-        deferred.resolve({
-          errors: [],
-          warnings: []
-        });  // lint errors
-
-        output.runCode("var a = 5;", function(errors, testResults) {
-            expect(errors).to.contain("runtime error");
-            expect(errors).to.not.contain("lint error");
-            expect(lintStub.called).to.be(true);
-            expect(runCodeStub.called).to.be(true);
-
-            done();
-        });
-    });
-
-    it("should work with lint errors", function (done) {
-
-        var lintStub = sinon.stub(output.output, "lint");
-        var runCodeStub = sinon.stub(output.output, "runCode").callsFake(function(userCode, callback) {
-            callback([]);    // runtime errors
-        });
-
-        var deferred = $.Deferred();
-        lintStub.returns(deferred);
-        deferred.resolve({
-          errors: ['lint error'],
-          warnings: []
-        });  // lint errors
-
-        output.runCode("var a = 5;", function(errors, testResults) {
-            expect(errors).to.contain("lint error");
-            expect(errors).to.not.contain("runtime error");
-            expect(lintStub.called).to.be(true);
-            expect(runCodeStub.called).to.be(false);
-
-            done();
-        });
-    });
-
-    it("should work with lint and runtime errors", function (done) {
-
-        var lintStub = sinon.stub(output.output, "lint");
-        var runCodeStub = sinon.stub(output.output, "runCode").callsFake(function(userCode, callback) {
-            callback(["runtime error"]);    // runtime errors
-        });
-
-        var deferred = $.Deferred();
-        lintStub.returns(deferred);
-        deferred.resolve({
-          errors: [],
-          warnings: []
-        });  // lint errors
-
-        output.runCode("var a = 5;", function(errors, testResults) {
-            expect(errors).to.contain("runtime error");
-            expect(errors).to.not.contain("lint error");
-            expect(lintStub.called).to.be(true);
-            expect(runCodeStub.called).to.be(true);
-
-            // there doesn't seem to be an easy way to redefine what function
-            // is as a replacement for the original "runCode" so we have to
-            // first restore the original function before we can re-stub it
-            output.output.runCode.restore();
-            runCodeStub = sinon.stub(output.output, "runCode").callsFake(function(userCode, callback) {
-                callback([]);    // runtime errors
-            });
-
-            var deferred = $.Deferred();
-            lintStub.returns(deferred);
-            deferred.resolve({
-              errors: ['lint error'],
-              warnings: []
-            });  // lint errors
-
-            output.runCode("var b = 10;", function(errors, testResults) {
-                // the runtime error is from 'var a = 5;' which is stale
-                // so it should not appear.
-                expect(errors).to.not.contain("runtime error");
-                // the lint error is from 'var b = 10;' which is the most
-                // recent code so it should appear.
-                expect(errors).to.contain("lint error");
-                expect(lintStub.called).to.be(true);
-                expect(runCodeStub.called).to.be(false);
-
+describe("async error order tests", function() {
+    it("should work without any errors", function(done) {
+        let lintDone = false;
+        let buildDone = false;
+        const outputRef = createLiveEditorOutput({
+            onLintDone: () => {
+                lintDone = true;
+            },
+            onRunDone: () => {
+                buildDone = true;
+            },
+            onAllDone: (runResults) => {
+                expect(runResults.errors.length).to.be(0);
+                expect(lintDone).to.be(true);
+                expect(buildDone).to.be(true);
                 done();
-            });
+            },
         });
+        outputRef.current.runCode("var a = 5;");
+    });
+
+    it("should work with runtime errors only", function(done) {
+        let lintDone = false;
+        let buildDone = false;
+        const outputRef = createLiveEditorOutput({
+            onLintDone: (lintErrors, lintWarnings) => {
+                lintDone = true;
+                expect(lintErrors.length).to.be(0);
+            },
+            onRunDone: (runResults) => {
+                buildDone = true;
+                expect(runResults.errors.length).to.be(1);
+                expect(runResults.errors[0].source).to.be("native");
+            },
+            onAllDone: (runResults) => {
+                expect(lintDone).to.be(true);
+                expect(buildDone).to.be(true);
+                done();
+            },
+        });
+        outputRef.current.runCode(
+            "var a = function(go, bFunc) {bFunc(true, a);};a();",
+        );
+    });
+
+    it("should work with lint errors", function(done) {
+        let lintDone = false;
+        let buildDone = false;
+        const outputRef = createLiveEditorOutput({
+            onLintDone: (lintErrors, lintWarnings) => {
+                lintDone = true;
+                console.log("linted");
+                expect(lintErrors.length).to.be(1);
+            },
+            onRunDone: (runResults) => {
+                buildDone = true;
+                console.log("ran!");
+                expect(runResults.errors.length).to.be(1);
+                expect(runResults.errors[0].source).to.be("jshint");
+            },
+            onAllDone: () => {
+                console.log("all done!");
+                expect(lintDone).to.be(true);
+                expect(buildDone).to.be(true);
+                done();
+            },
+        });
+        outputRef.current.runCode("var x = 5");
+    });
+
+    it("should work with runtime followed by lint errors", function(done) {
+        let lintCalls = 0;
+        let buildCalls = 0;
+        let runNum = 0;
+        const outputRef = createLiveEditorOutput({
+            onLintDone: (lintErrors, lintWarnings) => {
+                lintCalls++;
+                if (runNum === 0) {
+                    expect(lintErrors.length).to.be(0);
+                } else {
+                    expect(lintErrors.length).to.be(1);
+                }
+            },
+            onRunDone: (runResults) => {
+                buildCalls++;
+                if (runNum === 0) {
+                    expect(runResults.errors.length).to.be(1);
+                    expect(runResults.errors[0].source).to.be("native");
+                } else {
+                    expect(runResults.errors.length).to.be(1);
+                    expect(runResults.errors[0].source).to.be("jshint");
+                }
+            },
+            onAllDone: () => {
+                runNum++;
+                if (runNum === 1) {
+                    outputRef.current.runCode("var x = 5");
+                } else {
+                    expect(lintCalls).to.be(2);
+                    expect(buildCalls).to.be(2);
+                    done();
+                }
+            },
+        });
+        outputRef.current.runCode(
+            "var a = function(go, bFunc) {bFunc(true, a);};a();");
     });
 });
 
-describe("Code Injection", function() {
-
-    // This tests reproduces the "string not a function" error from
-    // https://github.com/Khan/live-editor/issues/279.
-    it("should not throw 'string is not a function'", function (done) {
-        var output = createLiveEditorOutput();
-
-        var code = getCodeFromOptions(function() {
-            var stars = [];
-            var Star = function(x, y) { this.x = x; this.y = y; };
-            Star.prototype.draw = function() { ellipse(this.x, this.y, 10, 10); };
-            for (var i = 0; i < 20; i++) {
-                // The Star constructor must be called with random value to
-                // reproduce the error.
-                stars.push(new Star(random(0, width), random(0, height)));
-            }
-            draw = function() {
-                background(0, 0, 0);
-                for (var i = 0; i < stars.length; i++) { stars[i].draw(); }
-            };
-
-        });
-
-        var error;
-        var listener = window.addEventListener('error', function(e) {
-            error = e;
-            window.removeEventListener('error', listener);
-        });
-
-        output.runCode(code, function(errors, testResults) {
-            expect(errors.length).to.be(0);
-
-            // The same code can be re-used, we just need to run the code twice
-            // to produce the error.
-            output.runCode(code, function(errors, testResults) {
-                expect(errors.length).to.be(0);
-                setTimeout(function () {
-                    // If we call done asynchronously when we get an error then
-                    // mocha will report two results for this test: one that's
-                    // failed and another that's succeed.  This is probably a
-                    // mocha bug.  TODO(kevinb) try upgrading mocha
-                    if (!error) {
-                        done();
-                    }
-                }, 100);
-            });
-        });
-    });
-
-    it("should call console.log with the correct args", function(done) {
-        var output = createLiveEditorOutput();
-
-        var code = getCodeFromOptions(function() {
-            debug("hello");
-        });
-
-        sinon.spy(console, "log");
-
-        output.runCode(code, function(errors) {
-            expect(errors.length).to.be(0);
-            expect(console.log.calledWith("hello")).to.be(true);
-            done();
-        });
-    });
-});
 
 describe("LoopProtector", function() {
 
     it("should stop Infinite Loops in event handlers", function (done) {
-        var output = createLiveEditorOutput();
-
-        var code = getCodeFromOptions(function() {
+        const code = getCodeFromOptions(function() {
             var mouseClicked = function() {
                 var i = 0;
                 while (true) {
@@ -219,26 +135,34 @@ describe("LoopProtector", function() {
             };
         });
 
-        var code2 = getCodeFromOptions(function() {
+        const code2 = getCodeFromOptions(function() {
             mouseClicked();
         });
 
-        output.output.injector.loopProtector = new LoopProtector(function (error) {
+        let runNum = 0;
+        const outputRef = createLiveEditorOutput({
+            onAllDone: (runResults) => {
+                if (runNum === 0) {
+                    expect(runResults.errors.length).to.be(0);
+                    outputRef.current.runCode(code2);
+                }
+                runNum++;
+            }
+        });
+
+        const injector = outputRef.current.outputTypeRef.current.injector;
+        injector.loopProtector = new LoopProtector(function (error) {
             expect(error.infiniteLoopNodeType).to.equal("WhileStatement");
             expect(error.row).to.equal(3);
             done();
         }, {initialTimeout: 200, frameTimeout: 50}, true);
 
-        output.runCode(code, function(errors, testResults) {
-            expect(errors.length).to.be(0);
-            output.runCode(code2);
-        });
+        outputRef.current.runCode(code);
     });
 
     it("should handle deleting all code and undoing it", function(done) {
-        var output = createLiveEditorOutput();
 
-        var code = getCodeFromOptions(function() {
+        const code = getCodeFromOptions(function() {
             fill(255, 0, 255);
 
             var draw = function() {
@@ -247,70 +171,82 @@ describe("LoopProtector", function() {
             };
         });
 
-        output.runCode(code, function(errors, testResults) {
-            expect(errors.length).to.be(0);
-            // simulate deleting all the code...
-            output.runCode("", function(errors, testResults) {
-                setTimeout(function() {
-                    expect(errors.length).to.be(0);
-                    // ...and then undoing it
-                    setTimeout(function() {
-                        output.runCode(code, function(errors, testResults) {
-                            expect(errors.length).to.be(0);
-                            done();
-                        });
-                    }, 500);
-                }, 200);
-            });
+        let runNum = 0;
+        const outputRef = createLiveEditorOutput({
+            onAllDone: (runResults) => {
+                // We expect no errors on any runs
+                expect(runResults.errors.length).to.be(0);
+                if (runNum === 0) {
+                    // We simulate deleting after first run
+                    outputRef.current.runCode("");
+                } else if (runNum === 1) {
+                    // We simulate undoing deleting after second run
+                    outputRef.current.runCode(code);
+                } else if (runNum === 2) {
+                    // And now we're all done!
+                    done();
+                }
+                runNum++;
+            }
         });
+
+        outputRef.current.runCode(code);
     });
 
     it("should stop Infinite Loops", function (done) {
-        var output = createLiveEditorOutput();
 
-        var code = getCodeFromOptions(function () {
+        const code = getCodeFromOptions(function () {
             var x = 0;
             while (x < 400) {
                 ellipse(100, 100, 100, x);
             }
         });
 
-        output.output.injector.loopProtector = new LoopProtector(function (error) {
-            // caught by the runCode callback
+        const outputRef = createLiveEditorOutput({
+            onAllDone(runResults) {
+                console.log(runResults);
+                expect(runResults.errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
+                expect(runResults.errors[0].row).to.equal(2);
+                done();
+            }
+        });
+
+        const injector = outputRef.current.outputTypeRef.current.injector;
+        injector.loopProtector = new LoopProtector(function (error) {
+            // caught by the onAllDone callback
         }, {initialTimeout: 200, frameTimeout: 50}, true);
 
-        output.runCode(code, function (errors, testResults) {
-            expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
-            expect(errors[0].row).to.equal(2);
-            done();
-        });
+        outputRef.current.runCode(code);
     });
 
     it("should stop Infinites Loop with width/height", function (done) {
-        var output = createLiveEditorOutput();
 
-        var code = getCodeFromOptions(function () {
+        const code = getCodeFromOptions(function () {
             var x = 0;
             while (x < width/20) {
                 ellipse(100, 100, 100, x);
             }
         });
 
-        output.output.injector.loopProtector = new LoopProtector(function (error) {
-            // caught by the runCode callback
+        const outputRef = createLiveEditorOutput({
+            onAllDone(runResults) {
+                expect(runResults.errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
+                expect(runResults.errors[0].row).to.equal(2);
+                done();
+            }
+        });
+
+        const injector = outputRef.current.outputTypeRef.current.injector;
+        injector.loopProtector = new LoopProtector(function (error) {
+            // caught by the onAllDone callback
         }, {initialTimeout: 200, frameTimeout: 50}, true);
 
-        output.runCode(code, function (errors, testResults) {
-            expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
-            expect(errors[0].row).to.equal(2);
-            done();
-        });
+        outputRef.current.runCode(code);
     });
 
-    xit("should stop Infinite Loop Inside Draw Function", function (done) {
-        var output = createLiveEditorOutput();
+    it("should stop Infinite Loop Inside Draw Function", function (done) {
 
-        var code = getCodeFromOptions(function () {
+        const code = getCodeFromOptions(function () {
             var draw = function() {
                 var y = 40;
                 while (y < 300) {
@@ -320,37 +256,45 @@ describe("LoopProtector", function() {
             };
         });
 
-        output.output.injector.loopProtector = new LoopProtector(function (error) {
-            // caught by the runCode callback
-        }, {initialTimeout: 200, frameTimeout: 50}, true);
-
-        output.runCode(code, function (errors, testResults) {
-            expect(errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
-            expect(errors[0].row).to.equal(3);
-            done();
+        const outputRef = createLiveEditorOutput({
+            onAllDone(runResults) {
+                expect(runResults.errors[0].infiniteLoopNodeType).to.equal("WhileStatement");
+                expect(runResults.errors[0].row).to.equal(3);
+                done();
+            }
         });
 
+        const injector = outputRef.current.outputTypeRef.current.injector;
+        injector.loopProtector = new LoopProtector(function (error) {
+            // caught by the onAllDone callback
+        }, {initialTimeout: 200, frameTimeout: 50}, true);
+
+        outputRef.current.runCode(code);
     });
 });
 
 describe("draw update tests", function() {
-    var output, ellipseSpy, backgroundSpy, noiseSpy;
+    let outputRef, ellipseSpy, backgroundSpy, noiseSpy;
 
-    beforeEach(function() {
-        output = createLiveEditorOutput();
-        sinon.spy(output.output.processing, "ellipse");
-        ellipseSpy = output.output.processing.ellipse;
-        sinon.spy(output.output.processing, "background");
-        backgroundSpy = output.output.processing.background;
-        sinon.spy(output.output.processing, "noise");
-        noiseSpy = output.output.processing.noise;
-    });
+    const createOutput = function(onAllDone) {
+        outputRef = createLiveEditorOutput({onAllDone});
+        const processing = outputRef.current.outputTypeRef.current.processing;
+        sinon.spy(processing, "ellipse");
+        ellipseSpy = processing.ellipse;
+        sinon.spy(processing, "background");
+        backgroundSpy = processing.background;
+        sinon.spy(processing, "noise");
+        noiseSpy = processing.noise;
+        return outputRef;
+    };
 
     afterEach(function() {
-        output.output.processing.ellipse.restore();
-        output.output.processing.background.restore();
-        output.output.processing.noise.restore();
-        output.output.kill();
+        const processing = outputRef.current.outputTypeRef.current.processing;
+        processing.ellipse.restore();
+        processing.background.restore();
+        processing.noise.restore();
+        outputRef = null;
+        removeLiveEditorOutput();
     });
 
     it("should draw using updated global variables", function(done) {
@@ -368,16 +312,21 @@ describe("draw update tests", function() {
             };
         });
 
-        output.runCode(code1, function(errors, testResults) {
-            expect(ellipseSpy.calledWith(200, 200, 10, 10)).to.be(true);
-            output.runCode(code2, function(errors, testResults) {
+        let runNum = 0;
+        const outputRef = createOutput(() => {
+            if (runNum === 0) {
+                expect(ellipseSpy.calledWith(200, 200, 10, 10)).to.be(true);
+                outputRef.current.runCode(code2);
+            } else if (runNum === 1) {
                 // Wait for it to tick forward a frame
                 setTimeout(() => {
                     expect(ellipseSpy.calledWith(200, 200, 20, 20)).to.be(true);
                     done();
                 }, 50);
-            });
+            }
+            runNum++;
         });
+        outputRef.current.runCode(code1);
     });
 
     it("should change the background when draw changes", function(done) {
@@ -393,13 +342,18 @@ describe("draw update tests", function() {
             };
         });
 
-        output.runCode(code1, function(errors, testResults) {
-            expect(backgroundSpy.calledWith(255,0,0)).to.be(true);
-            output.runCode(code2, function(errors, testResults) {
+        let runNum = 0;
+        const outputRef = createOutput(() => {
+            if (runNum === 0) {
+                expect(backgroundSpy.calledWith(255,0,0)).to.be(true);
+                outputRef.current.runCode(code2);
+            } else if (runNum === 1) {
                 expect(backgroundSpy.calledWith(0,0,255)).to.be(true);
                 done();
-            });
+            }
+            runNum++;
         });
+        outputRef.current.runCode(code1);
     });
 
     it("should re-run global calls when only global calls have been changed", function(done) {
@@ -419,13 +373,18 @@ describe("draw update tests", function() {
             };
         });
 
-        output.runCode(code1, function(errors, testResults) {
-            expect(backgroundSpy.calledWith(255,0,0)).to.be(true);
-            output.runCode(code2, function(errors, testResults) {
+        let runNum = 0;
+        const outputRef = createOutput(() => {
+            if (runNum === 0) {
+                expect(backgroundSpy.calledWith(255,0,0)).to.be(true);
+                outputRef.current.runCode(code2);
+            } else if (runNum === 1) {
                 expect(backgroundSpy.calledWith(0,0,255)).to.be(true);
                 done();
-            });
+            }
+            runNum++;
         });
+        outputRef.current.runCode(code1);
     });
 
 
@@ -444,15 +403,20 @@ describe("draw update tests", function() {
             };
         });
 
-        output.runCode(code1, function(errors, testResults) {
-            expect(noiseSpy.calledWith(50)).to.be(true);
-            expect(noiseSpy.callCount).to.be(1);
-            output.runCode(code2, function(errors, testResults) {
+        let runNum = 0;
+        const outputRef = createOutput(() => {
+            if (runNum === 0) {
+                expect(noiseSpy.calledWith(50)).to.be(true);
+                expect(noiseSpy.callCount).to.be(1);
+                outputRef.current.runCode(code2);
+            } else if (runNum === 1) {
                 expect(noiseSpy.calledWith(100)).to.be(true);
                 expect(noiseSpy.callCount).to.be(2);
                 done();
-            });
+            }
+            runNum++;
         });
+        outputRef.current.runCode(code1);
     });
 
     it("should handle adding new methods", function(done) {
@@ -480,11 +444,16 @@ describe("draw update tests", function() {
             };
         });
 
-        output.runCode(code1, function(errors, testResults) {
-            output.runCode(code2, function(errors, testResults) {
+        let runNum = 0;
+        const outputRef = createOutput(() => {
+            if (runNum === 0) {
+                outputRef.current.runCode(code2);
+            } else if (runNum === 1) {
                 expect(ellipseSpy.called).to.be(true);
                 done();
-            });
+            }
+            runNum++;
         });
+        outputRef.current.runCode(code1);
     });
 });

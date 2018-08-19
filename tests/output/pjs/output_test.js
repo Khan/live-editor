@@ -1,6 +1,9 @@
+/* eslint-disable */
 /* global ellipse, getImage, image, background, loadImage, requestImage */
 /* global text, color, textFont, fill, text, background, createFont, PVector */
 /* global externals, exp, link, width, draw, mouseMoved, Program */
+import {failingTest, supportsMpegAudio, runTest, test} from "./test_utils.js";
+
 
 // TODO(kevinb) split into smaller subsuites
 describe("Scratchpad Output Exec", function() {
@@ -645,7 +648,6 @@ describe("Scratchpad Output Exec", function() {
      * resolved but shouldn't have any immediate impact on users.
      */
     runTest({
-        skip: useDebugger,
         title: "Make sure prototype function scope is preserved",
         code: function() {
             var x = function() {
@@ -743,14 +745,14 @@ describe("Scratchpad Output Exec", function() {
         // p.Program methods weren't being stubbed and were causing some of the
         // test code to be run in an infinite loop after the it() block had
         // completed.
-        setup: function(output) {
-            var p = output.output.processing;
+        setup: function(outputRef) {
+            const p = outputRef.current.outputTypeRef.current.processing;
             sinon.stub(p.Program, "settings");
             sinon.stub(p.Program, "restart");
             sinon.stub(p.Program, "runTests");
         },
-        teardown: function(output) {
-            var p = output.output.processing;
+        teardown: function(outputRef) {
+            const p = outputRef.current.outputTypeRef.current.processing;
             expect(p.Program.settings.calledWith()).to.be(true);
             expect(p.Program.restart.calledWith()).to.be(true);
             expect(p.Program.runTests.calledWith()).to.be(true);
@@ -866,13 +868,13 @@ describe("Scratchpad Output Exec", function() {
                 ellipse(200, 200, r, r);
             };
         },
-        setup: function(output) {
-            var p = output.output.processing;
+        setup: function(outputRef) {
+            const p = outputRef.current.outputTypeRef.current.processing;
             sinon.stub(p, "fill");
             sinon.stub(p, "ellipse");
         },
-        teardown: function(output) {
-            var p = output.output.processing;
+        teardown: function(outputRef) {
+            const p = outputRef.current.outputTypeRef.current.processing;
             var red = p.color(255,0,0);
             var yellow = p.color(255,255,0);
             expect(p.fill.calledWith(red)).to.be(true);
@@ -905,13 +907,13 @@ describe("Scratchpad Output Exec", function() {
                 ellipse(200, 200, foo.r, foo.r);
             };
         },
-        setup: function(output) {
-            var p = output.output.processing;
+        setup: function(outputRef) {
+            const p = outputRef.current.outputTypeRef.current.processing;
             sinon.stub(p, "fill");
             sinon.stub(p, "ellipse");
         },
-        teardown: function(output) {
-            var p = output.output.processing;
+        teardown: function(outputRef) {
+            const p = outputRef.current.outputTypeRef.current.processing;
             var red = p.color(255,0,0);
             expect(p.fill.calledWith(red)).to.be(true);
             expect(p.fill.calledWith(0)).to.be(false);
@@ -936,9 +938,9 @@ describe("Scratchpad Output Exec", function() {
         code2: function () {
             var foo = { c:color(255, 0, 0), r:200 };
         },
-        teardown: function(output) {
-            var p = output.output.processing;
-            expect(p.draw).to.be(output.output.DUMMY);
+        teardown: function(outputRef) {
+            const p = outputRef.current.outputTypeRef.current.processing;
+            expect(p.draw).to.be(outputRef.current.outputTypeRef.current.DUMMY);
         },
         wait: 100
     });
@@ -948,8 +950,8 @@ describe("Output Methods", function() {
     runTest({
         title: "getScreenshot",
         code: "background(255, 255, 255);",
-        test: function(output, errors, testResults, callback) {
-            output.output.getScreenshot(200, function(data) {
+        test: function(outputRef, errors, testResults, callback) {
+            outputRef.current.outputTypeRef.current.getScreenshot(200, function(data) {
                 // Testing with a truncated base64 png
                 expect(data).to.contain("data:image/png;base64,iVBOR");
                 callback();

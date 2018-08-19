@@ -17,6 +17,7 @@ export default class AutoSuggest extends Component {
         eventToCheck: Object,
         aceEditor: Object,
         onEventCheck: Function,
+        onLoseFocus: Function,
     };
 
     constructor(props) {
@@ -47,6 +48,8 @@ export default class AutoSuggest extends Component {
 
     componentWillUnmount() {
         window.removeEventListener("keyup", this.handleKeyup);
+        document.removeEventListener("mousedown", this.handleDocMouseDown);
+        document.removeEventListener("mouseup", this.handleDocMouseUp);
     }
 
     checkEvent(event) {
@@ -106,6 +109,7 @@ export default class AutoSuggest extends Component {
 
     handleDocMouseDown() {
         this.setState({mouseDown: true});
+        this.props.onLoseFocus();
     }
 
     handleDocMouseUp() {
