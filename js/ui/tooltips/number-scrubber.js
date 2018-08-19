@@ -125,7 +125,6 @@ export default class NumberScrubber extends Component {
             decimals,
         });
         this.props.onScrubbingEnd(true);
-        // TODO: This may not be needed here
         this.props.onLoseFocus && this.props.onLoseFocus();
     }
 

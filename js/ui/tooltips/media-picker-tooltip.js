@@ -58,7 +58,6 @@ export default class MediaPickerTooltip extends Component {
     }
 }
 
-// TODO: Doesn't work!
 const styles = StyleSheet.create({
     tooltipBox: {
         backgroundColor: "#FFF",

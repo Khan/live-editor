@@ -142,7 +142,6 @@ export default class ImageModal extends Component {
         }
     }
 
-    // TODO: Record in a parent instead, via a prop callback
     logForRecording(action, value) {
         const logAction = "imagemodal" + action;
         this.props.record && this.props.record.log(logAction, value);

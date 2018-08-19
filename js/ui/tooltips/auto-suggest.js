@@ -53,10 +53,9 @@ export default class AutoSuggest extends Component {
     }
 
     checkEvent(event) {
-        // TODO(pamela): Disable while playing
-        // TODO: update this to support auto-suggest tooltip for inner functions passed as params
-        // this currently only allows displaying of the tooltip for the outside function, except in cases
-        // where the inner function uses one of the other tooltips (e.g. image-picker)
+        // STOPSHIP(pamela): Disable while playing
+        // TODO: Update this to support auto-suggest tooltip for inner functions
+        // passed as params, like fill(color()).
         if (
             !this.regex.test(event.pre) ||
             !tooltipUtils.isInParenthesis(RegExp.$3)
@@ -126,7 +125,6 @@ export default class AutoSuggest extends Component {
 
     handleMouseDown() {
         this.setState({isHidden: true});
-        // TODO(pamela): this.options.editor.focus();
     }
 
     render() {

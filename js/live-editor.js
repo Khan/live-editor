@@ -192,33 +192,7 @@ export default class LiveEditor extends Component {
     }
 
     componentDidMount() {
-        // Change the width and height of the output frame if it's been
-        // changed by the user, via the query string, or in the settings
-        //TODO(pamela): this.updateCanvasSize(this.props.width, this.props.height);
-
         window.addEventListener("message", this.handleMessages);
-
-        // This function will fire once after each synchronous block which
-        // changes the cursor or the current selection.
-        // We use it for tag highlighting in webpages.
-        const cursorDirty = () => {
-            if (this.outputState !== "clean") {
-                // This will fire after markDirty() itself gets a chance to start a new run
-                // So it will just keep resetting itself until one run comes back and there are
-                // no changes waiting
-                self.once("runDone", cursorDirty);
-            } else {
-                setTimeout(function() {
-                    if (self.editor.getSelectionIndices) {
-                        self.postFrame({
-                            setCursor: self.editor.getSelectionIndices(),
-                        });
-                    }
-                    self.editor.once("changeCursor", cursorDirty);
-                }, 0);
-            }
-        };
-        //this.aceWrapperRef.once("changeCursor", cursorDirty);
 
         this.config.on("versionSwitched", (e, version) => {
             // Re-run the code after a version switch
@@ -227,7 +201,7 @@ export default class LiveEditor extends Component {
             // Run the JSHint config
             this.config.runVersion(version, "jshint");
         });
-
+        // Track this so we can ignore debounced callbacks that try to setState
         this._isMounted = true;
     }
 
@@ -346,7 +320,6 @@ export default class LiveEditor extends Component {
                 this.props.onCursorChange && this.props.onCursorChange(cursor);
             },
             onClick: () => {
-                // TODO: make big play go away
                 this.setState({editorClicked: true});
             },
             onGutterErrorClick: (errorNum) => {
@@ -607,7 +580,6 @@ export default class LiveEditor extends Component {
      * code running (and thus should have the restart button shown).
      */
     shouldShowRestart() {
-        // TODO(pamela): Stop using a ref here
         if (!this.aceWrapperRef.current) {
             return null;
         }
@@ -657,11 +629,16 @@ export default class LiveEditor extends Component {
         return false;
     }
 
+    // Only enable recording if there's an explicit boolean to turn it on,
+    //  and if the transloadit information is supplied,
+    //  and if the playback isn't currently playing.
+    // Note that recording doesn't work right now.
     canRecord() {
         return (
             this.props.enableRecording &&
             this.props.transloaditAuthKey &&
-            this.props.transloaditTemplate
+            this.props.transloaditTemplate &&
+            !this.state.isPlaying
         );
     }
 
@@ -748,9 +725,6 @@ export default class LiveEditor extends Component {
             // While the audio is playing update the position on the progress
             // bar and update the time indicator
             whileplaying: function() {
-                if (!record.seeking) {
-                    // TODO: Make sure user can seek while its playing!
-                }
                 self.setState({audioCurrentTime: record.currentTime()});
                 record.trigger("playUpdate");
             },
@@ -912,10 +886,6 @@ export default class LiveEditor extends Component {
                 }
 
                 this.setState({isPlaying: true});
-                // During playback, disable recording
-                // TODO: Can probably remove this, if this is entirely
-                //  a function of isPlaying
-                this.setState({enableRecording: false});
                 this.props.onPlayingChange && this.props.onPlayingChange(true);
             },
 
@@ -930,11 +900,6 @@ export default class LiveEditor extends Component {
             // Playback of a recording has been paused
             playPaused: () => {
                 this.setState({isPlaying: false});
-
-                // Re-enable recording after playback
-                // TODO: Can probably remove this, if this is entirely
-                //  a function of isPlaying
-                this.setState({enableRecording: true});
 
                 // Turn off playback-related styling
                 document.querySelector("html").classList.remove("playing");
@@ -957,7 +922,6 @@ export default class LiveEditor extends Component {
                 // Reset the canvas to its initial state only if this is the
                 // very first chunk we are recording.
                 if (record.hasNoChunks()) {
-                    // TODO: Use ref or props
                     this.drawCanvas.clear(true);
                     this.drawCanvas.endDraw();
                 }

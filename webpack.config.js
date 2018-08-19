@@ -116,7 +116,6 @@ const config = {
     plugins: [
         new CopyWebpackPlugin([
             // Copy worker files
-            // TODO(pamela): Investigate which files are still needed
             {
                 from: "node_modules/ace-builds/src-noconflict/worker-html.js",
                 to: path.resolve(__dirname, "build/workers/webpage"),

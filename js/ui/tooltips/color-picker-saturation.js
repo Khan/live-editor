@@ -1,10 +1,10 @@
-import React from "react";
+import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 import Color from "color";
 
 const containerSize = 150;
 
-export default class SaturationPicker extends React.Component {
+export default class SaturationPicker extends Component {
     props: {
         color: Object, // h, s, l
         onColorChange: Function,

@@ -1,8 +1,8 @@
-import React from "react";
+import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 import Color from "color";
 
-export default class HuePicker extends React.Component {
+export default class HuePicker extends Component {
     props: {
         color: Object, // h, s, l
         onColorChange: Function,

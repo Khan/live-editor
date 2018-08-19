@@ -126,9 +126,7 @@ export default class ImagePicker extends Component {
     }
 
     handleMouseLeave() {
-        // TODO: This may not be needed here
         this.props.onLoseFocus();
-        // TODO? this.props.aceEditor.clearSelection();
     }
 
     handleImageSelect(imageName) {

@@ -53,7 +53,6 @@ export default class LiveEditorOutput extends Component {
             useDebugger: this.props.useDebugger,
         });
 
-        // TODO(pamela): Move these into state
         this.recording = false;
         this.loaded = false;
         this.lintErrors = [];
@@ -112,11 +111,10 @@ export default class LiveEditorOutput extends Component {
             testCodeReq: this.state.testCodeReq,
             toggleReq: this.state.toggleReq,
             onCanvasEvent: (e) => {
-                const offset = utils.getOffset(e.target);
-                // Only log if recording is occurring
+                // Log the command if recording is occurring
                 if (this.recording) {
-                    // Log the command
                     // Track the x/y coordinates of the event
+                    const offset = utils.getOffset(e.target);
                     const x = e.pageX - offset.left;
                     const y = e.pageY - offset.top;
                     this.postParent({
@@ -494,7 +492,6 @@ export default class LiveEditorOutput extends Component {
         this.setState({toggleReq: {timestamp: Date.now(), doToggle: doToggle}});
     }
 
-    // TODO(pamela): Stop referencing the child ref.
     restart() {
         // This is called on load and it's possible that the output
         // hasn't been set yet.

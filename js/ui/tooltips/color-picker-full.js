@@ -1,11 +1,11 @@
-import React from "react";
+import React, {Component} from "react";
 import {StyleSheet, css} from "aphrodite/no-important";
 import Color from "color";
 
 import HuePicker from "./color-picker-hue.js";
 import SaturationPicker from "./color-picker-saturation.js";
 
-export default class ColorPickerFull extends React.Component {
+export default class ColorPickerFull extends Component {
     props: {
         color: Object,
         onColorChange: Function,

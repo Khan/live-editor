@@ -38,14 +38,12 @@ export default class RecordControls extends Component {
 
         this.savedAudioRef = React.createRef();
 
-        // TODO: Handle interaction with outside views/models via callbacks
         this.editor = this.props.editor;
         this.record = this.props.record;
         this.config = this.props.config;
         this.drawCanvas = this.props.drawCanvas;
         this.audioChunks = new RecordChunks();
 
-        // TODO: Move these into state
         this.recordInProgress = false;
         this.commandChunks = [];
         this.startingCode = "";

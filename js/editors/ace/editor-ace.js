@@ -139,8 +139,6 @@ export default class AceEditorWrapper extends Component {
         });
 
         this.editor.session.getDocument().on("change", (e) => {
-            // TODO: Turn off if tooltips disabled, like from recording?
-            // See https://github.com/Khan/live-editor/blob/51c89d39f2055f5e8437e7a6f012d07fc2792631/js/ui/tooltip-engine.js#L78
             this.handleTooltipableEvent(e);
         });
 

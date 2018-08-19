@@ -28,13 +28,7 @@ export default class TooltipEngine extends Component {
         this.handleBlurEvent = this.handleBlurEvent.bind(this);
 
         const record = props.record;
-        if (record && !record.handlers.hot) {
-            record.handlers.hot = (e) => {
-                if (this.state.currentTooltip) {
-                    //TODO: TooltipBase.prototype.updateText.call(this.tooltip, e.hot);
-                }
-            };
-
+        if (record) {
             // disable autofill when playback or seeking has started
             ["playStarted", "runSeek"].forEach((event) => {
                 record.on(event, () => {
@@ -49,12 +43,6 @@ export default class TooltipEngine extends Component {
                 });
             });
         }
-    }
-
-    componentDidMount() {
-        // TODO(pamela)
-        //document.body.addEventListener("click", this.handleBlurEvent);
-        //document.body.addEventListener("contextmenu", this.handleBlurEvent);
     }
 
     componentDidUpdate(prevProps) {

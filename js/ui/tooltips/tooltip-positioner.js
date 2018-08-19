@@ -65,10 +65,6 @@ export default class TooltipPositioner extends Component {
     }
 
     render() {
-        // TODO: We should sometimes disable if aceEditor is readonly
-        // But we can't disable always because we actually SET IT to readOnly
-        // during number scrubbing (if aceEditor.isReadOnly())
-        // Maybe only during playback, we disable entirely?
         if (this.state.top === undefined) {
             return null;
         }

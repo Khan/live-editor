@@ -35,7 +35,6 @@ export default class EditorSide extends Component {
     }
 
     renderYoutubePlaybackLink() {
-        // TODO: Trigger after timeout, see webapp
         if (
             !(this.props.youtubeUrl && this.props.showYoutubeLink) ||
             this.state.closedYoutubeLink
