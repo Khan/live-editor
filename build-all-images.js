@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Running this file will regenerate js/shared/all-images.js
  */
@@ -9,16 +10,11 @@ fs.readdirSync("images").forEach(function(group) {
     if (fs.statSync(path.join("images", group)).isDirectory()) {
         images.push({
             groupName: group,
-            images: fs
-                .readdirSync(path.join("images", group))
-                .filter(function(image) {
-                    return fs
-                        .statSync(path.join("images", group, image))
-                        .isFile();
-                })
-                .map(function(image) {
-                    return image.replace(".png", "");
-                }),
+            images: fs.readdirSync(
+                path.join("images", group)).filter(function(image) {
+                    return fs.statSync(
+                        path.join("images", group, image)).isFile();
+                }).map(function(image) { return image.replace(".png", ""); }),
         });
     }
 });

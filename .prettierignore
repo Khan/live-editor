@@ -37,3 +37,4 @@ workers
 tests
 testutil
 gulpfile.js
+build-all-images.js

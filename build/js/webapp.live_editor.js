@@ -29155,26 +29155,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 /* globals i18n */
 
 
-// This adds html tags around quoted lines so they can be formatted
-var prettify = function prettify(str) {
-    str = str.split('"');
-    var htmlString = "";
-    for (var i = 0; i < str.length; i++) {
-        if (str[i].length === 0) {
-            continue;
-        }
-
-        if (i % 2 === 0) {
-            //regular text
-            htmlString += '<span class="text">' + str[i] + "</span>";
-        } else {
-            // text in quotes
-            htmlString += '<span class="quote">' + str[i] + "</span>";
-        }
-    }
-    return htmlString;
-};
-
 var clean = function clean(str) {
     return String(str).replace(/</g, "&lt;");
 };
@@ -30690,11 +30670,11 @@ var LiveEditor = function (_Component) {
                 // error.html was cleared above, so if it exists it's because we
                 // reset it, and it's safe.
                 if (typeof error === "string") {
-                    newError.text = clean(prettify(error));
+                    newError.text = clean(error);
                 } else if (error.html) {
-                    newError.text = prettify(error.html);
+                    newError.text = error.html;
                 } else {
-                    newError.text = prettify(clean(error.text || error.message || ""));
+                    newError.text = clean(error.text || error.message || "");
                 }
 
                 // Coerce anything from the user to the expected types before
@@ -31627,6 +31607,34 @@ var TipBar = function (_Component) {
             this.props.onLoseFocus();
         }
     }, {
+        key: "renderMessage",
+        value: function renderMessage(errorMsg) {
+            var messageParts = errorMsg.split('"').map(function (str, i) {
+                if (str.length === 0) {
+                    return;
+                }
+                if (i % 2 === 0) {
+                    return _react2.default.createElement(
+                        "span",
+                        null,
+                        str
+                    );
+                } else {
+                    // text inside quotes, used for suggesting how to use functions
+                    return _react2.default.createElement(
+                        "span",
+                        { className: (0, _noImportant.css)(styles.quoted) },
+                        str
+                    );
+                }
+            });
+            return _react2.default.createElement(
+                "div",
+                { className: (0, _noImportant.css)(styles.message) },
+                messageParts
+            );
+        }
+    }, {
         key: "render",
         value: function render() {
             if (this.props.isHidden || !this.props.errors.length) {
@@ -31636,9 +31644,7 @@ var TipBar = function (_Component) {
             var errorNum = errors[this.state.errorNum] == null ? 0 : this.state.errorNum;
             var currentError = errors[errorNum];
 
-            var messageHtml = {
-                __html: currentError.text || currentError || ""
-            };
+            var message = currentError.text || currentError || "";
 
             var showMeDiv = void 0;
             if (currentError.row > -1) {
@@ -31698,12 +31704,12 @@ var TipBar = function (_Component) {
                     },
                     _react2.default.createElement(
                         "div",
-                        { className: "tipbar" },
-                        _react2.default.createElement("div", { className: "speech-arrow" }),
-                        _react2.default.createElement("div", { className: "error-buddy" }),
+                        { className: (0, _noImportant.css)(styles.errorBuddyWrapper) },
+                        _react2.default.createElement("div", { className: (0, _noImportant.css)(styles.speechArrow) }),
+                        _react2.default.createElement("div", { className: (0, _noImportant.css)(styles.errorBuddyImg) }),
                         _react2.default.createElement(
                             "div",
-                            { className: "text-wrap" },
+                            { className: (0, _noImportant.css)(styles.messageBubble) },
                             _react2.default.createElement(_wonderBlocksIconButton2.default, {
                                 style: styles.closeButton,
                                 icon: _wonderBlocksIcon.icons.dismiss,
@@ -31716,10 +31722,7 @@ var TipBar = function (_Component) {
                                 { className: (0, _noImportant.css)(styles.ohNoHeader) },
                                 i18n._("Oh noes!")
                             ),
-                            _react2.default.createElement("div", {
-                                className: "message",
-                                dangerouslySetInnerHTML: messageHtml
-                            }),
+                            this.renderMessage(message),
                             showMeDiv,
                             navDiv
                         )
@@ -31743,6 +31746,62 @@ var styles = _noImportant.StyleSheet.create({
     errorOverlay: {
         background: "rgba(255,255,255,0.6)",
         zIndex: "auto"
+    },
+    errorBuddyWrapper: {
+        borderRadius: "10px",
+        /* Needs to match the background image */
+        background: "#F9F9F9",
+        border: "1px solid #EEE",
+        boxShadow: "2px 2px 5px rgba(0, 0, 0, 0.5)",
+        color: "#000",
+        fontFamily: "Helvetica, sans-serif",
+        fontWeight: "normal",
+        left: "125px",
+        margin: "auto",
+        minHeight: "40px",
+        position: "absolute",
+        top: "100px",
+        width: "260px"
+    },
+    errorBuddyImg: {
+        background: "url(../../images/scratchpads/error-buddy.png)",
+        cursor: "move",
+        height: "116px",
+        left: "-140px",
+        opacity: 0.75,
+        position: "absolute",
+        top: "-12px",
+        width: "130px"
+    },
+    speechArrow: {
+        backgroundImage: "url(../../images/scratchpads/speech-arrow.png)",
+        backgroundRepeat: "no-repeat",
+        height: "24px",
+        left: "-14px",
+        position: "absolute",
+        top: "40px",
+        width: "14px"
+    },
+    messageBubble: {
+        lineHeight: "1.4em",
+        margin: "8px"
+    },
+    quoted: {
+        background: "#fff",
+        border: "1px solid #EEE",
+        borderRadius: "5px",
+        display: "inline-block",
+        fontFamily: "Consolas, Courier New, monospace",
+        fontSize: "14px",
+        lineHeight: "22px",
+        margin: "0px 2px",
+        padding: "1px 4px",
+        textAlign: "left"
+    },
+    message: {
+        lineHeight: "20px",
+        margin: "10px 0px",
+        textAlign: "left"
     },
     closeButton: {
         float: "right"

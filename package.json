@@ -112,8 +112,8 @@
   },
   "pre-commit": [
     "lint",
-    "test",
     "pretty-quick",
-    "build"
+    "build",
+    "test"
   ]
 }

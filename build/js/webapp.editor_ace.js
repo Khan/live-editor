@@ -27078,7 +27078,7 @@ var AutoSuggest = function (_Component) {
     }, {
         key: "render",
         value: function render() {
-            // TODO(pamela) Hide this tooltip while playing
+            // STOPSHIP(pamela): Hide this tooltip while playing
             if (!this.props.isEnabled || this.state.isHidden) {
                 return null;
             }
