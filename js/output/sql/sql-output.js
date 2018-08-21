@@ -243,7 +243,7 @@ export default class SQLOutput extends Component {
                     lint: undefined,
                     priority: 2
                 }],
-                warnings: [],
+                warnings: []
             });
         }
 
@@ -358,8 +358,8 @@ export default class SQLOutput extends Component {
         }
     }
 
-    test(code, tests, errors, timestamp) {
-        const errorCount = errors.length;
+    test(userCode, tests, errors, timestamp) {
+        var errorCount = errors.length;
 
         this.tester.test(this.dbInfo, tests, errors,
             function(errors, testResults) {
@@ -374,7 +374,7 @@ export default class SQLOutput extends Component {
                         "making it unable to run."));
             }
             this.props.onCodeTest({
-                code,
+                code: userCode,
                 errors,
                 results: testResults,
                 timestamp,

@@ -475,10 +475,10 @@ var SQLOutput = function (_Component) {
         }
     }, {
         key: "runCode",
-        value: function runCode(code, timestamp) {
+        value: function runCode(userCode, timestamp) {
             if (!SQLOutput.isSupported()) {
                 return this.props.onCodeRun({
-                    code: code,
+                    code: userCode,
                     errors: [],
                     timestamp: timestamp
                 });
@@ -486,7 +486,7 @@ var SQLOutput = function (_Component) {
 
             var db = new _sql2.default.Database();
 
-            var results = _sqlTester2.default.Util.execWithResults(db, code);
+            var results = _sqlTester2.default.Util.execWithResults(db, userCode);
             var tables = _sqlTester2.default.Util.getTables(db);
             db.close();
 
@@ -504,7 +504,7 @@ var SQLOutput = function (_Component) {
             doc.close();
 
             this.props.onCodeRun({
-                code: code,
+                code: userCode,
                 errors: [],
                 timestamp: timestamp
             });
