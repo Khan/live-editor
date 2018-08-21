@@ -2,9 +2,12 @@ js/ui/blockly-processing-blocks.js
 js/ui/autosuggest.js
 js/ui/debugger.js
 js/ui/structured-blocks-tooltips.js
+js/output/shared/ast-walker.js
 js/output/shared/output-tester.js
 js/output/shared/pooled-worker.js
 js/output/pjs/babyhint.js
 js/output/pjs/pjs-ast-transforms.js
 js/output/pjs/pjs-debugger.js
 js/output/pjs/pjs-output.js
+js/output/pjs/pjs-utils.js
+js/output/pjs/pjs-tester.js

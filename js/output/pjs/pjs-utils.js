@@ -1,5 +1,3 @@
-/* eslint-disable no-var */
-/* TODO: Fix the lint errors */
 const PJSUtils = {
     /**
      * Returns code contained within a function.

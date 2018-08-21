@@ -29988,7 +29988,7 @@ var PJSOutput = function (_Component) {
         }
     }, {
         key: "test",
-        value: function test(code, tests, errors, timestamp) {
+        value: function test(userCode, tests, errors, timestamp) {
             var errorCount = errors.length;
 
             this.tester.testWorker.exec(userCode, tests, errors, function (errors, testResults) {
@@ -30002,9 +30002,9 @@ var PJSOutput = function (_Component) {
                 }
 
                 this.props.onCodeTest({
-                    code: code,
+                    code: userCode,
                     errors: errors,
-                    results: results,
+                    results: testResults,
                     timestamp: timestamp
                 });
             }.bind(this));
