@@ -24,6 +24,7 @@ import RecordControls from "./ui/record-controls.js";
 import RestartButton from "./ui/restart-button.js";
 import ScratchpadConfig from "./shared/config.js";
 import ScratchpadRecordModel from "./shared/record.js";
+import UndoButton from "./ui/undo-button.js";
 import * as utils from "./shared/utils.js";
 
 import "../css/ui/flashblock.css";
@@ -53,6 +54,8 @@ export default class LiveEditor extends Component {
         outputHeight: string,
         editorAutoFocus: boolean,
         editorCursor: Object,
+        editorDisablePaste: boolean,
+        editorDisablePasteMsg: string,
         editorFolds: Array,
         editorHeight: string,
         version: string,
@@ -61,6 +64,7 @@ export default class LiveEditor extends Component {
         hideEditor: boolean,
         enableLoopProtect: boolean,
         restartLabel: string,
+        showUndoButton: boolean,
         documentation: Array, // Array of strings
         toolbarLeftComponents: Array, // Array of components
         toolbarRightComponents: Array,
@@ -181,6 +185,7 @@ export default class LiveEditor extends Component {
         this.handleRecordClick = this.handleRecordClick.bind(this);
         this.handleMessages = this.handleMessages.bind(this);
         this.handleMiniClick = this.handleMiniClick.bind(this);
+        this.handleUndoClick = this.handleUndoClick.bind(this);
         this.handleRestartClick = this.handleRestartClick.bind(this);
         this.handleOverlayClick = this.handleOverlayClick.bind(this);
         this.handleRecordColorClick = this.handleRecordColorClick.bind(this);
@@ -287,6 +292,8 @@ export default class LiveEditor extends Component {
             code: this.props.code,
             folds: this.props.editorFolds,
             autoFocus: this.props.editorAutoFocus,
+            disablePaste: this.props.editorDisablePaste,
+            disablePasteMsg: this.props.editorDisablePasteMsg,
             errors: this.state.errors,
             warnings: this.state.warnings,
             highlightErrorReq: this.state.highlightErrorReq,
@@ -351,6 +358,13 @@ export default class LiveEditor extends Component {
                 onClick={this.handleMiniClick}
             />
         );
+        const undoButton = (
+            <UndoButton
+                key="undobutton"
+                isHidden={!this.props.showUndoButton}
+                onClick={this.handleUndoClick}
+            />
+        );
         const restartButton = (
             <RestartButton
                 key="restartButton"
@@ -363,7 +377,10 @@ export default class LiveEditor extends Component {
         );
         const extraProps = {
             aceEditorWrapper: this.renderAceEditorWrapper(),
-            leftComponents: this.props.toolbarLeftComponents.concat(errorBuddy),
+            leftComponents: this.props.toolbarLeftComponents.concat(
+                undoButton,
+                errorBuddy,
+            ),
             rightComponents: [restartButton].concat(
                 this.props.toolbarRightComponents,
             ),
@@ -1006,6 +1023,11 @@ export default class LiveEditor extends Component {
         this.record && this.record.log("restart");
     }
 
+    handleUndoClick() {
+        this.aceWrapperRef.current.undo();
+        this.aceWrapperRef.current.editor.focus();
+    }
+
     handleOverlayClick() {
         // If the user clicks the disable overlay (which is laid over
         // the editor and canvas on playback) then pause playback.
@@ -1502,10 +1524,6 @@ export default class LiveEditor extends Component {
 
     requestEditorCodeChange(code) {
         this.aceWrapperRef.current.text(code);
-    }
-
-    requestEditorUndo() {
-        this.aceWrapperRef.current.undo();
     }
 
     cleanErrors(errors) {

@@ -40,6 +40,8 @@ export default class AceEditorWrapper extends Component {
         imagesDir: string,
         soundsDir: string,
         autoFocus: boolean,
+        disablePaste: boolean,
+        disablePasteMsg: string,
         readOnly: boolean,
         errors: Array,
         warnings: Array,
@@ -148,6 +150,10 @@ export default class AceEditorWrapper extends Component {
         this.config.on("versionSwitched", (version) => {
             this.config.runVersion(version, this.props.type + "_editor", this);
         });
+
+        if (this.props.disablePaste) {
+            this.blockPaste();
+        }
 
         this.config.editor = this;
 
@@ -534,9 +540,14 @@ export default class AceEditorWrapper extends Component {
         });
     }
 
-    blockPaste(chastise) {
+    blockPaste() {
         // Used throughout the function
-        var aceEditor = this.editor;
+        const aceEditor = this.editor;
+
+        const notifyUser = () => {
+            // eslint-disable-next-line no-alert
+            window.alert(this.props.disablePasteMsg);
+        };
 
         // First, we remember the original functions, but only once,
         // in case this function gets run again
@@ -554,7 +565,7 @@ export default class AceEditorWrapper extends Component {
             aceEditor.lastCopied = this.getSelectedText();
             aceEditor.originalCopy.apply(aceEditor);
         };
-        aceEditor.onPaste = function(clipboardText) {
+        aceEditor.onPaste = (clipboardText) => {
             // Allow them to paste either if it matches what they cut/copied,
             // or if its a small # of characters, most likely symbols
             // that dont exist on their keyboard, or if its a URL
@@ -571,7 +582,7 @@ export default class AceEditorWrapper extends Component {
                 aceEditor.originalPaste.apply(aceEditor, [clipboardText]);
                 return;
             } else {
-                chastise();
+                notifyUser();
             }
         };
 
@@ -587,7 +598,7 @@ export default class AceEditorWrapper extends Component {
             "drop",
             function(e) {
                 if (!isLocal) {
-                    chastise();
+                    notifyUser();
                     e.stopPropagation();
                 }
             },

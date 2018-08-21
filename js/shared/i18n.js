@@ -2,7 +2,7 @@
 /* TODO: Fix the lint errors */
 import Jed from "jed";
 
-(function() {
+(function(global) {
     // If no language is specified, or if an unknown language is specified,
     // then fall back to using "en" as the base language
     var defaultLang = "en";
@@ -305,8 +305,8 @@ import Jed from "jed";
             options.inverse(this);
     };
 
-    window.i18n = i18n;
-})();
+    global.i18n = i18n;
+})(typeof window !== "undefined" ? window : global);
 
 if (typeof Handlebars !== "undefined") {
     Handlebars.registerHelper("_", i18n.handlebars_underscore);

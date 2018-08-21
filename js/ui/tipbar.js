@@ -72,10 +72,14 @@ export default class TipBar extends Component {
                 return;
             }
             if (i % 2 === 0) {
-                return <span>{str}</span>;
+                return <span key={i}>{str}</span>;
             } else {
                 // text inside quotes, used for suggesting how to use functions
-                return <span className={css(styles.quoted)}>{str}</span>;
+                return (
+                    <span key={i} className={css(styles.quoted)}>
+                        {str}
+                    </span>
+                );
             }
         });
         return <div className={css(styles.message)}>{messageParts}</div>;

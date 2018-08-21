@@ -136,6 +136,7 @@ export default class AutoSuggest extends Component {
             <AutoSuggestPopup
                 functionData={this.state.functionData}
                 paramsToCursor={this.state.paramsToCursor}
+                onMouseDown={this.handleMouseDown}
             />
         );
         return (

@@ -24,6 +24,7 @@ const config = {
         output_webpage_deps: ["./external/html2canvas/html2canvas.js"],
         output_sql_deps: ["./external/html2canvas/html2canvas.js"],
         test_worker: [
+            "./js/shared/i18n.js",
             "./js/workers/pjs/underscore-exposed.js",
             "./js/workers/pjs/test-worker.js",
         ],

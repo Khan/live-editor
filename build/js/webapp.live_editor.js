@@ -3093,6 +3093,566 @@ module.exports =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 9);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports) {
+
+module.exports = __webpack_require__(19);
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+module.exports = __webpack_require__(0);
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+module.exports = __webpack_require__(1);
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports) {
+
+module.exports = __webpack_require__(15);
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+module.exports = __webpack_require__(58);
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
+module.exports = __webpack_require__(17);
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+module.exports = __webpack_require__(3);
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(2);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _aphrodite = __webpack_require__(6);
+
+var _reactRouterDom = __webpack_require__(5);
+
+var _propTypes = __webpack_require__(1);
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _wonderBlocksTypography = __webpack_require__(4);
+
+var _wonderBlocksColor = __webpack_require__(3);
+
+var _wonderBlocksColor2 = _interopRequireDefault(_wonderBlocksColor);
+
+var _wonderBlocksCore = __webpack_require__(0);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var StyledAnchor = (0, _wonderBlocksCore.addStyle)("a");
+var StyledButton = (0, _wonderBlocksCore.addStyle)("button");
+var StyledLink = (0, _wonderBlocksCore.addStyle)(_reactRouterDom.Link);
+
+var ButtonCore = function (_React$Component) {
+    _inherits(ButtonCore, _React$Component);
+
+    function ButtonCore() {
+        var _ref;
+
+        var _temp, _this, _ret;
+
+        _classCallCheck(this, ButtonCore);
+
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = ButtonCore.__proto__ || Object.getPrototypeOf(ButtonCore)).call.apply(_ref, [this].concat(args))), _this), _this.handleClick = function (e) {
+            if (_this.props.disabled) {
+                e.preventDefault();
+            }
+        }, _temp), _possibleConstructorReturn(_this, _ret);
+    }
+
+    _createClass(ButtonCore, [{
+        key: "render",
+        value: function render() {
+            var _props = this.props,
+                children = _props.children,
+                skipClientNav = _props.skipClientNav,
+                color = _props.color,
+                disabled = _props.disabled,
+                focused = _props.focused,
+                hovered = _props.hovered,
+                href = _props.href,
+                kind = _props.kind,
+                light = _props.light,
+                pressed = _props.pressed,
+                size = _props.size,
+                style = _props.style,
+                testId = _props.testId,
+                handlers = _objectWithoutProperties(_props, ["children", "skipClientNav", "color", "disabled", "focused", "hovered", "href", "kind", "light", "pressed", "size", "style", "testId"]);
+
+            var router = this.context.router;
+
+
+            var buttonColor = color === "destructive" ? _wonderBlocksColor.SemanticColor.controlDestructive : _wonderBlocksColor.SemanticColor.controlDefault;
+
+            var buttonStyles = _generateStyles(buttonColor, kind, light);
+
+            var defaultStyle = [sharedStyles.shared, disabled && sharedStyles.disabled, buttonStyles.default, disabled && buttonStyles.disabled, !disabled && (pressed ? buttonStyles.active : (hovered || focused) && buttonStyles.focus), size === "small" && sharedStyles.small];
+
+            var commonProps = _extends({
+                "aria-disabled": disabled ? "true" : undefined,
+                "data-test-id": testId,
+                style: [defaultStyle, style]
+            }, handlers);
+
+            var Label = size === "small" ? _wonderBlocksTypography.LabelSmall : _wonderBlocksTypography.LabelLarge;
+
+            var label = _react2.default.createElement(
+                Label,
+                { style: sharedStyles.text },
+                children
+            );
+
+            if (href) {
+                return router && !skipClientNav ? _react2.default.createElement(
+                    StyledLink,
+                    _extends({}, commonProps, {
+                        onClick: this.handleClick,
+                        to: href
+                    }),
+                    label
+                ) : _react2.default.createElement(
+                    StyledAnchor,
+                    _extends({}, commonProps, {
+                        onClick: this.handleClick,
+                        href: href
+                    }),
+                    label
+                );
+            } else {
+                return _react2.default.createElement(
+                    StyledButton,
+                    _extends({}, commonProps, { disabled: disabled }),
+                    label
+                );
+            }
+        }
+    }]);
+
+    return ButtonCore;
+}(_react2.default.Component);
+
+ButtonCore.contextTypes = { router: _propTypes2.default.any };
+exports.default = ButtonCore;
+
+
+var sharedStyles = _aphrodite.StyleSheet.create({
+    shared: {
+        position: "relative",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 40,
+        paddingTop: 0,
+        paddingBottom: 0,
+        paddingLeft: 16,
+        paddingRight: 16,
+        border: "none",
+        borderRadius: 4,
+        cursor: "pointer",
+        outline: "none",
+        textDecoration: "none",
+        boxSizing: "border-box"
+    },
+    disabled: {
+        cursor: "auto"
+    },
+    small: {
+        height: 32
+    },
+    text: {
+        fontWeight: "bold",
+        pointerEvents: "none" // fix Safari bug where the browser was eating mouse events
+    }
+});
+
+var styles = {};
+
+var _generateStyles = function _generateStyles(color, kind, light) {
+    var buttonType = color + kind + light.toString();
+    if (styles[buttonType]) {
+        return styles[buttonType];
+    }
+
+    var white = _wonderBlocksColor2.default.white,
+        white64 = _wonderBlocksColor2.default.white64,
+        offBlack32 = _wonderBlocksColor2.default.offBlack32,
+        offBlack50 = _wonderBlocksColor2.default.offBlack50,
+        darkBlue = _wonderBlocksColor2.default.darkBlue;
+
+    var fadedColor = (0, _wonderBlocksColor.mix)((0, _wonderBlocksColor.fade)(color, 0.32), white);
+    var activeColor = (0, _wonderBlocksColor.mix)(offBlack32, color);
+
+    var newStyles = {};
+    if (kind === "primary") {
+        newStyles = {
+            default: {
+                background: light ? white : color,
+                color: light ? color : white
+            },
+            focus: {
+                // This assumes a background of white for the regular button and
+                // a background of darkBlue for the light version. The inner
+                // box shadow/ring is also small enough for a slight variation
+                // in the background color not to matter too much.
+                boxShadow: "0 0 0 1px " + (light ? darkBlue : white) + ", 0 0 0 3px " + (light ? white : color)
+            },
+            active: {
+                boxShadow: "0 0 0 1px " + (light ? darkBlue : white) + ", 0 0 0 3px " + (light ? fadedColor : activeColor),
+                background: light ? fadedColor : activeColor,
+                color: light ? activeColor : fadedColor
+            },
+            disabled: {
+                background: light ? fadedColor : offBlack32,
+                color: light ? color : white64,
+                cursor: "default"
+            }
+        };
+    } else if (kind === "secondary") {
+        newStyles = {
+            default: {
+                background: "none",
+                color: light ? white : color,
+                borderColor: light ? white64 : offBlack50,
+                borderStyle: "solid",
+                borderWidth: 1
+            },
+            focus: {
+                background: light ? "transparent" : white,
+                borderColor: light ? white : color,
+                borderWidth: 2,
+                paddingLeft: 15,
+                paddingRight: 15
+            },
+            active: {
+                background: light ? activeColor : fadedColor,
+                color: light ? fadedColor : activeColor,
+                borderColor: light ? fadedColor : activeColor,
+                borderWidth: 2,
+                paddingLeft: 15,
+                paddingRight: 15
+            },
+            disabled: {
+                color: light ? fadedColor : offBlack32,
+                borderColor: light ? fadedColor : offBlack32,
+                cursor: "default"
+            }
+        };
+    } else if (kind === "tertiary") {
+        newStyles = {
+            default: {
+                background: "none",
+                color: light ? white : color,
+                paddingLeft: 4,
+                paddingRight: 4
+            },
+            focus: {
+                ":after": {
+                    content: "''",
+                    position: "absolute",
+                    height: 2,
+                    width: "calc(100% - 8px)",
+                    bottom: "calc(50% - 11px)",
+                    background: light ? white : color,
+                    borderRadius: 2
+                }
+            },
+            active: {
+                color: light ? fadedColor : activeColor,
+                ":after": {
+                    content: "''",
+                    position: "absolute",
+                    height: 2,
+                    width: "calc(100% - 8px)",
+                    bottom: "calc(50% - 11px)",
+                    background: light ? fadedColor : activeColor,
+                    borderRadius: 2
+                }
+            },
+            disabled: {
+                color: light ? fadedColor : offBlack32,
+                cursor: "default"
+            }
+        };
+    } else {
+        throw new Error("Button kind not recognized");
+    }
+
+    styles[buttonType] = _aphrodite.StyleSheet.create(newStyles);
+    return styles[buttonType];
+};
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(2);
+
+var React = _interopRequireWildcard(_react);
+
+var _propTypes = __webpack_require__(1);
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _wonderBlocksCore = __webpack_require__(0);
+
+var _buttonCore = __webpack_require__(7);
+
+var _buttonCore2 = _interopRequireDefault(_buttonCore);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+/**
+ * Reusable button component.
+ *
+ * Consisting of a [`ClickableBehavior`](#clickablebehavior) surrounding a
+ * `ButtonCore`. `ClickableBehavior` handles interactions and state changes.
+ * `ButtonCore` is a stateless component which displays the different states
+ * the `Button` can take.
+ *
+ * Example usage:
+ * ```jsx
+ * <Button
+ *     onClick={(e) => console.log("Hello, world!")}
+ * >
+ *     Label
+ * </Button>
+ * ```
+ */
+var Button = function (_React$Component) {
+  _inherits(Button, _React$Component);
+
+  function Button() {
+    _classCallCheck(this, Button);
+
+    return _possibleConstructorReturn(this, (Button.__proto__ || Object.getPrototypeOf(Button)).apply(this, arguments));
+  }
+
+  _createClass(Button, [{
+    key: "render",
+    value: function render() {
+      var _props = this.props,
+          onClick = _props.onClick,
+          href = _props.href,
+          children = _props.children,
+          skipClientNav = _props.skipClientNav,
+          sharedProps = _objectWithoutProperties(_props, ["onClick", "href", "children", "skipClientNav"]);
+
+      var ClickableBehavior = (0, _wonderBlocksCore.getClickableBehavior)(href, skipClientNav, this.context.router);
+
+      return React.createElement(
+        ClickableBehavior,
+        {
+          disabled: sharedProps.disabled,
+          onClick: onClick,
+          href: href
+        },
+        function (state, handlers) {
+          return React.createElement(
+            _buttonCore2.default,
+            _extends({}, sharedProps, state, handlers, {
+              skipClientNav: skipClientNav,
+              href: href
+            }),
+            children
+          );
+        }
+      );
+    }
+  }]);
+
+  return Button;
+}(React.Component);
+
+Button.defaultProps = {
+  color: "default",
+  kind: "primary",
+  light: false,
+  size: "medium",
+  disabled: false
+};
+Button.contextTypes = { router: _propTypes2.default.any };
+exports.default = Button;
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = undefined;
+
+var _button = __webpack_require__(8);
+
+var _button2 = _interopRequireDefault(_button);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.default = _button2.default;
+
+/***/ })
+/******/ ]);
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports =
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(__webpack_require__.s = 21);
 /******/ })
 /************************************************************************/
@@ -5020,567 +5580,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /******/ ]);
 
 /***/ }),
-/* 19 */,
-/* 20 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports =
-/******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// define __esModule on exports
-/******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 		}
-/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 	};
-/******/
-/******/ 	// create a fake namespace object
-/******/ 	// mode & 1: value is a module id, require it
-/******/ 	// mode & 2: merge all properties of value into the ns
-/******/ 	// mode & 4: return value when already ns object
-/******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
-/******/ 		return ns;
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 9);
-/******/ })
-/************************************************************************/
-/******/ ([
-/* 0 */
-/***/ (function(module, exports) {
-
-module.exports = __webpack_require__(18);
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-module.exports = __webpack_require__(0);
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports) {
-
-module.exports = __webpack_require__(1);
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports) {
-
-module.exports = __webpack_require__(15);
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-module.exports = __webpack_require__(58);
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports) {
-
-module.exports = __webpack_require__(17);
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-module.exports = __webpack_require__(3);
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = __webpack_require__(2);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _aphrodite = __webpack_require__(6);
-
-var _reactRouterDom = __webpack_require__(5);
-
-var _propTypes = __webpack_require__(1);
-
-var _propTypes2 = _interopRequireDefault(_propTypes);
-
-var _wonderBlocksTypography = __webpack_require__(4);
-
-var _wonderBlocksColor = __webpack_require__(3);
-
-var _wonderBlocksColor2 = _interopRequireDefault(_wonderBlocksColor);
-
-var _wonderBlocksCore = __webpack_require__(0);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var StyledAnchor = (0, _wonderBlocksCore.addStyle)("a");
-var StyledButton = (0, _wonderBlocksCore.addStyle)("button");
-var StyledLink = (0, _wonderBlocksCore.addStyle)(_reactRouterDom.Link);
-
-var ButtonCore = function (_React$Component) {
-    _inherits(ButtonCore, _React$Component);
-
-    function ButtonCore() {
-        var _ref;
-
-        var _temp, _this, _ret;
-
-        _classCallCheck(this, ButtonCore);
-
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-            args[_key] = arguments[_key];
-        }
-
-        return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = ButtonCore.__proto__ || Object.getPrototypeOf(ButtonCore)).call.apply(_ref, [this].concat(args))), _this), _this.handleClick = function (e) {
-            if (_this.props.disabled) {
-                e.preventDefault();
-            }
-        }, _temp), _possibleConstructorReturn(_this, _ret);
-    }
-
-    _createClass(ButtonCore, [{
-        key: "render",
-        value: function render() {
-            var _props = this.props,
-                children = _props.children,
-                skipClientNav = _props.skipClientNav,
-                color = _props.color,
-                disabled = _props.disabled,
-                focused = _props.focused,
-                hovered = _props.hovered,
-                href = _props.href,
-                kind = _props.kind,
-                light = _props.light,
-                pressed = _props.pressed,
-                size = _props.size,
-                style = _props.style,
-                testId = _props.testId,
-                handlers = _objectWithoutProperties(_props, ["children", "skipClientNav", "color", "disabled", "focused", "hovered", "href", "kind", "light", "pressed", "size", "style", "testId"]);
-
-            var router = this.context.router;
-
-
-            var buttonColor = color === "destructive" ? _wonderBlocksColor.SemanticColor.controlDestructive : _wonderBlocksColor.SemanticColor.controlDefault;
-
-            var buttonStyles = _generateStyles(buttonColor, kind, light);
-
-            var defaultStyle = [sharedStyles.shared, disabled && sharedStyles.disabled, buttonStyles.default, disabled && buttonStyles.disabled, !disabled && (pressed ? buttonStyles.active : (hovered || focused) && buttonStyles.focus), size === "small" && sharedStyles.small];
-
-            var commonProps = _extends({
-                "aria-disabled": disabled ? "true" : undefined,
-                "data-test-id": testId,
-                style: [defaultStyle, style]
-            }, handlers);
-
-            var Label = size === "small" ? _wonderBlocksTypography.LabelSmall : _wonderBlocksTypography.LabelLarge;
-
-            var label = _react2.default.createElement(
-                Label,
-                { style: sharedStyles.text },
-                children
-            );
-
-            if (href) {
-                return router && !skipClientNav ? _react2.default.createElement(
-                    StyledLink,
-                    _extends({}, commonProps, {
-                        onClick: this.handleClick,
-                        to: href
-                    }),
-                    label
-                ) : _react2.default.createElement(
-                    StyledAnchor,
-                    _extends({}, commonProps, {
-                        onClick: this.handleClick,
-                        href: href
-                    }),
-                    label
-                );
-            } else {
-                return _react2.default.createElement(
-                    StyledButton,
-                    _extends({}, commonProps, { disabled: disabled }),
-                    label
-                );
-            }
-        }
-    }]);
-
-    return ButtonCore;
-}(_react2.default.Component);
-
-ButtonCore.contextTypes = { router: _propTypes2.default.any };
-exports.default = ButtonCore;
-
-
-var sharedStyles = _aphrodite.StyleSheet.create({
-    shared: {
-        position: "relative",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        height: 40,
-        paddingTop: 0,
-        paddingBottom: 0,
-        paddingLeft: 16,
-        paddingRight: 16,
-        border: "none",
-        borderRadius: 4,
-        cursor: "pointer",
-        outline: "none",
-        textDecoration: "none",
-        boxSizing: "border-box"
-    },
-    disabled: {
-        cursor: "auto"
-    },
-    small: {
-        height: 32
-    },
-    text: {
-        fontWeight: "bold",
-        pointerEvents: "none" // fix Safari bug where the browser was eating mouse events
-    }
-});
-
-var styles = {};
-
-var _generateStyles = function _generateStyles(color, kind, light) {
-    var buttonType = color + kind + light.toString();
-    if (styles[buttonType]) {
-        return styles[buttonType];
-    }
-
-    var white = _wonderBlocksColor2.default.white,
-        white64 = _wonderBlocksColor2.default.white64,
-        offBlack32 = _wonderBlocksColor2.default.offBlack32,
-        offBlack50 = _wonderBlocksColor2.default.offBlack50,
-        darkBlue = _wonderBlocksColor2.default.darkBlue;
-
-    var fadedColor = (0, _wonderBlocksColor.mix)((0, _wonderBlocksColor.fade)(color, 0.32), white);
-    var activeColor = (0, _wonderBlocksColor.mix)(offBlack32, color);
-
-    var newStyles = {};
-    if (kind === "primary") {
-        newStyles = {
-            default: {
-                background: light ? white : color,
-                color: light ? color : white
-            },
-            focus: {
-                // This assumes a background of white for the regular button and
-                // a background of darkBlue for the light version. The inner
-                // box shadow/ring is also small enough for a slight variation
-                // in the background color not to matter too much.
-                boxShadow: "0 0 0 1px " + (light ? darkBlue : white) + ", 0 0 0 3px " + (light ? white : color)
-            },
-            active: {
-                boxShadow: "0 0 0 1px " + (light ? darkBlue : white) + ", 0 0 0 3px " + (light ? fadedColor : activeColor),
-                background: light ? fadedColor : activeColor,
-                color: light ? activeColor : fadedColor
-            },
-            disabled: {
-                background: light ? fadedColor : offBlack32,
-                color: light ? color : white64,
-                cursor: "default"
-            }
-        };
-    } else if (kind === "secondary") {
-        newStyles = {
-            default: {
-                background: "none",
-                color: light ? white : color,
-                borderColor: light ? white64 : offBlack50,
-                borderStyle: "solid",
-                borderWidth: 1
-            },
-            focus: {
-                background: light ? "transparent" : white,
-                borderColor: light ? white : color,
-                borderWidth: 2,
-                paddingLeft: 15,
-                paddingRight: 15
-            },
-            active: {
-                background: light ? activeColor : fadedColor,
-                color: light ? fadedColor : activeColor,
-                borderColor: light ? fadedColor : activeColor,
-                borderWidth: 2,
-                paddingLeft: 15,
-                paddingRight: 15
-            },
-            disabled: {
-                color: light ? fadedColor : offBlack32,
-                borderColor: light ? fadedColor : offBlack32,
-                cursor: "default"
-            }
-        };
-    } else if (kind === "tertiary") {
-        newStyles = {
-            default: {
-                background: "none",
-                color: light ? white : color,
-                paddingLeft: 4,
-                paddingRight: 4
-            },
-            focus: {
-                ":after": {
-                    content: "''",
-                    position: "absolute",
-                    height: 2,
-                    width: "calc(100% - 8px)",
-                    bottom: "calc(50% - 11px)",
-                    background: light ? white : color,
-                    borderRadius: 2
-                }
-            },
-            active: {
-                color: light ? fadedColor : activeColor,
-                ":after": {
-                    content: "''",
-                    position: "absolute",
-                    height: 2,
-                    width: "calc(100% - 8px)",
-                    bottom: "calc(50% - 11px)",
-                    background: light ? fadedColor : activeColor,
-                    borderRadius: 2
-                }
-            },
-            disabled: {
-                color: light ? fadedColor : offBlack32,
-                cursor: "default"
-            }
-        };
-    } else {
-        throw new Error("Button kind not recognized");
-    }
-
-    styles[buttonType] = _aphrodite.StyleSheet.create(newStyles);
-    return styles[buttonType];
-};
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = __webpack_require__(2);
-
-var React = _interopRequireWildcard(_react);
-
-var _propTypes = __webpack_require__(1);
-
-var _propTypes2 = _interopRequireDefault(_propTypes);
-
-var _wonderBlocksCore = __webpack_require__(0);
-
-var _buttonCore = __webpack_require__(7);
-
-var _buttonCore2 = _interopRequireDefault(_buttonCore);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-/**
- * Reusable button component.
- *
- * Consisting of a [`ClickableBehavior`](#clickablebehavior) surrounding a
- * `ButtonCore`. `ClickableBehavior` handles interactions and state changes.
- * `ButtonCore` is a stateless component which displays the different states
- * the `Button` can take.
- *
- * Example usage:
- * ```jsx
- * <Button
- *     onClick={(e) => console.log("Hello, world!")}
- * >
- *     Label
- * </Button>
- * ```
- */
-var Button = function (_React$Component) {
-  _inherits(Button, _React$Component);
-
-  function Button() {
-    _classCallCheck(this, Button);
-
-    return _possibleConstructorReturn(this, (Button.__proto__ || Object.getPrototypeOf(Button)).apply(this, arguments));
-  }
-
-  _createClass(Button, [{
-    key: "render",
-    value: function render() {
-      var _props = this.props,
-          onClick = _props.onClick,
-          href = _props.href,
-          children = _props.children,
-          skipClientNav = _props.skipClientNav,
-          sharedProps = _objectWithoutProperties(_props, ["onClick", "href", "children", "skipClientNav"]);
-
-      var ClickableBehavior = (0, _wonderBlocksCore.getClickableBehavior)(href, skipClientNav, this.context.router);
-
-      return React.createElement(
-        ClickableBehavior,
-        {
-          disabled: sharedProps.disabled,
-          onClick: onClick,
-          href: href
-        },
-        function (state, handlers) {
-          return React.createElement(
-            _buttonCore2.default,
-            _extends({}, sharedProps, state, handlers, {
-              skipClientNav: skipClientNav,
-              href: href
-            }),
-            children
-          );
-        }
-      );
-    }
-  }]);
-
-  return Button;
-}(React.Component);
-
-Button.defaultProps = {
-  color: "default",
-  kind: "primary",
-  light: false,
-  size: "medium",
-  disabled: false
-};
-Button.contextTypes = { router: _propTypes2.default.any };
-exports.default = Button;
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = undefined;
-
-var _button = __webpack_require__(8);
-
-var _button2 = _interopRequireDefault(_button);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-exports.default = _button2.default;
-
-/***/ })
-/******/ ]);
-
-/***/ }),
+/* 20 */,
 /* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -8117,7 +8117,7 @@ module.exports =
 /* 0 */
 /***/ (function(module, exports) {
 
-module.exports = __webpack_require__(18);
+module.exports = __webpack_require__(19);
 
 /***/ }),
 /* 1 */
@@ -14655,7 +14655,7 @@ exports.default = styles;
 /* 1 */
 /***/ (function(module, exports) {
 
-module.exports = __webpack_require__(18);
+module.exports = __webpack_require__(19);
 
 /***/ }),
 /* 2 */
@@ -29078,7 +29078,7 @@ var _classnames2 = _interopRequireDefault(_classnames);
 
 var _noImportant = __webpack_require__(3);
 
-var _wonderBlocksButton = __webpack_require__(20);
+var _wonderBlocksButton = __webpack_require__(18);
 
 var _wonderBlocksButton2 = _interopRequireDefault(_wonderBlocksButton);
 
@@ -29134,11 +29134,15 @@ var _record = __webpack_require__(171);
 
 var _record2 = _interopRequireDefault(_record);
 
+var _undoButton = __webpack_require__(172);
+
+var _undoButton2 = _interopRequireDefault(_undoButton);
+
 var _utils = __webpack_require__(31);
 
 var utils = _interopRequireWildcard(_utils);
 
-__webpack_require__(172);
+__webpack_require__(173);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -29259,6 +29263,7 @@ var LiveEditor = function (_Component) {
         _this.handleRecordClick = _this.handleRecordClick.bind(_this);
         _this.handleMessages = _this.handleMessages.bind(_this);
         _this.handleMiniClick = _this.handleMiniClick.bind(_this);
+        _this.handleUndoClick = _this.handleUndoClick.bind(_this);
         _this.handleRestartClick = _this.handleRestartClick.bind(_this);
         _this.handleOverlayClick = _this.handleOverlayClick.bind(_this);
         _this.handleRecordColorClick = _this.handleRecordColorClick.bind(_this);
@@ -29275,33 +29280,7 @@ var LiveEditor = function (_Component) {
         value: function componentDidMount() {
             var _this2 = this;
 
-            // Change the width and height of the output frame if it's been
-            // changed by the user, via the query string, or in the settings
-            //TODO(pamela): this.updateCanvasSize(this.props.width, this.props.height);
-
             window.addEventListener("message", this.handleMessages);
-
-            // This function will fire once after each synchronous block which
-            // changes the cursor or the current selection.
-            // We use it for tag highlighting in webpages.
-            var cursorDirty = function cursorDirty() {
-                if (_this2.outputState !== "clean") {
-                    // This will fire after markDirty() itself gets a chance to start a new run
-                    // So it will just keep resetting itself until one run comes back and there are
-                    // no changes waiting
-                    self.once("runDone", cursorDirty);
-                } else {
-                    setTimeout(function () {
-                        if (self.editor.getSelectionIndices) {
-                            self.postFrame({
-                                setCursor: self.editor.getSelectionIndices()
-                            });
-                        }
-                        self.editor.once("changeCursor", cursorDirty);
-                    }, 0);
-                }
-            };
-            //this.aceWrapperRef.once("changeCursor", cursorDirty);
 
             this.config.on("versionSwitched", function (e, version) {
                 // Re-run the code after a version switch
@@ -29310,7 +29289,7 @@ var LiveEditor = function (_Component) {
                 // Run the JSHint config
                 _this2.config.runVersion(version, "jshint");
             });
-
+            // Track this so we can ignore debounced callbacks that try to setState
             this._isMounted = true;
         }
     }, {
@@ -29410,6 +29389,8 @@ var LiveEditor = function (_Component) {
                 code: this.props.code,
                 folds: this.props.editorFolds,
                 autoFocus: this.props.editorAutoFocus,
+                disablePaste: this.props.editorDisablePaste,
+                disablePasteMsg: this.props.editorDisablePasteMsg,
                 errors: this.state.errors,
                 warnings: this.state.warnings,
                 highlightErrorReq: this.state.highlightErrorReq,
@@ -29440,7 +29421,6 @@ var LiveEditor = function (_Component) {
                     _this6.props.onCursorChange && _this6.props.onCursorChange(cursor);
                 },
                 onClick: function onClick() {
-                    // TODO: make big play go away
                     _this6.setState({ editorClicked: true });
                 },
                 onGutterErrorClick: function onGutterErrorClick(errorNum) {
@@ -29473,6 +29453,11 @@ var LiveEditor = function (_Component) {
                 isHidden: this.state.showErrorPopup,
                 onClick: this.handleMiniClick
             });
+            var undoButton = _react2.default.createElement(_undoButton2.default, {
+                key: "undobutton",
+                isHidden: !this.props.showUndoButton,
+                onClick: this.handleUndoClick
+            });
             var restartButton = _react2.default.createElement(_restartButton2.default, {
                 key: "restartButton",
                 labelText: this.props.restartLabel,
@@ -29483,7 +29468,7 @@ var LiveEditor = function (_Component) {
             });
             var extraProps = {
                 aceEditorWrapper: this.renderAceEditorWrapper(),
-                leftComponents: this.props.toolbarLeftComponents.concat(errorBuddy),
+                leftComponents: this.props.toolbarLeftComponents.concat(undoButton, errorBuddy),
                 rightComponents: [restartButton].concat(this.props.toolbarRightComponents),
                 height: this.props.editorHeight || this.state.outputHeight,
                 hasAudio: this.hasAudio(),
@@ -29697,7 +29682,6 @@ var LiveEditor = function (_Component) {
     }, {
         key: "shouldShowRestart",
         value: function shouldShowRestart() {
-            // TODO(pamela): Stop using a ref here
             if (!this.aceWrapperRef.current) {
                 return null;
             }
@@ -29727,10 +29711,16 @@ var LiveEditor = function (_Component) {
 
             return false;
         }
+
+        // Only enable recording if there's an explicit boolean to turn it on,
+        //  and if the transloadit information is supplied,
+        //  and if the playback isn't currently playing.
+        // Note that recording doesn't work right now.
+
     }, {
         key: "canRecord",
         value: function canRecord() {
-            return this.props.enableRecording && this.props.transloaditAuthKey && this.props.transloaditTemplate;
+            return this.props.enableRecording && this.props.transloaditAuthKey && this.props.transloaditTemplate && !this.state.isPlaying;
         }
     }, {
         key: "isResizable",
@@ -29820,9 +29810,6 @@ var LiveEditor = function (_Component) {
                 // While the audio is playing update the position on the progress
                 // bar and update the time indicator
                 whileplaying: function whileplaying() {
-                    if (!record.seeking) {
-                        // TODO: Make sure user can seek while its playing!
-                    }
                     self.setState({ audioCurrentTime: record.currentTime() });
                     record.trigger("playUpdate");
                 },
@@ -29970,10 +29957,6 @@ var LiveEditor = function (_Component) {
                     }
 
                     _this12.setState({ isPlaying: true });
-                    // During playback, disable recording
-                    // TODO: Can probably remove this, if this is entirely
-                    //  a function of isPlaying
-                    _this12.setState({ enableRecording: false });
                     _this12.props.onPlayingChange && _this12.props.onPlayingChange(true);
                 },
 
@@ -29988,11 +29971,6 @@ var LiveEditor = function (_Component) {
                 // Playback of a recording has been paused
                 playPaused: function playPaused() {
                     _this12.setState({ isPlaying: false });
-
-                    // Re-enable recording after playback
-                    // TODO: Can probably remove this, if this is entirely
-                    //  a function of isPlaying
-                    _this12.setState({ enableRecording: true });
 
                     // Turn off playback-related styling
                     document.querySelector("html").classList.remove("playing");
@@ -30015,7 +29993,6 @@ var LiveEditor = function (_Component) {
                     // Reset the canvas to its initial state only if this is the
                     // very first chunk we are recording.
                     if (record.hasNoChunks()) {
-                        // TODO: Use ref or props
                         _this12.drawCanvas.clear(true);
                         _this12.drawCanvas.endDraw();
                     }
@@ -30103,6 +30080,12 @@ var LiveEditor = function (_Component) {
         value: function handleRestartClick() {
             this.restartCode();
             this.record && this.record.log("restart");
+        }
+    }, {
+        key: "handleUndoClick",
+        value: function handleUndoClick() {
+            this.aceWrapperRef.current.undo();
+            this.aceWrapperRef.current.editor.focus();
         }
     }, {
         key: "handleOverlayClick",
@@ -30632,11 +30615,6 @@ var LiveEditor = function (_Component) {
             this.aceWrapperRef.current.text(code);
         }
     }, {
-        key: "requestEditorUndo",
-        value: function requestEditorUndo() {
-            this.aceWrapperRef.current.undo();
-        }
-    }, {
         key: "cleanErrors",
         value: function cleanErrors(errors) {
             var loopProtectMessages = {
@@ -31161,7 +31139,7 @@ var _react = __webpack_require__(1);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _wonderBlocksButton = __webpack_require__(20);
+var _wonderBlocksButton = __webpack_require__(18);
 
 var _wonderBlocksButton2 = _interopRequireDefault(_wonderBlocksButton);
 
@@ -31211,7 +31189,6 @@ var EditorSide = function (_Component) {
         value: function renderYoutubePlaybackLink() {
             var _this2 = this;
 
-            // TODO: Trigger after timeout, see webapp
             if (!(this.props.youtubeUrl && this.props.showYoutubeLink) || this.state.closedYoutubeLink) {
                 return null;
             }
@@ -31522,7 +31499,7 @@ var _reactDraggable2 = _interopRequireDefault(_reactDraggable);
 
 var _wonderBlocksIcon = __webpack_require__(21);
 
-var _wonderBlocksButton = __webpack_require__(20);
+var _wonderBlocksButton = __webpack_require__(18);
 
 var _wonderBlocksButton2 = _interopRequireDefault(_wonderBlocksButton);
 
@@ -31616,14 +31593,14 @@ var TipBar = function (_Component) {
                 if (i % 2 === 0) {
                     return _react2.default.createElement(
                         "span",
-                        null,
+                        { key: i },
                         str
                     );
                 } else {
                     // text inside quotes, used for suggesting how to use functions
                     return _react2.default.createElement(
                         "span",
-                        { className: (0, _noImportant.css)(styles.quoted) },
+                        { key: i, className: (0, _noImportant.css)(styles.quoted) },
                         str
                     );
                 }
@@ -32144,7 +32121,7 @@ var _react2 = _interopRequireDefault(_react);
 
 var _noImportant = __webpack_require__(3);
 
-var _wonderBlocksButton = __webpack_require__(20);
+var _wonderBlocksButton = __webpack_require__(18);
 
 var _wonderBlocksButton2 = _interopRequireDefault(_wonderBlocksButton);
 
@@ -32444,7 +32421,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _wonderBlocksButton = __webpack_require__(20);
+var _wonderBlocksButton = __webpack_require__(18);
 
 var _wonderBlocksButton2 = _interopRequireDefault(_wonderBlocksButton);
 
@@ -32496,14 +32473,12 @@ var RecordControls = function (_Component) {
 
         _this.savedAudioRef = _react2.default.createRef();
 
-        // TODO: Handle interaction with outside views/models via callbacks
         _this.editor = _this.props.editor;
         _this.record = _this.props.record;
         _this.config = _this.props.config;
         _this.drawCanvas = _this.props.drawCanvas;
         _this.audioChunks = new _recordChunks2.default();
 
-        // TODO: Move these into state
         _this.recordInProgress = false;
         _this.commandChunks = [];
         _this.startingCode = "";
@@ -32937,7 +32912,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _wonderBlocksButton = __webpack_require__(20);
+var _wonderBlocksButton = __webpack_require__(18);
 
 var _wonderBlocksButton2 = _interopRequireDefault(_wonderBlocksButton);
 
@@ -33435,8 +33410,70 @@ exports.default = ScratchpadRecordModel;
 /* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
 
-var content = __webpack_require__(173);
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _wonderBlocksButton = __webpack_require__(18);
+
+var _wonderBlocksButton2 = _interopRequireDefault(_wonderBlocksButton);
+
+var _react = __webpack_require__(1);
+
+var _react2 = _interopRequireDefault(_react);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* globals i18n */
+
+
+var UndoButton = function (_Component) {
+    _inherits(UndoButton, _Component);
+
+    function UndoButton() {
+        _classCallCheck(this, UndoButton);
+
+        return _possibleConstructorReturn(this, (UndoButton.__proto__ || Object.getPrototypeOf(UndoButton)).apply(this, arguments));
+    }
+
+    _createClass(UndoButton, [{
+        key: "render",
+        value: function render() {
+            if (this.props.isHidden) {
+                return null;
+            }
+            return _react2.default.createElement(
+                _wonderBlocksButton2.default,
+                {
+                    kind: "secondary",
+                    size: "small",
+                    onClick: this.props.onClick
+                },
+                i18n._("Undo")
+            );
+        }
+    }]);
+
+    return UndoButton;
+}(_react.Component);
+
+exports.default = UndoButton;
+
+/***/ }),
+/* 173 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+var content = __webpack_require__(174);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -33457,7 +33494,7 @@ if(content.locals) module.exports = content.locals;
 if(false) {}
 
 /***/ }),
-/* 173 */
+/* 174 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(79)(false);

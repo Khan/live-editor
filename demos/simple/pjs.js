@@ -32,16 +32,19 @@ const liveEditorProps = {
     code: code,
     editorHeight: "50%",
     editorAutoFocus: true,
+    editorDisablePaste: true,
+    editorDisablePasteMsg: "Pasting is disabled",
     outputExecFile: "output.html",
     outputHeight: 400,
     outputWidth: 400,
     outputType: "pjs",
+    showUndoButton: true,
     workersDir: "../../build/",
     externalsDir: "../../build/external/",
     imagesDir: "../../build/images/",
     soundsDir: "../../build/sounds/",
     jshintFile: "../../build/external/jshint/jshint.js",
-    onEditorUserChange: function(code) {
+    onCodeChange: function(code) {
         window.localStorage["test-code"] = code;
     },
 };

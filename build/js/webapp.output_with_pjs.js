@@ -82,7 +82,7 @@ module.exports =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 210);
+/******/ 	return __webpack_require__(__webpack_require__.s = 211);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -28281,7 +28281,7 @@ var _astBuilder = __webpack_require__(59);
 
 var _astBuilder2 = _interopRequireDefault(_astBuilder);
 
-var _allImages = __webpack_require__(218);
+var _allImages = __webpack_require__(219);
 
 var _allImages2 = _interopRequireDefault(_allImages);
 
@@ -28854,14 +28854,15 @@ exports.default = PJSResourceCache;
 /* 207 */,
 /* 208 */,
 /* 209 */,
-/* 210 */
+/* 210 */,
+/* 211 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(211);
+module.exports = __webpack_require__(212);
 
 
 /***/ }),
-/* 211 */
+/* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28871,11 +28872,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _output = __webpack_require__(212);
+var _output = __webpack_require__(213);
 
 var _output2 = _interopRequireDefault(_output);
 
-var _pjsOutput = __webpack_require__(215);
+var _pjsOutput = __webpack_require__(216);
 
 var _pjsOutput2 = _interopRequireDefault(_pjsOutput);
 
@@ -28886,7 +28887,7 @@ _output2.default.registerOutput("pjs", _pjsOutput2.default);
 exports.default = _output2.default;
 
 /***/ }),
-/* 212 */
+/* 213 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28918,7 +28919,7 @@ var _utils = __webpack_require__(31);
 
 var utils = _interopRequireWildcard(_utils);
 
-__webpack_require__(213);
+__webpack_require__(214);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -28957,7 +28958,6 @@ var LiveEditorOutput = function (_Component) {
             useDebugger: _this.props.useDebugger
         });
 
-        // TODO(pamela): Move these into state
         _this.recording = false;
         _this.loaded = false;
         _this.lintErrors = [];
@@ -29023,11 +29023,10 @@ var LiveEditorOutput = function (_Component) {
                 testCodeReq: this.state.testCodeReq,
                 toggleReq: this.state.toggleReq,
                 onCanvasEvent: function onCanvasEvent(e) {
-                    var offset = utils.getOffset(e.target);
-                    // Only log if recording is occurring
+                    // Log the command if recording is occurring
                     if (_this2.recording) {
-                        // Log the command
                         // Track the x/y coordinates of the event
+                        var offset = utils.getOffset(e.target);
                         var x = e.pageX - offset.left;
                         var y = e.pageY - offset.top;
                         _this2.postParent({
@@ -29087,7 +29086,7 @@ var LiveEditorOutput = function (_Component) {
                 onCodeTest: function onCodeTest(testResults) {
                     _this2.results.errors = testResults.errors;
                     _this2.results.tests = testResults.results;
-                    _this2.props.onAllDone && _this2.props.onAllDone(_this2.results);
+                    _this2.testDone();
                 },
                 onTitleChange: function onTitleChange(title) {
                     _this2.postParent({
@@ -29293,7 +29292,7 @@ var LiveEditorOutput = function (_Component) {
                 errors: [],
                 assertions: [],
                 warnings: [],
-                tests: []
+                tests: null
             };
 
             // Always lint the first time, so that PJS can populate its list of globals
@@ -29374,6 +29373,12 @@ var LiveEditorOutput = function (_Component) {
                 this.props.onAllDone && this.props.onAllDone(this.results);
             }
         }
+    }, {
+        key: "testDone",
+        value: function testDone() {
+            this.phoneHome();
+            this.props.onAllDone && this.props.onAllDone(this.results);
+        }
 
         /**
          * Send the most up to date errors/test results to the parent frame.
@@ -29415,9 +29420,6 @@ var LiveEditorOutput = function (_Component) {
         value: function toggle(doToggle) {
             this.setState({ toggleReq: { timestamp: Date.now(), doToggle: doToggle } });
         }
-
-        // TODO(pamela): Stop referencing the child ref.
-
     }, {
         key: "restart",
         value: function restart() {
@@ -29461,11 +29463,11 @@ LiveEditorOutput.registerOutput = function (name, output) {
 };
 
 /***/ }),
-/* 213 */
+/* 214 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(214);
+var content = __webpack_require__(215);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -29486,7 +29488,7 @@ if(content.locals) module.exports = content.locals;
 if(false) {}
 
 /***/ }),
-/* 214 */
+/* 215 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(79)(false);
@@ -29500,7 +29502,7 @@ exports.push([module.i, "html,\nbody {\n    margin: 0;\n    min-width: 0;\n    o
 
 
 /***/ }),
-/* 215 */
+/* 216 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29524,11 +29526,11 @@ var _utils = __webpack_require__(31);
 
 var utils = _interopRequireWildcard(_utils);
 
-var _babyhint = __webpack_require__(216);
+var _babyhint = __webpack_require__(217);
 
 var _babyhint2 = _interopRequireDefault(_babyhint);
 
-var _pjsCodeInjector = __webpack_require__(217);
+var _pjsCodeInjector = __webpack_require__(218);
 
 var _pjsCodeInjector2 = _interopRequireDefault(_pjsCodeInjector);
 
@@ -30104,7 +30106,7 @@ PJSOutput.defaultProps = {
 exports.default = PJSOutput;
 
 /***/ }),
-/* 216 */
+/* 217 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30773,7 +30775,7 @@ var BabyHint = {
 exports.default = BabyHint;
 
 /***/ }),
-/* 217 */
+/* 218 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30827,7 +30829,7 @@ var _pjsResourceCache = __webpack_require__(120);
 
 var _pjsResourceCache2 = _interopRequireDefault(_pjsResourceCache);
 
-var _pjsUtils = __webpack_require__(219);
+var _pjsUtils = __webpack_require__(220);
 
 var _pjsUtils2 = _interopRequireDefault(_pjsUtils);
 
@@ -32198,7 +32200,7 @@ exports.default = PJSCodeInjector;
 PJSCodeInjector.instances = [];
 
 /***/ }),
-/* 218 */
+/* 219 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32251,7 +32253,7 @@ var AllImages = [{
 exports.default = AllImages;
 
 /***/ }),
-/* 219 */
+/* 220 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

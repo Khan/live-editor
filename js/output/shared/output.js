@@ -181,7 +181,7 @@ export default class LiveEditorOutput extends Component {
             onCodeTest: (testResults) => {
                 this.results.errors = testResults.errors;
                 this.results.tests = testResults.results;
-                this.props.onAllDone && this.props.onAllDone(this.results);
+                this.testDone();
             },
             onTitleChange: (title) => {
                 this.postParent({
@@ -381,7 +381,7 @@ export default class LiveEditorOutput extends Component {
             errors: [],
             assertions: [],
             warnings: [],
-            tests: [],
+            tests: null,
         };
 
         // Always lint the first time, so that PJS can populate its list of globals
@@ -456,6 +456,11 @@ export default class LiveEditorOutput extends Component {
         } else {
             this.props.onAllDone && this.props.onAllDone(this.results);
         }
+    }
+
+    testDone() {
+        this.phoneHome();
+        this.props.onAllDone && this.props.onAllDone(this.results);
     }
 
     /**

@@ -4,6 +4,7 @@ import {StyleSheet, css} from "aphrodite/no-important";
 export default class AutoSuggestPopup extends Component {
     props: {
         functionData: Object, // Function data - name, exampleURL, description, params
+        onMouseDown: Function,
         paramsToCursor: string, // The params specified so far
     };
 
@@ -119,7 +120,10 @@ export default class AutoSuggestPopup extends Component {
         }
 
         return (
-            <div className={css(styles.popup)}>
+            <div
+                className={css(styles.popup)}
+                onMouseDown={this.props.onMouseDown}
+            >
                 {funcNameEl}
                 <span className={css(styles.paramsGroup)}>
                     <span>(</span>
