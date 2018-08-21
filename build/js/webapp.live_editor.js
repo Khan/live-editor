@@ -28394,9 +28394,7 @@ var ScratchpadConfig = _backboneModel.Model.extend({
 
         // NOTE: update version test in output_test.js
     }]
-}); /* eslint-disable no-var, prefer-spread, no-redeclare */
-/* TODO: Fix the lint errors */
-// Maintain all of the configuration options and settings for the site.
+}); // Maintain all of the configuration options and settings for the site.
 // Have them be versioned and attached to the ScratchpadRevision so that
 // later config changes don't break old code.
 /* jshint unused:false */
@@ -33425,8 +33423,8 @@ var ScratchpadRecordModel = _backboneModel.Model.extend({
     resumeLog: function resumeLog() {
         this.recording = this.oldRecording;
     }
-}); /* eslint-disable no-var, no-undef, no-redeclare, no-console */
-/* TODO: Fix the lint errors */
+});
+
 exports.default = ScratchpadRecordModel;
 
 /***/ }),

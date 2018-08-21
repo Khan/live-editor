@@ -8032,8 +8032,6 @@ Model.extend = __webpack_require__(25).extend;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-/* eslint-disable no-undef */
-/* TODO: Fix the lint errors */
 /* globals i18n */
 
 if (!i18n._) {
@@ -8045,7 +8043,7 @@ if (!i18n._) {
 // The master list of acceptable sounds
 // Build a list of all the available sounds
 // TODO(kevinb) add methods to help query for sounds
-var OutputSounds = [{
+exports.default = OutputSounds = [{
     className: "Sound effects",
     groups: [{
         groupName: "rpg",
@@ -8059,8 +8057,6 @@ var OutputSounds = [{
         citeLink: "https://www.khanacademy.org/profile/spongejr/"
     }]
 }];
-
-exports.default = OutputSounds;
 
 /***/ }),
 /* 44 */
@@ -23788,9 +23784,7 @@ var ScratchpadConfig = _backboneModel.Model.extend({
 
         // NOTE: update version test in output_test.js
     }]
-}); /* eslint-disable no-var, prefer-spread, no-redeclare */
-/* TODO: Fix the lint errors */
-// Maintain all of the configuration options and settings for the site.
+}); // Maintain all of the configuration options and settings for the site.
 // Have them be versioned and attached to the ScratchpadRevision so that
 // later config changes don't break old code.
 /* jshint unused:false */

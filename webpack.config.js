@@ -40,7 +40,6 @@ const config = {
         demos_audio: ["./demos/simple/audio.js"],
         // Used for testing:
         live_editor: ["./js/live-editor.global.js"],
-        loop_protector: ["./js/output/shared/loop-protect.global.js"],
         tests_output_pjs_output: ["./tests/output/pjs/output_test.js"],
         tests_output_pjs_assert: ["./tests/output/pjs/assert_test.js"],
         tests_output_pjs_async: ["./tests/output/pjs/async_test.js"],

@@ -1,1 +1,0 @@
-window.LoopProtector = require("./loop-protect.js");

@@ -10,6 +10,7 @@ js/output/pjs/pjs-ast-transforms.js
 js/output/pjs/pjs-debugger.js
 js/output/pjs/pjs-output.js
 js/output/pjs/pjs-utils.js
+js/output/pjs/pjs-resource-cache.js
 js/output/pjs/pjs-tester.js
 js/output/webpage/state-scrubber.js
 js/output/webpage/webpage-tester.js

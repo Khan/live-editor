@@ -1,5 +1,3 @@
-/* eslint-disable prefer-spread, no-extra-bind, no-throw-literal */
-/* TODO: Fix the lint errors */
 /* globals i18n */
 import _ from "lodash";
 import * as esprima from "esprima";
@@ -39,7 +37,7 @@ const PJSResourceCache = function(options) {
  * @returns {Promise}
  */
 PJSResourceCache.prototype.cacheResources = function(resources) {
-    const promises = Object.keys(resources).map((filename) => {
+    var promises = Object.keys(resources).map((filename) => {
         return this.loadResource(filename);
     });
     return Promise.all(promises);
@@ -55,8 +53,8 @@ PJSResourceCache.prototype.loadResource = function(filename) {
 
 PJSResourceCache.prototype.loadImage = function(filename) {
     return new Promise((resolve) => {
-        const path = this.imagesDir + filename;
-        const img = document.createElement("img");
+        var path = this.imagesDir + filename;
+        var img = document.createElement("img");
 
         img.onload = () => {
             this.cache[filename] = img;
@@ -71,23 +69,20 @@ PJSResourceCache.prototype.loadImage = function(filename) {
 };
 
 PJSResourceCache.prototype.loadSound = function(filename) {
-    const findWhere = function(array, criteria) {
-        return array.find(item => Object.keys(criteria).every(key => item[key] === criteria[key]))
-    };
-
     return new Promise((resolve) => {
-        const audio = document.createElement("audio");
-        const parts = filename.split("/");
+        var audio = document.createElement("audio");
+        var parts = filename.split("/");
 
-        const group = findWhere(OutputSounds[0].groups, { groupName: parts[0] });
-        const hasSound = group && group.sounds.includes(parts[1].replace(".mp3", ""));
+        var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
+        var hasSound = group && group.sounds.includes(parts[1].replace(".mp3", ""));
+
         if (!hasSound) {
             resolve();
             return;
         }
 
         audio.preload = "auto";
-        audio.oncanplaythrough = () => {
+        audio.oncanplaythrough = function() {
             this.cache[filename] = {
                 audio: audio,
                 __id: function () {
@@ -95,10 +90,10 @@ PJSResourceCache.prototype.loadSound = function(filename) {
                 }
             };
             resolve();
-        };
-        audio.onerror = () => {
+        }.bind(this);
+        audio.onerror = function() {
             resolve();
-        };
+        }.bind(this);
 
         audio.src = this.soundsDir + filename;
     });
@@ -116,7 +111,7 @@ PJSResourceCache.prototype.getResource = function(filename, type) {
 };
 
 PJSResourceCache.prototype.getImage = function(filename) {
-    const image = this.cache[filename + ".png"];
+    var image = this.cache[filename + ".png"];
 
     if (!image) {
         throw {message:
@@ -125,7 +120,7 @@ PJSResourceCache.prototype.getImage = function(filename) {
 
     // cache <img> instead of PImage until we investigate how caching
     // PImage instances affects loadPixels(), pixels[], updatePixels()
-    const pImage = new this.canvas.PImage(image);
+    var pImage = new this.canvas.PImage(image);
     pImage.__id = function() {
         return "getImage('" + filename + "')";
     };
@@ -134,7 +129,7 @@ PJSResourceCache.prototype.getImage = function(filename) {
 };
 
 PJSResourceCache.prototype.getSound = function(filename) {
-    const sound = this.cache[filename + ".mp3"];
+    var sound = this.cache[filename + ".mp3"];
 
     if (!sound) {
         throw {message:
@@ -152,9 +147,9 @@ PJSResourceCache.prototype.getSound = function(filename) {
  * @returns {Object}
  */
 PJSResourceCache.findResources = function(code) {
-    const ast = esprima.parse(code, { loc: true });
+    var ast = esprima.parse(code, { loc: true });
 
-    const resources = {};
+    var resources = {};
     walkAST(ast, null,
         [ASTTransforms.findResources(resources)]);
 

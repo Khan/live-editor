@@ -9,7 +9,7 @@ if (!i18n._) {
 // The master list of acceptable sounds
 // Build a list of all the available sounds
 // TODO(kevinb) add methods to help query for sounds
-export default OutputSounds = [{
+var OutputSounds = [{
     className: "Sound effects",
     groups: [{
         groupName: "rpg",
@@ -24,3 +24,5 @@ export default OutputSounds = [{
         citeLink: "https://www.khanacademy.org/profile/spongejr/"
     }]
 }];
+
+export default OutputSounds;
