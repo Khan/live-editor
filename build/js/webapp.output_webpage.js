@@ -3168,96 +3168,80 @@ var __WEBPACK_AMD_DEFINE_RESULT__;// This is a version of slowparse modified for
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/* eslint-disable no-var */
-/* TODO: Fix the lint errors */
 /**
  * StateScrubber
  * Resets the global javascript state in the browser
  * (timeouts, intervals and global variables)
  */
-var StateScrubber = function () {
-    function StateScrubber(target) {
-        _classCallCheck(this, StateScrubber);
+var StateScrubber = function StateScrubber(target) {
+    this.target = target;
+    this.firstTimeout = target.setTimeout(function () {}, 0);
 
-        this.target = target;
-        this.firstTimeout = target.setTimeout(function () {}, 0);
-
-        // We will record all the variables that we see on window on startup
-        // these will be the only keys we leave intact when we reset window
-        this.globalVariables = {};
-        for (var prop in target) {
-            if (target.hasOwnProperty(prop)) {
-                this.globalVariables[prop] = true;
-            }
+    // We will record all the variables that we see on window on startup
+    // these will be the only keys we leave intact when we reset window
+    this.globalVariables = {};
+    for (var prop in target) {
+        if (target.hasOwnProperty(prop)) {
+            this.globalVariables[prop] = true;
         }
-
-        // Since variables initially on window will not be reset, try to freeze them to
-        // avoid state leaking between executions.
-        /* jshint forin:false */
-        Object.keys(this.globalVariables).forEach(function (prop) {
-            try {
-                var propDescriptor = Object.getOwnPropertyDescriptor(target, prop);
-                if (!propDescriptor || propDescriptor.configurable) {
-                    Object.defineProperty(target, prop, {
-                        value: target[prop],
-                        writable: false,
-                        configurable: false
-                    });
-                }
-            } catch (e) {
-                // Couldn't access property for permissions reasons,
-                // like window.frame
-                // Only happens on prod where it's cross-origin
-            }
-        });
-        // Completely lock down window's prototype chain
-        Object.freeze(Object.getPrototypeOf(target));
     }
 
-    _createClass(StateScrubber, [{
-        key: "clearGlobals",
-        value: function clearGlobals() {
-            for (var prop in this.target) {
-                if (!this.globalVariables[prop] && this.target.hasOwnProperty(prop)) {
-                    // This should get rid of variables which cannot be deleted
-                    // http://perfectionkills.com/understanding-delete/
-                    this.target[prop] = undefined;
-                    // delete operator throws an error in strict mode,
-                    // so we use ES6 deleteProperty instead
-                    Reflect.deleteProperty(this.target, prop);
-                }
+    // Since variables initially on window will not be reset, try to freeze them to
+    // avoid state leaking between executions.
+    /* jshint forin:false */
+    for (var prop in this.globalVariables) {
+        try {
+            var propDescriptor = Object.getOwnPropertyDescriptor(target, prop);
+            if (!propDescriptor || propDescriptor.configurable) {
+                Object.defineProperty(target, prop, {
+                    value: target[prop],
+                    writable: false,
+                    configurable: false
+                });
+            }
+        } catch (e) {
+            // Couldn't access property for permissions reasons,
+            // like window.frame
+            // Only happens on prod where it's cross-origin
+        }
+    }
+    // Completely lock down window's prototype chain
+    Object.freeze(Object.getPrototypeOf(target));
+};
+
+StateScrubber.prototype = {
+    clearGlobals: function clearGlobals() {
+        for (var prop in this.target) {
+            if (!this.globalVariables[prop] && this.target.hasOwnProperty(prop)) {
+                // This should get rid of variables which cannot be deleted
+                // http://perfectionkills.com/understanding-delete/
+                this.target[prop] = undefined;
+                // delete operator throws an error in strict mode,
+                // so we use ES6 deleteProperty instead
+                Reflect.deleteProperty(this.target, prop);
             }
         }
-    }, {
-        key: "clearTimeoutsAndIntervals",
-        value: function clearTimeoutsAndIntervals() {
-            // Intervals are acutally also timeouts under the hood, so clearing all the
-            // timeouts since last time is sufficient.
-            // (If you're interested intervals are timeouts with the repeat flag set to true:
-            // www.w3.org/TR/html5/webappapis.html#timers)
-            var lastTimeout = this.target.setTimeout(function () {}, 0);
+    },
 
-            for (var i = this.firstTimeout; i < lastTimeout; i++) {
-                this.target.clearTimeout(i);
-            }
+    clearTimeoutsAndIntervals: function clearTimeoutsAndIntervals() {
+        // Intervals are acutally also timeouts under the hood, so clearing all the
+        // timeouts since last time is sufficient.
+        // (If you're interested intervals are timeouts with the repeat flag set to true:
+        // www.w3.org/TR/html5/webappapis.html#timers)
+        var lastTimeout = this.target.setTimeout(function () {}, 0);
 
-            this.firstTimeout = lastTimeout;
+        for (var i = this.firstTimeout; i < lastTimeout; i++) {
+            this.target.clearTimeout(i);
         }
-    }, {
-        key: "clearAll",
-        value: function clearAll() {
-            this.clearGlobals();
-            this.clearTimeoutsAndIntervals();
-        }
-    }]);
 
-    return StateScrubber;
-}();
+        this.firstTimeout = lastTimeout;
+    },
+
+    clearAll: function clearAll() {
+        this.clearGlobals();
+        this.clearTimeoutsAndIntervals();
+    }
+};
 
 exports.default = StateScrubber;
 

@@ -54,7 +54,7 @@ _.extend(WebpageTester.prototype, {
         this.syncTests = false;
 
         callback(errors, testResults);
-    }
+    },
 });
 
 
