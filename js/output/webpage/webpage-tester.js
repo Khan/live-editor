@@ -1,20 +1,22 @@
 /* eslint-disable */
 /* TODO: Fix the lint errors */
+import _ from "lodash";
+
 import Structured from "../../../external/structuredjs/structured.js";
 
 import OutputTester from "../shared/output-tester.js";
 import PJSTester from "../pjs/pjs-tester.js";
 
-export default class WebpageTester extends OutputTester {
-    constructor(options) {
-        super();
-        options = options || {};
-        this.initialize(options);
-        this.bindTestContext();
-        this.testContext.phoneHome = options.onPhoneHomeRequest;
-    }
+export default function WebpageTester(options) {
+    this.initialize(options);
+    this.bindTestContext();
+    this.testContext.phoneHome = options.onPhoneHomeRequest;
+}
 
-    test(userCode, validate, errors, callback) {
+WebpageTester.prototype = new OutputTester();
+
+_.extend(WebpageTester.prototype, {
+    test: function(userCode, validate, errors, callback) {
         var testResults = [];
         errors = this.errors = errors || [];
         this.userCode = userCode;
@@ -53,7 +55,8 @@ export default class WebpageTester extends OutputTester {
 
         callback(errors, testResults);
     }
-}
+});
+
 
 /*
 * Returns a callback which will accept arguments and make a constriant
@@ -68,12 +71,9 @@ const constraintPartial = function(callback) {
     };
 };
 
-WebpageTester.prototype.testMethods = Object.assign(
-    {},
-    PJSTester.prototype.testMethods,
-);
+WebpageTester.prototype.testMethods = _.clone(window.PJSTester.prototype.testMethods);
 
-Object.assign(WebpageTester.prototype.testMethods, {
+_.extend(WebpageTester.prototype.testMethods, {
     scriptTest: function() {
         this.testContext.staticTest.apply(this, arguments);
     },

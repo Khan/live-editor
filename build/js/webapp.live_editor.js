@@ -29094,9 +29094,9 @@ var _structured = __webpack_require__(29);
 
 var _structured2 = _interopRequireDefault(_structured);
 
-var _drawCanvas = __webpack_require__(161);
+var _canvas = __webpack_require__(161);
 
-var _drawCanvas2 = _interopRequireDefault(_drawCanvas);
+var _canvas2 = _interopRequireDefault(_canvas);
 
 var _editorSide = __webpack_require__(162);
 
@@ -29358,7 +29358,7 @@ var LiveEditor = function (_Component) {
                     _this4.setState({ drawingColor: color });
                 }
             };
-            return _react2.default.createElement(_drawCanvas2.default, props);
+            return _react2.default.createElement(_canvas2.default, props);
         }
     }, {
         key: "renderOutputSide",
