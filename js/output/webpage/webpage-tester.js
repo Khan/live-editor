@@ -182,6 +182,7 @@ _.extend(WebpageTester.prototype.testMethods, {
         return {success: true};
     },
 
+
     /*
         * Returns all of the rules from the user's code,
         * formatted as a map of selectors to properties and
@@ -428,6 +429,7 @@ _.extend(WebpageTester.prototype.testMethods, {
         return false;
     },
 
+
     /*
     * Check if two CSS selectors match, including wildcards
     * "div" == "div"
@@ -570,4 +572,5 @@ _.extend(WebpageTester.prototype.testMethods, {
             };
         }
     },
+
 });

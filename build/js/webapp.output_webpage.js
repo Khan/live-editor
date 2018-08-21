@@ -673,22 +673,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* eslint-disable no-empty, no-console, prefer-const, no-new-func */
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* eslint-disable no-var no-empty, no-console, prefer-const, no-new-func */
 /* TODO: Fix the lint errors */
 /* globals i18n */
 
-
-var infiniteLoopError = {
-    text: i18n._("Your javascript is taking too long to run. " + "Perhaps you have a mistake in your code?"),
-    type: "error",
-    source: "timeout"
-};
-
-var runtimeError = {
-    text: i18n._("Your javascript encountered a runtime error. " + "Check your console for more information."),
-    type: "error",
-    source: "timeout"
-};
 
 /**
  * WebpageOutput
@@ -702,7 +690,6 @@ var runtimeError = {
  * so that it can be sandboxed from the main domain,
  * it communicates via postMessage() with liveEditor.
  */
-
 var WebpageOutput = function (_Component) {
     _inherits(WebpageOutput, _Component);
 
@@ -710,6 +697,18 @@ var WebpageOutput = function (_Component) {
         _classCallCheck(this, WebpageOutput);
 
         var _this = _possibleConstructorReturn(this, (WebpageOutput.__proto__ || Object.getPrototypeOf(WebpageOutput)).call(this, props));
+
+        _this.infiniteLoopError = {
+            text: i18n._("Your javascript is taking too long to run. " + "Perhaps you have a mistake in your code?"),
+            type: "error",
+            source: "timeout"
+        };
+        _this.runtimeError = {
+            text: i18n._("Your javascript encountered a runtime error. " + "Check your console for more information."),
+            type: "error",
+            source: "timeout"
+        };
+
 
         _this.config = props.config;
 
@@ -805,7 +804,7 @@ var WebpageOutput = function (_Component) {
     }, {
         key: "infiniteLoopCallback",
         value: function infiniteLoopCallback() {
-            this.props.onInfiniteLoopError(infiniteLoopError);
+            this.props.onInfiniteLoopError(this.infiniteLoopError);
             this.KA_INFINITE_LOOP = true;
         }
     }, {
@@ -845,13 +844,13 @@ var WebpageOutput = function (_Component) {
 
             this.slowparseResults = results;
 
-            var errors = [];
+            var error = [];
             if (results.error) {
                 var pos = results.error.cursor || 0;
                 var previous = userCode.slice(0, pos);
                 var column = pos - previous.lastIndexOf("\n") - 1;
                 var row = (previous.match(/\n/g) || []).length;
-                errors.push({
+                error = [{
                     row: row,
                     column: column,
                     text: this.getLintMessage(results.error),
@@ -859,7 +858,7 @@ var WebpageOutput = function (_Component) {
                     source: "slowparse",
                     lint: results.error,
                     priority: 2
-                });
+                }];
             }
 
             var warnings = [];
@@ -869,6 +868,7 @@ var WebpageOutput = function (_Component) {
                     var _previous = userCode.slice(0, _pos);
                     var _column = _pos - _previous.lastIndexOf("\n") - 1;
                     var _row = (_previous.match(/\n/g) || []).length;
+
                     warnings.push({
                         row: _row,
                         column: _column,
@@ -882,7 +882,7 @@ var WebpageOutput = function (_Component) {
             this.props.onCodeLint({
                 code: userCode,
                 timestamp: timestamp,
-                errors: errors,
+                errors: error,
                 warnings: warnings
             });
         }
@@ -915,45 +915,46 @@ var WebpageOutput = function (_Component) {
             return {
                 NO_DOCTYPE_FOUND: i18n._("A DOCTYPE declaration should be the first item on the page.", error),
                 HTML_NOT_ROOT_ELEMENT: i18n._("The root element on the page should be an <html> element.", error),
-                ATTRIBUTE_IN_CLOSING_TAG: i18n._('A closing "&lt;/%(closeTag_name)s&gt;" tag cannot contain any attributes.', error),
-                CLOSE_TAG_FOR_VOID_ELEMENT: i18n._('You have a closing "&lt;/%(closeTag_name)s&gt;" tag for a void element (and void elements don\'t need to be closed).', error),
-                CSS_MIXED_ACTIVECONTENT: i18n._('You have a css property "%(cssProperty_property)s" with a "url()" value that currently points to an insecure resource.', error),
-                EVENT_HANDLER_ATTR_NOT_ALLOWED: i18n._('Sorry, but security restrictions on this site prevent you from using the "%(attribute_name_value)s" JavaScript event handler attribute.', error),
+                ATTRIBUTE_IN_CLOSING_TAG: i18n._("A closing \"&lt;/%(closeTag_name)s&gt;\" tag cannot contain any attributes.", error),
+                CLOSE_TAG_FOR_VOID_ELEMENT: i18n._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag for a void element (and void elements don't need to be closed).", error),
+                CSS_MIXED_ACTIVECONTENT: i18n._("You have a css property \"%(cssProperty_property)s\" with a \"url()\" value that currently points to an insecure resource.", error),
+                EVENT_HANDLER_ATTR_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using the \"%(attribute_name_value)s\" JavaScript event handler attribute.", error),
                 HTML_CODE_IN_CSS_BLOCK: i18n._("Did you put HTML code inside a CSS area?", error),
-                HTTP_LINK_FROM_HTTPS_PAGE: i18n._('The <%(openTag_name)s> tag\'s "%(attribute_name_value)s" attribute currently points to an insecure resource.', error),
-                INVALID_URL: i18n._('The <%(openTag_name)s> tag\'s "%(attribute_name_value)s" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?', error),
-                INVALID_ATTR_NAME: i18n._('The attribute name "%(attribute_name_value)s" is not permitted under HTML5 naming conventions.', error),
-                UNSUPPORTED_ATTR_NAMESPACE: i18n._('The attribute "%(attribute_name_value)s" uses an attribute namespace that is not permitted under HTML5 conventions.', error),
-                MULTIPLE_ATTR_NAMESPACES: i18n._('The attribute "%(attribute_name_value)s" has multiple namespaces. Check your text and make sure there\'s only a single namespace prefix for the attribute.', error),
-                INVALID_CSS_PROPERTY_NAME: i18n._('The CSS property "%(cssProperty_property)s" does not exist.', error),
-                IMPROPER_CSS_VALUE: i18n._('The CSS value "%(cssValue_value)s" is malformed.', error),
-                INVALID_TAG_NAME: i18n._('A "&lt;" character appears to be the beginning of a tag, but is not followed by a valid tag name. If you want a "&lt;" to appear on your Web page, try using "&amp;lt;" instead. Otherwise, check your spelling.', error),
-                JAVASCRIPT_URL_NOT_ALLOWED: i18n._('Sorry, but security restrictions on this site prevent you from using the "javascript:" URL.', error),
-                MISMATCHED_CLOSE_TAG: i18n._('You have a closing "&lt;/%(closeTag_name)s&gt;" tag that doesn\'t pair with the opening "&lt;%(openTag_name)s&gt;" tag. This is likely due to a missing or misordered "&lt;/%(openTag_name)s&gt;" tag.', error),
-                MISSING_CSS_BLOCK_CLOSER: i18n._('You\'re missing either a "}" or another "property:value;" pair following "%(cssValue_value)s".', error),
-                MISSING_CSS_BLOCK_OPENER: i18n._('You\'re missing the "{" after "%(cssSelector_selector)s".', error),
-                MISSING_CSS_PROPERTY: i18n._('You\'re missing property for "%(cssSelector_selector)s".', error),
-                MISSING_CSS_SELECTOR: i18n._('You\'re missing either a new CSS selector or the "&lt;/style&gt;" tag.', error),
-                MISSING_CSS_VALUE: i18n._('You\'re missing value for "%(cssProperty_property)s".', error),
-                SCRIPT_ELEMENT_NOT_ALLOWED: i18n._('Sorry, but security restrictions on this site prevent you from using "&lt;script&gt;" tags.', error),
-                OBSOLETE_HTML_TAG: i18n._('The "%(openTag_name)s" tag is obsolete and may not function properly in modern browsers.', error),
-                ELEMENT_NOT_ALLOWED: i18n._('Sorry, but security restrictions on this site prevent you from using "&lt;%(openTag_name)s&gt;" tags.', error),
-                SELF_CLOSING_NON_VOID_ELEMENT: i18n._('The "&lt;%(name)s&gt;" tag can\'t be self-closed, because "&lt;%(name)s&gt;" is not a void element; it must be closed with a separate "&lt;/%(name)s&gt;" tag.', error),
-                UNCAUGHT_CSS_PARSE_ERROR: i18n._('A parse error occurred outside expected cases: "%(error_msg)s"', error),
-                UNCLOSED_TAG: i18n._('It looks like your "&lt;%(openTag_name)s&gt;" tag never closes.', error),
-                UNEXPECTED_CLOSE_TAG: i18n._('You have a closing "&lt;/%(closeTag_name)s&gt;" tag that doesn\'t pair with any matching opening tags.', error),
-                UNFINISHED_CSS_PROPERTY: i18n._('The CSS property "%(cssProperty_property)s" is missing a ":"', error),
-                UNFINISHED_CSS_SELECTOR: i18n._('The CSS selector "%(cssSelector_selector)s" needs to be followed by "{"', error),
-                UNFINISHED_CSS_VALUE: i18n._('The CSS value "%(cssValue_value)s" still needs to be finalized with ";"', error),
-                UNKOWN_CSS_KEYWORD: i18n._('The CSS @keyword "%(cssKeyword_value)s" does not match any known @keywords.', error),
+                HTTP_LINK_FROM_HTTPS_PAGE: i18n._("The <%(openTag_name)s> tag's \"%(attribute_name_value)s\" attribute currently points to an insecure resource.", error),
+                INVALID_URL: i18n._("The <%(openTag_name)s> tag's \"%(attribute_name_value)s\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?", error),
+                INVALID_ATTR_NAME: i18n._("The attribute name \"%(attribute_name_value)s\" is not permitted under HTML5 naming conventions.", error),
+                UNSUPPORTED_ATTR_NAMESPACE: i18n._("The attribute \"%(attribute_name_value)s\" uses an attribute namespace that is not permitted under HTML5 conventions.", error),
+                MULTIPLE_ATTR_NAMESPACES: i18n._("The attribute \"%(attribute_name_value)s\" has multiple namespaces. Check your text and make sure there's only a single namespace prefix for the attribute.", error),
+                INVALID_CSS_PROPERTY_NAME: i18n._("The CSS property \"%(cssProperty_property)s\" isn't valid - property names can only have letters and dashes.", error),
+                IMPROPER_CSS_VALUE: i18n._("The CSS value \"%(cssValue_value)s\" is malformed.", error),
+                INVALID_TAG_NAME: i18n._("A \"&lt;\" character appears to be the beginning of a tag, but is not followed by a valid tag name. If you want a \"&lt;\" to appear on your Web page, try using \"&amp;lt;\" instead. Otherwise, check your spelling.", error),
+                JAVASCRIPT_URL_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using the \"javascript:\" URL.", error),
+                MISMATCHED_CLOSE_TAG: i18n._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag that doesn't pair with the opening \"&lt;%(openTag_name)s&gt;\" tag. This is likely due to a missing or misordered \"&lt;/%(openTag_name)s&gt;\" tag.", error),
+                MISSING_CSS_BLOCK_CLOSER: i18n._("You're missing either a \"}\" or another \"property:value;\" pair following \"%(cssValue_value)s\".", error),
+                MISSING_CSS_BLOCK_OPENER: i18n._("You're missing the \"{\" after \"%(cssSelector_selector)s\".", error),
+                MISSING_CSS_PROPERTY: i18n._("You're missing property for \"%(cssSelector_selector)s\".", error),
+                MISSING_CSS_SELECTOR: i18n._("You're missing either a new CSS selector or the \"&lt;/style&gt;\" tag.", error),
+                MISSING_CSS_VALUE: i18n._("You're missing value for \"%(cssProperty_property)s\".", error),
+                SCRIPT_ELEMENT_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using \"&lt;script&gt;\" tags.", error),
+                OBSOLETE_HTML_TAG: i18n._("The \"%(openTag_name)s\" tag is obsolete and may not function properly in modern browsers.", error),
+                ELEMENT_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using \"&lt;%(openTag_name)s&gt;\" tags.", error),
+                SELF_CLOSING_NON_VOID_ELEMENT: i18n._("The \"&lt;%(name)s&gt;\" tag can't be self-closed, because \"&lt;%(name)s&gt;\" is not a void element; it must be closed with a separate \"&lt;/%(name)s&gt;\" tag.", error),
+                UNCAUGHT_CSS_PARSE_ERROR: i18n._("A parse error occurred outside expected cases: \"%(error_msg)s\"", error),
+                UNCLOSED_TAG: i18n._("It looks like your \"&lt;%(openTag_name)s&gt;\" tag never closes.", error),
+                UNEXPECTED_CLOSE_TAG: i18n._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag that doesn't pair with any matching opening tags.", error),
+                UNFINISHED_CSS_PROPERTY: i18n._("The CSS property \"%(cssProperty_property)s\" is missing a \":\"", error),
+                UNFINISHED_CSS_SELECTOR: i18n._("The CSS selector \"%(cssSelector_selector)s\" needs to be followed by \"{\"", error),
+                UNFINISHED_CSS_VALUE: i18n._("The CSS value \"%(cssValue_value)s\" still needs to be finalized with \";\"", error),
+                UNKOWN_CSS_KEYWORD: i18n._("The CSS @keyword \"%(cssKeyword_value)s\" does not match any known @keywords.", error),
+                UNKNOWN_CSS_PROPERTY_NAME: i18n._("The CSS property \"%(cssProperty_property)s\" is non-standard or non-existent. Check spelling and browser compatibility.", error),
                 UNQUOTED_ATTR_VALUE: i18n._("Make sure your attribute value starts with an opening double quote.", error),
-                UNTERMINATED_ATTR_VALUE: i18n._('It looks like your "&lt;%(openTag_name)s&gt;" tag\'s "%(attribute_name_value)s" attribute has a value that doesn\'t end with a closing double quote.', error),
-                UNTERMINATED_CLOSE_TAG: i18n._('It looks like your closing "&lt;/%(closeTag_name)s&gt;" tag doesn\'t end with a "&gt;".', error),
-                UNTERMINATED_COMMENT: i18n._('It looks like your comment doesn\'t end with a "--&gt;".', error),
-                UNTERMINATED_CSS_COMMENT: i18n._('It looks like your CSS comment doesn\'t end with a "*/".', error),
-                UNTERMINATED_OPEN_TAG: i18n._('It looks like your opening "&lt;%(openTag_name)s&gt;" tag doesn\'t end with a "&gt;".', error),
+                UNTERMINATED_ATTR_VALUE: i18n._("It looks like your \"&lt;%(openTag_name)s&gt;\" tag's \"%(attribute_name_value)s\" attribute has a value that doesn't end with a closing double quote.", error),
+                UNTERMINATED_CLOSE_TAG: i18n._("It looks like your closing \"&lt;/%(closeTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
+                UNTERMINATED_COMMENT: i18n._("It looks like your comment doesn't end with a \"--&gt;\".", error),
+                UNTERMINATED_CSS_COMMENT: i18n._("It looks like your CSS comment doesn't end with a \"*/\".", error),
+                UNTERMINATED_OPEN_TAG: i18n._("It looks like your opening \"&lt;%(openTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
                 UNKNOWN_SLOWPARSE_ERROR: i18n._("Something's wrong with the HTML, but we're not sure what."),
-                JAVASCRIPT_ERROR: i18n._('Javascript Error:\n"%(message)s"', error)
+                JAVASCRIPT_ERROR: i18n._("Javascript Error:\n\"%(message)s\"", error)
             }[error.type];
         }
     }, {
@@ -985,9 +986,7 @@ var WebpageOutput = function (_Component) {
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
                     // figure out whether we hit this case.
-                    var message = i18n._("Error: %(message)s", {
-                        message: errors[errors.length - 1].message
-                    });
+                    var message = i18n._("Error: %(message)s", { message: errors[errors.length - 1].message });
                     _this4.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
                 }
 
@@ -1064,10 +1063,10 @@ var WebpageOutput = function (_Component) {
             this.postProcessing();
 
             if (this.KA_INFINITE_LOOP) {
-                errors.push(infiniteLoopError);
+                errors.push(this.infiniteLoopError);
             }
             if (this.foundRunTimeError) {
-                errors.push(runtimeError);
+                errors.push(this.runtimeError);
             }
 
             this.props.onCodeRun({ code: userCode, errors: errors, timestamp: timestamp });
@@ -3273,6 +3272,7 @@ exports.default = StateScrubber;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.default = WebpageTester;
 
 var _lodash = __webpack_require__(12);
 
@@ -3294,11 +3294,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 /* eslint-disable */
 /* TODO: Fix the lint errors */
-var WebpageTester = function WebpageTester(options) {
+function WebpageTester(options) {
     this.initialize(options);
     this.bindTestContext();
     this.testContext.phoneHome = options.onPhoneHomeRequest;
-};
+}
 
 WebpageTester.prototype = new _outputTester2.default();
 
@@ -3315,6 +3315,7 @@ _lodash2.default.extend(WebpageTester.prototype, {
         //  referencing functions like staticTest and that
         //  function will fill in this.tests
         this.exec(validate);
+
         this.testContext.allScripts = "";
 
         var parser = new DOMParser();
@@ -3573,8 +3574,6 @@ _lodash2.default.extend(WebpageTester.prototype.testMethods, {
     * of them might pass the callbacks even if others fail)
     */
     testCSSRules: function testCSSRules(rules, css, callbacks, wVars) {
-        var _this2 = this;
-
         wVars = wVars || {};
         // Base case. All rules have passed preliminarily.
         // Check that the wildcards vars pass the callbacks
@@ -3590,13 +3589,13 @@ _lodash2.default.extend(WebpageTester.prototype.testMethods, {
 
         // Get the properties for this rule
         var testProperties = {};
-        testBody.split(";").forEach(function (prop) {
+        _lodash2.default.each(testBody.split(";"), function (prop) {
             if (prop.trim().length === 0) {
                 return;
             }
             var parts = prop.split(":");
-            testProperties[parts[0].trim()] = _this2.testContext.normalizePropertyValue(parts[1]);
-        });
+            testProperties[parts[0].trim()] = this.testContext.normalizePropertyValue(parts[1]);
+        }.bind(this));
 
         var oldWVars = wVars;
         var lastFailureMessage = { success: false };
@@ -3618,10 +3617,9 @@ _lodash2.default.extend(WebpageTester.prototype.testMethods, {
             }
 
             // Match properties
-            var doPropertiesMatch = Object.keys(testProperties).every(function (prop) {
-                var value = testProperties[prop];
-                return prop in css[selector] && _this2.testContext.wildcardMatch(value, css[selector][prop], wVars);
-            });
+            var doPropertiesMatch = _lodash2.default.every(testProperties, function (value, prop) {
+                return prop in css[selector] && this.testContext.wildcardMatch(value, css[selector][prop], wVars);
+            }.bind(this));
             if (!doPropertiesMatch) {
                 continue;
             }
@@ -3720,10 +3718,10 @@ _lodash2.default.extend(WebpageTester.prototype.testMethods, {
     },
 
     /*
-        * Check if two CSS selectors match, including wildcards
-        * "div" == "div"
-        * "_" == "div"
-        */
+    * Check if two CSS selectors match, including wildcards
+    * "div" == "div"
+    * "_" == "div"
+    */
     singleSelectorMatch: function singleSelectorMatch(pattern, selector, wVars) {
         var patternParts = pattern.split(" ");
         var selectorParts = selector.split(" ");
@@ -3819,7 +3817,7 @@ _lodash2.default.extend(WebpageTester.prototype.testMethods, {
 
         // If we don't see a pattern property, they probably passed in
         // a pattern itself, so we'll turn it into a structure
-        if (structure && typeof structure.pattern === "undefined") {
+        if (structure && _lodash2.default.isUndefined(structure.pattern)) {
             structure = { pattern: structure };
         }
 
@@ -3848,13 +3846,12 @@ _lodash2.default.extend(WebpageTester.prototype.testMethods, {
             }
             return {
                 success: true,
-                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + 'Please click "Report a problem" to notify us.')
+                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
             };
         }
     }
-});
 
-exports.default = WebpageTester;
+});
 
 /***/ }),
 

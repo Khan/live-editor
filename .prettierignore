@@ -21,6 +21,7 @@ js/output/shared/pooled-worker.js
 js/output/sql/sql-tester.js
 js/output/webpage/state-scrubber.js
 js/output/webpage/webpage-tester.js
+js/output/webpage/webpage-output.js
 js/shared/i18n.js
 js/shared/all-images.js
 js/shared/images.js

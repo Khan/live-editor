@@ -1,4 +1,4 @@
-/* eslint-disable no-empty, no-console, prefer-const, no-new-func */
+/* eslint-disable no-var, no-empty, no-console, prefer-const, no-new-func */
 /* TODO: Fix the lint errors */
 /* globals i18n */
 import React, {Component} from "react";
@@ -8,24 +8,6 @@ import Slowparse from "../../../external/slowparse/slowparse.js";
 
 import StateScrubber from "./state-scrubber.js";
 import WebpageTester from "./webpage-tester.js";
-
-const infiniteLoopError = {
-    text: i18n._(
-        "Your javascript is taking too long to run. " +
-            "Perhaps you have a mistake in your code?",
-    ),
-    type: "error",
-    source: "timeout",
-};
-
-const runtimeError = {
-    text: i18n._(
-        "Your javascript encountered a runtime error. " +
-            "Check your console for more information.",
-    ),
-    type: "error",
-    source: "timeout",
-};
 
 /**
  * WebpageOutput
@@ -128,17 +110,16 @@ export default class WebpageOutput extends Component {
         html2canvas(this.frameDoc.body, {
             imagesDir: this.props.imagesDir,
             onrendered: function(canvas) {
-                const width = screenshotSize;
-                const height = (screenshotSize / canvas.width) * canvas.height;
+                var width = screenshotSize;
+                var height = (screenshotSize / canvas.width) * canvas.height;
 
                 // We want to resize the image to a thumbnail,
                 // which we can do by creating a temporary canvas
-                const tmpCanvas = document.createElement("canvas");
+                var tmpCanvas = document.createElement("canvas");
                 tmpCanvas.width = screenshotSize;
                 tmpCanvas.height = screenshotSize;
-                tmpCanvas
-                    .getContext("2d")
-                    .drawImage(canvas, 0, 0, width, height);
+                tmpCanvas.getContext("2d").drawImage(
+                    canvas, 0, 0, width, height);
 
                 // Send back the screenshot data
                 callback(tmpCanvas.toDataURL("image/png"));
@@ -146,8 +127,22 @@ export default class WebpageOutput extends Component {
         });
     }
 
+    infiniteLoopError = {
+        text: i18n._("Your javascript is taking too long to run. " +
+                    "Perhaps you have a mistake in your code?"),
+        type: "error",
+        source: "timeout",
+    }
+
+    runtimeError = {
+        text: i18n._("Your javascript encountered a runtime error. " +
+                    "Check your console for more information."),
+        type: "error",
+        source: "timeout",
+    }
+
     infiniteLoopCallback() {
-        this.props.onInfiniteLoopError(infiniteLoopError);
+        this.props.onInfiniteLoopError(this.infiniteLoopError);
         this.KA_INFINITE_LOOP = true;
     }
 
@@ -157,7 +152,7 @@ export default class WebpageOutput extends Component {
                 code: userCode,
                 timestamp: timestamp,
                 errors: [],
-                warnings: [],
+                warnings: []
             });
         }
 
@@ -165,47 +160,48 @@ export default class WebpageOutput extends Component {
         userCode = userCode || "";
 
         // Lint the user's code, returning any errors in the callback
-        let results = {};
+        var results = {};
         try {
             results = Slowparse.HTML(document, userCode, {
                 scriptPreprocessor: (code) => this.loopProtector.protect(code),
-                disableTags: ["iframe", "embed", "object", "frameset", "frame"],
+                disableTags: ["iframe", "embed", "object", "frameset", "frame"]
             });
         } catch (e) {
             if (window.console) {
                 console.warn(e);
             }
             results.error = {
-                type: "UNKNOWN_SLOWPARSE_ERROR",
+                type: "UNKNOWN_SLOWPARSE_ERROR"
             };
         }
 
         this.slowparseResults = results;
 
-        const errors = [];
+        var error = [];
         if (results.error) {
             let pos = results.error.cursor || 0;
             let previous = userCode.slice(0, pos);
             let column = pos - previous.lastIndexOf("\n") - 1;
             let row = (previous.match(/\n/g) || []).length;
-            errors.push({
+            error = [{
                 row: row,
                 column: column,
                 text: this.getLintMessage(results.error),
                 type: "error",
                 source: "slowparse",
                 lint: results.error,
-                priority: 2,
-            });
+                priority: 2
+            }];
         }
 
-        const warnings = [];
+        var warnings = [];
         if (results.warnings && results.warnings.length > 0) {
             for (let i = 0; i < results.warnings.length; i++) {
                 let pos = results.warnings[i].parseInfo.cursor || 0;
                 let previous = userCode.slice(0, pos);
                 let column = pos - previous.lastIndexOf("\n") - 1;
                 let row = (previous.match(/\n/g) || []).length;
+
                 warnings.push({
                     row: row,
                     column: column,
@@ -219,7 +215,7 @@ export default class WebpageOutput extends Component {
         this.props.onCodeLint({
             code: userCode,
             timestamp: timestamp,
-            errors: errors,
+            errors: error,
             warnings: warnings,
         });
     }
@@ -228,9 +224,9 @@ export default class WebpageOutput extends Component {
         error = error || {};
         base = base || "";
 
-        for (let prop in plainError) {
+        for (var prop in plainError) {
             if (plainError.hasOwnProperty(prop)) {
-                const flatName = base ? base + "_" + prop : prop;
+                var flatName = (base ? base + "_" + prop : prop);
                 if (typeof plainError[prop] === "object") {
                     this.flattenError(plainError[prop], error, flatName);
                 } else {
@@ -243,172 +239,54 @@ export default class WebpageOutput extends Component {
     }
 
     getLintMessage(plainError) {
-        const error = this.flattenError(plainError);
+        var error = this.flattenError(plainError);
 
         // Mostly borrowed from:
         // https://github.com/mozilla/thimble.webmaker.org/blob/master/locale/en_US/thimble-dialog-messages.json
-        return {
-            NO_DOCTYPE_FOUND: i18n._(
-                "A DOCTYPE declaration should be the first item on the page.",
-                error,
-            ),
-            HTML_NOT_ROOT_ELEMENT: i18n._(
-                "The root element on the page should be an <html> element.",
-                error,
-            ),
-            ATTRIBUTE_IN_CLOSING_TAG: i18n._(
-                'A closing "&lt;/%(closeTag_name)s&gt;" tag cannot contain any attributes.',
-                error,
-            ),
-            CLOSE_TAG_FOR_VOID_ELEMENT: i18n._(
-                'You have a closing "&lt;/%(closeTag_name)s&gt;" tag for a void element (and void elements don\'t need to be closed).',
-                error,
-            ),
-            CSS_MIXED_ACTIVECONTENT: i18n._(
-                'You have a css property "%(cssProperty_property)s" with a "url()" value that currently points to an insecure resource.',
-                error,
-            ),
-            EVENT_HANDLER_ATTR_NOT_ALLOWED: i18n._(
-                'Sorry, but security restrictions on this site prevent you from using the "%(attribute_name_value)s" JavaScript event handler attribute.',
-                error,
-            ),
-            HTML_CODE_IN_CSS_BLOCK: i18n._(
-                "Did you put HTML code inside a CSS area?",
-                error,
-            ),
-            HTTP_LINK_FROM_HTTPS_PAGE: i18n._(
-                'The <%(openTag_name)s> tag\'s "%(attribute_name_value)s" attribute currently points to an insecure resource.',
-                error,
-            ),
-            INVALID_URL: i18n._(
-                'The <%(openTag_name)s> tag\'s "%(attribute_name_value)s" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?',
-                error,
-            ),
-            INVALID_ATTR_NAME: i18n._(
-                'The attribute name "%(attribute_name_value)s" is not permitted under HTML5 naming conventions.',
-                error,
-            ),
-            UNSUPPORTED_ATTR_NAMESPACE: i18n._(
-                'The attribute "%(attribute_name_value)s" uses an attribute namespace that is not permitted under HTML5 conventions.',
-                error,
-            ),
-            MULTIPLE_ATTR_NAMESPACES: i18n._(
-                'The attribute "%(attribute_name_value)s" has multiple namespaces. Check your text and make sure there\'s only a single namespace prefix for the attribute.',
-                error,
-            ),
-            INVALID_CSS_PROPERTY_NAME: i18n._(
-                'The CSS property "%(cssProperty_property)s" does not exist.',
-                error,
-            ),
-            IMPROPER_CSS_VALUE: i18n._(
-                'The CSS value "%(cssValue_value)s" is malformed.',
-                error,
-            ),
-            INVALID_TAG_NAME: i18n._(
-                'A "&lt;" character appears to be the beginning of a tag, but is not followed by a valid tag name. If you want a "&lt;" to appear on your Web page, try using "&amp;lt;" instead. Otherwise, check your spelling.',
-                error,
-            ),
-            JAVASCRIPT_URL_NOT_ALLOWED: i18n._(
-                'Sorry, but security restrictions on this site prevent you from using the "javascript:" URL.',
-                error,
-            ),
-            MISMATCHED_CLOSE_TAG: i18n._(
-                'You have a closing "&lt;/%(closeTag_name)s&gt;" tag that doesn\'t pair with the opening "&lt;%(openTag_name)s&gt;" tag. This is likely due to a missing or misordered "&lt;/%(openTag_name)s&gt;" tag.',
-                error,
-            ),
-            MISSING_CSS_BLOCK_CLOSER: i18n._(
-                'You\'re missing either a "}" or another "property:value;" pair following "%(cssValue_value)s".',
-                error,
-            ),
-            MISSING_CSS_BLOCK_OPENER: i18n._(
-                'You\'re missing the "{" after "%(cssSelector_selector)s".',
-                error,
-            ),
-            MISSING_CSS_PROPERTY: i18n._(
-                'You\'re missing property for "%(cssSelector_selector)s".',
-                error,
-            ),
-            MISSING_CSS_SELECTOR: i18n._(
-                'You\'re missing either a new CSS selector or the "&lt;/style&gt;" tag.',
-                error,
-            ),
-            MISSING_CSS_VALUE: i18n._(
-                'You\'re missing value for "%(cssProperty_property)s".',
-                error,
-            ),
-            SCRIPT_ELEMENT_NOT_ALLOWED: i18n._(
-                'Sorry, but security restrictions on this site prevent you from using "&lt;script&gt;" tags.',
-                error,
-            ),
-            OBSOLETE_HTML_TAG: i18n._(
-                'The "%(openTag_name)s" tag is obsolete and may not function properly in modern browsers.',
-                error,
-            ),
-            ELEMENT_NOT_ALLOWED: i18n._(
-                'Sorry, but security restrictions on this site prevent you from using "&lt;%(openTag_name)s&gt;" tags.',
-                error,
-            ),
-            SELF_CLOSING_NON_VOID_ELEMENT: i18n._(
-                'The "&lt;%(name)s&gt;" tag can\'t be self-closed, because "&lt;%(name)s&gt;" is not a void element; it must be closed with a separate "&lt;/%(name)s&gt;" tag.',
-                error,
-            ),
-            UNCAUGHT_CSS_PARSE_ERROR: i18n._(
-                'A parse error occurred outside expected cases: "%(error_msg)s"',
-                error,
-            ),
-            UNCLOSED_TAG: i18n._(
-                'It looks like your "&lt;%(openTag_name)s&gt;" tag never closes.',
-                error,
-            ),
-            UNEXPECTED_CLOSE_TAG: i18n._(
-                'You have a closing "&lt;/%(closeTag_name)s&gt;" tag that doesn\'t pair with any matching opening tags.',
-                error,
-            ),
-            UNFINISHED_CSS_PROPERTY: i18n._(
-                'The CSS property "%(cssProperty_property)s" is missing a ":"',
-                error,
-            ),
-            UNFINISHED_CSS_SELECTOR: i18n._(
-                'The CSS selector "%(cssSelector_selector)s" needs to be followed by "{"',
-                error,
-            ),
-            UNFINISHED_CSS_VALUE: i18n._(
-                'The CSS value "%(cssValue_value)s" still needs to be finalized with ";"',
-                error,
-            ),
-            UNKOWN_CSS_KEYWORD: i18n._(
-                'The CSS @keyword "%(cssKeyword_value)s" does not match any known @keywords.',
-                error,
-            ),
-            UNQUOTED_ATTR_VALUE: i18n._(
-                "Make sure your attribute value starts with an opening double quote.",
-                error,
-            ),
-            UNTERMINATED_ATTR_VALUE: i18n._(
-                'It looks like your "&lt;%(openTag_name)s&gt;" tag\'s "%(attribute_name_value)s" attribute has a value that doesn\'t end with a closing double quote.',
-                error,
-            ),
-            UNTERMINATED_CLOSE_TAG: i18n._(
-                'It looks like your closing "&lt;/%(closeTag_name)s&gt;" tag doesn\'t end with a "&gt;".',
-                error,
-            ),
-            UNTERMINATED_COMMENT: i18n._(
-                'It looks like your comment doesn\'t end with a "--&gt;".',
-                error,
-            ),
-            UNTERMINATED_CSS_COMMENT: i18n._(
-                'It looks like your CSS comment doesn\'t end with a "*/".',
-                error,
-            ),
-            UNTERMINATED_OPEN_TAG: i18n._(
-                'It looks like your opening "&lt;%(openTag_name)s&gt;" tag doesn\'t end with a "&gt;".',
-                error,
-            ),
-            UNKNOWN_SLOWPARSE_ERROR: i18n._(
-                "Something's wrong with the HTML, but we're not sure what.",
-            ),
-            JAVASCRIPT_ERROR: i18n._('Javascript Error:\n"%(message)s"', error),
-        }[error.type];
+        return ({
+            NO_DOCTYPE_FOUND: i18n._("A DOCTYPE declaration should be the first item on the page.", error),
+            HTML_NOT_ROOT_ELEMENT: i18n._("The root element on the page should be an <html> element.", error),
+            ATTRIBUTE_IN_CLOSING_TAG: i18n._("A closing \"&lt;/%(closeTag_name)s&gt;\" tag cannot contain any attributes.", error),
+            CLOSE_TAG_FOR_VOID_ELEMENT: i18n._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag for a void element (and void elements don't need to be closed).", error),
+            CSS_MIXED_ACTIVECONTENT: i18n._("You have a css property \"%(cssProperty_property)s\" with a \"url()\" value that currently points to an insecure resource.", error),
+            EVENT_HANDLER_ATTR_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using the \"%(attribute_name_value)s\" JavaScript event handler attribute.", error),
+            HTML_CODE_IN_CSS_BLOCK: i18n._("Did you put HTML code inside a CSS area?", error),
+            HTTP_LINK_FROM_HTTPS_PAGE: i18n._("The <%(openTag_name)s> tag's \"%(attribute_name_value)s\" attribute currently points to an insecure resource.", error),
+            INVALID_URL: i18n._("The <%(openTag_name)s> tag's \"%(attribute_name_value)s\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?", error),
+            INVALID_ATTR_NAME: i18n._("The attribute name \"%(attribute_name_value)s\" is not permitted under HTML5 naming conventions.", error),
+            UNSUPPORTED_ATTR_NAMESPACE: i18n._("The attribute \"%(attribute_name_value)s\" uses an attribute namespace that is not permitted under HTML5 conventions.", error),
+            MULTIPLE_ATTR_NAMESPACES: i18n._("The attribute \"%(attribute_name_value)s\" has multiple namespaces. Check your text and make sure there's only a single namespace prefix for the attribute.", error),
+            INVALID_CSS_PROPERTY_NAME: i18n._("The CSS property \"%(cssProperty_property)s\" isn't valid - property names can only have letters and dashes.", error),
+            IMPROPER_CSS_VALUE: i18n._("The CSS value \"%(cssValue_value)s\" is malformed.", error),
+            INVALID_TAG_NAME: i18n._("A \"&lt;\" character appears to be the beginning of a tag, but is not followed by a valid tag name. If you want a \"&lt;\" to appear on your Web page, try using \"&amp;lt;\" instead. Otherwise, check your spelling.", error),
+            JAVASCRIPT_URL_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using the \"javascript:\" URL.", error),
+            MISMATCHED_CLOSE_TAG: i18n._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag that doesn't pair with the opening \"&lt;%(openTag_name)s&gt;\" tag. This is likely due to a missing or misordered \"&lt;/%(openTag_name)s&gt;\" tag.", error),
+            MISSING_CSS_BLOCK_CLOSER: i18n._("You're missing either a \"}\" or another \"property:value;\" pair following \"%(cssValue_value)s\".", error),
+            MISSING_CSS_BLOCK_OPENER: i18n._("You're missing the \"{\" after \"%(cssSelector_selector)s\".", error),
+            MISSING_CSS_PROPERTY: i18n._("You're missing property for \"%(cssSelector_selector)s\".", error),
+            MISSING_CSS_SELECTOR: i18n._("You're missing either a new CSS selector or the \"&lt;/style&gt;\" tag.", error),
+            MISSING_CSS_VALUE: i18n._("You're missing value for \"%(cssProperty_property)s\".", error),
+            SCRIPT_ELEMENT_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using \"&lt;script&gt;\" tags.", error),
+            OBSOLETE_HTML_TAG: i18n._("The \"%(openTag_name)s\" tag is obsolete and may not function properly in modern browsers.", error),
+            ELEMENT_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using \"&lt;%(openTag_name)s&gt;\" tags.", error),
+            SELF_CLOSING_NON_VOID_ELEMENT: i18n._("The \"&lt;%(name)s&gt;\" tag can't be self-closed, because \"&lt;%(name)s&gt;\" is not a void element; it must be closed with a separate \"&lt;/%(name)s&gt;\" tag.", error),
+            UNCAUGHT_CSS_PARSE_ERROR: i18n._("A parse error occurred outside expected cases: \"%(error_msg)s\"", error),
+            UNCLOSED_TAG: i18n._("It looks like your \"&lt;%(openTag_name)s&gt;\" tag never closes.", error),
+            UNEXPECTED_CLOSE_TAG: i18n._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag that doesn't pair with any matching opening tags.", error),
+            UNFINISHED_CSS_PROPERTY: i18n._("The CSS property \"%(cssProperty_property)s\" is missing a \":\"", error),
+            UNFINISHED_CSS_SELECTOR: i18n._("The CSS selector \"%(cssSelector_selector)s\" needs to be followed by \"{\"", error),
+            UNFINISHED_CSS_VALUE: i18n._("The CSS value \"%(cssValue_value)s\" still needs to be finalized with \";\"", error),
+            UNKOWN_CSS_KEYWORD: i18n._("The CSS @keyword \"%(cssKeyword_value)s\" does not match any known @keywords.", error),
+            UNKNOWN_CSS_PROPERTY_NAME: i18n._("The CSS property \"%(cssProperty_property)s\" is non-standard or non-existent. Check spelling and browser compatibility.", error),
+            UNQUOTED_ATTR_VALUE: i18n._("Make sure your attribute value starts with an opening double quote.", error),
+            UNTERMINATED_ATTR_VALUE: i18n._("It looks like your \"&lt;%(openTag_name)s&gt;\" tag's \"%(attribute_name_value)s\" attribute has a value that doesn't end with a closing double quote.", error),
+            UNTERMINATED_CLOSE_TAG: i18n._("It looks like your closing \"&lt;/%(closeTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
+            UNTERMINATED_COMMENT: i18n._("It looks like your comment doesn't end with a \"--&gt;\".", error),
+            UNTERMINATED_CSS_COMMENT: i18n._("It looks like your CSS comment doesn't end with a \"*/\".", error),
+            UNTERMINATED_OPEN_TAG: i18n._("It looks like your opening \"&lt;%(openTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
+            UNKNOWN_SLOWPARSE_ERROR: i18n._("Something's wrong with the HTML, but we're not sure what."),
+            JAVASCRIPT_ERROR: i18n._("Javascript Error:\n\"%(message)s\"", error)
+        })[error.type];
     }
 
     initTests(validate) {
@@ -417,15 +295,15 @@ export default class WebpageOutput extends Component {
         }
 
         try {
-            const code = "with(arguments[0]){\n" + validate + "\n}";
-            new Function(code).apply({}, this.tester.testContext);
+            var code = "with(arguments[0]){\n" + validate + "\n}";
+            (new Function(code)).apply({}, this.tester.testContext);
         } catch (e) {
             return e;
         }
     }
 
     test(code, tests, errors, timestamp) {
-        const errorCount = errors.length;
+        var errorCount = errors.length;
 
         this.tester.testContext.docSP = this.slowparseResults.document;
         this.tester.testContext.cssRules = this.slowparseResults.rules;
@@ -435,17 +313,11 @@ export default class WebpageOutput extends Component {
                 // Note: Scratchpad challenge checks against the exact
                 // translated text "A critical problem occurred..." to
                 // figure out whether we hit this case.
-                const message = i18n._("Error: %(message)s", {
-                    message: errors[errors.length - 1].message,
-                });
-                this.tester.testContext.assert(
-                    false,
-                    message,
-                    i18n._(
-                        "A critical problem occurred in your program " +
-                            "making it unable to run.",
-                    ),
-                );
+                var message = i18n._("Error: %(message)s",
+                    {message: errors[errors.length - 1].message});
+                this.tester.testContext.assert(false, message,
+                    i18n._("A critical problem occurred in your program " +
+                            "making it unable to run."));
             }
 
             this.props.onCodeTest({
@@ -516,10 +388,10 @@ export default class WebpageOutput extends Component {
         this.postProcessing();
 
         if (this.KA_INFINITE_LOOP) {
-            errors.push(infiniteLoopError);
+            errors.push(this.infiniteLoopError);
         }
         if (this.foundRunTimeError) {
-            errors.push(runtimeError);
+            errors.push(this.runtimeError);
         }
 
         this.props.onCodeRun({code: userCode, errors: errors, timestamp});
