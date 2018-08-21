@@ -29282,6 +29282,15 @@ var LiveEditor = function (_Component) {
 
             window.addEventListener("message", this.handleMessages);
 
+            // Track whether the audio has taken >= 15 seconds to load
+            if (this.hasAudio()) {
+                this.audioTimer = window.setTimeout(function () {
+                    if (!_this2.state.isAudioLoaded) {
+                        _this2.setState({ audioLoadSlow: true });
+                    }
+                }, 15 * 1000);
+            }
+
             this.config.on("versionSwitched", function (e, version) {
                 // Re-run the code after a version switch
                 _this2.markDirty();
@@ -29303,6 +29312,7 @@ var LiveEditor = function (_Component) {
         key: "componentWillUnmount",
         value: function componentWillUnmount() {
             window.removeEventListener("message", this.handleMessages);
+            window.clearTimeout(this.audioTimer);
             this.player && this.player.destruct();
             this.record && this.record.stopPlayback();
             this._isMounted = false;
@@ -29315,6 +29325,7 @@ var LiveEditor = function (_Component) {
             var props = {
                 errors: this.state.errors,
                 errorNum: this.state.errorNum,
+                imagesDir: this.props.imagesDir,
                 isHidden: !this.state.showErrorPopup,
                 onErrorShowRequested: function onErrorShowRequested(error) {
                     _this3.setState({
@@ -29325,7 +29336,7 @@ var LiveEditor = function (_Component) {
                     });
                 },
                 onLoseFocus: function onLoseFocus() {
-                    _this3.aceWrapperRef.current.editor.focus();
+                    _this3.requestEditorFocus();
                 },
                 onDismissed: function onDismissed(error) {
                     _this3.setState({
@@ -29408,9 +29419,9 @@ var LiveEditor = function (_Component) {
                     _this6.handleChangeDebounced();
                     _this6.props.onEditorChange && _this6.props.onEditorChange();
                 },
-                onUserChange: function onUserChange(code) {
+                onUserChange: function onUserChange(code, folds) {
                     if (!_this6.record || !_this6.record.recording && !_this6.record.playing) {
-                        _this6.props.onCodeChange && _this6.props.onCodeChange(code);
+                        _this6.props.onCodeChange && _this6.props.onCodeChange(code, folds);
                     }
                 },
                 onCursorChange: function onCursorChange(cursor) {
@@ -29472,8 +29483,8 @@ var LiveEditor = function (_Component) {
                 rightComponents: [restartButton].concat(this.props.toolbarRightComponents),
                 height: this.props.editorHeight || this.state.outputHeight,
                 hasAudio: this.hasAudio(),
-                showYoutubeLink: !this.state.isAudioLoaded,
-                showAudioPlayButton: this.state.isAudioLoaded && !this.state.isPlaying && !this.state.editorClicked,
+                showYoutubeLink: !this.state.isAudioLoaded && this.state.audioLoadSlow,
+                showAudioPlayButton: this.state.isAudioLoaded && !this.state.everPlayed && !this.state.editorClicked,
                 showAudioSpinner: !this.state.isAudioLoaded && !this.state.editorClicked,
                 // During playback, prevent user interaction with editor
                 showDisableOverlay: this.state.isPlaying && !this.state.isRecording,
@@ -29670,6 +29681,11 @@ var LiveEditor = function (_Component) {
                     "div",
                     { className: (0, _noImportant.css)(styles.playbackBar) },
                     playbackBar
+                ),
+                _react2.default.createElement(
+                    "div",
+                    { className: (0, _noImportant.css)(styles.playbackSide) },
+                    this.props.playbarRightComponents
                 )
             );
         }
@@ -29849,7 +29865,7 @@ var LiveEditor = function (_Component) {
                     // anyway and let the load happen when the
                     // user clicks the play button later on.
                     self.setState({ isAudioLoaded: true });
-                    self.props.onReadyToPlay();
+                    self.props.onReadyToPlay && self.props.onReadyToPlay();
                 }
             });
 
@@ -29860,7 +29876,7 @@ var LiveEditor = function (_Component) {
                 if (_this11.audioReadyToPlay()) {
                     clearInterval(checkStreaming);
                     _this11.setState({ isAudioLoaded: true });
-                    _this11.props.onReadyToPlay();
+                    _this11.props.onReadyToPlay && _this11.props.onReadyToPlay();
                 }
             }, 16);
 
@@ -29956,7 +29972,7 @@ var LiveEditor = function (_Component) {
                         document.querySelector("html").classList.add("playing");
                     }
 
-                    _this12.setState({ isPlaying: true });
+                    _this12.setState({ isPlaying: true, everPlayed: true });
                     _this12.props.onPlayingChange && _this12.props.onPlayingChange(true);
                 },
 
@@ -30085,7 +30101,7 @@ var LiveEditor = function (_Component) {
         key: "handleUndoClick",
         value: function handleUndoClick() {
             this.aceWrapperRef.current.undo();
-            this.aceWrapperRef.current.editor.focus();
+            this.requestEditorFocus();
         }
     }, {
         key: "handleOverlayClick",
@@ -30115,7 +30131,7 @@ var LiveEditor = function (_Component) {
                 callback({ error: "outdated" });
             } else if (this.canRecord() && !this.hasAudio()) {
                 this.startRecording();
-                this.aceWrapperRef.focus();
+                this.requestEditorFocus();
             } else {
                 callback({ error: "exists" });
             }
@@ -30124,7 +30140,7 @@ var LiveEditor = function (_Component) {
         key: "handleRecordColorClick",
         value: function handleRecordColorClick(color) {
             this.setState({ drawingColor: color });
-            this.aceWrapperRef.current.focus();
+            this.requestEditorFocus();
         }
     }, {
         key: "handleRecordClearClick",
@@ -30132,7 +30148,7 @@ var LiveEditor = function (_Component) {
             this.setState({ drawingColor: null });
             this.drawCanvas.clear();
             this.drawCanvas.endDraw();
-            this.aceWrapperRef.current.focus();
+            this.requestEditorFocus();
         }
     }, {
         key: "saveRecording",
@@ -30596,8 +30612,8 @@ var LiveEditor = function (_Component) {
 
             var handleScreenshotMessage = function handleScreenshotMessage(e) {
                 // Only call if the data is actually an image!
-                if (/^data:/.test(e.originalEvent.data)) {
-                    callback(e.originalEvent.data);
+                if (/^data:/.test(e.data)) {
+                    callback(e.data);
                 }
             };
 
@@ -30609,10 +30625,18 @@ var LiveEditor = function (_Component) {
             // Ask the frame for a screenshot
             this.postFrame({ screenshot: true });
         }
+
+        // TODO(pamela): Send these requests as timestamped props in future
+
     }, {
         key: "requestEditorCodeChange",
         value: function requestEditorCodeChange(code) {
             this.aceWrapperRef.current.text(code);
+        }
+    }, {
+        key: "requestEditorFocus",
+        value: function requestEditorFocus() {
+            this.aceWrapperRef.current.focus();
         }
     }, {
         key: "cleanErrors",
@@ -30753,6 +30777,7 @@ var LiveEditor = function (_Component) {
 LiveEditor.defaultProps = {
     outputWidth: "400px",
     outputHeight: "400px",
+    playbarRightComponents: [],
     toolbarLeftComponents: [],
     toolbarRightComponents: []
 };
@@ -30820,6 +30845,9 @@ var styles = _noImportant.StyleSheet.create({
     },
     playbackBar: {
         flex: "1 0 0"
+    },
+    playbackSide: {
+        paddingLeft: "10px"
     },
     toolbarWrap: {
         borderTop: defaultBorder,
@@ -31662,6 +31690,9 @@ var TipBar = function (_Component) {
                     })
                 );
             }
+            var ebImg = this.props.imagesDir + "scratchpads/error-buddy.png";
+            var arImg = this.props.imagesDir + "scratchpads/speech-arrow.png";
+
             // Note: enableUserSelectHack below is very important.
             // Without it, the editor loses focus whenever this component unmounts.
             // See https://github.com/mzabriskie/react-draggable/issues/315
@@ -31682,8 +31713,12 @@ var TipBar = function (_Component) {
                     _react2.default.createElement(
                         "div",
                         { className: (0, _noImportant.css)(styles.errorBuddyWrapper) },
-                        _react2.default.createElement("div", { className: (0, _noImportant.css)(styles.speechArrow) }),
-                        _react2.default.createElement("div", { className: (0, _noImportant.css)(styles.errorBuddyImg) }),
+                        _react2.default.createElement("div", { className: (0, _noImportant.css)(styles.speechArrow),
+                            style: { background: "url(" + arImg + ")" }
+                        }),
+                        _react2.default.createElement("div", { className: (0, _noImportant.css)(styles.errorBuddyImg),
+                            style: { background: "url(" + ebImg + ")" }
+                        }),
                         _react2.default.createElement(
                             "div",
                             { className: (0, _noImportant.css)(styles.messageBubble) },
@@ -31741,7 +31776,6 @@ var styles = _noImportant.StyleSheet.create({
         width: "260px"
     },
     errorBuddyImg: {
-        background: "url(../../images/scratchpads/error-buddy.png)",
         cursor: "move",
         height: "116px",
         left: "-140px",
@@ -31751,7 +31785,6 @@ var styles = _noImportant.StyleSheet.create({
         width: "130px"
     },
     speechArrow: {
-        backgroundImage: "url(../../images/scratchpads/speech-arrow.png)",
         backgroundRepeat: "no-repeat",
         height: "24px",
         left: "-14px",
@@ -32366,6 +32399,7 @@ var styles = _noImportant.StyleSheet.create({
         width: "100%"
     },
     seekProgress: {
+        background: _wonderBlocksColor2.default.blue,
         height: "100%"
     },
     seekHandle: {
@@ -33453,11 +33487,7 @@ var UndoButton = function (_Component) {
             }
             return _react2.default.createElement(
                 _wonderBlocksButton2.default,
-                {
-                    kind: "secondary",
-                    size: "small",
-                    onClick: this.props.onClick
-                },
+                { kind: "secondary", size: "small", onClick: this.props.onClick },
                 i18n._("Undo")
             );
         }

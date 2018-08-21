@@ -66,6 +66,7 @@ export default class LiveEditor extends Component {
         restartLabel: string,
         showUndoButton: boolean,
         documentation: Array, // Array of strings
+        playbarRightComponents: Array, // Array of components
         toolbarLeftComponents: Array, // Array of components
         toolbarRightComponents: Array,
         // For talkthroughs
@@ -87,12 +88,13 @@ export default class LiveEditor extends Component {
         onEditorChange: Function,
         onCursorChange: Function,
         onPlayingChange: Function,
-        onReadyToPlay: Function,
+        onReadyToPlay?: Function,
     };
 
     static defaultProps = {
         outputWidth: "400px",
         outputHeight: "400px",
+        playbarRightComponents: [],
         toolbarLeftComponents: [],
         toolbarRightComponents: [],
     };
@@ -199,6 +201,15 @@ export default class LiveEditor extends Component {
     componentDidMount() {
         window.addEventListener("message", this.handleMessages);
 
+        // Track whether the audio has taken >= 15 seconds to load
+        if (this.hasAudio()) {
+            this.audioTimer = window.setTimeout(() => {
+                if (!this.state.isAudioLoaded) {
+                    this.setState({audioLoadSlow: true});
+                }
+            }, 15 * 1000);
+        }
+
         this.config.on("versionSwitched", (e, version) => {
             // Re-run the code after a version switch
             this.markDirty();
@@ -218,6 +229,7 @@ export default class LiveEditor extends Component {
 
     componentWillUnmount() {
         window.removeEventListener("message", this.handleMessages);
+        window.clearTimeout(this.audioTimer);
         this.player && this.player.destruct();
         this.record && this.record.stopPlayback();
         this._isMounted = false;
@@ -227,6 +239,7 @@ export default class LiveEditor extends Component {
         const props = {
             errors: this.state.errors,
             errorNum: this.state.errorNum,
+            imagesDir: this.props.imagesDir,
             isHidden: !this.state.showErrorPopup,
             onErrorShowRequested: (error) => {
                 this.setState({
@@ -237,7 +250,7 @@ export default class LiveEditor extends Component {
                 });
             },
             onLoseFocus: () => {
-                this.aceWrapperRef.current.editor.focus();
+                this.requestEditorFocus();
             },
             onDismissed: (error) => {
                 this.setState({
@@ -311,12 +324,13 @@ export default class LiveEditor extends Component {
                 this.handleChangeDebounced();
                 this.props.onEditorChange && this.props.onEditorChange();
             },
-            onUserChange: (code) => {
+            onUserChange: (code, folds) => {
                 if (
                     !this.record ||
                     (!this.record.recording && !this.record.playing)
                 ) {
-                    this.props.onCodeChange && this.props.onCodeChange(code);
+                    this.props.onCodeChange &&
+                        this.props.onCodeChange(code, folds);
                 }
             },
             onCursorChange: (cursor) => {
@@ -386,10 +400,11 @@ export default class LiveEditor extends Component {
             ),
             height: this.props.editorHeight || this.state.outputHeight,
             hasAudio: this.hasAudio(),
-            showYoutubeLink: !this.state.isAudioLoaded,
+            showYoutubeLink:
+                !this.state.isAudioLoaded && this.state.audioLoadSlow,
             showAudioPlayButton:
                 this.state.isAudioLoaded &&
-                !this.state.isPlaying &&
+                !this.state.everPlayed &&
                 !this.state.editorClicked,
             showAudioSpinner:
                 !this.state.isAudioLoaded && !this.state.editorClicked,
@@ -588,6 +603,9 @@ export default class LiveEditor extends Component {
         return (
             <div className={css(styles.playbar)}>
                 <div className={css(styles.playbackBar)}>{playbackBar}</div>
+                <div className={css(styles.playbackSide)}>
+                    {this.props.playbarRightComponents}
+                </div>
             </div>
         );
     }
@@ -781,7 +799,7 @@ export default class LiveEditor extends Component {
                 // anyway and let the load happen when the
                 // user clicks the play button later on.
                 self.setState({isAudioLoaded: true});
-                self.props.onReadyToPlay();
+                self.props.onReadyToPlay && self.props.onReadyToPlay();
             },
         });
 
@@ -792,7 +810,7 @@ export default class LiveEditor extends Component {
             if (this.audioReadyToPlay()) {
                 clearInterval(checkStreaming);
                 this.setState({isAudioLoaded: true});
-                this.props.onReadyToPlay();
+                this.props.onReadyToPlay && this.props.onReadyToPlay();
             }
         }, 16);
 
@@ -902,7 +920,7 @@ export default class LiveEditor extends Component {
                     document.querySelector("html").classList.add("playing");
                 }
 
-                this.setState({isPlaying: true});
+                this.setState({isPlaying: true, everPlayed: true});
                 this.props.onPlayingChange && this.props.onPlayingChange(true);
             },
 
@@ -1025,7 +1043,7 @@ export default class LiveEditor extends Component {
 
     handleUndoClick() {
         this.aceWrapperRef.current.undo();
-        this.aceWrapperRef.current.editor.focus();
+        this.requestEditorFocus();
     }
 
     handleOverlayClick() {
@@ -1053,7 +1071,7 @@ export default class LiveEditor extends Component {
             callback({error: "outdated"});
         } else if (this.canRecord() && !this.hasAudio()) {
             this.startRecording();
-            this.aceWrapperRef.focus();
+            this.requestEditorFocus();
         } else {
             callback({error: "exists"});
         }
@@ -1061,14 +1079,14 @@ export default class LiveEditor extends Component {
 
     handleRecordColorClick(color) {
         this.setState({drawingColor: color});
-        this.aceWrapperRef.current.focus();
+        this.requestEditorFocus();
     }
 
     handleRecordClearClick() {
         this.setState({drawingColor: null});
         this.drawCanvas.clear();
         this.drawCanvas.endDraw();
-        this.aceWrapperRef.current.focus();
+        this.requestEditorFocus();
     }
 
     saveRecording(callback, steps) {
@@ -1508,8 +1526,8 @@ export default class LiveEditor extends Component {
 
         const handleScreenshotMessage = function(e) {
             // Only call if the data is actually an image!
-            if (/^data:/.test(e.originalEvent.data)) {
-                callback(e.originalEvent.data);
+            if (/^data:/.test(e.data)) {
+                callback(e.data);
             }
         };
 
@@ -1522,8 +1540,13 @@ export default class LiveEditor extends Component {
         this.postFrame({screenshot: true});
     }
 
+    // TODO(pamela): Send these requests as timestamped props in future
     requestEditorCodeChange(code) {
         this.aceWrapperRef.current.text(code);
+    }
+
+    requestEditorFocus() {
+        this.aceWrapperRef.current.focus();
     }
 
     cleanErrors(errors) {
@@ -1739,6 +1762,9 @@ const styles = StyleSheet.create({
     },
     playbackBar: {
         flex: "1 0 0",
+    },
+    playbackSide: {
+        paddingLeft: "10px",
     },
     toolbarWrap: {
         borderTop: defaultBorder,

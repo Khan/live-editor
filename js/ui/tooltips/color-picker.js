@@ -34,7 +34,7 @@ export default class ColorPicker extends Component {
         super(props);
         this.state = {
             closing: "",
-            color: {r: 255, g: 0, b: 0},
+            rgb: {r: 255, g: 0, b: 0},
         };
         const funcs =
             this.props.editorType === "ace_webpage"
@@ -68,9 +68,9 @@ export default class ColorPicker extends Component {
         this.props.onLoseFocus();
     };
 
-    handleChange = (color, eventType) => {
-        this.setState({color});
-        this.updateText(color, eventType);
+    handleChange = (rgb, eventType) => {
+        this.setState({rgbTemp: rgb});
+        this.updateText(rgb, eventType);
     };
 
     checkEvent(event) {
@@ -189,13 +189,13 @@ export default class ColorPicker extends Component {
             colorPicker = (
                 <div className={css(styles.fullDiv)}>
                     <FullColorPicker
-                        color={this.state.color}
+                        color={this.state.rgb}
                         onColorChange={this.handleChange}
                     />
                 </div>
             );
         } else {
-            const colorBg = `rgb(${stringifyRGB(this.state.color)})`;
+            const colorBg = `rgb(${stringifyRGB(this.state.rgb)})`;
             colorPicker = (
                 <div
                     className={css(styles.previewDiv)}

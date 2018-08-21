@@ -247,6 +247,7 @@ const styles = StyleSheet.create({
         width: "100%",
     },
     seekProgress: {
+        background: Color.blue,
         height: "100%",
     },
     seekHandle: {

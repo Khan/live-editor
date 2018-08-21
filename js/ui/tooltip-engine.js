@@ -29,17 +29,14 @@ export default class TooltipEngine extends Component {
 
         const record = props.record;
         if (record) {
-            // disable autofill when playback or seeking has started
             ["playStarted", "runSeek"].forEach((event) => {
                 record.on(event, () => {
-                    this.setState({autofillEnabled: false});
+                    this.setState({isPlaying: true});
                 });
             });
-
-            // enable autofill when playback or seeking has stopped
-            ["playPaused", "playStopped", "seekDone"].forEach((event) => {
+            ["playPaused", "playStopped"].forEach((event) => {
                 record.on(event, () => {
-                    this.setState({autofillEnabled: true});
+                    this.setState({isPlaying: false});
                 });
             });
         }
@@ -68,10 +65,18 @@ export default class TooltipEngine extends Component {
             return;
         }
         newEvent.timestamp = Date.now();
+
+        let possibleTooltips = this.props.tooltips;
+        // Disable autosuggest while audio is playing
+        if (this.state.isPlaying) {
+            possibleTooltips = possibleTooltips.filter((tooltip) => {
+                return tooltip !== "autoSuggest";
+            });
+        }
         // eslint-disable-next-line react/no-did-update-set-state
         this.setState({
             eventToCheck: newEvent,
-            possibleTooltips: this.props.tooltips,
+            possibleTooltips,
         });
     }
 
@@ -92,7 +97,8 @@ export default class TooltipEngine extends Component {
                 {
                     key: name,
                     isEnabled: false,
-                    autofillEnabled: !this.state.autofillEnabled,
+                    // Disable autofill during talkthrough playback
+                    autofillEnabled: !this.state.isPlaying,
                 },
                 this.props,
             );

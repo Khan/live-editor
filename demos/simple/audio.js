@@ -1,29 +1,32 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-const AceEditor = require("../../js/editors/ace/editor-ace.js");
-const LiveEditor = require("../../js/live-editor.js");
-const data = require("./test-audio.json");
+import AceEditor from "../../js/editors/ace/editor-ace.js";
+import LiveEditor from "../../js/live-editor.js";
+
+import data from "./test-audio.json";
 
 LiveEditor.registerEditor("ace_pjs", AceEditor);
 
-var liveEditorProps = {
+const liveEditorProps = {
     code: data.init.code,
     version: data.init.configVersion,
     recordingMP3: data.mp3,
     recordingCommands: data.commands,
     recordingInit: data.init,
     youtubeUrl: "https://www.youtubeeducation.com/embed/D5HQw_GKOwo",
-    width: 400,
-    height: 400,
+    outputExecFile: "output.html",
+    outputWidth: 400,
+    outputHeight: 400,
     outputType: "pjs",
     workersDir: "../../build/",
     externalsDir: "../../build/external/",
     imagesDir: "../../build/images/",
     soundsDir: "../../build/sounds/",
-    execFile: "output.html",
     jshintFile: "../../build/external/jshint/jshint.js",
 };
 
-ReactDOM.render(React.createElement(LiveEditor, liveEditorProps),
-    document.getElementById("sample-live-editor"));
+ReactDOM.render(
+    React.createElement(LiveEditor, liveEditorProps),
+    document.getElementById("sample-live-editor"),
+);

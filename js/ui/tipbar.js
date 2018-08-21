@@ -16,6 +16,7 @@ import SharedStyles from "./shared-styles.js";
 
 export default class TipBar extends Component {
     props: {
+        imagesDir: string,
         isHidden: boolean,
         errors: Array<string>,
         errorNum: number,
@@ -132,6 +133,9 @@ export default class TipBar extends Component {
                 </div>
             );
         }
+        const ebImg = `${this.props.imagesDir}scratchpads/error-buddy.png`;
+        const arImg = `${this.props.imagesDir}scratchpads/speech-arrow.png`;
+
         // Note: enableUserSelectHack below is very important.
         // Without it, the editor loses focus whenever this component unmounts.
         // See https://github.com/mzabriskie/react-draggable/issues/315
@@ -147,8 +151,14 @@ export default class TipBar extends Component {
                     handle=".error-buddy"
                 >
                     <div className={css(styles.errorBuddyWrapper)}>
-                        <div className={css(styles.speechArrow)} />
-                        <div className={css(styles.errorBuddyImg)} />
+                        <div
+                            className={css(styles.speechArrow)}
+                            style={{background: `url(${arImg})`}}
+                        />
+                        <div
+                            className={css(styles.errorBuddyImg)}
+                            style={{background: `url(${ebImg})`}}
+                        />
                         <div className={css(styles.messageBubble)}>
                             <IconButton
                                 style={styles.closeButton}
@@ -193,7 +203,6 @@ const styles = StyleSheet.create({
         width: "260px",
     },
     errorBuddyImg: {
-        background: "url(../../images/scratchpads/error-buddy.png)",
         cursor: "move",
         height: "116px",
         left: "-140px",
@@ -203,7 +212,6 @@ const styles = StyleSheet.create({
         width: "130px",
     },
     speechArrow: {
-        backgroundImage: "url(../../images/scratchpads/speech-arrow.png)",
         backgroundRepeat: "no-repeat",
         height: "24px",
         left: "-14px",

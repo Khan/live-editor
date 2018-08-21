@@ -37,7 +37,7 @@ const config = {
         demos_sql: ["./demos/simple/sql.js"],
         demos_sql_output: ["./demos/simple/sql_output.js"],
         demos_document: ["./demos/simple/document.js"],
-        audio_demo: ["./demos/simple/audio.js"],
+        demos_audio: ["./demos/simple/audio.js"],
         // Used for testing:
         live_editor: ["./js/live-editor.global.js"],
         loop_protector: ["./js/output/shared/loop-protect.global.js"],

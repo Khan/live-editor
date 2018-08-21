@@ -6427,17 +6427,14 @@ var TooltipEngine = function (_Component) {
 
         var record = props.record;
         if (record) {
-            // disable autofill when playback or seeking has started
             ["playStarted", "runSeek"].forEach(function (event) {
                 record.on(event, function () {
-                    _this.setState({ autofillEnabled: false });
+                    _this.setState({ isPlaying: true });
                 });
             });
-
-            // enable autofill when playback or seeking has stopped
-            ["playPaused", "playStopped", "seekDone"].forEach(function (event) {
+            ["playPaused", "playStopped"].forEach(function (event) {
                 record.on(event, function () {
-                    _this.setState({ autofillEnabled: true });
+                    _this.setState({ isPlaying: false });
                 });
             });
         }
@@ -6465,10 +6462,18 @@ var TooltipEngine = function (_Component) {
                 return;
             }
             newEvent.timestamp = Date.now();
+
+            var possibleTooltips = this.props.tooltips;
+            // Disable autosuggest while audio is playing
+            if (this.state.isPlaying) {
+                possibleTooltips = possibleTooltips.filter(function (tooltip) {
+                    return tooltip !== "autoSuggest";
+                });
+            }
             // eslint-disable-next-line react/no-did-update-set-state
             this.setState({
                 eventToCheck: newEvent,
-                possibleTooltips: this.props.tooltips
+                possibleTooltips: possibleTooltips
             });
         }
     }, {
@@ -6488,7 +6493,8 @@ var TooltipEngine = function (_Component) {
                 var childProps = Object.assign({
                     key: name,
                     isEnabled: false,
-                    autofillEnabled: !_this2.state.autofillEnabled
+                    // Disable autofill during talkthrough playback
+                    autofillEnabled: !_this2.state.isPlaying
                 }, _this2.props);
 
                 childProps.onEventCheck = function (foundMatch, aceLocation) {
@@ -20772,7 +20778,7 @@ var AceEditorWrapper = function (_Component) {
             this.editor.on("change", function () {
                 _this2.props.onChange(_this2.text());
                 if (_this2.editor.curOp && _this2.editor.curOp.command.name) {
-                    _this2.props.onUserChange(_this2.text());
+                    _this2.props.onUserChange(_this2.text(), _this2.getAllFolds());
                 }
             });
 
@@ -21174,6 +21180,7 @@ var AceEditorWrapper = function (_Component) {
             var aceEditor = this.editor;
 
             var notifyUser = function notifyUser() {
+                // eslint-disable-next-line no-alert
                 window.alert(_this7.props.disablePasteMsg);
             };
 
@@ -21508,14 +21515,14 @@ var ColorPicker = function (_Component) {
             _this.props.onLoseFocus();
         };
 
-        _this.handleChange = function (color, eventType) {
-            _this.setState({ color: color });
-            _this.updateText(color, eventType);
+        _this.handleChange = function (rgb, eventType) {
+            _this.setState({ rgbTemp: rgb });
+            _this.updateText(rgb, eventType);
         };
 
         _this.state = {
             closing: "",
-            color: { r: 255, g: 0, b: 0 }
+            rgb: { r: 255, g: 0, b: 0 }
         };
         var funcs = _this.props.editorType === "ace_webpage" ? "rgb|rgba" : "background|fill|stroke|color";
         _this.regex = RegExp("(\\b(?:" + funcs + ")\\s*\\()[^\\)]*$");
@@ -21642,12 +21649,12 @@ var ColorPicker = function (_Component) {
                     "div",
                     { className: (0, _noImportant.css)(styles.fullDiv) },
                     _react2.default.createElement(_colorPickerFull2.default, {
-                        color: this.state.color,
+                        color: this.state.rgb,
                         onColorChange: this.handleChange
                     })
                 );
             } else {
-                var colorBg = "rgb(" + stringifyRGB(this.state.color) + ")";
+                var colorBg = "rgb(" + stringifyRGB(this.state.rgb) + ")";
                 colorPicker = _react2.default.createElement("div", {
                     className: (0, _noImportant.css)(styles.previewDiv),
                     style: { backgroundColor: colorBg }
@@ -27777,7 +27784,10 @@ var AutoSuggestPopup = function (_Component) {
 
             return _react2.default.createElement(
                 "div",
-                { className: (0, _noImportant.css)(styles.popup), onMouseDown: this.props.onMouseDown },
+                {
+                    className: (0, _noImportant.css)(styles.popup),
+                    onMouseDown: this.props.onMouseDown
+                },
                 funcNameEl,
                 _react2.default.createElement(
                     "span",

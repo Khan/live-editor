@@ -116,7 +116,7 @@ export default class AceEditorWrapper extends Component {
         this.editor.on("change", () => {
             this.props.onChange(this.text());
             if (this.editor.curOp && this.editor.curOp.command.name) {
-                this.props.onUserChange(this.text());
+                this.props.onUserChange(this.text(), this.getAllFolds());
             }
         });
 
