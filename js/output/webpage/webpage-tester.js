@@ -3,11 +3,10 @@
 import _ from "lodash";
 
 import Structured from "../../../external/structuredjs/structured.js";
-
 import OutputTester from "../shared/output-tester.js";
 import PJSTester from "../pjs/pjs-tester.js";
 
-var WebpageTester = function(options) {
+export default function WebpageTester(options) {
     this.initialize(options);
     this.bindTestContext();
     this.testContext.phoneHome = options.onPhoneHomeRequest;
@@ -26,6 +25,7 @@ _.extend(WebpageTester.prototype, {
         //  referencing functions like staticTest and that
         //  function will fill in this.tests
         this.exec(validate);
+
         this.testContext.allScripts = "";
 
         var parser = new DOMParser();
@@ -300,15 +300,13 @@ _.extend(WebpageTester.prototype.testMethods, {
 
         // Get the properties for this rule
         var testProperties = {};
-        testBody.split(";").forEach((prop) => {
+        _.each(testBody.split(";"), function(prop) {
             if (prop.trim().length === 0) {
                 return;
             }
             var parts = prop.split(":");
-            testProperties[
-                parts[0].trim()
-            ] = this.testContext.normalizePropertyValue(parts[1]);
-        });
+            testProperties[parts[0].trim()] = this.testContext.normalizePropertyValue(parts[1]);
+        }.bind(this));
 
         var oldWVars = wVars;
         var lastFailureMessage = {success: false};
@@ -325,37 +323,21 @@ _.extend(WebpageTester.prototype.testMethods, {
             wVars = Object.create(oldWVars);
 
             // Match selector
-            if (
-                !this.testContext.selectorMatch(testSelector, selector, wVars)
-            ) {
+            if (!this.testContext.selectorMatch(testSelector, selector, wVars)) {
                 continue;
             }
 
             // Match properties
-            var doPropertiesMatch = Object.keys(testProperties).every(
-                (prop) => {
-                    const value = testProperties[prop];
-                    return (
-                        prop in css[selector] &&
-                        this.testContext.wildcardMatch(
-                            value,
-                            css[selector][prop],
-                            wVars,
-                        )
-                    );
-                },
-            );
+            var doPropertiesMatch = _.every(testProperties, function(value, prop) {
+                return (prop in css[selector]) &&
+                        this.testContext.wildcardMatch(value, css[selector][prop], wVars);
+            }.bind(this));
             if (!doPropertiesMatch) {
                 continue;
             }
 
             // Recurse
-            var result = this.testContext.testCSSRules(
-                rules,
-                css,
-                callbacks,
-                wVars,
-            );
+            var result = this.testContext.testCSSRules(rules, css, callbacks, wVars);
             if (result.success) {
                 return result;
             } else {
@@ -408,11 +390,7 @@ _.extend(WebpageTester.prototype.testMethods, {
         return {success: true};
     },
     selectorMatch: function(compositePattern, compositeSelector, wVars) {
-        return this.testContext.multiSelectorMatch(
-            compositePattern.split(","),
-            compositeSelector.split(","),
-            wVars,
-        );
+        return this.testContext.multiSelectorMatch(compositePattern.split(","), compositeSelector.split(","), wVars);
     },
 
     /*
@@ -434,20 +412,9 @@ _.extend(WebpageTester.prototype.testMethods, {
         for (var key = 0; key < selectors.length; key++) {
             wVars = Object.create(oldWVars);
             var selector = selectors[key];
-            if (
-                this.testContext.singleSelectorMatch(pattern, selector, wVars)
-            ) {
-                if (
-                    this.testContext.multiSelectorMatch(
-                        patterns,
-                        selectors
-                            .slice(0, key)
-                            .concat(selectors.slice(key + 1)),
-                        wVars,
-                    )
-                ) {
-                    for (key in wVars) {
-                        /* jshint forin:false */
+            if (this.testContext.singleSelectorMatch(pattern, selector, wVars)) {
+                if (this.testContext.multiSelectorMatch(patterns, selectors.slice(0, key).concat(selectors.slice(key + 1)), wVars)) {
+                    for (key in wVars) { /* jshint forin:false */
                         // Commit wildcard selections to parent wVars
                         if (!(key in oldWVars)) {
                             oldWVars[key] = wVars[key];
@@ -462,10 +429,10 @@ _.extend(WebpageTester.prototype.testMethods, {
     },
 
     /*
-        * Check if two CSS selectors match, including wildcards
-        * "div" == "div"
-        * "_" == "div"
-        */
+    * Check if two CSS selectors match, including wildcards
+    * "div" == "div"
+    * "_" == "div"
+    */
     singleSelectorMatch: function(pattern, selector, wVars) {
         var patternParts = pattern.split(" ");
         var selectorParts = selector.split(" ");
@@ -473,13 +440,7 @@ _.extend(WebpageTester.prototype.testMethods, {
             return false;
         }
         for (var i = 0; i < patternParts.length; i++) {
-            if (
-                !this.testContext.wildcardMatch(
-                    patternParts[i],
-                    selectorParts[i],
-                    wVars,
-                )
-            ) {
+            if (!this.testContext.wildcardMatch(patternParts[i], selectorParts[i], wVars)) {
                 return false;
             }
         }
@@ -497,9 +458,8 @@ _.extend(WebpageTester.prototype.testMethods, {
     },
 
     notDefaultColor: constraintPartial(function(color) {
-        var isRGB =
-            /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
-            /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color);
+        var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
+                      /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
         var isDefault = color.replace(/\s+/, "") === "rgb(255,0,0)";
         return isRGB && !isDefault;
     }),
@@ -509,25 +469,20 @@ _.extend(WebpageTester.prototype.testMethods, {
             var num = parseInt(val, 10);
             return num >= 0 && num <= 255;
         };
-        var isRGB =
-            /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
-            /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color);
+        var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
+                      /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
         if (isRGB) {
             var vals = color.split("(")[1].split(",");
-            return (
-                isValidNum(vals[0]) &&
-                isValidNum(vals[1]) &&
-                isValidNum(vals[2])
-            );
+            return (isValidNum(vals[0]) &&
+                    isValidNum(vals[1]) &&
+                    isValidNum(vals[2]));
         }
 
         // If they're trying to use a color name, it should be at least
         //  three letters long and not equal to rgb
-        return (
-            /[a-zA-Z]+/.test(color) &&
+        return /[a-zA-Z]+/.test(color) &&
             color.length >= 3 &&
-            color.indexOf("rgb") === -1
-        );
+            color.indexOf("rgb") === -1;
     }),
 
     ///////////////////////////////////////////////////////
@@ -556,7 +511,7 @@ _.extend(WebpageTester.prototype.testMethods, {
             structure: hint ? hint.toString() : "",
             alternateMessage: alternateMessage,
             alsoMessage: alsoMessage,
-            image: image,
+            image: image
         });
     },
 
@@ -568,7 +523,7 @@ _.extend(WebpageTester.prototype.testMethods, {
         if (this.errors.length) {
             return {
                 success: false,
-                message: i18n._("Syntax error!"),
+                message: i18n._("Syntax error!")
             };
         }
 
@@ -578,7 +533,7 @@ _.extend(WebpageTester.prototype.testMethods, {
 
         // If we don't see a pattern property, they probably passed in
         // a pattern itself, so we'll turn it into a structure
-        if (structure && typeof structure.pattern === "undefined") {
+        if (structure && _.isUndefined(structure.pattern)) {
             structure = {pattern: structure};
         }
 
@@ -587,23 +542,20 @@ _.extend(WebpageTester.prototype.testMethods, {
         if (!structure || !structure.pattern) {
             return {
                 success: false,
-                message: "",
+                message: ""
             };
         }
 
         try {
             var callbacks = structure.constraint;
-            var success = Structured.match(
-                this.testContext.allScripts,
-                structure.pattern,
-                {
-                    varCallbacks: callbacks,
-                },
-            );
+            var success = Structured.match(this.testContext.allScripts,
+                structure.pattern, {
+                    varCallbacks: callbacks
+                });
 
             return {
                 success: success,
-                message: callbacks && callbacks.failure,
+                message: callbacks && callbacks.failure
             };
         } catch (e) {
             if (window.console) {
@@ -611,15 +563,11 @@ _.extend(WebpageTester.prototype.testMethods, {
             }
             return {
                 success: true,
-                message: i18n._(
-                    "Hm, we're having some trouble " +
-                        "verifying your answer for this step, so we'll give " +
-                        "you the benefit of the doubt as we work to fix it. " +
-                        'Please click "Report a problem" to notify us.',
-                ),
+                message: i18n._("Hm, we're having some trouble " +
+                    "verifying your answer for this step, so we'll give " +
+                    "you the benefit of the doubt as we work to fix it. " +
+                    "Please click \"Report a problem\" to notify us.")
             };
         }
     },
 });
-
-export default WebpageTester;
