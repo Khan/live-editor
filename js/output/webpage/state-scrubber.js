@@ -1,50 +1,47 @@
-/* eslint-disable no-var */
-/* TODO: Fix the lint errors */
 /**
  * StateScrubber
  * Resets the global javascript state in the browser
  * (timeouts, intervals and global variables)
  */
-export default class StateScrubber {
+var StateScrubber = function(target) {
+    this.target = target;
+    this.firstTimeout = target.setTimeout(function() {}, 0);
 
-    constructor (target) {
-        this.target = target;
-        this.firstTimeout = target.setTimeout(function() {}, 0);
-
-        // We will record all the variables that we see on window on startup
-        // these will be the only keys we leave intact when we reset window
-        this.globalVariables = {};
-        for (var prop in target) {
-            if (target.hasOwnProperty(prop)) {
-                this.globalVariables[prop] = true;
-            }
+    // We will record all the variables that we see on window on startup
+    // these will be the only keys we leave intact when we reset window
+    this.globalVariables = {};
+    for (var prop in target) {
+        if (target.hasOwnProperty(prop)) {
+            this.globalVariables[prop] = true;
         }
-
-        // Since variables initially on window will not be reset, try to freeze them to
-        // avoid state leaking between executions.
-        /* jshint forin:false */
-        Object.keys(this.globalVariables).forEach((prop) => {
-            try {
-                var propDescriptor =
-                    Object.getOwnPropertyDescriptor(target, prop);
-                if (!propDescriptor || propDescriptor.configurable) {
-                    Object.defineProperty(target, prop, {
-                        value: target[prop],
-                        writable: false,
-                        configurable: false
-                    });
-                }
-            } catch(e) {
-                // Couldn't access property for permissions reasons,
-                // like window.frame
-                // Only happens on prod where it's cross-origin
-            }
-        });
-        // Completely lock down window's prototype chain
-        Object.freeze(Object.getPrototypeOf(target));
     }
 
-    clearGlobals () {
+    // Since variables initially on window will not be reset, try to freeze them to
+    // avoid state leaking between executions.
+    /* jshint forin:false */
+    for (var prop in this.globalVariables) {
+        try {
+            var propDescriptor =
+                Object.getOwnPropertyDescriptor(target, prop);
+            if (!propDescriptor || propDescriptor.configurable) {
+                Object.defineProperty(target, prop, {
+                    value: target[prop],
+                    writable: false,
+                    configurable: false
+                });
+            }
+        } catch(e) {
+            // Couldn't access property for permissions reasons,
+            // like window.frame
+            // Only happens on prod where it's cross-origin
+        }
+    }
+    // Completely lock down window's prototype chain
+    Object.freeze(Object.getPrototypeOf(target));
+};
+
+StateScrubber.prototype = {
+    clearGlobals: function() {
         for (var prop in this.target) {
             if (!this.globalVariables[prop] && this.target.hasOwnProperty(prop)) {
                 // This should get rid of variables which cannot be deleted
@@ -55,9 +52,9 @@ export default class StateScrubber {
                 Reflect.deleteProperty(this.target, prop);
             }
         }
-    }
+    },
 
-    clearTimeoutsAndIntervals () {
+    clearTimeoutsAndIntervals: function() {
     	// Intervals are acutally also timeouts under the hood, so clearing all the
     	// timeouts since last time is sufficient.
     	// (If you're interested intervals are timeouts with the repeat flag set to true:
@@ -69,10 +66,12 @@ export default class StateScrubber {
         }
 
         this.firstTimeout = lastTimeout;
-    }
+    },
 
-    clearAll () {
+    clearAll: function() {
         this.clearGlobals();
     	this.clearTimeoutsAndIntervals();
     }
-}
+};
+
+export default StateScrubber;
