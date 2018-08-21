@@ -8043,7 +8043,7 @@ if (!i18n._) {
 // The master list of acceptable sounds
 // Build a list of all the available sounds
 // TODO(kevinb) add methods to help query for sounds
-exports.default = OutputSounds = [{
+var OutputSounds = [{
     className: "Sound effects",
     groups: [{
         groupName: "rpg",
@@ -8057,6 +8057,8 @@ exports.default = OutputSounds = [{
         citeLink: "https://www.khanacademy.org/profile/spongejr/"
     }]
 }];
+
+exports.default = OutputSounds;
 
 /***/ }),
 /* 44 */
@@ -28613,8 +28615,6 @@ var PJSResourceCache = function PJSResourceCache(options) {
  * @param {Object} resources A object whose keys are filenames
  * @returns {Promise}
  */
-/* eslint-disable prefer-spread, no-extra-bind, no-throw-literal */
-/* TODO: Fix the lint errors */
 /* globals i18n */
 PJSResourceCache.prototype.cacheResources = function (resources) {
     var _this = this;
@@ -28655,20 +28655,13 @@ PJSResourceCache.prototype.loadImage = function (filename) {
 PJSResourceCache.prototype.loadSound = function (filename) {
     var _this3 = this;
 
-    var findWhere = function findWhere(array, criteria) {
-        return array.find(function (item) {
-            return Object.keys(criteria).every(function (key) {
-                return item[key] === criteria[key];
-            });
-        });
-    };
-
     return new Promise(function (resolve) {
         var audio = document.createElement("audio");
         var parts = filename.split("/");
 
-        var group = findWhere(_sounds2.default[0].groups, { groupName: parts[0] });
+        var group = _lodash2.default.findWhere(_sounds2.default[0].groups, { groupName: parts[0] });
         var hasSound = group && group.sounds.includes(parts[1].replace(".mp3", ""));
+
         if (!hasSound) {
             resolve();
             return;
@@ -28676,17 +28669,17 @@ PJSResourceCache.prototype.loadSound = function (filename) {
 
         audio.preload = "auto";
         audio.oncanplaythrough = function () {
-            _this3.cache[filename] = {
+            this.cache[filename] = {
                 audio: audio,
                 __id: function __id() {
                     return "getSound('" + filename.replace(".mp3", "") + "')";
                 }
             };
             resolve();
-        };
+        }.bind(_this3);
         audio.onerror = function () {
             resolve();
-        };
+        }.bind(_this3);
 
         audio.src = _this3.soundsDir + filename;
     });

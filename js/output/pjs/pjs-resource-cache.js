@@ -56,13 +56,14 @@ PJSResourceCache.prototype.loadImage = function(filename) {
         var path = this.imagesDir + filename;
         var img = document.createElement("img");
 
-        img.onload = () => {
+        img.onload = function() {
             this.cache[filename] = img;
             resolve();
-        };
-        img.onerror = () => {
+        }.bind(this);
+        img.onerror = function() {
             resolve(); // always resolve
-        };
+        }.bind(this);
+
         img.src = path;
         this.imageHolder.append(img);
     });
@@ -147,9 +148,9 @@ PJSResourceCache.prototype.getSound = function(filename) {
  * @returns {Object}
  */
 PJSResourceCache.findResources = function(code) {
-    var ast = esprima.parse(code, { loc: true });
+    let ast = esprima.parse(code, { loc: true });
 
-    var resources = {};
+    let resources = {};
     walkAST(ast, null,
         [ASTTransforms.findResources(resources)]);
 
