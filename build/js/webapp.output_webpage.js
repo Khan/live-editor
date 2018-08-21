@@ -123,6 +123,13 @@ module.exports = function(module) {
 
 /***/ }),
 
+/***/ 12:
+/***/ (function(module, exports) {
+
+module.exports = require("underscore");
+
+/***/ }),
+
 /***/ 16:
 /***/ (function(module, exports) {
 
@@ -3267,7 +3274,9 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _lodash = __webpack_require__(12);
+
+var _lodash2 = _interopRequireDefault(_lodash);
 
 var _structured = __webpack_require__(29);
 
@@ -3283,83 +3292,63 @@ var _pjsTester2 = _interopRequireDefault(_pjsTester);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* eslint-disable */
+/* eslint-disable */
 /* TODO: Fix the lint errors */
+var WebpageTester = function WebpageTester(options) {
+    this.initialize(options);
+    this.bindTestContext();
+    this.testContext.phoneHome = options.onPhoneHomeRequest;
+};
 
+WebpageTester.prototype = new _outputTester2.default();
 
-var WebpageTester = function (_OutputTester) {
-    _inherits(WebpageTester, _OutputTester);
+_lodash2.default.extend(WebpageTester.prototype, {
+    test: function test(userCode, validate, errors, callback) {
+        var _this = this;
 
-    function WebpageTester(options) {
-        _classCallCheck(this, WebpageTester);
+        var testResults = [];
+        errors = this.errors = errors || [];
+        this.userCode = userCode;
+        this.tests = [];
 
-        var _this = _possibleConstructorReturn(this, (WebpageTester.__proto__ || Object.getPrototypeOf(WebpageTester)).call(this));
+        // This will also fill in tests, as it will end up
+        //  referencing functions like staticTest and that
+        //  function will fill in this.tests
+        this.exec(validate);
+        this.testContext.allScripts = "";
 
-        options = options || {};
-        _this.initialize(options);
-        _this.bindTestContext();
-        _this.testContext.phoneHome = options.onPhoneHomeRequest;
-        return _this;
-    }
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(userCode, "text/html");
 
-    _createClass(WebpageTester, [{
-        key: "test",
-        value: function test(userCode, validate, errors, callback) {
-            var _this2 = this;
+        var fakeDoc = document.createElement("div");
+        fakeDoc.innerHTML = doc;
+        fakeDoc.querySelectorAll("script").forEach(function (index, scriptElement) {
+            _this.testContext.allScripts += scriptElement.innerHTML;
+            _this.testContext.allScripts += "\n";
+        });
 
-            var testResults = [];
-            errors = this.errors = errors || [];
-            this.userCode = userCode;
-            this.tests = [];
+        this.curTask = null;
+        this.curTest = null;
 
-            // This will also fill in tests, as it will end up
-            //  referencing functions like staticTest and that
-            //  function will fill in this.tests
-            this.exec(validate);
-            this.testContext.allScripts = "";
-
-            var parser = new DOMParser();
-            var doc = parser.parseFromString(userCode, "text/html");
-
-            var fakeDoc = document.createElement("div");
-            fakeDoc.innerHTML = doc;
-            fakeDoc.querySelectorAll("script").forEach(function (index, scriptElement) {
-                _this2.testContext.allScripts += scriptElement.innerHTML;
-                _this2.testContext.allScripts += "\n";
-            });
-
-            this.curTask = null;
-            this.curTest = null;
-
-            // uiTests will try to postMessage the parent immediately
-            // because they are usually running asynchronously.
-            // Set this flag so that they know we are actually running
-            // the original pass, and we will handle reporting everything
-            // caught here for them.
-            this.syncTests = true;
-            for (var i = 0; i < this.tests.length; i++) {
-                testResults.push(this.runTest(this.tests[i], i));
-            }
-            this.syncTests = false;
-
-            callback(errors, testResults);
+        // uiTests will try to postMessage the parent immediately
+        // because they are usually running asynchronously.
+        // Set this flag so that they know we are actually running
+        // the original pass, and we will handle reporting everything
+        // caught here for them.
+        this.syncTests = true;
+        for (var i = 0; i < this.tests.length; i++) {
+            testResults.push(this.runTest(this.tests[i], i));
         }
-    }]);
+        this.syncTests = false;
 
-    return WebpageTester;
-}(_outputTester2.default);
+        callback(errors, testResults);
+    }
+});
 
 /*
 * Returns a callback which will accept arguments and make a constriant
 * used internally to create shorthand functions that accept arguments
 */
-
-
-exports.default = WebpageTester;
 var constraintPartial = function constraintPartial(callback) {
     return function () {
         return {
@@ -3369,9 +3358,9 @@ var constraintPartial = function constraintPartial(callback) {
     };
 };
 
-WebpageTester.prototype.testMethods = Object.assign({}, _pjsTester2.default.prototype.testMethods);
+WebpageTester.prototype.testMethods = _lodash2.default.clone(_pjsTester2.default.prototype.testMethods);
 
-Object.assign(WebpageTester.prototype.testMethods, {
+_lodash2.default.extend(WebpageTester.prototype.testMethods, {
     scriptTest: function scriptTest() {
         this.testContext.staticTest.apply(this, arguments);
     },
@@ -3494,17 +3483,15 @@ Object.assign(WebpageTester.prototype.testMethods, {
         * }
         */
     getCssMap: function getCssMap() {
-        var _this3 = this;
-
         // Convert CSS rules from a list of parsed objects into a map.
         var css = {};
-        this.testContext.cssRules.forEach(function (rule) {
+        _lodash2.default.each(this.testContext.cssRules, function (rule) {
             // Parse all properties for this rule into map
             var properties = {};
-            rule.declarations.properties.forEach(function (property) {
-                var normalized = _this3.testContext.normalizePropertyValue(property.value.value);
+            _lodash2.default.each(rule.declarations.properties, function (property) {
+                var normalized = this.testContext.normalizePropertyValue(property.value.value);
                 properties[property.name.value] = normalized;
-            });
+            }.bind(this));
 
             var selectors = [rule.selector.value];
 
@@ -3515,8 +3502,8 @@ Object.assign(WebpageTester.prototype.testMethods, {
                 selectors.push.apply(selectors, selectors[0].split(","));
             }
 
-            selectors.forEach(function (selector) {
-                selector = _this3.testContext.normalizeSelector(selector);
+            _lodash2.default.each(selectors, function (selector) {
+                selector = this.testContext.normalizeSelector(selector);
                 if (!(selector in css)) {
                     css[selector] = {};
                 }
@@ -3524,15 +3511,13 @@ Object.assign(WebpageTester.prototype.testMethods, {
                 for (var prop in properties) {
                     css[selector][prop] = properties[prop];
                 }
-            });
-        });
+            }.bind(this));
+        }.bind(this));
 
         return css;
     },
 
     cssMatch: function cssMatch(pattern, callbacks) {
-        var _this4 = this;
-
         // If there were syntax errors, don't even try to match it
         if (this.errors.length) {
             return { success: false };
@@ -3540,35 +3525,36 @@ Object.assign(WebpageTester.prototype.testMethods, {
 
         var css = this.testContext.getCssMap();
         var cssRules = pattern.split("}").slice(0, -1);
-        if (!Array.isArray(callbacks) && typeof callbacks !== "undefined") {
+        if (!_lodash2.default.isArray(callbacks) && !_lodash2.default.isUndefined(callbacks)) {
             callbacks = [callbacks];
         }
-        callbacks = callbacks.map(function (cb) {
+        callbacks = _lodash2.default.map(callbacks, function (cb) {
             if (typeof cb === "function") {
-                return _this4.testContext.constraint(cb);
+                return this.testContext.constraint(cb);
             }
             return cb;
-        });
+        }.bind(this));
+
         var res = this.testContext.testCSSRules(cssRules, css, callbacks, {});
         return res;
     },
 
     /*
-        * Make it so that equivalent CSS property values are
-        * be equal strings. In particular this targets odd spacing
-        * in rgb(0,0,0) or border: 1px solid black;
-        */
+    * Make it so that equivalent CSS property values are
+    * be equal strings. In particular this targets odd spacing
+    * in rgb(0,0,0) or border: 1px solid black;
+    */
     normalizePropertyValue: function normalizePropertyValue(property) {
         return property.replace(/\s+/g, " ").replace(", ", ",").trim();
     },
 
     /*
-        * Make it so that equivalent CSS selectors are equal strings.
-        * In particular this function targets odd spacing, and different ordered
-        * sets of "," delimitted selectors. It also forces modifiers to
-        * be attached to their selector "div > p" -> "div >p" so that selectors
-        * can be split by spaces
-        */
+    * Make it so that equivalent CSS selectors are equal strings.
+    * In particular this function targets odd spacing, and different ordered
+    * sets of "," delimitted selectors. It also forces modifiers to
+    * be attached to their selector "div > p" -> "div >p" so that selectors
+    * can be split by spaces
+    */
     normalizeSelector: function normalizeSelector(selector) {
         selector = selector.replace(/\s+/g, " ").replace(/(>|~|,) /g, "$1");
         var pieces = selector.split(",");
@@ -3580,14 +3566,14 @@ Object.assign(WebpageTester.prototype.testMethods, {
     },
 
     /*
-        * Recursively verify a set of CSS rules and
-        * check that wildcard variables match callbacks.
-        * This function uses recursion in order to attempt all
-        * possible combinations of wildcard variables (since some
-        * of them might pass the callbacks even if others fail)
-        */
+    * Recursively verify a set of CSS rules and
+    * check that wildcard variables match callbacks.
+    * This function uses recursion in order to attempt all
+    * possible combinations of wildcard variables (since some
+    * of them might pass the callbacks even if others fail)
+    */
     testCSSRules: function testCSSRules(rules, css, callbacks, wVars) {
-        var _this5 = this;
+        var _this2 = this;
 
         wVars = wVars || {};
         // Base case. All rules have passed preliminarily.
@@ -3609,7 +3595,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
                 return;
             }
             var parts = prop.split(":");
-            testProperties[parts[0].trim()] = _this5.testContext.normalizePropertyValue(parts[1]);
+            testProperties[parts[0].trim()] = _this2.testContext.normalizePropertyValue(parts[1]);
         });
 
         var oldWVars = wVars;
@@ -3634,7 +3620,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
             // Match properties
             var doPropertiesMatch = Object.keys(testProperties).every(function (prop) {
                 var value = testProperties[prop];
-                return prop in css[selector] && _this5.testContext.wildcardMatch(value, css[selector][prop], wVars);
+                return prop in css[selector] && _this2.testContext.wildcardMatch(value, css[selector][prop], wVars);
             });
             if (!doPropertiesMatch) {
                 continue;
@@ -3676,7 +3662,7 @@ Object.assign(WebpageTester.prototype.testMethods, {
     checkCallbacks: function checkCallbacks(callbacks, wVars) {
         for (var i = 0; i < callbacks.length; i++) {
             var cb = callbacks[i];
-            var cbArgs = _.map(cb.variables, function (variable) {
+            var cbArgs = _lodash2.default.map(cb.variables, function (variable) {
                 if (typeof variable === "string" && variable[0] === "$") {
                     return wVars[variable];
                 } else {
@@ -3867,6 +3853,8 @@ Object.assign(WebpageTester.prototype.testMethods, {
         }
     }
 });
+
+exports.default = WebpageTester;
 
 /***/ }),
 

@@ -4,7 +4,7 @@ describe("CSS selector matching with wildcards", function() {
     let tester;
 
     before(function() {
-        tester = new WebpageTester();
+        tester = new WebpageTester({onPhoneHomeRequest: () => {}});
     });
 
     const selectorTests = [

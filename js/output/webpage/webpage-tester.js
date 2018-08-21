@@ -7,7 +7,7 @@ import Structured from "../../../external/structuredjs/structured.js";
 import OutputTester from "../shared/output-tester.js";
 import PJSTester from "../pjs/pjs-tester.js";
 
-export default function WebpageTester(options) {
+var WebpageTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
     this.testContext.phoneHome = options.onPhoneHomeRequest;
@@ -62,16 +62,16 @@ _.extend(WebpageTester.prototype, {
 * Returns a callback which will accept arguments and make a constriant
 * used internally to create shorthand functions that accept arguments
 */
-const constraintPartial = function(callback) {
+var constraintPartial = function(callback) {
     return function() {
         return {
             variables: arguments,
-            fn: callback,
+            fn: callback
         };
     };
 };
 
-WebpageTester.prototype.testMethods = _.clone(window.PJSTester.prototype.testMethods);
+WebpageTester.prototype.testMethods = _.clone(PJSTester.prototype.testMethods);
 
 _.extend(WebpageTester.prototype.testMethods, {
     scriptTest: function() {
@@ -93,29 +93,26 @@ _.extend(WebpageTester.prototype.testMethods, {
                 expected: "",
                 meta: {
                     structure: hint,
-                    image: image,
-                },
+                    image: image
+                }
             };
             test.results = [result];
 
-            callback(
-                function(success, message) {
-                    var state = success ? "pass" : "fail";
-                    test.state = state;
-                    result.state = state;
-                    delete result.meta.alsoMessage;
-                    delete result.meta.alternateMessage;
-                    if (message) {
-                        result.meta[
-                            success ? "alternateMessage" : "alsoMessage"
-                        ] = message;
-                    }
+            callback(function(success, message) {
+                var state = success ? "pass" : "fail";
+                test.state = state;
+                result.state = state;
+                delete result.meta.alsoMessage;
+                delete result.meta.alternateMessage;
+                if (message) {
+                    result.meta[success ? "alternateMessage" : "alsoMessage"] = message;
+                }
 
-                    if (!this.syncTests) {
-                        this.testContext.phoneHome();
-                    }
-                }.bind(this),
-            );
+                if (!this.syncTests) {
+                    this.testContext.phoneHome();
+                }
+
+            }.bind(this));
         }.bind(this);
         this.testContext.test(name, fn, "ui");
     },
@@ -132,17 +129,12 @@ _.extend(WebpageTester.prototype.testMethods, {
     constraint: function(variables, fn) {
         if (!fn) {
             fn = variables;
-            var paramText = /^function\s*[^\(]*\(([^\)]*)\)/.exec(
-                fn.toString(),
-            )[1];
+            var paramText = /^function\s*[^\(]*\(([^\)]*)\)/.exec(fn.toString())[1];
             var variables = paramText.match(/[$_a-zA-z0-9]+/g);
 
             for (var key in variables) {
                 if (variables[key][0] !== "$") {
-                    console.warn(
-                        "Invalid variable in constraint (should begin with a '$'): ",
-                        variables[key],
-                    );
+                    console.warn("Invalid variable in constraint (should begin with a '$'): ", variables[key]);
                     return null;
                 }
             }
@@ -150,7 +142,7 @@ _.extend(WebpageTester.prototype.testMethods, {
 
         return {
             variables: variables,
-            fn: fn,
+            fn: fn
         };
     },
 
@@ -207,15 +199,13 @@ _.extend(WebpageTester.prototype.testMethods, {
     getCssMap: function() {
         // Convert CSS rules from a list of parsed objects into a map.
         var css = {};
-        this.testContext.cssRules.forEach((rule) => {
+        _.each(this.testContext.cssRules, function(rule) {
             // Parse all properties for this rule into map
             var properties = {};
-            rule.declarations.properties.forEach((property) => {
-                var normalized = this.testContext.normalizePropertyValue(
-                    property.value.value,
-                );
+            _.each(rule.declarations.properties, function(property) {
+                var normalized = this.testContext.normalizePropertyValue(property.value.value);
                 properties[property.name.value] = normalized;
-            });
+            }.bind(this));
 
             var selectors = [rule.selector.value];
 
@@ -226,7 +216,7 @@ _.extend(WebpageTester.prototype.testMethods, {
                 selectors.push.apply(selectors, selectors[0].split(","));
             }
 
-            selectors.forEach((selector) => {
+            _.each(selectors, function(selector) {
                 selector = this.testContext.normalizeSelector(selector);
                 if (!(selector in css)) {
                     css[selector] = {};
@@ -235,8 +225,8 @@ _.extend(WebpageTester.prototype.testMethods, {
                 for (var prop in properties) {
                     css[selector][prop] = properties[prop];
                 }
-            });
-        });
+            }.bind(this));
+        }.bind(this));
 
         return css;
     },
@@ -249,55 +239,51 @@ _.extend(WebpageTester.prototype.testMethods, {
 
         var css = this.testContext.getCssMap();
         var cssRules = pattern.split("}").slice(0, -1);
-        if (!Array.isArray(callbacks) && typeof callbacks !== "undefined") {
+        if (!_.isArray(callbacks) && !_.isUndefined(callbacks)) {
             callbacks = [callbacks];
         }
-        callbacks = callbacks.map((cb) => {
+        callbacks = _.map(callbacks, function(cb) {
             if (typeof cb === "function") {
                 return this.testContext.constraint(cb);
             }
             return cb;
-        });
-        var res = this.testContext.testCSSRules(cssRules, css, callbacks, {});
+        }.bind(this));
+
+        var res = this.testContext.testCSSRules(cssRules, css, callbacks , {});
         return res;
     },
 
     /*
-        * Make it so that equivalent CSS property values are
-        * be equal strings. In particular this targets odd spacing
-        * in rgb(0,0,0) or border: 1px solid black;
-        */
+    * Make it so that equivalent CSS property values are
+    * be equal strings. In particular this targets odd spacing
+    * in rgb(0,0,0) or border: 1px solid black;
+    */
     normalizePropertyValue: function(property) {
-        return property
-            .replace(/\s+/g, " ")
-            .replace(", ", ",")
-            .trim();
+        return property.replace(/\s+/g, " ").replace(", ", ",").trim();
     },
 
     /*
-        * Make it so that equivalent CSS selectors are equal strings.
-        * In particular this function targets odd spacing, and different ordered
-        * sets of "," delimitted selectors. It also forces modifiers to
-        * be attached to their selector "div > p" -> "div >p" so that selectors
-        * can be split by spaces
-        */
+    * Make it so that equivalent CSS selectors are equal strings.
+    * In particular this function targets odd spacing, and different ordered
+    * sets of "," delimitted selectors. It also forces modifiers to
+    * be attached to their selector "div > p" -> "div >p" so that selectors
+    * can be split by spaces
+    */
     normalizeSelector: function(selector) {
         selector = selector.replace(/\s+/g, " ").replace(/(>|~|,) /g, "$1");
         var pieces = selector.split(",");
-        pieces = pieces.map(function(s) {
-            return s.trim();
-        });
+        pieces = pieces.map(function(s) { return s.trim(); });
         selector = pieces.sort().join(",");
         return selector;
     },
 
     /*
-        * Recursively verify a set of CSS rules and
-        * check that wildcard variables match callbacks.
-        * This function uses recursion in order to attempt all
-        * possible combinations of wildcard variables (since some
-        * of them might pass the callbacks even if others fail)
-        */
+    * Recursively verify a set of CSS rules and
+    * check that wildcard variables match callbacks.
+    * This function uses recursion in order to attempt all
+    * possible combinations of wildcard variables (since some
+    * of them might pass the callbacks even if others fail)
+    */
     testCSSRules: function(rules, css, callbacks, wVars) {
         wVars = wVars || {};
         // Base case. All rules have passed preliminarily.
@@ -635,3 +621,5 @@ _.extend(WebpageTester.prototype.testMethods, {
         }
     },
 });
+
+export default WebpageTester;

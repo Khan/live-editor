@@ -94,17 +94,17 @@ module.exports = require("react");
 
 /***/ }),
 
+/***/ 12:
+/***/ (function(module, exports) {
+
+module.exports = require("underscore");
+
+/***/ }),
+
 /***/ 121:
 /***/ (function(module, exports) {
 
 module.exports = require("SQL");
-
-/***/ }),
-
-/***/ 13:
-/***/ (function(module, exports) {
-
-module.exports = require("underscore");
 
 /***/ }),
 
@@ -554,7 +554,7 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _lodash = __webpack_require__(13);
+var _lodash = __webpack_require__(12);
 
 var _lodash2 = _interopRequireDefault(_lodash);
 

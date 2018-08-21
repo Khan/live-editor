@@ -5474,7 +5474,8 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 12 */
+/* 12 */,
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5494,7 +5495,6 @@ elliptic.eddsa = __webpack_require__(298);
 
 
 /***/ }),
-/* 13 */,
 /* 14 */
 /***/ (function(module, exports) {
 
@@ -19241,7 +19241,7 @@ module.exports = {
 /* WEBPACK VAR INJECTION */(function(Buffer) {// much of this based on https://github.com/indutny/self-signed/blob/gh-pages/lib/rsa.js
 var createHmac = __webpack_require__(132)
 var crt = __webpack_require__(110)
-var EC = __webpack_require__(12).ec
+var EC = __webpack_require__(13).ec
 var BN = __webpack_require__(10)
 var parseKeys = __webpack_require__(64)
 var curves = __webpack_require__(155)
@@ -19527,7 +19527,7 @@ utils.intFromLE = intFromLE;
 
 
 var BN = __webpack_require__(10);
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 var utils = elliptic.utils;
 var getNAF = utils.getNAF;
 var getJSF = utils.getJSF;
@@ -19909,7 +19909,7 @@ BasePoint.prototype.dblp = function dblp(k) {
 
 
 var curve = __webpack_require__(63);
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 var BN = __webpack_require__(10);
 var inherits = __webpack_require__(4);
 var Base = curve.base;
@@ -20858,7 +20858,7 @@ var BN = __webpack_require__(10);
 var inherits = __webpack_require__(4);
 var Base = curve.base;
 
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 var utils = elliptic.utils;
 
 function MontCurve(conf) {
@@ -21041,7 +21041,7 @@ Point.prototype.getX = function getX() {
 
 
 var curve = __webpack_require__(63);
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 var BN = __webpack_require__(10);
 var inherits = __webpack_require__(4);
 var Base = curve.base;
@@ -21483,7 +21483,7 @@ Point.prototype.mixedAdd = Point.prototype.add;
 var curves = exports;
 
 var hash = __webpack_require__(111);
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 
 var assert = elliptic.utils.assert;
 
@@ -22861,7 +22861,7 @@ module.exports = {
 
 var BN = __webpack_require__(10);
 var HmacDRBG = __webpack_require__(295);
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 var utils = elliptic.utils;
 var assert = utils.assert;
 
@@ -23227,7 +23227,7 @@ HmacDRBG.prototype.generate = function generate(len, enc, add, addEnc) {
 
 
 var BN = __webpack_require__(10);
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 var utils = elliptic.utils;
 var assert = utils.assert;
 
@@ -23354,7 +23354,7 @@ KeyPair.prototype.inspect = function inspect() {
 
 var BN = __webpack_require__(10);
 
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 var utils = elliptic.utils;
 var assert = utils.assert;
 
@@ -23495,7 +23495,7 @@ Signature.prototype.toDER = function toDER(enc) {
 
 
 var hash = __webpack_require__(111);
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 var utils = elliptic.utils;
 var assert = utils.assert;
 var parseBytes = utils.parseBytes;
@@ -23619,7 +23619,7 @@ EDDSA.prototype.isPoint = function isPoint(val) {
 "use strict";
 
 
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 var utils = elliptic.utils;
 var assert = utils.assert;
 var parseBytes = utils.parseBytes;
@@ -23723,7 +23723,7 @@ module.exports = KeyPair;
 
 
 var BN = __webpack_require__(10);
-var elliptic = __webpack_require__(12);
+var elliptic = __webpack_require__(13);
 var utils = elliptic.utils;
 var assert = utils.assert;
 var cachedProperty = utils.cachedProperty;
@@ -25204,7 +25204,7 @@ module.exports = function (okey, password) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {// much of this based on https://github.com/indutny/self-signed/blob/gh-pages/lib/rsa.js
 var BN = __webpack_require__(10)
-var EC = __webpack_require__(12).ec
+var EC = __webpack_require__(13).ec
 var parseKeys = __webpack_require__(64)
 var curves = __webpack_require__(155)
 
@@ -25292,7 +25292,7 @@ module.exports = verify
 /* 316 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {var elliptic = __webpack_require__(12)
+/* WEBPACK VAR INJECTION */(function(Buffer) {var elliptic = __webpack_require__(13)
 var BN = __webpack_require__(10)
 
 module.exports = function createECDH (curve) {
