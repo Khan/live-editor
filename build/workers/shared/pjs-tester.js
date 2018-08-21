@@ -1,5 +1,3 @@
-/* eslint-disable no-var, one-var, curly */
-/* TODO: Fix the lint errors */
 /* We list i18n and lodash as globals instead of require() them
   due to how we load this file in the test-worker */
 /* globals i18n, _ */
@@ -382,7 +380,7 @@ PJSTester.prototype.testMethods = {
                 message: callbacks && callbacks.failure
             };
         } catch (e) {
-            console && console.warn(e); // eslint-disable-line no-console
+            console && console.warn(e);
             return {
                 success: true,
                 message: i18n._("Hm, we're having some trouble " +

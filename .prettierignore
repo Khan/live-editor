@@ -16,6 +16,7 @@ js/output/pjs/pjs-tester.js
 js/output/pjs/pjs-utils.js
 js/output/shared/ast-builder.js
 js/output/shared/ast-walker.js
+js/output/shared/output-tester.js
 js/output/shared/loop-protect.js
 js/output/shared/pooled-worker.js
 js/output/sql/sql-output.js

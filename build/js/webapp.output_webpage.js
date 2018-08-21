@@ -20898,8 +20898,6 @@ exports.ArraySet = ArraySet;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-/* eslint-disable prefer-const */
-/* TODO: Fix the lint errors */
 /**
  * Traverses an AST and calls visitor methods on each of the visitors.
  *
@@ -24611,10 +24609,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* eslint-disable no-var, one-var, curly */
-/* TODO: Fix the lint errors */
-/* We list i18n and lodash as globals instead of require() them
-  due to how we load this file in the test-worker */
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* We list i18n and lodash as globals instead of require() them
+                                                                                                                                                                                                                                                                                due to how we load this file in the test-worker */
 /* globals i18n, _ */
 
 var _outputTester = __webpack_require__(34);
@@ -24977,7 +24973,7 @@ PJSTester.prototype.testMethods = {
                 message: callbacks && callbacks.failure
             };
         } catch (e) {
-            console && console.warn(e); // eslint-disable-line no-console
+            console && console.warn(e);
             return {
                 success: true,
                 message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
