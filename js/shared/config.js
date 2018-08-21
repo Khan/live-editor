@@ -1,5 +1,3 @@
-/* eslint-disable no-var, prefer-spread, no-redeclare */
-/* TODO: Fix the lint errors */
 // Maintain all of the configuration options and settings for the site.
 // Have them be versioned and attached to the ScratchpadRevision so that
 // later config changes don't break old code.

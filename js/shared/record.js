@@ -1,5 +1,3 @@
-/* eslint-disable no-var, no-undef, no-redeclare, no-console */
-/* TODO: Fix the lint errors */
 import { Model } from "backbone-model";
 
 // Note: All time measurements are handled in milliseconds

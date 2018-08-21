@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-/* TODO: Fix the lint errors */
 /* globals i18n */
 
 if (!i18n._) {
@@ -11,7 +9,7 @@ if (!i18n._) {
 // The master list of acceptable sounds
 // Build a list of all the available sounds
 // TODO(kevinb) add methods to help query for sounds
-const OutputSounds = [{
+export default OutputSounds = [{
     className: "Sound effects",
     groups: [{
         groupName: "rpg",
@@ -26,5 +24,3 @@ const OutputSounds = [{
         citeLink: "https://www.khanacademy.org/profile/spongejr/"
     }]
 }];
-
-export default OutputSounds;

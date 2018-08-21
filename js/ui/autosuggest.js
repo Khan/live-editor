@@ -1,4 +1,4 @@
-/* NOTE: This file is not currently used. It contains the logic for
+/* NOTE: This file is not currently used. It contains the logic
  * for autocompletion. The documentation popup has moved into the tooltip.
  */
 /**
@@ -130,49 +130,6 @@ const ScratchpadAutosuggest = {
             // enable live popping up of the autosuggest
             enableLiveAutocompletion: enable,
         });
-    },
-    /**
-     * Returns the list of parameters for the specified function
-     * This is used for the parameter info popup within lookupParamsSafeHTML.
-     * @param lookup The function to lookup
-     */
-    lookupParams: function(lookup) {
-        // Ignore lookupParams calls if we're not initialized
-        if (!this.initialized) {
-            return;
-        }
-        var found = _.find(
-            ScratchpadAutosuggestData._pjsFunctions.whitelist,
-            function(o) {
-                var f = o;
-                if (_.isObject(o)) {
-                    f = o.name;
-                }
-                return f.split("(")[0] === lookup;
-            },
-        );
-
-        // If we don't have a funciton, check the keywords list
-        // This feature isn't currently used but you can enable it
-        // to give help for things like for loops by providing an
-        // example of how it is used.
-        if (!found) {
-            found = _.find(
-                ScratchpadAutosuggestData._keywords.whitelist,
-                function(o) {
-                    if (_.isObject(o)) {
-                        var f = o.name;
-                        return f === lookup;
-                    }
-                    return false;
-                },
-            );
-        }
-
-        if (!found) {
-            return;
-        }
-        return found;
     },
 };
 

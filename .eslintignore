@@ -13,3 +13,7 @@ js/output/pjs/pjs-utils.js
 js/output/pjs/pjs-tester.js
 js/output/webpage/state-scrubber.js
 js/output/webpage/webpage-tester.js
+js/shared/config.js
+js/shared/i18n.js
+js/shared/record.js
+js/shared/sounds.js

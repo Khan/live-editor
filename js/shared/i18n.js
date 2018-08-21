@@ -1,5 +1,3 @@
-/* eslint-disable no-var, camelcase, no-undef */
-/* TODO: Fix the lint errors */
 import Jed from "jed";
 
 (function(global) {
