@@ -51,7 +51,6 @@ describe("LoopProtector", function() {
             called = true;
         });
         const processed = loopProtector.protect("while(true){}");
-        //debugger;
         const exec = new Function("KAInfiniteLoopProtect", processed);
         try {
             exec(loopProtector.KAInfiniteLoopProtect);

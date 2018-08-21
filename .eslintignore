@@ -5,3 +5,6 @@ js/ui/structured-blocks-tooltips.js
 js/output/shared/output-tester.js
 js/output/shared/pooled-worker.js
 js/output/pjs/babyhint.js
+js/output/pjs/pjs-ast-transforms.js
+js/output/pjs/pjs-debugger.js
+js/output/pjs/pjs-output.js

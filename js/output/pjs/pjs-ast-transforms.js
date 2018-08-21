@@ -1,5 +1,3 @@
-/* eslint-disable no-var, prefer-const, no-throw-literal */
-/* TODO: Fix the lint errors */
 import escodegen from "escodegen";
 
 import b from "../shared/ast-builder.js";
