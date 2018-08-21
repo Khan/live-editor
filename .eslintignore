@@ -2,3 +2,5 @@ js/ui/blockly-processing-blocks.js
 js/ui/autosuggest.js
 js/ui/debugger.js
 js/ui/structured-blocks-tooltips.js
+js/output/shared/output-tester.js
+js/output/shared/pooled-worker.js

@@ -454,7 +454,7 @@ var SQLOutput = function (_Component) {
         }
     }, {
         key: "test",
-        value: function test(code, tests, errors, timestamp) {
+        value: function test(userCode, tests, errors, timestamp) {
             var errorCount = errors.length;
 
             this.tester.test(this.dbInfo, tests, errors, function (errors, testResults) {
@@ -466,7 +466,7 @@ var SQLOutput = function (_Component) {
                     this.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
                 }
                 this.props.onCodeTest({
-                    code: code,
+                    code: userCode,
                     errors: errors,
                     results: testResults,
                     timestamp: timestamp
