@@ -1,8 +1,46 @@
 /* global i18n, MultiRecorder */
 import Button from "@khanacademy/wonder-blocks-button";
 import React, {Component} from "react";
+import {Model} from "backbone-model";
 
-import RecordChunks from "../shared/record-chunks.js";
+/* Manages the audio chunks as we build up this recording. */
+const RecordChunks = Model.extend({
+    initialize: function(options) {
+        // The saved audio chunks
+        this.audioChunks = [];
+        // The current chunk we have not yet saved or discarded
+        this.currentChunk = null;
+    },
+
+    setCurrentChunk: function(recording) {
+        this.currentChunk = recording;
+    },
+
+    currentChunkExists: function() {
+        return this.currentChunk !== null;
+    },
+
+    startNewChunk: function() {
+        this.currentChunk = null;
+    },
+
+    discardCurrentChunk: function() {
+        this.currentChunk = null;
+    },
+
+    saveCurrentChunk: function() {
+        if (!this.currentChunk) {
+            return;
+        }
+        this.audioChunks.push(this.currentChunk);
+        this.currentChunk = null;
+    },
+
+    /* Return the array of audio chunks, not yet stitched together. */
+    getAllChunks: function() {
+        return this.audioChunks;
+    },
+});
 
 /* Builds up audio and the command chunks for our recording, coordinates
  *  the process.

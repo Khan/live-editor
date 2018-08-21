@@ -20,7 +20,7 @@ import ErrorBuddy from "./ui/tipbar.js";
 import ErrorBuddyMini from "./ui/errorbuddy-mini.js";
 import OutputSide from "./ui/output-side.js";
 import PlaybackBar from "./ui/playback-bar.js";
-import RecordControls from "./ui/record-controls.js";
+import RecordControls from "./ui/record.js";
 import RestartButton from "./ui/restart-button.js";
 import ScratchpadConfig from "./shared/config.js";
 import ScratchpadRecordModel from "./shared/record.js";
