@@ -100,7 +100,7 @@ export default class RecordControls extends Component {
     initializeRecordingAudio() {
         // Start recording the presenter's audio
         this.multirecorder = new MultiRecorder({
-            workerPath: this.props.workersDir + "shared/multirecorder-worker.js",
+            workerPath: this.props.workersDir + "shared/multirecorder-worker.js"
         });
         this.disableChunkButtons(false, true, true, true, true);
     }

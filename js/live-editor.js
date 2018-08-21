@@ -14,7 +14,7 @@ import IconButton from "@khanacademy/wonder-blocks-icon-button";
 
 import Structured from "../external/structuredjs/structured.js";
 
-import DrawCanvas from "./ui/draw-canvas.js";
+import DrawCanvas from "./ui/canvas.js";
 import EditorSide from "./ui/editor-side.js";
 import ErrorBuddy from "./ui/tipbar.js";
 import ErrorBuddyMini from "./ui/errorbuddy-mini.js";
