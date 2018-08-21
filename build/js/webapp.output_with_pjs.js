@@ -1929,10 +1929,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* eslint-disable no-var, no-redeclare, no-new-func, no-unused-vars, no-undef */
-/* TODO: Fix the lint errors */
-/* We list i18n and lodash as globals instead of require() them
-  due to how we load this file in the test-worker */
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* We list i18n and lodash as globals instead of importing them
+                                                                                                                                                                                                                                                                                due to how we load this file in the test-worker */
 /* global i18n, _ */
 
 
@@ -1974,14 +1972,13 @@ OutputTester.prototype = {
          * The worker that runs the tests in the background, if possible.
          */
         this.testWorker = new _pooledWorker2.default(options.workerFile, options.workersDir, function (code, validate, errors, callback) {
-            var _this = this;
+            var self = this;
 
             // If there are syntax errors in the tests themselves,
             //  then we ignore the request to test.
             try {
                 tester.exec(validate);
             } catch (e) {
-                // eslint-disable-next-line no-console
                 console && console.warn(e.message);
                 return;
             }
@@ -2009,8 +2006,8 @@ OutputTester.prototype = {
                     // from the PooledWorker's pool so we don't have to
                     // worry about returning workers to the pool before
                     // calling kill()
-                    _this.addWorkerToPool(worker);
-                    if (_this.isCurrentWorker(worker)) {
+                    self.addWorkerToPool(worker);
+                    if (self.isCurrentWorker(worker)) {
                         var data = event.data.message;
                         callback(data.errors, data.testResults);
                     }
@@ -2020,7 +2017,7 @@ OutputTester.prototype = {
                 code: code,
                 validate: validate,
                 errors: errors,
-                externalsDir: options.externalsDir
+                externalsDir: this.externalsDir
             });
         });
     },
@@ -2102,7 +2099,6 @@ OutputTester.prototype = {
                     try {
                         return _fn.apply(this, arguments);
                     } catch (e) {
-                        // eslint-disable-next-line no-console
                         console && console.warn(e);
                     }
                 }

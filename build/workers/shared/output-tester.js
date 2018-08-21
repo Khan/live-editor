@@ -1,6 +1,4 @@
-/* eslint-disable no-var, no-redeclare, no-new-func, no-unused-vars, no-undef */
-/* TODO: Fix the lint errors */
-/* We list i18n and lodash as globals instead of require() them
+/* We list i18n and lodash as globals instead of importing them
   due to how we load this file in the test-worker */
 /* global i18n, _ */
 import PooledWorker from "./pooled-worker.js";
@@ -40,12 +38,13 @@ OutputTester.prototype = {
             options.workerFile,
             options.workersDir,
             function(code, validate, errors, callback) {
+                var self = this;
+
                 // If there are syntax errors in the tests themselves,
                 //  then we ignore the request to test.
                 try {
                     tester.exec(validate);
                 } catch (e) {
-                    // eslint-disable-next-line no-console
                     console && console.warn(e.message);
                     return;
                 }
@@ -63,7 +62,7 @@ OutputTester.prototype = {
 
                 var worker = this.getWorkerFromPool();
 
-                worker.onmessage = (event) => {
+                worker.onmessage = function(event) {
                     if (event.data.type === "test") {
                         // PJSOutput.prototype.kill() is called synchronously
                         // from callback so if we want test workers to be
@@ -73,8 +72,8 @@ OutputTester.prototype = {
                         // from the PooledWorker's pool so we don't have to
                         // worry about returning workers to the pool before
                         // calling kill()
-                        this.addWorkerToPool(worker);
-                        if (this.isCurrentWorker(worker)) {
+                        self.addWorkerToPool(worker);
+                        if (self.isCurrentWorker(worker)) {
                             var data = event.data.message;
                             callback(data.errors, data.testResults);
                         }
@@ -84,7 +83,7 @@ OutputTester.prototype = {
                     code: code,
                     validate: validate,
                     errors: errors,
-                    externalsDir: options.externalsDir,
+                    externalsDir: this.externalsDir,
                 });
             },
         );
@@ -167,7 +166,6 @@ OutputTester.prototype = {
                     try {
                         return fn.apply(this, arguments);
                     } catch (e) {
-                        // eslint-disable-next-line no-console
                         console && console.warn(e);
                     }
                 },

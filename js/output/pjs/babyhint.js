@@ -1,5 +1,3 @@
-/* eslint-disable no-var, no-redeclare, prefer-const, no-useless-escape */
-/* TODO: Fix the lint errors */
 /*
  * BabyHint does a line-by-line check for common beginner programming mistakes,
  * such as misspelling, missing spaces, missing commas, etc.  It is used in
