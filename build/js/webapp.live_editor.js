@@ -31713,10 +31713,12 @@ var TipBar = function (_Component) {
                     _react2.default.createElement(
                         "div",
                         { className: (0, _noImportant.css)(styles.errorBuddyWrapper) },
-                        _react2.default.createElement("div", { className: (0, _noImportant.css)(styles.speechArrow),
+                        _react2.default.createElement("div", {
+                            className: (0, _noImportant.css)(styles.speechArrow),
                             style: { background: "url(" + arImg + ")" }
                         }),
-                        _react2.default.createElement("div", { className: (0, _noImportant.css)(styles.errorBuddyImg),
+                        _react2.default.createElement("div", {
+                            className: (0, _noImportant.css)(styles.errorBuddyImg),
                             style: { background: "url(" + ebImg + ")" }
                         }),
                         _react2.default.createElement(

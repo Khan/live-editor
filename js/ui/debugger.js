@@ -1,5 +1,4 @@
-/* eslint-disable no-var, one-var, import/no-commonjs */
-/* TODO: Fix the lint errors */
+/* NOTE: This file is not currently used, as debugger is never enabled. */
 const Backbone = require("backbone");
 Backbone.$ = require("jquery");
 const iframeOverlay = require("iframe-overlay");

@@ -1,3 +1,4 @@
+/* NOTE: This file is not currently used, as debugger is never enabled. */
 import React, {Component} from "react";
 
 import "../../css/ui/debugger.css";
@@ -9,19 +10,19 @@ export default class DebuggerControls extends Component {
         // this should be ported to fully utilize React
         return (
             <div>
-                {$._("Debug Mode")}
+                {"Debug Mode"}
                 <input type="checkbox" className="debug-mode" />
                 <span
                     className="debugger-level"
                     style={{display: "none", marginLeft: "20px"}}
                 >
-                    {$._("Level")}
+                    {"Level"}
                     <select
                         className="debugger-level-select"
                         defaultValue="beginner"
                     >
-                        <option value="beginner">{$._("Beginner")}</option>
-                        <option value="advanced">{$._("Advanced")}</option>
+                        <option value="beginner">{"Beginner"}</option>
+                        <option value="advanced">{"Advanced"}</option>
                     </select>
                 </span>
                 <div
@@ -32,17 +33,17 @@ export default class DebuggerControls extends Component {
                         className="debug-begin"
                         style={{marginRight: "20px"}}
                     >
-                        {$._("Begin")}
+                        {"Begin"}
                     </button>
                     <button className="step-in" disabled>
-                        {$._("Step")}
+                        {"Step"}
                     </button>
                     <button
                         className="debug-end"
                         disabled
                         style={{marginLeft: "20px"}}
                     >
-                        {$._("End")}
+                        {"End"}
                     </button>
                 </div>
                 <div
@@ -53,23 +54,23 @@ export default class DebuggerControls extends Component {
                         className="debug-restart"
                         style={{marginRight: "10px"}}
                     >
-                        {$._("Restart")}
+                        {"Restart"}
                     </button>
                     <button className="step-over" disabled>
-                        {$._("Step Over")}
+                        {"Step Over"}
                     </button>
                     <button className="step-in" disabled>
-                        {$._("Step In")}
+                        {"Step In"}
                     </button>
                     <button className="step-out" disabled>
-                        {$._("Step Out")}
+                        {"Step Out"}
                     </button>
                     <button
                         className="debug-continue"
                         disabled
                         style={{marginLeft: "10px"}}
                     >
-                        {$._("Continue")}
+                        {"Continue"}
                     </button>
                 </div>
             </div>

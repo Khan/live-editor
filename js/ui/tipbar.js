@@ -1,8 +1,8 @@
 /**
  * This is called tipbar for historical reasons.
  * Originally, it appeared as a red bar sliding up from the bottom of the
- * canvas. Now it powers the error reporting mechanism, which no longer
- * looks like a bar.
+ * canvas. Now it just powers the error reporting mechanism, which no longer
+ * looks like a bar
  */
 /* globals i18n */
 import Draggable from "react-draggable";

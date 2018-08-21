@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* TODO: Fix the lint errors */
 /* global Blockly, patternMatch, goog */
 /*
  Missing but want to add:
