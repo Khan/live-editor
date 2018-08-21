@@ -1,4 +1,7 @@
+/* eslint-disable no-var */
+/* TODO: Fix the lint errors */
 /* global i18n, MultiRecorder */
+import _ from "lodash";
 import Button from "@khanacademy/wonder-blocks-button";
 import React, {Component} from "react";
 import {Model} from "backbone-model";
@@ -17,7 +20,7 @@ const RecordChunks = Model.extend({
     },
 
     currentChunkExists: function() {
-        return this.currentChunk !== null;
+        return !_.isNull(this.currentChunk);
     },
 
     startNewChunk: function() {
@@ -39,8 +42,9 @@ const RecordChunks = Model.extend({
     /* Return the array of audio chunks, not yet stitched together. */
     getAllChunks: function() {
         return this.audioChunks;
-    },
+    }
 });
+
 
 /* Builds up audio and the command chunks for our recording, coordinates
  *  the process.
@@ -96,8 +100,7 @@ export default class RecordControls extends Component {
     initializeRecordingAudio() {
         // Start recording the presenter's audio
         this.multirecorder = new MultiRecorder({
-            workerPath:
-                this.props.workersDir + "shared/multirecorder-worker.js",
+            workerPath: this.props.workersDir + "shared/multirecorder-worker.js",
         });
         this.disableChunkButtons(false, true, true, true, true);
     }
@@ -124,10 +127,11 @@ export default class RecordControls extends Component {
     /* Stop recording audio. Called from ScratchpadUI as a result of the
      *  call to stopRecordingCommands. */
     stopRecordingAudio() {
-        this.multirecorder.stopRecording().done((recording) => {
-            this.audioChunks.setCurrentChunk(recording);
-            this.setState({lastChunkHTML: recording.createAudioPlayer()});
-        });
+        this.multirecorder.stopRecording()
+            .done(_.bind(function(recording) {
+                this.audioChunks.setCurrentChunk(recording);
+                this.setState({lastChunkHTML: recording.createAudioPlayer()});
+            }, this));
     }
 
     /* Display a sound player with all the saved audio chunks. */
@@ -147,10 +151,8 @@ export default class RecordControls extends Component {
      * for the audio elem to load. This is pretty gross.
      */
     getDurationMsOfSavedAudio() {
-        let durationMs = 0;
-        const audioElem = this.savedAudioRef.current.getElementsByTagName(
-            "audio",
-        );
+        var durationMs = 0;
+        const audioElem = this.savedAudioRef.current.getElementsByTagName("audio");
         if (audioElem && audioElem.length > 0) {
             durationMs = audioElem[0].duration * 1000;
         }
@@ -165,12 +167,12 @@ export default class RecordControls extends Component {
             //this.scratchpad.get("revision")
             //    .set("code", this.editor.text());
             this.startingCode = this.editor.text();
-            const newVersion = this.config.curVersion();
+            var newVersion = this.config.curVersion();
             // Make sure we record using the scratchpad version
             this.config.switchVersion(newVersion);
             this.record.setActualInitData({
                 configVersion: newVersion,
-                code: this.startingCode,
+                code: this.startingCode
             });
         }
 
@@ -196,8 +198,7 @@ export default class RecordControls extends Component {
     /* Return the final audio recording, with all the audio chunks stitched
      *  together. */
     getFinalAudioRecording(callback) {
-        this.multirecorder
-            .combineRecordings(this.audioChunks.getAllChunks())
+        this.multirecorder.combineRecordings(this.audioChunks.getAllChunks())
             .done(callback);
     }
 
@@ -294,12 +295,7 @@ export default class RecordControls extends Component {
      * Quick way to set the disabled state for lots of recording-related
      *  buttons at once.
      */
-    disableChunkButtons(
-        disableNew,
-        disableDiscard,
-        disableSave,
-        disableRefresh,
-    ) {
+    disableChunkButtons(disableNew, disableDiscard, disableSave, disableRefresh) {
         this.setState({
             disableNew,
             disableDiscard,

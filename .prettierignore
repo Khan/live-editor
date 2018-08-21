@@ -26,11 +26,11 @@ js/shared/all-images.js
 js/shared/images.js
 js/shared/config.js
 js/shared/sounds.js
-js/shared/record-chunks.js
 js/shared/record.js
 js/ui/autosuggest-data.js
 js/ui/blockly-processing-blocks.js
 js/ui/debugger.js
+js/ui/record.js
 js/ui/structured-blocks-tooltips.js
 js/editors/structured-blocks
 workers

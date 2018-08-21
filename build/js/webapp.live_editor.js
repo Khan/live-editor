@@ -29118,11 +29118,11 @@ var _playbackBar = __webpack_require__(167);
 
 var _playbackBar2 = _interopRequireDefault(_playbackBar);
 
-var _recordControls = __webpack_require__(168);
+var _record = __webpack_require__(168);
 
-var _recordControls2 = _interopRequireDefault(_recordControls);
+var _record2 = _interopRequireDefault(_record);
 
-var _restartButton = __webpack_require__(170);
+var _restartButton = __webpack_require__(169);
 
 var _restartButton2 = _interopRequireDefault(_restartButton);
 
@@ -29130,11 +29130,11 @@ var _config = __webpack_require__(78);
 
 var _config2 = _interopRequireDefault(_config);
 
-var _record = __webpack_require__(171);
+var _record3 = __webpack_require__(170);
 
-var _record2 = _interopRequireDefault(_record);
+var _record4 = _interopRequireDefault(_record3);
 
-var _undoButton = __webpack_require__(172);
+var _undoButton = __webpack_require__(171);
 
 var _undoButton2 = _interopRequireDefault(_undoButton);
 
@@ -29142,7 +29142,7 @@ var _utils = __webpack_require__(31);
 
 var utils = _interopRequireWildcard(_utils);
 
-__webpack_require__(173);
+__webpack_require__(172);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -29235,7 +29235,7 @@ var LiveEditor = function (_Component) {
             version: _this.props.version
         });
 
-        _this.record = new _record2.default();
+        _this.record = new _record4.default();
         // Load the recording playback commands as well, if applicable
         if (_this.props.recordingCommands) {
             // Check the filename to see if a multiplier is specified,
@@ -29614,7 +29614,7 @@ var LiveEditor = function (_Component) {
                 workersDir: workersDir,
                 drawCanvas: this.drawCanvas
             };
-            return _react2.default.createElement(_recordControls2.default, props);
+            return _react2.default.createElement(_record2.default, props);
         }
     }, {
         key: "renderPlaybackBar",
@@ -32465,9 +32465,7 @@ var _react = __webpack_require__(1);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _recordChunks = __webpack_require__(169);
-
-var _recordChunks2 = _interopRequireDefault(_recordChunks);
+var _backboneModel = __webpack_require__(41);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -32478,6 +32476,45 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* global i18n, MultiRecorder */
 
 
+/* Manages the audio chunks as we build up this recording. */
+var RecordChunks = _backboneModel.Model.extend({
+    initialize: function initialize(options) {
+        // The saved audio chunks
+        this.audioChunks = [];
+        // The current chunk we have not yet saved or discarded
+        this.currentChunk = null;
+    },
+
+    setCurrentChunk: function setCurrentChunk(recording) {
+        this.currentChunk = recording;
+    },
+
+    currentChunkExists: function currentChunkExists() {
+        return this.currentChunk !== null;
+    },
+
+    startNewChunk: function startNewChunk() {
+        this.currentChunk = null;
+    },
+
+    discardCurrentChunk: function discardCurrentChunk() {
+        this.currentChunk = null;
+    },
+
+    saveCurrentChunk: function saveCurrentChunk() {
+        if (!this.currentChunk) {
+            return;
+        }
+        this.audioChunks.push(this.currentChunk);
+        this.currentChunk = null;
+    },
+
+    /* Return the array of audio chunks, not yet stitched together. */
+    getAllChunks: function getAllChunks() {
+        return this.audioChunks;
+    }
+});
+
 /* Builds up audio and the command chunks for our recording, coordinates
  *  the process.
  *
@@ -32487,6 +32524,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
  *  restore state after a discard, and so any Record bugs also cause bugs in
  *  recording in chunks.
  */
+
 var RecordControls = function (_Component) {
     _inherits(RecordControls, _Component);
 
@@ -32513,7 +32551,7 @@ var RecordControls = function (_Component) {
         _this.record = _this.props.record;
         _this.config = _this.props.config;
         _this.drawCanvas = _this.props.drawCanvas;
-        _this.audioChunks = new _recordChunks2.default();
+        _this.audioChunks = new RecordChunks();
 
         _this.recordInProgress = false;
         _this.commandChunks = [];
@@ -32891,61 +32929,6 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _backboneModel = __webpack_require__(41);
-
-/* Manages the audio chunks as we build up this recording. */
-var ScratchpadAudioChunks = _backboneModel.Model.extend({
-
-    initialize: function initialize(options) {
-        // The saved audio chunks
-        this.audioChunks = [];
-        // The current chunk we have not yet saved or discarded
-        this.currentChunk = null;
-    },
-
-    setCurrentChunk: function setCurrentChunk(recording) {
-        this.currentChunk = recording;
-    },
-
-    currentChunkExists: function currentChunkExists() {
-        return this.currentChunk !== null;
-    },
-
-    startNewChunk: function startNewChunk() {
-        this.currentChunk = null;
-    },
-
-    discardCurrentChunk: function discardCurrentChunk() {
-        this.currentChunk = null;
-    },
-
-    saveCurrentChunk: function saveCurrentChunk() {
-        if (!this.currentChunk) {
-            return;
-        }
-        this.audioChunks.push(this.currentChunk);
-        this.currentChunk = null;
-    },
-
-    /* Return the array of audio chunks, not yet stitched together. */
-    getAllChunks: function getAllChunks() {
-        return this.audioChunks;
-    }
-});
-
-exports.default = ScratchpadAudioChunks;
-
-/***/ }),
-/* 170 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _wonderBlocksButton = __webpack_require__(18);
@@ -33070,7 +33053,7 @@ var styles = _noImportant.StyleSheet.create({
 });
 
 /***/ }),
-/* 171 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33443,7 +33426,7 @@ var ScratchpadRecordModel = _backboneModel.Model.extend({
 exports.default = ScratchpadRecordModel;
 
 /***/ }),
-/* 172 */
+/* 171 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33501,11 +33484,11 @@ var UndoButton = function (_Component) {
 exports.default = UndoButton;
 
 /***/ }),
-/* 173 */
+/* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(174);
+var content = __webpack_require__(173);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -33526,7 +33509,7 @@ if(content.locals) module.exports = content.locals;
 if(false) {}
 
 /***/ }),
-/* 174 */
+/* 173 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(79)(false);
