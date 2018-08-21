@@ -382,10 +382,10 @@ export default class SQLOutput extends Component {
         }.bind(this));
     }
 
-    runCode(code, timestamp) {
+    runCode(userCode, timestamp) {
         if (!SQLOutput.isSupported()) {
             return this.props.onCodeRun({
-                code,
+                code: userCode,
                 errors: [],
                 timestamp,
             });
@@ -393,7 +393,7 @@ export default class SQLOutput extends Component {
 
         var db = new SQL.Database();
 
-        var results = SQLTester.Util.execWithResults(db, code);
+        var results = SQLTester.Util.execWithResults(db, userCode);
         var tables = SQLTester.Util.getTables(db);
         db.close();
 
@@ -416,7 +416,7 @@ export default class SQLOutput extends Component {
         doc.close();
 
         this.props.onCodeRun({
-            code,
+            code: userCode,
             errors: [],
             timestamp,
         });

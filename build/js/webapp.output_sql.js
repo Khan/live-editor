@@ -154,7 +154,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* globals i18n */
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* eslint-disable no-var, no-redeclare, no-new-func */
+/* TODO: Fix the lint errors */
+/* globals i18n */
 
 
 var SQLOutput = function (_Component) {
@@ -223,6 +225,17 @@ var SQLOutput = function (_Component) {
             }
         }
     }, {
+        key: "handleResultsMounted",
+        value: function handleResultsMounted() {
+            if (this.state.scrollToResults && this.state.resultsMounted) {
+                // If a new result set was added, scroll to the bottom
+                // But ignore the first time the scratchpad loads
+                var docEl = this.getDocument().documentElement;
+                docEl.scrollTop = docEl.scrollHeight;
+            }
+            this.setState({ resultsMounted: true });
+        }
+    }, {
         key: "getDocument",
         value: function getDocument() {
             return this.frameRef.current.contentWindow.document;
@@ -233,7 +246,6 @@ var SQLOutput = function (_Component) {
             html2canvas(this.getDocument().body, {
                 imagesDir: this.props.imagesDir,
                 onrendered: function onrendered(canvas) {
-                    // Note: this code is the same in webpage-output.js
                     var width = screenshotSize;
                     var height = screenshotSize / canvas.width * canvas.height;
 
@@ -313,8 +325,6 @@ var SQLOutput = function (_Component) {
     }, {
         key: "lint",
         value: function lint(userCode, skip, timestamp) {
-            var _this2 = this;
-
             if (skip) {
                 return this.props.onCodeLint({
                     code: userCode,
@@ -345,8 +355,7 @@ var SQLOutput = function (_Component) {
             // We also test for foreign key constraints being violated after
             // each statement so we can give proper line numbers to the user
             // if anything is violated.
-            var error = void 0;
-            var result = void 0;
+            var error;
             var db = new _sql2.default.Database();
             var results = [];
             _sqlTester2.default.Util.forEachStatement(userCode, function (statement, lineNumber) {
@@ -354,7 +363,7 @@ var SQLOutput = function (_Component) {
                     if (!statement) {
                         throw new Error(i18n._("It looks like you have an " + "unnecessary semicolon."));
                     }
-                    result = _sqlTester2.default.Util.execSingleStatementWithResults(db, statement);
+                    var result = _sqlTester2.default.Util.execSingleStatementWithResults(db, statement);
                     if (result) {
                         results.push(result);
                     }
@@ -364,8 +373,8 @@ var SQLOutput = function (_Component) {
                     // https://www.sqlite.org/datatype3.html
                     // Instead it would be better for learning purposes to require
                     // the valid names that things coerce to.
-                    var _tables = _sqlTester2.default.Util.getTables(db);
-                    _tables.forEach(function (table) {
+                    var tables = _sqlTester2.default.Util.getTables(db);
+                    tables.forEach(function (table) {
                         table.columns.forEach(function (column) {
                             var type = column.type.toUpperCase();
                             var allowedTypes = ["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE"];
@@ -378,14 +387,14 @@ var SQLOutput = function (_Component) {
                     // Check if we have any new foreign key constraint violations
                     var fkResults = db.exec("PRAGMA foreign_key_check;");
                     if (fkResults.length > 0) {
-                        result = fkResults[0];
+                        var result = fkResults[0];
                         throw new Error("Please check for a foreign key constraint " + "on table " + result.values[0][0] + " for parent table " + result.values[0][2]);
                     }
 
-                    // Check if we have any new integrity errors such as
-                    //  NOT NULL violations
+                    // Check if we have any new integrity errors such as NOT NULL
+                    // vilolations
                     var integrityResults = db.exec("PRAGMA integrity_check(1);");
-                    result = integrityResults[0];
+                    var result = integrityResults[0];
                     if (result.values[0][0] !== "ok") {
                         throw new Error("Integrity error: " + result.values[0][0]);
                     }
@@ -393,13 +402,13 @@ var SQLOutput = function (_Component) {
                     return true;
                 } catch (e) {
                     error = true;
-                    _this2.props.onCodeLint({
+                    this.props.onCodeLint({
                         code: userCode,
                         timestamp: timestamp,
                         errors: [{
                             row: lineNumber,
                             column: 0,
-                            text: _this2.getErrorMessage(e.message, statement),
+                            text: this.getErrorMessage(e.message, statement),
                             type: "error",
                             source: "sqlite",
                             lint: undefined,
@@ -409,7 +418,7 @@ var SQLOutput = function (_Component) {
                     });
                     return false;
                 }
-            });
+            }.bind(this));
 
             var tables = _sqlTester2.default.Util.getTables(db);
             db.close();
@@ -438,7 +447,6 @@ var SQLOutput = function (_Component) {
 
             try {
                 var code = "with(arguments[0]){\n" + validate + "\n}";
-                // eslint-disable-next-line no-new-func
                 new Function(code).apply({}, this.tester.testContext);
             } catch (e) {
                 return e;
@@ -447,27 +455,23 @@ var SQLOutput = function (_Component) {
     }, {
         key: "test",
         value: function test(code, tests, errors, timestamp) {
-            var _this3 = this;
-
             var errorCount = errors.length;
 
-            this.tester.test(this.dbInfo, tests, errors, function (errors, results) {
+            this.tester.test(this.dbInfo, tests, errors, function (errors, testResults) {
                 if (errorCount !== errors.length) {
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
                     // figure out whether we hit this case.
-                    var message = i18n._("Error: %(message)s", {
-                        message: errors[errors.length - 1].message
-                    });
-                    _this3.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
+                    var message = i18n._("Error: %(message)s", { message: errors[errors.length - 1].message });
+                    this.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
                 }
-                _this3.props.onCodeTest({
+                this.props.onCodeTest({
                     code: code,
                     errors: errors,
-                    results: results,
+                    results: testResults,
                     timestamp: timestamp
                 });
-            });
+            }.bind(this));
         }
     }, {
         key: "runCode",
@@ -506,20 +510,14 @@ var SQLOutput = function (_Component) {
             });
         }
     }, {
+        key: "clear",
+        value: function clear() {
+            // Clear the output
+        }
+    }, {
         key: "kill",
         value: function kill() {
             // Completely stop and clear the output
-        }
-    }, {
-        key: "handleResultsMounted",
-        value: function handleResultsMounted() {
-            if (this.state.scrollToResults && this.state.resultsMounted) {
-                // If a new result set was added, scroll to the bottom
-                // But ignore the first time the scratchpad loads
-                var docEl = this.getDocument().documentElement;
-                docEl.scrollTop = docEl.scrollHeight;
-            }
-            this.setState({ resultsMounted: true });
         }
     }, {
         key: "render",
