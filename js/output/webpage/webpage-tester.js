@@ -24,10 +24,10 @@
             var parser = new DOMParser();
             var doc = parser.parseFromString(userCode, "text/html");
 
-            $(doc).find("script").each(function (index, scriptElement) {
+            doc.querySelectorAll("script").forEach((scriptElement) => {
                 this.testContext.allScripts += scriptElement.innerHTML;
                 this.testContext.allScripts += "\n";
-            }.bind(this));
+            });
 
             this.curTask = null;
             this.curTest = null;
@@ -162,8 +162,8 @@
                 var expected = structure[selector];
                 // TODO(jeresig): Maybe find a way to do this such that we can run
                 // it in a worker thread.
-                var numFound = $(selector, this.testContext.$docSP).length;
-                if (expected === 0 && numFound !== 0 || numFound < expected) {
+                var numFound = this.testContext.docSP.querySelectorAll(selector).length;
+                if ((expected === 0 && numFound !== 0) || numFound < expected) {
                     return {success: false};
                 }
             }
