@@ -2346,13 +2346,6 @@ function PJSResourceCache(options) {
         this.imageHolder.style.overflow = "hidden";
         this.imageHolder.style.position = "absolute";
         document.body.appendChild(this.imageHolder);
-
-        this.imageHolder = $("<div>").css({
-            height: 0,
-            width: 0,
-            overflow: "hidden",
-            position: "absolute"
-        }).appendTo("body");
     }
 }
 
@@ -2385,56 +2378,53 @@ PJSResourceCache.prototype.loadResource = function (filename) {
 };
 
 PJSResourceCache.prototype.loadImage = function (filename) {
-    var _this2 = this;
+    var deferred = $.Deferred();
+    var path = this.output.imagesDir + filename;
+    var img = document.createElement("img");
 
-    return new Promise(function (resolve) {
-        var path = _this2.output.imagesDir + filename;
-        var img = document.createElement("img");
+    img.onload = (function () {
+        this.cache[filename] = img;
+        deferred.resolve();
+    }).bind(this);
+    img.onerror = (function () {
+        deferred.resolve(); // always resolve
+    }).bind(this);
 
-        img.onload = (function () {
-            this.cache[filename] = img;
-            resolve();
-        }).bind(_this2);
-        img.onerror = (function () {
-            resolve(); // always resolve
-        }).bind(_this2);
+    img.src = path;
+    this.imageHolder.appendChild(img);
 
-        img.src = path;
-        _this2.imageHolder.append(img);
-    });
+    return deferred;
 };
 
 PJSResourceCache.prototype.loadSound = function (filename) {
-    var _this3 = this;
+    var deferred = $.Deferred();
+    var audio = document.createElement("audio");
+    var parts = filename.split("/");
 
-    return new Promise(function (resolve) {
-        var audio = document.createElement("audio");
-        var parts = filename.split("/");
+    var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
+    var hasSound = group && group.sounds.includes(parts[1].replace(".mp3", ""));
+    if (!hasSound) {
+        deferred.resolve();
+        return deferred;
+    }
 
-        var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
-        var hasSound = group && group.sounds.includes(parts[1].replace(".mp3", ""));
+    audio.preload = "auto";
+    audio.oncanplaythrough = (function () {
+        this.cache[filename] = {
+            audio: audio,
+            __id: function __id() {
+                return "getSound('" + filename.replace(".mp3", "") + "')";
+            }
+        };
+        deferred.resolve();
+    }).bind(this);
+    audio.onerror = (function () {
+        deferred.resolve();
+    }).bind(this);
 
-        if (!hasSound) {
-            resolve();
-            return;
-        }
+    audio.src = this.output.soundsDir + filename;
 
-        audio.preload = "auto";
-        audio.oncanplaythrough = (function () {
-            this.cache[filename] = {
-                audio: audio,
-                __id: function __id() {
-                    return "getSound('" + filename.replace(".mp3", "") + "')";
-                }
-            };
-            resolve();
-        }).bind(_this3);
-        audio.onerror = (function () {
-            resolve();
-        }).bind(_this3);
-
-        audio.src = _this3.output.soundsDir + filename;
-    });
+    return deferred;
 };
 
 PJSResourceCache.prototype.getResource = function (filename, type) {
