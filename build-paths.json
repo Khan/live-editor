@@ -70,8 +70,7 @@
             "js/shared/images.js",
             "js/shared/sounds.js",
             "js/shared/record.js",
-            "js/shared/config.js",
-            "external/visibly/visibly.js"
+            "js/shared/config.js"
         ],
         "output_pjs_deps": [
             "external/processing-js/processing.js",
