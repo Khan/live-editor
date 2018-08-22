@@ -139,13 +139,13 @@
 			}
 		    }
 		} break;
-            case "Literal":
-                r.raw = tree.raw
-                    .replace(/^(?:\"(.*?)\"|\'(.*?)\')$/, function(match, p1, p2) {
-                        return "\"" + ((p1 || "") + (p2 || ""))
-                            .replace(/"|'/g, "\"") + "\"";
-                    });
-                break;
+        case "Literal":
+            r.raw = tree.raw
+                .replace(/^(?:\"(.*?)\"|\'(.*?)\')$/, function(match, p1, p2) {
+                    return "\"" + ((p1 || "") + (p2 || ""))
+                        .replace(/"|'/g, "\"") + "\"";
+                });
+            console.log(r.raw); break;
 	    default:
 	        for (var key in tree) {
 		    if (!tree.hasOwnProperty(key) || !_.isObject(tree[key])) {
