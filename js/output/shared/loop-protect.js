@@ -27,14 +27,14 @@ window.LoopProtector = function(callback, timeouts, reportLocation) {
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
 
-    document.addEventListener('visibilitychange', function() {
+    document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             this.visible = true;
             this.branchStartTime = 0;
         } else {
             this.visible = false;
         }
-    }.bind(this));
+    });
 
     this.visible = !document.hidden;
 };
