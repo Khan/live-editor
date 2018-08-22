@@ -5,7 +5,8 @@
   "main": "dist/live-editor.js",
   "scripts": {
     "build": "gulp build",
-    "test": "gulp test"
+    "test": "gulp test",
+    "build:add": "git add build/"
   },
   "repository": {
     "type": "git",
@@ -44,6 +45,7 @@
     "mocha": "^1.21.4",
     "node-static": "^0.7.4",
     "object-assign": "^3.0.0",
+    "pre-commit": "^1.2.2",
     "replace-ext": "0.0.1",
     "request": "^2.44.0",
     "rimraf": "^2.5.4",
@@ -51,5 +53,10 @@
     "sinon": "^1.10.3",
     "through2": "^2.0.0",
     "vinyl-sourcemaps-apply": "^0.1.4"
-  }
+  },
+  "pre-commit": [
+    "build",
+    "test",
+    "build:add"
+  ]
 }
