@@ -64,7 +64,8 @@ describe("Challenge Assertions - HTML", function() {
     assertTest({
         title: "Doing the step with no errors",
         code: "<p id='foo'><div></div></p>",
-        validate: divTest
+        validate: divTest,
+        fromTests: true
     });
 });
 
@@ -154,7 +155,8 @@ describe("Challenge Assertions - HTML Scripting", function() {
     assertTest({
         title: "jQuery scripting works",
         code: '<div><script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script><script>$("img").animate({width:500});</script></div>',
-        validate: jQueryTest
+        validate: jQueryTest,
+        fromTests: true
     });
 });
 
