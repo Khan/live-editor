@@ -2366,7 +2366,7 @@ PJSResourceCache.prototype.cacheResources = function (resources) {
     var promises = Object.keys(resources).map(function (filename) {
         return _this.loadResource(filename);
     });
-    return Promise.all(promises);
+    return $.when.apply($, promises);
 };
 
 PJSResourceCache.prototype.loadResource = function (filename) {
