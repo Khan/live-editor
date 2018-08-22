@@ -9,6 +9,8 @@
 
     _.extend(WebpageTester.prototype, {
         test: function test(userCode, validate, errors, callback) {
+            var _this = this;
+
             var testResults = [];
             errors = this.errors = errors || [];
             this.userCode = userCode;
@@ -24,10 +26,10 @@
             var parser = new DOMParser();
             var doc = parser.parseFromString(userCode, "text/html");
 
-            $(doc).find("script").each((function (index, scriptElement) {
-                this.testContext.allScripts += scriptElement.innerHTML;
-                this.testContext.allScripts += "\n";
-            }).bind(this));
+            doc.querySelectorAll("script").forEach(function (scriptElement) {
+                _this.testContext.allScripts += scriptElement.innerHTML;
+                _this.testContext.allScripts += "\n";
+            });
 
             this.curTask = null;
             this.curTest = null;
@@ -160,7 +162,7 @@
                 var expected = structure[selector];
                 // TODO(jeresig): Maybe find a way to do this such that we can run
                 // it in a worker thread.
-                var numFound = $(selector, this.testContext.$docSP).length;
+                var numFound = this.testContext.docSP.querySelectorAll(selector).length;
                 if (expected === 0 && numFound !== 0 || numFound < expected) {
                     return { success: false };
                 }
@@ -803,8 +805,7 @@ window.WebpageOutput = Backbone.View.extend({
 
         _.extend(this.tester.testContext, {
             $doc: $(this.frameDoc),
-            // Append to a div because jQuery doesn't work on a document fragment
-            $docSP: $("<div>").append(this.slowparseResults.document),
+            docSP: this.slowparseResults.document,
             cssRules: this.slowparseResults.rules
         });
 

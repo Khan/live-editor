@@ -253,8 +253,7 @@ window.WebpageOutput = Backbone.View.extend({
 
         _.extend(this.tester.testContext, {
             $doc: $(this.frameDoc),
-            // Append to a div because jQuery doesn't work on a document fragment
-            $docSP: $("<div>").append(this.slowparseResults.document),
+            docSP: this.slowparseResults.document,
             cssRules: this.slowparseResults.rules
         });
 

@@ -42,14 +42,16 @@ describe("Challenge Assertions - HTML", function() {
         title: "Failing to complete any step",
         code: "<span></span>",
         validate: divTest,
-        fromTests: true
+        fromTests: true,
+        reason: "fail"
     });
 
     assertTest({
         title: "Failing to complete any step",
         code: "<span></span>",
         validate: divTest,
-        fromTests: true
+        fromTests: true,
+        reason: "fail"
     });
 
     assertTest({
@@ -62,7 +64,8 @@ describe("Challenge Assertions - HTML", function() {
     assertTest({
         title: "Doing the step with no errors",
         code: "<p id='foo'><div></div></p>",
-        validate: divTest
+        validate: divTest,
+        fromTests: true
     });
 });
 
@@ -82,7 +85,8 @@ describe("Challenge Assertions - HTML Scripting", function() {
         title: "Scripting Works",
         code: "<div><script>window.x = 4;</script></div>",
         validate: xTest,
-    }); 
+        fromTests: true,
+    });
 
     assertTest({
         title: "Scripting Test fails",
@@ -151,7 +155,8 @@ describe("Challenge Assertions - HTML Scripting", function() {
     assertTest({
         title: "jQuery scripting works",
         code: '<div><script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script><script>$("img").animate({width:500});</script></div>',
-        validate: jQueryTest
+        validate: jQueryTest,
+        fromTests: true
     });
 });
 
@@ -170,20 +175,23 @@ describe("scriptTest tests", function() {
         title: "scriptTest reports success for matching code",
         code: "<div><script>var x = 4;</script></div>",
         validate: xTest,
-    }); 
+    });
 
     assertTest({
         title: "scriptTest reports failure for not matching code",
         code: "<div></div>",
         validate: xTest,
-        fromTests: true
+        fromTests: true,
+        reason: "fail"
     });
 
     assertTest({
         title: "scriptTest reports failure for not matching code",
         code: "<div><script>var y = 4;</script></div>",
         validate: xTest,
-    }); 
+        fromTests: true,
+        reason: "fail"
+    });
 });
 
 describe("CSS selector matching with wildcards", function() {
@@ -353,12 +361,12 @@ describe("Full CSS matching with wildcards", function() {
         css: "h1 { color: (0, 10, 20); }",
         callbacks: 'isValidColor("$1")'
     }, {
-        res: true, 
+        res: true,
         title: "Concatenating multiple stylesheets",
         pat: "h1{color: red} h2{color: black}",
-        html: "<style>h1{color: red}</style><style>h2{color: black}</style>", 
+        html: "<style>h1{color: red}</style><style>h2{color: black}</style>",
     }, {
-        res: false, 
+        res: false,
         title: "Later styles override earlier styles",
         pat: "h1{color: red}",
         html: "<style>h1{color: red}</style><style>h1{color: black}</style>"
