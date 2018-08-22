@@ -116,14 +116,25 @@ var warningTest = function(title, code, warnings) {
 
 var assertTest = function(options) {
     options.test = function(output, errors, testResults, callback) {
-        if (!options.reason) {
-            expect(errors.length).to.be.equal(0);
-        } else {
-            if (options.fromTests) {
+        // If the test is checking the results from validation tests:
+        if (options.fromTests) {
+            if (!options.reason) {
+                expect(errors.length).to.be.equal(0);
+                expect(testResults).to.not.equal([]);
+                expect(testResults[0].state).to.not.equal("fail");
+            } else {
                 expect(testResults).to.not.equal([]);
                 expect(testResults[0].state).to.be.equal("fail");
-                expect(testResults[0].results[0].meta.alsoMessage)
-                    .to.be.equal(options.reason);
+                // If specific reason given, verify it matches:
+                if (options.reason !== "fail") {
+                    expect(testResults[0].results[0].meta.alsoMessage)
+                        .to.be.equal(options.reason);
+                }
+            }
+        } else {
+            // Otherwise, the test is checking results from lint errors:
+            if (!options.reason) {
+                expect(errors.length).to.be.equal(0);
             } else {
                 expect(errors).to.not.equal([]);
                 if (options.lint) {
@@ -131,8 +142,10 @@ var assertTest = function(options) {
                     expect(errors[0].lint.reason)
                         .to.be.equal(options.reason);
                 } else {
-                    var $html = $("<div>" + errors[0].text + "</div>");
-                    expect($html.text()).to.be.equal(options.reason);
+                    // Strip HTML tags from message before comparing them
+                    const errorDiv = document.createElement("div");
+                    errorDiv.innerHTML = errors[0].text;
+                    expect(errorDiv.innerText).to.be.equal(options.reason);
                 }
             }
         }
