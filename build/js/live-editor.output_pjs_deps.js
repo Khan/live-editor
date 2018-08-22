@@ -86257,7 +86257,7 @@ require("/tools/entry-point.js");
 
     if (typeof module !== "undefined" && module.exports) {
         exports = module.exports = {};
-        esprima = require("esprima");
+        esprima = require("./external/esprima.js");
         _ = require("underscore");
     } else {
         exports = this.Structured = {};
@@ -86290,6 +86290,116 @@ require("/tools/entry-point.js");
             variables: params,
             fn: callback
         };
+    }
+    
+    /*
+     * return true if n2 < n1 (according to relatively arbitrary criteria)
+     */
+    function shouldSwap(n1, n2) {
+	if (n1.type < n2.type) { //Sort by node type if different
+	    return false;
+	} else if (n1.type > n2.type) {
+	    return true;
+	} else if (n1.type === "Literal") { //Sort by value if they're literals
+	    return n1.raw > n2.raw;
+	} else { //Otherwise, loop through the properties until a difference is found and sort by that
+	    for (var k in n1) {
+		if (n1[k].hasOwnProperty("type") && n1[k] !== n2[k]) {
+		    return shouldSwap(n1[k], n2[k]);
+		}
+	    }
+	}
+    }
+    function standardizeTree(tree) {
+	if (!tree) {return tree;}
+        var r = deepClone(tree);
+        switch (tree.type) {
+            case "BinaryExpression":
+                if (_.contains(["*", "+", "===", "!==", "==", "!=", "&", "|", "^"], tree.operator)) {
+		    if (shouldSwap(tree.left, tree.right)) {
+			r.left = standardizeTree(tree.right);
+			r.right = standardizeTree(tree.left);
+            } else {
+                r.left = standardizeTree(tree.left);
+                r.right = standardizeTree(tree.right);
+            }
+		} else if (tree.operator[0] === ">") {
+		    r.operator = "<" + tree.operator.slice(1);
+		    r.left = standardizeTree(tree.right);
+		    r.right = standardizeTree(tree.left);
+		} break;
+	    case "LogicalExpression":
+	        if (_.contains(["&&", "||"], tree.operator) &&
+		    shouldSwap(tree.left, tree.right)) {
+		    r.left = standardizeTree(tree.right);
+		    r.right = standardizeTree(tree.left);
+		} break;
+	    case "AssignmentExpression":
+	        if (_.contains(["+=", "-=", "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "|="], tree.operator)) {
+		    var l = standardizeTree(tree.left);
+		    r = {type: "AssignmentExpression",
+			 operator: "=",
+			 left: l,
+			 right: {type: "BinaryExpression",
+				 operator: tree.operator.slice(0,-1),
+				 left: l,
+				 right: standardizeTree(tree.right)}};
+		} else {
+            r.left = standardizeTree(r.left);
+            r.right = standardizeTree(r.right);
+        } break;
+	    case "UpdateExpression":
+	        if (_.contains(["++", "--"], tree.operator)) {
+		    var l = standardizeTree(tree.argument);
+		    r = {type: "AssignmentExpression",
+			 operator: "=",
+			 left: l,
+			 right: {type: "BinaryExpression",
+				 operator: tree.operator[0],
+				 left: l,
+				 right: {type: "Literal",
+					 value: 1,
+					 raw: "1"}}};
+		} break;
+	    case "VariableDeclaration":
+	        if (tree.kind === "var") {
+		    r = [deepClone(tree)];
+		    for (var i in tree.declarations) {
+			if (tree.declarations[i].type === "VariableDeclarator" &&
+			    tree.declarations[i].init !== null) {
+			    r.push({type: "ExpressionStatement",
+				    expression: {type: "AssignmentExpression",
+						 operator: "=",
+						 left: tree.declarations[i].id,
+						 right: standardizeTree(tree.declarations[i].init)}});
+			    r[0].declarations[i].init = null;
+			}
+		    }
+		} break;
+            case "Literal":
+                r.raw = tree.raw
+                    .replace(/^(?:\"(.*?)\"|\'(.*?)\')$/, function(match, p1, p2) {
+                        return "\"" + ((p1 || "") + (p2 || ""))
+                            .replace(/"|'/g, "\"") + "\"";
+                    });
+                break;
+	    default:
+	        for (var key in tree) {
+		    if (!tree.hasOwnProperty(key) || !_.isObject(tree[key])) {
+			continue;
+		    }
+		    if (_.isArray(tree[key])) {
+			var ar = [];
+			for (var i in tree[key]) {  /* jshint forin:false */
+			    ar = ar.concat(standardizeTree(tree[key][i]));
+			}
+			r[key] = ar;
+		    } else {
+			r[key] = standardizeTree(tree[key]);
+		    }
+		}
+        }
+        return r;
     }
 
     /*
@@ -86401,6 +86511,7 @@ require("/tools/entry-point.js");
             _: [],
             vars: {}
         };
+	codeTree = standardizeTree(codeTree);
         if (wildcardVars.order.length === 0 || options.single) {
             // With no vars to match, our normal greedy approach works great.
             result = checkMatchTree(codeTree, toFind, peers, wildcardVars, matchResult, options);
@@ -86515,7 +86626,7 @@ require("/tools/entry-point.js");
     function checkUserVarCallbacks(wVars, varCallbacks) {
         // Clear old failure message if needed
         delete originalVarCallbacks.failure;
-        for (var key in varCallbacks) {
+        for (var key in varCallbacks) {  /* jshint forin:false */
             // Property strings may be "$foo, $bar, $baz" to mimic arrays.
             var varNames = varCallbacks[key].variables;
             var varValues = _.map(varNames, function(varName) {
@@ -86589,7 +86700,7 @@ require("/tools/entry-point.js");
      *        relative ordering matter).
      */
     function parseStructureWithVars(structure, wVars) {
-        var tree = parseStructure(structure);
+        var tree = standardizeTree(parseStructure(structure));
         foldConstants(tree);
         simplifyTree(tree, wVars);
         return tree;
@@ -86599,7 +86710,7 @@ require("/tools/entry-point.js");
      * Constant folds the syntax tree
      */
     function foldConstants(tree) {
-        for (var key in tree) {
+        for (var key in tree) {  /* jshint forin:false */
             if (!tree.hasOwnProperty(key)) {
                 continue; // Inherited property
             }
@@ -86613,6 +86724,7 @@ require("/tools/entry-point.js");
                  * This is easy to extend, but it means we lose the ability to match
                  * potentially useful expressions like 5 + 5 with a pattern like _ + _.
                  */
+                /* jshint eqeqeq:false */
                 if (ast.type == esprima.Syntax.UnaryExpression) {
                     var argument = ast.argument;
                     if (argument.type === esprima.Syntax.Literal &&
@@ -86652,7 +86764,7 @@ require("/tools/entry-point.js");
      *
      */
     function simplifyTree(tree, wVars) {
-        for (var key in tree) {
+        for (var key in tree) {  /* jshint forin:false */
             if (!tree.hasOwnProperty(key)) {
                 continue; // Inherited property
             }
@@ -86714,12 +86826,14 @@ require("/tools/entry-point.js");
      * toFind: The syntax node from the structure that we wish to find.
      * peersToFind: The remaining ordered syntax nodes that we must find after
      *     toFind (and on the same level as toFind).
+     * modify: should it call RestructureTree()?
      */
     function checkMatchTree(currTree, toFind, peersToFind, wVars, matchResults, options) {
         if (_.isArray(toFind)) {
             console.error("toFind should never be an array.");
             console.error(toFind);
         }
+        /* jshint -W041, -W116 */
         if (currTree == undefined) {
             if (toFind == undefined) {
                 matchResults._.push(currTree);
@@ -86736,15 +86850,15 @@ require("/tools/entry-point.js");
             return false;
         }
         // Check children.
-        for (var key in currTree) {
+        for (var key in currTree) {  /* jshint forin:false */
             if (!currTree.hasOwnProperty(key) || !_.isObject(currTree[key])) {
                 continue; // Skip inherited properties
             }
             // Recursively check for matches
             if ((_.isArray(currTree[key]) &&
-                    checkNodeArray(currTree[key], toFind, peersToFind, wVars, matchResults, options)) ||
+                    checkNodeArray(currTree[key], toFind, peersToFind, wVars, matchResults, options, true)) ||
                 (!_.isArray(currTree[key]) &&
-                    checkMatchTree(currTree[key], toFind, peersToFind, wVars, matchResults, options))) {
+                    checkMatchTree(currTree[key], toFind, peersToFind, wVars, matchResults, options, true))) {
                 return matchResults;
             }
         }
@@ -86901,7 +87015,7 @@ require("/tools/entry-point.js");
             rootToSet = currNode;
         }
 
-        for (var key in toFind) {
+        for (var key in toFind) {  /* jshint forin:false */
             // Ignore inherited properties; also, null properties can be
             // anything and do not have to exist.
             if (!toFind.hasOwnProperty(key) || toFind[key] === null) {
@@ -86911,6 +87025,7 @@ require("/tools/entry-point.js");
             var subCurr = currNode[key];
             // Undefined properties can be anything, but they must exist.
             if (subFind === undefined) {
+                /* jshint -W116 */
                 if (subCurr == undefined) {
                     return false;
                 } else {
@@ -87131,7 +87246,7 @@ require("/tools/entry-point.js");
             return node;
         }
 
-        for (var prop in node) {
+        for (var prop in node) {  /* jshint forin:false */
             if (!node.hasOwnProperty(prop)) {
                 continue;
             }
@@ -87417,6 +87532,8 @@ window.walkAST = function (node, path, visitors) {
  * @constructor
  */
 window.LoopProtector = function (callback, timeouts, reportLocation) {
+    var _this = this;
+
     this.callback = callback || function () {};
     this.timeout = 200;
     this.branchStartTime = 0;
@@ -87433,16 +87550,16 @@ window.LoopProtector = function (callback, timeouts, reportLocation) {
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
 
-    visibly.onVisible((function () {
-        this.visible = true;
-        this.branchStartTime = 0;
-    }).bind(this));
+    document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+            _this.visible = true;
+            _this.branchStartTime = 0;
+        } else {
+            _this.visible = false;
+        }
+    });
 
-    visibly.onHidden((function () {
-        this.visible = false;
-    }).bind(this));
-
-    this.visible = !visibly.hidden();
+    this.visible = !document.hidden;
 };
 
 window.LoopProtector.prototype = {
@@ -87462,7 +87579,7 @@ window.LoopProtector.prototype = {
      * @private
      */
     _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect(location) {
-        var _this = this;
+        var _this2 = this;
 
         if (location) {
             if (!this.loopCounts[location]) {
@@ -87479,9 +87596,9 @@ window.LoopProtector.prototype = {
         } else if (now - this.branchStartTime > this.timeout) {
             if (this.visible) {
                 (function () {
-                    if (!_this.reportLocation) {
+                    if (!_this2.reportLocation) {
                         var _error = new Error("KA_INFINITE_LOOP");
-                        _this.callback(_error);
+                        _this2.callback(_error);
                         throw _error;
                     }
 
@@ -87489,9 +87606,9 @@ window.LoopProtector.prototype = {
                     // the most calls.
                     var max = 0; // current max count
                     var hotLocation = null; // callsite with most calls
-                    Object.keys(_this.loopCounts).forEach(function (location) {
-                        if (_this.loopCounts[location] > max) {
-                            max = _this.loopCounts[location];
+                    Object.keys(_this2.loopCounts).forEach(function (location) {
+                        if (_this2.loopCounts[location] > max) {
+                            max = _this2.loopCounts[location];
                             hotLocation = location;
                         }
                     });
@@ -87503,7 +87620,7 @@ window.LoopProtector.prototype = {
                         row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
                     };
 
-                    _this.callback(error);
+                    _this2.callback(error);
 
                     // We throw here to interrupt communication but also to
                     throw error;
