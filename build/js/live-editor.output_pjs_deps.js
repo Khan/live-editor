@@ -87417,8 +87417,6 @@ window.walkAST = function (node, path, visitors) {
  * @constructor
  */
 window.LoopProtector = function (callback, timeouts, reportLocation) {
-    var _this = this;
-
     this.callback = callback || function () {};
     this.timeout = 200;
     this.branchStartTime = 0;
@@ -87435,14 +87433,14 @@ window.LoopProtector = function (callback, timeouts, reportLocation) {
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
 
-    document.addEventListener("visibilitychange", function () {
+    document.addEventListener("visibilitychange", (function () {
         if (document.hidden) {
-            _this.visible = true;
-            _this.branchStartTime = 0;
+            this.visible = true;
+            this.branchStartTime = 0;
         } else {
-            _this.visible = false;
+            this.visible = false;
         }
-    });
+    }).bind(this));
 
     this.visible = !document.hidden;
 };
@@ -87464,7 +87462,7 @@ window.LoopProtector.prototype = {
      * @private
      */
     _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect(location) {
-        var _this2 = this;
+        var _this = this;
 
         if (location) {
             if (!this.loopCounts[location]) {
@@ -87481,9 +87479,9 @@ window.LoopProtector.prototype = {
         } else if (now - this.branchStartTime > this.timeout) {
             if (this.visible) {
                 (function () {
-                    if (!_this2.reportLocation) {
+                    if (!_this.reportLocation) {
                         var _error = new Error("KA_INFINITE_LOOP");
-                        _this2.callback(_error);
+                        _this.callback(_error);
                         throw _error;
                     }
 
@@ -87491,9 +87489,9 @@ window.LoopProtector.prototype = {
                     // the most calls.
                     var max = 0; // current max count
                     var hotLocation = null; // callsite with most calls
-                    Object.keys(_this2.loopCounts).forEach(function (location) {
-                        if (_this2.loopCounts[location] > max) {
-                            max = _this2.loopCounts[location];
+                    Object.keys(_this.loopCounts).forEach(function (location) {
+                        if (_this.loopCounts[location] > max) {
+                            max = _this.loopCounts[location];
                             hotLocation = location;
                         }
                     });
@@ -87505,7 +87503,7 @@ window.LoopProtector.prototype = {
                         row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
                     };
 
-                    _this2.callback(error);
+                    _this.callback(error);
 
                     // We throw here to interrupt communication but also to
                     throw error;
