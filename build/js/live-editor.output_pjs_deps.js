@@ -87844,7 +87844,7 @@ ASTTransforms.rewriteNewExpressions = function (envName) {
             if (node.type === "NewExpression") {
                 var _name = escodegen.generate(node.callee);
 
-                return b.CallExpression(b.CallExpression(b.MemberExpression(b.MemberExpression(b.Identifier(envName), b.Identifier("PJSOutput")), b.Identifier("applyInstance")), [node.callee, b.Literal(_name)]), node.arguments);
+                return b.CallExpression(b.CallExpression(b.MemberExpression(b.MemberExpression(b.Identifier(envName), b.Identifier("PJSCodeInjector")), b.Identifier("applyInstance")), [node.callee, b.Literal(_name)]), node.arguments);
             }
         }
     };
