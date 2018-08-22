@@ -2340,6 +2340,13 @@ function PJSResourceCache(options) {
     // Insert the images into a hidden div to cause them to load
     // but not be visible to the user
     if (!this.imageHolder) {
+        this.imageHolder = document.createElement("div");
+        this.imageHolder.style.height = 0;
+        this.imageHolder.style.width = 0;
+        this.imageHolder.style.overflow = "hidden";
+        this.imageHolder.style.position = "absolute";
+        document.body.appendChild(this.imageHolder);
+
         this.imageHolder = $("<div>").css({
             height: 0,
             width: 0,
@@ -2366,7 +2373,7 @@ PJSResourceCache.prototype.cacheResources = function (resources) {
     var promises = Object.keys(resources).map(function (filename) {
         return _this.loadResource(filename);
     });
-    return $.when.apply($, promises);
+    return Promise.all(promises);
 };
 
 PJSResourceCache.prototype.loadResource = function (filename) {
@@ -2378,53 +2385,56 @@ PJSResourceCache.prototype.loadResource = function (filename) {
 };
 
 PJSResourceCache.prototype.loadImage = function (filename) {
-    var deferred = $.Deferred();
-    var path = this.output.imagesDir + filename;
-    var img = document.createElement("img");
+    var _this2 = this;
 
-    img.onload = (function () {
-        this.cache[filename] = img;
-        deferred.resolve();
-    }).bind(this);
-    img.onerror = (function () {
-        deferred.resolve(); // always resolve
-    }).bind(this);
+    return new Promise(function (resolve) {
+        var path = _this2.output.imagesDir + filename;
+        var img = document.createElement("img");
 
-    img.src = path;
-    this.imageHolder.append(img);
+        img.onload = (function () {
+            this.cache[filename] = img;
+            resolve();
+        }).bind(_this2);
+        img.onerror = (function () {
+            resolve(); // always resolve
+        }).bind(_this2);
 
-    return deferred;
+        img.src = path;
+        _this2.imageHolder.append(img);
+    });
 };
 
 PJSResourceCache.prototype.loadSound = function (filename) {
-    var deferred = $.Deferred();
-    var audio = document.createElement("audio");
-    var parts = filename.split("/");
+    var _this3 = this;
 
-    var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
-    var hasSound = group && group.sounds.includes(parts[1].replace(".mp3", ""));
-    if (!hasSound) {
-        deferred.resolve();
-        return deferred;
-    }
+    return new Promise(function (resolve) {
+        var audio = document.createElement("audio");
+        var parts = filename.split("/");
 
-    audio.preload = "auto";
-    audio.oncanplaythrough = (function () {
-        this.cache[filename] = {
-            audio: audio,
-            __id: function __id() {
-                return "getSound('" + filename.replace(".mp3", "") + "')";
-            }
-        };
-        deferred.resolve();
-    }).bind(this);
-    audio.onerror = (function () {
-        deferred.resolve();
-    }).bind(this);
+        var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
+        var hasSound = group && group.sounds.includes(parts[1].replace(".mp3", ""));
 
-    audio.src = this.output.soundsDir + filename;
+        if (!hasSound) {
+            resolve();
+            return;
+        }
 
-    return deferred;
+        audio.preload = "auto";
+        audio.oncanplaythrough = (function () {
+            this.cache[filename] = {
+                audio: audio,
+                __id: function __id() {
+                    return "getSound('" + filename.replace(".mp3", "") + "')";
+                }
+            };
+            resolve();
+        }).bind(_this3);
+        audio.onerror = (function () {
+            resolve();
+        }).bind(_this3);
+
+        audio.src = _this3.output.soundsDir + filename;
+    });
 };
 
 PJSResourceCache.prototype.getResource = function (filename, type) {
