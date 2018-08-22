@@ -27,16 +27,16 @@ window.LoopProtector = function(callback, timeouts, reportLocation) {
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
 
-    visibly.onVisible(function () {
-        this.visible = true;
-        this.branchStartTime = 0;
-    }.bind(this));
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            this.visible = true;
+            this.branchStartTime = 0;
+        } else {
+            this.visible = false;
+        }
+    });
 
-    visibly.onHidden(function () {
-        this.visible = false;
-    }.bind(this));
-
-    this.visible = !visibly.hidden();
+    this.visible = !document.hidden;
 };
 
 window.LoopProtector.prototype = {
