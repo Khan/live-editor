@@ -62,7 +62,6 @@ window.LoopProtector.prototype = {
             }
             this.loopCounts[location] += 1;
         }
-        let error;
         const now = new Date().getTime();
         if (!this.branchStartTime) {
             this.branchStartTime = now;
@@ -72,7 +71,7 @@ window.LoopProtector.prototype = {
         } else if (now - this.branchStartTime > this.timeout) {
             if (this.visible) {
                 if (!this.reportLocation) {
-                    error = new Error("KA_INFINITE_LOOP");
+                    const error = new Error("KA_INFINITE_LOOP");
                     this.callback(error);
                     throw error;
                 }
@@ -90,7 +89,7 @@ window.LoopProtector.prototype = {
 
                 hotLocation = JSON.parse(hotLocation);
 
-                error = {
+                const error = {
                     infiniteLoopNodeType: hotLocation.type,
                     row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
                 };

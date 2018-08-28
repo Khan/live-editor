@@ -87472,7 +87472,6 @@ window.LoopProtector.prototype = {
             }
             this.loopCounts[location] += 1;
         }
-        var error = undefined;
         var now = new Date().getTime();
         if (!this.branchStartTime) {
             this.branchStartTime = now;
@@ -87483,9 +87482,9 @@ window.LoopProtector.prototype = {
             if (this.visible) {
                 (function () {
                     if (!_this2.reportLocation) {
-                        error = new Error("KA_INFINITE_LOOP");
-                        _this2.callback(error);
-                        throw error;
+                        var _error = new Error("KA_INFINITE_LOOP");
+                        _this2.callback(_error);
+                        throw _error;
                     }
 
                     // Determine which of KAInfiniteLoopProtect's callsites has
@@ -87501,7 +87500,7 @@ window.LoopProtector.prototype = {
 
                     hotLocation = JSON.parse(hotLocation);
 
-                    error = {
+                    var error = {
                         infiniteLoopNodeType: hotLocation.type,
                         row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
                     };
