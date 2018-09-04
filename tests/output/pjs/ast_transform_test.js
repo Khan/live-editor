@@ -152,12 +152,12 @@ describe("AST Transforms", function () {
 
         expect(transformedCode).to.equal(expectedCode);
     });
-    
+
     it("should handle methods in local scopes with the same names event handlers", function() {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var draw = function() {
                 var mouseClicked = function() {
-                    
+
                 };
                 var test = function() {
                     mouseClicked = function() {
@@ -242,7 +242,7 @@ describe("AST Transforms", function () {
         expect(expectedCode).to.equal(transformedCode);
     });
 
-    it("should substitute all 'NewExpression's with 'CallExpression's to '__env__.PJSOutput.applyInstance'", function() {
+    it("should substitute all 'NewExpression's with 'CallExpression's to '__env__.PJSCodeInjector.applyInstance'", function() {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var Obj = function (prop) {
                 this.prop = prop;
@@ -256,7 +256,7 @@ describe("AST Transforms", function () {
                 this.prop = prop;
             };
 
-            __env__.myInstance = __env__.PJSOutput.applyInstance(__env__.Obj, 'Obj')(1);
+            __env__.myInstance = __env__.PJSCodeInjector.applyInstance(__env__.Obj, 'Obj')(1);
         }));
     });
 
@@ -279,7 +279,7 @@ describe("AST Transforms", function () {
             };
 
             __env__.makeObj = function (obj) {
-                return __env__.PJSOutput.applyInstance(obj, 'obj')();
+                return __env__.PJSCodeInjector.applyInstance(obj, 'obj')();
             };
 
             __env__.myInstance = __env__.makeObj(__env__.myObj);
@@ -291,17 +291,17 @@ describe("AST Transforms for exporting", function() {
     var transformCode = function(code) {
         var canvas = document.createElement('canvas');
         var processing = new Processing(canvas);
-        var injector = new PJSCodeInjector({ 
-            processing: processing, 
+        var injector = new PJSCodeInjector({
+            processing: processing,
             sandboxed: false });
 
         return injector.transformCode(code, processing);
     };
-    
+
     var exportCode = function(code) {
         var canvas = document.createElement('canvas');
         var processing = new Processing(canvas);
-        var injector = new PJSCodeInjector({ 
+        var injector = new PJSCodeInjector({
             processing: processing,
             sandboxed: false,
             envName: "p"  // TODO(kevinb) make this an option to transformCode
@@ -311,15 +311,15 @@ describe("AST Transforms for exporting", function() {
         var soundDir = "../../../sounds/";
         return injector.exportCode(code, imageDir, soundDir);
     };
-    
+
     beforeEach(function() {
         sinon.spy(console, "log");
     });
-    
+
     afterEach(function() {
         console.log.restore();
     });
-    
+
     it("should not prefix built-in globals'", function() {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var x = Math.cos(30);
@@ -331,7 +331,7 @@ describe("AST Transforms for exporting", function() {
             }
             var str = String.fromCharCode(65);
         }));
-    
+
         var expectedCode = cleanupCode(getCodeFromOptions(function() {
             __env__.x = Math.cos(30);
             __env__.y = Math.sin(30);
@@ -342,35 +342,35 @@ describe("AST Transforms for exporting", function() {
             }
             __env__.str = String.fromCharCode(65);
         }));
-    
+
         expect(expectedCode).to.equal(transformedCode);
     });
-    
+
     it("should work with code that uses images", function() {
         var exportedCode = exportCode(getCodeFromOptions(function() {
             background(0,128,255);
             var img = getImage("avatars/leafers-seed");
             image(img, 100, 100);
         }));
-        
+
         expect(function() {
             var func = new Function(exportedCode);
             func();
         }).to.not.throwException();
     });
-    
+
     it("should work with code that uses sounds", function() {
         var exportedCode = exportCode(getCodeFromOptions(function() {
             var snd = getSound("rpg/metal-clink");
             playSound(snd);
         }));
-    
+
         expect(function() {
             var func = new Function(exportedCode);
             func();
         }).to.not.throwException();
     });
-    
+
     it("should automatically loop when a 'draw' method exists", function(done) {
         var exportedCode = exportCode(getCodeFromOptions(function() {
             var Dot = function(x,y) {
@@ -404,10 +404,10 @@ describe("AST Transforms for exporting", function() {
                 }
             };
         }));
-    
+
         var func = new Function(exportedCode);
         func();
-    
+
         setTimeout(function() {
             expect(console.log.callCount > 2).to.be(true);
             done();
