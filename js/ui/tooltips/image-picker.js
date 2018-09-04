@@ -54,7 +54,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
 
         var results = Handlebars.templates["image-picker"]({
             imagesDir: imagesDir,
-            groups: _.map(OutputImages, function(data) {
+            groups: _.map(AllOutputImages, function(data) {
                 data.imagesDir = imagesDir;
                 return data;
             })
@@ -104,7 +104,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         var pathParts = path.split("/");
         var groupName = pathParts[0];
         var fileName = pathParts[1];
-        _.each(OutputImages, function(group) {
+        _.each(AllOutputImages, function(group) {
             if (group.groupName === groupName) {
                 _.each(group.images, function(imageName) {
                     if (imageName === fileName) {

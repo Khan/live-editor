@@ -65,3 +65,8 @@ window.ExtendedOutputImages = [
         ]
     }
 ];
+
+window.AllOutputImages = [];
+_.each(ExtendedOutputImages, function(imageClass) {
+    Array.prototype.push.apply(window.AllOutputImages, imageClass.groups);
+});

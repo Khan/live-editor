@@ -90,6 +90,11 @@ window.ExtendedOutputImages = [{
         images: "father-winston fireworks-2015 fireworks-in-sky fireworks-over-harbor fireworks-scattered gingerbread-family gingerbread-house gingerbread-houses gingerbread-man hannukah-dreidel hannukah-menorah hopper-elfer hopper-partying hopper-reindeer house-with-lights reindeer snow-crystal1 snow-crystal2 snow-crystal3 snownoes snowy-slope-with-trees stocking-empty xmas-cookies xmas-ornament-boat xmas-ornament-on-tree xmas-ornaments xmas-presents xmas-scene-holly-border xmas-tree-with-presents xmas-tree xmas-wreath".split(" ")
     }]
 }];
+
+window.AllOutputImages = [];
+_.each(ExtendedOutputImages, function (imageClass) {
+    Array.prototype.push.apply(window.AllOutputImages, imageClass.groups);
+});
 if (!i18n._) {
     i18n._ = function (msg) {
         return msg;
