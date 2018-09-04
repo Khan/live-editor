@@ -2465,12 +2465,12 @@ function PJSResourceCache(options) {
     // Insert the images into a hidden div to cause them to load
     // but not be visible to the user
     if (!this.imageHolder) {
-        this.imageHolder = $("<div>").css({
-            height: 0,
-            width: 0,
-            overflow: "hidden",
-            position: "absolute"
-        }).appendTo("body");
+        this.imageHolder = document.createElement("div");
+        this.imageHolder.style.height = 0;
+        this.imageHolder.style.width = 0;
+        this.imageHolder.style.overflow = "hidden";
+        this.imageHolder.style.position = "absolute";
+        document.body.appendChild(this.imageHolder);
     }
 }
 
@@ -2516,7 +2516,7 @@ PJSResourceCache.prototype.loadImage = function (filename) {
     }).bind(this);
 
     img.src = path;
-    this.imageHolder.append(img);
+    this.imageHolder.appendChild(img);
 
     return deferred;
 };
