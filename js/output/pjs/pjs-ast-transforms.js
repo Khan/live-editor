@@ -303,7 +303,7 @@ ASTTransforms.rewriteNewExpressions = function(envName) {
                         b.MemberExpression(
                             b.MemberExpression(
                                 b.Identifier(envName),
-                                b.Identifier("PJSOutput")
+                                b.Identifier("PJSCodeInjector")
                             ),
                             b.Identifier("applyInstance")
                         ),

@@ -27,16 +27,16 @@ window.LoopProtector = function(callback, timeouts, reportLocation) {
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
 
-    visibly.onVisible(function () {
-        this.visible = true;
-        this.branchStartTime = 0;
-    }.bind(this));
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            this.visible = true;
+            this.branchStartTime = 0;
+        } else {
+            this.visible = false;
+        }
+    });
 
-    visibly.onHidden(function () {
-        this.visible = false;
-    }.bind(this));
-
-    this.visible = !visibly.hidden();
+    this.visible = !document.hidden;
 };
 
 window.LoopProtector.prototype = {
@@ -62,7 +62,7 @@ window.LoopProtector.prototype = {
             }
             this.loopCounts[location] += 1;
         }
-        let now = new Date().getTime();
+        const now = new Date().getTime();
         if (!this.branchStartTime) {
             this.branchStartTime = now;
             setTimeout(function () {
@@ -71,7 +71,7 @@ window.LoopProtector.prototype = {
         } else if (now - this.branchStartTime > this.timeout) {
             if (this.visible) {
                 if (!this.reportLocation) {
-                    let error = new Error("KA_INFINITE_LOOP");
+                    const error = new Error("KA_INFINITE_LOOP");
                     this.callback(error);
                     throw error;
                 }
@@ -89,7 +89,7 @@ window.LoopProtector.prototype = {
 
                 hotLocation = JSON.parse(hotLocation);
 
-                let error = {
+                const error = {
                     infiniteLoopNodeType: hotLocation.type,
                     row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
                 };
@@ -117,11 +117,11 @@ window.LoopProtector.prototype = {
 
     // Called by walkAST whenever it leaves a node so AST mutations are okay
     leave(node) {
-        let b = window.ASTBuilder;
+        const b = window.ASTBuilder;
 
         if (this.riskyStatements.indexOf(node.type) !== -1) {
             if (this.reportLocation) {
-                let location = {
+                const location = {
                     type: node.type,
                     loc: node.loc
                 };
@@ -195,7 +195,7 @@ window.LoopProtector.prototype = {
 
     // Convenience method used by webpage-output.js
     protect: function (code) {
-        let ast = esprima.parse(code, { loc: true });
+        const ast = esprima.parse(code, { loc: true });
 
         walkAST(ast, null, [this]);
 
