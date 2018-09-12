@@ -87756,7 +87756,9 @@ ASTTransforms.rewriteContextVariables = function (envName, context) {
 
                             return {
                                 type: "SequenceExpression",
-                                expressions: node.declarations.map(function (decl) {
+                                expressions: node.declarations.filter(function (decl) {
+                                    return decl.init !== null;
+                                }).map(function (decl) {
                                     return b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init);
                                 })
                             };
