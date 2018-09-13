@@ -108,6 +108,32 @@ describe("Scratchpad Output - BabyHint checks", function() {
         babyhint: true,
         code: "rect(100, 200, 300);"
     });
+
+    assertTest({
+        title: "Too few arguments (proper comma detection)",
+        reason: "\"rect()\" takes 4, 5 or 8 parameters, not 2!",
+        babyhint: true,
+        code: "rect([0, 2, 3][0], 20);"
+    })
+
+    assertTest({
+        title: "println array argument (should pass)",
+        babyhint: true,
+        code: "println([3, 2, 1]);"
+    })
+
+    assertTest({
+        title: "text with a nested object/array argument (should pass)",
+        babyhint: true,
+        code: "text({ a: 10, b: [1, 2, 3], c: \")\" }, 10, 20);"
+    })
+
+    assertTest({
+        title: "ellipse with parenthesized expression arg",
+        reason: "\"ellipse()\" takes 4 parameters, not 3!",
+        babyhint: true,
+        code: "ellipse(100, 100, (10, 20));"
+    })
 });
 
 // Syntax errors - not controlled by JSHint options.
