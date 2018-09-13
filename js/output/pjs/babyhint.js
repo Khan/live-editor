@@ -559,16 +559,17 @@ var BabyHint = {
         };
 
         var stack = [];
+        var indexStack = [];
         var commaCount = 0;
-        var lastPushIndex = 0;
 
         for (var i = 0; i < str.length; i++) {
             if (pairs.hasOwnProperty(str[i])) {
                 stack.push(str[i]);
-                lastPushIndex = i;
+                indexStack.push(i);
             } else if (revPairs.hasOwnProperty(str[i])) {
                 if (revPairs[str[i]] === stack[stack.length - 1]) {
                     stack.pop();
+                    indexStack.pop();
                 } else {
                     return {
                         error: {
@@ -585,7 +586,7 @@ var BabyHint = {
         return stack.length > 0 ? {
             error: {
                 message: i18n._("Unmatched \"%(token)s\"", { token: stack.pop() }),
-                index: lastPushIndex
+                index: indexStack.pop()
             }
         } : {
             count: commaCount
