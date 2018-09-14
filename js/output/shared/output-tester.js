@@ -37,9 +37,7 @@ OutputTester.prototype = {
                 try {
                     tester.exec(validate);
                 } catch(e) {
-                    if (window.console) {
-                        console.warn(e.message);
-                    }
+                    console && console.warn(e.message);
                     return;
                 }
 
@@ -161,9 +159,7 @@ OutputTester.prototype = {
                     try {
                         return fn.apply(this, arguments);
                     } catch (e) {
-                        if (window.console) {
-                            console.warn(e);
-                        }
+                        console && console.warn(e);
                     }
                 }
             });

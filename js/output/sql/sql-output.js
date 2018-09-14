@@ -111,7 +111,7 @@ window.SQLOutput = Backbone.View.extend({
             errorMessage += ". " +
                 i18n._("Are you missing a parenthesis?");
         } else if (isSyntaxError &&
-                statement.indexOf("CREATE") !== -1 && 
+                statement.indexOf("CREATE") !== -1 &&
                 statement.indexOf("TABLE") === -1 && (
                     statement.indexOf("INDEX") === -1 ||
                     statement.indexOf("TRIGGER") === -1 ||
@@ -133,7 +133,7 @@ window.SQLOutput = Backbone.View.extend({
                 i18n._("Do you have a semi-colon after each statement?");
         } else if (isSyntaxError &&
             statement.indexOf("INSERT") !== -1 &&
-            statement.search(/[^INSERT],\d*\s*[a-zA-Z]+/) > -1 
+            statement.search(/[^INSERT],\d*\s*[a-zA-Z]+/) > -1
             ) {
             errorMessage += ". " +
                 i18n._("Are you missing quotes around text values?");
@@ -312,8 +312,7 @@ window.SQLOutput = Backbone.View.extend({
                     // figure out whether we hit this case.
                     var message = i18n._("Error: %(message)s",
                         {message: errors[errors.length - 1].message});
-                    // TODO(jeresig): Find a better way to show this
-                    this.output.$el.find(".test-errors").text(message).show();
+                    console && console.warn(message);
                     this.tester.testContext.assert(false, message,
                         i18n._("A critical problem occurred in your program " +
                             "making it unable to run."));

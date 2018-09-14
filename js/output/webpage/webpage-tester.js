@@ -123,7 +123,7 @@
 
                 for (var key in variables) {
                     if (variables[key][0] !== "$") {
-                        console.warn("Invalid variable in constraint (should begin with a '$'): ", variables[key]);
+                        console && console.warn("Invalid variable in constraint (should begin with a '$'): ", variables[key]);
                         return null;
                     }
                 }
@@ -549,9 +549,7 @@
                     message: callbacks && callbacks.failure
                 };
             } catch (e) {
-                if (window.console) {
-                    console.warn(e);
-                }
+                console && console.warn(e);
                 return {
                     success: true,
                     message: i18n._("Hm, we're having some trouble " +

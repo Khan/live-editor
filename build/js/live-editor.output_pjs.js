@@ -1719,9 +1719,7 @@ PJSTester.prototype.testMethods = {
                 message: callbacks && callbacks.failure
             };
         } catch (e) {
-            if (window.console) {
-                console.warn(e);
-            }
+            console && console.warn(e);
             return {
                 success: true,
                 message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
@@ -3020,8 +3018,7 @@ window.PJSOutput = Backbone.View.extend({
                 // translated text "A critical problem occurred..." to
                 // figure out whether we hit this case.
                 var message = i18n._("Error: %(message)s", { message: errors[errors.length - 1].message });
-                // TODO(jeresig): Find a better way to show this
-                this.output.$el.find(".test-errors").text(message).show();
+                console && console.warn(message);
                 this.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
             }
 
