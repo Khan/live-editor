@@ -182,21 +182,6 @@ window.LiveEditor = Backbone.View.extend({
             liveEditor: this
         });
 
-        // Set up the debugger;
-        if (options.useDebugger) {
-            this.debugger = new ScratchpadDebugger({
-                liveEditor: this,
-                editor: this.editor.editor
-            });
-            this.debugger.on("enabled", function (enabled) {
-                if (enabled) {
-                    this.$el.find(this.dom.RESTART_BUTTON).attr("disabled", "");
-                } else {
-                    this.$el.find(this.dom.RESTART_BUTTON).removeAttr("disabled");
-                }
-            }, this);
-        }
-
         var code = options.code;
 
         // Load the text into the editor
@@ -1052,11 +1037,6 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         if (typeof data !== "object") {
-            return;
-        }
-
-        if (data.type === "debugger") {
-            // these messages are handled by ui/debugger.js:listenMessages
             return;
         }
 

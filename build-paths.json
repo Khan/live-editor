@@ -60,11 +60,6 @@
             "build/tmpl/mediapicker-modal.js",
             "js/ui/structured-blocks-tooltips.js"
         ],
-        "debugger": [
-            "bower_components/iframe-overlay/dist/iframe-overlay.js",
-            "js/ui/debugger.js",
-            "build/tmpl/debugger.js"
-        ],
         "shared": [
             "js/shared/all-images.js",
             "js/shared/images.js",
@@ -82,12 +77,6 @@
             "js/output/shared/ast-walker.js",
             "js/output/shared/loop-protect.js",
             "js/output/pjs/pjs-ast-transforms.js"
-        ],
-        "output_debugger_deps": [
-            "bower_components/iframe-overlay/dist/iframe-overlay.js",
-            "external/debugger/build/debugger.js",
-            "external/debugger/build/processing-debugger.js",
-            "js/output/pjs/pjs-debugger.js"
         ],
         "output_pjs": [
             "js/output/pjs/pjs-utils.js",
@@ -184,9 +173,6 @@
         ],
         "output": [
             "css/output/style.css"
-        ],
-        "debugger": [
-            "css/ui/debugger.css"
         ]
     },
     "images": [

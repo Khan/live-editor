@@ -28,15 +28,6 @@ window.PJSOutput = Backbone.View.extend({
             options.enableLoopProtect,
             options.loopProtectTimeouts);
 
-        if (this.config.useDebugger && PJSDebugger) {
-            iframeOverlay.createRelay(this.$canvas[0]);
-
-            this.debugger = new PJSDebugger({
-                context: this.processing,
-                output: this
-            });
-        }
-
         this.config.on("versionSwitched", function(e, version) {
             this.config.runVersion(version, "processing", this.processing);
         }.bind(this));

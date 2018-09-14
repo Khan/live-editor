@@ -1180,16 +1180,12 @@ class PJSCodeInjector {
             JSON.stringify(badProgram) + " } } }";
 
         try {
-            if (this.debugger) {
-                this.debugger.exec(code);
-            } else {
-                let transformedCode =
-                    this.transformCode(code, context, mutatingCalls);
-                let funcBody = `var ${this.envName} = context;\n` +
-                    `(function(){\n${transformedCode}\n}).apply(${topLevelThis});`;
-                let func = new Function("context", funcBody);
-                func(context);
-            }
+            let transformedCode =
+                this.transformCode(code, context, mutatingCalls);
+            let funcBody = `var ${this.envName} = context;\n` +
+                `(function(){\n${transformedCode}\n}).apply(${topLevelThis});`;
+            let func = new Function("context", funcBody);
+            func(context);
         } catch (e) {
             return e;
         }
@@ -1286,7 +1282,7 @@ class PJSCodeInjector {
     // called whenever a user defined class is called to instantiate an object.
     // adds metadata to the class and the object to keep track of it and to
     // serialize it.
-    // Called in applyInstance and the Debugger's context.__instantiate__
+    // Called in applyInstance
     static newCallback(classFn, className, obj, args) {
         // Make sure a name is set for the class if one has not been
         // set already
