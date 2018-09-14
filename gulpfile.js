@@ -222,8 +222,6 @@ gulp.task("check_errors", [], function() {
     process.exit(failureCount);
 });
 
-// TODO(kevinb7): Add task for debugger tests once ES5 is supported
-
 // NOTE(jeresig): We don't bundle this data as it's kind of big. Better to
 // download it dynamically, when we need it.
 var recordDataURL = "https://s3.amazonaws.com/ka-cs-scratchpad-audio/" +

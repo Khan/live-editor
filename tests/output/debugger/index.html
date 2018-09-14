@@ -6,16 +6,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Mocha Test Runner</title>
         <link rel="stylesheet" href="../../../node_modules/mocha/mocha.css">
-        <script>
-            // run tests with debugger on
-            if (location.search.indexOf("debugger=true") === -1) {
-                if (location.search.indexOf("?") === -1) {
-                    location.search = "debugger=true";
-                } else {
-                    location.search += "&debugger=true";
-                }
-            }
-        </script>
     </head>
     <body>
         <div id="mocha"></div>
@@ -39,7 +29,6 @@
         <script src="../../../build/js/live-editor.output.js"></script>
         <script src="../../../build/js/live-editor.output_pjs_deps.js"></script>
         <script src="../../../build/js/live-editor.output_pjs.js"></script>
-        <script src="../../../build/js/live-editor.output_debugger_deps.js"></script>
         <script src="../../../node_modules/mocha/mocha.js"></script>
         <script src="../../../node_modules/expect.js/index.js"></script>
         <script src="../../../node_modules/sinon/pkg/sinon.js"></script>
