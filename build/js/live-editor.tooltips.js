@@ -2228,7 +2228,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
 
         render: function render() {
             var self = this;
-            this.$el = $(Handlebars.templates["mediapicker-preview"]({ isAudio: true })).appendTo("body").hide();
+            this.$el = $(Handlebars.templates["mediapicker-preview"]({ isAudio: true, pickMsg: i18n._("Pick file:") })).appendTo("body").hide();
 
             this.$("button").on("click", function () {
                 self.modal.show();

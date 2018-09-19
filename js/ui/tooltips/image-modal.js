@@ -348,7 +348,7 @@
         render: function() {
             var self = this;
             this.$el = $(Handlebars.templates["mediapicker-preview"](
-                            {isAudio: true}))
+                            {isAudio: true, pickMsg: i18n._("Pick file:")}))
                             .appendTo("body").hide();
 
             this.$("button").on("click", function() {
