@@ -1,7 +1,11 @@
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
 this["Handlebars"]["templates"]["sql-results"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
-    return "        <h1>Database Schema</h1>\n";
+    var helper;
+
+  return "        <h1>"
+    + container.escapeExpression(((helper = (helper = helpers.databaseMsg || (depth0 != null ? depth0.databaseMsg : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0 != null ? depth0 : (container.nullContext || {}),{"name":"databaseMsg","hash":{},"data":data}) : helper)))
+    + "</h1>\n";
 },"3":function(container,depth0,helpers,partials,data) {
     var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {});
 
@@ -41,7 +45,11 @@ this["Handlebars"]["templates"]["sql-results"] = Handlebars.template({"1":functi
 },"9":function(container,depth0,helpers,partials,data) {
     return "<span class=\"schema-pk\">(PK)</span>";
 },"11":function(container,depth0,helpers,partials,data) {
-    return "        <h1>Results</h1>\n";
+    var helper;
+
+  return "        <h1>"
+    + container.escapeExpression(((helper = (helper = helpers.resultsMsg || (depth0 != null ? depth0.resultsMsg : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0 != null ? depth0 : (container.nullContext || {}),{"name":"resultsMsg","hash":{},"data":data}) : helper)))
+    + "</h1>\n";
 },"13":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {});
 
@@ -802,48 +810,50 @@ window.SQLOutput = Backbone.View.extend({
         statement = statement || "";
         statement = statement.toUpperCase();
 
+        // Error messages take form: 'near \"%T\": syntax error'
         var isSyntaxError = errorMessage.indexOf(": syntax error") > -1;
         if (isSyntaxError) {
-            errorMessage = i18n._("There's a syntax error " + errorMessage.split(":")[0]);
+            var nearPhrase = errorMessage.split(":")[0];
+            errorMessage = i18n._("There's a syntax error near %(nearThing)s.", { nearThing: nearPhrase.substr(5) });
         }
 
         // Possible SELECT with missing FROM
         if (errorMessage.indexOf("no such column:") !== -1 && statement.indexOf("SELECT") !== -1 && statement.indexOf("FROM") === -1) {
-            errorMessage += ". " + i18n._("Are you missing a FROM clause?");
+            errorMessage += " " + i18n._("Are you missing a FROM clause?");
             // Possible INSERT with missing INTO
         } else if (isSyntaxError && statement.indexOf("INSERT") !== -1 && statement.indexOf("VALUES") !== -1 && statement.indexOf("INTO") === -1) {
-            errorMessage += ". " + i18n._("Are you missing the INTO keyword?");
+            errorMessage += " " + i18n._("Are you missing the INTO keyword?");
             // Possible INSERT INTO with missing VALUES
         } else if (isSyntaxError && statement.indexOf("INSERT") !== -1 && statement.indexOf("INTO") !== -1 && statement.indexOf("VALUES") === -1) {
-            errorMessage += ". " + i18n._("Are you missing the VALUES keyword?");
+            errorMessage += " " + i18n._("Are you missing the VALUES keyword?");
         } else if (statement.indexOf("INTERGER") !== -1) {
-            errorMessage += ". " + i18n._(" Is INTEGER spelled correctly?");
+            errorMessage += " " + i18n._("Is INTEGER spelled correctly?");
         } else if (isSyntaxError && statement.indexOf("CREATE") !== -1 && statement.search(/CREATE TABLE \w+\s\w+/) > -1) {
-            errorMessage += ". " + i18n._("You can't have a space in your table name.");
+            errorMessage += " " + i18n._("You can't have a space in your table name.");
         } else if (isSyntaxError && statement.indexOf("CREATE TABLE (") > -1) {
-            errorMessage += ". " + i18n._("Are you missing the table name?");
+            errorMessage += " " + i18n._("Are you missing the table name?");
         } else if (isSyntaxError && statement.indexOf("PRIMARY KEY INTEGER") !== -1) {
-            errorMessage += ". " + i18n._("Did you mean to put PRIMARY KEY after INTEGER?");
+            errorMessage += " " + i18n._("Did you mean to put PRIMARY KEY after INTEGER?");
         } else if (isSyntaxError && statement.indexOf("(") !== -1 && statement.indexOf(")") === -1) {
-            errorMessage += ". " + i18n._("Are you missing a parenthesis?");
+            errorMessage += " " + i18n._("Are you missing a parenthesis?");
         } else if (isSyntaxError && statement.indexOf("CREATE") !== -1 && statement.indexOf("TABLE") === -1 && (statement.indexOf("INDEX") === -1 || statement.indexOf("TRIGGER") === -1 || statement.indexOf("VIEW") === -1)) {
-            errorMessage += ". " + i18n._("You may be missing what to create. For " + "example, CREATE TABLE...");
+            errorMessage += " " + i18n._("You may be missing what to create. For " + "example, CREATE TABLE...");
         } else if (isSyntaxError && statement.indexOf("UPDATE") !== -1 && statement.indexOf("SET") === -1) {
-            errorMessage += ". " + i18n._("Are you missing the SET keyword?");
+            errorMessage += " " + i18n._("Are you missing the SET keyword?");
         } else if (isSyntaxError && statement.search(/[^SUM]\s*\(.*\)\n*\s*\w+/) > -1 || statement.search(/\n+\s*SELECT/) > -1 || statement.search(/\)\n+\s*INSERT/) > -1) {
-            errorMessage += ". " + i18n._("Do you have a semi-colon after each statement?");
+            errorMessage += " " + i18n._("Do you have a semi-colon after each statement?");
         } else if (isSyntaxError && statement.indexOf("INSERT") !== -1 && statement.search(/[^INSERT],\d*\s*[a-zA-Z]+/) > -1) {
-            errorMessage += ". " + i18n._("Are you missing quotes around text values?");
+            errorMessage += " " + i18n._("Are you missing quotes around text values?");
         } else if (isSyntaxError && statement.search(/,\s*\)/) > -1) {
-            errorMessage += ". " + i18n._("Do you have an extra comma?");
+            errorMessage += " " + i18n._("Do you have an extra comma?");
         } else if (isSyntaxError && statement.indexOf("INSERT,") > -1) {
-            errorMessage += ". " + i18n._("There shouldn't be a comma after INSERT.");
+            errorMessage += " " + i18n._("There shouldn't be a comma after INSERT.");
         } else if (errorMessage.indexOf("column types") > -1 && statement.search(/(\w+\s*,\s*((TEXT)|(INTEGER))+)/) > -1) {
-            errorMessage += ". " + i18n._("Do you have an extra comma between the name and type?");
+            errorMessage += " " + i18n._("Do you have an extra comma between the name and type?");
         } else if (errorMessage.indexOf("column types") > -1 && statement.search(/(\w+\s+\w+\s*((TEXT)|(INTEGER)|(REAL))+)/) > -1) {
             errorMessage = i18n._("You can't have a space in your column name.");
         } else if (errorMessage.indexOf("UNIQUE constraint failed") !== -1) {
-            errorMessage += ". " + i18n._("Are you specifying a different value for each row?");
+            errorMessage += " " + i18n._("Are you specifying a different value for each row?");
         } else if (errorMessage.indexOf("duplicate column name:") !== -1) {
             errorMessage = i18n._("You have multiple columns named `%(name)s` - " + "column names must be unique.", { name: errorMessage.split(":")[1].trim() });
         }
@@ -1022,7 +1032,9 @@ window.SQLOutput = Backbone.View.extend({
 
         var output = Handlebars.templates["sql-results"]({
             tables: tables,
-            results: results
+            results: results,
+            databaseMsg: i18n._("Database Schema"),
+            resultsMsg: i18n._("Query results")
         });
 
         var doc = this.getDocument();

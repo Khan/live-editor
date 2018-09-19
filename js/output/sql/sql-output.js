@@ -65,95 +65,97 @@ window.SQLOutput = Backbone.View.extend({
         statement = statement || "";
         statement = statement.toUpperCase();
 
+        // Error messages take form: 'near \"%T\": syntax error'
         var isSyntaxError = errorMessage.indexOf(": syntax error") > -1;
         if (isSyntaxError) {
-            errorMessage = i18n._("There's a syntax error " +
-                errorMessage.split(":")[0]);
+            const nearPhrase = errorMessage.split(":")[0];
+            errorMessage = i18n._("There's a syntax error near %(nearThing)s.",
+                {nearThing: nearPhrase.substr(5)});
         }
 
         // Possible SELECT with missing FROM
         if (errorMessage.indexOf("no such column:") !== -1 &&
                 statement.indexOf("SELECT") !== -1 &&
                 statement.indexOf("FROM") === -1) {
-            errorMessage += ". " + i18n._("Are you missing a FROM clause?");
+            errorMessage += " " + i18n._("Are you missing a FROM clause?");
         // Possible INSERT with missing INTO
         } else if (isSyntaxError &&
                 statement.indexOf("INSERT") !== -1 &&
                 statement.indexOf("VALUES") !== -1 &&
                 statement.indexOf("INTO") === -1) {
-            errorMessage += ". " + i18n._("Are you missing the INTO keyword?");
+            errorMessage += " " + i18n._("Are you missing the INTO keyword?");
         // Possible INSERT INTO with missing VALUES
         } else if (isSyntaxError &&
                 statement.indexOf("INSERT") !== -1 &&
                 statement.indexOf("INTO") !== -1 &&
                 statement.indexOf("VALUES") === -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Are you missing the VALUES keyword?");
         } else if (statement.indexOf("INTERGER") !== -1) {
-            errorMessage += ". " +
-                i18n._(" Is INTEGER spelled correctly?");
+            errorMessage += " " +
+                i18n._("Is INTEGER spelled correctly?");
         } else if (isSyntaxError &&
                 statement.indexOf("CREATE") !== -1 &&
                 statement.search(/CREATE TABLE \w+\s\w+/) > -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("You can't have a space in your table name.");
         } else if (isSyntaxError &&
                 statement.indexOf("CREATE TABLE (") > -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Are you missing the table name?");
         } else if (isSyntaxError &&
                 statement.indexOf("PRIMARY KEY INTEGER") !== -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Did you mean to put PRIMARY KEY after INTEGER?");
         } else if (isSyntaxError &&
                 statement.indexOf("(") !== -1 &&
                 statement.indexOf(")") === -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Are you missing a parenthesis?");
         } else if (isSyntaxError &&
-                statement.indexOf("CREATE") !== -1 && 
+                statement.indexOf("CREATE") !== -1 &&
                 statement.indexOf("TABLE") === -1 && (
                     statement.indexOf("INDEX") === -1 ||
                     statement.indexOf("TRIGGER") === -1 ||
                     statement.indexOf("VIEW") === -1)) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("You may be missing what to create. For " +
                     "example, CREATE TABLE...");
         } else if (isSyntaxError &&
                 statement.indexOf("UPDATE") !== -1 &&
                 statement.indexOf("SET") === -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Are you missing the SET keyword?");
         } else if (isSyntaxError &&
                 statement.search(/[^SUM]\s*\(.*\)\n*\s*\w+/) > -1 ||
                 statement.search(/\n+\s*SELECT/) > -1 ||
                 statement.search(/\)\n+\s*INSERT/) > -1
                 ) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Do you have a semi-colon after each statement?");
         } else if (isSyntaxError &&
             statement.indexOf("INSERT") !== -1 &&
-            statement.search(/[^INSERT],\d*\s*[a-zA-Z]+/) > -1 
+            statement.search(/[^INSERT],\d*\s*[a-zA-Z]+/) > -1
             ) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Are you missing quotes around text values?");
         } else if (isSyntaxError &&
             statement.search(/,\s*\)/) > -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Do you have an extra comma?");
         } else if (isSyntaxError &&
             statement.indexOf("INSERT,") > -1 ) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("There shouldn't be a comma after INSERT.");
         } else if (errorMessage.indexOf("column types") > -1 &&
             statement.search(/(\w+\s*,\s*((TEXT)|(INTEGER))+)/) > -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Do you have an extra comma between the name and type?");
         } else if (errorMessage.indexOf("column types") > -1 &&
             statement.search(/(\w+\s+\w+\s*((TEXT)|(INTEGER)|(REAL))+)/) > -1) {
             errorMessage = i18n._("You can't have a space in your column name.");
         } else if (errorMessage.indexOf("UNIQUE constraint failed") !== -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Are you specifying a different value for each row?");
         } else if (errorMessage.indexOf("duplicate column name:") !== -1) {
             errorMessage = i18n._("You have multiple columns named `%(name)s` - " +
@@ -350,7 +352,9 @@ window.SQLOutput = Backbone.View.extend({
 
         var output = Handlebars.templates["sql-results"]({
             tables: tables,
-            results: results
+            results: results,
+            databaseMsg: i18n._("Database Schema"),
+            resultsMsg: i18n._("Query results"),
         });
 
         var doc = this.getDocument();
