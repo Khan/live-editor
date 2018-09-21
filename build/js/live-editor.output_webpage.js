@@ -123,7 +123,7 @@
 
                 for (var key in variables) {
                     if (variables[key][0] !== "$") {
-                        console && console.warn("Invalid variable in constraint (should begin with a '$'): ", variables[key]);
+                        console.warn("Invalid variable in constraint (should begin with a '$'): ", variables[key]);
                         return null;
                     }
                 }
@@ -542,7 +542,7 @@
                     message: callbacks && callbacks.failure
                 };
             } catch (e) {
-                console && console.warn(e);
+                console.warn(e);
                 return {
                     success: true,
                     message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
@@ -664,7 +664,7 @@ window.WebpageOutput = Backbone.View.extend({
                 disableTags: ["iframe", "embed", "object", "frameset", "frame"]
             });
         } catch (e) {
-            console && console.warn(e);
+            console.warn(e);
             results.error = {
                 type: "UNKNOWN_SLOWPARSE_ERROR"
             };
@@ -811,7 +811,7 @@ window.WebpageOutput = Backbone.View.extend({
                 // translated text "A critical problem occurred..." to
                 // figure out whether we hit this case.
                 var message = i18n._("Error: %(message)s", { message: errors[errors.length - 1].message });
-                console && console.warn(message);
+                console.warn(message);
                 this.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
             }
 

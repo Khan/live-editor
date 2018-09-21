@@ -437,7 +437,7 @@ window.PJSOutput = Backbone.View.extend({
                     // figure out whether we hit this case.
                     var message = i18n._("Error: %(message)s",
                         {message: errors[errors.length - 1].message});
-                    console && console.warn(message);
+                    console.warn(message);
                     this.tester.testContext.assert(false, message,
                         i18n._("A critical problem occurred in your program " +
                             "making it unable to run."));

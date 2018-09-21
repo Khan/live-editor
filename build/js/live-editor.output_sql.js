@@ -325,7 +325,7 @@ SQLTester.prototype.testMethods = {
 
         for (var key in params) {
             if (params[key][0] !== "$") {
-                console && console.warn("Invalid parameter in constraint " + "(should begin with a '$'): ", params[key]);
+                console.warn("Invalid parameter in constraint " + "(should begin with a '$'): ", params[key]);
                 return null;
             }
         }
@@ -984,7 +984,7 @@ window.SQLOutput = Backbone.View.extend({
                 // translated text "A critical problem occurred..." to
                 // figure out whether we hit this case.
                 var message = i18n._("Error: %(message)s", { message: errors[errors.length - 1].message });
-                console && console.warn(message);
+                console.warn(message);
                 this.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
             }
 

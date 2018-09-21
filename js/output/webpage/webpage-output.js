@@ -114,7 +114,7 @@ window.WebpageOutput = Backbone.View.extend({
                 disableTags: ["iframe", "embed", "object", "frameset", "frame"]
             });
         } catch (e) {
-            console && console.warn(e);
+            console.warn(e);
             results.error = {
                 type: "UNKNOWN_SLOWPARSE_ERROR"
             };
@@ -263,7 +263,7 @@ window.WebpageOutput = Backbone.View.extend({
                     // figure out whether we hit this case.
                     var message = i18n._("Error: %(message)s",
                         {message: errors[errors.length - 1].message});
-                    console && console.warn(message);
+                    console.warn(message);
                     this.tester.testContext.assert(false, message,
                         i18n._("A critical problem occurred in your program " +
                             "making it unable to run."));
