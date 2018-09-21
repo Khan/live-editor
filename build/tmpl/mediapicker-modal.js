@@ -119,23 +119,16 @@ this["Handlebars"]["templates"]["mediapicker-modal"] = Handlebars.template({"1":
     + "\">"
     + alias3(((helper = (helper = helpers.groupName || (depth0 != null ? depth0.groupName : depth0)) != null ? helper : alias2),(typeof helper === "function" ? helper.call(alias1,{"name":"groupName","hash":{},"data":data}) : helper)))
     + "</a></li>\n";
-},"19":function(container,depth0,helpers,partials,data) {
-    return "Close";
-},"21":function(container,depth0,helpers,partials,data) {
-    return "Ok";
 },"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data,blockParams,depths) {
-    var stack1, helper, options, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=helpers.blockHelperMissing, buffer = 
-  "<div class=\"modal mediapicker-modal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n"
+    var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=container.escapeExpression;
+
+  return "<div class=\"modal mediapicker-modal\">\n    <ul class=\"nav nav-tabs\" role=\"tablist\">\n"
     + ((stack1 = (helpers.patchedEach || (depth0 && depth0.patchedEach) || alias2).call(alias1,(depth0 != null ? depth0.classes : depth0),{"name":"patchedEach","hash":{},"fn":container.program(1, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
     + "    </ul>\n\n    <div class=\"tab-content\">\n"
     + ((stack1 = (helpers.patchedEach || (depth0 && depth0.patchedEach) || alias2).call(alias1,(depth0 != null ? depth0.classes : depth0),{"name":"patchedEach","hash":{},"fn":container.program(4, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
-    + "    </div>\n\n    <div class=\"mediapicker-modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(19, data, 0, blockParams, depths),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  buffer += "</button>\n      <button type=\"button\" class=\"simple-button green mediapicker-modal-submit\" data-dismiss=\"modal\">";
-  stack1 = ((helper = (helper = helpers._ || (depth0 != null ? depth0._ : depth0)) != null ? helper : alias2),(options={"name":"_","hash":{},"fn":container.program(21, data, 0, blockParams, depths),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
-  if (!helpers._) { stack1 = alias4.call(depth0,stack1,options)}
-  if (stack1 != null) { buffer += stack1; }
-  return buffer + "</button>\n    </div>\n</div>";
+    + "    </div>\n\n    <div class=\"mediapicker-modal-footer\">\n      <button type=\"button\" class=\"simple-button\" data-dismiss=\"modal\">"
+    + alias4(((helper = (helper = helpers.closeMsg || (depth0 != null ? depth0.closeMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"closeMsg","hash":{},"data":data}) : helper)))
+    + "</button>\n      <button type=\"button\" class=\"simple-button green mediapicker-modal-submit\" data-dismiss=\"modal\">"
+    + alias4(((helper = (helper = helpers.okMsg || (depth0 != null ? depth0.okMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"okMsg","hash":{},"data":data}) : helper)))
+    + "</button>\n    </div>\n</div>";
 },"useData":true,"useDepths":true});;

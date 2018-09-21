@@ -60,55 +60,99 @@ window.SQLOutput = Backbone.View.extend({
      * error message.  SQLlite error messages aren't always very descriptive,
      * this should make common syntax errors easier to understand.
      */
-    getErrorMessage: function(errorMessage, statement) {
-        errorMessage = errorMessage || "";
+    getErrorMessage: function(sqliteError, statement) {
+        sqliteError = sqliteError || "";
         statement = statement || "";
         statement = statement.toUpperCase();
 
-        var isSyntaxError = errorMessage.indexOf(": syntax error") > -1;
+        let errorMessage = sqliteError;
+
+        // First, we translate SQLite errors into friendly i18n-able messages
+
+        const colTypesError = sqliteError.indexOf("valid column types") > -1;
+        if (colTypesError) {
+            errorMessage = i18n._("Please use one of the valid column types " +
+                "when creating a table: ")
+                + "\"TEXT\", \"NUMERIC\", \"INTEGER\", \"REAL\", \"NONE\".";
+        }
+        const uniqStr = "UNIQUE constraint failed:";
+        const uniqError = sqliteError.indexOf(uniqStr) > -1;
+        if (uniqError) {
+            const colName = sqliteError.split(uniqStr)[1].trim();
+            errorMessage = i18n._("\"UNIQUE\" constraint failed on column \"%(colName)s\".",
+                {colName});
+        }
+        const notNullStr = "NOT NULL constraint failed:"
+        const notNullError = sqliteError.indexOf(notNullStr) > -1;
+        if (notNullError) {
+            const colName = sqliteError.split(notNullStr)[1].trim();
+            errorMessage = i18n._("\"NOT NULL\" constraint failed on column \"%(colName)s\".",
+                {colName});
+        }
+        const dupColStr = "duplicate column name:";
+        const dupColError = sqliteError.indexOf(dupColStr) > -1;
+        if (dupColError) {
+            const colName = errorMessage.split(dupColStr)[1].trim();
+            errorMessage = i18n._("You have multiple columns named \"%(colName)s\" - " +
+                "column names must be unique.", {colName});
+        }
+        const unknownColStr = "no such column:";
+        const unknownColError = sqliteError.indexOf(unknownColStr) > -1;
+        if (unknownColError) {
+            const colName = sqliteError.split(unknownColStr)[1].trim();
+            errorMessage = i18n._("We can't find the column named \"%(colName)s\".",
+                {colName});
+        }
+        const noTablesError = sqliteError.indexOf("no tables specified") > -1;
+        if (noTablesError) {
+            errorMessage = i18n._("You didn't specify any tables for your \"SELECT\".");
+        }
+        // Generic syntax error messages take form: 'near \"%T\": syntax error'
+        const syntaxErrStr = ": syntax error";
+        const isSyntaxError = sqliteError.indexOf(syntaxErrStr) > -1;
         if (isSyntaxError) {
-            errorMessage = i18n._("There's a syntax error " +
-                errorMessage.split(":")[0]);
+            const nearPhrase = errorMessage.split(syntaxErrStr)[0];
+            errorMessage = i18n._("There's a syntax error near %(nearThing)s.",
+                {nearThing: nearPhrase.substr(5)});
         }
 
-        // Possible SELECT with missing FROM
-        if (errorMessage.indexOf("no such column:") !== -1 &&
+        // Now that we've translated the base error messages,
+        // we add on additional helper messages for common mistakes
+        if (unknownColError &&
                 statement.indexOf("SELECT") !== -1 &&
                 statement.indexOf("FROM") === -1) {
-            errorMessage += ". " + i18n._("Are you missing a FROM clause?");
-        // Possible INSERT with missing INTO
+            errorMessage += " " + i18n._("Are you perhaps missing a \"FROM\" clause?");
         } else if (isSyntaxError &&
                 statement.indexOf("INSERT") !== -1 &&
                 statement.indexOf("VALUES") !== -1 &&
                 statement.indexOf("INTO") === -1) {
-            errorMessage += ". " + i18n._("Are you missing the INTO keyword?");
-        // Possible INSERT INTO with missing VALUES
+            errorMessage += " " + i18n._("Are you missing the \"INTO\" keyword?");
         } else if (isSyntaxError &&
                 statement.indexOf("INSERT") !== -1 &&
                 statement.indexOf("INTO") !== -1 &&
                 statement.indexOf("VALUES") === -1) {
-            errorMessage += ". " +
-                i18n._("Are you missing the VALUES keyword?");
+            errorMessage += " " +
+                i18n._("Are you missing the \"VALUES\" keyword?");
         } else if (statement.indexOf("INTERGER") !== -1) {
-            errorMessage += ". " +
-                i18n._(" Is INTEGER spelled correctly?");
+            errorMessage += " " +
+                i18n._("Is \"INTEGER\" spelled correctly?");
         } else if (isSyntaxError &&
                 statement.indexOf("CREATE") !== -1 &&
                 statement.search(/CREATE TABLE \w+\s\w+/) > -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("You can't have a space in your table name.");
         } else if (isSyntaxError &&
                 statement.indexOf("CREATE TABLE (") > -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Are you missing the table name?");
         } else if (isSyntaxError &&
                 statement.indexOf("PRIMARY KEY INTEGER") !== -1) {
-            errorMessage += ". " +
-                i18n._("Did you mean to put PRIMARY KEY after INTEGER?");
+            errorMessage += " " +
+                i18n._("Perhaps you meant to put \"PRIMARY KEY\" after \"INTEGER\"?");
         } else if (isSyntaxError &&
                 statement.indexOf("(") !== -1 &&
                 statement.indexOf(")") === -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Are you missing a parenthesis?");
         } else if (isSyntaxError &&
                 statement.indexOf("CREATE") !== -1 &&
@@ -116,49 +160,45 @@ window.SQLOutput = Backbone.View.extend({
                     statement.indexOf("INDEX") === -1 ||
                     statement.indexOf("TRIGGER") === -1 ||
                     statement.indexOf("VIEW") === -1)) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("You may be missing what to create. For " +
-                    "example, CREATE TABLE...");
+                    "example, \"CREATE TABLE...\"");
         } else if (isSyntaxError &&
                 statement.indexOf("UPDATE") !== -1 &&
                 statement.indexOf("SET") === -1) {
-            errorMessage += ". " +
-                i18n._("Are you missing the SET keyword?");
+            errorMessage += " " +
+                i18n._("Are you missing the \"SET\" keyword?");
         } else if (isSyntaxError &&
                 statement.search(/[^SUM]\s*\(.*\)\n*\s*\w+/) > -1 ||
                 statement.search(/\n+\s*SELECT/) > -1 ||
                 statement.search(/\)\n+\s*INSERT/) > -1
                 ) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Do you have a semi-colon after each statement?");
         } else if (isSyntaxError &&
             statement.indexOf("INSERT") !== -1 &&
             statement.search(/[^INSERT],\d*\s*[a-zA-Z]+/) > -1
             ) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Are you missing quotes around text values?");
         } else if (isSyntaxError &&
             statement.search(/,\s*\)/) > -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Do you have an extra comma?");
         } else if (isSyntaxError &&
             statement.indexOf("INSERT,") > -1 ) {
-            errorMessage += ". " +
-                i18n._("There shouldn't be a comma after INSERT.");
-        } else if (errorMessage.indexOf("column types") > -1 &&
+            errorMessage += " " +
+                i18n._("There shouldn't be a comma after \"INSERT\".");
+        } else if (colTypesError &&
             statement.search(/(\w+\s*,\s*((TEXT)|(INTEGER))+)/) > -1) {
-            errorMessage += ". " +
+            errorMessage += " " +
                 i18n._("Do you have an extra comma between the name and type?");
-        } else if (errorMessage.indexOf("column types") > -1 &&
+        } else if (colTypesError &&
             statement.search(/(\w+\s+\w+\s*((TEXT)|(INTEGER)|(REAL))+)/) > -1) {
             errorMessage = i18n._("You can't have a space in your column name.");
-        } else if (errorMessage.indexOf("UNIQUE constraint failed") !== -1) {
-            errorMessage += ". " +
+        } else if (uniqError) {
+            errorMessage += " " +
                 i18n._("Are you specifying a different value for each row?");
-        } else if (errorMessage.indexOf("duplicate column name:") !== -1) {
-            errorMessage = i18n._("You have multiple columns named `%(name)s` - " +
-                "column names must be unique.",
-                {name: errorMessage.split(":")[1].trim()});
         }
         return errorMessage;
     },
@@ -349,7 +389,9 @@ window.SQLOutput = Backbone.View.extend({
 
         var output = Handlebars.templates["sql-results"]({
             tables: tables,
-            results: results
+            results: results,
+            databaseMsg: i18n._("Database Schema"),
+            resultsMsg: i18n._("Query results"),
         });
 
         var doc = this.getDocument();
