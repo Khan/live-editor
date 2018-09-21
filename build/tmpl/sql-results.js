@@ -1,7 +1,11 @@
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
 this["Handlebars"]["templates"]["sql-results"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
-    return "        <h1>Database Schema</h1>\n";
+    var helper;
+
+  return "        <h1>"
+    + container.escapeExpression(((helper = (helper = helpers.databaseMsg || (depth0 != null ? depth0.databaseMsg : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0 != null ? depth0 : (container.nullContext || {}),{"name":"databaseMsg","hash":{},"data":data}) : helper)))
+    + "</h1>\n";
 },"3":function(container,depth0,helpers,partials,data) {
     var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {});
 
@@ -41,7 +45,11 @@ this["Handlebars"]["templates"]["sql-results"] = Handlebars.template({"1":functi
 },"9":function(container,depth0,helpers,partials,data) {
     return "<span class=\"schema-pk\">(PK)</span>";
 },"11":function(container,depth0,helpers,partials,data) {
-    return "        <h1>Results</h1>\n";
+    var helper;
+
+  return "        <h1>"
+    + container.escapeExpression(((helper = (helper = helpers.resultsMsg || (depth0 != null ? depth0.resultsMsg : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(depth0 != null ? depth0 : (container.nullContext || {}),{"name":"resultsMsg","hash":{},"data":data}) : helper)))
+    + "</h1>\n";
 },"13":function(container,depth0,helpers,partials,data) {
     var stack1, alias1=depth0 != null ? depth0 : (container.nullContext || {});
 

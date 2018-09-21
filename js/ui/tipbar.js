@@ -16,7 +16,12 @@ window.TipBar = Backbone.View.extend({
 
     render: function() {
         this.$overlay = $("<div class=\"overlay error-overlay\" style=\"display: none\"></div>").appendTo(this.$el);
-        this.$el.append(Handlebars.templates["tipbar"]());
+        this.$el.append(Handlebars.templates["tipbar"]({
+            ohNoesMsg: i18n._("Oh noes!"),
+            showMeMsg: i18n._("Show me where"),
+            prevMsg: i18n._("Previous error"),
+            nextMsg: i18n._("Next error"),
+        }));
         this.$bar = this.$el.find(".tipbar");
     },
 

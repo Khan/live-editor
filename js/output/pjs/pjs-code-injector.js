@@ -334,36 +334,35 @@ class PJSCodeInjector {
      *
      * @param {string} userCode: code to lint
      * @param {boolean} skip: skips linting if true and resolves Deferred immediately
-     * @returns {$.Deferred} resolves an array of lint errors
+     * @returns {Promise} resolves an array of lint errors
      */
     lint(userCode, skip) {
-        var deferred = $.Deferred();
-        if (skip || !userCode) {
-            deferred.resolve([]);
-            return deferred;
-        }
+        return new Promise((resolve) => {
+            if (skip || !userCode) {
+                resolve([]);
+                return;
+            }
 
-        // Build a string of options to feed into JSHint
-        // All properties are defined in the config
-        var hintCode = `/*jshint ${this.propListString(this.JSHint)} */` +
+            // Build a string of options to feed into JSHint
+            // All properties are defined in the config
+            var hintCode = `/*jshint ${this.propListString(this.JSHint)} */` +
 
-            // Build a string of variables names to feed into JSHint
-            // This lets JSHint know which variables are globally exposed
-            // and which can be overridden, more details:
-            // http://www.jshint.com/about/
-            // propName: true (is a global property, but can be overridden)
-            // propName: false (is a global property, cannot be overridden)
-            `/*global ${this.propListString(this.props)} */\n` +
+                // Build a string of variables names to feed into JSHint
+                // This lets JSHint know which variables are globally exposed
+                // and which can be overridden, more details:
+                // http://www.jshint.com/about/
+                // propName: true (is a global property, but can be overridden)
+                // propName: false (is a global property, cannot be overridden)
+                `/*global ${this.propListString(this.props)} */\n` +
 
-            // The user's code to execute
-            userCode;
+                // The user's code to execute
+                userCode;
 
-        this.hintWorker.exec(hintCode, (hintData, hintErrors) => {
-            this.globals = this.extractGlobals(hintData);
-            deferred.resolve(hintErrors);
+            this.hintWorker.exec(hintCode, (hintData, hintErrors) => {
+                this.globals = this.extractGlobals(hintData);
+                resolve(hintErrors);
+            });
         });
-
-        return deferred;
     }
 
     /**
@@ -407,9 +406,9 @@ class PJSCodeInjector {
         // Make sure the object actually exists before we try
         // to inject stuff into it
         if (!this.processing[name]) {
-            if ($.isArray(obj)) {
+            if (Array.isArray(obj)) {
                 this.processing[name] = [];
-            } else if ($.isFunction(obj)) {
+            } else if (typeof obj === "function") {
                 this.processing[name] = function() {};
             } else {
                 this.processing[name] = {};
@@ -1062,46 +1061,44 @@ class PJSCodeInjector {
                 document.body.appendChild(imageHolder);
 
                 var loadImage = function(filename) {
-                    var deferred = $.Deferred();
-                    var img = document.createElement("img");
-                    img.onload = function() {
+                    return new Promise((resolve) => {
+                        var img = document.createElement("img");
+                        img.onload = function() {
+                            resourceCache[filename] = img;
+                            resolve();
+                        };
+                        img.onerror = function() {
+                            resolve(); // always resolve
+                        };
+
+                        img.src = imageDir + filename;
+                        imageHolder.appendChild(img);
                         resourceCache[filename] = img;
-                        deferred.resolve();
-                    }.bind(this);
-                    img.onerror = function() {
-                        deferred.resolve(); // always resolve
-                    }.bind(this);
-
-                    img.src = imageDir + filename;
-                    imageHolder.appendChild(img);
-                    resourceCache[filename] = img;
-
-                    return deferred.promise();
+                    });
                 };
 
                 var loadSound = function(filename) {
-                    var deferred = $.Deferred();
-                    var audio = document.createElement("audio");
-                    var parts = filename.split("/");
+                    return new Promise((resolve) => {
+                        var audio = document.createElement("audio");
+                        var parts = filename.split("/");
 
-                    var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
-                    if (!group || group.sounds.indexOf(parts[1].replace(".mp3", "")) === -1) {
-                        deferred.resolve();
-                        return deferred;
-                    }
+                        var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
+                        if (!group || group.sounds.indexOf(parts[1].replace(".mp3", "")) === -1) {
+                            resolve();
+                            return;
+                        }
 
-                    audio.preload = "auto";
-                    audio.oncanplaythrough = function() {
-                        resourceCache[filename] = audio;
-                        deferred.resolve();
-                    }.bind(this);
-                    audio.onerror = function() {
-                        deferred.resolve();
-                    }.bind(this);
+                        audio.preload = "auto";
+                        audio.oncanplaythrough = function() {
+                            resourceCache[filename] = audio;
+                            resolve();
+                        };
+                        audio.onerror = function() {
+                            resolve();
+                        };
 
-                    audio.src = soundDir + filename;
-
-                    return deferred;
+                        audio.src = soundDir + filename;
+                    });
                 };
 
                 var promises = Object.keys(resources).map(function(filename) {
@@ -1112,7 +1109,7 @@ class PJSCodeInjector {
                     }
                 });
 
-                $.when.apply($, promises).then(function() {
+                Promise.all(promises).then(function() {
                     var canvas = document.createElement('canvas');
                     canvas.width = 400;
                     canvas.height = 400;
