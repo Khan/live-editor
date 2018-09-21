@@ -132,7 +132,9 @@
             this.$el = $(Handlebars.templates["mediapicker-modal"]({
                 imagesDir: this.options.imagesDir,
                 soundsDir: this.options.soundsDir,
-                classes: this.options.files
+                classes: this.options.files,
+                closeMsg: i18n._("Close"),
+                okMsg: i18n._("Ok"),
             }));
             this.$el.appendTo("body").hide();
         },
@@ -233,7 +235,7 @@
         render: function() {
             var self = this;
             this.$el = $(Handlebars.templates["mediapicker-preview"](
-                            {isAudio: false}))
+                            {isAudio: false, pickMsg: i18n._("Pick file:")}))
                             .appendTo("body").hide();
 
             this.$(".thumb")
@@ -346,7 +348,7 @@
         render: function() {
             var self = this;
             this.$el = $(Handlebars.templates["mediapicker-preview"](
-                            {isAudio: true}))
+                            {isAudio: true, pickMsg: i18n._("Pick file:")}))
                             .appendTo("body").hide();
 
             this.$("button").on("click", function() {
