@@ -75,27 +75,31 @@ window.SQLOutput = Backbone.View.extend({
                 "when creating a table: ")
                 + "\"TEXT\", \"NUMERIC\", \"INTEGER\", \"REAL\", \"NONE\".";
         }
-        const uniqError = sqliteError.indexOf("UNIQUE constraint failed:") > -1;
+        const uniqStr = "UNIQUE constraint failed:";
+        const uniqError = sqliteError.indexOf(uniqStr) > -1;
         if (uniqError) {
-            const colName = sqliteError.split(":")[1].trim();
+            const colName = sqliteError.split(uniqStr)[1].trim();
             errorMessage = i18n._("\"UNIQUE\" constraint failed on column \"%(colName)s\".",
                 {colName});
         }
-        const notNullError = sqliteError.indexOf("NOT NULL constraint") > -1;
+        const notNullStr = "NOT NULL constraint failed:"
+        const notNullError = sqliteError.indexOf(notNullStr) > -1;
         if (notNullError) {
-            const colName = sqliteError.split(":")[1].trim();
+            const colName = sqliteError.split(notNullStr)[1].trim();
             errorMessage = i18n._("\"NOT NULL\" constraint failed on column \"%(colName)s\".",
                 {colName});
         }
-        const dupColError = sqliteError.indexOf("duplicate column name:") > -1;
+        const dupColStr = "duplicate column name:";
+        const dupColError = sqliteError.indexOf(dupColStr) > -1;
         if (dupColError) {
-            const colName = errorMessage.split(":")[1].trim();
+            const colName = errorMessage.split(dupColStr)[1].trim();
             errorMessage = i18n._("You have multiple columns named \"%(colName)s\" - " +
                 "column names must be unique.", {colName});
         }
-        const unknownColError = sqliteError.indexOf("no such column:") > -1;
+        const unknownColStr = "no such column:";
+        const unknownColError = sqliteError.indexOf(unknownColStr) > -1;
         if (unknownColError) {
-            const colName = sqliteError.split(":")[1].trim();
+            const colName = sqliteError.split(unknownColStr)[1].trim();
             errorMessage = i18n._("We can't find the column named \"%(colName)s\".",
                 {colName});
         }
@@ -104,9 +108,10 @@ window.SQLOutput = Backbone.View.extend({
             errorMessage = i18n._("You didn't specify any tables for your \"SELECT\".");
         }
         // Generic syntax error messages take form: 'near \"%T\": syntax error'
-        const isSyntaxError = sqliteError.indexOf(": syntax error") > -1;
+        const syntaxErrStr = ": syntax error";
+        const isSyntaxError = sqliteError.indexOf(syntaxErrStr) > -1;
         if (isSyntaxError) {
-            const nearPhrase = errorMessage.split(":")[0];
+            const nearPhrase = errorMessage.split(syntaxErrStr)[0];
             errorMessage = i18n._("There's a syntax error near %(nearThing)s.",
                 {nearThing: nearPhrase.substr(5)});
         }
