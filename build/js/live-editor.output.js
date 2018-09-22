@@ -324,9 +324,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         this.setPaths(options);
 
-        this.config = new ScratchpadConfig({
-            useDebugger: options.useDebugger
-        });
+        this.config = new ScratchpadConfig({});
 
         if (options.outputType) {
             this.setOutput(options.outputType, true, options.loopProtectTimeouts);
@@ -410,7 +408,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // filter out events that are objects
         // currently the only messages that contain objects are messages
         // being sent by Poster instances being used by the iframeOverlay
-        // in pjs-output.js and ui/debugger.js
+        // in pjs-output.js
         if (typeof event.data === "object") {
             return;
         }
@@ -434,12 +432,6 @@ window.LiveEditorOutput = Backbone.View.extend({
                 loopProtectTimeouts = data.loopProtectTimeouts;
             }
             this.setOutput(outputType, enableLoopProtect, loopProtectTimeouts);
-        }
-
-        // filter out debugger events
-        // handled by pjs-debugger.js::handleMessage
-        if (data.type === "debugger") {
-            return;
         }
 
         // Set the paths from the incoming data, if they exist

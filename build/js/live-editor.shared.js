@@ -508,8 +508,6 @@ var ScratchpadConfig = Backbone.Model.extend({
 
     initialize: function initialize(options) {
         this.version = options.version;
-        this.useDebugger = options.useDebugger;
-
         if (this.version != null) {
             this.version = this.latestVersion();
         }
