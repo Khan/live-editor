@@ -373,9 +373,7 @@ PJSTester.prototype.testMethods = {
                 message: callbacks && callbacks.failure
             };
         } catch (e) {
-            if (window.console) {
-                console.warn(e);
-            }
+            console.warn(e);
             return {
                 success: true,
                 message: i18n._("Hm, we're having some trouble " +
@@ -395,7 +393,7 @@ PJSTester.prototype.testMethods = {
         }
         return this.testContext.match(structure).success;
     },
-            
+
     _checkSyntaxErrors: function(syntaxChecks) {
         if (!syntaxChecks) return;
 
