@@ -1217,14 +1217,10 @@ var PJSCodeInjector = (function () {
             var topLevelThis = "{ get externals() { throw { message: " + JSON.stringify(badProgram) + " } } }";
 
             try {
-                if (this["debugger"]) {
-                    this["debugger"].exec(code);
-                } else {
-                    var transformedCode = this.transformCode(code, context, mutatingCalls);
-                    var funcBody = "var " + this.envName + " = context;\n" + ("(function(){\n" + transformedCode + "\n}).apply(" + topLevelThis + ");");
-                    var func = new Function("context", funcBody);
-                    func(context);
-                }
+                var transformedCode = this.transformCode(code, context, mutatingCalls);
+                var funcBody = "var " + this.envName + " = context;\n" + ("(function(){\n" + transformedCode + "\n}).apply(" + topLevelThis + ");");
+                var func = new Function("context", funcBody);
+                func(context);
             } catch (e) {
                 return e;
             }
@@ -1326,7 +1322,7 @@ var PJSCodeInjector = (function () {
         // called whenever a user defined class is called to instantiate an object.
         // adds metadata to the class and the object to keep track of it and to
         // serialize it.
-        // Called in applyInstance and the Debugger's context.__instantiate__
+        // Called in applyInstance
         value: function newCallback(classFn, className, obj, args) {
             // Make sure a name is set for the class if one has not been
             // set already
@@ -2628,15 +2624,6 @@ window.PJSOutput = Backbone.View.extend({
         this.bind();
 
         this.build(this.$canvas[0], options.enableLoopProtect, options.loopProtectTimeouts);
-
-        if (this.config.useDebugger && PJSDebugger) {
-            iframeOverlay.createRelay(this.$canvas[0]);
-
-            this["debugger"] = new PJSDebugger({
-                context: this.processing,
-                output: this
-            });
-        }
 
         this.config.on("versionSwitched", (function (e, version) {
             this.config.runVersion(version, "processing", this.processing);

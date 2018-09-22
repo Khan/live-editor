@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
     <link rel="stylesheet" href="../../build/css/live-editor.tooltips.css"/>
     <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
-    <link rel="stylesheet" href="../../build/css/live-editor.debugger.css"/>
     <style>
         body {
             padding: 20px;
@@ -32,16 +31,9 @@
     <script src="../../build/js/live-editor.tooltips.js"></script>
     <script src="../../build/js/live-editor.ui.js"></script>
     <script src="../../build/js/live-editor.editor_ace.js"></script>
-    <!--<script src="../../build/js/live-editor.debugger.js"></script>-->
 
     <script>
     var outputUrl = "output.html";
-    var useDebugger = false;
-    // TODO(kevinb7) conditionally load live-editor.debugger.js
-//    if (location.search.indexOf("debugger=true") !== -1) {
-//        outputUrl += "?debugger=true";
-//        useDebugger = true;
-//    }
 
     var code = window.localStorage["test-code"] || "rect(10, 10, 100, 100);";
 
@@ -78,7 +70,6 @@
         soundsDir: "../../sounds/",
         execFile: outputUrl,
         jshintFile: "../../build/external/jshint/jshint.js",
-        useDebugger: useDebugger,
         newErrorExperience: true,
     });
     liveEditor.editor.on("change", function() {
