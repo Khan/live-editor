@@ -352,8 +352,7 @@ window.SQLOutput = Backbone.View.extend({
                     // figure out whether we hit this case.
                     var message = i18n._("Error: %(message)s",
                         {message: errors[errors.length - 1].message});
-                    // TODO(jeresig): Find a better way to show this
-                    this.output.$el.find(".test-errors").text(message).show();
+                    console.warn(message);
                     this.tester.testContext.assert(false, message,
                         i18n._("A critical problem occurred in your program " +
                             "making it unable to run."));

@@ -549,9 +549,7 @@
                     message: callbacks && callbacks.failure
                 };
             } catch (e) {
-                if (window.console) {
-                    console.warn(e);
-                }
+                console.warn(e);
                 return {
                     success: true,
                     message: i18n._("Hm, we're having some trouble " +

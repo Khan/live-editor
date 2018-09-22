@@ -333,9 +333,7 @@ SQLTester.prototype.testMethods = {
 
         for (var key in params) {
             if (params[key][0] !== "$") {
-                if (window.console) {
-                    console.warn("Invalid parameter in constraint " + "(should begin with a '$'): ", params[key]);
-                }
+                console.warn("Invalid parameter in constraint " + "(should begin with a '$'): ", params[key]);
                 return null;
             }
         }
@@ -453,7 +451,7 @@ SQLTester.prototype.testMethods = {
     },
 
     /**
-     * @param templateDBInfo: A template DB to match column names 
+     * @param templateDBInfo: A template DB to match column names
      * @return {success} if user table contains same column names
      *   Note - it could also contain other names,
      *   use matchTableColumnCount if you need to be exact.
@@ -1030,8 +1028,7 @@ window.SQLOutput = Backbone.View.extend({
                 // translated text "A critical problem occurred..." to
                 // figure out whether we hit this case.
                 var message = i18n._("Error: %(message)s", { message: errors[errors.length - 1].message });
-                // TODO(jeresig): Find a better way to show this
-                this.output.$el.find(".test-errors").text(message).show();
+                console.warn(message);
                 this.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
             }
 
