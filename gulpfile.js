@@ -147,7 +147,7 @@ var failureCount = 0;
 // in Travis-CI.
 const testPre = "../../../build/js/live-editor.tests_output_";
 
-var pjs_tests = ["assert", "async", "jshint", "output"];
+var pjs_tests = ["jshint", "output", "assert", "ast_transform", "async"];
 
 pjs_tests.forEach(function(test) {
     gulp.task("test_output_pjs_" + test, function() {

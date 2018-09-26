@@ -28,6 +28,7 @@ const config = {
         tests_output_pjs_async: ["./tests/output/pjs/async_test.js"],
         tests_output_pjs_jshint: ["./tests/output/pjs/jshint_test.js"],
         tests_output_pjs_output: ["./tests/output/pjs/output_test.js"],
+        tests_output_pjs_ast_transform: ["./tests/output/pjs/ast_transform_test.js"],
         tests_output_webpage_assert: ["./tests/output/webpage/assert_test.js"],
         tests_output_webpage_output: ["./tests/output/webpage/output_test.js"],
         tests_output_webpage_transform: ["./tests/output/webpage/transform_test.js"],

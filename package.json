@@ -4,7 +4,8 @@
   "description": "Live Code Editor",
   "main": "dist/live-editor.js",
   "scripts": {
-    "build": "gulp build && webpack --mode development",
+    "build": "gulp build",
+    "build-webpack": "webpack --mode development",
     "test": "gulp test",
     "build:add": "git add build/"
   },
