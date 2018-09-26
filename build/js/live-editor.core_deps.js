@@ -34299,13 +34299,7 @@ return parser;
   })
 
 }(window.jQuery);
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-var _jed = require("jed");
-
-var _jed2 = _interopRequireDefault(_jed);
-
-(function (global) {
+(function () {
     // If no language is specified, or if an unknown language is specified,
     // then fall back to using "en" as the base language
     var defaultLang = "en";
@@ -34365,7 +34359,7 @@ var _jed2 = _interopRequireDefault(_jed);
     };
 
     // Create a global Jed instance named 'i18n'
-    var i18n = new _jed2["default"]({});
+    var i18n = new Jed({});
 
     // We will set the locale-data lazily, as we need it
     i18n.options.locale_data = {};
@@ -34518,7 +34512,7 @@ var _jed2 = _interopRequireDefault(_jed);
 
         // Generate a function which will give the position of the message
         // which matches the correct plural form of the string
-        return _jed2["default"].PF.compile(getPluralForm(lang))(num);
+        return Jed.PF.compile(getPluralForm(lang))(num);
     };
 
     /*
@@ -34603,8 +34597,8 @@ var _jed2 = _interopRequireDefault(_jed);
         return i18n.ngetpos(num) === pos ? options.fn(this) : options.inverse(this);
     };
 
-    global.i18n = i18n;
-})(typeof window !== "undefined" ? window : global);
+    window.i18n = i18n;
+})();
 
 if (typeof Handlebars !== "undefined") {
     Handlebars.registerHelper("_", i18n.handlebars_underscore);
