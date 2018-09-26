@@ -130,7 +130,6 @@ export default class PJSCodeInjector {
                 worker.postMessage({
                     code: hintCode,
                     externalsDir: this.externalsDir,
-                    jshintFile: this.jshintFile
                 });
             }
         );

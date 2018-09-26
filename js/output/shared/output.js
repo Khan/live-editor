@@ -79,10 +79,6 @@ const LiveEditorOutput = Backbone.View.extend({
         if (data.redirectUrl) {
             this.redirectUrl = data.redirectUrl;
         }
-        if (data.jshintFile) {
-            this.jshintFile = this._qualifyURL(data.jshintFile);
-            PooledWorker.prototype.jshintFile = this.jshintFile;
-        }
     },
 
     _qualifyURL: function(url){

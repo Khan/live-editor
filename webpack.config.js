@@ -42,11 +42,10 @@ const config = {
             //  so we fake its availability
             // See https://github.com/kripken/sql.js/issues/112
             fs: true,
-            // Separated into their own build files (Subject to change!)
-            i18n: "i18n",
-            "ace-builds": "ace",
             // Bundling this results in an asm error
             "sql.js": "SQL",
+            // Separated into its own build file (to mirror webapp)
+            i18n: "i18n",
         },
     ],
     output: {
@@ -89,50 +88,6 @@ const config = {
     },
     plugins: [
         new CopyWebpackPlugin([
-            // Copy worker files
-            {
-                from: "node_modules/ace-builds/src-noconflict/worker-html.js",
-                to: path.resolve(__dirname, "build/workers/webpage"),
-            },
-            {
-                from: "external/multirecorderjs/multirecorder-worker.js",
-                to: path.resolve(__dirname, "build/workers/shared"),
-            },
-            {
-                from: "external/jshint/jshint.js",
-                to: path.resolve(__dirname, "build/external/jshint"),
-            },
-            {
-                from: "external/structuredjs/structured.js",
-                to: path.resolve(__dirname, "build/external/structuredjs"),
-            },
-            {
-                from: "external/structuredjs/external/esprima.js",
-                to: path.resolve(
-                    __dirname,
-                    "build/external/structuredjs/external",
-                ),
-            },
-            {
-                from: "js/output/shared/output-tester.js",
-                to: path.resolve(__dirname, "build/workers/shared"),
-            },
-            {
-                from: "js/output/pjs/pjs-tester.js",
-                to: path.resolve(__dirname, "build/workers/shared"),
-            },
-            {
-                from: "js/output/pjs/pjs-tester.js",
-                to: path.resolve(__dirname, "build/workers/pjs"),
-            },
-            {
-                from: "js/workers/pjs/jshint-worker.js",
-                to: path.resolve(__dirname, "build/workers/pjs"),
-            },
-            {
-                from: "js/workers/pjs/test-worker.js",
-                to: path.resolve(__dirname, "build/workers/pjs"),
-            },
             // Copy images and sounds
             {
                 from: "images/",

@@ -47,7 +47,6 @@ export function runTest(options) {
             externalsDir: "../../../build/external/",
             imagesDir: "../../../build/images/",
             soundsDir: "../../../sounds/",
-            jshintFile: "../../../build/external/jshint/jshint.js",
             loopProtectTimeouts: {
                 initialTimeout: 1000,
                 frameTimeout: 500
@@ -263,6 +262,5 @@ export function createLiveEditorOutput() {
         externalsDir: "../../../build/external/",
         imagesDir: "../../../build/images/",
         soundsDir: "../../../sounds/",
-        jshintFile: "../../../build/external/jshint/jshint.js"
     });
 };

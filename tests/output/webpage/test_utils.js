@@ -11,7 +11,6 @@ export function createLiveEditorOutput(extraOptions) {
         workersDir: "../../../build/",
         externalsDir: "../../../build/external/",
         imagesDir: "../../../build/images/",
-        jshintFile: "../../../build/external/jshint/jshint.js",
         redirectUrl: "http://ka.org/r",
     }, extraOptions || {});
 
