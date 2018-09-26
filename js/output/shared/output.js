@@ -311,7 +311,6 @@ const LiveEditorOutput = Backbone.View.extend({
             }.bind(this));
 
         } catch (e) {
-            console.log("Caught it!", e);
             if (this.outputs.hasOwnProperty('pjs')) {
                 this.runtimeErrors = [e];
             }

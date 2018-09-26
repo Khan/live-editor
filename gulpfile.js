@@ -147,12 +147,12 @@ var failureCount = 0;
 // in Travis-CI.
 const testPre = "../../../build/js/live-editor.tests_output_";
 
-var pjs_tests = ["pjs_assert", "pjs_async", "pjs_jshint", "pjs_output"];
+var pjs_tests = ["assert", "async", "jshint", "output"];
 
 pjs_tests.forEach(function(test) {
     gulp.task("test_output_pjs_" + test, function() {
         return gulp.src("tests/output/pjs/index.html")
-            .pipe(mochaRunner({ test: testPre + test + ".js"}))
+            .pipe(mochaRunner({ test: testPre + "pjs_" + test + ".js"}))
             .on("error", function (err) {
                 failureCount += parseInt(err.message);
                 this.emit("end");
@@ -168,12 +168,12 @@ gulp.task("test_output_pjs", function(callback) {
     runSequence.apply(null, sequence);
 });
 
-var webpage_tests = ["webpage_assert", "webpage_output", "webpage_transform"];
+var webpage_tests = ["assert", "output", "transform"];
 
 webpage_tests.forEach(function(test) {
     gulp.task("test_output_webpage_" + test, function() {
         return gulp.src("tests/output/webpage/index.html")
-            .pipe(mochaRunner({ test: testPre + test + ".js" }))
+            .pipe(mochaRunner({ test: testPre + "webpage_" + test + ".js" }))
             .on("error", function (err) {
                 failureCount += parseInt(err.message);
                 this.emit("end");
