@@ -1,3 +1,5 @@
+import {failingTest, isFirefox, runTest, test, warningTest} from "./test_utils.js";
+
 describe("Output Methods", function() {
     runTest({
         title: "getScreenshot",

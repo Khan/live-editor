@@ -1,6 +1,10 @@
 /* global ellipse, getImage, image, background, loadImage, requestImage */
 /* global text, color, textFont, fill, text, background, createFont, PVector */
 /* global externals, exp, link, width, draw, mouseMoved, Program */
+import PJSCodeInjector from "../../../js/output/pjs/pjs-code-injector.js";
+import ScratchpadConfig from "../../../js/shared/config.js";
+
+import {failingTest, supportsMpegAudio, runTest, test} from "./test_utils.js";
 
 describe("Version test", function() {
     it("should use version 4 or greater", function() {

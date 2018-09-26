@@ -15,7 +15,9 @@
  * }
  */
 
-var BabyHint = {
+/* globals i18n */
+import _ from "lodash";
+const BabyHint = {
 
     EDIT_DISTANCE_THRESHOLD: 2,
 
@@ -708,5 +710,4 @@ var BabyHint = {
         return errors;
     }
 };
-// TODO(jlfwong): Stop globalizing BabyHint
-window.BabyHint = BabyHint;
+export default BabyHint;

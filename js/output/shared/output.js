@@ -1,7 +1,11 @@
-// TODO(kevinb) remove after challenges have been converted to use i18n._
-$._ = i18n._;
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
 
-window.LiveEditorOutput = Backbone.View.extend({
+const PooledWorker = require("./pooled-worker.js");
+const ScratchpadConfig = require("../../shared/config.js");
+
+const LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
@@ -97,9 +101,6 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.notifyActive();
 
         // filter out events that are objects
-        // currently the only messages that contain objects are messages
-        // being sent by Poster instances being used by the iframeOverlay
-        // in pjs-output.js
         if (typeof event.data === "object") {
             return;
         }
@@ -310,6 +311,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             }.bind(this));
 
         } catch (e) {
+            console.log("Caught it!", e);
             if (this.outputs.hasOwnProperty('pjs')) {
                 this.runtimeErrors = [e];
             }
@@ -425,3 +427,5 @@ window.LiveEditorOutput = Backbone.View.extend({
 LiveEditorOutput.registerOutput = function(name, output) {
     LiveEditorOutput.prototype.outputs[name] = output;
 };
+
+export default LiveEditorOutput;

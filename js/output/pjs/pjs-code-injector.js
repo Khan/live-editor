@@ -1,10 +1,24 @@
+/* globals i18n */
+import _ from "lodash";
+import * as esprima from "esprima";
+import escodegen from "escodegen";
+
+import LoopProtector from "../shared/loop-protect.js";
+import OutputSounds from "../../shared/sounds.js";
+import PooledWorker from "../shared/pooled-worker.js";
+import walkAST from "../shared/ast-walker.js";
+
+import ASTTransforms from "./pjs-ast-transforms.js";
+import PJSResourceCache from "./pjs-resource-cache.js";
+import PJSUtils from "./pjs-utils.js";
+
 /**
  * The CodeInjector object is responsible for running code, determining what
  * code to inject when the user code has been updated, and maintaining the
  * appropriate state in the processing object in order to make live editing
  * of processing-js programs work correctly.
  */
-class PJSCodeInjector {
+export default class PJSCodeInjector {
 
     /**
      * Create a new processing-js code injector.
@@ -90,7 +104,7 @@ class PJSCodeInjector {
          * The worker that analyzes the user's code.
          */
         this.hintWorker = new PooledWorker(
-            "pjs/jshint-worker.js",
+            "js/live-editor.jshint_worker.js",
             function(hintCode, callback) {
                 // Fallback in case of no worker support
                 if (!window.Worker) {
@@ -489,6 +503,7 @@ class PJSCodeInjector {
                 this.injectCode(userCode, callback);
             });
         } catch(e) {
+            console.log("runCode error", e);
             let [line, text] = e.message.split(":");
 
             if (text.trim() === "Unexpected token ILLEGAL") {
@@ -778,6 +793,7 @@ class PJSCodeInjector {
                     // The variable contains something that can't be serialized
                     // (such as instantiated objects) and so we need to extract it
                 } catch (e) {
+                    console.log("Error here", e);
                     this.objectExtract(prop, val);
                 }
             }.bind(this));
@@ -888,6 +904,7 @@ class PJSCodeInjector {
             // Execute the injected code
             let error = this.exec(inject, this.processing, mutatingCalls);
             if (error) {
+                console.log("Error in exec", error);
                 return callback([error]);
             }
         }
@@ -908,6 +925,7 @@ class PJSCodeInjector {
             try {
                 callback([]);
             } catch(e) {
+                console.log("Error HERE", e);
                 // Ignore any errors that were generated in the callback
                 // NOTE(jeresig): This is needed because Mocha throws errors
                 // when it encounters an assertion error, which causes this
@@ -1000,6 +1018,7 @@ class PJSCodeInjector {
         try {
             walkAST(ast, null, astTransformPasses);
         } catch (e) {
+            console.log("WalkAST e", e);
             return e;
         }
 
@@ -1184,6 +1203,7 @@ class PJSCodeInjector {
             let func = new Function("context", funcBody);
             func(context);
         } catch (e) {
+            console.log("Transform err", e);
             return e;
         }
     }
@@ -1309,6 +1329,3 @@ class PJSCodeInjector {
 }
 
 PJSCodeInjector.instances = [];
-
-// TODO(kevinb) convert to a commonjs module at somepoint in the future
-window.PJSCodeInjector = PJSCodeInjector;

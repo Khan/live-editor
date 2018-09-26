@@ -7,7 +7,7 @@
  * @param visitors: One or more objects containing 'enter' and/or 'leave'
  *                  methods which accept a single AST node as an argument.
  */
-window.walkAST = function(node, path, visitors) {
+const walkAST = function(node, path, visitors) {
     if (path === null) {
         path = [node];
     } else {
@@ -64,3 +64,5 @@ window.walkAST = function(node, path, visitors) {
     path.pop();
     return step;
 };
+
+export default walkAST;

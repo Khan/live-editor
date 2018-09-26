@@ -1,3 +1,5 @@
+import {failingTest, runTest, test} from "./test_utils.js";
+
 describe("Output Methods", function() {
     runTest({
         title: "getScreenshot",

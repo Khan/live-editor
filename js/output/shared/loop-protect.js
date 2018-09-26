@@ -1,3 +1,9 @@
+import * as esprima from "esprima";
+import escodegen from "escodegen";
+
+import ASTBuilder from "./ast-builder.js";
+import walkAST from "./ast-walker.js";
+
 /**
  * Creates a new LoopProtector object.
  *
@@ -10,7 +16,7 @@
  *                        passed to the callback. TODO(kevinb) use this for webpages
  * @constructor
  */
-window.LoopProtector = function(callback, timeouts, reportLocation) {
+const LoopProtector = function(callback, timeouts, reportLocation) {
     this.callback = callback || function () { };
     this.timeout = 200;
     this.branchStartTime = 0;
@@ -39,7 +45,7 @@ window.LoopProtector = function(callback, timeouts, reportLocation) {
     this.visible = !document.hidden;
 };
 
-window.LoopProtector.prototype = {
+LoopProtector.prototype = {
     /**
      * Throws 'KA_INFINITE_LOOP' if the difference between the current time
      * and this.brancStartTime is greater than this.timeout.
@@ -117,7 +123,7 @@ window.LoopProtector.prototype = {
 
     // Called by walkAST whenever it leaves a node so AST mutations are okay
     leave(node) {
-        const b = window.ASTBuilder;
+        const b = ASTBuilder;
 
         if (this.riskyStatements.indexOf(node.type) !== -1) {
             if (this.reportLocation) {
@@ -202,3 +208,5 @@ window.LoopProtector.prototype = {
         return escodegen.generate(ast);
     }
 };
+
+export default LoopProtector;

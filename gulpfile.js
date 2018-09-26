@@ -79,17 +79,6 @@ gulp.task("scripts_min", scriptTypes.map(function(type) {
     return "script_" + type + "_min";
 }));
 
-gulp.task("workers", function() {
-    gulp.src(paths.workers_webpage)
-        .pipe(gulp.dest("build/workers/webpage"));
-
-    gulp.src(paths.workers_pjs)
-        .pipe(gulp.dest("build/workers/pjs"));
-
-    gulp.src(paths.workers_shared)
-        .pipe(gulp.dest("build/workers/shared"));
-});
-
 gulp.task("externals", function() {
     gulp.src(paths.externals, {base: "./"})
         .pipe(gulp.dest("build/"));
@@ -111,11 +100,6 @@ gulp.task("styles", styleTypes.map(function(type) {
     return "style_" + type;
 }));
 
-gulp.task("images", function() {
-    gulp.src(paths.images)
-        .pipe(gulp.dest("build/images"));
-});
-
 gulp.task("watch", function() {
     scriptTypes.forEach(function(type) {
         gulp.watch(paths.scripts[type], ["script_" + type]);
@@ -126,11 +110,6 @@ gulp.task("watch", function() {
     });
 
     gulp.watch(paths.templates, ["templates"]);
-
-    gulp.watch(paths.workers_pjs.concat(paths.workers_webpage)
-        .concat(paths.workers_shared), ["workers"]);
-
-    gulp.watch(paths.images, ["images"]);
 });
 
 var runTest = function(fileName) {
@@ -166,12 +145,14 @@ var failureCount = 0;
 
 // We run tests in groups so that we don't require as much memory to run them
 // in Travis-CI.
-var pjs_tests = ["jshint", "output", "assert", "ast_transform", "async"];
+const testPre = "../../../build/js/live-editor.tests_output_";
+
+var pjs_tests = ["pjs_assert", "pjs_async", "pjs_jshint", "pjs_output"];
 
 pjs_tests.forEach(function(test) {
-    gulp.task("test_output_pjs_" + test, ["script_output_pjs"], function() {
+    gulp.task("test_output_pjs_" + test, function() {
         return gulp.src("tests/output/pjs/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js"}))
+            .pipe(mochaRunner({ test: testPre + test + ".js"}))
             .on("error", function (err) {
                 failureCount += parseInt(err.message);
                 this.emit("end");
@@ -187,12 +168,12 @@ gulp.task("test_output_pjs", function(callback) {
     runSequence.apply(null, sequence);
 });
 
-var webpage_tests = ["assert", "output", "transform"];
+var webpage_tests = ["webpage_assert", "webpage_output", "webpage_transform"];
 
 webpage_tests.forEach(function(test) {
-    gulp.task("test_output_webpage_" + test, ["script_output_pjs"], function() {
+    gulp.task("test_output_webpage_" + test, function() {
         return gulp.src("tests/output/webpage/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js" }))
+            .pipe(mochaRunner({ test: testPre + test + ".js" }))
             .on("error", function (err) {
                 failureCount += parseInt(err.message);
                 this.emit("end");
@@ -200,7 +181,7 @@ webpage_tests.forEach(function(test) {
     });
 });
 
-gulp.task("test_output_webpage", ["script_output_webpage"], function(callback) {
+gulp.task("test_output_webpage", function(callback) {
     var sequence = webpage_tests.map(function(test) {
         return "test_output_webpage_" + test;
     });
@@ -208,12 +189,12 @@ gulp.task("test_output_webpage", ["script_output_webpage"], function(callback) {
     runSequence.apply(null, sequence);
 });
 
-gulp.task("test_output_sql", ["script_output_sql"], function() {
+gulp.task("test_output_sql", function() {
    return gulp.src("tests/output/sql/index.html")
        .pipe(mochaRunner());
 });
 
-gulp.task("test_tooltips", ["script_tooltips"], function() {
+gulp.task("test_tooltips", function() {
     return gulp.src("tests/tooltips/index.html")
         .pipe(mochaRunner());
 });
@@ -261,7 +242,7 @@ gulp.task("check", function() {
 });
 
 gulp.task("build",
-    ["check", "templates", "scripts", "workers", "styles", "images", "externals"],
+    ["check", "templates", "scripts", "styles", "externals"],
     function() {
         firstBuild = false;
     });

@@ -1,3 +1,12 @@
+/* globals i18n */
+import _ from "lodash";
+import * as esprima from "esprima";
+
+import OutputSounds from "../../shared/sounds.js";
+import walkAST from "../shared/ast-walker.js";
+
+import ASTTransforms from "./pjs-ast-transforms.js";
+
 function PJSResourceCache(options) {
     this.canvas = options.canvas;   // customized Processing instance
     this.output = options.output;   // LiveEditorOutput instance
@@ -146,3 +155,5 @@ PJSResourceCache.findResources = function(code) {
 
     return resources;
 };
+
+export default PJSResourceCache;

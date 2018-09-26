@@ -1,3 +1,5 @@
+import {assertTest, allErrorsTest} from "./test_utils.js";
+
 // TODO(benkraft): These tests assert about what comes out of the iframe.
 // Instead they should probably assert about what we actually display to the
 // user.

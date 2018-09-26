@@ -1,4 +1,4 @@
-window.PJSUtils = {
+const PJSUtils = {
     /**
      * Returns code contained within a function.
      *
@@ -29,3 +29,5 @@ window.PJSUtils = {
         }).join("\n").trim();
     }
 };
+
+export default PJSUtils;

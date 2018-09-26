@@ -1,4 +1,11 @@
-window.PJSTester = function(options) {
+/* We list i18n and lodash as globals instead of require() them
+  due to how we load this file in the test-worker */
+/* globals i18n, _ */
+
+import OutputTester from "../shared/output-tester.js";
+import Structured from "../../../external/structuredjs/structured.js";
+
+const PJSTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
 };
@@ -460,3 +467,5 @@ PJSTester.prototype.testMethods = {
         });
     }
 };
+
+export default PJSTester;

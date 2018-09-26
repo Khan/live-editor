@@ -67,56 +67,6 @@
             "js/shared/record.js",
             "js/shared/config.js"
         ],
-        "output_pjs_deps": [
-            "external/processing-js/processing.js",
-            "external/jshint/jshint.js",
-            "external/structuredjs/external/esprima.js",
-            "external/structured-blocks/external/escodegen.browser.js",
-            "external/structuredjs/structured.js",
-            "js/output/shared/ast-builder.js",
-            "js/output/shared/ast-walker.js",
-            "js/output/shared/loop-protect.js",
-            "js/output/pjs/pjs-ast-transforms.js"
-        ],
-        "output_pjs": [
-            "js/output/pjs/pjs-utils.js",
-            "js/output/pjs/pjs-code-injector.js",
-            "js/output/pjs/pjs-tester.js",
-            "js/output/pjs/babyhint.js",
-            "js/output/pjs/pjs-resource-cache.js",
-            "js/output/pjs/pjs-output.js"
-        ],
-        "output_webpage_deps": [
-            "external/structuredjs/external/esprima.js",
-            "external/structured-blocks/external/escodegen.browser.js",
-            "external/html2canvas/html2canvas.js",
-            "external/slowparse/slowparse.js",
-            "js/output/shared/ast-builder.js",
-            "js/output/shared/ast-walker.js",
-            "js/output/shared/loop-protect.js",
-            "js/output/webpage/state-scrubber.js",
-            "external/structuredjs/structured.js",
-            "js/output/pjs/pjs-tester.js"
-        ],
-        "output_sql_deps": [
-            "external/html2canvas/html2canvas.js",
-            "external/sqlitejs/sql.js"
-        ],
-        "output_webpage": [
-            "js/output/webpage/webpage-tester.js",
-            "js/output/webpage/webpage-output.js"
-        ],
-        "output_sql": [
-            "build/tmpl/sql-results.js",
-            "js/output/sql/sql-tester.js",
-            "js/output/sql/sql-output.js"
-        ],
-        "output": [
-            "build/tmpl/output.js",
-            "js/output/shared/pooled-worker.js",
-            "js/output/shared/output-tester.js",
-            "js/output/shared/output.js"
-        ],
         "ui": [
             "build/tmpl/tipbar.js",
             "js/ui/tipbar.js",
@@ -126,23 +76,8 @@
             "js/live-editor.js"
         ]
     },
-    "workers_pjs": [
-        "js/workers/pjs/jshint-worker.js",
-        "js/workers/pjs/test-worker.js",
-        "js/output/pjs/pjs-tester.js"
-    ],
-    "workers_webpage": [
-        "bower_components/ace-builds/src-noconflict/worker-html.js"
-    ],
-    "workers_shared": [
-        "js/output/shared/output-tester.js",
-        "external/multirecorderjs/multirecorder-worker.js"
-    ],
     "externals": [
         "bower_components/es5-shim/es5-shim.js",
-        "external/jshint/jshint.js",
-        "external/structuredjs/external/esprima.js",
-        "external/structuredjs/structured.js",
         "bower_components/underscore/underscore.js",
         "bower_components/soundmanager/swf/**"
     ],

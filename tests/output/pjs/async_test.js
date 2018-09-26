@@ -1,3 +1,7 @@
+import LoopProtector from "../../../js/output/shared/loop-protect.js";
+
+import {createLiveEditorOutput, getCodeFromOptions} from "./test_utils.js";
+
 /**
  * This file contains tests that are difficult to write using the normal test
  * helpers from test_utils.js.  The tests require custom asynchronous code in
@@ -24,12 +28,10 @@ describe("async error order tests", function () {
             callback([]); // no runtime errors
         });
 
-        var deferred = $.Deferred();
-        lintStub.returns(deferred);
-        deferred.resolve({
-          errors: [],
-          warnings: []
-        });  // lint errors
+        lintStub.returns(Promise.resolve({
+            errors: [],
+            warnings: []
+        }));
 
         output.runCode("var a = 5;", function(errors, testResults) {
             expect(errors.length).to.be(0);
@@ -47,12 +49,10 @@ describe("async error order tests", function () {
             callback(["runtime error"]);    // runtime errors
         });
 
-        var deferred = $.Deferred();
-        lintStub.returns(deferred);
-        deferred.resolve({
-          errors: [],
-          warnings: []
-        });  // lint errors
+        lintStub.returns(Promise.resolve({
+            errors: [],
+            warnings: []
+        }));
 
         output.runCode("var a = 5;", function(errors, testResults) {
             expect(errors).to.contain("runtime error");
@@ -71,12 +71,10 @@ describe("async error order tests", function () {
             callback([]);    // runtime errors
         });
 
-        var deferred = $.Deferred();
-        lintStub.returns(deferred);
-        deferred.resolve({
-          errors: ['lint error'],
-          warnings: []
-        });  // lint errors
+        lintStub.returns(Promise.resolve({
+            errors: ['lint error'],
+            warnings: []
+        }));
 
         output.runCode("var a = 5;", function(errors, testResults) {
             expect(errors).to.contain("lint error");
@@ -95,12 +93,10 @@ describe("async error order tests", function () {
             callback(["runtime error"]);    // runtime errors
         });
 
-        var deferred = $.Deferred();
-        lintStub.returns(deferred);
-        deferred.resolve({
-          errors: [],
-          warnings: []
-        });  // lint errors
+        lintStub.returns(Promise.resolve({
+            errors: [],
+            warnings: []
+        }));
 
         output.runCode("var a = 5;", function(errors, testResults) {
             expect(errors).to.contain("runtime error");
@@ -116,12 +112,10 @@ describe("async error order tests", function () {
                 callback([]);    // runtime errors
             });
 
-            var deferred = $.Deferred();
-            lintStub.returns(deferred);
-            deferred.resolve({
-              errors: ['lint error'],
-              warnings: []
-            });  // lint errors
+            lintStub.returns(Promise.resolve({
+                errors: ['lint error'],
+                warnings: []
+            }));
 
             output.runCode("var b = 10;", function(errors, testResults) {
                 // the runtime error is from 'var a = 5;' which is stale

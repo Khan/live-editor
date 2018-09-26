@@ -9,23 +9,23 @@
     </head>
     <body>
         <div id="mocha"></div>
-        <div id="output-area"></div>
-        <script src="../../../build/js/live-editor.core_deps.js"></script>
-        <script src="../../../build/js/live-editor.shared.js"></script>
-        <script src="../../../build/js/live-editor.output.js"></script>
+        <div id="live-editor-output"></div>
+
+        <!-- Exposes 'i18n' as a global -->
+        <script src="../../../build/js/live-editor.i18n.js"></script>
+        <!-- Exposes html2canvas as global -->
         <script src="../../../build/js/live-editor.output_webpage_deps.js"></script>
-        <script src="../../../build/js/live-editor.output_webpage.js"></script>
+        <!-- Mocha, sinon, and test JS -->
         <script src="../../../node_modules/mocha/mocha.js"></script>
         <script src="../../../node_modules/expect.js/index.js"></script>
+        <script src="../../../node_modules/sinon/pkg/sinon.js"></script>
         <script src="../../../testutil/json-reporter.js"></script>
-        <script src="test_utils.js"></script>
         <script src="../../shared_utils.js"></script>
         <script>
             runTestFiles([
-                "assert_test.js",
-                "output_test.js",
-                "transform_test.js",
-                "non-ci_test.js",
+                "../../../build/js/live-editor.tests_output_webpage_assert.js",
+                "../../../build/js/live-editor.tests_output_webpage_output.js",
+                "../../../build/js/live-editor.tests_output_webpage_transform.js",
             ]);
         </script>
     </body>

@@ -9,21 +9,24 @@
     </head>
     <body>
         <div id="mocha"></div>
-        <div id="output-area"></div>
-        <script src="../../../build/js/live-editor.core_deps.js"></script>
-        <script src="../../../build/js/live-editor.shared.js"></script>
-        <script src="../../../build/js/live-editor.output.js"></script>
+        <div id="live-editor-output"></div>
+
+        <!-- Exposes 'i18n' as a global -->
+        <script src="../../../build/js/live-editor.i18n.js"></script>
+        <!-- Exposes html2canvas as global -->
         <script src="../../../build/js/live-editor.output_sql_deps.js"></script>
-        <script src="../../../build/js/live-editor.output_sql.js"></script>
+        <!-- Exposes SQL as global -->
+        <script src="../../../external/sqlitejs/sql.js"></script>
+        <!-- Mocha, sinon, and test JS -->
         <script src="../../../node_modules/mocha/mocha.js"></script>
         <script src="../../../node_modules/expect.js/index.js"></script>
+        <script src="../../../node_modules/sinon/pkg/sinon.js"></script>
         <script src="../../../testutil/json-reporter.js"></script>
-        <script src="test_utils.js"></script>
         <script src="../../shared_utils.js"></script>
         <script>
             runTestFiles([
-                "output_test.js",
-                "assert_test.js"
+                "../../../build/js/live-editor.tests_output_sql_assert.js",
+                "../../../build/js/live-editor.tests_output_sql_output.js",
             ]);
         </script>
     </body>

@@ -1,4 +1,9 @@
 /*jshint unused: false*/
+import LiveEditorOutput from "../../../js/output/shared/output.js";
+import PJSOutput from "../../../js/output/pjs/pjs-output.js";
+
+LiveEditorOutput.registerOutput("pjs", PJSOutput);
+
 /* Possibly options:
  *  code: First code to run
  *  code2: Code to run after
@@ -14,7 +19,7 @@
  *  teardown: custom teardown callback, takes a single argument: output
  *  wait: time to wait after first code run, this allows "draw" to be called
  */
-var runTest = function(options) {
+export function runTest(options) {
     if ((!options.errors || !options.errors.length) && !options.noLint) {
         var noLintOpts = _.extend({}, options);
         noLintOpts.noLint = true;
@@ -22,12 +27,7 @@ var runTest = function(options) {
         runTest(noLintOpts);
     }
 
-    if (options.version === undefined) {
-        options.version = ScratchpadConfig.prototype.latestVersion();
-    }
-
-    var displayTitle = options.title +
-        " (Version: " + options.version + ")";
+    var displayTitle = options.title;
 
     var code1 = getCodeFromOptions(options.code);
     var code2 = getCodeFromOptions(options.code2);
@@ -43,7 +43,7 @@ var runTest = function(options) {
     itFunc(displayTitle, function(done) {
         var output = new LiveEditorOutput({
             outputType: "pjs",
-            workersDir: "../../../build/workers/",
+            workersDir: "../../../build/",
             externalsDir: "../../../build/external/",
             imagesDir: "../../../build/images/",
             soundsDir: "../../../sounds/",
@@ -53,9 +53,6 @@ var runTest = function(options) {
                 frameTimeout: 500
             },
         });
-
-        // Switch to the Scratchpad's version
-        output.config.switchVersion(options.version);
 
         if (options.validate) {
             output.initTests(options.validate);
@@ -147,7 +144,7 @@ var finishTest = function(done, output, options) {
 };
 
 
-var assertTest = function(options) {
+export function assertTest(options) {
     options.test = function(output, errors, testResults, callback) {
         if (!options.reason) {
             expect(errors.length).to.be.equal(0);
@@ -167,8 +164,10 @@ var assertTest = function(options) {
                     expect(errors[0].lint.reason)
                         .to.be.equal(options.reason);
                 } else {
-                    var $html = $("<div>" + errors[0].text + "</div>");
-                    expect($html.text()).to.be.equal(options.reason);
+                    // Strip HTML tags from message before comparing them
+                    const errorDiv = document.createElement("div");
+                    errorDiv.innerHTML = errors[0].text;
+                    expect(errorDiv.innerText).to.be.equal(options.reason);
                 }
             }
         }
@@ -184,7 +183,7 @@ var assertTest = function(options) {
  *  title: Title of test
  *  code: Code to be run through linter, output is compared to reason
  */
-var allErrorsTest = function(options) {
+export function allErrorsTest(options) {
     options.test = function(output, errors, testResults, callback) {
             if (options.reasons.length === 0) {
                 expect(errors.length).to.be.equal(0);
@@ -218,7 +217,7 @@ var allErrorsTest = function(options) {
         runTest(options);
 };
 
-var test = function(title, code, code2) {
+export function test(title, code, code2) {
     runTest({
         title: title,
         code: code,
@@ -227,7 +226,7 @@ var test = function(title, code, code2) {
     });
 };
 
-var failingTest = function(title, code, code2, errors) {
+export function failingTest(title, code, code2, errors) {
     runTest({
         title: title,
         code: code,
@@ -236,12 +235,12 @@ var failingTest = function(title, code, code2, errors) {
     });
 };
 
-var supportsMpegAudio = function() {
+export function supportsMpegAudio() {
     var a = document.createElement('audio');
     return !!(a.canPlayType && a.canPlayType('audio/mpeg;').replace(/no/, ''));
 };
 
-var getCodeFromOptions = function(code) {
+export function getCodeFromOptions(code) {
     // Assume the code is a string, by default
     // If not then we assume that it's a function so we need to
     // extract the code to run from the serialized function
@@ -253,14 +252,14 @@ var getCodeFromOptions = function(code) {
     return code;
 };
 
-var simulateClick = function(output) {
+export function simulateClick(output) {
     output.output.$canvas.mouseup();
 };
 
-var createLiveEditorOutput = function() {
+export function createLiveEditorOutput() {
     return new LiveEditorOutput({
         outputType: "pjs",
-        workersDir: "../../../build/workers/",
+        workersDir: "../../../build/",
         externalsDir: "../../../build/external/",
         imagesDir: "../../../build/images/",
         soundsDir: "../../../sounds/",

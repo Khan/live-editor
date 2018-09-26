@@ -1,28 +1,34 @@
-var runTest = function(options) {
-    if (options.version === undefined) {
-        options.version = ScratchpadConfig.prototype.latestVersion();
-    }
+import LiveEditorOutput from "../../../js/output/shared/output.js";
+import WebpageOutput from "../../../js/output/webpage/webpage-output.js";
 
-    var displayTitle = options.title +
-        " (Version: " + options.version + ")";
+LiveEditorOutput.registerOutput("webpage", WebpageOutput);
+
+export function createLiveEditorOutput(extraOptions) {
+
+    const options = Object.assign({}, {
+        el: document.getElementById("live-editor-output"),
+        outputType: "webpage",
+        workersDir: "../../../build/",
+        externalsDir: "../../../build/external/",
+        imagesDir: "../../../build/images/",
+        jshintFile: "../../../build/external/jshint/jshint.js",
+        redirectUrl: "http://ka.org/r",
+    }, extraOptions || {});
+
+    return new LiveEditorOutput(options);
+};
+
+export function runTest(options) {
+    var displayTitle = options.title;
 
     // Assume the code is a string, by default
     var code = options.code;
 
     // Start an asynchronous test
     it(displayTitle, function(done) {
-        var output = new LiveEditorOutput({
-            el: $("#output-area")[0],
-            outputType: "webpage",
-            workersDir: "../../../build/workers/",
-            externalsDir: "../../../build/external/",
-            imagesDir: "../../../build/images/",
-            jshintFile: "../../../build/external/jshint/jshint.js",
-            redirectUrl: "http://ka.org/r"
+        var output = createLiveEditorOutput({
+            validate: options.validate,
         });
-
-        // Switch to the Scratchpad's version
-        output.config.switchVersion(options.version);
 
         if (options.validate) {
             output.initTests(options.validate);
@@ -75,7 +81,7 @@ var runTest = function(options) {
     });
 };
 
-var test = function(title, code) {
+export function test(title, code) {
     if (typeof code === "object") {
         code.forEach(function(userCode) {
             test(title, userCode);
@@ -90,7 +96,7 @@ var test = function(title, code) {
     });
 };
 
-var failingTest = function(title, code, errors) {
+export function failingTest(title, code, errors) {
     runTest({
         title: title,
         code: code,
@@ -99,7 +105,7 @@ var failingTest = function(title, code, errors) {
     });
 };
 
-var warningTest = function(title, code, warnings) {
+export function warningTest(title, code, warnings) {
     if (typeof code === "object") {
         code.forEach(function(userCode, i) {
             warningTest(title, userCode, warnings[i]);
@@ -114,7 +120,7 @@ var warningTest = function(title, code, warnings) {
     });
 }
 
-var assertTest = function(options) {
+export function assertTest(options) {
     options.test = function(output, errors, testResults, callback) {
         // If the test is checking the results from validation tests:
         if (options.fromTests) {
@@ -165,6 +171,6 @@ var checkWarnings = function(expectedWarnings, outputWarnings) {
     }
 };
 
-var isFirefox = function() {
+export function isFirefox() {
     return navigator.userAgent.indexOf('Firefox') !== -1;
 };

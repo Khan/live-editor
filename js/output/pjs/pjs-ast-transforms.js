@@ -1,6 +1,9 @@
-window.ASTTransforms = {};
+import escodegen from "escodegen";
+import b from "../shared/ast-builder.js";
+import AllImages from "../../shared/all-images.js";
+import OutputSounds from "../../shared/sounds.js";
 
-let b = window.ASTBuilder;
+const ASTTransforms = {};
 
 /**
  * Visitor object which adds line and column information as additional args,
@@ -318,3 +321,5 @@ ASTTransforms.rewriteNewExpressions = function(envName) {
         }
     }
 };
+
+export default ASTTransforms;

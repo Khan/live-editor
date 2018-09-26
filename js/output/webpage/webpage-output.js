@@ -1,3 +1,13 @@
+const $ = require("jquery");
+const Backbone = require("backbone");
+Backbone.$ = require("jquery");
+
+import LoopProtector from "../shared/loop-protect.js";
+import Slowparse from "../../../external/slowparse/slowparse.js";
+
+import StateScrubber from "./state-scrubber.js";
+import WebpageTester from "./webpage-tester.js";
+
 /**
  * WebpageOutput
  * It creates an iframe on the same domain, and uses
@@ -10,7 +20,7 @@
  * so that it can be sandboxed from the main domain,
  * it communicates via postMessage() with liveEditor.
  */
-window.WebpageOutput = Backbone.View.extend({
+const WebpageOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
@@ -29,8 +39,12 @@ window.WebpageOutput = Backbone.View.extend({
         // In case frame didn't load (like in IE10), this adds it
         //  once the frame has loaded
         this.$frame.addEventListener("load", function () {
-            this.$frame.contentWindow.KAInfiniteLoopProtect =
-                this.loopProtector.KAInfiniteLoopProtect;
+            // If it was successfully assigned, this will error because
+            // strict mode warns about assignming to non-writable props
+            try {
+                this.$frame.contentWindow.KAInfiniteLoopProtect =
+                    this.loopProtector.KAInfiniteLoopProtect;
+            } catch(e) {}
         }.bind(this));
         // Do this at the end so variables I add to the global scope stay
         // i.e.  KAInfiniteLoopProtect
@@ -332,9 +346,13 @@ window.WebpageOutput = Backbone.View.extend({
         this.KA_INFINITE_LOOP = false;
         this.foundRunTimeError = false;
         this.frameDoc.open();
-        // It's necessary in FF/IE to redefine it here
-        this.$frame.contentWindow.KAInfiniteLoopProtect =
-                this.loopProtector.KAInfiniteLoopProtect;
+        // It's necessary in FF/IE to redefine KAInfiniteLoopProtect here
+        try {
+            this.$frame.contentWindow.KAInfiniteLoopProtect =
+                    this.loopProtector.KAInfiniteLoopProtect;
+        } catch (e) {
+            // But it will error in strict mode, if already assigned
+        }
         this.$frame.contentWindow.addEventListener("error", function () {
             this.foundRunTimeError = true;
         }.bind(this));
@@ -361,4 +379,4 @@ window.WebpageOutput = Backbone.View.extend({
     }
 });
 
-LiveEditorOutput.registerOutput("webpage", WebpageOutput);
+export default WebpageOutput;

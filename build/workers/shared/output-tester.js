@@ -1,4 +1,9 @@
-window.OutputTester = function() {};
+/* We list i18n and lodash as globals instead of importing them
+  due to how we load this file in the test-worker */
+/* global i18n, _ */
+import PooledWorker from "./pooled-worker.js";
+
+const OutputTester = function() {};
 
 OutputTester.prototype = {
     initialize: function(options) {
@@ -19,8 +24,9 @@ OutputTester.prototype = {
             }
         }
 
-        // This won't be defined inside a web worker itself (that's ok)
-        if (typeof PooledWorker === "undefined") {
+        // When we call this from a worker, we don't specify a workerFile,
+        // and that signifies that we don't need to spawn a worker
+        if (!options || !options.workerFile) {
             return;
         }
 
@@ -136,7 +142,7 @@ OutputTester.prototype = {
         if (!code) {
             return true;
         }
-
+        code = code.replace(/\$\._/g, "i18n._");
         code = "with(arguments[0]){\n" + code + "\n}";
         (new Function(code)).call({}, this.testContext);
 
@@ -265,3 +271,5 @@ OutputTester.prototype = {
         }
     }
 };
+
+export default OutputTester;

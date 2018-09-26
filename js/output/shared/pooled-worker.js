@@ -1,4 +1,4 @@
-var PooledWorker = function(filename, onExec) {
+const PooledWorker = function(filename, onExec) {
     this.pool = [];
     this.curID = 0;
     this.filename = filename;
@@ -48,3 +48,5 @@ PooledWorker.prototype.kill = function() {
     }, this);
     this.pool = [];
 };
+
+export default PooledWorker;

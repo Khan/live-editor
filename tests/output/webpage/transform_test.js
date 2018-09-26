@@ -1,3 +1,5 @@
+import LoopProtector from "../../../js/output/shared/loop-protect.js";
+
 /*
  * In these tests I strip all spacing to avoid brittleness
  * It shouldn't affect the outcoume of the tests
