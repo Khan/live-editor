@@ -1,50 +1,53 @@
+// TODO(benkraft): These tests assert about what comes out of the iframe.
+// Instead they should probably assert about what we actually display to the
+// user.
 describe("Scratchpad Output - BabyHint checks", function() {
     /* Baby Hint errors */
     assertTest({
         title: "Misspelling a function name",
-        reason: "reect is not defined. Maybe you meant to type rect, or you\'re using a variable you didn\'t define.",
+        reason: "\"reect\" is not defined. Maybe you meant to type \"rect\", or you\'re using a variable you didn\'t define.",
         babyhint: true,
         code: "reect(20, 20, 10, 20);"
     });
 
     assertTest({
         title: "Using wrong capitalization",
-        reason: "noSTROKE is not defined. Maybe you meant to type noStroke, or you\'re using a variable you didn\'t define.",
+        reason: "\"noSTROKE\" is not defined. Maybe you meant to type \"noStroke\", or you\'re using a variable you didn\'t define.",
         babyhint: true,
         code: "noSTROKE();"
     });
 
     assertTest({
         title: "Using wrong capitalization and misspelling",
-        reason: "noStrokee is not defined. Maybe you meant to type noStroke, or you\'re using a variable you didn\'t define.",
+        reason: "\"noStrokee\" is not defined. Maybe you meant to type \"noStroke\", or you\'re using a variable you didn\'t define.",
         babyhint: true,
         code: "noStrokee();"
     });
 
     assertTest({
         title: "Mispelling with too many letters",
-        reason: "reeeect is not defined. Make sure you're spelling it correctly and that you declared it.",
+        reason: "\"reeeect\" is not defined. Make sure you're spelling it correctly and that you declared it.",
         babyhint: true,
         code: "reeeect();"
     });
 
     assertTest({
         title: "Leaving off last parantheses in function call",
-        reason: "It looks like you are missing a ) - does every ( have a corresponding closing )?",
+        reason: "It looks like you are missing a \")\" - does every \"(\" have a corresponding closing \")\"?",
         babyhint: true,
         code: "rect(80,70,60,240);\nrect("
     });
 
     assertTest({
         title: "Leaving off last parantheses in if statement",
-        reason: "It looks like you are missing a ) - does every ( have a corresponding closing )?",
+        reason: "It looks like you are missing a \")\" - does every \"(\" have a corresponding closing \")\"?",
         babyhint: true,
         code: "if(\n"
     });
 
     assertTest({
         title: "Syntax error on line that has a keyword that looks like another keyword",
-        reason: "I thought you were going to type { but you typed y.",
+        reason: "I thought you were going to type \"{\" but you typed \"y\".",
         babyhint: true,
         code: "var y;\nif(true)\ny=random(0,10);"
     });
@@ -58,7 +61,7 @@ describe("Scratchpad Output - BabyHint checks", function() {
 
     assertTest({
         title: "Spelling error that should match lowercase version instead of uppercase",
-        reason: "rainbo is not defined. Maybe you meant to type rainbow, or you\'re using a variable you didn\'t define.",
+        reason: "\"rainbo\" is not defined. Maybe you meant to type \"rainbow\", or you\'re using a variable you didn\'t define.",
         babyhint: true,
         code: "var Rainbow = function(){};\nvar RainbowRed = new Rainbow();\nvar drawRainbow = function(rainbow){\nellipse(rainbo.x, 10, 10, 10);};"
     });
@@ -75,6 +78,35 @@ describe("Scratchpad Output - BabyHint checks", function() {
         title: "No errors should trigger inside of strings",
         babyhint: true,
         code: "var foo = \"rect()//\";"
+    });
+
+    assertTest({
+        title: "It should only trigger a single error for undefined var in for loop definition",
+        reason: "\"x\" is not defined. Make sure you're spelling it correctly and that you declared it.",
+        babyhint: true,
+        code: "for (var i = 0; i < 10; x++) { }"
+    });
+
+    assertTest({
+        title: "Missing comma should only report a single error",
+        reason: "Did you forget to add a comma between two parameters?",
+        babyhint: true,
+        code: "fill(255, 0 0);",
+        count: 1
+    });
+
+    assertTest({
+        title: "Too many arguments",
+        reason: "\"dist()\" takes 4 or 6 parameters, not 7!",
+        babyhint: true,
+        code: "dist(30, 50, 20, 30, 50, 39, 3);"
+    });
+
+    assertTest({
+        title: "Too few arguments",
+        reason: "\"rect()\" takes 4, 5 or 8 parameters, not 3!",
+        babyhint: true,
+        code: "rect(100, 200, 300);"
     });
 });
 
@@ -293,14 +325,14 @@ describe("Scratchpad Output - JSHint syntax options", function() {
 
     assertTest({
         title: "Using undefined variable where a BabyHint spelling suggestion exists should merge the two error messages.",
-        reason: "examle is not defined. Maybe you meant to type example, or you're using a variable you didn't define.",
+        reason: "\"examle\" is not defined. Maybe you meant to type \"example\", or you're using a variable you didn't define.",
         babyhint: true,
         code: "var example = 100;\nexamle = 30;"
     });
 
     assertTest({
         title: "Using undefined variable where a BabyHint spelling suggestion exists for another variable shouldn't merge anything.",
-        reason: "x is not defined. Make sure you're spelling it correctly and that you declared it.",
+        reason: "\"x\" is not defined. Make sure you're spelling it correctly and that you declared it.",
         babyhint: true,
         code: "x=0;\nvar example = 100;\nexamle = 30;"
     });
@@ -318,7 +350,7 @@ describe("Scratchpad Output - Error report pattern checks", function() {
 
     allErrorsTest({
         title: "Different errors on same line are still reported sepearately",
-        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it.", 
+        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it.",
             "\"j\" is not defined. Make sure you're spelling it correctly and that you declared it."],
         jshint: true,
         code: "for (i = 0, j = 0; i * j < 100; i++, j++) {}"
@@ -326,7 +358,7 @@ describe("Scratchpad Output - Error report pattern checks", function() {
 
     allErrorsTest({
         title: "Same error on different lines are still reported separately",
-        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it.", 
+        reasons: ["\"i\" is not defined. Make sure you're spelling it correctly and that you declared it.",
             "\"i\" is not defined. Make sure you're spelling it correctly and that you declared it."],
         jshint: true,
         code: "for (i = 0; i < 10; i++) {} \n i = 4;"

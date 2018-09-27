@@ -71,16 +71,15 @@
     font-size: 14px;
     font-weight: bold;
     position: absolute;
-    right: 7px;
+    left: 7px;
 }
 .tipbar .text-wrap .show-me a:hover {
     color: #678D00;
     text-decoration: underline;
 }
 .tipbar .tipnav {
+    right: 7px;
     position: absolute;
-    right: 10px;
-    top: 4px;
 }
 .tipbar .tipnav a {
     background: rgba(255, 255, 255, 0.2);
@@ -111,6 +110,13 @@
 }
 .tipbar .tipnav a .ui-icon.ui-icon-circle-triangle-e {
     background-position: -48px -192px;
+}
+.tipbar .close {
+    background-color: transparent;
+    border: none;
+    color: black;
+    float: right;
+    text-shadow: 0 1px 0 #CDCDCD;
 }
 .tipbar .text a {
     text-decoration: underline;
@@ -166,6 +172,14 @@
     display: none;
 }
 
+.scratchpad-wrap.no-output .scratchpad-canvas-wrap {
+    display: none;
+}
+
+.scratchpad-wrap.no-output .scratchpad-editor-wrap {
+    margin-right: 0;
+}
+
 .scratchpad-wrap .scratchpad-canvas-wrap {
     float: right;
 }
@@ -201,9 +215,26 @@
     margin-right: 5px;
 }
 
-.scratchpad-wrap .scratchpad-toolbar .simple-button.pull-left {
+.scratchpad-wrap .scratchpad-toolbar .simple-button.pull-right {
     float: right;
     margin-left: 5px;
+}
+
+.scratchpad-wrap .error-buddy-resting {
+    color: #4A7040;
+    display: inline-block;
+    height: 35px;
+    position: relative;
+    white-space: nowrap;
+}
+.scratchpad-wrap .error-buddy-resting .error-buddy-happy,
+.scratchpad-wrap .error-buddy-resting .error-buddy-thinking {
+    position: absolute;
+    text-decoration: none;
+}
+.scratchpad-wrap .error-buddy-resting img {
+    height: 35px;
+    vertical-align: middle;
 }
 
 .scratchpad-editor-bigplay-button,
@@ -226,7 +257,7 @@
     font-size: 66px;
     line-height: 1em;
     opacity: .7;
-    padding: 20px 13px 20px 40px;
+    padding: 18px 23px 18px 31px;
 }
 
 .scratchpad-editor-bigplay-button:hover {
@@ -245,9 +276,9 @@
     background: #F5F3E5;
 }
 
-/* Otherwise, the tooltip (for assertEqual) is cut off */
 .scratchpad-ace-editor .ace_tooltip {
-    max-width: 550px;
+    max-width: 550px; /* Ensures tooltip isn't cut off */
+    white-space: normal; /* Allows multi-lines to wrap */
 }
 
 .scratchpad-ace-editor .ace_problem_line {
@@ -275,6 +306,12 @@
 .scratchpad-ace-editor .ace_line {
     direction: ltr;
     unicode-bidi: bidi-override;
+}
+
+.scratchpad-editor .textarea-editor {
+    font-size: 16px;
+    height: 100%;
+    width: 100%;
 }
 
 .scratchpad-playbar {
@@ -326,7 +363,7 @@
 }
 
 .scratchpad-playbar .loading-msg {
-    background: url(../images/throbber.gif) no-repeat 7px center;
+    background: url(../images/spinner.gif) no-repeat 7px center;
     line-height: 30px;
     padding-left: 30px;
 }

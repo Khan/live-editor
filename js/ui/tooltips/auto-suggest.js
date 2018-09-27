@@ -5,14 +5,33 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
         this.parent = options.parent;
         this.render();
         this.bind();
+        this.mouse = false;
+        
+        document.addEventListener("mousedown", () => {
+            this.mouse = true;
+        });
+        document.addEventListener("mouseup", () => {
+            this.mouse = false;
+        });
     },
 
     detector: function(event) {
-        if (!/(\b[^\d\W][\w]*)\s*\(\s*([^\)]*)$/.test(event.pre) || this.parent.options.record.playing) {
+        // TODO: update this to support auto-suggest tooltip for inner functions passed as params
+        // this currently only allows displaying of the tooltip for the outside function, except in cases
+        // where the inner function uses one of the other tooltips (e.g. image-picker)
+        if (!/(\b[^\d\W][\w]*)\s*(\({1}\s*\){1})*\s*([^\]]*)$/.test(event.pre)
+            || this.parent.options.record.playing) {
+            return;
+        }
+        if (!this.isInParenthesis(RegExp.$3)) {
+            return;
+        }
+        if (event.source && event.source.type === "changeCursor" && this.mouse) {
+            // ignore changeCursor events when the mouse button is down
             return;
         }
         var functionCall = RegExp.$1;
-        var paramsToCursor = RegExp.$2;
+        var paramsToCursor = RegExp.$3;
         var lookupParams = ScratchpadAutosuggest.lookupParamsSafeHTML(functionCall, paramsToCursor);
         if (lookupParams) {
             this.aceLocation = {
@@ -34,8 +53,6 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
     },
 
     bind: function() {
-        var over = false;
-        var down = false;
         this.$el.on("mousedown", function() {
             this.$el.hide();
             this.options.editor.focus();

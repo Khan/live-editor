@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mocha Test Runner</title>
+        <link rel="stylesheet" href="../../../node_modules/mocha/mocha.css">
+    </head>
+    <body>
+        <div id="mocha"></div>
+        <div id="output-area"></div>
+        <script src="../../../build/js/live-editor.core_deps.js"></script>
+        <script src="../../../build/js/live-editor.shared.js"></script>
+        <script src="../../../build/js/live-editor.output.js"></script>
+        <script src="../../../build/js/live-editor.output_pjs_deps.js"></script>
+        <script src="../../../build/js/live-editor.output_pjs.js"></script>
+        <script src="../../../node_modules/mocha/mocha.js"></script>
+        <script src="../../../node_modules/expect.js/index.js"></script>
+        <script src="../../../node_modules/sinon/pkg/sinon.js"></script>
+        <script src="../../../testutil/json-reporter.js"></script>
+        <script src="test_utils.js"></script>
+        <script src="../../shared_utils.js"></script>
+        <script>
+            runTestFiles([
+                "assert_test.js",
+                "ast_transform_test.js",
+                "async_test.js",
+                "jshint_test.js",
+                "output_test.js",
+            ]);
+        </script>
+    </body>
+</html>

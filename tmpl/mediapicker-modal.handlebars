@@ -23,7 +23,7 @@
                     data-update-path="{{../../../imagesDir}}{{../groupName}}/{{this}}.png"
                     data-preview-path="{{../../../imagesDir}}{{../groupName}}{{../thumbsDir}}/{{this}}.png"
                     data-path="{{../groupName}}/{{this}}">
-                    <div class="thumb-shell"><img src="/images/throbber.gif" data-lazy-src="{{../../../imagesDir}}{{../groupName}}{{../thumbsDir}}/{{this}}.png"/></div>
+                    <div class="thumb-shell"><img src="{{../../../imagesDir}}spinner.gif" data-lazy-src="{{../../../imagesDir}}{{../groupName}}{{../thumbsDir}}/{{this}}.png"/></div>
                     <span>{{this}}</span>
                 </div>
                 {{/each}}
@@ -57,7 +57,7 @@
     </div>
 
     <div class="mediapicker-modal-footer">
-      <button type="button" class="simple-button" data-dismiss="modal">{{#_}}Close{{/_}}</button>
-      <button type="button" class="simple-button green mediapicker-modal-submit" data-dismiss="modal">{{#_}}Ok{{/_}}</button>
+      <button type="button" class="simple-button" data-dismiss="modal">{{closeMsg}}</button>
+      <button type="button" class="simple-button green mediapicker-modal-submit" data-dismiss="modal">{{okMsg}}</button>
     </div>
 </div>

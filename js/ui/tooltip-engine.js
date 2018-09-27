@@ -2,6 +2,7 @@ window.TooltipEngine = Backbone.View.extend({
     initialize: function(options) {
         this.options = options;
         this.editor = options.editor;
+        this.enabled = true;
         var record = this.options.record;
 
         this.tooltips = {};
@@ -25,6 +26,24 @@ window.TooltipEngine = Backbone.View.extend({
                     TooltipBase.prototype.updateText.call(this.currentTooltip, e.hot);
                 }
             }.bind(this);
+
+            // disable autofill when playback or seeking has started
+            ["playStarted", "runSeek"].forEach(function(event) {
+                record.on(event, function() {
+                    _.values(this.tooltips).forEach(function(tooltip) {
+                        tooltip.autofill = false;
+                    });
+                }.bind(this));
+            }, this);
+
+            // enable autofill when playback or seeking has stopped
+            ["playPaused", "playStopped", "seekDone"].forEach(function(event) {
+                record.on(event, function() {
+                    _.values(this.tooltips).forEach(function(tooltip) {
+                        tooltip.autofill = true;
+                    });
+                }.bind(this));
+            }, this);
         }
 
         this.currentTooltip = undefined;
@@ -56,7 +75,9 @@ window.TooltipEngine = Backbone.View.extend({
             target: this.editor.session.getDocument(),
             event: "change",
             fn: function(e) {
-                this.doRequestTooltip(e.data);
+                if (this.enabled) {
+                    this.doRequestTooltip(e.data);
+                }
             }.bind(this)
         }, {
             target: this.editor.session,
@@ -88,16 +109,24 @@ window.TooltipEngine = Backbone.View.extend({
             cb.target.on(cb.event, cb.fn);
         });
 
-        
+
         this.requestTooltipDefaultCallback = function() {  //Fallback to hiding
-            ScratchpadAutosuggest.enableLiveCompletion(true);
+            // We are disabling autosuggest for now until issue #408 is fixed
+            // We may also consider doing A/B tests with partial lists of
+            // commands in the autocomplete to new programmers
+            ScratchpadAutosuggest.enableLiveCompletion(false);
             if (this.currentTooltip && this.currentTooltip.$el) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
             }
         }.bind(this);
 
-        this.editor.on("requestTooltip", this.requestTooltipDefaultCallback);   
+        // Sets the live completion status to whatever value is passed in.
+        this.setEnabledStatus = function(status) {
+            this.enabled = status;
+        }.bind(this);
+
+        this.editor.on("requestTooltip", this.requestTooltipDefaultCallback);
     },
 
     remove: function() {
@@ -107,7 +136,7 @@ window.TooltipEngine = Backbone.View.extend({
         _.each(this.tooltips, function(tooltip) {
             tooltip.remove();
         });
-        
+
         this.editor.off("requestTooltip", this.requestTooltipDefaultCallback);
     },
 
@@ -115,6 +144,7 @@ window.TooltipEngine = Backbone.View.extend({
         if (this.ignore) {
             return;
         }
+
         this.last = this.last || {};
 
         var selection = this.editor.selection;
@@ -136,12 +166,17 @@ window.TooltipEngine = Backbone.View.extend({
             return false;
         }
         if (this.isWithinComment(params.pre)){
+            // if selected text is within a comment, hide current tooltip (if any) and return
+            if (this.currentTooltip) {
+                this.currentTooltip.$el.hide();
+                this.currentTooltip = undefined;
+            }
             return false;
         }
         this.last = params;
 
         this.editor._emit("requestTooltip", params);
-    }, 
+    },
 
     // Returns true if we're inside a comment
     // This isn't a perfect check, but it is close enough.
@@ -158,24 +193,24 @@ TooltipEngine.classes = {};
   *
   * Every Tooltip has the following major parts:
   * - initialize(), just accepts options and then tries to attach
-  *   the html for the tooltip by callin render() and bind() as required
-  * 
+  *   the html for the tooltip by calling render() and bind() as required
+  *
   * - render() and bind() to set up the HTML
-  * 
-  * - A detector function. The detector functions are all bound to the 
-  *   requestTooltip event in their respective bind() method. They receive an event with 
-  *   information about where the cursor is and whether it got there because of a click, 
-  *   selection character added, etc. It chooses to either load its tooltip or let the 
+  *
+  * - A detector function. The detector functions are all bound to the
+  *   requestTooltip event in their respective bind() method. They receive an event with
+  *   information about where the cursor is and whether it got there because of a click,
+  *   selection character added, etc. It chooses to either load its tooltip or let the
   *   event keep bubbling
   *   > The detector function also sets aceLocation, which saves what portion of the
   *     text the selector is active for.
-  *   
-  * - updateText replaces whatever text is specified by the aceLocation 
+  *
+  * - updateText replaces whatever text is specified by the aceLocation
   *   with the new text. It is common for tooltips to override this function
-  *   so that they can accept a value in a different format, make it into a string 
+  *   so that they can accept a value in a different format, make it into a string
   *   and then pass the formatted value back to the function defined in TooltipBase
   *   to do the actual replace
-  * 
+  *
   * - placeOnScreen which determines where the HTML needs to be moved to in order
   *   for it to show up on by the cursor. This also pulls information from aceLocation
   *
@@ -208,7 +243,6 @@ window.TooltipBase = Backbone.View.extend({
 
         var editor = parent.editor;
         var loc = this.aceLocation;
-        var pos = editor.selection.getCursor();
         var editorBB = editor.renderer.scroller.getBoundingClientRect();
         var editorHeight = editorBB.height;
         if (typeof loc.tooltipCursor !== "number") {
@@ -225,7 +259,17 @@ window.TooltipBase = Backbone.View.extend({
             .toggle(!(relativePos < 0 || relativePos >= editorHeight));
     },
 
-    updateText: function(newText, customSelection) {
+    // Third parameter, if true, tells ACE not to remember this update in the undo chain. Useful in
+    // number-scrubbing.
+    // THIS IS A PROBLEMATIC HACK.
+    //  - If the undo chain and the editor's text are left in an inconsistent state, then
+    //     future undo's will change the wrong text. I (ChrisJPhoenix) think this just means you need to
+    //     put the editor's text back the way it was before letting anything else happen.
+    //     This causes problems if the user hits the keyboard in the middle of a number-scrub: undo
+    //     won't put things back correctly. Thus, use editor.setReadOnly(true) while using this hack.
+    //  - I use the session's $fromUndo variable to tell the editor not to save undo's. This
+    //     is undocumented. There's currently (7/25/15) a test for it in tooltips_test.js.
+    updateText: function(newText, customSelection, avoidUndo) {
         if (!this.parent || this.parent.options.record.playing) {
             return;
         }
@@ -238,7 +282,17 @@ window.TooltipBase = Backbone.View.extend({
         var loc = this.aceLocation;
         var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
 
+        // We probably could just set it to false when we're done, but someone else might
+        // be trying a similar hack, or... who knows?
+        var undoState;
+        if (avoidUndo) {
+            undoState = editor.session.$fromUndo;
+            editor.session.$fromUndo = true;
+        }
         editor.session.replace(range, newText);
+        if (avoidUndo) {
+            editor.session.$fromUndo = undoState;
+        }
 
         range.end.column = range.start.column + newText.length;
         if (customSelection) {
@@ -275,6 +329,11 @@ window.TooltipBase = Backbone.View.extend({
             }
         }
         return parenStack.length > 0;
+    },
+
+    // Returns true if we're after an `=` assignment
+    isAfterAssignment: function(text) {
+        return /(?:^|[^!=])=\s*$/.test(text);
     },
 
     // Returns true if we're inside a string

@@ -1,3 +1,4 @@
+/*jshint unused: false*/
 /* Possibly options:
  *  code: First code to run
  *  code2: Code to run after
@@ -28,18 +29,6 @@ var runTest = function(options) {
     var displayTitle = options.title +
         " (Version: " + options.version + ")";
 
-    var getCodeFromOptions = function(code) {
-        // Assume the code is a string, by default
-        // If not then we assume that it's a function so we need to
-        // extract the code to run from the serialized function
-        if (code && typeof code !== "string") {
-            code = code.toString();
-            code = code.substr(code.indexOf("{") + 1);
-            code = code.substr(0, code.length - 1);
-        }
-        return code;
-    };
-
     var code1 = getCodeFromOptions(options.code);
     var code2 = getCodeFromOptions(options.code2);
 
@@ -50,7 +39,7 @@ var runTest = function(options) {
     } else if (options.only) {
         itFunc = it.only;
     }
- 
+
     itFunc(displayTitle, function(done) {
         var output = new LiveEditorOutput({
             outputType: "pjs",
@@ -59,7 +48,10 @@ var runTest = function(options) {
             imagesDir: "../../../build/images/",
             soundsDir: "../../../sounds/",
             jshintFile: "../../../build/external/jshint/jshint.js",
-            useDebugger: useDebugger
+            loopProtectTimeouts: {
+                initialTimeout: 1000,
+                frameTimeout: 500
+            },
         });
 
         // Switch to the Scratchpad's version
@@ -104,20 +96,6 @@ var runTest = function(options) {
             }
         };
 
-        // Theoretically, jQuery.mouseup should work, but it wasn't working
-        //  for me across PhantomJS/browser, and this does.
-        var simulateClick = function() {
-            var ev = document.createEvent("MouseEvent");
-            ev.initMouseEvent(
-                "mouseup",
-                true, true,
-                window, null,
-                0, 0, 0, 0,
-                false, false, false, false,
-                0, null
-            );
-            output.output.$canvas[0].dispatchEvent(ev);
-        };
 
         // Run once to make sure that no errors are thrown
         // during execution
@@ -131,14 +109,14 @@ var runTest = function(options) {
 
             checkErrors(options.errors, errors);
             checkAssertions(options.assertions, output.results.assertions);
-            options.simulateClick && simulateClick();
+            options.simulateClick && simulateClick(output);
 
             if (code2) {
                 output.runCode(code2, function(errors) {
                     checkErrors(options.errors2, errors);
                     checkAssertions(options.assertions2,
                         output.results.assertions);
-                    options.simulateClick && simulateClick();
+                    options.simulateClick && simulateClick(output);
 
                     finishTest(done, output, options);
                 });
@@ -181,6 +159,9 @@ var assertTest = function(options) {
                     .to.be.equal(options.reason);
             } else {
                 expect(errors).to.not.equal([]);
+                if (options.count) {
+                    expect(errors.length).to.equal(options.count);
+                }
                 if (options.jshint) {
                     expect(errors[0].lint).to.be.ok();
                     expect(errors[0].lint.reason)
@@ -255,11 +236,34 @@ var failingTest = function(title, code, code2, errors) {
     });
 };
 
-var assertEqualTest = function(title, code, assertions) {
-    runTest({title: options.title, code: code, assertions: assertions});
-};
-
 var supportsMpegAudio = function() {
     var a = document.createElement('audio');
     return !!(a.canPlayType && a.canPlayType('audio/mpeg;').replace(/no/, ''));
+};
+
+var getCodeFromOptions = function(code) {
+    // Assume the code is a string, by default
+    // If not then we assume that it's a function so we need to
+    // extract the code to run from the serialized function
+    if (code && typeof code !== "string") {
+        code = code.toString();
+        code = code.substr(code.indexOf("{") + 1);
+        code = code.substr(0, code.length - 1);
+    }
+    return code;
+};
+
+var simulateClick = function(output) {
+    output.output.$canvas.mouseup();
+};
+
+var createLiveEditorOutput = function() {
+    return new LiveEditorOutput({
+        outputType: "pjs",
+        workersDir: "../../../build/workers/",
+        externalsDir: "../../../build/external/",
+        imagesDir: "../../../build/images/",
+        soundsDir: "../../../sounds/",
+        jshintFile: "../../../build/external/jshint/jshint.js"
+    });
 };

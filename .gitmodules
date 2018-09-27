@@ -15,7 +15,7 @@
 	url = https://github.com/Khan/structuredjs
 [submodule "external/processing-js"]
 	path = external/processing-js
-	url = https://github.com/kevinb7/processing-js
+	url = https://github.com/Khan/processing-js
 [submodule "external/escodegen"]
 	path = external/escodegen
 	url = https://github.com/Khan/escodegen

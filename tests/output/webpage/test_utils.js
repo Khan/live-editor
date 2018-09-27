@@ -53,6 +53,8 @@ var runTest = function(options) {
                             expect(errors[0].text)
                                 .to.be.equal(options.errors[0].text);
                         }
+                    } else if (options.warnings) {
+                        checkWarnings(options.warnings, output.results.warnings);
                     }
                 }
 
@@ -65,7 +67,7 @@ var runTest = function(options) {
                     }
                 } else {
                     done();
-                }   
+                }
             } catch (e) {
                 done(e);
             }
@@ -97,16 +99,42 @@ var failingTest = function(title, code, errors) {
     });
 };
 
+var warningTest = function(title, code, warnings) {
+    if (typeof code === "object") {
+        code.forEach(function(userCode, i) {
+            warningTest(title, userCode, warnings[i]);
+        });
+        return;
+    }
+
+    runTest({
+        title: title,
+        code: code,
+        warnings: warnings
+    });
+}
+
 var assertTest = function(options) {
     options.test = function(output, errors, testResults, callback) {
-        if (!options.reason) {
-            expect(errors.length).to.be.equal(0);
-        } else {
-            if (options.fromTests) {
+        // If the test is checking the results from validation tests:
+        if (options.fromTests) {
+            if (!options.reason) {
+                expect(errors.length).to.be.equal(0);
+                expect(testResults).to.not.equal([]);
+                expect(testResults[0].state).to.not.equal("fail");
+            } else {
                 expect(testResults).to.not.equal([]);
                 expect(testResults[0].state).to.be.equal("fail");
-                expect(testResults[0].results[0].meta.alsoMessage)
-                    .to.be.equal(options.reason);
+                // If specific reason given, verify it matches:
+                if (options.reason !== "fail") {
+                    expect(testResults[0].results[0].meta.alsoMessage)
+                        .to.be.equal(options.reason);
+                }
+            }
+        } else {
+            // Otherwise, the test is checking results from lint errors:
+            if (!options.reason) {
+                expect(errors.length).to.be.equal(0);
             } else {
                 expect(errors).to.not.equal([]);
                 if (options.lint) {
@@ -114,14 +142,27 @@ var assertTest = function(options) {
                     expect(errors[0].lint.reason)
                         .to.be.equal(options.reason);
                 } else {
-                    var $html = $("<div>" + errors[0].text + "</div>");
-                    expect($html.text()).to.be.equal(options.reason);
+                    // Strip HTML tags from message before comparing them
+                    const errorDiv = document.createElement("div");
+                    errorDiv.innerHTML = errors[0].text;
+                    expect(errorDiv.innerText).to.be.equal(options.reason);
                 }
             }
         }
         callback();
     };
     runTest(options);
+};
+
+// Used to check warnings
+var checkWarnings = function(expectedWarnings, outputWarnings) {
+    if (expectedWarnings !== undefined) {
+        expect(outputWarnings.length).to.be.equal(
+            expectedWarnings.length);
+        for (var i = 0; i < expectedWarnings.length; i++) {
+            expect(outputWarnings[i].text).to.be.equal(expectedWarnings[i]);
+        }
+    }
 };
 
 var isFirefox = function() {

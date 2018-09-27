@@ -9,14 +9,20 @@ window.TipBar = Backbone.View.extend({
     initialize: function(options) {
         this.liveEditor = options.liveEditor;
         this.pos = 0;
-        this.texts = [];
+        this.errors = [];
         this.render();
         this.bind();
     },
 
     render: function() {
         this.$overlay = $("<div class=\"overlay error-overlay\" style=\"display: none\"></div>").appendTo(this.$el);
-        this.$el.append(Handlebars.templates["tipbar"]());
+        this.$el.append(Handlebars.templates["tipbar"]({
+            ohNoesMsg: i18n._("Oh noes!"),
+            showMeMsg: i18n._("Show me where"),
+            prevMsg: i18n._("Previous error"),
+            nextMsg: i18n._("Next error"),
+        }));
+        this.$bar = this.$el.find(".tipbar");
     },
 
     bind: function() {
@@ -34,7 +40,7 @@ window.TipBar = Backbone.View.extend({
         this.$el.on("click", ".tipbar .tipnav a", function(e) {
             if (!$(this).hasClass("ui-state-disabled")) {
                 self.pos += $(this).hasClass("next") ? 1 : -1;
-                self.show();
+                self.update();
             }
 
             self.liveEditor.editor.focus();
@@ -42,62 +48,74 @@ window.TipBar = Backbone.View.extend({
             return false;
         });
 
-        this.$el.on("click", ".tipbar .text-wrap a", function(e) {
-            var error = self.texts[self.pos];
+        this.$el.on("click", ".tipbar .show-me a", function(e) {
+            e.preventDefault();
 
+            var error = self.errors[self.pos];
             self.liveEditor.editor.setCursor(error);
             self.liveEditor.editor.setErrorHighlight(true);
 
             return false;
         });
+
+        this.$el.on("click", ".tipbar .close", function(e) {
+            self.liveEditor.setThinkingState();
+        });
+
     },
 
-    show: function(texts) {
-        if (texts) {
-            this.pos = 0;
-            this.texts = texts;
-        } else {
-            texts = this.texts;
-        }
+    setErrors: function(errors) {
+        this.errors = errors;
+        this.update(false);
+    },
 
+    update: function(show) {
+        if (!this.errors.length) return;
 
-        var pos = this.pos;
-        var bar = this.$el.find(".tipbar");
+        var errors = this.errors;
+        var pos = errors[this.pos] == null ? 0 : this.pos;
 
         // Inject current text
-        bar
-            .find(".current-pos").text(texts.length > 1 ? (pos + 1) + "/" + texts.length : "").end()
-            .find(".message").html(texts[pos].text || texts[pos] || "").end()
+        this.$bar
+            .find(".current-pos").text(errors.length > 1 ? (pos + 1) + "/" + errors.length : "").end()
+            .find(".message").html(errors[pos].text || errors[pos] || "").end()
             .find("a.prev").toggleClass("ui-state-disabled", pos === 0).end()
-            .find("a.next").toggleClass("ui-state-disabled", pos + 1 === texts.length).end();
-        
+            .find("a.next").toggleClass("ui-state-disabled", pos + 1 === errors.length).end();
+
         // it could be undefined, null, or -1
-        this.$el.find(".show-me").toggle(texts[pos].row > -1);
+        this.$el.find(".show-me").toggle(errors[pos].row > -1);
 
-        bar.find(".tipnav").toggle(texts.length > 1);
-
-        bar.show();
+        this.$bar.find(".tipnav").toggle(errors.length > 1);
+        if (show) {
+            this.$overlay.show();
+            this.$bar.show();
+        }
     },
 
     hide: function() {
-        var bar = this.$el.find(".tipbar");
-        bar.hide();
+        this.$bar.hide();
+        this.$overlay.hide();
         clearTimeout(this.errorDelay);
     },
 
-    toggleErrors: function(errors) {
-        var hasErrors = !!errors.length;
-
-        this.$overlay.toggle(hasErrors);
-
+    toggleErrors: function(errors, delay) {
+        var hasErrors = errors.length > 0;
         if (!hasErrors) {
             this.hide();
             return;
         }
 
+        this.$overlay.show();
+        this.setErrors(errors);
+
         clearTimeout(this.errorDelay);
-        this.errorDelay = setTimeout( function() {
-            this.show(errors);
-        }.bind(this), 1500);
+        this.errorDelay = setTimeout(function() {
+            this.update(true);
+        }.bind(this), delay);
+    },
+
+    setErrorPosition: function(errorPos) {
+        this.pos = errorPos;
+        this.update(true);
     }
 });

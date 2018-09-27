@@ -1,5 +1,14 @@
+// TODO(kevinb) remove after challenges have been converted to use i18n._
+$._ = i18n._;
+
 describe("Challenge Assertions - HTML", function() {
     var divTest = (function() {
+
+        var syntaxChecks = [{
+            re: /<p>\w*<h1>\w*<\/h1>\w*<\/p>/,
+            msg: "No h1 inside p!"
+        }];
+
         staticTest("Put a div in your page.", function() {
             var pattern = "#foo div";
             var result = htmlMatch(pattern);
@@ -9,9 +18,17 @@ describe("Challenge Assertions - HTML", function() {
                 }
             }
             var descrip = "Add a div element to your page. Put it inside the element with an id of 'foo'.";
-            assertMatch(result, descrip, pattern);
+            assertMatch(result, descrip, pattern, null, syntaxChecks);
         });
     }).toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
+
+    assertTest({
+        title: "Getting a syntax error",
+        code: "<div id='foo'><div><p><h1>hi</h1></p></div></div>",
+        validate: divTest,
+        fromTests: false,
+        reason: "No h1 inside p!"
+    });
 
     assertTest({
         title: "Checking a div in the wrong place",
@@ -25,20 +42,30 @@ describe("Challenge Assertions - HTML", function() {
         title: "Failing to complete any step",
         code: "<span></span>",
         validate: divTest,
-        fromTests: true
+        fromTests: true,
+        reason: "fail"
+    });
+
+    assertTest({
+        title: "Failing to complete any step",
+        code: "<span></span>",
+        validate: divTest,
+        fromTests: true,
+        reason: "fail"
     });
 
     assertTest({
         title: "Getting a Slowparse syntax error",
         code: "<div></div",
         validate: divTest,
-        reason: "It looks like your closing </div> tag doesn\'t end with a >."
+        reason: "It looks like your closing \"</div>\" tag doesn\'t end with a \">\"."
     });
 
     assertTest({
         title: "Doing the step with no errors",
         code: "<p id='foo'><div></div></p>",
-        validate: divTest
+        validate: divTest,
+        fromTests: true
     });
 });
 
@@ -58,7 +85,8 @@ describe("Challenge Assertions - HTML Scripting", function() {
         title: "Scripting Works",
         code: "<div><script>window.x = 4;</script></div>",
         validate: xTest,
-    }); 
+        fromTests: true,
+    });
 
     assertTest({
         title: "Scripting Test fails",
@@ -66,6 +94,69 @@ describe("Challenge Assertions - HTML Scripting", function() {
         validate: xTest,
         fromTests: true,
         reason: "Did you set x to 4?"
+    });
+
+    var jQueryTest = (function() {
+        var jQueryC = constraint(function($jQuery) {
+            return $jQuery.name === "$" || $jQuery.name === "jQuery";
+        });
+
+        staticTest($._("Animate the image"), function() {
+            var result = null;
+            var descrip = $._("This webpage displays an avatar's image and name (Aqualine!). In this first step, use jQuery's `animate` function to make Aqualine grow larger.\nTip: Try using a CSS 'descendant selector' to select the image.");
+            var displayP = "_.animate(...);";
+
+            var match1P = function() {
+                $jQuery($selector).animate({
+                    $prop: $propVal
+                }, $delay);
+            };
+
+            var match2P = function() {
+                $jQuery($selector).animate({
+                    $prop: $propVal
+                });
+            };
+
+            var selectorC = constraint(function($selector) {
+                return $selector.value === ".avatar img" || $selector.value === "img";
+            });
+
+            var usedIdC = constraint(function($selector) {
+                return $selector.value && $selector.value.indexOf('#') === 0;
+            });
+
+            var propC = constraint(function($prop) {
+                return ($prop.type === "Identifier" && ($prop.name === "width" || $prop.name === "height"))
+                    || ($prop.type === "Literal" &&  ($prop.value === "width" || $prop.value === "height"));
+            });
+
+            var propValC = constraint(function($propVal) {
+                return $propVal && $propVal.value && $propVal.value > 150;
+            });
+            var matchP = firstMatchingPattern([match1P, match2P]);
+            result = match(structure(matchP, jQueryC));
+
+            if (passes(result)) {
+                if (matches(structure(matchP, usedIdC))) {
+                    result = fail($._("It looks like you're selecting by ID. Can you try selecting using the parent element's class name and a descendant selector instead?"));
+                } else if (!matches(structure(matchP, selectorC))) {
+                    result = fail($._("Hm, how are you selecting the image? The selector doesn't look like what I expected."));
+                } else if (!matches(structure(matchP, propC))) {
+                    result = fail($._("What property are you animating? To change the size, you should animate the `width` or the `height`."));
+                } else if (!matches(structure(matchP, propValC))) {
+                    result = fail($._("Are you making it bigger than it started?"));
+                }
+            }
+            assertMatch(result, descrip, displayP);
+        });
+    }).toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
+
+    assertTest({
+        title: "jQuery scripting works",
+        code: '<div><script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script><script>$("img").animate({width:500});</script></div>',
+        validate: jQueryTest,
+        fromTests: true
     });
 });
 
@@ -84,20 +175,23 @@ describe("scriptTest tests", function() {
         title: "scriptTest reports success for matching code",
         code: "<div><script>var x = 4;</script></div>",
         validate: xTest,
-    }); 
+    });
 
     assertTest({
         title: "scriptTest reports failure for not matching code",
         code: "<div></div>",
         validate: xTest,
-        fromTests: true
+        fromTests: true,
+        reason: "fail"
     });
 
     assertTest({
         title: "scriptTest reports failure for not matching code",
         code: "<div><script>var y = 4;</script></div>",
         validate: xTest,
-    }); 
+        fromTests: true,
+        reason: "fail"
+    });
 });
 
 describe("CSS selector matching with wildcards", function() {
@@ -267,12 +361,12 @@ describe("Full CSS matching with wildcards", function() {
         css: "h1 { color: (0, 10, 20); }",
         callbacks: 'isValidColor("$1")'
     }, {
-        res: true, 
+        res: true,
         title: "Concatenating multiple stylesheets",
         pat: "h1{color: red} h2{color: black}",
-        html: "<style>h1{color: red}</style><style>h2{color: black}</style>", 
+        html: "<style>h1{color: red}</style><style>h2{color: black}</style>",
     }, {
-        res: false, 
+        res: false,
         title: "Later styles override earlier styles",
         pat: "h1{color: red}",
         html: "<style>h1{color: red}</style><style>h1{color: black}</style>"

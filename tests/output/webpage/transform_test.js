@@ -38,7 +38,7 @@ describe("Test LoopProtect", function(){
         try {
             exec(loopProtector.KAInfiniteLoopProtect);
         } catch (e) {
-            expect(e).to.be.equal("KA_INFINITE_LOOP");
+            expect(e.message).to.be.equal("KA_INFINITE_LOOP");
         }
         expect(called).to.be.equal(true);
     });

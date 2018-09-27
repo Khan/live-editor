@@ -5,6 +5,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
+        this.autofill = true;
         this.render();
         this.bindToRequestTooltip();
     },
@@ -29,10 +30,11 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         };
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
 
+        // TODO(kevinb) extract this into a method on TooltipBase
         if (leadingPadding.length === 0 && path.length === 0 && this.closing.length === 0 &&
-            event.source && event.source.action === "insertText" && event.source.text.length === 1) {
+            event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.autofill) {
 
-            this.closing = ")" + (this.isInParenthesis(event.pre.slice(0, functionStart)) ? "" : ";");
+            this.closing = ")" + (this.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
             this.insert({
                 row: event.row,
                 column: pathStart
@@ -80,7 +82,9 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
             .on("click", ".image", function() {
                 $(this).parents(".mediapicker").find(".active").removeClass("active");
                 $(this).addClass("active");
-                self.updateText($(this).attr("data-path"));
+                var path = $(this).attr("data-path");
+                self.updateText(path);
+                self.updateTooltip(`"${path}"`);
             })
             .on("mouseleave", function() {
                 self.options.editor.clearSelection();

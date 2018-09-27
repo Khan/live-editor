@@ -55,7 +55,7 @@ window.AceEditor = Backbone.View.extend({
             editor: this.editor,
             record: this.record
         });
-        
+
         this.tooltipEngine.on("scrubbingStarted", function(name) {
             this.trigger("scrubbingStarted", name);
         }.bind(this));
@@ -68,6 +68,18 @@ window.AceEditor = Backbone.View.extend({
         if (this.tooltips[this.type].indexOf("autoSuggest") !== -1) {
             ScratchpadAutosuggest.init(this.editor);
         }
+
+        // Override ACE gutter tooltip positioning due to bugginess
+        ace.require("ace/tooltip").Tooltip.prototype.setPosition = function (x, y) {
+            // Calculate x & y, relative to editor & scrolled window
+            var editorOffset = $(this.$parentNode).offset();
+            var xOffset = editorOffset.left - $(window).scrollLeft();
+            var yOffset = editorOffset.top - $(window).scrollTop();
+            x -= xOffset;
+            y -= yOffset;
+            this.getElement().style.left = x + "px";
+            this.getElement().style.top = y + "px";
+        };
 
         // Make the editor vertically resizable
         if (this.$el.resizable) {
@@ -107,6 +119,10 @@ window.AceEditor = Backbone.View.extend({
         // Stop overriding Cmd/Ctrl-L. It's used to by browser to go to the
         // location bar, but ace wants to use it for go-to-line.
         this.editor.commands.removeCommand("gotoline");
+
+        // On Windows, the "fold all" hotkey conflicts with close curly brace
+        // "}" on EU keyboards. Unbind this in case we're on an EU keyboard.
+        this.editor.commands.bindKey("Alt-0", null);
 
         // Stop highlighting lines on cursor change
         this.editor.selection.addEventListener("changeCursor", function() {
@@ -391,7 +407,7 @@ window.AceEditor = Backbone.View.extend({
         var doc = this.editor.getSession().getDocument();
 
         return {
-            start: doc.positionToIndex(rng.start), 
+            start: doc.positionToIndex(rng.start),
             end: doc.positionToIndex(rng.end)
         };
     },
@@ -418,7 +434,7 @@ window.AceEditor = Backbone.View.extend({
         if (text != null) {
             this.editor.getSession().setValue(text);
         } else {
-            return this.editor.getSession().getValue().replace(/\r/g, "\n");
+            return this.editor.getSession().getValue().replace(/\r\n/g, "\n");
         }
 
         return this;
@@ -440,10 +456,6 @@ window.AceEditor = Backbone.View.extend({
                 this.setCursor({row: maxRow + 1, column: 0});
             }
         }
-    },
-
-    setReadOnly: function(state) {
-        this.editor.setReadOnly(state);
     },
 
     undo: function() {

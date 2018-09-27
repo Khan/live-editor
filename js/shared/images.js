@@ -1,5 +1,5 @@
-if (!$._) {
-    $._ = function(msg) {
+if (!i18n._) {
+    i18n._ = function(msg) {
         return msg;
     };
 }
@@ -9,22 +9,22 @@ if (!$._) {
 window.OutputImages = [
     {
         groupName: "avatars",
-        images: "leaf-blue leaf-green leaf-grey leaf-orange leaf-red leaf-yellow leafers-seed leafers-seedling leafers-sapling leafers-tree leafers-ultimate marcimus mr-pants mr-pink piceratops-seed piceratops-seedling piceratops-sapling piceratops-tree piceratops-ultimate old-spice-man orange-juice-squid aqualine-seed aqualine-seedling aqualine-sapling aqualine-tree aqualine-ultimate purple-pi questionmark robot_female_1 robot_female_2 robot_female_3 robot_male_1 robot_male_2 robot_male_3 spunky-sam".split(" ")
+        images: "aqualine-sapling aqualine-seed aqualine-seedling aqualine-tree aqualine-ultimate avatar-team duskpin-sapling duskpin-seed duskpin-seedling duskpin-tree duskpin-ultimate leaf-blue leaf-green leaf-grey leaf-orange leaf-red leaf-yellow leafers-sapling leafers-seed leafers-seedling leafers-tree leafers-ultimate marcimus marcimus-orange marcimus-purple marcimus-red mr-pants mr-pants-green mr-pants-orange mr-pants-pink mr-pants-purple mr-pants-with-hat mr-pink mr-pink-green mr-pink-orange old-spice-man old-spice-man-blue orange-juice-squid piceratops-sapling piceratops-seed piceratops-seedling piceratops-tree piceratops-ultimate primosaur-sapling primosaur-seed primosaur-seedling primosaur-tree primosaur-ultimate purple-pi purple-pi-pink purple-pi-teal questionmark robot_female_1 robot_female_2 robot_female_3 robot_male_1 robot_male_2 robot_male_3 spunky-sam spunky-sam-green spunky-sam-orange spunky-sam-red starky-sapling starky-seed starky-seedling starky-tree starky-ultimate".split(" ")
     },
     {
         groupName: "creatures",
-        images: "Hopper-Happy Hopper-Cool Hopper-Jumping OhNoes BabyWinston Winston".split(" ")
+        images: "Hopper-Happy Hopper-Cool Hopper-Jumping OhNoes OhNoes-Happy OhNoes-Hmm BabyWinston Winston".split(" ")
     },
     {
         groupName: "cute",
         images: "Blank BrownBlock CharacterBoy CharacterCatGirl CharacterHornGirl CharacterPinkGirl CharacterPrincessGirl ChestClosed ChestLid ChestOpen DirtBlock DoorTallClosed DoorTallOpen EnemyBug GemBlue GemGreen GemOrange GrassBlock Heart Key PlainBlock RampEast RampNorth RampSouth RampWest Rock RoofEast RoofNorth RoofNorthEast RoofNorthWest RoofSouth RoofSouthEast RoofSouthWest RoofWest Selector ShadowEast ShadowNorth ShadowNorthEast ShadowNorthWest ShadowSideWest ShadowSouth ShadowSouthEast ShadowSouthWest ShadowWest Star StoneBlock StoneBlockTall TreeShort TreeTall TreeUgly WallBlock WallBlockTall WaterBlock WindowTall WoodBlock".split(" "),
-        cite: $._("'Planet Cute' art by Daniel Cook (Lostgarden.com)"),
+        cite: i18n._("'Planet Cute' art by Daniel Cook (Lostgarden.com)"),
         citeLink: "http://lostgarden.com/2007/05/dancs-miraculously-flexible-game.html"
     },
     {
         groupName: "space",
         images: "background beetleship collisioncircle girl1 girl2 girl3 girl4 girl5 healthheart minus octopus planet plus rocketship star 0 1 2 3 4 5 6 7 8 9".split(" "),
-        cite: $._("'Space Cute' art by Daniel Cook (Lostgarden.com)"),
+        cite: i18n._("'Space Cute' art by Daniel Cook (Lostgarden.com)"),
         citeLink: "http://lostgarden.com/2007/03/spacecute-prototyping-challenge.html"
     }
 ];
@@ -60,7 +60,7 @@ window.ExtendedOutputImages = [
             {
                 groupName: "seasonal",
                 thumbsDir: "/thumbs",
-                images: "fireworks-2015 fireworks-in-sky fireworks-over-harbor fireworks-scattered gingerbread-family gingerbread-house gingerbread-houses gingerbread-man hannukah-dreidel hannukah-menorah house-with-lights reindeer snow-crystal1 snow-crystal2 snow-crystal3 snowy-slope-with-trees stocking-empty xmas-cookies xmas-ornament-boat xmas-ornament-on-tree xmas-ornaments xmas-presents xmas-scene-holly-border xmas-tree-with-presents xmas-tree xmas-wreath".split(" ")
+                images: "father-winston fireworks-2015 fireworks-in-sky fireworks-over-harbor fireworks-scattered gingerbread-family gingerbread-house gingerbread-houses gingerbread-man hannukah-dreidel hannukah-menorah hopper-elfer hopper-partying hopper-reindeer house-with-lights reindeer snow-crystal1 snow-crystal2 snow-crystal3 snownoes snowy-slope-with-trees stocking-empty xmas-cookies xmas-ornament-boat xmas-ornament-on-tree xmas-ornaments xmas-presents xmas-scene-holly-border xmas-tree-with-presents xmas-tree xmas-wreath".split(" ")
             }
         ]
     }

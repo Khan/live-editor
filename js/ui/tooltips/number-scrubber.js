@@ -27,9 +27,15 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
             return exp;
         }
 
-        var leftArrow = clickOnly ? "-" : "◄";
-        var rightArrow = clickOnly ? "+" : "◄";
-        var center = clickOnly ? "" : " ◆ ";
+        var baseSvg =
+            "<svg width='12px' height='12px' viewBox='-25, -25, 150, 150'>";
+
+        var leftArrow = clickOnly ? "-" : baseSvg +
+            "<polygon points='0,50 100,0 100, 100' fill='white'/></svg>";
+        var rightArrow = clickOnly ? "+" : baseSvg +
+            "<polygon points='0,50 100,0 100, 100' fill='white'/></svg>";
+        var center = clickOnly ? "" : baseSvg +
+            "<polygon points='50,0 100,50 50,100 0,50' fill='white'/></svg>";
 
         var $leftButton = $("<span role='button'>" + leftArrow + "</span>");
         var $rightButton = $("<span role='button' class='flipped-arrow'>" + rightArrow + "</span>");
@@ -68,6 +74,13 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
         var $scrubberHandle = $("<div class='scrubber-handle'/>")
             .append($leftButton).append($center).append($rightButton);
 
+        var textAtAceLocation = function() {
+            var Range = ace.require("ace/range").Range;
+            var loc = self.aceLocation;
+            var range = new Range(loc.row, loc.start, loc.row, loc.start + loc.length);
+            return self.parent.editor.getSession().getTextRange(range);
+        };
+
         if (!clickOnly) {
             $scrubberHandle.draggable({
                 axis: "x",
@@ -79,6 +92,13 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     self.$el.addClass("dragging");
                     $(this).css("visibility", "hidden");
                     self.trigger("scrubbingStarted");
+                    // The text-to-be-tweaked needs to be the same length at the start and end
+                    // of the anti-undo changes.
+                    // I could probably just remember the length, but I like putting back the
+                    // original string. (It might even matter for i18n.)
+                    self.originalString = textAtAceLocation();
+                    self.wasReadOnly = self.parent.editor.getReadOnly();
+                    self.parent.editor.setReadOnly(true);
                 },
                 drag: function(evt, ui) {
                     var thisOffset = ui.helper.offset();
@@ -88,7 +108,8 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     var exp = getExponent(evt);
                     self.decimals = Math.max(0, -exp);
                     self.intermediateValue = self.value + Math.round(dx / 2.0) * Math.pow(10, exp);
-                    self.updateText(self.intermediateValue.toFixed(self.decimals));
+                    // Third parameter true means: Don't let this be remembered in the undo chain.
+                    self.updateText(self.intermediateValue.toFixed(self.decimals), undefined, true);
                     self.dragged = true;
                 },
                 stop: function(evt, ui) {
@@ -97,6 +118,10 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
 
                     var exp = getExponent(evt);
                     self.decimals = Math.max(0,-exp);
+                    // put back the original string from before we started the un-undo manipulations
+                    self.updateText(self.originalString, undefined, true);
+                    // ...And this makes one undo-able replacement placing the drag's final value.
+                    self.updateText(self.intermediateValue.toFixed(self.decimals));
                     self.updateTooltip(self.intermediateValue, self.decimals);
                     self.trigger("scrubbingEnded");
 
@@ -104,6 +129,7 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
                     // are called after stop
                     setTimeout(function () {
                         self.dragged = false;
+                        self.parent.editor.setReadOnly(self.wasReadOnly);
                     }, 0);
                 }
             });

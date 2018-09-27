@@ -1,3 +1,4 @@
+/* global ProcessingDebugger */
 window.PJSDebugger = Backbone.View.extend({
     
     initialize: function(options) {

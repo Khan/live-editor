@@ -1,12 +1,15 @@
 // Mock out $._, since we don't use any of the sprintf functionality
+var i18n = {};
+i18n._ = function(str) { return str; };
+// TODO(kevinb) remove when all challenge test code is updated to use i18n._
 var $ = {};
-$._ = function(str) { return str;};
+$._ = i18n._;
 
 // We set window to self so that StructuredJS can find Esprima and
 // Underscore
-if (typeof window === "undefined") { 
+if (typeof window === "undefined") {
     /*global window:true */
-    window = self;  
+    window = self;
 }
 
 var init = false;

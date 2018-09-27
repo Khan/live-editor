@@ -24,6 +24,16 @@ describe("Output Methods", function() {
         title: "transformUrl",
         code: "<!DOCTYPE html><html><body></body></html>",
         test: function(output, errors, testResults) {
+            expect(output.output.transformUrl("http://khanacademy.org.mn"))
+                .to.be.equal(
+                    "http://ka.org/r?url=http%3A%2F%2Fkhanacademy.org.mn");
+        }
+    });
+
+    runTest({
+        title: "transformUrl",
+        code: "<!DOCTYPE html><html><body></body></html>",
+        test: function(output, errors, testResults) {
             expect(output.output.transformUrl("http://www.khanacademy.org/m"))
                 .to.be.equal("http://www.khanacademy.org/m");
         }
@@ -54,7 +64,7 @@ describe("Linting", function() {
         ]
     );
 
-    test("parsing of HTML comments", 'hi<!--testing-->there');
+    test("parsing of HTML comments", '<!DOCTYPE html><html>hi<!--testing-->there</html>');
 
     failingTest("UNQUOTED_ATTR_VALUE in <h2><span start=</h2>",
         '<h2><span start=</h2>', [
@@ -76,12 +86,24 @@ describe("Linting", function() {
     test("parsing of valid HTML", '<p class="foo">hello there</p>');
 
     test("parsing of HTML comments with '--' in them",
-        '<!-- allow\n--\nin comments plz -->');
+        '<!DOCTYPE html><html><!-- allow\n--\nin comments plz --></html>');
 
     var text = "\nThis is CDATA with <p>, <i> and" +
         " <script> in it.\nThis should not trigger errors.";
     test("parsing of CDATA in <textarea> elements",
         "<textarea>" + text + "</textarea>");
+
+    test("parsing of uppercase <TEXTAREA> tags should work", [
+        '<TEXTAREA>hi</TEXTAREA>',
+        '<TEXTAREA>hi</textarea>',
+        '<textarea>hi</TEXTAREA>',
+    ]);
+
+    test("parsing of uppercase <SCRIPT> tags should work", [
+        '<SCRIPT>var hi = "hi";</SCRIPT>',
+        '<SCRIPT>var hi = "hi";</script>',
+        '<script>var hi = "hi";</SCRIPT>',
+    ]);
 
     test("parsing of HTML is case-insensitive", [
         '<P CLASS="FOO">hi</P>',
@@ -92,7 +114,7 @@ describe("Linting", function() {
 
     test("parsing of HTML with void elements:", [
         '<br>',
-        '<img src="data:image/png,aaaa">'
+        '<img src="https://www.google.com/images/srpr/logo11w.png">'
     ]);
 
     test("parsing of text content w/ newlines", [
@@ -120,6 +142,63 @@ describe("Linting", function() {
     test("parsing of form elements", [
         '<button type="button">Submit</button>',
         '<button type="submit">Submit</button>'
+    ]);
+
+    failingTest("INVALID_CSS_PROPERTY_NAME in CSS style",
+        '<style>p { background color: red;}</style>', [
+            {row: 0, column: 11, lint: {type: "INVALID_CSS_PROPERTY_NAME"}}
+        ]
+    );
+
+    warningTest('links with invalid protocols throw warnings', [
+        "<!DOCTYPE html><html><a href='www.google.com'></a></html>",
+        "<!DOCTYPE html><html><a href='google.com'></a></html>",
+        "<!DOCTYPE html><html><script src='www.google.com'></script></html>"
+    ], [
+        ["The <a> tag's \"href\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?"],
+        ["The <a> tag's \"href\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?"],
+        ["The <script> tag's \"src\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?"]
+    ]);
+
+    warningTest('links with valid protocols do not throw warnings', [
+      '<!DOCTYPE html><html><a href="http://google.com"></a></html>',
+      '<!DOCTYPE html><html><a href="https://google.com"></a></html>',
+      '<!DOCTYPE html><html><script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js"></script></html>',
+      '<!DOCTYPE html><html><a href="ftp://google.com"></a></html>',
+      '<!DOCTYPE html><html><a href="mailto:khan@ka.com"></a</html>>'
+    ], [[], [], [], [], []]);
+
+    warningTest("in-page links are not banned", '<!DOCTYPE html><html><a href="#foobar"></a></html>', []);
+    warningTest("javascript hrefs are not banned", '<!DOCTYPE html><html><a href="javascript:void(0)"></a></html>', []);
+    warningTest("regular scripts are not banned", '<!DOCTYPE html><html><script src="http://google.com"></script></html>', []);
+
+    warningTest("missing DOCTYPE", "<html><body></body></html>",
+      ["A DOCTYPE declaration should be the first item on the page."]
+    );
+
+    warningTest("forgetting CSS values in a <style> block throw a warning",
+      '<!DOCTYPE html><html><style>.photo {\nborder: 2px, double, red;\nmargin-left:5px;\nwidth: 200px;\ncolor: blue\n}</style></html>',
+      ['The CSS value \"blue\" still needs to be finalized with \";\"']
+    );
+
+    warningTest("color values with a space throw a warning",
+      '<!DOCTYPE html><html><style>\n.photo {\ncolor: rgb (255, 255, 255);\n}\n</style></html>',
+      ['The CSS value \"rgb (255, 255, 255)\" is malformed.']
+    );
+
+    warningTest("non-standard CSS properties throw a warning",
+      '<!DOCTYPE html><html><style>\n.photo {\nbackground-blend-mode: screen;\n}\n</style></html>',
+      ['The CSS property "background-blend-mode" is non-standard or non-existent. Check spelling and browser compatibility.']
+    );
+
+    warningTest("obsolete HTML elements warned against", [
+        "<!DOCTYPE html><html><marquee></marquee></html>",
+        "<!DOCTYPE html><html><marquee>Some clever message</marquee></html>",
+        "<!DOCTYPE html><html><acronym title=\"World Wide Web\">WWW</acronym></html>"
+    ], [
+        ["The \"marquee\" tag is obsolete and may not function properly in modern browsers."],
+        ["The \"marquee\" tag is obsolete and may not function properly in modern browsers."],
+        ["The \"acronym\" tag is obsolete and may not function properly in modern browsers."]
     ]);
 
     failingTest("INVALID_TAG_NAME raised by < at EOF",
@@ -172,6 +251,18 @@ describe("Linting", function() {
         ]
     );
 
+    failingTest("Frameset element banned",
+        "<frameset></frameset>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
+    failingTest("Frame element banned",
+        "<frame></frame>", [
+            {row: 0, column: 0, lint: {type: "ELEMENT_NOT_ALLOWED"}}
+        ]
+    );
+
     if (!isFirefox()) {
         // An exception occurs in slowparse when parsing this HTML on
         // Chrome, Safari, and phantomjs.
@@ -199,19 +290,19 @@ describe("Linting", function() {
     failingTest("Infinite loop errors",
         "<script> while(true){} </script>", [
             // Infinite loops dont give a location for their error message
-            {row: undefined, column: undefined, text: 
-                '<span class="text">Your javascript is taking too long to run.' +
-                ' Perhaps you have a mistake in your code?</span>'},
-            {row: undefined, column: undefined, text: 
-                '<span class="text">Your javascript encountered a runtime error. ' +
-                ' Check your console for more information.</span>'}
+            {row: undefined, column: undefined, text:
+                'Your javascript is taking too long to run.' +
+                ' Perhaps you have a mistake in your code?'},
+            {row: undefined, column: undefined, text:
+                'Your javascript encountered a runtime error. ' +
+                ' Check your console for more information.'}
         ]
     );
 
     failingTest("Runtime errors",
-        "<script> bla(x);</script>", [
-            // Infinite loops dont give a location for their error message
-            {row: undefined, column: undefined, text: 
+        "<script> testingRuntimeErrors(x);</script>", [
+            // Runtime errors dont give a location for their error message
+            {row: undefined, column: undefined, text:
                 'Your javascript encountered a runtime error. ' +
                 'Check your console for more information.'}
         ]

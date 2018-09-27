@@ -1,3 +1,6 @@
+// TODO(kevinb) remove after challenges have been converted to use i18n._
+$._ = i18n._;
+
 window.LiveEditor = Backbone.View.extend({
     dom: {
         DRAW_CANVAS: ".scratchpad-draw-canvas",
@@ -18,7 +21,10 @@ window.LiveEditor = Backbone.View.extend({
         OUTPUT_FRAME: "#output-frame",
         OUTPUT_DIV: "#output",
         ALL_OUTPUT: "#output, #output-frame",
-        RESTART_BUTTON: "#restart-code"
+        RESTART_BUTTON: "#restart-code",
+        GUTTER_ERROR: ".ace_error",
+        ERROR_BUDDY_HAPPY: ".error-buddy-happy",
+        ERROR_BUDDY_THINKING: ".error-buddy-thinking",
     },
 
     mouseCommands: ["move", "over", "out", "down", "up"],
@@ -34,7 +40,7 @@ window.LiveEditor = Backbone.View.extend({
         this.externalsDir = this._qualifyURL(options.externalsDir);
         this.imagesDir = this._qualifyURL(options.imagesDir);
         this.soundsDir = options.soundsDir;
-        this.execFile = this._qualifyURL(options.execFile);
+        this.execFile = options.execFile ? this._qualifyURL(options.execFile) : "";
         this.jshintFile = this._qualifyURL(options.jshintFile ||
             this.externalsDir + "jshint/jshint.js");
         this.redirectUrl = options.redirectUrl;
@@ -98,6 +104,20 @@ window.LiveEditor = Backbone.View.extend({
             }.bind(this)
         });
 
+        // TEMP: Set up a query param for testing the new error experience
+        // Looks to see if "new_error_experience=yes" is in the url,
+        //  if it is, then we use the new error buddy behaviour.
+        this.newErrorExperience = options.newErrorExperience;
+        if (window.location.search.indexOf("new_error_experience=yes") !== -1) {
+            this.newErrorExperience = true;
+        }
+
+        if (options.enableLoopProtect != null) {
+            this.enableLoopProtect = options.enableLoopProtect;
+        } else {
+            this.enableLoopProtect = true;
+        }
+
         // Set up the editor
         this.editor = new this.editors[this.editorType]({
             el: this.dom.EDITOR,
@@ -112,8 +132,39 @@ window.LiveEditor = Backbone.View.extend({
             type: this.editorType
         });
 
-        // linting in the webpage environment generates slowparseResults which 
-        // is used in the runCode step so skipping linting won't work in that 
+        var tooltipEngine = this.config.editor.tooltipEngine;
+        if (tooltipEngine.setEnabledStatus) {
+            // Looks to see if "autosuggestToggle=yes" is in the url,
+            //  if it is, then we disable the live autosuggestions.
+            if (window.location.search.indexOf("autosuggestToggle=yes") !== -1) {
+
+                // Overrides whatever is in localStorage.
+                // TODO (anyone) remove this when the URL param is removed.
+                window.localStorage["autosuggest"] = "true";
+
+                // Allows toggling of the autosuggestions.
+                this.editor.editor.commands.addCommand({
+                    name: 'toggleAutosuggest',
+                    bindKey: {
+                        win: 'Ctrl+Alt+A',
+                        mac: 'Command+Option+A'
+                    },
+                    exec: function(editor) {
+                        var status = window.localStorage["autosuggest"] === "true";
+
+                        tooltipEngine.setEnabledStatus(status !== true);
+
+                        window.localStorage.setItem("autosuggest", String(status !== true));
+                    }
+                });
+            } else {
+                // since we load the enabled value from localStorage...
+                tooltipEngine.setEnabledStatus("true");
+            }
+        }
+
+        // linting in the webpage environment generates slowparseResults which
+        // is used in the runCode step so skipping linting won't work in that
         // environment without some more work
         if (this.editorType === "ace_pjs") {
             this.noLint = false;
@@ -130,21 +181,6 @@ window.LiveEditor = Backbone.View.extend({
             el: this.$(this.dom.OUTPUT_DIV),
             liveEditor: this
         });
-
-        // Set up the debugger;
-        if (options.useDebugger) {
-            this.debugger = new ScratchpadDebugger({
-                liveEditor: this,
-                editor: this.editor.editor
-            });
-            this.debugger.on("enabled", function (enabled) {
-                if (enabled) {
-                    this.$el.find(this.dom.RESTART_BUTTON).attr("disabled", "");
-                } else {
-                    this.$el.find(this.dom.RESTART_BUTTON).removeAttr("disabled");
-                }
-            }, this);
-        }
 
         var code = options.code;
 
@@ -210,21 +246,21 @@ window.LiveEditor = Backbone.View.extend({
         this.handleMessagesBound = this.handleMessages.bind(this);
         $(window).on("message", this.handleMessagesBound);
 
-        $el.find("#output-frame").on("load", function() {
+        $el.find("#output-frame").on("load", () => {
             this.outputState = "clean";
             this.markDirty();
-        }.bind(this));
+        });
 
         // Whenever the user changes code, execute the code
-        this.editor.on("change", function() {
+        this.editor.on("change", () => {
             this.markDirty();
-        }.bind(this));
+        });
 
-        this.editor.on("userChangedCode", function() {
+        this.editor.on("userChangedCode", () => {
             if (!this.record.recording && !this.record.playing) {
               this.trigger("userChangedCode");
             }
-        }.bind(this));
+        });
 
         this.on("runDone", this.runDone.bind(this));
 
@@ -244,8 +280,13 @@ window.LiveEditor = Backbone.View.extend({
                         });
                     }
                     self.editor.once("changeCursor", cursorDirty);
-                }, 0);                
+                }, 0);
             }
+            // This makes sure that we pop up the error
+            // if the user changed the cursor to a new line
+            setTimeout(function() {
+                self.maybeShowErrors();
+            }, 0);
         };
         this.editor.once("changeCursor", cursorDirty);
 
@@ -398,6 +439,17 @@ window.LiveEditor = Backbone.View.extend({
             self.record.log("restart");
         });
 
+        // Handle the gutter errors
+        $el.on("click", this.dom.GUTTER_ERROR, function() {
+            var lineNum = parseInt($(this).text(), 10);
+            self.setErrorPosition(this.gutterDecorations[lineNum]);
+        });
+
+        // Handle clicks on the thinking Error Buddy
+        $el.on("click", this.dom.ERROR_BUDDY_THINKING, function() {
+            self.setErrorPosition(0);
+        });
+
         // Bind the handler to start a new recording
         $el.find("#record").on("click", function() {
             self.recordHandler(function(err) {
@@ -454,7 +506,7 @@ window.LiveEditor = Backbone.View.extend({
             // Sometimes when Flash is blocked or the browser is slower,
             //  soundManager will fail to initialize at first,
             //  claiming no response from the Flash file.
-            // To handle that, we attempt a reboot 3 seconds after each 
+            // To handle that, we attempt a reboot 3 seconds after each
             //  timeout, clearing the timer if we get an onready during
             //  that time (which happens if user un-blocks flash).
             onready: function() {
@@ -571,7 +623,7 @@ window.LiveEditor = Backbone.View.extend({
 
     audioReadyToPlay: function() {
         // NOTE(pamela): We can't just check bytesLoaded,
-        //  because IE reports null for that 
+        //  because IE reports null for that
         // (it seems to not get the progress event)
         // So we've changed it to also check loaded.
         // If we need to, we can reach inside the HTML5 audio element
@@ -957,6 +1009,20 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     handleMessages: function(e) {
+        // DANGER!  The data coming in from the iframe could be anything,
+        // because with some cleverness the author of the program can send an
+        // arbitrary message up to us.  We need to be careful to sanitize it
+        // before doing anything with it, to avoid XSS attacks.  For some
+        // examples, see https://hackerone.com/reports/103989 or
+        // https://app.asana.com/0/44063710579000/71736430394249.
+        // TODO(benkraft): Right now that sanitization is spread over a number
+        // of different places; some things get sanitized here, while others
+        // get passed around and sanitized elsewhere.  Put all the sanitization
+        // in one place so it's easier to reason about its correctness, since
+        // any gap leaves us open to XSS attacks.
+        // TODO(benkraft): Write some tests that send arbitrary messages up
+        // from the iframe, and assert that they don't end up displaying
+        // arbitrary HTML to the user outside the iframe.
         var event = e.originalEvent;
         var data;
 
@@ -970,8 +1036,7 @@ window.LiveEditor = Backbone.View.extend({
             return;
         }
 
-        if (data.type === "debugger") {
-            // these messages are handled by ui/debugger.js:listenMessages
+        if (typeof data !== "object") {
             return;
         }
 
@@ -988,57 +1053,80 @@ window.LiveEditor = Backbone.View.extend({
 
         // Set the code in the editor
         if (data.code !== undefined) {
+            // TODO(benkraft): This is technically not unsafe, in that
+            // this.editor.text() does not render its argument as HTML, but it
+            // does mean that a user can write a program which modifies its own
+            // code (perhaps on another user's computer).  Not directly a
+            // security risk, but it would be nice if it weren't possible.
             this.editor.text(data.code);
             this.editor.originalCode = data.code;
             this.restartCode();
         }
 
         // Testing/validation code is being set
-        if (data.validate != null) {
+        if (data.validate !== undefined && data.validate !== null) {
             this.validation = data.validate;
         }
-        
+
         if (data.results) {
             this.trigger("runDone");
         }
 
-        if (this.editorType.indexOf("ace_") === 0 && data.results &&
-                data.results.assertions) {
+        if (this.editorType.indexOf("ace_") === 0 && data.results) {
             // Remove previously added markers
-            var markers = this.editor.editor.session.getMarkers();
-            _.each(markers, function(marker, markerId) {
-                this.editor.editor.session.removeMarker(markerId);
-            }.bind(this));
+            this.removeMarkers();
+            if (data.results.assertions || data.results.warnings) {
+                // Add gutter warning markers in the editor.
+                // E.g. Add `Program.assertEqual(2, 4);` to the live editor to see
+                // an example.
+                var annotations = [];
+                for (let i = 0; i < data.results.assertions.length; i++) {
+                    let assertion = data.results.assertions[i];
+                    annotations.push({
+                        // Coerce to the expected type
+                        row: +assertion.row,
+                        column: +assertion.column,
+                        // This is escaped by the gutter annotation display
+                        // code, so we don't need to escape it here.
+                        text: assertion.text.toString(),
+                        type: "warning"
+                    });
+                    this.addUnderlineMarker(+assertion.row);
+                }
 
-            var annotations = [];
-            for (var i = 0; i < data.results.assertions.length; i++) { 
-                var unitTest = data.results.assertions[i];
-                annotations.push({
-                    row: unitTest.row, 
-                    column: unitTest.column, 
-                    text: unitTest.text,
-                    type: "warning" 
-                });
-                // Underline the problem line to make it more obvious
-                //  if they don't notice the gutter icon
-                var AceRange = ace.require("ace/range").Range;
-                var line = this.editor.editor.session
-                    .getDocument().getLine(unitTest.row);
-                this.editor.editor.session.addMarker(
-                   new AceRange(unitTest.row, 0, unitTest.row, line.length),
-                   "ace_problem_line", "text", false);
-           }
+                for (let i = 0; i < data.results.warnings.length; i++) {
+                    let warning = data.results.warnings[i];
+                    annotations.push({
+                        // Coerce to the expected type
+                        row: +warning.row,
+                        column: +warning.column,
+                        // This is escaped by the gutter annotation display
+                        // code, so we don't need to escape it here.
+                        text: warning.text.toString(),
+                        type: "warning"
+                    });
+                    this.addUnderlineMarker(+warning.row);
+                }
 
-           this.editor.editor.session.setAnnotations(annotations);
+                // Add new gutter markers
+                this.editor.editor.session.setAnnotations(annotations);
+            } else {
+                this.editor.editor.session.setAnnotations([]);
+            }
+        }
+
+        if (this.newErrorExperience && this.errorState.length === 0) {
+            this.setHappyState();
         }
 
         if (data.results && _.isArray(data.results.errors)) {
-            this.tipbar.toggleErrors(data.results.errors);
+            this.handleErrors(this.cleanErrors(data.results.errors));
         }
 
         // Set the line visibility in the editor
         if (data.lines !== undefined) {
-            this.editor.toggleGutter(data.lines);
+            // Coerce to the expected type
+            this.editor.toggleGutter(data.lines.map(x => +x));
         }
 
         // Restart the execution
@@ -1048,8 +1136,188 @@ window.LiveEditor = Backbone.View.extend({
 
         // Log the recorded action
         if (data.log) {
+            // TODO(benkraft): I think passing unsanitized data to any of our
+            // record handlers is currently safe, but it would be nice to not
+            // depend on that always being true.  Do something to sanitize
+            // this, or at least make it more clear that the data coming in may
+            // be unsanitized.
             this.record.log.apply(this.record, data.log);
         }
+    },
+
+    addUnderlineMarker: function (row) {
+        // Underline the problem line to make it more obvious
+        //  if they don't notice the gutter icon
+        var AceRange = ace.require("ace/range").Range;
+        var line = this.editor.editor.session.getDocument().getLine(row);
+        this.editor.editor.session.addMarker(
+           new AceRange(row, 0, row, line.length),
+           "ace_problem_line", "text", false);
+    },
+
+    removeMarkers: function() {
+        // Remove previously added markers and decorations
+        var session = this.editor.editor.session;
+        var markers = session.getMarkers();
+        _.each(markers, function(marker, markerId) {
+            session.removeMarker(markerId);
+        });
+    },
+
+    removeGutterDecorations: function() {
+        // Remove old gutter decorations
+        var session = this.editor.editor.session;
+        _.each(this.gutterDecorations, function(errorOffset, errorRow) {
+            session.removeGutterDecoration(errorRow - 1, "ace_error");
+        });
+    },
+
+    gutterDecorations: [],
+    errorCursorRow: null,
+    showError: null,
+
+    handleErrors: function(errors) {
+        if (!this.newErrorExperience) {
+            this.tipbar.toggleErrors(errors, 1500);
+            return;
+        }
+        // New Error Experience:
+
+        // We want to check if the errors we see are caused by the line the
+        // user is currently on, and that they have just typed them, and if so
+        // give the user some time to finish what they were typing.
+
+        // When you start with no errors, the errorCursorRow is null.
+        // When you make an error, the errorCursorRow is set to the current row.
+        // When we register another error, we check if the errorCursorRow is the
+        // same as the current row:
+        //  -if it is, we set a timer for one minute of no typing before showing
+        //   you the error so you have a chance to finish what you're doing.
+        //  -if it is not, we show the error right away.
+
+        // Reset the timer
+        window.clearTimeout(this.errorTimeout);
+
+        if (errors.length) {
+            // There is an error
+            var session = this.editor.editor.session;
+
+            // Remove old gutter markers and decorations
+            this.removeMarkers();
+            this.removeGutterDecorations();
+
+            // Add gutter decorations
+            var gutterDecorations = [];
+            _.each(errors, function(error, index) {
+                // Create a log of which row corresponds with which error
+                // message so that when the user clicks a gutter marker they
+                // are shown the relevant error message.
+                if (gutterDecorations[error.row + 1] === null) {
+                    gutterDecorations[error.row + 1] = index;
+                    session.addGutterDecoration(error.row, "ace_error");
+                }
+
+                this.addUnderlineMarker(error.row);
+            }, this);
+
+            this.gutterDecorations = gutterDecorations;
+
+            // Set the errors
+            this.setErrors(errors);
+
+            this.maybeShowErrors();
+
+        } else {
+            // If there are no errors, remove the gutter decorations that marked
+            // the errors and reset our state.
+            this.removeGutterDecorations();
+            this.setErrors([]);
+            this.setHappyState();
+            this.showError = false;
+            this.errorCursorRow = null;
+        }
+    },
+
+    maybeShowErrors: function() {
+
+        if (!this.hasErrors() || !this.editor || !this.editor.getCursor()) {
+            return;
+        }
+
+        var currentRow = this.editor.getCursor().row;
+        var onlyErrorsOnThisLine = this.errorCursorRow === null ||
+                                   this.errorCursorRow === currentRow;
+        if (this.errorCursorRow === null) {
+            this.errorCursorRow = currentRow;
+        }
+
+        // If we were already planning to show the error, or if there are
+        // errors on more than the current line, or we have errors and the
+        // program was just loaded (i.e. this.showError is null) then we
+        // should show the error now. Otherwise we'll delay showing the
+        // error message to give them time to type.
+        this.showError = this.showError ||
+                         !onlyErrorsOnThisLine ||
+                         this.showError === null;
+
+        if (this.showError) {
+            // We've already timed out or moved to another line, so show
+            // the error.
+            this.setErrorState();
+        } else if (onlyErrorsOnThisLine) {
+            // There are new errors caused by typing on this line, so let's
+            // give the typer time to finish what they were writing. We'll
+            // show the tipbar if 1 minute has gone by without typing.
+            this.setThinkingState();
+            // Make doubly sure that we clear the timeout
+            window.clearTimeout(this.errorTimeout);
+            this.errorTimeout = setTimeout(function() {
+                if (this.hasErrors()) {
+                    this.setErrorState();
+                }
+            }.bind(this), 60000);
+        }
+    },
+
+    // This is the current error state of Oh Noes Guy.
+    // His state can be one of:
+    // - happy (no errors)
+    // - thinking (the ambigous state where there may be an error in what the
+    //             typer is currently typing)
+    // - error (there is an error that we want to display prominently)
+    errorState: "",
+    hasErrors: function() {
+        return this.tipbar.errors.length;
+    },
+    setErrors: function(errors) {
+        this.tipbar.setErrors(errors);
+    },
+    setErrorPosition: function(errorPos) {
+        this.setErrorState();
+        this.tipbar.setErrorPosition(errorPos);
+    },
+    setErrorState: function() {
+        this.errorState = "error";
+        this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
+        this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();
+        this.tipbar.update(true);
+    },
+    setThinkingState: function() {
+        if (this.errorState !== "thinking") {
+            this.errorState = "thinking";
+            this.tipbar.hide();
+            this.$el.find(this.dom.ERROR_BUDDY_HAPPY).hide();
+            this.$el.find(this.dom.ERROR_BUDDY_THINKING).show()
+                .animate({ left: -2 }, {duration: 300, easing: 'linear'})
+                .animate({ left: 2 }, {duration: 300, easing: 'linear'})
+                .animate({ left: 0 }, {duration: 300, easing: 'linear'});
+        }
+    },
+    setHappyState: function() {
+        this.errorState = "happy";
+        this.tipbar.hide();
+        this.$el.find(this.dom.ERROR_BUDDY_THINKING).hide();
+        this.$el.find(this.dom.ERROR_BUDDY_HAPPY).show();
     },
 
     // Extract the origin from the embedded frame location
@@ -1068,6 +1336,10 @@ window.LiveEditor = Backbone.View.extend({
             JSON.stringify(data), this.postFrameOrigin());
     },
 
+    hasFrame: function() {
+        return !!(this.execFile);
+    },
+
     /*
      * Restart the code in the output frame.
      */
@@ -1080,7 +1352,7 @@ window.LiveEditor = Backbone.View.extend({
      *
      * A note about the throttling:
      * This limits updates to 50FPS. No point in updating faster than that.
-     * 
+     *
      * DO NOT CALL THIS DIRECTLY
      * Instead call markDirty because it will handle
      * throttling requests properly.
@@ -1099,17 +1371,37 @@ window.LiveEditor = Backbone.View.extend({
             soundsDir: this.soundsDir,
             redirectUrl: this.redirectUrl,
             jshintFile: this.jshintFile,
-            outputType: this.outputType
+            outputType: this.outputType,
+            enableLoopProtect: this.enableLoopProtect
         };
 
         this.trigger("runCode", options);
 
         this.postFrame(options);
     }, 20),
-    
+
     markDirty: function() {
-        // They're typing. Hide the tipbar to give them a chance to fix things up
-        this.tipbar.hide();
+        // makeDirty is called when you type something in the editor. When this
+        // happens, we want to run the code, but also want to throttle how often
+        // we re-run so we can wait for the results of running it to come back.
+        // We keep track of the state using clean/running/dirty markers.
+
+        // The state of the output starts out "clean": the editor and the output
+        // are in sync.
+        // When you type, markDirty gets called, which will mark the state as
+        // "running" and starts of runCode in the background. Since runCode is
+        // async, if you type again while it's running then the output state
+        // will get set to "dirty".
+        // When runCode finishes it will call runDone, which will either set the
+        // state back to clean (if it was running before), or will run again if
+        // the state was dirty.
+        // If runCode takes more than 500ms then runDone will be called and we
+        // set the state back to "clean".
+
+        if (!this.newErrorExperience) {
+            this.tipbar.hide();
+        }
+
         if (this.outputState === "clean") {
             // We will run at the end of this code block
             // This stops replace from trying to execute code
@@ -1117,13 +1409,17 @@ window.LiveEditor = Backbone.View.extend({
             setTimeout(this.runCode.bind(this), 0);
             this.outputState = "running";
 
-            // 500ms is an arbitrary timeout. Hopefully long enough for reasonable programs
-            // to execute, but short enough for editor to not freeze
-            this.runTimeout = setTimeout(function() { this.trigger("runDone"); }.bind(this), 500);
+            // 500ms is an arbitrary timeout. Hopefully long enough for
+            // reasonable programs to execute, but short enough for editor to
+            // not freeze.
+            this.runTimeout = setTimeout(() => {
+                this.trigger("runDone");
+            }, 500);
         } else {
             this.outputState = "dirty";
         }
     },
+
     // This will either be called when we receive the results
     // Or it will timeout.
     runDone: function() {
@@ -1134,26 +1430,10 @@ window.LiveEditor = Backbone.View.extend({
             this.markDirty();
         }
     },
-    // This stops us from sending  any updates until
+
+    // This stops us from sending any updates until the current run has finished
     // Reset output state to clean as a part of the frame load handler
     outputState: "dirty",
-
-    getScreenshot: function(callback) {
-        // Unbind any handlers this function may have set for previous
-        // screenshots
-        $(window).unbind("message.getScreenshot");
-
-        // We're only expecting one screenshot back
-        $(window).bind("message.getScreenshot", function(e) {
-            // Only call if the data is actually an image!
-            if (/^data:/.test(e.originalEvent.data)) {
-                callback(e.originalEvent.data);
-            }
-        });
-
-        // Ask the frame for a screenshot
-        this.postFrame({ screenshot: true });
-    },
 
     updateCanvasSize: function(width, height) {
         width = width || this.defaultOutputWidth;
@@ -1172,10 +1452,59 @@ window.LiveEditor = Backbone.View.extend({
     },
 
     getScreenshot: function(callback) {
+        // If we don't have an output frame then we need to render our
+        // own screenshot (so we just use the text in the editor)
+        if (!this.hasFrame()) {
+            var canvas = document.createElement("canvas");
+            canvas.width = 200;
+            canvas.height = 200;
+            var ctx = canvas.getContext("2d");
+
+            // Default sizing, we also use a 5px margin
+            var lineHeight = 24;
+            var maxWidth = 190;
+
+            // We go through all of this so that the text will wrap nicely
+            var text = this.editor.text();
+
+            // Remove all HTML markup and un-escape entities
+            text = text.replace(/<[^>]+>/g, "");
+            text = text.replace(/&nbsp;|&#160;/g, " ");
+            text = text.replace(/&lt;|&#60;/g, "<");
+            text = text.replace(/&gt;|&#62;/g, ">");
+            text = text.replace(/&amp;|&#38;/g, "&");
+            text = text.replace(/&quot;|&#34;/g, "\"");
+            text = text.replace(/&apos;|&#39;/g, "\'");
+
+            var words = text.split(/\s+/);
+            var lines = 0;
+            var currentLine = words[0];
+
+            ctx.font = lineHeight + "px serif";
+
+            for (var i = 1; i < words.length; i++) {
+                var word = words[i];
+                var width = ctx.measureText(currentLine + " " + word).width;
+                if (width < maxWidth) {
+                    currentLine += " " + word;
+                } else {
+                    lines += 1;
+                    ctx.fillText(currentLine, 5, (lineHeight + 5) * lines);
+                    currentLine = word;
+                }
+            }
+            lines += 1;
+            ctx.fillText(currentLine, 5, (lineHeight + 5) * lines + 5);
+
+            // Render it to an image and we're done!
+            callback(canvas.toDataURL("image/png"));
+            return;
+        }
+
         // Unbind any handlers this function may have set for previous
         // screenshots
         $(window).off("message.getScreenshot");
-    
+
         // We're only expecting one screenshot back
         $(window).on("message.getScreenshot", function(e) {
             // Only call if the data is actually an image!
@@ -1183,7 +1512,7 @@ window.LiveEditor = Backbone.View.extend({
                 callback(e.originalEvent.data);
             }
         });
-    
+
         // Ask the frame for a screenshot
         this.postFrame({ screenshot: true });
     },
@@ -1196,7 +1525,138 @@ window.LiveEditor = Backbone.View.extend({
         var a = document.createElement("a");
         a.href = url;
         return a.href;
-    }
+    },
+
+    cleanErrors: function(errors) {
+        var loopProtectMessages = {
+            "WhileStatement": i18n._("<code>while</code> loop"),
+            "DoWhileStatement": i18n._("<code>do-while</code> loop"),
+            "ForStatement": i18n._("<code>for</code> loop"),
+            "FunctionDeclaration": i18n._("<code>function</code>"),
+            "FunctionExpression": i18n._("<code>function</code>"),
+        };
+
+        errors = errors.map(function(error) {
+            // These errors come from the user, so we can't trust them.  They
+            // get decoded from JSON, so they will just be plain objects, not
+            // arbitrary classes, but they're still potentially full of HTML
+            // that we need to escape.  So any HTML we want to put in needs to
+            // get put in here, rather than somewhere inside the iframe.
+            delete error.html;
+            // TODO(benkraft): This is a kind of ugly place to put this
+            // processing.  Refactor so that we don't have to do something
+            // quite so ad-hoc here, while still keeping any user input
+            // appropriately sanitized.
+            var loopNodeType = error.infiniteLoopNodeType;
+            if (loopNodeType) {
+                error.html = i18n._(
+                    "A %(type)s is taking too long to run. " +
+                    "Perhaps you have a mistake in your code?", {
+                        type: loopProtectMessages[loopNodeType]
+                });
+            }
+
+            const newError = {};
+
+            // error.html was cleared above, so if it exists it's because we
+            // reset it, and it's safe.
+            if (typeof error === "string") {
+                newError.text = this.clean(this.prettify(error));
+            } else if (error.html) {
+                newError.text = this.prettify(error.html);
+            } else {
+                newError.text = this.prettify(this.clean(
+                    error.text || error.message || ""));
+            }
+
+            // Coerce anything from the user to the expected types before
+            // copying over
+            if (error.lint !== undefined) {
+                newError.lint = {};
+
+                // TODO(benkraft): Coerce this in a less ad-hoc way, or at
+                // least only pass through the things we'll actually use.
+                // Also, get a stronger guarantee that none of these
+                // strings ever get used unescaped.
+                const numberProps = ["character", "line"];
+                const stringProps = [
+                    "code", "evidence", "id", "raw", "reason", "scope", "type"
+                ];
+                const objectProps = ["openTag"];
+
+                numberProps.forEach(prop => {
+                    if (error.lint[prop] != undefined) {
+                        newError.lint[prop] = +error.lint[prop];
+                    }
+                });
+
+                stringProps.forEach(prop => {
+                    if (error.lint[prop] != undefined) {
+                        newError.lint[prop] = error.lint[prop].toString();
+                    }
+                });
+
+                objectProps.forEach(prop => {
+                    if (error.lint[prop] != undefined) {
+                        newError.lint[prop] = error.lint[prop];
+                    }
+                });
+            }
+
+            if (error.row != undefined) {
+                newError.row = +error.row;
+            }
+
+            if (error.column != undefined) {
+                newError.column = +error.column;
+            }
+
+            if (error.type != undefined) {
+                newError.type = error.type.toString();
+            }
+
+            if (error.source != undefined) {
+                newError.source = error.source.toString();
+            }
+
+            if (error.priority != undefined) {
+                newError.priority = +error.priority;
+            }
+
+            return newError;
+        }.bind(this));
+
+        errors = errors.sort(function(a, b) {
+            var diff = a.row - b.row;
+            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
+        });
+
+        return errors;
+    },
+
+    // This adds html tags around quoted lines so they can be formatted
+    prettify: function(str) {
+        str = str.split("\"");
+        var htmlString = "";
+        for (var i = 0; i < str.length; i++) {
+            if (str[i].length === 0) {
+                continue;
+            }
+
+            if (i % 2 === 0) {
+                //regular text
+                htmlString += "<span class=\"text\">" + str[i] + "</span>";
+            } else {
+                // text in quotes
+                htmlString += "<span class=\"quote\">" + str[i] + "</span>";
+            }
+        }
+        return htmlString;
+    },
+
+    clean: function(str) {
+        return String(str).replace(/</g, "&lt;");
+    },
 });
 
 LiveEditor.registerEditor = function(name, editor) {

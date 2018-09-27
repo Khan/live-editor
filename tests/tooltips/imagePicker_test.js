@@ -1,3 +1,4 @@
+
 describe("imagePicker - detection", function() {
     var mockedImagePicker = getMockedTooltip(tooltipClasses.imagePicker, ["detector"]);
 
@@ -79,7 +80,12 @@ describe("imagePicker - selection (what it replaces)", function() {
 describe("imagePicker - Integration tests (running on a real editor)", function() {
     it("Autocomplete", function() {
         typeLine('bob getImage(');
-        expect(getLine()).to.be.equal('bob getImage("cute/None");');
+        expect(getLine()).to.be.equal('bob getImage("cute/None")');
+    });
+
+    it("Autocomplete", function() {
+        typeLine('var bob = getImage(');
+        expect(getLine()).to.be.equal('var bob = getImage("cute/None");');
     });
 
     it("detection", function() {
@@ -87,3 +93,4 @@ describe("imagePicker - Integration tests (running on a real editor)", function(
         expect(TTE.currentTooltip).to.be.equal(TTE.tooltips.imagePicker);
     });
 });
+

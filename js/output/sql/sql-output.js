@@ -1,3 +1,4 @@
+/* global SQLTester */
 window.SQLOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
@@ -59,61 +60,176 @@ window.SQLOutput = Backbone.View.extend({
      * error message.  SQLlite error messages aren't always very descriptive,
      * this should make common syntax errors easier to understand.
      */
-    getErrorMessage: function(errorMessage, statement) {
-        errorMessage = errorMessage || "";
+    getErrorMessage: function(sqliteError, statement) {
+        sqliteError = sqliteError || "";
         statement = statement || "";
         statement = statement.toUpperCase();
 
-        // Possible SELECT with missing FROM
-        if (errorMessage.indexOf("no such column:") !== -1 &&
+        let errorMessage = sqliteError;
+
+        // First, we translate SQLite errors into friendly i18n-able messages
+
+        const colTypesError = sqliteError.indexOf("valid column types") > -1;
+        if (colTypesError) {
+            errorMessage = i18n._("Please use one of the valid column types " +
+                "when creating a table: ")
+                + "\"TEXT\", \"NUMERIC\", \"INTEGER\", \"REAL\", \"NONE\".";
+        }
+        const uniqStr = "UNIQUE constraint failed:";
+        const uniqError = sqliteError.indexOf(uniqStr) > -1;
+        if (uniqError) {
+            const colName = sqliteError.split(uniqStr)[1].trim();
+            errorMessage = i18n._("\"UNIQUE\" constraint failed on column \"%(colName)s\".",
+                {colName});
+        }
+        const notNullStr = "NOT NULL constraint failed:"
+        const notNullError = sqliteError.indexOf(notNullStr) > -1;
+        if (notNullError) {
+            const colName = sqliteError.split(notNullStr)[1].trim();
+            errorMessage = i18n._("\"NOT NULL\" constraint failed on column \"%(colName)s\".",
+                {colName});
+        }
+        const dupColStr = "duplicate column name:";
+        const dupColError = sqliteError.indexOf(dupColStr) > -1;
+        if (dupColError) {
+            const colName = errorMessage.split(dupColStr)[1].trim();
+            errorMessage = i18n._("You have multiple columns named \"%(colName)s\" - " +
+                "column names must be unique.", {colName});
+        }
+        const unknownColStr = "no such column:";
+        const unknownColError = sqliteError.indexOf(unknownColStr) > -1;
+        if (unknownColError) {
+            const colName = sqliteError.split(unknownColStr)[1].trim();
+            errorMessage = i18n._("We can't find the column named \"%(colName)s\".",
+                {colName});
+        }
+        const noTablesError = sqliteError.indexOf("no tables specified") > -1;
+        if (noTablesError) {
+            errorMessage = i18n._("You didn't specify any tables for your \"SELECT\".");
+        }
+        // Generic syntax error messages take form: 'near \"%T\": syntax error'
+        const syntaxErrStr = ": syntax error";
+        const isSyntaxError = sqliteError.indexOf(syntaxErrStr) > -1;
+        if (isSyntaxError) {
+            const nearPhrase = errorMessage.split(syntaxErrStr)[0];
+            errorMessage = i18n._("There's a syntax error near %(nearThing)s.",
+                {nearThing: nearPhrase.substr(5)});
+        }
+
+        // Now that we've translated the base error messages,
+        // we add on additional helper messages for common mistakes
+        if (unknownColError &&
                 statement.indexOf("SELECT") !== -1 &&
                 statement.indexOf("FROM") === -1) {
-            errorMessage += ". " + $._("Are you missing a FROM clause?");
-        // Possible INSERT with missing INTO
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
+            errorMessage += " " + i18n._("Are you perhaps missing a \"FROM\" clause?");
+        } else if (isSyntaxError &&
                 statement.indexOf("INSERT") !== -1 &&
                 statement.indexOf("VALUES") !== -1 &&
                 statement.indexOf("INTO") === -1) {
-            errorMessage += ". " + $._("Are you missing the INTO keyword?");
-        // Possible INSERT INTO with missing VALUES
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
+            errorMessage += " " + i18n._("Are you missing the \"INTO\" keyword?");
+        } else if (isSyntaxError &&
                 statement.indexOf("INSERT") !== -1 &&
                 statement.indexOf("INTO") !== -1 &&
                 statement.indexOf("VALUES") === -1) {
-            errorMessage += ". " +
-                $._("Are you missing the VALUES keyword?");
-        // Possible CREATE with missing what to create
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
-                statement.indexOf("CREATE") !== -1 && (
+            errorMessage += " " +
+                i18n._("Are you missing the \"VALUES\" keyword?");
+        } else if (statement.indexOf("INTERGER") !== -1) {
+            errorMessage += " " +
+                i18n._("Is \"INTEGER\" spelled correctly?");
+        } else if (isSyntaxError &&
+                statement.indexOf("CREATE") !== -1 &&
+                statement.search(/CREATE TABLE \w+\s\w+/) > -1) {
+            errorMessage += " " +
+                i18n._("You can't have a space in your table name.");
+        } else if (isSyntaxError &&
+                statement.indexOf("CREATE TABLE (") > -1) {
+            errorMessage += " " +
+                i18n._("Are you missing the table name?");
+        } else if (isSyntaxError &&
+                statement.indexOf("PRIMARY KEY INTEGER") !== -1) {
+            errorMessage += " " +
+                i18n._("Perhaps you meant to put \"PRIMARY KEY\" after \"INTEGER\"?");
+        } else if (isSyntaxError &&
+                statement.indexOf("(") !== -1 &&
+                statement.indexOf(")") === -1) {
+            errorMessage += " " +
+                i18n._("Are you missing a parenthesis?");
+        } else if (isSyntaxError &&
+                statement.indexOf("CREATE") !== -1 &&
+                statement.indexOf("TABLE") === -1 && (
                     statement.indexOf("INDEX") === -1 ||
-                    statement.indexOf("TABLE") === -1 ||
                     statement.indexOf("TRIGGER") === -1 ||
                     statement.indexOf("VIEW") === -1)) {
-            errorMessage += ". " +
-                $._("You may be missing what to create. For " +
-                    "example CREATE TABLE...");
-        // Possible UPDATE without SET
-        } else if (errorMessage.indexOf(": syntax error") !== -1 &&
+            errorMessage += " " +
+                i18n._("You may be missing what to create. For " +
+                    "example, \"CREATE TABLE...\"");
+        } else if (isSyntaxError &&
                 statement.indexOf("UPDATE") !== -1 &&
                 statement.indexOf("SET") === -1) {
-            errorMessage += ". " +
-                $._("Are you missing the SET keyword?");
+            errorMessage += " " +
+                i18n._("Are you missing the \"SET\" keyword?");
+        } else if (isSyntaxError &&
+                statement.search(/[^SUM]\s*\(.*\)\n*\s*\w+/) > -1 ||
+                statement.search(/\n+\s*SELECT/) > -1 ||
+                statement.search(/\)\n+\s*INSERT/) > -1
+                ) {
+            errorMessage += " " +
+                i18n._("Do you have a semi-colon after each statement?");
+        } else if (isSyntaxError &&
+            statement.indexOf("INSERT") !== -1 &&
+            statement.search(/[^INSERT],\d*\s*[a-zA-Z]+/) > -1
+            ) {
+            errorMessage += " " +
+                i18n._("Are you missing quotes around text values?");
+        } else if (isSyntaxError &&
+            statement.search(/,\s*\)/) > -1) {
+            errorMessage += " " +
+                i18n._("Do you have an extra comma?");
+        } else if (isSyntaxError &&
+            statement.indexOf("INSERT,") > -1 ) {
+            errorMessage += " " +
+                i18n._("There shouldn't be a comma after \"INSERT\".");
+        } else if (colTypesError &&
+            statement.search(/(\w+\s*,\s*((TEXT)|(INTEGER))+)/) > -1) {
+            errorMessage += " " +
+                i18n._("Do you have an extra comma between the name and type?");
+        } else if (colTypesError &&
+            statement.search(/(\w+\s+\w+\s*((TEXT)|(INTEGER)|(REAL))+)/) > -1) {
+            errorMessage = i18n._("You can't have a space in your column name.");
+        } else if (uniqError) {
+            errorMessage += " " +
+                i18n._("Are you specifying a different value for each row?");
         }
         return errorMessage;
     },
 
-    lint: function(userCode, callback) {
+    lint: function(userCode, skip) {
+        // the deferred isn't required in this case, but we need to match the
+        // same API as the pjs-output.js' lint method.
+        var deferred = $.Deferred();
+        if (skip) {
+            deferred.resolve({
+                errors: [],
+                warnings: []
+            });
+            return deferred;
+        }
+
         if (!window.SQLOutput.isSupported()) {
-            return callback([{
-                row: -1,
-                column: -1,
-                text: $._("Your browser is not recent enough to show " +
-                          "SQL output. Please upgrade your browser."),
-                type: "error",
-                source: "sqlite",
-                lint: undefined,
-                priority: 2
-            }]);
+            deferred.resolve({
+              errors: [{
+                  row: -1,
+                  column: -1,
+                  text: i18n._("Your browser is not recent enough to show " +
+                            "SQL output. Please upgrade your browser."),
+                  type: "error",
+                  source: "sqlite",
+                  lint: undefined,
+                  priority: 2
+              }],
+              warnings: []
+            });
+            return deferred;
         }
 
         // To lint we execute each statement in an isolated environment.
@@ -127,7 +243,7 @@ window.SQLOutput = Backbone.View.extend({
                 function(statement, lineNumber) {
             try {
                 if (!statement) {
-                    throw new Error($._("It looks like you have an " +
+                    throw new Error(i18n._("It looks like you have an " +
                         "unnecessary semicolon."));
                 }
                 var result =
@@ -149,7 +265,7 @@ window.SQLOutput = Backbone.View.extend({
                         var allowedTypes = ["TEXT", "NUMERIC", "INTEGER",
                             "REAL", "NONE"];
                         if (allowedTypes.indexOf(type) === -1) {
-                            throw new Error($._("Please use one of the valid column " +
+                            throw new Error(i18n._("Please use one of the valid column " +
                                 "types when creating a table: ") +
                                 allowedTypes.join(", "));
                         }
@@ -176,15 +292,18 @@ window.SQLOutput = Backbone.View.extend({
                 return true;
             } catch (e) {
                 error = true;
-                callback([{
-                    row: lineNumber,
-                    column: 0,
-                    text: this.getErrorMessage(e.message, statement),
-                    type: "error",
-                    source: "sqlite",
-                    lint: undefined,
-                    priority: 2
-                }]);
+                deferred.resolve({
+                    errors:[{
+                        row: lineNumber,
+                        column: 0,
+                        text: this.getErrorMessage(e.message, statement),
+                        type: "error",
+                        source: "sqlite",
+                        lint: undefined,
+                        priority: 2
+                    }],
+                    warnings: []
+                });
                 return false;
             }
         }.bind(this));
@@ -199,8 +318,13 @@ window.SQLOutput = Backbone.View.extend({
         };
 
         if (!error) {
-            callback([]);
+            deferred.resolve({
+                errors: [],
+                warnings: []
+            });
         }
+
+        return deferred;
     },
 
     initTests: function(validate) {
@@ -226,12 +350,11 @@ window.SQLOutput = Backbone.View.extend({
                     // Note: Scratchpad challenge checks against the exact
                     // translated text "A critical problem occurred..." to
                     // figure out whether we hit this case.
-                    var message = $._("Error: %(message)s",
+                    var message = i18n._("Error: %(message)s",
                         {message: errors[errors.length - 1].message});
-                    // TODO(jeresig): Find a better way to show this
-                    this.output.$el.find(".test-errors").text(message).show();
+                    console.warn(message);
                     this.tester.testContext.assert(false, message,
-                        $._("A critical problem occurred in your program " +
+                        i18n._("A critical problem occurred in your program " +
                             "making it unable to run."));
                 }
 
@@ -266,11 +389,12 @@ window.SQLOutput = Backbone.View.extend({
 
         var output = Handlebars.templates["sql-results"]({
             tables: tables,
-            results: results
+            results: results,
+            databaseMsg: i18n._("Database Schema"),
+            resultsMsg: i18n._("Query results"),
         });
 
         var doc = this.getDocument();
-        var oldPageTitle = $(doc).find("head > title").text();
         doc.open();
         doc.write(output);
         doc.close();

@@ -4,13 +4,13 @@
  * Author: Stefan Petre www.eyecon.ro
  * 
  * Dual licensed under the MIT and GPL licenses
- * 
+ *
  */
 (function ($) {
-	// We only use the more responsive touch events on iPad/iPhone
-	//  because otherwise we also use touch on touch-enabled ChromeBooks,
-	//  and students can no longer use their mouse.
-	var isITouch = /(iPhone|iPod|iPad).*AppleWebKit/i.test(navigator.userAgent);
+    // We only use the more responsive touch events on iPad/iPhone
+    //  because otherwise we also use touch on touch-enabled ChromeBooks,
+    //  and students can no longer use their mouse.
+    var isITouch = /(iPhone|iPod|iPad).*AppleWebKit/i.test(navigator.userAgent);
 
 	var ColorPicker = function () {
 		var
@@ -78,7 +78,7 @@
 					change.apply(this);
 				}
 			},
-			change = function (ev) {
+			change = function (ev, undoMode) {
 				var cal = $(this).parent().parent(), col;
 				if (this.parentNode.className.indexOf('_hex') > 0) {
 					cal.data('colorpicker').color = col = HexToHSB(fixHex(this.value));
@@ -103,7 +103,7 @@
 				setSelector(col, cal.get(0));
 				setHue(col, cal.get(0));
 				setNewColor(col, cal.get(0));
-				cal.data('colorpicker').onChange.apply(cal, [col, HSBToHex(col), HSBToRGB(col)]);
+				cal.data('colorpicker').onChange.apply(cal, [col, HSBToHex(col), HSBToRGB(col), undoMode]);
 			},
 			blur = function (ev) {
 				var cal = $(this).parent().parent();
@@ -137,7 +137,7 @@
 					y: ev.pageY,
 					field: field,
 					val: parseInt(field.val(), 10),
-					preview: $(this).parent().parent().data('colorpicker').livePreview					
+					preview: $(this).parent().parent().data('colorpicker').livePreview
 				};
 				$(document).bind(events.end, current, upIncrement);
 				$(document).bind(events.move, current, moveIncrement);
@@ -163,12 +163,12 @@
 					y: $(this).offset().top
 				};
 				ev.data = current;
-				moveHue(ev);
+				moveHue(ev, "startScrub");
 				current.preview = current.cal.data('colorpicker').livePreview;
 				$(document).bind(events.end, current, upHue);
 				$(document).bind(events.move, current, moveHue);
 			},
-			moveHue = function (ev) {
+			moveHue = function (ev, undoMode) {
 				var pos = getPagePos(ev);
 				if (!pos.pageX && !pos.pageY) {
 					return false;
@@ -179,12 +179,12 @@
 						.eq(4)
 						.val(parseInt(360*(150 - Math.max(0,Math.min(150,(pos.pageY - ev.data.y))))/150, 10))
 						.get(0),
-					[ev.data.preview]
+					[ev.data.preview, undoMode || "midScrub"]
 				);
 				return false;
 			},
 			upHue = function (ev) {
-				moveHue(ev);
+				moveHue(ev, "stopScrub");
 				fillRGBFields(ev.data.cal.data('colorpicker').color, ev.data.cal.get(0));
 				fillHexFields(ev.data.cal.data('colorpicker').color, ev.data.cal.get(0));
 				$(document).unbind(events.end, upHue);
@@ -198,12 +198,12 @@
 					pos: $(this).offset()
 				};
 				ev.data = current;
-				moveSelector(ev);
+				moveSelector(ev, "startScrub");
 				current.preview = current.cal.data('colorpicker').livePreview;
 				$(document).bind(events.end, current, upSelector);
 				$(document).bind(events.move, current, moveSelector);
 			},
-			moveSelector = function (ev) {
+			moveSelector = function (ev, undoMode) {
 				var pos = getPagePos(ev);
 				if (!pos.pageX && !pos.pageY) {
 					return false;
@@ -217,12 +217,12 @@
 						.eq(5)
 						.val(parseInt(100*(Math.max(0,Math.min(150,(pos.pageX - ev.data.pos.left))))/150, 10))
 						.get(0),
-					[ev.data.preview]
+					[ev.data.preview, undoMode || "midScrub"]
 				);
 				return false;
 			},
 			upSelector = function (ev) {
-				moveSelector(ev);
+				moveSelector(ev, "stopScrub");
 				fillRGBFields(ev.data.cal.data('colorpicker').color, ev.data.cal.get(0));
 				fillHexFields(ev.data.cal.data('colorpicker').color, ev.data.cal.get(0));
 				$(document).unbind(events.end, upSelector);
@@ -303,7 +303,7 @@
 					s: Math.min(100, Math.max(0, hsb.s)),
 					b: Math.min(100, Math.max(0, hsb.b))
 				};
-			}, 
+			},
 			fixRGB = function (rgb) {
 				return {
 					r: Math.min(255, Math.max(0, rgb.r)),
@@ -322,7 +322,7 @@
 					hex = o.join('');
 				}
 				return hex;
-			}, 
+			},
 			HexToRGB = function (hex) {
 				var hex = parseInt(((hex.indexOf('#') > -1) ? hex.substring(1) : hex), 16);
 				return {r: hex >> 16, g: (hex & 0x00FF00) >> 8, b: (hex & 0x0000FF)};
@@ -341,7 +341,7 @@
 				var delta = max - min;
 				hsb.b = max;
 				if (max != 0) {
-					
+
 				}
 				hsb.s = max != 0 ? 255 * delta / max : 0;
 				if (hsb.s != 0) {

@@ -1,21 +1,37 @@
+// TODO(kevinb) remove after challenges have been converted to use i18n._
+$._ = i18n._;
+
 window.LiveEditorOutput = Backbone.View.extend({
     recording: false,
     loaded: false,
     outputs: {},
+    lintErrors: [],
+    runtimeErrors: [],
+    lintWarnings: [],
 
     initialize: function(options) {
         this.render();
 
         this.setPaths(options);
 
-        this.config = new ScratchpadConfig({
-            useDebugger: options.useDebugger
-        });
+        this.config = new ScratchpadConfig({});
 
         if (options.outputType) {
-            this.setOutput(options.outputType);
+            this.setOutput(options.outputType, true, options.loopProtectTimeouts);
         }
-        
+
+        // Add a timestamp property to the lintErrors and runtimeErrors arrays
+        // to keep track of which version of the code the errors are for.  A
+        // new timestamp is created when runCode is called and is assigned to
+        // lintErrors and runtimeErrors (if there is no lint) when linting and
+        // running of the code complete.  The timestamps are used later to
+        // ensure we're not report stale errors that have already been fixed
+        // to the parent.  Adding properties to an array works because Array is
+        // essentially a special subclass of Object.
+        this.lintErrors.timestamp = 0;
+        this.runtimeErrors.timestamp = 0;
+        this.lintWarnings.timestamp = 0;
+
         this.bind();
     },
 
@@ -29,13 +45,15 @@ window.LiveEditorOutput = Backbone.View.extend({
             this.handleMessage.bind(this), false);
     },
 
-    setOutput: function(outputType) {
+    setOutput: function(outputType, enableLoopProtect, loopProtectTimeouts) {
         var OutputClass = this.outputs[outputType];
         this.output = new OutputClass({
             el: this.$el.find(".output"),
             config: this.config,
             output: this,
-            type: outputType
+            type: outputType,
+            enableLoopProtect: enableLoopProtect,
+            loopProtectTimeouts: loopProtectTimeouts
         });
     },
 
@@ -81,7 +99,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // filter out events that are objects
         // currently the only messages that contain objects are messages
         // being sent by Poster instances being used by the iframeOverlay
-        // in pjs-output.js and ui/debugger.js 
+        // in pjs-output.js
         if (typeof event.data === "object") {
             return;
         }
@@ -93,13 +111,18 @@ window.LiveEditorOutput = Backbone.View.extend({
         }
         if (!this.output) {
             var outputType = data.outputType || _.keys(this.outputs)[0];
-            this.setOutput(outputType);
-        }
-
-        // filter out debugger events
-        // handled by pjs-debugger.js::handleMessage
-        if (data.type === "debugger") {
-            return;
+            var enableLoopProtect = true;
+            if (data.enableLoopProtect != null) {
+                enableLoopProtect = data.enableLoopProtect;
+            }
+            var loopProtectTimeouts = {
+                initialTimeout: 2000,
+                frameTimeout: 500
+            };
+            if (data.loopProtectTimeouts != null) {
+                loopProtectTimeouts = data.loopProtectTimeouts;
+            }
+            this.setOutput(outputType, enableLoopProtect, loopProtectTimeouts);
         }
 
         // Set the paths from the incoming data, if they exist
@@ -118,7 +141,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Code to be executed
         if (data.code != null) {
             this.config.switchVersion(data.version);
-            this.runCode(data.code, undefined, data.cursor, data.noLint);
+            this.runCode(data.code, undefined, data.noLint);
         }
 
         if (data.onlyRunTests != null) {
@@ -160,7 +183,18 @@ window.LiveEditorOutput = Backbone.View.extend({
         // If there is no frameSource (e.g. we're not embedded in another page)
         // Then we don't need to care about sending the messages anywhere!
         if (this.frameSource) {
-            this.frameSource.postMessage(
+            let parentWindow = this.frameSource;
+            // In Chrome on dev when postFrame is called from webapp's
+            // scratchpad package it is somehow executed from the iframe
+            // instead, so frameSource is not really the parent frame.  We
+            // detect that here and fix it.
+            // TODO(james): Figure out why this is and if there is a better
+            // place to put a fix.
+            if (this.frameSource === window) {
+                parentWindow = this.frameSource.parent;
+            }
+
+            parentWindow.postMessage(
                 typeof data === "string" ? data : JSON.stringify(data),
                 this.frameOrigin);
         }
@@ -182,97 +216,173 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.validate = validate;
     },
 
-    runCode: function(userCode, callback, cursor, noLint) {
-        this.currentCode = userCode;
-
-        this.results = {
-            code: userCode,
-            errors: [],
-            assertions: []
-        };
-        this.lastSent = undefined;
-
-        var buildDone = function(errors) {
-            errors = this.cleanErrors(errors || []);
-
-            if (!this.loaded) {
-                this.postParent({ loaded: true });
-                this.loaded = true;
-            }
-
-            // Update results
-            this.results.errors = errors;
-            this.phoneHome();
-
-            this.toggle(!errors.length);
-
-            // A callback for working with a test suite
-            if (callback) {
-                //This is synchronous
-                this._test(userCode, this.validate, errors, function(errors, testResults) {
-                    callback(errors, testResults);
-                    return;
-                });
-            // Normal case
-            } else {
-                // This is debounced (async)
-                if (this.validate !== "") {
-                    this.test(userCode, this.validate, errors, function(errors, testResults) {
-                        this.results.errors = errors;
-                        this.results.tests = testResults;
-                        this.phoneHome();
-                    }.bind(this));   
-                }
-            }
-        }.bind(this);
-
-        var lintDone = function(errors) {
-            if (errors.length > 0 || this.onlyRunTests) {
-                return buildDone(errors);
-            }
-
-            // Then run the user's code
-            try {
-                this.output.runCode(userCode, function(errors) {
-                    buildDone(errors);
-                }, cursor);
-
-            } catch (e) {
-                buildDone([e]);
-            }
-        }.bind(this);
-
-        // Always lint the first time, so that PJS can populate its list of globals
-        if (noLint && this.firstLint) {
-            lintDone([]);
+    /**
+     * Converts an error to something that will JSONify usefully
+     *
+     * JS error objects JSONify to an empty object, so we need to convert them
+     * to a plain object ourselves first.  Since we'll end up doing some
+     * conversion of the format to better match jshint errors anyway, we'll
+     * just do that here too.  But sanitization will happen outside the iframe,
+     * since any code here can be bypassed by the user.
+     *
+     * @param {*} error: the error to JSONify
+     * @returns {*}
+     */
+    jsonifyError: function(error) {
+        if (typeof error !== "object" || $.isPlainObject(error)) {
+            // If we're not an object, or we're a plain object, we don't need
+            // to do anything.
+            return error;
         } else {
-            this.lint(userCode, lintDone);
-            this.firstLint = true;
+            return {
+                row: error.lineno ? error.lineno - 2 : -1,
+                column: 0,
+                text: error.message,
+                type: "error",
+                source: "native",
+                priority: 3,
+            };
         }
     },
 
     /**
-     * Send the most up to date errors/test results to the parent frame
+     * Performs all steps necessary to run code.
+     * - lint
+     * - actually run the code
+     * - manage lint and runtime errors
+     * - call the callback (via buildDone) to run tests
+     *
+     * @param userCode: code to run
+     * @param callback: used by the tests
+     * @param noLint: disables linting if true, first run still lints
+     *
+     * TODO(kevinb) return a Deferred and move test related code to test_utils
+     */
+    runCode: function(userCode, callback, noLint) {
+        this.currentCode = userCode;
+        var timestamp = Date.now();
+
+        this.results = {
+            timestamp: timestamp,
+            code: userCode,
+            errors: [],
+            assertions: [],
+            warnings: []
+        };
+
+        var skip = noLint && this.firstLint;
+
+        // Always lint the first time, so that PJS can populate its list of globals
+        this.output.lint(userCode, skip).then(function (lintResults) {
+            this.lintErrors = lintResults.errors;
+            this.lintErrors.timestamp = timestamp;
+            this.lintWarnings = lintResults.warnings;
+            this.lintWarnings.timestamp = timestamp;
+            return this.lintDone(userCode, timestamp);
+        }.bind(this)).then(function () {
+            this.buildDone(userCode, callback);
+        }.bind(this));
+
+        this.firstLint = true;
+    },
+
+    /**
+     * Runs the code and records runtime errors.  Returns immediately if there
+     * are any lint errors.
+     *
+     * @param userCode
+     * @param timestamp
+     * @returns {$.Deferred}
+     */
+    lintDone: function(userCode, timestamp) {
+        var deferred = $.Deferred();
+        if (this.lintErrors.length > 0 || this.onlyRunTests) {
+            deferred.resolve();
+            return deferred;
+        }
+
+        // Then run the user's code
+        try {
+            this.output.runCode(userCode, function(runtimeErrors) {
+                this.runtimeErrors = runtimeErrors;
+                this.runtimeErrors.timestamp = timestamp;
+                deferred.resolve();
+            }.bind(this));
+
+        } catch (e) {
+            if (this.outputs.hasOwnProperty('pjs')) {
+                this.runtimeErrors = [e];
+            }
+            deferred.resolve();
+        }
+        return deferred;
+    },
+
+    /**
+     * Posts results to the the parent frame and runs tests if a callback has
+     * been provided or if the .validate property is set.
+     *
+     * @param userCode
+     * @param callback
+     */
+    buildDone: function(userCode, callback) {
+        var errors = [];
+        var warnings = [];
+
+        // only use lint errors if the timestamp isn't stale
+        if (this.results.timestamp === this.lintErrors.timestamp) {
+            errors = errors.concat(this.lintErrors);
+        }
+        // only use runtime errors if the timestamp isn't stale
+        if (this.results.timestamp === this.runtimeErrors.timestamp) {
+            errors = errors.concat(this.runtimeErrors);
+        }
+        // only use lint warnings if the timestamp isn't stale
+        if (this.results.timestamp === this.lintWarnings.timestamp) {
+            warnings = warnings.concat(this.lintWarnings);
+        }
+
+        errors = errors || [];
+        errors = errors.map(this.jsonifyError);
+
+        if (!this.loaded) {
+            this.postParent({ loaded: true });
+            this.loaded = true;
+        }
+
+        // Update results
+        this.results.errors = errors;
+        this.results.warnings = warnings;
+        this.phoneHome();
+
+        this.toggle(!errors.length);
+
+        // A callback for working with a test suite
+        if (callback) {
+            //This is synchronous
+            this._test(userCode, this.validate, errors, function(errors, testResults) {
+                callback(errors, testResults);
+            });
+            // Normal case
+        } else {
+            // This is debounced (async)
+            if (this.validate !== "") {
+                this.test(userCode, this.validate, errors, function(errors, testResults) {
+                    this.results.errors = errors;
+                    this.results.tests = testResults;
+                    this.phoneHome();
+                }.bind(this));
+            }
+        }
+    },
+
+    /**
+     * Send the most up to date errors/test results to the parent frame.
      */
     phoneHome: function() {
-        // Our handling of errors is leaky.
-        // In the old design errors were passed from function to function 
-        // via arguments to callbacks. Recently I have added asynchronous sources 
-        // of errors such as those from breaking out of an infinite loop.
-        // These two different mechanisms mean that it's possible for errors to 
-        // get lost, but it can't be fixed without rewriting how all of the callbacks
-        // work. As a work around if we ever see an error, never erase it.
-        // I made the judgement that rather than trying to merge the two it's ok if 
-        // earlier errors cover newer ones, since once the user fixes the earlier errors 
-        // the new ones will appear, meaning we never leave the user stuck wondering what to do. 
-        // I expect that to be good enough compromise.
-        if (this.lastSent && this.lastSent.errors && this.lastSent.errors.length) {
-            this.results.errors = this.lastSent.errors;
-        } 
         this.postParent({
             results: this.results
         });
-        this.lastSent = JSON.parse(JSON.stringify(this.results));
     },
 
 
@@ -310,62 +420,6 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         this.runCode(this.getUserCode());
     },
-
-    cleanErrors: function(errors) {
-        errors = errors.map(function(error) {
-            if (!$.isPlainObject(error)) {
-                return {
-                    row: error.lineno ? error.lineno - 2 : -1,
-                    column: 0,
-                    text: this.clean(error.message),
-                    type: "error",
-                    source: "native",
-                    priority: 3
-                };
-            }
-
-            return {
-                row: error.row,
-                column: error.column,
-                text: _.compose(this.prettify, this.clean)(
-                    error.text || error.message || ""),
-                type: error.type,
-                lint: error.lint,
-                source: error.source
-            };
-        }.bind(this));
-
-        errors = errors.sort(function(a, b) {
-            var diff = a.row - b.row;
-            return diff === 0 ? (a.priority || 99) - (b.priority || 99) : diff;
-        });
-
-        return errors;
-    },
-
-    // This adds html tags around quoted lines so they can be formatted
-    prettify: function(str) {
-        str = str.split("\"");
-        var htmlString = "";
-        for (var i = 0; i < str.length; i++) {
-            if (str[i].length === 0) {
-                continue;
-            }
-
-            if (i % 2 === 0) {
-                //regular text
-                htmlString += "<span class=\"text\">" + str[i] + "</span>";
-            } else {
-                // text in quotes
-                htmlString += "<span class=\"quote\">" + str[i] + "</span>";
-            }
-        }
-        return htmlString;
-    },
-
-    clean: function(str) {
-        return String(str).replace(/</g, "&lt;");
-    }
 });
 
 LiveEditorOutput.registerOutput = function(name, output) {

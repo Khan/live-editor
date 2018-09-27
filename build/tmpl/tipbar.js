@@ -1,38 +1,20 @@
 this["Handlebars"] = this["Handlebars"] || {};
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["tipbar"] = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
-  helpers = helpers || Handlebars.helpers;
-  var buffer = "", stack1, foundHelper, tmp1, self=this, functionType="function", blockHelperMissing=helpers.blockHelperMissing;
-
-function program1(depth0,data) {
-  
-  
-  return "Oh noes!";}
-
-function program3(depth0,data) {
-  
-  
-  return "Show me where";}
-
-  buffer += "<div class=\"tipbar\">\n    <div class=\"speech-arrow\"></div>\n    <div class=\"error-buddy\"></div>\n    <div class=\"tipnav\">\n        <a href=\"\" class=\"prev\"><span class=\"ui-icon ui-icon-circle-triangle-w\"></span></a>\n        <span class=\"current-pos\"></span>\n        <a href=\"\" class=\"next\"><span class=\"ui-icon ui-icon-circle-triangle-e\"></span></a>\n    </div>\n    <div class=\"text-wrap\">\n        <div class=\"oh-no\">";
-  foundHelper = helpers['_'];
-  stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(1, program1, data);
-  tmp1.hash = {};
-  tmp1.fn = tmp1;
-  tmp1.inverse = self.noop;
-  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
-  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
-  if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</div>\n        <div class=\"message\"></div>\n        <div class=\"show-me\"><a href>";
-  foundHelper = helpers['_'];
-  stack1 = foundHelper || depth0['_'];
-  tmp1 = self.program(3, program3, data);
-  tmp1.hash = {};
-  tmp1.fn = tmp1;
-  tmp1.inverse = self.noop;
-  if(foundHelper && typeof stack1 === functionType) { stack1 = stack1.call(depth0, tmp1); }
-  else { stack1 = blockHelperMissing.call(depth0, stack1, tmp1); }
-  if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "</a></div>\n    </div>\n</div>";
-  return buffer;});;
+this["Handlebars"]["templates"]["tipbar"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
+    return "&times;";
+},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    var stack1, helper, options, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=container.escapeExpression, buffer = 
+  "<div class=\"tipbar\">\n    <div class=\"speech-arrow\"></div>\n    <div class=\"error-buddy\"></div>\n\n    <div class=\"text-wrap\">\n        <button class=\"close\" type=\"button\" aria-label=\"Close\">";
+  stack1 = ((helper = (helper = helpers.i18nDoNotTranslate || (depth0 != null ? depth0.i18nDoNotTranslate : depth0)) != null ? helper : alias2),(options={"name":"i18nDoNotTranslate","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data}),(typeof helper === alias3 ? helper.call(alias1,options) : helper));
+  if (!helpers.i18nDoNotTranslate) { stack1 = helpers.blockHelperMissing.call(depth0,stack1,options)}
+  if (stack1 != null) { buffer += stack1; }
+  return buffer + "</button>\n        <div class=\"oh-no\">"
+    + alias4(((helper = (helper = helpers.ohNoesMsg || (depth0 != null ? depth0.ohNoesMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"ohNoesMsg","hash":{},"data":data}) : helper)))
+    + "</div>\n        <div class=\"message\"></div>\n        <div class=\"show-me\"><a href>"
+    + alias4(((helper = (helper = helpers.showMeMsg || (depth0 != null ? depth0.showMeMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"showMeMsg","hash":{},"data":data}) : helper)))
+    + "</a></div>\n        <div class=\"tipnav\">\n            <a href=\"javascript:void(0);\" class=\"prev\" title=\""
+    + alias4(((helper = (helper = helpers.prevMsg || (depth0 != null ? depth0.prevMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"prevMsg","hash":{},"data":data}) : helper)))
+    + "\">\n                <span class=\"ui-icon ui-icon-circle-triangle-w\"></span>\n            </a>\n            <span class=\"current-pos\"></span>\n            <a href=\"javascript:void(0);\" class=\"next\" title=\""
+    + alias4(((helper = (helper = helpers.nextMsg || (depth0 != null ? depth0.nextMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"nextMsg","hash":{},"data":data}) : helper)))
+    + "\">\n                <span class=\"ui-icon ui-icon-circle-triangle-e\"></span>\n            </a>\n        </div>\n    </div>\n</div>";
+},"useData":true});;

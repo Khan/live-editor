@@ -1,12 +1,14 @@
-<div class="scratchpad-wrap">
+<div class="scratchpad-wrap{{#unless execFile}} no-output{{/unless}}">
     <!-- Canvases (Drawing + Output) -->
     <div class="scratchpad-canvas-wrap">
         <div id="output">
             <!-- Extra data-src attribute to work around
                  cross-origin access policies. -->
-            <iframe id="output-frame"
-                src="{{execFile}}"
-                data-src="{{execFile}}"></iframe>
+            {{#if execFile}}
+                <iframe id="output-frame"
+                    src="{{execFile}}"
+                    data-src="{{execFile}}"></iframe>
+            {{/if}}
             <canvas class="scratchpad-draw-canvas" style="display:none;"
                 width="400" height="400"></canvas>
 
@@ -14,12 +16,22 @@
             </div>
 
             <div class="scratchpad-canvas-loading">
-                <img src="{{imagesDir}}/throbber-full.gif">
+                <img src="{{imagesDir}}/spinner-large.gif">
                 <span class="hide-text">{{#_}}Loading...{{/_}}</span>
             </div>
         </div>
 
         <div class="scratchpad-toolbar">
+            <div class="error-buddy-resting">
+                <div class="error-buddy-happy" style="display:none;">
+                    <img src="{{imagesDir}}/creatures/OhNoes-Happy.png"/>
+                </div>
+                <a class="error-buddy-thinking" style="display:none;" href="javascript:void()">
+                    <img src="{{imagesDir}}/creatures/OhNoes-Hmm.png"/>
+                    {{! I18N: The CS error buddy is thinking there might be an error in your code and is waiting for you to fix it !}}
+                    {{#_}}Hmm...{{/_}}
+                </a>
+            </div>
             <button id="restart-code"
                 class="simple-button pull-right">
                 <span class="icon-refresh"></span>
@@ -52,7 +64,7 @@
             </div>
 
             <div class="scratchpad-editor-bigplay-loading" style="display:none;">
-                <img src="{{imagesDir}}/throbber-full.gif">
+                <img src="{{imagesDir}}/spinner-large.gif">
                 <span class="hide-text">{{#_}}Loading...{{/_}}</span>
             </div>
 

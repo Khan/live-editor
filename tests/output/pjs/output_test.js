@@ -2,18 +2,33 @@
 /* global text, color, textFont, fill, text, background, createFont, PVector */
 /* global externals, exp, link, width, draw, mouseMoved, Program */
 
+describe("Version test", function() {
+    it("should use version 4 or greater", function() {
+        var config = new ScratchpadConfig({});
+        expect(config.latestVersion()).to.be(4);
+    });
+});
+
 // Test the lower level functions in Output
 describe("Scratchpad CanvasOutput functions", function() {
     it("stringifyArray", function() {
-        var undefArray = PJSOutput.stringifyArray([undefined, undefined]);
+        var undefArray = PJSCodeInjector.stringifyArray([undefined, undefined]);
         expect(undefArray).to.be.equal("undefined, undefined");
-        var primArray = PJSOutput.stringifyArray([1, "A"]);
+        var primArray = PJSCodeInjector.stringifyArray([1, "A"]);
         expect(primArray).to.be.equal("1, \"A\"");
     });
 
 });
 
+// TODO(kevinb) split into smaller subsuites
 describe("Scratchpad Output Exec", function() {
+    test("Make sure instances are serialized properly", function() {
+        var myObj = { innerObj: {} };
+        myObj.innerObj.myConstructor = function() {};
+
+        var myInstance = new myObj.innerObj.myConstructor();
+    });
+
     test("Color modes", function() {
         color(255, 0, 0);
     });
@@ -33,6 +48,10 @@ describe("Scratchpad Output Exec", function() {
             getSound('rpg/giant-no');
             getSound("rpg/giant-no");
         });
+
+        test("getSound with computed string", function() {
+            getSound('rpg/' + 'giant-no');
+        });
     }
 
     // Check the actual contents of error message
@@ -46,29 +65,40 @@ describe("Scratchpad Output Exec", function() {
 
     failingTest("JSHint Error", "ellipse(x, 100, 100, 100);");
 
-    failingTest("Infinite Loop", function() {
-        var x = 0;
-        while (x < 400) {
-            ellipse(100, 100, 100, x);
-        }
-    });
+    failingTest(
+        "KAInfiniteLoopCount is not allowed",
+        "KAInfiniteLoopCount = 0;"
+    );
 
-    failingTest("Infinite Loop with width/height", function() {
-        var x = 0;
-        while (x < width/20) {
-            ellipse(100, 100, 100, x);
-        }
-    });
+    failingTest(
+        "KAInfiniteLoopSetTimeout is not allowed",
+        "KAInfiniteLoopSetTimeout(1000);"
+    );
 
-    failingTest("Infinite Loop Inside Draw Function", function() {
-        var draw = function() {
-            var y = 40;
-            while (y < 300) {
-                var message = "hello" + y;
-                text(message, 30, y);
-            }
-        };
-    });
+    failingTest(
+        "KAInfiniteLoopProtect is not allowed",
+        "KAInfiniteLoopProtect();"
+    );
+
+    failingTest(
+        "props on __env__ cannot be accessed directly",
+        "__env__.fill = function() { debug('foo'); }"
+    );
+
+    failingTest(
+        "__env__ cannot be replaced",
+        "__env__ = {};"
+    );
+
+    failingTest(
+        "__env__ cannot be declared",
+        "var __env__ = {};"
+    );
+
+    failingTest(
+        "generates an error for numbers prefixed by a 0",
+        "ellipse(09,10,11,12);"
+    );
 
     test("Looping (with Processing.js Built-in Functions)", function() {
         var go = function() {
@@ -84,8 +114,50 @@ describe("Scratchpad Output Exec", function() {
         background(105, 171, 74);
     });
 
+    test("Declaring an uninitialized variable in 1st expression of for loop", function() {
+        for (var i = 0, j; i < 10; i++) {}
+    });
+
+    test("for loop with variable declaration", function() {
+        for (var i = 0; i < 10; i++) {
+            ellipse(25 * i, 200, 50, 50);
+        }
+    });
+
+    test("try-catch", function() {
+        try {
+            throw "hello";
+        } catch(e) {
+            debug(e);
+        }
+    });
+
+    test("arguments special object/array", function() {
+        var foo = function() {
+            var x = arguments[0];
+            var y = arguments[1];
+            ellipse(x,y,100,100);
+        };
+
+        foo(200,200);
+    });
+
+    runTest({
+        title: "inner scope variables supercede global variables",
+        code: function() {
+            var foo = 5;
+            var bar = function() {
+                var foo = 10;
+                Program.assertEqual(foo, 10);
+            };
+            bar();
+        },
+        errors: [],
+        assertions: []
+    });
+
     failingTest("Too Many Draw Operations", function() {
-        for (var i = 0; i < 17000; i++) {
+        for (var i = 0; i < 1000000; i++) {
             ellipse(100, 100, 100, 100);
         }
     });
@@ -125,6 +197,18 @@ describe("Scratchpad Output Exec", function() {
         var draw = function() {
             image(imageMap[0], 10, 10);
         };
+    });
+
+    test("getImage with computed string", function() {
+        var img = getImage("cute/" + "Blank" );
+        image(img, 0, 0);
+    });
+
+    test("for-in loop with variable declaration", function() {
+        var obj = { a: 1, b: 2, c: 3 };
+        for (var i in obj) {
+            println(obj);
+        }
     });
 
     failingTest("getImage with simple string", function () {
@@ -195,16 +279,16 @@ describe("Scratchpad Output Exec", function() {
     });
 
     failingTest(".ownerDocument disabled", function() {
-        var document = externals.canvas.ownerDocument;
+        var document = externals.processing.ownerDocument;
         document.getElementsByTagName("div");
     });
 
     failingTest(".createElement disabled", function() {
-        externals.canvas.ownerDocument.createElement("img");
+        externals.processing.ownerDocument.createElement("img");
     });
 
     failingTest("externals disabled", function() {
-        var d = externals.canvas.ownerDocument;
+        var d = externals.processing.ownerDocument;
         var a = d.createElement("audio");
         a.src = "http://www.w3schools.com/html5/horse.ogg";
         a.autoplay = 'true';
@@ -354,6 +438,14 @@ describe("Scratchpad Output Exec", function() {
         var letter = String.fromCharCode(65);
     });
 
+    test("Number object works", function() {
+        var newVal = Number.isFinite(1/0);
+    });
+
+    test("Date object works", function() {
+        var newDate = Date.now();
+    });
+
     test("Processing's parseFloat, parseInt work", function() {
         var settings = {};
         var val = parseInt(settings.val, 10) || 13;
@@ -461,6 +553,20 @@ describe("Scratchpad Output Exec", function() {
 
     });
 
+    runTest({
+        title: "Make sure methods on objects returned by createGraphics work",
+        code: function() {
+            var img = getImage("avatars/leafers-seedling");
+
+            var gfx = createGraphics(400, 400, 1);
+            gfx.image(img, 0, 0);
+
+            var draw = function() {
+                image(gfx, 10, 0);
+            };
+        }
+    });
+
     // This test requires commercial codecs
     if (supportsMpegAudio()) {
         test("Make sure object with getSound works in injection", function () {
@@ -550,18 +656,8 @@ describe("Scratchpad Output Exec", function() {
      * This makes sure that when you have objects, the scope of
      * closures and with statements are not lost during the code
      * injection phase.
-     *
-     * This test is skipped when debugging because users can't make
-     * changes to the program while debugging.  Also, there are
-     * technical issues with replacing the prototype.  Currently,
-     * all functions are converted to generator functions which
-     * have a .next() function.  Replacing the prototype gets rid
-     * of the .next() function and the generator ceases to exist
-     * which breaks the debugger.  This issue will eventually be
-     * resolved but shouldn't have any immediate impact on users.
      */
     runTest({
-        skip: useDebugger,
         title: "Make sure prototype function scope is preserved",
         code: function() {
             var x = function() {
@@ -660,13 +756,13 @@ describe("Scratchpad Output Exec", function() {
         // test code to be run in an infinite loop after the it() block had
         // completed.
         setup: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             sinon.stub(p.Program, "settings");
             sinon.stub(p.Program, "restart");
             sinon.stub(p.Program, "runTests");
         },
         teardown: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             expect(p.Program.settings.calledWith()).to.be(true);
             expect(p.Program.restart.calledWith()).to.be(true);
             expect(p.Program.runTests.calledWith()).to.be(true);
@@ -686,6 +782,66 @@ describe("Scratchpad Output Exec", function() {
             "row":0,"column":0,
             "text": "Assertion failed: 2 is not equal to 4."}],
         assertions2: []
+    });
+
+    runTest({
+        title: "Program.assertEqual() returns correct line number inside functions",
+        code: function() {
+            var foo = function () {
+                Program.assertEqual(2, 4);
+            };
+            foo();
+        },
+        code2: function() {
+            var foo = function () {
+                Program.assertEqual(2, 2);
+            };
+            foo();
+        },
+        errors: [],
+        assertions: [{
+            "row":2,"column":4,
+            "text": "Assertion failed: 2 is not equal to 4."}],
+        assertions2: []
+    });
+
+    // This test should not use a variable that is defined in another test
+    // TODO(kevinb) prevent persistent state between tests
+    runTest({
+        title: "hoisting should work",
+        code: function() {
+            var foo = function() {
+                var bar = function() {
+                    return b;
+                };
+                var b = 5;
+                return bar;
+            };
+
+            Program.assertEqual(foo()(), 5);
+        },
+        errors: [],
+        assertions: []
+    });
+
+    runTest({
+        title: "local variables in closure of global draw should update",
+        code: function() {
+            (function () {
+                var radius = 100;
+                draw = function() {
+                    ellipse(200,200,2*radius,2*radius);
+                };
+            })();
+        },
+        code2: function() {
+            (function () {
+                var radius = 50;
+                draw = function() {
+                    ellipse(200,200,2*radius,2*radius);
+                };
+            })();
+        }
     });
 
     /**
@@ -723,12 +879,12 @@ describe("Scratchpad Output Exec", function() {
             };
         },
         setup: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             sinon.stub(p, "fill");
             sinon.stub(p, "ellipse");
         },
         teardown: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             var red = p.color(255,0,0);
             var yellow = p.color(255,255,0);
             expect(p.fill.calledWith(red)).to.be(true);
@@ -762,12 +918,12 @@ describe("Scratchpad Output Exec", function() {
             };
         },
         setup: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             sinon.stub(p, "fill");
             sinon.stub(p, "ellipse");
         },
         teardown: function(output) {
-            var p = output.output.canvas;
+            var p = output.output.processing;
             var red = p.color(255,0,0);
             expect(p.fill.calledWith(red)).to.be(true);
             expect(p.fill.calledWith(0)).to.be(false);
@@ -775,6 +931,26 @@ describe("Scratchpad Output Exec", function() {
             expect(p.ellipse.calledWith(200,200,200,200)).to.be(true);
             p.fill.restore();
             p.ellipse.restore();
+        },
+        wait: 100
+    });
+
+    runTest({
+        title: "Removing draw() sets it to the DUMMY function",
+        code: function() {
+            var foo = { c:color(255, 0, 0), r:100 };
+            var draw = function() {
+                background(255);
+                fill(foo.c);
+                ellipse(200, 200, foo.r, foo.r);
+            };
+        },
+        code2: function () {
+            var foo = { c:color(255, 0, 0), r:200 };
+        },
+        teardown: function(output) {
+            var p = output.output.processing;
+            expect(p.draw).to.be(output.output.DUMMY);
         },
         wait: 100
     });

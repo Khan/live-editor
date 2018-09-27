@@ -9755,6 +9755,17 @@ require("/tools/entry-point.js");
       return obj;
     },
     // These are HTML errors.
+    NO_DOCTYPE_FOUND: function() {},
+    HTML_NOT_ROOT_ELEMENT: function(parser) {
+      var currentNode = parser.domBuilder.currentNode.firstElementChild,
+          openTag = this._combine({
+            name: currentNode.nodeName.toLowerCase()
+          }, currentNode.parseInfo.openTag);
+      return {
+        openTag: openTag,
+        cursor: openTag.start
+      };
+    },
     UNCLOSED_TAG: function(parser) {
       var currentNode = parser.domBuilder.currentNode,
           openTag = this._combine({
@@ -9782,6 +9793,15 @@ require("/tools/entry-point.js");
         openTag: openTag,
         cursor: openTag.start
       };
+    },
+    OBSOLETE_HTML_TAG: function(tagName, token) {
+      var openTag = this._combine({
+          name: tagName
+        }, token.interval);
+      return {
+        openTag: openTag,
+        cursor: openTag.start
+      }
     },
     ELEMENT_NOT_ALLOWED: function(tagName, token) {
       var openTag = this._combine({
@@ -10009,6 +10029,29 @@ require("/tools/entry-point.js");
         cursor: attribute.value.start
       };
     },
+    //Special error type for urls that start with www
+    INVALID_URL: function(parser, nameTok, valueTok) {
+      var currentNode = parser.domBuilder.currentNode,
+          openTag = this._combine({
+            name: currentNode.nodeName.toLowerCase()
+          }, currentNode.parseInfo.openTag),
+          attribute = {
+            name: {
+              value: nameTok.value,
+              start: nameTok.interval.start,
+              end: nameTok.interval.end
+            },
+            value: {
+              start: valueTok.interval.start + 1,
+              end: valueTok.interval.end - 1
+            }
+          };
+      return {
+        openTag: openTag,
+        attribute: attribute,
+        cursor: attribute.value.start
+      };
+    },
     // These are CSS errors.
     UNKOWN_CSS_KEYWORD: function(parser, start, end, value) {
       return {
@@ -10045,6 +10088,16 @@ require("/tools/entry-point.js");
           start: start,
           end: end,
           selector: selector
+        },
+        cursor: start
+      };
+    },
+    UNKNOWN_CSS_PROPERTY_NAME: function(parser, start, end, property) {
+      return {
+        cssProperty: {
+          start: start,
+          end: end,
+          property: property
         },
         cursor: start
       };
@@ -10090,6 +10143,16 @@ require("/tools/entry-point.js");
       };
     },
     UNFINISHED_CSS_VALUE: function(parser, start, end, value) {
+      return {
+        cssValue: {
+          start: start,
+          end: end,
+          value: value
+        },
+        cursor: start
+      };
+    },
+    IMPROPER_CSS_VALUE: function(parser, start, end, value) {
       return {
         cssValue: {
           start: start,
@@ -10736,8 +10799,13 @@ require("/tools/entry-point.js");
       if (next === ':') {
         // Before we continue, we must make sure the string we found is a real
         // CSS property.
-        if (!( property && property.match(/^[a-z\-]+$/)) || !this._knownCSSProperty(property)) {
-          throw new ParseError("INVALID_CSS_PROPERTY_NAME", this, propertyStart, propertyEnd, property);
+        var isValidName = property && property.match(/^[a-z\-]+$/);
+        if (!isValidName) {
+          throw new ParseError("INVALID_CSS_PROPERTY_NAME",
+              this, propertyStart, propertyEnd, property);
+        } else if (!this._knownCSSProperty(property)) {
+          this.warnings.push(new ParseError("UNKNOWN_CSS_PROPERTY_NAME",
+              this, propertyStart, propertyEnd, property));
         }
         this.stream.markTokenStartAfterSpace();
         this._parseValue(selector, selectorStart, property, propertyStart);
@@ -10763,7 +10831,6 @@ require("/tools/entry-point.js");
       if(token === null) {
         throw new ParseError("MISSING_CSS_VALUE", this, propertyStart, propertyStart+property.length, property);
       }
-
       var next = (!this.stream.end() ? this.stream.next() : "end of stream"),
           errorMsg = "[_parseValue] Expected }, <, or ;, instead found "+next;
 
@@ -10774,6 +10841,17 @@ require("/tools/entry-point.js");
 
       if (value === '') {
         throw new ParseError("MISSING_CSS_VALUE", this, this.stream.pos-1, this.stream.pos);
+      }
+
+      // If value has a newline, the tokenizer ate the next pair, so we're missing a ;
+      if (value.indexOf('\n') > -1) {
+        value = value.substr(0, value.indexOf('\n'));
+        this.warnings.push(new ParseError("UNFINISHED_CSS_VALUE", this, valueStart, valueEnd, value));
+      }
+
+      // if value matches this regex, then there's a space between
+      if (value.match(/(#|rgb|rgba|hsl|hsla)\s+\(/)) {
+        this.warnings.push(new ParseError("IMPROPER_CSS_VALUE", this, valueStart, valueEnd, value));
       }
 
       // At this point we can fill in the *value* part of the current
@@ -10805,6 +10883,7 @@ require("/tools/entry-point.js");
       }
       else if (next === '}') {
         // This is block level termination; try to read a new selector.
+        this.warnings.push(new ParseError("UNFINISHED_CSS_VALUE", this, valueStart, valueEnd, value));
         this.currentRule.declarations.end = this.stream.pos;
         this._bindCurrentRule();
         this.stream.markTokenStartAfterSpace();
@@ -10913,8 +10992,9 @@ require("/tools/entry-point.js");
     // We also keep a list of HTML elements that are now obsolete, but
     // may still be encountered in the wild on popular sites.
     obsoleteHtmlElements: ["acronym", "applet", "basefont", "big", "center",
-                           "dir", "font", "isindex", "listing", "noframes",
-                           "plaintext", "s", "strike", "tt", "xmp"],
+                           "dir", "font", "isindex", "listing", "marquee",
+                           "noframes", "plaintext", "s", "strike", "tt",
+                           "xmp"],
 
     webComponentElements: ["template", "shadow", "content"],
 
@@ -10947,6 +11027,12 @@ require("/tools/entry-point.js");
     },
 
     // This is a helper function to determine whether a given string
+    // is an obsolete HTML element tag
+    _knownObsoleteHTMLElement: function(tagName) {
+      return this.obsoleteHtmlElements.indexOf(tagName) > -1;
+    },
+
+    // This is a helper function to determine whether a given string
     // is a HTML element tag which can optional omit its close tag.
     _knownOmittableCloseTagHtmlElement: function(tagName) {
       return this.omittableCloseTagHtmlElements.indexOf(tagName) > -1;
@@ -10976,13 +11062,16 @@ require("/tools/entry-point.js");
       // First we check to see if the beginning of our stream is
       // an HTML5 doctype tag. We're currently quite strict and don't
       // parse XHTML or other doctypes.
-      if (this.stream.match(this.html5Doctype, true, true))
+      if (this.stream.match(this.html5Doctype, true, true)) {
         this.domBuilder.fragment.parseInfo = {
           doctype: {
             start: 0,
             end: this.stream.pos
           }
         };
+      } else {
+        this.warnings.push(new ParseError("NO_DOCTYPE_FOUND"));
+      }
 
       // Next, we parse "tag soup", creating text nodes and diving into
       // tags as we find them.
@@ -11000,6 +11089,11 @@ require("/tools/entry-point.js");
       // we test for that.
       if (this.domBuilder.currentNode != this.domBuilder.fragment)
         throw new ParseError("UNCLOSED_TAG", this);
+
+      if (this.domBuilder.currentNode.children &&
+        (this.domBuilder.currentNode.children.length !== 1 || this.domBuilder.currentNode.firstElementChild.tagName !== "HTML")) {
+        this.warnings.push(new ParseError("HTML_NOT_ROOT_ELEMENT", this));
+      }
 
       return {
         warnings: (this.warnings.length > 0 ? this.warnings : false)
@@ -11065,8 +11159,11 @@ require("/tools/entry-point.js");
         if (tagName) {
           var badSVG = this.parsingSVG && !this._knownSVGElement(tagName);
           var badHTML = !this.parsingSVG && !this._knownHTMLElement(tagName) && !this._isCustomElement(tagName);
+          var obsoleteHTML = this._knownObsoleteHTMLElement(tagName);
           if (badSVG || badHTML) {
             throw new ParseError("INVALID_TAG_NAME", tagName, token);
+          } else if (obsoleteHTML) {
+            this.warnings.push(new ParseError("OBSOLETE_HTML_TAG", tagName, token));
           } else if (this.options.noScript && tagName === "script") {
             throw new ParseError("SCRIPT_ELEMENT_NOT_ALLOWED", tagName, token);
           } else if (this.options.disableTags) {
@@ -11128,7 +11225,7 @@ require("/tools/entry-point.js");
 
       this.stream.makeToken();
       while (!this.stream.end()) {
-        if (this.stream.match(matchString, true)) {
+        if (this.stream.match(matchString, true, true)) {
           token = this.stream.makeToken();
           text = token.value.slice(0, -matchString.length);
           closeTagInterval = {
@@ -11216,7 +11313,7 @@ require("/tools/entry-point.js");
             this.domBuilder.text(cssBlock.value, cssBlock.parseInfo);
           }
 
-          // If the opening tag represents a `<textarea>` element, we need
+          // If the opening tag represents a `<script>` element, we need
           // to parse all its contents as CDATA (unparsed character data)
           if (tagName && tagName === "script") {
             this.domBuilder.pushContext("javascript", this.stream.pos);
@@ -11308,11 +11405,33 @@ require("/tools/entry-point.js");
         }
         var valueTok = this.stream.makeToken();
 
-        //Add a new validator to check if there is a http link in a https page
+        // Add a new validator to check if there is a http link in a https page
         if (checkMixedContent && valueTok.value.match(/http:/) && isActiveContent(tagName, nameTok.value)) {
           this.warnings.push(
             new ParseError("HTTP_LINK_FROM_HTTPS_PAGE", this, nameTok, valueTok)
           );
+        }
+
+        // Add a new validator to check if there is invalid link content
+        // Cheers to Diego Perini: https://gist.github.com/dperini/729294, modified to include protocol-relative links
+        var regexp = /^(?:((?:https?|ftp):\/\/)|\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/i;
+
+        // Remove quotes from string literal
+        var url = valueTok.value.substring(1, valueTok.value.length-1);
+        if (!url.match(regexp)) {
+          if (nameTok.value === "src"){
+            this.warnings.push(
+              new ParseError("INVALID_URL", this, nameTok, valueTok)
+            );
+          } else if (nameTok.value === "href") {
+            if (url.charAt(0) !== "#" &&
+                url.substring(0, 10) !== "javascript" &&
+                url.substring(0, 7) !== "mailto:") {
+              this.warnings.push(
+                new ParseError("INVALID_URL", this, nameTok, valueTok)
+              );
+            }
+          }
         }
 
         var unquotedValue = replaceEntityRefs(valueTok.value.slice(1, -1));
@@ -11344,17 +11463,17 @@ require("/tools/entry-point.js");
   //
   // The DOM builder is given a single document DOM object that will
   // be used to create all necessary DOM nodes.
-  function DOMBuilder(sourceCode, disallowActiveAttributes, scriptPreprocessor) { 
-    this.disallowActiveAttributes = disallowActiveAttributes; 
-    this.scriptPreprocessor = scriptPreprocessor; 
+  function DOMBuilder(sourceCode, disallowActiveAttributes, scriptPreprocessor) {
+    this.disallowActiveAttributes = disallowActiveAttributes;
+    this.scriptPreprocessor = scriptPreprocessor;
     this.document = document;
-    this.sourceCode = sourceCode; 
-    this.code = ""; 
+    this.sourceCode = sourceCode;
+    this.code = "";
     this.fragment = document.createDocumentFragment();
     this.currentNode = this.fragment;
     this.contexts = [];
     this.rules = [];
-    this.last = 0; 
+    this.last = 0;
     this.pushContext("html", 0);
   }
 
@@ -11407,44 +11526,44 @@ require("/tools/entry-point.js");
     },
     // This method appends a text node to the currently active element.
     text: function(text, parseInfo) {
-      if (this.currentNode && this.currentNode.attributes) { 
+      if (this.currentNode && this.currentNode.attributes) {
         var type = this.currentNode.attributes.type || "";
         if (type.toLowerCase) {
             type = type.toLowerCase();
         } else if (type.nodeValue) { // button type="submit"
             type = type.nodeValue;
         }
-        if (this.currentNode.nodeName.toLowerCase() === "script" && (!type || type === "text/javascript")) { 
-          this.javascript(text, parseInfo); 
+        if (this.currentNode.nodeName.toLowerCase() === "script" && (!type || type === "text/javascript")) {
+          this.javascript(text, parseInfo);
           // Don't actually add javascript to the DOM we're building
           // because it will execute and we don't want that.
           return;
         } else if (this.currentNode.nodeName.toLowerCase() === "style") {
           this.rules.push.apply(this.rules, parseInfo.rules);
-        } 
-      } 
+        }
+      }
       var textNode = this.document.createTextNode(text);
       textNode.parseInfo = parseInfo;
       this.currentNode.appendChild(textNode);
     },
-    javascript: function(text, parseInfo) { 
-      try { 
-        text = this.scriptPreprocessor(text); 
-      } catch(err) { 
-        // This is meant to handle esprima errors 
-        if (err.index && err.description && err.message) { 
-          var cursor = this.currentNode.parseInfo.openTag.end + err.index; 
-          throw {parseInfo: {type: "JAVASCRIPT_ERROR", message: err.description, cursor: cursor} }; 
-        } else { 
-          throw err; 
-        } 
-      } 
-      this.code += this.sourceCode.slice(this.last, parseInfo.start); 
-      this.code += text; 
-      this.last = parseInfo.end; 
+    javascript: function(text, parseInfo) {
+      try {
+        text = this.scriptPreprocessor(text);
+      } catch(err) {
+        // This is meant to handle esprima errors
+        if (err.index && err.description && err.message) {
+          var cursor = this.currentNode.parseInfo.openTag.end + err.index;
+          throw {parseInfo: {type: "JAVASCRIPT_ERROR", message: err.description, cursor: cursor} };
+        } else {
+          throw err;
+        }
+      }
+      this.code += this.sourceCode.slice(this.last, parseInfo.start);
+      this.code += text;
+      this.last = parseInfo.end;
     },
     close: function() {
-      this.code += this.sourceCode.slice(this.last); 
+      this.code += this.sourceCode.slice(this.last);
     }
   };
 
@@ -11495,9 +11614,9 @@ require("/tools/entry-point.js");
           errorDetectors = options.errorDetectors || [],
           disallowActiveAttributes = (typeof options.disallowActiveAttributes === "undefined") ? false : options.disallowActiveAttributes;
 
-      var scriptPreprocessor = options.scriptPreprocessor || function(x) {return x;}; 
-      var domBuilder = new DOMBuilder(html, disallowActiveAttributes, scriptPreprocessor); 
-      var parser = new HTMLParser(stream, domBuilder, options); 
+      var scriptPreprocessor = options.scriptPreprocessor || function(x) {return x;};
+      var domBuilder = new DOMBuilder(html, disallowActiveAttributes, scriptPreprocessor);
+      var parser = new HTMLParser(stream, domBuilder, options);
 
       try {
         var _ = parser.parse();
@@ -11548,70 +11667,408 @@ require("/tools/entry-point.js");
   }
 }());
 
-window.LoopProtector = function(callback) {
-	this.callback = callback || function() {};
-	this.branchStartTime = 0;
-	this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
+window.ASTBuilder = {
+    /**
+     * @param {Expression} left
+     * @param {string} operator: "=", "+=", "-=", "*=", "/=", etc.
+     * @param {Expression} right
+     */
+    AssignmentExpression: function AssignmentExpression(left, operator, right) {
+        return {
+            type: "AssignmentExpression",
+            left: left,
+            operator: operator,
+            right: right
+        };
+    },
+    /**
+     * @param {Expression} left
+     * @param {string} operator: "+", "-", "*", "/", "<", ">", "<=", ">=", etc.
+     * @param {Expression} right
+     */
+    BinaryExpression: function BinaryExpression(left, operator, right) {
+        return {
+            type: "BinaryExpression",
+            left: left,
+            operator: operator,
+            right: right
+        };
+    },
+    /**
+     * @param {Array} body: an array of Expressions
+     */
+    BlockStatement: function BlockStatement(body) {
+        return {
+            type: "BlockStatement",
+            body: body
+        };
+    },
+    /**
+     * @param {Expression} callee
+     * @param {Array} args
+     */
+    CallExpression: function CallExpression(callee, args) {
+        return {
+            type: "CallExpression",
+            callee: callee,
+            arguments: args
+        };
+    },
+    /**
+     * @param {Expression} expression
+     */
+    ExpressionStatement: function ExpressionStatement(expression) {
+        return {
+            type: "ExpressionStatement",
+            expression: expression
+        };
+    },
+    /**
+     * @param {string} name
+     */
+    Identifier: function Identifier(name) {
+        return {
+            type: "Identifier",
+            name: name
+        };
+    },
+    /**
+     * @param {Expression} test
+     * @param {Statement} consequent: usually a BlockStatement
+     * @param {Statement?} alternate: usually a BlockStatement when not omitted
+     */
+    IfStatement: function IfStatement(test, consequent) {
+        var alternate = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+        return {
+            type: "IfStatement",
+            test: test,
+            consequent: consequent,
+            alternate: alternate
+        };
+    },
+    /**
+     * @param {Number|String|null|RegExp} value
+     */
+    Literal: function Literal(value) {
+        return {
+            type: "Literal",
+            value: value
+        };
+    },
+    /**
+     * @param {Expression} object
+     * @param {Expression} property
+     * @param {Boolean?} computed - true => obj[prop], false => obj.prop
+     */
+    MemberExpression: function MemberExpression(object, property) {
+        var computed = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+
+        return {
+            type: "MemberExpression",
+            object: object,
+            property: property,
+            computed: computed
+        };
+    },
+    /**
+     * @param {Expression} argument
+     * @param {string} operator: "++" or "--"
+     * @param {Boolean} prefix: true => ++argument, false => argument++
+     */
+    UpdateExpression: function UpdateExpression(argument, operator, prefix) {
+        return {
+            type: "UpdateExpression",
+            argument: argument,
+            operator: operator,
+            prefix: prefix
+        };
+    },
+    /**
+     * @param {Array} declarations
+     * @param {string} kind: "var", "let", "const"
+     */
+    VariableDeclaration: function VariableDeclaration(declarations, kind) {
+        return {
+            type: "VariableDeclaration",
+            declarations: declarations,
+            kind: kind
+        };
+    }
+};
+/**
+ * Traverses an AST and calls visitor methods on each of the visitors.
+ *
+ * @param node: The root of the AST to walk.
+ * @param path: An array containing all of the ancestors and the current node.
+ *              Callers should pass in null.
+ * @param visitors: One or more objects containing 'enter' and/or 'leave'
+ *                  methods which accept a single AST node as an argument.
+ */
+window.walkAST = function (node, path, visitors) {
+    if (path === null) {
+        path = [node];
+    } else {
+        path.push(node);
+    }
+    visitors.forEach(function (visitor) {
+        if (visitor.enter) {
+            visitor.enter(node, path);
+        }
+    });
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+        for (var _iterator = Object.keys(node)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var prop = _step.value;
+
+            if (node.hasOwnProperty(prop) && node[prop] instanceof Object) {
+                if (Array.isArray(node[prop])) {
+                    var i = 0;
+                    while (i < node[prop].length) {
+                        var child = node[prop][i];
+                        // Skip over the number of replacements.  This is usually
+                        // just 1, but in situations involving multiple variable
+                        // declarations we end up replacing one statement with
+                        // multiple statements and we need to step over all of them.
+                        i += walkAST(child, path, visitors);
+                    }
+                } else if (node[prop].type) {
+                    // don't walk metadata props like "loc"
+                    walkAST(node[prop], path, visitors);
+                }
+            }
+        }
+    } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion && _iterator["return"]) {
+                _iterator["return"]();
+            }
+        } finally {
+            if (_didIteratorError) {
+                throw _iteratorError;
+            }
+        }
+    }
+
+    var step = 1;
+    visitors.forEach(function (visitor) {
+        if (visitor.leave) {
+            (function () {
+                var replacement = visitor.leave(node, path);
+                if (replacement) {
+                    if (replacement instanceof Array) {
+                        var _parent = path[path.length - 2];
+                        if (_parent.body) {
+                            var index = _parent.body.findIndex(function (child) {
+                                return child === node;
+                            });
+                            Array.prototype.splice.apply(_parent.body, [index, 1].concat(replacement));
+                            // Since we replaced one statement with multiple statements
+                            // we'll want to skip over all of them so set 'step' to
+                            // the number of replacements.
+                            step = replacement.length;
+                        }
+                    } else {
+                        Object.keys(node).forEach(function (key) {
+                            delete node[key];
+                        });
+                        Object.keys(replacement).forEach(function (key) {
+                            node[key] = replacement[key];
+                        });
+                    }
+                }
+            })();
+        }
+    });
+    path.pop();
+    return step;
+};
+/**
+ * Creates a new LoopProtector object.
+ *
+ * @param callback: called whenever a loop takes more than <timeout>ms to complete.
+ * @param timeouts: an object containing initialTimeout and frameTimeout used
+ *                  to control how long before the loop protector is triggered
+ *                  on initial run during draw functions (or when responding to
+ *                  user events)
+ * @param reportLocation: true if the location of the long running loop should be
+ *                        passed to the callback. TODO(kevinb) use this for webpages
+ * @constructor
+ */
+window.LoopProtector = function (callback, timeouts, reportLocation) {
+    var _this = this;
+
+    this.callback = callback || function () {};
+    this.timeout = 200;
+    this.branchStartTime = 0;
+    this.loopCounts = {};
+    this.reportLocation = reportLocation;
+
+    this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
+
+    if (timeouts) {
+        this.mainTimeout = timeouts.initialTimeout;
+        this.asyncTimeout = timeouts.frameTimeout;
+    }
+
     this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
+    this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
+
+    document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+            _this.visible = true;
+            _this.branchStartTime = 0;
+        } else {
+            _this.visible = false;
+        }
+    });
+
+    this.visible = !document.hidden;
 };
 
 window.LoopProtector.prototype = {
-	// Make sure to attach this function to the global scope
-	_KAInfiniteLoopProtect: function() {
+    /**
+     * Throws 'KA_INFINITE_LOOP' if the difference between the current time
+     * and this.brancStartTime is greater than this.timeout.
+     *
+     * The difference grows as long as this method is called synchronously.  As
+     * soon as the current execution stack completes and the browser grabs the
+     * next task off the event queue this.branchStartTime will be reset by the
+     * timeout.
+     *
+     * In order to use this correctly, you must add a reference to this function
+     * to the global scope where the user code is being run.  See the exec()
+     * method in pjs-output.js for an example of how to do this.
+     *
+     * @private
+     */
+    _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect(location) {
+        var _this2 = this;
+
+        if (location) {
+            if (!this.loopCounts[location]) {
+                this.loopCounts[location] = 0;
+            }
+            this.loopCounts[location] += 1;
+        }
         var now = new Date().getTime();
         if (!this.branchStartTime) {
             this.branchStartTime = now;
-            setTimeout(function() {
+            setTimeout((function () {
                 this.branchStartTime = 0;
-            }.bind(this), 0);
-        } else if (now - this.branchStartTime > 200) {
-        	this.callback();
-            throw "KA_INFINITE_LOOP";
-        }
-    },
+            }).bind(this), 0);
+        } else if (now - this.branchStartTime > this.timeout) {
+            if (this.visible) {
+                (function () {
+                    if (!_this2.reportLocation) {
+                        var _error = new Error("KA_INFINITE_LOOP");
+                        _this2.callback(_error);
+                        throw _error;
+                    }
 
-    riskyStatements: [
-        "DoWhileStatement",
-        "WhileStatement",
-        "ForStatement",
-        "FunctionExpression",
-        "FunctionDeclaration"
-    ],
+                    // Determine which of KAInfiniteLoopProtect's callsites has
+                    // the most calls.
+                    var max = 0; // current max count
+                    var hotLocation = null; // callsite with most calls
+                    Object.keys(_this2.loopCounts).forEach(function (location) {
+                        if (_this2.loopCounts[location] > max) {
+                            max = _this2.loopCounts[location];
+                            hotLocation = location;
+                        }
+                    });
 
-    protectAst: function(ast) {
-        if (this.riskyStatements.indexOf(ast.type) !== -1) {
-            ast.body.body.unshift(this.loopBreak);
-        }
-        for (var prop in ast) {
-            if (ast.hasOwnProperty(prop) && _.isObject(ast[prop])) {
-                if (_.isArray(ast[prop])) {
-                    _.each(ast[prop], this.protectAst.bind(this));
-                } else {
-                    this.protectAst(ast[prop]);
-                }
+                    hotLocation = JSON.parse(hotLocation);
+
+                    var error = {
+                        infiniteLoopNodeType: hotLocation.type,
+                        row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
+                    };
+
+                    _this2.callback(error);
+
+                    // We throw here to interrupt communication but also to
+                    throw error;
+                })();
             }
         }
     },
 
-	protect: function(ast, callback) {
-		callback = callback || function() {};
+    _KAInfiniteLoopSetTimeout: function _KAInfiniteLoopSetTimeout(timeout) {
+        this.timeout = timeout;
+        this.branchStartTime = 0;
+    },
 
-		if (_.isString(ast)) {
-        	var ast = esprima.parse(ast);
-		}
-        this.protectAst(ast);
-        text = escodegen.generate(ast);
-        return text;
-	}
+    riskyStatements: ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration"],
+
+    // Called by walkAST whenever it leaves a node so AST mutations are okay
+    leave: function leave(node) {
+        var b = window.ASTBuilder;
+
+        if (this.riskyStatements.indexOf(node.type) !== -1) {
+            if (this.reportLocation) {
+                var _location = {
+                    type: node.type,
+                    loc: node.loc
+                };
+
+                // Inserts the following code at the start of riskt statements:
+                //
+                // KAInfiniteLoopCount++;
+                // if (KAInfiniteLoopCount > 1000) {
+                //     KAInfiniteLoopProtect();
+                //     KAInfiniteLoopCount = 0;
+                // }
+                node.body.body.unshift(b.IfStatement(b.BinaryExpression(b.Identifier("KAInfiniteLoopCount"), ">", b.Literal(1000)), b.BlockStatement([b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopProtect"), [b.Literal(JSON.stringify(_location))])), b.ExpressionStatement(b.AssignmentExpression(b.Identifier("KAInfiniteLoopCount"), "=", b.Literal(0)))])));
+                node.body.body.unshift(b.ExpressionStatement(b.UpdateExpression(b.Identifier("KAInfiniteLoopCount"), "++", false)));
+            } else {
+                node.body.body.unshift(this.loopBreak);
+            }
+        }
+
+        if (node.type === "Program") {
+            // Many pjs programs take a while to start up because they're generating
+            // terrain or textures or whatever.  Instead of complaining about all of
+            // those programs taking too long, we allow the main program body to take
+            // a little longer to run.  We call KAInfiniteLoopSetTimeout and set
+            // the timeout to mainTimeout just to reset the value when the program
+            // is re-run.
+            if (this.mainTimeout) {
+                node.body.unshift(b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopSetTimeout"), [b.Literal(this.mainTimeout)])));
+            }
+
+            // Any asynchronous calls such as mouseClicked() or calls to draw()
+            // should take much less time so that the app (and the browser) remain
+            // responsive as the app is running so we call KAInfiniteLoopSetTimeout
+            // at the end of main and set timeout to be asyncTimeout
+            if (this.asyncTimeout) {
+                node.body.push(b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopSetTimeout"), [b.Literal(this.asyncTimeout)])));
+            }
+        }
+    },
+
+    // Convenience method used by webpage-output.js
+    protect: function protect(code) {
+        var ast = esprima.parse(code, { loc: true });
+
+        walkAST(ast, null, [this]);
+
+        return escodegen.generate(ast);
+    }
 };
 /**
  * StateScrubber
  * Resets the global javascript state in the browser
  * (timeouts, intervals and global variables)
  */
-window.StateScrubber = function(target) {
+window.StateScrubber = function (target) {
     this.target = target;
-    this.firstTimeout = target.setTimeout(function() {}, 0);
+    this.firstTimeout = target.setTimeout(function () {}, 0);
 
     // We will record all the variables that we see on window on startup
     // these will be the only keys we leave intact when we reset window
@@ -11624,10 +12081,10 @@ window.StateScrubber = function(target) {
 
     // Since variables initially on window will not be reset, try to freeze them to
     // avoid state leaking between executions.
+    /* jshint forin:false */
     for (var prop in this.globalVariables) {
         try {
-            var propDescriptor =
-                Object.getOwnPropertyDescriptor(target, prop);
+            var propDescriptor = Object.getOwnPropertyDescriptor(target, prop);
             if (!propDescriptor || propDescriptor.configurable) {
                 Object.defineProperty(target, prop, {
                     value: target[prop],
@@ -11635,18 +12092,14 @@ window.StateScrubber = function(target) {
                     configurable: false
                 });
             }
-        } catch(e) {
-            // Couldn't access property for permissions reasons,
-            // like window.frame
-            // Only happens on prod where it's cross-origin
-        }
+        } catch (e) {}
     }
     // Completely lock down window's prototype chain
     Object.freeze(Object.getPrototypeOf(target));
 };
 
 window.StateScrubber.prototype = {
-    clearGlobals: function() {
+    clearGlobals: function clearGlobals() {
         for (var prop in this.target) {
             if (!this.globalVariables[prop] && this.target.hasOwnProperty(prop)) {
                 // This should get rid of variables which cannot be deleted
@@ -11657,25 +12110,29 @@ window.StateScrubber.prototype = {
         }
     },
 
-    clearTimeoutsAndIntervals: function() {
-    	// Intervals are acutally also timeouts under the hood, so clearing all the 
-    	// timeouts since last time is sufficient.
-    	// (If you're interested intervals are timeouts with the repeat flag set to true:
-    	// www.w3.org/TR/html5/webappapis.html#timers)
-        var lastTimeout = this.target.setTimeout(function() {}, 0);
+    clearTimeoutsAndIntervals: function clearTimeoutsAndIntervals() {
+        // Intervals are acutally also timeouts under the hood, so clearing all the
+        // timeouts since last time is sufficient.
+        // (If you're interested intervals are timeouts with the repeat flag set to true:
+        // www.w3.org/TR/html5/webappapis.html#timers)
+        var lastTimeout = this.target.setTimeout(function () {}, 0);
 
-        for (var i=this.firstTimeout; i<lastTimeout; i++) {
+        for (var i = this.firstTimeout; i < lastTimeout; i++) {
             this.target.clearTimeout(i);
         }
 
         this.firstTimeout = lastTimeout;
     },
 
-    clearAll: function() {
-    	this.clearGlobals();
-    	this.clearTimeoutsAndIntervals();
+    clearAll: function clearAll() {
+        this.clearGlobals();
+        this.clearTimeoutsAndIntervals();
     }
 };
+
+// Couldn't access property for permissions reasons,
+// like window.frame
+// Only happens on prod where it's cross-origin
 /*
  * StructuredJS provides an API for static analysis of code based on an abstract
  * syntax tree generated by Esprima (compliant with the Mozilla Parser
@@ -12623,7 +13080,7 @@ window.StateScrubber.prototype = {
     exports.prettify = prettyHtml;
 })(typeof window !== "undefined" ? window : global);
 
-window.PJSTester = function(options) {
+window.PJSTester = function (options) {
     this.initialize(options);
     this.bindTestContext();
 };
@@ -12634,34 +13091,29 @@ PJSTester.prototype.testMethods = {
     /*
      * See if any of the patterns match the code
      */
-    firstMatchingPattern: function(patterns) {
-        return _.find(patterns, _.bind(function(pattern) {
+    firstMatchingPattern: function firstMatchingPattern(patterns) {
+        return _.find(patterns, _.bind(function (pattern) {
             return this.testContext.matches(pattern);
         }, this));
     },
 
-    hasFnCall: function(name, check) {
+    hasFnCall: function hasFnCall(name, check) {
         for (var i = 0, l = this.fnCalls.length; i < l; i++) {
-            var retVal = this.testContext.checkFn(
-                this.fnCalls[i], name, check);
+            var retVal = this.testContext.checkFn(this.fnCalls[i], name, check);
 
             if (retVal === true) {
                 return;
             }
         }
 
-        this.testContext.assert(false,
-            $._("Expected function call to '%(name)s' was not made.",
-            {name: name}));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: name }));
     },
 
-    orderedFnCalls: function(calls) {
+    orderedFnCalls: function orderedFnCalls(calls) {
         var callPos = 0;
 
         for (var i = 0, l = this.fnCalls.length; i < l; i++) {
-            var retVal = this.testContext.checkFn(
-                this.fnCalls[i],
-                    calls[callPos][0], calls[callPos][1]);
+            var retVal = this.testContext.checkFn(this.fnCalls[i], calls[callPos][0], calls[callPos][1]);
 
             if (retVal === true) {
                 callPos += 1;
@@ -12672,12 +13124,10 @@ PJSTester.prototype.testMethods = {
             }
         }
 
-        this.testContext.assert(false,
-            $._("Expected function call to '%(name)s' was not made.",
-            {name: calls[callPos][0]}));
+        this.testContext.assert(false, i18n._("Expected function call to '%(name)s' was not made.", { name: calls[callPos][0] }));
     },
 
-    checkFn: function(fnCall, name, check) {
+    checkFn: function checkFn(fnCall, name, check) {
         if (fnCall.name !== name) {
             return;
         }
@@ -12687,56 +13137,48 @@ PJSTester.prototype.testMethods = {
         if (typeof check === "object") {
             if (check.length !== fnCall.args.length) {
                 pass = false;
-
             } else {
                 for (var c = 0; c < check.length; c++) {
-                    if (check[c] !== null &&
-                        check[c] !== fnCall.args[c]) {
+                    if (check[c] !== null && check[c] !== fnCall.args[c]) {
                         pass = false;
                     }
                 }
             }
-
         } else if (typeof check === "function") {
             pass = check(fnCall);
         }
 
         if (pass) {
-            this.testContext.assert(true,
-                $._("Correct function call made to %(name)s.",
-                {name: name}));
+            this.testContext.assert(true, i18n._("Correct function call made to %(name)s.", { name: name }));
         }
 
         return pass;
     },
 
-    _isVarName: function(str) {
+    _isVarName: function _isVarName(str) {
         return _.isString(str) && str.length > 0 && str[0] === "$";
     },
 
-    _assertVarName: function(str) {
+    _assertVarName: function _assertVarName(str) {
         if (!this.testContext._isVarName(str)) {
-            throw new Error(
-                $._("Expected '%(name)s' to be a valid variable name.",
-                    {name: str}));
+            throw new Error(i18n._("Expected '%(name)s' to be a valid variable name.", { name: str }));
         }
     },
 
     /*
      * Satisfied when predicate(var) is true.
      */
-    unaryOp: function(varName, predicate) {
+    unaryOp: function unaryOp(varName, predicate) {
         this.testContext._assertVarName(varName);
-        return this.testContext.constraint([varName], function(ast) {
-            return !!(ast && !_.isUndefined(ast.value) &&
-                predicate(ast.value));
+        return this.testContext.constraint([varName], function (ast) {
+            return !!(ast && !_.isUndefined(ast.value) && predicate(ast.value));
         });
     },
 
     /*
      * Satisfied when var is any literal.
      */
-    isLiteral: function(varName) {
+    isLiteral: function isLiteral(varName) {
         function returnsTrue() {
             return true;
         }
@@ -12747,15 +13189,15 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when var is a number.
      */
-    isNumber: function(varName) {
+    isNumber: function isNumber(varName) {
         return this.testContext.unaryOp(varName, _.isNumber);
     },
 
     /*
      * Satisfied when var is an identifier
      */
-    isIdentifier: function(varName) {
-        return this.testContext.constraint([varName], function(ast) {
+    isIdentifier: function isIdentifier(varName) {
+        return this.testContext.constraint([varName], function (ast) {
             return !!(ast && ast.type && ast.type === "Identifier");
         });
     },
@@ -12763,48 +13205,42 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when var is a boolean.
      */
-    isBoolean: function(varName) {
+    isBoolean: function isBoolean(varName) {
         return this.testContext.unaryOp(varName, _.isBoolean);
     },
 
     /*
      * Satisfied when var is a string.
      */
-    isString: function(varName) {
+    isString: function isString(varName) {
         return this.testContext.unaryOp(varName, _.isString);
     },
 
     /*
      * Satisfied when pred(first, second) is true.
      */
-    binaryOp: function(first, second, predicate) {
+    binaryOp: function binaryOp(first, second, predicate) {
         var variables = [];
         var fn;
         if (this.testContext._isVarName(first)) {
             variables.push(first);
             if (this.testContext._isVarName(second)) {
                 variables.push(second);
-                fn = function(a, b) {
-                    return !!(a && b && !_.isUndefined(a.value) &&
-                        !_.isUndefined(b.value) &&
-                        predicate(a.value, b.value));
+                fn = function (a, b) {
+                    return !!(a && b && !_.isUndefined(a.value) && !_.isUndefined(b.value) && predicate(a.value, b.value));
                 };
             } else {
-                fn = function(a) {
-                    return !!(a && !_.isUndefined(a.value) &&
-                        predicate(a.value, second));
+                fn = function (a) {
+                    return !!(a && !_.isUndefined(a.value) && predicate(a.value, second));
                 };
             }
         } else if (this.testContext._isVarName(second)) {
             variables.push(second);
-            fn = function(b) {
-                return !!(b && !_.isUndefined(b.value) &&
-                    predicate(first, b.value));
+            fn = function (b) {
+                return !!(b && !_.isUndefined(b.value) && predicate(first, b.value));
             };
         } else {
-            throw new Error($._("Expected either '%(first)s' or '%(second)s'" +
-                " to be a valid variable name.",
-                {first: first, second: second}));
+            throw new Error(i18n._("Expected either '%(first)s' or '%(second)s'" + " to be a valid variable name.", { first: first, second: second }));
         }
 
         return this.testContext.constraint(variables, fn);
@@ -12813,8 +13249,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a < b
      */
-    lessThan: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    lessThan: function lessThan(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a < b;
         });
     },
@@ -12822,8 +13258,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a <= b
      */
-    lessThanOrEqual: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    lessThanOrEqual: function lessThanOrEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a <= b;
         });
     },
@@ -12831,8 +13267,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a > b
      */
-    greaterThan: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    greaterThan: function greaterThan(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a > b;
         });
     },
@@ -12840,8 +13276,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a > 0
      */
-    positive: function(a) {
-        return this.testContext.unaryOp(a, function(a) {
+    positive: function positive(a) {
+        return this.testContext.unaryOp(a, function (a) {
             return a > 0;
         });
     },
@@ -12849,8 +13285,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a > 0
      */
-    negative: function(a) {
-        return this.testContext.unaryOp(a, function(a) {
+    negative: function negative(a) {
+        return this.testContext.unaryOp(a, function (a) {
             return a < 0;
         });
     },
@@ -12858,8 +13294,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a >= b
      */
-    greaterThanOrEqual: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    greaterThanOrEqual: function greaterThanOrEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a >= b;
         });
     },
@@ -12867,18 +13303,15 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when min <= val <= max
      */
-    inRange: function(val, min, max) {
-        return this.testContext.and(
-            this.testContext.greaterThanOrEqual(val, min),
-            this.testContext.lessThanOrEqual(val, max)
-        );
+    inRange: function inRange(val, min, max) {
+        return this.testContext.and(this.testContext.greaterThanOrEqual(val, min), this.testContext.lessThanOrEqual(val, max));
     },
 
     /*
      * Satisfied when a === b
      */
-    equal: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    equal: function equal(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a === b;
         });
     },
@@ -12886,8 +13319,8 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when a !== b
      */
-    notEqual: function(a, b) {
-        return this.testContext.binaryOp(a, b, function(a, b) {
+    notEqual: function notEqual(a, b) {
+        return this.testContext.binaryOp(a, b, function (a, b) {
             return a !== b;
         });
     },
@@ -12895,23 +13328,23 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when constraint is not satisfied
      */
-    not: function(constraint) {
-        return this.testContext.constraint(constraint.variables, function() {
+    not: function not(constraint) {
+        return this.testContext.constraint(constraint.variables, function () {
             return !constraint.fn.apply({}, arguments);
         });
     },
 
-    _naryShortCircuitingOp: function(allOrAny, args) {
+    _naryShortCircuitingOp: function _naryShortCircuitingOp(allOrAny, args) {
         var variables = _.union.apply({}, _.pluck(args, "variables"));
 
-        var argNameToIndex = _.object(_.map(variables, function(item, i) {
+        var argNameToIndex = _.object(_.map(variables, function (item, i) {
             return [item, i];
         }));
 
-        return this.testContext.constraint(variables, function() {
+        return this.testContext.constraint(variables, function () {
             var constraintArgs = arguments;
-            return allOrAny(args, function(constraint) {
-                var fnArgs = _.map(constraint.variables, function(varName) {
+            return allOrAny(args, function (constraint) {
+                var fnArgs = _.map(constraint.variables, function (varName) {
                     return constraintArgs[argNameToIndex[varName]];
                 });
 
@@ -12923,14 +13356,14 @@ PJSTester.prototype.testMethods = {
     /*
      * Satisfied when all of the input constraints are satisfied
      */
-    and: function() {
+    and: function and() {
         return this.testContext._naryShortCircuitingOp(_.all, arguments);
     },
 
     /*
      * Satisfied when any of the input constraints are satisfied
      */
-    or: function() {
+    or: function or() {
         return this.testContext._naryShortCircuitingOp(_.any, arguments);
     },
 
@@ -12938,7 +13371,7 @@ PJSTester.prototype.testMethods = {
      * Returns a new structure from the combination of a pattern and a
      * constraint
      */
-    structure: function(pattern, constraint) {
+    structure: function structure(pattern, constraint) {
         return {
             pattern: pattern,
             constraint: constraint
@@ -12948,7 +13381,7 @@ PJSTester.prototype.testMethods = {
     /*
      * Creates a new variable constraint
      */
-    constraint: function(variables, fn) {
+    constraint: function constraint(variables, fn) {
         return {
             variables: variables,
             fn: fn
@@ -12958,12 +13391,12 @@ PJSTester.prototype.testMethods = {
     /*
      * Returns the result of matching a structure against the user's code
      */
-    match: function(structure) {
+    match: function match(structure) {
         // If there were syntax errors, don't even try to match it
         if (this.errors.length) {
             return {
                 success: false,
-                message: $._("Syntax error!")
+                message: i18n._("Syntax error!")
             };
         }
 
@@ -12974,12 +13407,12 @@ PJSTester.prototype.testMethods = {
         // If we don't see a pattern property, they probably passed in
         // a pattern itself, so we'll turn it into a structure
         if (structure && _.isUndefined(structure.pattern)) {
-            structure = {pattern: structure};
+            structure = { pattern: structure };
         }
 
         // If nothing is passed in or the pattern is non-existent, return
         // failure
-        if (!structure || ! structure.pattern) {
+        if (!structure || !structure.pattern) {
             return {
                 success: false,
                 message: ""
@@ -12988,25 +13421,19 @@ PJSTester.prototype.testMethods = {
 
         try {
             var callbacks = structure.constraint;
-            var success = Structured.match(this.userCode,
-                structure.pattern, {
-                    varCallbacks: callbacks
-                });
+            var success = Structured.match(this.userCode, structure.pattern, {
+                varCallbacks: callbacks
+            });
 
             return {
                 success: success,
                 message: callbacks && callbacks.failure
             };
         } catch (e) {
-            if (window.console) {
-                console.warn(e);
-            }
+            console.warn(e);
             return {
                 success: true,
-                message: $._("Hm, we're having some trouble " +
-                    "verifying your answer for this step, so we'll give " +
-                    "you the benefit of the doubt as we work to fix it. " +
-                    "Please click \"Report a problem\" to notify us.")
+                message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
             };
         }
     },
@@ -13014,54 +13441,59 @@ PJSTester.prototype.testMethods = {
     /*
      * Returns true if the structure matches the user's code
      */
-    matches: function(structure) {
+    matches: function matches(structure) {
         if (typeof structure !== "object") {
             structure = this.testContext.structure(structure);
         }
         return this.testContext.match(structure).success;
     },
 
-    /*
-     * Creates a new test result (i.e. new challenge tab)
-     */
-    assertMatch: function(result, description, hint, image, syntaxChecks) {
-        if (syntaxChecks) {
-            // If we found any syntax errors or warnings, we'll send it
-            // through the special syntax checks
-            var foundErrors = _.any(this.errors, function(error) {
-                return error.lint;
-            });
+    _checkSyntaxErrors: function _checkSyntaxErrors(syntaxChecks) {
+        if (!syntaxChecks) return;
 
-            if (foundErrors) {
-                _.each(syntaxChecks, function(syntaxCheck) {
-                    // Check if we find the regex anywhere in the code
-                    var foundCheck = this.userCode.search(syntaxCheck.re);
-                    var rowNum = -1, colNum = -1, errorMsg;
-                    if (foundCheck > -1) {
-                        errorMsg = syntaxCheck.msg;
+        // If we found any syntax errors or warnings, we'll send it
+        // through the special syntax checks
+        var foundErrors = _.any(this.errors, function (error) {
+            return error.lint;
+        });
 
-                        // Find line number and character
-                        var lines = this.userCode.split("\n");
-                        var totalChars = 0;
-                        _.each(lines, function(line, num) {
-                            if (rowNum === -1 &&
-                                foundCheck < totalChars + line.length) {
-                                rowNum = num;
-                                colNum = foundCheck - totalChars;
-                            }
-                            totalChars += line.length;
-                        });
+        if (foundErrors) {
+            _.each(syntaxChecks, (function (syntaxCheck) {
+                // Check if we find the regex anywhere in the code
+                var foundCheck = this.userCode.search(syntaxCheck.re);
+                var rowNum = -1,
+                    colNum = -1,
+                    errorMsg;
+                if (foundCheck > -1) {
+                    errorMsg = syntaxCheck.msg;
 
-                        this.errors.splice(0, 1, {
-                            text: errorMsg,
-                            row: rowNum,
-                            col: colNum,
-                            type: "error"
-                        });
-                    }
-                }.bind(this));
-            }
+                    // Find line number and character
+                    var lines = this.userCode.split("\n");
+                    var totalChars = 0;
+                    _.each(lines, function (line, num) {
+                        if (rowNum === -1 && foundCheck < totalChars + line.length) {
+                            rowNum = num;
+                            colNum = foundCheck - totalChars;
+                        }
+                        totalChars += line.length;
+                    });
+
+                    this.errors.splice(0, 1, {
+                        text: errorMsg,
+                        row: rowNum,
+                        col: colNum,
+                        type: "error"
+                    });
+                }
+            }).bind(this));
         }
+    },
+
+    /*
+     * Creates a new test result (i.e. new challenge step)
+     */
+    assertMatch: function assertMatch(result, description, hint, image, syntaxChecks) {
+        this.testContext._checkSyntaxErrors(syntaxChecks);
 
         var alternateMessage;
         var alsoMessage;
@@ -13075,8 +13507,7 @@ PJSTester.prototype.testMethods = {
         this.testContext.assert(result.success, description, "", {
             // We can accept string hints here because
             //  we never match against them anyway
-            structure: _.isString(hint) ? "function() {" + hint + "}" :
-                hint.toString(),
+            structure: _.isString(hint) ? "function() {" + hint + "}" : hint.toString(),
             alternateMessage: alternateMessage,
             alsoMessage: alsoMessage,
             image: image

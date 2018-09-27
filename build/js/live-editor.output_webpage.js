@@ -1,5 +1,5 @@
-(function() {
-    window.WebpageTester = function(options) {
+(function () {
+    window.WebpageTester = function (options) {
         this.initialize(options);
         this.bindTestContext();
         this.testContext.phoneHome = options.output.phoneHome.bind(options.output);
@@ -8,7 +8,9 @@
     WebpageTester.prototype = new OutputTester();
 
     _.extend(WebpageTester.prototype, {
-        test: function(userCode, validate, errors, callback) {
+        test: function test(userCode, validate, errors, callback) {
+            var _this = this;
+
             var testResults = [];
             errors = this.errors = errors || [];
             this.userCode = userCode;
@@ -20,10 +22,14 @@
             this.exec(validate);
 
             this.testContext.allScripts = "";
-            _.each(this.testContext.$doc.find("script"), function($script) {
-                this.testContext.allScripts += $script.innerHTML;
-                this.testContext.allScripts += "\n";
-            }.bind(this));
+
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(userCode, "text/html");
+
+            doc.querySelectorAll("script").forEach(function (scriptElement) {
+                _this.testContext.allScripts += scriptElement.innerHTML;
+                _this.testContext.allScripts += "\n";
+            });
 
             this.curTask = null;
             this.curTest = null;
@@ -40,16 +46,15 @@
             this.syncTests = false;
 
             callback(errors, testResults);
-        },
+        }
     });
-
 
     /*
      * Returns a callback which will accept arguments and make a constriant
      * used internally to create shorthand functions that accept arguments
      */
-    var constraintPartial = function(callback) {
-        return function() {
+    var constraintPartial = function constraintPartial(callback) {
+        return function () {
             return {
                 variables: arguments,
                 fn: callback
@@ -59,7 +64,7 @@
     WebpageTester.prototype.testMethods = _.clone(window.PJSTester.prototype.testMethods);
 
     _.extend(WebpageTester.prototype.testMethods, {
-        scriptTest: function() {
+        scriptTest: function scriptTest() {
             this.testContext.staticTest.apply(this, arguments);
         },
 
@@ -67,8 +72,8 @@
          * This looks exactly like an assertion,
          * but can be updated asynchronously
          */
-        uiTest: function(name, callback, description, hint, image) {
-            var fn = function() {
+        uiTest: function uiTest(name, callback, description, hint, image) {
+            var fn = (function () {
                 var test = this.curTest;
                 test.state = "fail";
                 var result = {
@@ -83,7 +88,7 @@
                 };
                 test.results = [result];
 
-                callback(function(success, message) { 
+                callback((function (success, message) {
                     var state = success ? "pass" : "fail";
                     test.state = state;
                     result.state = state;
@@ -96,12 +101,11 @@
                     if (!this.syncTests) {
                         this.testContext.phoneHome();
                     }
-
-                }.bind(this));
-            }.bind(this);
+                }).bind(this));
+            }).bind(this);
             this.testContext.test(name, fn, "ui");
         },
-        
+
         constraintPartial: constraintPartial,
 
         /*
@@ -111,7 +115,7 @@
          * This allows much terser definition of callback functions since you don't have to
          * explicitly state the parameters in a separate list
          */
-        constraint: function(variables, fn) {
+        constraint: function constraint(variables, fn) {
             if (!fn) {
                 fn = variables;
                 var paramText = /^function\s*[^\(]*\(([^\)]*)\)/.exec(fn.toString())[1];
@@ -131,7 +135,7 @@
             };
         },
 
-        cleanStructure: function(structure) {
+        cleanStructure: function cleanStructure(structure) {
             // Passing in a single selector string is equivalent to passing in
             // {"selector": 1}
             if (typeof structure === "string") {
@@ -145,31 +149,31 @@
         /*
          * Returns the result of matching a structure against the user's HTML
          */
-        htmlMatch: function(structure) {
+        htmlMatch: function htmlMatch(structure) {
             // If there were syntax errors, don't even try to match it
             if (this.errors.length) {
-                return {success: false};
+                return { success: false };
             }
 
             structure = this.testContext.cleanStructure(structure);
             // HTML challenge tests
+            /* jshint forin:false */
             for (var selector in structure) {
                 var expected = structure[selector];
                 // TODO(jeresig): Maybe find a way to do this such that we can run
                 // it in a worker thread.
-                var numFound = $(selector, this.testContext.$docSP).length;
+                var numFound = this.testContext.docSP.querySelectorAll(selector).length;
                 if (expected === 0 && numFound !== 0 || numFound < expected) {
-                    return {success: false};
+                    return { success: false };
                 }
             }
 
-            return {success: true}; 
+            return { success: true };
         },
 
-
-        /* 
-         * Returns all of the rules from the user's code,  
-         * formatted as a map of selectors to properties and 
+        /*
+         * Returns all of the rules from the user's code,
+         * formatted as a map of selectors to properties and
          * property names to property values:
          *
          * {
@@ -181,16 +185,16 @@
          *    ...
          * }
          */
-        getCssMap: function() {
+        getCssMap: function getCssMap() {
             // Convert CSS rules from a list of parsed objects into a map.
             var css = {};
-            _.each(this.testContext.cssRules, function(rule) {
+            _.each(this.testContext.cssRules, (function (rule) {
                 // Parse all properties for this rule into map
                 var properties = {};
-                _.each(rule.declarations.properties, function(property) {
+                _.each(rule.declarations.properties, (function (property) {
                     var normalized = this.testContext.normalizePropertyValue(property.value.value);
                     properties[property.name.value] = normalized;
-                }.bind(this));
+                }).bind(this));
 
                 var selectors = [rule.selector.value];
 
@@ -201,24 +205,25 @@
                     selectors.push.apply(selectors, selectors[0].split(","));
                 }
 
-                _.each(selectors, function(selector) {
+                _.each(selectors, (function (selector) {
                     selector = this.testContext.normalizeSelector(selector);
                     if (!(selector in css)) {
                         css[selector] = {};
                     }
+                    /* jshint forin:false */
                     for (var prop in properties) {
                         css[selector][prop] = properties[prop];
                     }
-                }.bind(this));
-            }.bind(this));
+                }).bind(this));
+            }).bind(this));
 
             return css;
         },
 
-         cssMatch: function(pattern, callbacks) {
+        cssMatch: function cssMatch(pattern, callbacks) {
             // If there were syntax errors, don't even try to match it
             if (this.errors.length) {
-                return {success: false};
+                return { success: false };
             }
 
             var css = this.testContext.getCssMap();
@@ -226,14 +231,14 @@
             if (!_.isArray(callbacks) && !_.isUndefined(callbacks)) {
                 callbacks = [callbacks];
             }
-            callbacks = _.map(callbacks, function(cb) {
+            callbacks = _.map(callbacks, (function (cb) {
                 if (typeof cb === "function") {
                     return this.testContext.constraint(cb);
                 }
                 return cb;
-            }.bind(this));
+            }).bind(this));
 
-            var res = this.testContext.testCSSRules(cssRules, css, callbacks , {});
+            var res = this.testContext.testCSSRules(cssRules, css, callbacks, {});
             return res;
         },
 
@@ -242,21 +247,23 @@
          * be equal strings. In particular this targets odd spacing
          * in rgb(0,0,0) or border: 1px solid black;
          */
-        normalizePropertyValue: function(property) {
+        normalizePropertyValue: function normalizePropertyValue(property) {
             return property.replace(/\s+/g, " ").replace(", ", ",").trim();
         },
 
         /*
          * Make it so that equivalent CSS selectors are equal strings.
-         * In particular this function targets odd spacing, and different ordered 
+         * In particular this function targets odd spacing, and different ordered
          * sets of "," delimitted selectors. It also forces modifiers to
          * be attached to their selector "div > p" -> "div >p" so that selectors
          * can be split by spaces
          */
-        normalizeSelector: function(selector) {
+        normalizeSelector: function normalizeSelector(selector) {
             selector = selector.replace(/\s+/g, " ").replace(/(>|~|,) /g, "$1");
             var pieces = selector.split(",");
-            pieces = pieces.map(function(s) { return s.trim(); });
+            pieces = pieces.map(function (s) {
+                return s.trim();
+            });
             selector = pieces.sort().join(",");
             return selector;
         },
@@ -268,7 +275,7 @@
          * possible combinations of wildcard variables (since some
          * of them might pass the callbacks even if others fail)
          */
-        testCSSRules: function(rules, css, callbacks, wVars) {
+        testCSSRules: function testCSSRules(rules, css, callbacks, wVars) {
             wVars = wVars || {};
             // Base case. All rules have passed preliminarily.
             // Check that the wildcards vars pass the callbacks
@@ -284,37 +291,37 @@
 
             // Get the properties for this rule
             var testProperties = {};
-            _.each(testBody.split(";"), function(prop) {
+            _.each(testBody.split(";"), (function (prop) {
                 if (prop.trim().length === 0) {
                     return;
                 }
                 var parts = prop.split(":");
                 testProperties[parts[0].trim()] = this.testContext.normalizePropertyValue(parts[1]);
-            }.bind(this));
+            }).bind(this));
 
             var oldWVars = wVars;
-            var lastFailureMessage = {success: false};
+            var lastFailureMessage = { success: false };
 
             // Attempt to match the selector/property combination against every available piece of CSS
+            /* jshint forin:false */
             for (var selector in css) {
                 // On each pass we propose a new set of wVars
                 // based on the specific set things we matched.
-                // If we end up rejecting a match we want to 
-                // discard the associated wVars as well. To facilitate 
+                // If we end up rejecting a match we want to
+                // discard the associated wVars as well. To facilitate
                 // this we isolate each group of proposed wVars in its
                 // own object on the prototype chain
-                wVars = Object.create(oldWVars); 
-                
+                wVars = Object.create(oldWVars);
+
                 // Match selector
                 if (!this.testContext.selectorMatch(testSelector, selector, wVars)) {
                     continue;
                 }
 
                 // Match properties
-                var doPropertiesMatch = _.every(testProperties, function(value, prop) {
-                    return (prop in css[selector]) && 
-                            this.testContext.wildcardMatch(value, css[selector][prop], wVars);
-                }.bind(this));
+                var doPropertiesMatch = _.every(testProperties, (function (value, prop) {
+                    return prop in css[selector] && this.testContext.wildcardMatch(value, css[selector][prop], wVars);
+                }).bind(this));
                 if (!doPropertiesMatch) {
                     continue;
                 }
@@ -330,18 +337,18 @@
 
             // We've exhausted all possibilities in this branch
             rules.unshift(rawRule);
-            return  lastFailureMessage;
+            return lastFailureMessage;
         },
 
         /*
          * Match two values, accounting for wildcard values
          * "_" and "$var"
          */
-        wildcardMatch: function(pattern, value, wVars) {
+        wildcardMatch: function wildcardMatch(pattern, value, wVars) {
             if (pattern === "_") {
                 return true;
             } else if (pattern[0] === "$") {
-                if (!(pattern  in wVars)) {
+                if (!(pattern in wVars)) {
                     wVars[pattern] = value;
                     return true;
                 } else {
@@ -352,10 +359,10 @@
             }
         },
 
-        checkCallbacks: function(callbacks, wVars) {
+        checkCallbacks: function checkCallbacks(callbacks, wVars) {
             for (var i = 0; i < callbacks.length; i++) {
                 var cb = callbacks[i];
-                var cbArgs = _.map(cb.variables, function(variable) {
+                var cbArgs = _.map(cb.variables, function (variable) {
                     if (typeof variable === "string" && variable[0] === "$") {
                         return wVars[variable];
                     } else {
@@ -364,15 +371,15 @@
                 });
                 var res = cb.fn.apply({}, cbArgs);
                 if (res === false) {
-                    return {success: false};
+                    return { success: false };
                 } else if (res.success === false) {
                     return res;
                 }
             }
 
-            return {success: true};
+            return { success: true };
         },
-        selectorMatch: function(compositePattern, compositeSelector, wVars) {
+        selectorMatch: function selectorMatch(compositePattern, compositeSelector, wVars) {
             return this.testContext.multiSelectorMatch(compositePattern.split(","), compositeSelector.split(","), wVars);
         },
 
@@ -381,7 +388,7 @@
          * Checks every possible order since patterns and selectors
          * could be ordered differently.
          */
-        multiSelectorMatch: function(patterns, selectors, wVars) {
+        multiSelectorMatch: function multiSelectorMatch(patterns, selectors, wVars) {
             if (patterns.length !== selectors.length) {
                 return false;
             } else if (patterns.length === 0) {
@@ -397,7 +404,9 @@
                 var selector = selectors[key];
                 if (this.testContext.singleSelectorMatch(pattern, selector, wVars)) {
                     if (this.testContext.multiSelectorMatch(patterns, selectors.slice(0, key).concat(selectors.slice(key + 1)), wVars)) {
-                        for (key in wVars) { // Commit wildcard selections to parent wVars
+                        for (key in wVars) {
+                            /* jshint forin:false */
+                            // Commit wildcard selections to parent wVars
                             if (!(key in oldWVars)) {
                                 oldWVars[key] = wVars[key];
                             }
@@ -410,15 +419,14 @@
             return false;
         },
 
-
         /*
          * Check if two CSS selectors match, including wildcards
          * "div" == "div"
          * "_" == "div"
          */
-        singleSelectorMatch: function(pattern, selector, wVars) {
-            patternParts = pattern.split(" ");
-            selectorParts = selector.split(" ");
+        singleSelectorMatch: function singleSelectorMatch(pattern, selector, wVars) {
+            var patternParts = pattern.split(" ");
+            var selectorParts = selector.split(" ");
             if (patternParts.length !== selectorParts.length) {
                 return false;
             }
@@ -433,39 +441,33 @@
         /*
          * Returns true if match() succeeds
          */
-        htmlMatches: function(structure) {
+        htmlMatches: function htmlMatches(structure) {
             return this.testContext.htmlMatch.apply(this, arguments).success;
         },
-        cssMatches: function(pattern, callbacks) {
+        cssMatches: function cssMatches(pattern, callbacks) {
             return this.testContext.cssMatch.apply(this, arguments).success;
         },
 
-        notDefaultColor: constraintPartial(function(color) {
-            var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
-                          /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
+        notDefaultColor: constraintPartial(function (color) {
+            var isRGB = /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) || /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color);
             var isDefault = color.replace(/\s+/, "") === "rgb(255,0,0)";
             return isRGB && !isDefault;
         }),
 
-        isValidColor:  constraintPartial(function(color) {
-            var isValidNum = function(val) {
+        isValidColor: constraintPartial(function (color) {
+            var isValidNum = function isValidNum(val) {
                 var num = parseInt(val, 10);
                 return num >= 0 && num <= 255;
             };
-            var isRGB = ( /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) ||
-                          /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color) );
+            var isRGB = /rgb\((\s*\d+,){2}(\s*\d+\s*)\)/.test(color) || /rgba\((\s*\d+,){3}(\s*\d+\s*)\)/.test(color);
             if (isRGB) {
                 var vals = color.split("(")[1].split(",");
-                return (isValidNum(vals[0]) &&
-                        isValidNum(vals[1]) &&
-                        isValidNum(vals[2]));
+                return isValidNum(vals[0]) && isValidNum(vals[1]) && isValidNum(vals[2]);
             }
 
-            // If they're trying to use a color name, it should be at least 
+            // If they're trying to use a color name, it should be at least
             //  three letters long and not equal to rgb
-            return /[a-zA-Z]+/.test(color) && 
-                color.length >= 3 &&
-                color.indexOf("rgb") === -1;
+            return /[a-zA-Z]+/.test(color) && color.length >= 3 && color.indexOf("rgb") === -1;
         }),
 
         ///////////////////////////////////////////////////////
@@ -473,11 +475,12 @@
         ///////////////////////////////////////////////////////
 
         /**
-         * The differences are that this assertMatch doesn't support syntaxChecks
-         * (deemed unnecessary for webpage JS testing, and that the hint text is 
-         * interpreted differently. 
+         * The difference is that the hint text is
+         * interpreted differently.
          */
-        assertMatch: function(result, description, hint, image) {
+        assertMatch: function assertMatch(result, description, hint, image, syntaxChecks) {
+            this.testContext._checkSyntaxErrors(syntaxChecks);
+
             var alternateMessage;
             var alsoMessage;
 
@@ -496,68 +499,59 @@
                 image: image
             });
         },
-        
-        
 
         /*
          * The difference here is that it tests against allScripts instead of userCode
          */
-        match: function(structure) {
+        match: function match(structure) {
             // If there were syntax errors, don't even try to match it
             if (this.errors.length) {
                 return {
                     success: false,
-                    message: $._("Syntax error!")
+                    message: i18n._("Syntax error!")
                 };
             }
-    
+
             // At the top, we take care of some "alternative" uses of this
             // function. For ease of challenge developing, we return a
             // failure() instead of disallowing these uses altogether
-    
+
             // If we don't see a pattern property, they probably passed in
             // a pattern itself, so we'll turn it into a structure
             if (structure && _.isUndefined(structure.pattern)) {
-                structure = {pattern: structure};
+                structure = { pattern: structure };
             }
-    
+
             // If nothing is passed in or the pattern is non-existent, return
             // failure
-            if (!structure || ! structure.pattern) {
+            if (!structure || !structure.pattern) {
                 return {
                     success: false,
                     message: ""
                 };
             }
-    
+
             try {
                 var callbacks = structure.constraint;
-                var success = Structured.match(this.testContext.allScripts,
-                    structure.pattern, {
-                        varCallbacks: callbacks
-                    });
-    
+                var success = Structured.match(this.testContext.allScripts, structure.pattern, {
+                    varCallbacks: callbacks
+                });
+
                 return {
                     success: success,
                     message: callbacks && callbacks.failure
                 };
             } catch (e) {
-                if (window.console) {
-                    console.warn(e);
-                }
+                console.warn(e);
                 return {
                     success: true,
-                    message: $._("Hm, we're having some trouble " +
-                        "verifying your answer for this step, so we'll give " +
-                        "you the benefit of the doubt as we work to fix it. " +
-                        "Please click \"Report a problem\" to notify us.")
+                    message: i18n._("Hm, we're having some trouble " + "verifying your answer for this step, so we'll give " + "you the benefit of the doubt as we work to fix it. " + "Please click \"Report a problem\" to notify us.")
                 };
             }
-        },
+        }
 
     });
 })();
-
 /**
  * WebpageOutput
  * It creates an iframe on the same domain, and uses
@@ -571,7 +565,7 @@
  * it communicates via postMessage() with liveEditor.
  */
 window.WebpageOutput = Backbone.View.extend({
-    initialize: function(options) {
+    initialize: function initialize(options) {
         this.config = options.config;
         this.output = options.output;
 
@@ -584,42 +578,36 @@ window.WebpageOutput = Backbone.View.extend({
 
         // Set up infinite loop protection
         this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this));
-        this.$frame.contentWindow.KAInfiniteLoopProtect = 
-            this.loopProtector.KAInfiniteLoopProtect;
+        this.$frame.contentWindow.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         // In case frame didn't load (like in IE10), this adds it
         //  once the frame has loaded
-        this.$frame.addEventListener("load", function () {
-            this.$frame.contentWindow.KAInfiniteLoopProtect = 
-                this.loopProtector.KAInfiniteLoopProtect;
-        }.bind(this));
+        this.$frame.addEventListener("load", (function () {
+            this.$frame.contentWindow.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
+        }).bind(this));
         // Do this at the end so variables I add to the global scope stay
         // i.e.  KAInfiniteLoopProtect
         this.stateScrubber = new StateScrubber(this.$frame.contentWindow);
     },
 
-    render: function() {
+    render: function render() {
         this.$el.empty();
-        this.$frame = $("<iframe>")
-            .css({width: "100%", height: "100%", border: "0"})
-            .appendTo(this.el)
-            .show()[0];
+        this.$frame = $("<iframe>").css({ width: "100%", height: "100%", border: "0" }).appendTo(this.el).show()[0];
         this.frameDoc = this.$frame.contentDocument;
     },
 
-    getScreenshot: function(screenshotSize, callback) {
+    getScreenshot: function getScreenshot(screenshotSize, callback) {
         html2canvas(this.frameDoc.body, {
             imagesDir: this.output.imagesDir,
-            onrendered: function(canvas) {
+            onrendered: function onrendered(canvas) {
                 var width = screenshotSize;
-                var height = (screenshotSize / canvas.width) * canvas.height;
+                var height = screenshotSize / canvas.width * canvas.height;
 
                 // We want to resize the image to a thumbnail,
                 // which we can do by creating a temporary canvas
                 var tmpCanvas = document.createElement("canvas");
                 tmpCanvas.width = screenshotSize;
                 tmpCanvas.height = screenshotSize;
-                tmpCanvas.getContext("2d").drawImage(
-                    canvas, 0, 0, width, height);
+                tmpCanvas.getContext("2d").drawImage(canvas, 0, 0, width, height);
 
                 // Send back the screenshot data
                 callback(tmpCanvas.toDataURL("image/png"));
@@ -628,20 +616,18 @@ window.WebpageOutput = Backbone.View.extend({
     },
 
     infiniteLoopError: {
-        text: $._("Your javascript is taking too long to run. " +
-                    "Perhaps you have a mistake in your code?"),
+        text: i18n._("Your javascript is taking too long to run. " + "Perhaps you have a mistake in your code?"),
         type: "error",
-        source: "timeout",
+        source: "timeout"
     },
 
     runtimeError: {
-        text: $._("Your javascript encountered a runtime error. " +
-                    "Check your console for more information."),
+        text: i18n._("Your javascript encountered a runtime error. " + "Check your console for more information."),
         type: "error",
-        source: "timeout",
+        source: "timeout"
     },
 
-    infiniteLoopCallback:  function() {
+    infiniteLoopCallback: function infiniteLoopCallback() {
         this.output.postParent({
             results: {
                 code: this.output.currentCode,
@@ -651,7 +637,20 @@ window.WebpageOutput = Backbone.View.extend({
         this.KA_INFINITE_LOOP = true;
     },
 
-    lint: function(userCode, callback) {
+    lint: function lint(userCode, skip) {
+        var _this = this;
+
+        // the deferred isn't required in this case, but we need to match the
+        // same API as the pjs-output.js' lint method.
+        var deferred = $.Deferred();
+        if (skip) {
+            deferred.resolve({
+                errors: [],
+                warnings: []
+            });
+            return deferred;
+        }
+
         this.userCode = userCode;
         userCode = userCode || "";
 
@@ -659,13 +658,13 @@ window.WebpageOutput = Backbone.View.extend({
         var results = {};
         try {
             results = Slowparse.HTML(document, userCode, {
-                scriptPreprocessor: this.loopProtector.protect.bind(this.loopProtector),
-                disableTags: ["iframe", "embed", "object"]
+                scriptPreprocessor: function scriptPreprocessor(code) {
+                    return _this.loopProtector.protect(code);
+                },
+                disableTags: ["iframe", "embed", "object", "frameset", "frame"]
             });
         } catch (e) {
-            if (window.console) {
-                console.warn(e);
-            }
+            console.warn(e);
             results.error = {
                 type: "UNKNOWN_SLOWPARSE_ERROR"
             };
@@ -673,13 +672,13 @@ window.WebpageOutput = Backbone.View.extend({
 
         this.slowparseResults = results;
 
+        var error = [];
         if (results.error) {
             var pos = results.error.cursor || 0;
             var previous = userCode.slice(0, pos);
             var column = pos - previous.lastIndexOf("\n") - 1;
             var row = (previous.match(/\n/g) || []).length;
-
-            return callback([{
+            error = [{
                 row: row,
                 column: column,
                 text: this.getLintMessage(results.error),
@@ -687,19 +686,41 @@ window.WebpageOutput = Backbone.View.extend({
                 source: "slowparse",
                 lint: results.error,
                 priority: 2
-            }]);
+            }];
         }
 
-        callback([]);
+        var warnings = [];
+        if (results.warnings && results.warnings.length > 0) {
+            for (var i = 0; i < results.warnings.length; i++) {
+                var pos = results.warnings[i].parseInfo.cursor || 0;
+                var previous = userCode.slice(0, pos);
+                var column = pos - previous.lastIndexOf("\n") - 1;
+                var row = (previous.match(/\n/g) || []).length;
+
+                warnings.push({
+                    row: row,
+                    column: column,
+                    text: this.getLintMessage(results.warnings[i].parseInfo),
+                    type: "warning",
+                    source: "slowparse"
+                });
+            }
+        }
+
+        deferred.resolve({
+            errors: error,
+            warnings: warnings
+        });
+        return deferred;
     },
 
-    flattenError: function(plainError, error, base) {
+    flattenError: function flattenError(plainError, error, base) {
         error = error || {};
         base = base || "";
 
         for (var prop in plainError) {
             if (plainError.hasOwnProperty(prop)) {
-                var flatName = (base ? base + "_" + prop : prop);
+                var flatName = base ? base + "_" + prop : prop;
                 if (typeof plainError[prop] === "object") {
                     this.flattenError(plainError[prop], error, flatName);
                 } else {
@@ -711,101 +732,100 @@ window.WebpageOutput = Backbone.View.extend({
         return error;
     },
 
-    getLintMessage: function(plainError) {
+    getLintMessage: function getLintMessage(plainError) {
         var error = this.flattenError(plainError);
 
         // Mostly borrowed from:
         // https://github.com/mozilla/thimble.webmaker.org/blob/master/locale/en_US/thimble-dialog-messages.json
         return ({
-            ATTRIBUTE_IN_CLOSING_TAG: $._("A closing \"&lt;/%(closeTag_name)s&gt;\" tag cannot contain any attributes.", error),
-            CLOSE_TAG_FOR_VOID_ELEMENT: $._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag for a void element (and void elements don't need to be closed).", error),
-            CSS_MIXED_ACTIVECONTENT: $._("You have a css property \"%(cssProperty_property)s\" with a \"url()\" value that currently points to an insecure resource.", error),
-            EVENT_HANDLER_ATTR_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using the \"%(attribute_name_value)s\" JavaScript event handler attribute.", error),
-            HTML_CODE_IN_CSS_BLOCK: $._("Did you put HTML code inside a CSS area?", error),
-            HTTP_LINK_FROM_HTTPS_PAGE: $._("The \"&lt;%(openTag_name)s&gt;\" tag's \"%(attribute_name_value)s\" attribute currently points to an insecure resource.", error),
-            INVALID_ATTR_NAME: $._("The attribute name \"%(attribute_name_value)s\" is not permitted under HTML5 naming conventions.", error),
-            UNSUPPORTED_ATTR_NAMESPACE: $._("The attribute \"%(attribute_name_value)s\" uses an attribute namespace that is not permitted under HTML5 conventions.", error),
-            MULTIPLE_ATTR_NAMESPACES: $._("The attribute \"%(attribute_name_value)s\" has multiple namespaces. Check your text and make sure there's only a single namespace prefix for the attribute.", error),
-            INVALID_CSS_PROPERTY_NAME: $._("The CSS property \"%(cssProperty_property)s\" does not exist.", error),
-            INVALID_TAG_NAME: $._("A \"&lt;\" character appears to be the beginning of a tag, but is not followed by a valid tag name. If you want a \"&lt;\" to appear on your Web page, try using \"&amp;lt;\" instead. Otherwise, check your spelling.", error),
-            JAVASCRIPT_URL_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using the \"javascript:\" URL.", error),
-            MISMATCHED_CLOSE_TAG: $._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag that doesn't pair with the opening \"&lt;%(openTag_name)s&gt;\" tag. This is likely due to a missing or misordered \"&lt;/%(openTag_name)s&gt;\" tag.", error),
-            MISSING_CSS_BLOCK_CLOSER: $._("You're missing either a \"}\" or another \"property:value;\" pair following \"%(cssValue_value)s\".", error),
-            MISSING_CSS_BLOCK_OPENER: $._("You're missing the \"{\" after \"%(cssSelector_selector)s\".", error),
-            MISSING_CSS_PROPERTY: $._("You're missing property for \"%(cssSelector_selector)s\".", error),
-            MISSING_CSS_SELECTOR: $._("You're missing either a new CSS selector or the \"&lt;/style&gt;\" tag.", error),
-            MISSING_CSS_VALUE: $._("You're missing value for \"%(cssProperty_property)s\".", error),
-            SCRIPT_ELEMENT_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using \"&lt;script&gt;\" tags.", error),
-            ELEMENT_NOT_ALLOWED: $._("Sorry, but security restrictions on this site prevent you from using \"&lt;%(openTag_name)s&gt;\" tags.", error),
-            SELF_CLOSING_NON_VOID_ELEMENT: $._("The \"&lt;%(name)s&gt;\" tag can't be self-closed, because \"&lt;%(name)s&gt;\" is not a void element; it must be closed with a separate \"&lt;/%(name)s&gt;\" tag.", error),
-            UNCAUGHT_CSS_PARSE_ERROR: $._("A parse error occurred outside expected cases: \"%(error_msg)s\"", error),
-            UNCLOSED_TAG: $._("It looks like your \"&lt;%(openTag_name)s&gt;\" tag never closes.", error),
-            UNEXPECTED_CLOSE_TAG: $._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag that doesn't pair with any matching opening tags.", error),
-            UNFINISHED_CSS_PROPERTY: $._("The CSS property \"%(cssProperty_property)s\" is missing a \":\"", error),
-            UNFINISHED_CSS_SELECTOR: $._("The CSS selector \"%(cssSelector_selector)s\" needs to be followed by \"{\"", error),
-            UNFINISHED_CSS_VALUE: $._("The CSS value \"%(cssValue_value)s\" still needs to be finalized with \";\"", error),
-            UNKOWN_CSS_KEYWORD: $._("The CSS @keyword \"%(cssKeyword_value)s\" does not match any known @keywords.", error),
-            UNQUOTED_ATTR_VALUE: $._("Make sure your attribute value starts with an opening double quote.", error),
-            UNTERMINATED_ATTR_VALUE: $._("It looks like your \"&lt;%(openTag_name)s&gt;\" tag's \"%(attribute_name_value)s\" attribute has a value that doesn't end with a closing double quote.", error),
-            UNTERMINATED_CLOSE_TAG: $._("It looks like your closing \"&lt;/%(closeTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
-            UNTERMINATED_COMMENT: $._("It looks like your comment doesn't end with a \"--&gt;\".", error),
-            UNTERMINATED_CSS_COMMENT: $._("It looks like your CSS comment doesn't end with a \"*/\".", error),
-            UNTERMINATED_OPEN_TAG: $._("It looks like your opening \"&lt;%(openTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
-            UNKNOWN_SLOWPARSE_ERROR: $._("Something's wrong with the HTML, but we're not sure what."),
-            JAVASCRIPT_ERROR: $._("Javascript Error:\n\"%(message)s\"", error)
+            NO_DOCTYPE_FOUND: i18n._("A DOCTYPE declaration should be the first item on the page.", error),
+            HTML_NOT_ROOT_ELEMENT: i18n._("The root element on the page should be an <html> element.", error),
+            ATTRIBUTE_IN_CLOSING_TAG: i18n._("A closing \"&lt;/%(closeTag_name)s&gt;\" tag cannot contain any attributes.", error),
+            CLOSE_TAG_FOR_VOID_ELEMENT: i18n._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag for a void element (and void elements don't need to be closed).", error),
+            CSS_MIXED_ACTIVECONTENT: i18n._("You have a css property \"%(cssProperty_property)s\" with a \"url()\" value that currently points to an insecure resource.", error),
+            EVENT_HANDLER_ATTR_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using the \"%(attribute_name_value)s\" JavaScript event handler attribute.", error),
+            HTML_CODE_IN_CSS_BLOCK: i18n._("Did you put HTML code inside a CSS area?", error),
+            HTTP_LINK_FROM_HTTPS_PAGE: i18n._("The <%(openTag_name)s> tag's \"%(attribute_name_value)s\" attribute currently points to an insecure resource.", error),
+            INVALID_URL: i18n._("The <%(openTag_name)s> tag's \"%(attribute_name_value)s\" attribute points to an invalid URL.  Did you include the protocol (http:// or https://)?", error),
+            INVALID_ATTR_NAME: i18n._("The attribute name \"%(attribute_name_value)s\" is not permitted under HTML5 naming conventions.", error),
+            UNSUPPORTED_ATTR_NAMESPACE: i18n._("The attribute \"%(attribute_name_value)s\" uses an attribute namespace that is not permitted under HTML5 conventions.", error),
+            MULTIPLE_ATTR_NAMESPACES: i18n._("The attribute \"%(attribute_name_value)s\" has multiple namespaces. Check your text and make sure there's only a single namespace prefix for the attribute.", error),
+            INVALID_CSS_PROPERTY_NAME: i18n._("The CSS property \"%(cssProperty_property)s\" isn't valid - property names can only have letters and dashes.", error),
+            IMPROPER_CSS_VALUE: i18n._("The CSS value \"%(cssValue_value)s\" is malformed.", error),
+            INVALID_TAG_NAME: i18n._("A \"&lt;\" character appears to be the beginning of a tag, but is not followed by a valid tag name. If you want a \"&lt;\" to appear on your Web page, try using \"&amp;lt;\" instead. Otherwise, check your spelling.", error),
+            JAVASCRIPT_URL_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using the \"javascript:\" URL.", error),
+            MISMATCHED_CLOSE_TAG: i18n._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag that doesn't pair with the opening \"&lt;%(openTag_name)s&gt;\" tag. This is likely due to a missing or misordered \"&lt;/%(openTag_name)s&gt;\" tag.", error),
+            MISSING_CSS_BLOCK_CLOSER: i18n._("You're missing either a \"}\" or another \"property:value;\" pair following \"%(cssValue_value)s\".", error),
+            MISSING_CSS_BLOCK_OPENER: i18n._("You're missing the \"{\" after \"%(cssSelector_selector)s\".", error),
+            MISSING_CSS_PROPERTY: i18n._("You're missing property for \"%(cssSelector_selector)s\".", error),
+            MISSING_CSS_SELECTOR: i18n._("You're missing either a new CSS selector or the \"&lt;/style&gt;\" tag.", error),
+            MISSING_CSS_VALUE: i18n._("You're missing value for \"%(cssProperty_property)s\".", error),
+            SCRIPT_ELEMENT_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using \"&lt;script&gt;\" tags.", error),
+            OBSOLETE_HTML_TAG: i18n._("The \"%(openTag_name)s\" tag is obsolete and may not function properly in modern browsers.", error),
+            ELEMENT_NOT_ALLOWED: i18n._("Sorry, but security restrictions on this site prevent you from using \"&lt;%(openTag_name)s&gt;\" tags.", error),
+            SELF_CLOSING_NON_VOID_ELEMENT: i18n._("The \"&lt;%(name)s&gt;\" tag can't be self-closed, because \"&lt;%(name)s&gt;\" is not a void element; it must be closed with a separate \"&lt;/%(name)s&gt;\" tag.", error),
+            UNCAUGHT_CSS_PARSE_ERROR: i18n._("A parse error occurred outside expected cases: \"%(error_msg)s\"", error),
+            UNCLOSED_TAG: i18n._("It looks like your \"&lt;%(openTag_name)s&gt;\" tag never closes.", error),
+            UNEXPECTED_CLOSE_TAG: i18n._("You have a closing \"&lt;/%(closeTag_name)s&gt;\" tag that doesn't pair with any matching opening tags.", error),
+            UNFINISHED_CSS_PROPERTY: i18n._("The CSS property \"%(cssProperty_property)s\" is missing a \":\"", error),
+            UNFINISHED_CSS_SELECTOR: i18n._("The CSS selector \"%(cssSelector_selector)s\" needs to be followed by \"{\"", error),
+            UNFINISHED_CSS_VALUE: i18n._("The CSS value \"%(cssValue_value)s\" still needs to be finalized with \";\"", error),
+            UNKOWN_CSS_KEYWORD: i18n._("The CSS @keyword \"%(cssKeyword_value)s\" does not match any known @keywords.", error),
+            UNKNOWN_CSS_PROPERTY_NAME: i18n._("The CSS property \"%(cssProperty_property)s\" is non-standard or non-existent. Check spelling and browser compatibility.", error),
+            UNQUOTED_ATTR_VALUE: i18n._("Make sure your attribute value starts with an opening double quote.", error),
+            UNTERMINATED_ATTR_VALUE: i18n._("It looks like your \"&lt;%(openTag_name)s&gt;\" tag's \"%(attribute_name_value)s\" attribute has a value that doesn't end with a closing double quote.", error),
+            UNTERMINATED_CLOSE_TAG: i18n._("It looks like your closing \"&lt;/%(closeTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
+            UNTERMINATED_COMMENT: i18n._("It looks like your comment doesn't end with a \"--&gt;\".", error),
+            UNTERMINATED_CSS_COMMENT: i18n._("It looks like your CSS comment doesn't end with a \"*/\".", error),
+            UNTERMINATED_OPEN_TAG: i18n._("It looks like your opening \"&lt;%(openTag_name)s&gt;\" tag doesn't end with a \"&gt;\".", error),
+            UNKNOWN_SLOWPARSE_ERROR: i18n._("Something's wrong with the HTML, but we're not sure what."),
+            JAVASCRIPT_ERROR: i18n._("Javascript Error:\n\"%(message)s\"", error)
         })[error.type];
     },
 
-    initTests: function(validate) {
+    initTests: function initTests(validate) {
         if (!validate) {
             return;
         }
 
         try {
             var code = "with(arguments[0]){\n" + validate + "\n}";
-            (new Function(code)).apply({}, this.tester.testContext);
+            new Function(code).apply({}, this.tester.testContext);
         } catch (e) {
             return e;
         }
     },
 
-    test: function(userCode, tests, errors, callback) {
+    test: function test(userCode, tests, errors, callback) {
         var errorCount = errors.length;
 
         _.extend(this.tester.testContext, {
             $doc: $(this.frameDoc),
-            // Append to a div because jQuery doesn't work on a document fragment
-            $docSP: $("<div>").append(this.slowparseResults.document),
+            docSP: this.slowparseResults.document,
             cssRules: this.slowparseResults.rules
         });
 
-        this.tester.test(userCode, tests, errors,
-            function(errors, testResults) {
-                if (errorCount !== errors.length) {
-                    // Note: Scratchpad challenge checks against the exact
-                    // translated text "A critical problem occurred..." to
-                    // figure out whether we hit this case.
-                    var message = $._("Error: %(message)s",
-                        {message: errors[errors.length - 1].message});
-                    // TODO(jeresig): Find a better way to show this
-                    this.output.$el.find(".test-errors").text(message).show();
-                    this.tester.testContext.assert(false, message,
-                        $._("A critical problem occurred in your program " +
-                            "making it unable to run."));
-                }
+        this.tester.test(userCode, tests, errors, (function (errors, testResults) {
+            if (errorCount !== errors.length) {
+                // Note: Scratchpad challenge checks against the exact
+                // translated text "A critical problem occurred..." to
+                // figure out whether we hit this case.
+                var message = i18n._("Error: %(message)s", { message: errors[errors.length - 1].message });
+                console.warn(message);
+                this.tester.testContext.assert(false, message, i18n._("A critical problem occurred in your program " + "making it unable to run."));
+            }
 
-                if (this.foundRunTimeError) {
-                    errors.push(this.runtimeError);
-                }
-                callback(errors, testResults);
-
-            }.bind(this));
+            if (this.foundRunTimeError) {
+                errors.push(this.runtimeError);
+            }
+            callback(errors, testResults);
+        }).bind(this));
     },
 
     // Prefixes a URL with the URL of a redirecting proxy,
     //  if one has been specified.
-    transformUrl: function(url) {
-        if (url.match(/^https?:\/\/([\w\d]+\.)?khanacademy\.org/)) {
+    transformUrl: function transformUrl(url) {
+        if (url.match(/^https?:\/\/([\w\d]+\.)?khanacademy\.org(\/|$)/)) {
             return url;
         }
         var redirectUrl = this.output.redirectUrl;
@@ -815,20 +835,20 @@ window.WebpageOutput = Backbone.View.extend({
         return url;
     },
 
-    postProcessing: function(oldPageTitle) {
+    postProcessing: function postProcessing(oldPageTitle) {
         var self = this;
 
         // Change external links to a redirecting proxy
-        $(this.frameDoc).find("a").each(function(ind, a) {
+        $(this.frameDoc).find("a").each((function (ind, a) {
             var url = $(a).attr("href");
-            if (url && url[0] !== "#") {
+            if (url && url[0] !== "#" && url.substring(0, 10) !== "javascript") {
                 $(a).attr("target", "_blank");
                 $(a).attr("href", this.transformUrl(url));
             }
-        }.bind(this));
+        }).bind(this));
 
         // Animate internal links (as otherwise, they don't work in FF)
-        $(this.frameDoc).find("a[href^='#']").on("mouseup", function() {
+        $(this.frameDoc).find("a[href^='#']").on("mouseup", function () {
             var url = $(this).attr("href");
             var target = $(self.frameDoc).find(url);
             // Scroll only if the target exists
@@ -852,17 +872,16 @@ window.WebpageOutput = Backbone.View.extend({
         }
     },
 
-    runCode: function(codeObj, callback) {
+    runCode: function runCode(codeObj, callback) {
         this.stateScrubber.clearAll();
         this.KA_INFINITE_LOOP = false;
         this.foundRunTimeError = false;
         this.frameDoc.open();
         // It's necessary in FF/IE to redefine it here
-        this.$frame.contentWindow.KAInfiniteLoopProtect = 
-                this.loopProtector.KAInfiniteLoopProtect;
-        this.$frame.contentWindow.addEventListener("error", function () {
+        this.$frame.contentWindow.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
+        this.$frame.contentWindow.addEventListener("error", (function () {
             this.foundRunTimeError = true;
-        }.bind(this));
+        }).bind(this));
 
         this.frameDoc.write(this.slowparseResults.code);
         this.frameDoc.close();
@@ -874,17 +893,15 @@ window.WebpageOutput = Backbone.View.extend({
         } else {
             callback([]);
         }
-        
     },
 
-    clear: function() {
-        // Clear the output
-    },
+    clear: function clear() {},
 
-    kill: function() {
-        // Completely stop and clear the output
-    }
+    kill: function kill() {}
 });
 
 LiveEditorOutput.registerOutput("webpage", WebpageOutput);
 
+// Clear the output
+
+// Completely stop and clear the output

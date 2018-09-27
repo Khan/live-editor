@@ -8,25 +8,12 @@ window.AceEditor = Backbone.View.extend({
     tooltips: {
         // The earlier in the list a tooltip appears
         // the higher priority it gets.
-        ace_pjs: [
-            "imagePicker",
-            "soundModal",
-            "colorPicker",
-            "numberScrubberClick",
-            "autoSuggest",
-            "numberScrubber"
-        ],
-        ace_webpage: [
-            "imageModal",
-            "colorPicker",
-            "numberScrubber"
-        ],
-        ace_sql: [
-            "numberScrubber"
-        ]
+        ace_pjs: ["imagePicker", "soundModal", "colorPicker", "numberScrubberClick", "autoSuggest", "numberScrubber"],
+        ace_webpage: ["imageModal", "colorPicker", "numberScrubber"],
+        ace_sql: ["numberScrubber"]
     },
 
-    initialize: function(options) {
+    initialize: function initialize(options) {
         var self = this;
 
         this.defaultCode = options.code;
@@ -55,19 +42,31 @@ window.AceEditor = Backbone.View.extend({
             editor: this.editor,
             record: this.record
         });
-        
-        this.tooltipEngine.on("scrubbingStarted", function(name) {
-            this.trigger("scrubbingStarted", name);
-        }.bind(this));
 
-        this.tooltipEngine.on("scrubbingEnded", function(name) {
+        this.tooltipEngine.on("scrubbingStarted", (function (name) {
+            this.trigger("scrubbingStarted", name);
+        }).bind(this));
+
+        this.tooltipEngine.on("scrubbingEnded", (function (name) {
             this.trigger("scrubbingEnded", name);
-        }.bind(this));
+        }).bind(this));
 
         // TODO(bbondy): Support multiple content types for autosuggest.
         if (this.tooltips[this.type].indexOf("autoSuggest") !== -1) {
             ScratchpadAutosuggest.init(this.editor);
         }
+
+        // Override ACE gutter tooltip positioning due to bugginess
+        ace.require("ace/tooltip").Tooltip.prototype.setPosition = function (x, y) {
+            // Calculate x & y, relative to editor & scrolled window
+            var editorOffset = $(this.$parentNode).offset();
+            var xOffset = editorOffset.left - $(window).scrollLeft();
+            var yOffset = editorOffset.top - $(window).scrollTop();
+            x -= xOffset;
+            y -= yOffset;
+            this.getElement().style.left = x + "px";
+            this.getElement().style.top = y + "px";
+        };
 
         // Make the editor vertically resizable
         if (this.$el.resizable) {
@@ -76,7 +75,7 @@ window.AceEditor = Backbone.View.extend({
                 handles: "s",
 
                 // While the resize is occurring, resize the Ace editor
-                resize: function() {
+                resize: function resize() {
                     self.editor.resize();
                 }
             });
@@ -89,18 +88,17 @@ window.AceEditor = Backbone.View.extend({
             visibility: "hidden"
         }).appendTo(this.el);
 
-        $($sensorFrame[0].contentWindow.window).on("resize", function() {
+        $($sensorFrame[0].contentWindow.window).on("resize", (function () {
             // Force the editor to resize.
             this.editor.resize();
 
             // Set the font size. Scale the font size down when the
             // size of the editor is too small.
-            this.editor.setFontSize(this.$el.width() < 400 ?
-                "12px" : "14px");
-        }.bind(this));
+            this.editor.setFontSize(this.$el.width() < 400 ? "12px" : "14px");
+        }).bind(this));
 
         // Kill default selection on the hot number
-        this.$el.on("mousedown", ".tooltip", function(e) {
+        this.$el.on("mousedown", ".tooltip", function (e) {
             e.preventDefault();
         });
 
@@ -108,30 +106,34 @@ window.AceEditor = Backbone.View.extend({
         // location bar, but ace wants to use it for go-to-line.
         this.editor.commands.removeCommand("gotoline");
 
+        // On Windows, the "fold all" hotkey conflicts with close curly brace
+        // "}" on EU keyboards. Unbind this in case we're on an EU keyboard.
+        this.editor.commands.bindKey("Alt-0", null);
+
         // Stop highlighting lines on cursor change
-        this.editor.selection.addEventListener("changeCursor", function() {
+        this.editor.selection.addEventListener("changeCursor", function () {
             self.setErrorHighlight(false);
         });
 
-        this.editor.on("change", function() {
+        this.editor.on("change", (function () {
             self.trigger("change");
             if (this.editor.curOp && this.editor.curOp.command.name) {
-              self.trigger("userChangedCode");
+                self.trigger("userChangedCode");
             }
-        }.bind(this));
+        }).bind(this));
 
-        this.editor.on("click", function() {
+        this.editor.on("click", function () {
             self.trigger("click");
         });
 
-        this.editor.selection.on("changeCursor", function() {
+        this.editor.selection.on("changeCursor", function () {
             self.trigger("changeCursor");
         });
-        this.editor.selection.on("changeSelection", function() {
+        this.editor.selection.on("changeSelection", function () {
             self.trigger("changeCursor");
         });
 
-        this.config.on("versionSwitched", function(version) {
+        this.config.on("versionSwitched", function (version) {
             self.config.runVersion(version, self.type + "_editor", self);
         });
 
@@ -140,51 +142,42 @@ window.AceEditor = Backbone.View.extend({
         this.reset();
     },
 
-    remove: function() {
+    remove: function remove() {
         this.tooltipEngine.remove();
     },
 
-    bindRecord: function() {
+    bindRecord: function bindRecord() {
         var self = this;
         var editor = this.editor;
         var record = this.record;
         var doc = editor.session.doc;
 
         // Track text change events
-        doc.on("change", function(e) {
+        doc.on("change", function (e) {
             var start = e.data.range.start;
             var end = e.data.range.end;
 
             if (e.data.action.indexOf("insert") === 0) {
                 var insert = e.data.lines || e.data.text;
-                self.record.log(e.data.action,
-                    start.row, start.column, end.row, end.column, insert);
+                self.record.log(e.data.action, start.row, start.column, end.row, end.column, insert);
             } else {
-                self.record.log(e.data.action,
-                    start.row, start.column, end.row, end.column);
+                self.record.log(e.data.action, start.row, start.column, end.row, end.column);
             }
         }, true);
 
-        editor.selection.addEventListener("changeCursor", function() {
+        editor.selection.addEventListener("changeCursor", function () {
             if (editor.selection.isEmpty()) {
                 self.handleSelect();
             }
         }, true);
 
-        editor.selection.addEventListener("changeSelection",
-            this.handleSelect.bind(this), true);
+        editor.selection.addEventListener("changeSelection", this.handleSelect.bind(this), true);
 
         // Add in record playback handlers
-        var docOperations = [
-            "insertText",
-            "insertLines",
-            "removeText",
-            "removeLines"
-        ];
+        var docOperations = ["insertText", "insertLines", "removeText", "removeLines"];
 
-        _.each(docOperations, function(op) {
-            record.handlers[op] = function(startRow, startCol, endRow, endCol,
-                    data) {
+        _.each(docOperations, function (op) {
+            record.handlers[op] = function (startRow, startCol, endRow, endCol, data) {
                 var delta = {
                     action: op,
                     range: {
@@ -210,7 +203,7 @@ window.AceEditor = Backbone.View.extend({
         });
 
         $.extend(record.handlers, {
-            select: function(startRow, startCol, endRow, endCol) {
+            select: function select(startRow, startCol, endRow, endCol) {
                 if (endRow == null) {
                     endRow = startRow;
                 }
@@ -234,7 +227,7 @@ window.AceEditor = Backbone.View.extend({
 
         // Handle record seek caching
         record.seekCachers.editor = {
-            getState: function() {
+            getState: function getState() {
                 return {
                     // Save current editor text
                     text: self.text(),
@@ -244,7 +237,7 @@ window.AceEditor = Backbone.View.extend({
                 };
             },
 
-            restoreState: function(cacheData) {
+            restoreState: function restoreState(cacheData) {
                 // Restore editor text
                 self.text(cacheData.text);
 
@@ -253,12 +246,12 @@ window.AceEditor = Backbone.View.extend({
             }
         };
 
-        record.on("runSeek", function() {
+        record.on("runSeek", function () {
             self.reset(record.initData.code);
         });
     },
 
-    handleSelect: function() {
+    handleSelect: function handleSelect() {
         if (!this.record.recording) {
             return;
         }
@@ -268,57 +261,56 @@ window.AceEditor = Backbone.View.extend({
         var start = curRange.start;
         var end = curRange.end;
 
-        this.record.log("select", start.row, start.column, end.row,
-            end.column);
+        this.record.log("select", start.row, start.column, end.row, end.column);
     },
 
-    reset: function(code, focus) {
+    reset: function reset(code, focus) {
         code = code || this.defaultCode;
 
         this.config.runCurVersion(this.type + "_editor", this);
 
         // Reset the editor
         this.text(code);
-        this.setCursor({row: 0, column: 0}, focus);
+        this.setCursor({ row: 0, column: 0 }, focus);
     },
 
     // Set the cursor position on the editor
-    setErrorHighlight: function(shouldHighlight) {
+    setErrorHighlight: function setErrorHighlight(shouldHighlight) {
         var self = this;
 
         this.editor.setHighlightActiveLine(shouldHighlight);
 
         // Delay adding a flash until the active line is shown
-        setTimeout(function() {
+        setTimeout(function () {
             // Add the hilite flash
             var line = self.$(self.dom.ACTIVE_LINE).addClass("hilite");
 
             // And quickly remove it again (to give a nice flash animation)
-            setTimeout(function() {
+            setTimeout(function () {
                 line.removeClass("hilite");
             }, 100);
         }, 1);
     },
 
     // Allow for toggling of the editor gutter
-    toggleGutter: function(toggle) {
+    toggleGutter: function toggleGutter(toggle) {
         this.editor.renderer.setShowGutter(toggle);
     },
 
-    getAllFolds: function() {
+    getAllFolds: function getAllFolds() {
         var session = this.editor.session;
-        return _.map(session.getAllFolds(), function(fold) {
+        return _.map(session.getAllFolds(), function (fold) {
             return [fold.start.row, fold.end.row];
         });
     },
 
-    setFolds: function(folds) {
-        _.each(folds, function(fold) {
+    setFolds: function setFolds(folds) {
+        _.each(folds, (function (fold) {
             this.editor.session.foldAll(fold[0], fold[1], 0);
-        }.bind(this));
+        }).bind(this));
     },
 
-    blockPaste: function(chastise) {
+    blockPaste: function blockPaste(chastise) {
         // Used throughout the function
         var aceEditor = this.editor;
 
@@ -330,24 +322,22 @@ window.AceEditor = Backbone.View.extend({
             aceEditor.originalPaste = aceEditor.onPaste;
         }
 
-        aceEditor.onCut = function(clipboardText) {
+        aceEditor.onCut = function (clipboardText) {
             aceEditor.lastCopied = this.getSelectedText();
             aceEditor.originalCut.apply(aceEditor);
         };
-        aceEditor.onCopy = function(clipboardText) {
+        aceEditor.onCopy = function (clipboardText) {
             aceEditor.lastCopied = this.getSelectedText();
             aceEditor.originalCopy.apply(aceEditor);
         };
-        aceEditor.onPaste = function(clipboardText) {
+        aceEditor.onPaste = function (clipboardText) {
             // Allow them to paste either if it matches what they cut/copied,
             // or if its a small # of characters, most likely symbols
             // that dont exist on their keyboard, or if its a URL
-            var isUrl = function(str) {
+            var isUrl = function isUrl(str) {
                 return str.match(/\s*https?:\/\/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)\s*/);
             };
-            if (clipboardText === aceEditor.lastCopied ||
-                clipboardText.length < 3 ||
-                isUrl(clipboardText)) {
+            if (clipboardText === aceEditor.lastCopied || clipboardText.length < 3 || isUrl(clipboardText)) {
                 aceEditor.originalPaste.apply(aceEditor, [clipboardText]);
                 return;
             } else {
@@ -357,13 +347,13 @@ window.AceEditor = Backbone.View.extend({
 
         // Block dragging
         var isLocal = false;
-        aceEditor.container.addEventListener("dragstart", function() {
+        aceEditor.container.addEventListener("dragstart", function () {
             isLocal = true;
         });
-        aceEditor.container.addEventListener("dragend", function() {
+        aceEditor.container.addEventListener("dragend", function () {
             isLocal = false;
         });
-        aceEditor.container.addEventListener("drop", function(e) {
+        aceEditor.container.addEventListener("drop", function (e) {
             if (!isLocal) {
                 chastise();
                 e.stopPropagation();
@@ -376,28 +366,28 @@ window.AceEditor = Backbone.View.extend({
      */
 
     // Focus the editor
-    focus: function() {
+    focus: function focus() {
         if (this.autoFocus !== false) {
             this.editor.focus();
         }
     },
 
-    getCursor: function() {
+    getCursor: function getCursor() {
         return this.editor.getCursorPosition();
     },
 
-    getSelectionIndices: function() {
+    getSelectionIndices: function getSelectionIndices() {
         var rng = this.editor.getSelectionRange();
         var doc = this.editor.getSession().getDocument();
 
         return {
-            start: doc.positionToIndex(rng.start), 
+            start: doc.positionToIndex(rng.start),
             end: doc.positionToIndex(rng.end)
         };
     },
 
     // Set the cursor position on the editor
-    setCursor: function(cursorPos, focus) {
+    setCursor: function setCursor(cursorPos, focus) {
         this.editor.moveCursorToPosition(cursorPos);
         this.editor.clearSelection();
 
@@ -406,29 +396,29 @@ window.AceEditor = Backbone.View.extend({
         }
     },
 
-    setSelection: function(selection) {
+    setSelection: function setSelection(selection) {
         this.editor.selection.setSelectionRange(selection);
     },
 
-    setReadOnly: function(readOnly) {
+    setReadOnly: function setReadOnly(readOnly) {
         this.editor.setReadOnly(readOnly);
     },
 
-    text: function(text) {
-        if (text != null) {
-            this.editor.getSession().setValue(text);
+    text: function text(_text) {
+        if (_text != null) {
+            this.editor.getSession().setValue(_text);
         } else {
-            return this.editor.getSession().getValue().replace(/\r/g, "\n");
+            return this.editor.getSession().getValue().replace(/\r\n/g, "\n");
         }
 
         return this;
     },
 
-    unfold: function() {
+    unfold: function unfold() {
         return this.editor.getSession().unfold();
     },
 
-    insertNewlineIfCursorAtEnd: function() {
+    insertNewlineIfCursorAtEnd: function insertNewlineIfCursorAtEnd() {
         var maxRow = this.editor.getSession().getLength() - 1;
         var line = this.editor.getSession().getLine(maxRow);
         var maxColumn = line.length;
@@ -437,16 +427,12 @@ window.AceEditor = Backbone.View.extend({
             var oldText = this.text();
             if (oldText.length && oldText[oldText.length - 1] !== "\n") {
                 this.text(this.text() + "\n");
-                this.setCursor({row: maxRow + 1, column: 0});
+                this.setCursor({ row: maxRow + 1, column: 0 });
             }
         }
     },
 
-    setReadOnly: function(state) {
-        this.editor.setReadOnly(state);
-    },
-
-    undo: function() {
+    undo: function undo() {
         this.editor.undo();
     }
 });

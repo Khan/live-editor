@@ -8,7 +8,6 @@
         <link rel="stylesheet" href="../../node_modules/mocha/mocha.css">
     </head>
     <body>
-        <div id="faux_editor"></div>
         <div id="mocha"></div>
         <script src="../../build/js/live-editor.core_deps.js"></script>
         <script>
@@ -32,24 +31,20 @@
         <script src="../../build/js/live-editor.editor_ace.js"></script>
         <script src="../../build/js/live-editor.tooltips.js"></script>
         <script src="../../node_modules/mocha/mocha.js"></script>
-        <script src="../sinon.js"></script>
+        <script src="../../node_modules/sinon/pkg/sinon.js"></script>
         <script src="../../node_modules/expect.js/index.js"></script>
-        <script>mocha.setup("bdd");</script>
+        <script src="../../testutil/json-reporter.js"></script>
         <script src="shared.js"></script>
-        <script src="numberScrubber_test.js"></script>
-        <script src="imagePicker_test.js"></script>
-        <script src="imageModal_test.js"></script>
-        <script src="soundModal_test.js"></script>
-        <script src="colorPicker_test.js"></script>
-        <script src="tooltips_test.js"></script>
+        <script src="../shared_utils.js"></script>
         <script>
-            onload = function(){
-                if (window.mochaPhantomJS) {
-                    mochaPhantomJS.run();
-                } else {
-                    mocha.run();
-                }
-            };
+            runTestFiles([
+                "numberScrubber_test.js",
+                "imagePicker_test.js",
+                "imageModal_test.js",
+                "soundModal_test.js",
+                "colorPicker_test.js",
+                "tooltips_test.js",
+            ]);
         </script>
     </body>
 </html>

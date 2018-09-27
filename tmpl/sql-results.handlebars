@@ -86,7 +86,7 @@ table.sql-schema-table .row-count {
 <body>
 <div class="sql-output">
     {{#if tables}}
-        <h1>Database Schema</h1>
+        <h1>{{databaseMsg}}</h1>
     {{/if}}
     {{#each tables}}
         <table class="sql-schema-table" data-table-name="{{name}}">
@@ -108,7 +108,7 @@ table.sql-schema-table .row-count {
     {{/each}}
 
     {{#if results }}
-        <h1>Results</h1>
+        <h1>{{resultsMsg}}</h1>
     {{/if}}
     {{#each results}}
         <table class="sql-result-table">

@@ -155,6 +155,7 @@
     HALF_PI:    Math.PI / 2,
     THIRD_PI:   Math.PI / 3,
     QUARTER_PI: Math.PI / 4,
+    TAU:        2 * Math.PI,
 
     DEG_TO_RAD: Math.PI / 180,
     RAD_TO_DEG: 180 / Math.PI,
@@ -1387,6 +1388,94 @@
     processingInstances.push(processing);
   };
 
+  ////////////////////////////////////////////////////////////////////////////
+  // LRUCache.JS START
+  ////////////////////////////////////////////////////////////////////////////
+
+  /**
+  * This is a Least Recently Used Cache
+  *
+  * When the max size is reached, then the least recently used item is dropped.
+  *
+  * This is tracked by having a "use index", which is a number indicating how
+  * recently a given item was accessed. The closer the "use index" is to
+  * "mostRecent", the more recently is was used.
+  *
+  * When an item is accessed (via .get()) it's "use index" gets updated to be
+  * the new "most recent".
+  */
+
+  function LRUCache(maxSize) {
+    this.maxSize = maxSize;
+    this.size = 0;
+    this.cache = {}; // key => val
+    this.useIndex = {}; // use index => key
+    this.useReverse = {}; // key => use index
+    // this will be incremented to 0 for the first item added, making
+    // leastRecent === mostRecent
+    this.mostRecent = -1;
+    this.leastRecent = 0;
+  }
+
+  /**
+    * Get a value from the cache, returning undefined for an unknown key
+    */
+  LRUCache.prototype.get = function(key) {
+    key = key + '';
+    if (!this.cache[key]) {
+      return;
+    }
+    this._makeMostRecent(key);
+    return this.cache[key];
+  };
+
+  /**
+    * Set a value in the cache. If the max size is reached, the least recently
+    * used item will be popped off.
+    */
+  LRUCache.prototype.set = function(key, val) {
+    key = key + '';
+    if (!this.cache[key]) {
+      this.size += 1;
+    }
+    this.cache[key] = val;
+    this._makeMostRecent(key);
+
+    if (this.size > this.maxSize) {
+      this._pop();
+    }
+  };
+
+  LRUCache.prototype._makeMostRecent = function (key) {
+    var current = this.useReverse[key];
+    if (current === this.mostRecent) {
+      return;
+    } else if (current) {
+      delete this.useIndex[current];
+    }
+
+    this.mostRecent += 1;
+    var newIndex = this.mostRecent;
+    this.useIndex[newIndex] = key;
+    this.useReverse[key] = newIndex;
+  }
+
+  LRUCache.prototype._pop = function () {
+    while (this.leastRecent < this.mostRecent) {
+      var oldKey = this.useIndex[this.leastRecent];
+      if (!oldKey) {
+        this.leastRecent += 1;
+        continue;
+      }
+
+      delete this.useIndex[this.leastRecent];
+      delete this.useReverse[oldKey];
+      delete this.cache[oldKey];
+      this.leastRecent += 1;
+      this.size -= 1;
+      return;
+    }
+  }
 
   ////////////////////////////////////////////////////////////////////////////
   // PFONT.JS START
@@ -1561,7 +1650,7 @@
   /**
   * Global "loaded fonts" list, internal to PFont
   */
-  PFont.PFontCache = {};
+  PFont.PFontCache = new LRUCache(100);
 
   /**
   * This function acts as single access point for getting and caching
@@ -1570,11 +1659,15 @@
   PFont.get = function(fontName, fontSize) {
     var cache = PFont.PFontCache;
     var idx = fontName+"/"+fontSize;
-    if (!cache[idx]) {
-      cache[idx] = new PFont(fontName, fontSize);
+    var val = cache.get(idx);
+    if (!val) {
+      val = new PFont(fontName, fontSize);
+      cache.set(idx, val);
     }
-    return cache[idx];
+    return val;
   };
+
+
 
   /**
   * Lists all standard fonts. Due to browser limitations, this list is
@@ -1620,7 +1713,7 @@
 
       // set up the template element
       var element = document.createElement("span");
-      element.style.cssText = 'position: absolute; top: 0; left: 0; opacity: 0; font-family: "PjsEmptyFont", fantasy;';
+      element.style.cssText = 'position: absolute; top: 0; left: 0; opacity: 0; font-family: "PjsEmptyFont", fantasy; pointer-events: none;';
       element.innerHTML = "AAAAAAAA";
       document.body.appendChild(element);
       this.template = element;
@@ -1692,7 +1785,7 @@
 
       // also create the element to load and compare the new font
       var element = document.createElement("span");
-      element.style.cssText = "position: absolute; top: 0; left: 0; opacity: 0;";
+      element.style.cssText = "position: absolute; top: 0; left: 0; opacity: 0; pointer-events: none;";
       element.style.fontFamily = '"' + fontName + '", "PjsEmptyFont", fantasy';
       element.innerHTML = "AAAAAAAA";
       document.body.appendChild(element);
@@ -2040,7 +2133,7 @@
       }
 
       // Create the static methods of PVector automatically
-      // We don't do toString because it causes a TypeError 
+      // We don't do toString because it causes a TypeError
       //  when attempting to stringify PVector
       for (var method in PVector.prototype) {
         if (PVector.prototype.hasOwnProperty(method) && !PVector.hasOwnProperty(method) &&
@@ -16321,6 +16414,8 @@
      */
     p.textSize = function(size) {
       if (size !== curTextSize) {
+        // round size to the nearest tenth so that we don't explode the cache
+        size = Math.round(10 * size) / 10;
         curTextFont = PFont.get(curFontName, size);
         curTextSize = size;
         // recache metrics
@@ -17399,7 +17494,7 @@
     // by a "mousemove".  Unfortunately, both events have the same coordinates
     // which causes (pmouseX, pmouseY) === (mouseX, mouseY) when the cursor
     // re-enters the iframe which results in a gap in the line in the paint
-    // test program.  The reason why this bug ddoesn't appear when using just 
+    // test program.  The reason why this bug ddoesn't appear when using just
     // the canvas is that the canvas doesn't get "mousemove" events which occur
     // outside the canvas.
     // TODO(kevinb7): verify that this solution works with just the canvas
@@ -17575,10 +17670,10 @@
       if (!p.__usingDebugger) {
         p.keyCode = 0;
         // When the debugger is in use all callbacks are queued and thus not
-        // run synchronously therefore, setting keyCode = 0; immediatedly as 
+        // run synchronously therefore, setting keyCode = 0; immediatedly as
         // it is without this check results keyCode being 0 when keyPressed()
         // is finally run which is not the behaviour we want.
-        // The ProcessingDebugger sets keyCode to 0 right before it calls 
+        // The ProcessingDebugger sets keyCode to 0 right before it calls
         // keyTyped().
         // https://github.com/kevinb7/stepper/blob/master/src/processing-debugger.ts#L41-L43
       }
@@ -78341,221 +78436,223 @@ exports.Lexer = Lexer;
 "use strict";
 
 // XXX(jeresig): Used for i18n string extraction
-var $ = { _: function (msg) { return msg; } };
+var i18n = { _: function (msg) { return msg; } };
 
 var errors = {
 	// JSHint options
-	E001: $._("Bad option: '{a}'."),
-	E002: $._("Bad option value."),
+	E001: i18n._("Bad option: '{a}'."),
+	E002: i18n._("Bad option value."),
 
 	// JSHint input
-	E003: $._("Expected a JSON value."),
-	E004: $._("Input is neither a string nor an array of strings."),
-	E005: $._("Input is empty."),
-	E006: $._("Unexpected early end of program."),
+	E003: i18n._("Expected a JSON value."),
+	E004: i18n._("Input is neither a string nor an array of strings."),
+	E005: i18n._("Input is empty."),
+	E006: i18n._("Unexpected early end of program."),
 
 	// Strict mode
-	E007: $._("Missing \"use strict\" statement."),
-	E008: $._("Strict violation."),
-	E009: $._("Option 'validthis' can't be used in a global scope."),
-	E010: $._("'with' is not allowed in strict mode."),
+	E007: i18n._("Missing \"use strict\" statement."),
+	E008: i18n._("Strict violation."),
+	E009: i18n._("Option 'validthis' can't be used in a global scope."),
+	E010: i18n._("'with' is not allowed in strict mode."),
 
 	// Constants
-	E011: $._("const '{a}' has already been declared."),
-	E012: $._("const '{a}' is initialized to 'undefined'."),
-	E013: $._("Attempting to override '{a}' which is a constant."),
+	E011: i18n._("const '{a}' has already been declared."),
+	E012: i18n._("const '{a}' is initialized to 'undefined'."),
+	E013: i18n._("Attempting to override '{a}' which is a constant."),
 
 	// Regular expressions
-	E014: $._("A regular expression literal can be confused with '/='."),
-	E015: $._("Unclosed regular expression."),
-	E016: $._("Invalid regular expression."),
+	E014: i18n._("A regular expression literal can be confused with '/='."),
+	E015: i18n._("Unclosed regular expression."),
+	E016: i18n._("Invalid regular expression."),
 
 	// Tokens
-	E017: $._("It looks like your comment isn't closed. Use \"*/\" to end a multi-line comment."),
-	E018: $._("It looks like you never started your comment. " +
+	E017: i18n._("It looks like your comment isn't closed. Use \"*/\" to end a multi-line comment."),
+	E018: i18n._("It looks like you never started your comment. " +
 		"Use \"/*\" to start a multi-line comment."),
-	E019: $._("Unmatched \"{a}\"."),
-	E020: $._("I thought you were going to type \"{a}\" to match \"{b}\" " +
+	E019: i18n._("Unmatched \"{a}\"."),
+	E020: i18n._("I thought you were going to type \"{a}\" to match \"{b}\" " +
 		"from line {c} but you typed \"{d}\""),
-	E021: $._("I thought you were going to type \"{a}\" but you typed \"{b}\"!"),
-	E022: $._("Line breaking error '{a}'."),
-	E023: $._("I think you're missing a \"{a}\"!"),
-	E024: $._("Unexpected \"{a}\"."),
-	E025: $._("I think you're missing ':' on a case clause."),
-	E026: $._("I think you're missing a '}' to match '{' from line {a}."),
-	E027: $._("I think you're missing a ']' to match '[' from line {a}."),
-	E028: $._("Illegal comma."),
-	E029: $._("Unclosed string! Make sure you end your string with a quote."),
+	E021: i18n._("I thought you were going to type \"{a}\" but you typed \"{b}\"!"),
+	E022: i18n._("Line breaking error '{a}'."),
+	E023: i18n._("I think you're missing a \"{a}\"!"),
+	E024: i18n._("Unexpected \"{a}\"."),
+	E025: i18n._("I think you're missing ':' on a case clause."),
+	E026: i18n._("I think you're missing a '}' to match '{' from line {a}."),
+	E027: i18n._("I think you're missing a ']' to match '[' from line {a}."),
+	E028: i18n._("Illegal comma."),
+	E029: i18n._("Unclosed string! Make sure you end your string with a quote."),
 
 	// Everything else
-	E030: $._("I thought you were going to type an identifier but you typed '{a}'."),
-	E031: $._("The left side of an assignment must be a single variable name, not an expression."),
-	E032: $._("I thought you were going to type a number or 'false' but you typed '{a}'."),
-	E033: $._("I thought you were going to type an operator but you typed '{a}'."),
-	E034: $._("get/set are ES5 features."),
-	E035: $._("I think you're missing a property name."),
-	E036: $._("I thought you were going to type a statement but you typed a block instead."),
+	E030: i18n._("I thought you were going to type an identifier but you typed '{a}'."),
+	E031: i18n._("The left side of an assignment must be a single variable name, not an expression."),
+	E032: i18n._("I thought you were going to type a number or 'false' but you typed '{a}'."),
+	E033: i18n._("I thought you were going to type an operator but you typed '{a}'."),
+	E034: i18n._("get/set are ES5 features."),
+	E035: i18n._("I think you're missing a property name."),
+	E036: i18n._("I thought you were going to type a statement but you typed a block instead."),
 	E037: null,
 	E038: null,
-	E039: $._("Function declarations are not invocable. " +
+	E039: i18n._("Function declarations are not invocable. " +
 		"Wrap the whole function invocation in parens."),
-	E040: $._("Each value should have its own case label."),
-	E041: $._("Unrecoverable syntax error."),
-	E042: $._("Stopping."),
-	E043: $._("Too many errors."),
+	E040: i18n._("Each value should have its own case label."),
+	E041: i18n._("Unrecoverable syntax error."),
+	E042: i18n._("Stopping."),
+	E043: i18n._("Too many errors."),
 	E044: null,
-	E045: $._("Invalid for each loop."),
-	E046: $._("A yield statement shall be within a generator function (with syntax: `function*`)"),
-	E047: $._("A generator function shall contain a yield statement."),
-	E048: $._("Let declaration not directly within block."),
-	E049: $._("A {a} cannot be named '{b}'."),
-	E050: $._("Mozilla requires the yield expression to be parenthesized here."),
-	E051: $._("Regular parameters cannot come after default parameters."),
-	E052: $._("I think you meant to type a value or variable name before that comma?"),
-	E053: $._("I think you either have an extra comma or a missing argument?")
+	E045: i18n._("Invalid for each loop."),
+	E046: i18n._("A yield statement shall be within a generator function (with syntax: `function*`)"),
+	E047: i18n._("A generator function shall contain a yield statement."),
+	E048: i18n._("Let declaration not directly within block."),
+	E049: i18n._("A {a} cannot be named '{b}'."),
+	E050: i18n._("Mozilla requires the yield expression to be parenthesized here."),
+	E051: i18n._("Regular parameters cannot come after default parameters."),
+	E052: i18n._("I think you meant to type a value or variable name before that comma?"),
+	E053: i18n._("I think you either have an extra comma or a missing argument?")
 };
 
 var warnings = {
-	W001: $._("'hasOwnProperty' is a really bad name."),
-	W002: $._("Value of '{a}' may be overwritten in IE 8 and earlier."),
-	W003: $._("'{a}' was used before it was defined."),
-	W004: $._("'{a}' is already defined."),
-	W005: $._("A dot following a number can be confused with a decimal point."),
-	W006: $._("Confusing minuses."),
-	W007: $._("Confusing pluses."),
-	W008: $._("Please put a 0 in front of the decimal point: \"{a}\"!"),
-	W009: $._("The array literal notation [] is preferrable."),
-	W010: $._("The object literal notation {} is preferrable."),
-	W011: $._("Unexpected space after '{a}'."),
-	W012: $._("Unexpected space before '{a}'."),
-	W013: $._("I think you're missing a space after \"{a}\"."),
-	W014: $._("Bad line breaking before '{a}'."),
-	W015: $._("Expected '{a}' to have an indentation at {b} instead at {c}."),
-	W016: $._("Unexpected use of '{a}'."),
-	W017: $._("Bad operand."),
-	W018: $._("Confusing use of '{a}'."),
-	W019: $._("Use the isNaN function to compare with NaN."),
-	W020: $._("Read only."),
-	W021: $._("'{a}' is a function."),
-	W022: $._("Do not assign to the exception parameter."),
-	W023: $._("I thought you were going to type an identifier in an assignment " +
+	W001: i18n._("'hasOwnProperty' is a really bad name."),
+	W002: i18n._("Value of '{a}' may be overwritten in IE 8 and earlier."),
+	W003: i18n._("'{a}' was used before it was defined."),
+	W004: i18n._("'{a}' is already defined."),
+	W005: i18n._("A dot following a number can be confused with a decimal point."),
+	W006: i18n._("Confusing minuses."),
+	W007: i18n._("Confusing pluses."),
+	W008: i18n._("Please put a 0 in front of the decimal point: \"{a}\"!"),
+	W009: i18n._("The array literal notation [] is preferrable."),
+	W010: i18n._("The object literal notation {} is preferrable."),
+	W011: i18n._("Unexpected space after '{a}'."),
+	W012: i18n._("Unexpected space before '{a}'."),
+	W013: i18n._("I think you're missing a space after \"{a}\"."),
+	W014: i18n._("Bad line breaking before '{a}'."),
+	W015: i18n._("Expected '{a}' to have an indentation at {b} instead at {c}."),
+	W016: i18n._("Unexpected use of '{a}'."),
+	W017: i18n._("Bad operand."),
+	W018: i18n._("Confusing use of '{a}'."),
+	W019: i18n._("Use the isNaN function to compare with NaN."),
+	W020: i18n._("Read only."),
+	W021: i18n._("'{a}' is a function."),
+	W022: i18n._("Do not assign to the exception parameter."),
+	W023: i18n._("I thought you were going to type an identifier in an assignment " +
 		"but you typed a function invocation instead."),
-	W024: $._("I thought you were going to type an identifier but you typed '{a}' " +
+	W024: i18n._("I thought you were going to type an identifier but you typed '{a}' " +
 		"(a reserved word)."),
-	W025: $._("I think you're missing the name in your function declaration."),
-	W026: $._("Inner functions should be listed at the top of the outer function."),
-	W027: $._("Unreachable '{a}' after '{b}'."),
-	W028: $._("Label '{a}' on {b} statement."),
-	W030: $._("I thought you were going to type an assignment or function call " +
+	W025: i18n._("I think you're missing the name in your function declaration."),
+	W026: i18n._("Inner functions should be listed at the top of the outer function."),
+	W027: i18n._("Unreachable '{a}' after '{b}'."),
+	W028: i18n._("Label '{a}' on {b} statement."),
+	W030: i18n._("I thought you were going to type an assignment or function call " +
 		"but you typed an expression instead."),
-	W031: $._("Do not use 'new' for side effects."),
-	W032: $._("It looks like you have an unnecessary semicolon."),
-	W033: $._("It looks like you're missing a semicolon."),
-	W034: $._("Unnecessary directive \"{a}\"."),
-	W035: $._("Empty block."),
-	W036: $._("Unexpected /*member '{a}'."),
-	W037: $._("'{a}' is a statement label."),
-	W038: $._("'{a}' used out of scope."),
-	W039: $._("'{a}' is not allowed."),
-	W040: $._("Possible strict violation."),
-	W041: $._("Use '{a}' to compare with '{b}'."),
-	W042: $._("Avoid EOL escaping."),
-	W043: $._("Bad escaping of EOL. Use option multistr if needed."),
-	W044: $._("Bad or unnecessary escaping."),
-	W045: $._("Bad number '{a}'."),
-	W046: $._("Don't use extra leading zeros \"{a}\"."),
-	W047: $._("A trailing decimal point can be confused with a dot: '{a}'."),
-	W048: $._("Unexpected control character in regular expression."),
-	W049: $._("Unexpected escaped character '{a}' in regular expression."),
-	W050: $._("JavaScript URL."),
-	W051: $._("Variables should not be deleted."),
-	W052: $._("Unexpected '{a}'."),
-	W053: $._("Do not use {a} as a constructor."),
-	W054: $._("The Function constructor is a form of eval."),
-	W055: $._("A constructor name should start with an uppercase letter."),
-	W056: $._("Bad constructor."),
-	W057: $._("Weird construction. Is 'new' necessary?"),
-	W058: $._("I think you're missing the \"()\" to invoke the constructor."),
-	W059: $._("Avoid arguments.{a}."),
-	W060: $._("document.write can be a form of eval."),
-	W061: $._("eval can be harmful."),
-	W062: $._("Wrap an immediate function invocation in parens " +
+	W031: i18n._("Do not use 'new' for side effects."),
+	W032: i18n._("It looks like you have an unnecessary semicolon."),
+	W033: i18n._("It looks like you're missing a semicolon."),
+	W034: i18n._("Unnecessary directive \"{a}\"."),
+	W035: i18n._("Empty block."),
+	W036: i18n._("Unexpected /*member '{a}'."),
+	W037: i18n._("'{a}' is a statement label."),
+	W038: i18n._("'{a}' used out of scope."),
+	W039: i18n._("'{a}' is not allowed."),
+	W040: i18n._("Possible strict violation."),
+	W041: i18n._("Use '{a}' to compare with '{b}'."),
+	W042: i18n._("Avoid EOL escaping."),
+	W043: i18n._("Bad escaping of EOL. Use option multistr if needed."),
+	W044: i18n._("Bad or unnecessary escaping."),
+	W045: i18n._("Bad number '{a}'."),
+	W046: i18n._("Don't use extra leading zeros \"{a}\"."),
+	W047: i18n._("A trailing decimal point can be confused with a dot: '{a}'."),
+	W048: i18n._("Unexpected control character in regular expression."),
+	W049: i18n._("Unexpected escaped character '{a}' in regular expression."),
+	W050: i18n._("JavaScript URL."),
+	W051: i18n._("Variables should not be deleted."),
+	W052: i18n._("Unexpected '{a}'."),
+	W053: i18n._("Do not use {a} as a constructor."),
+	W054: i18n._("The Function constructor is a form of eval."),
+	W055: i18n._("A constructor name should start with an uppercase letter."),
+	W056: i18n._("Bad constructor."),
+	W057: i18n._("Weird construction. Is 'new' necessary?"),
+	W058: i18n._("I think you're missing the \"()\" to invoke the constructor."),
+	W059: i18n._("Avoid arguments.{a}."),
+	W060: i18n._("document.write can be a form of eval."),
+	W061: i18n._("eval can be harmful."),
+	W062: i18n._("Wrap an immediate function invocation in parens " +
 		"to assist the reader in understanding that the expression " +
 		"is the result of a function, and not the function itself."),
-	W063: $._("Math is not a function."),
-	W064: $._("I think you're missing using 'new' to call a constructor."),
-	W065: $._("It looks like you're missing a radix parameter."),
-	W066: $._("Implied eval. Consider passing a function instead of a string."),
-	W067: $._("Bad invocation."),
-	W068: $._("Wrapping non-IIFE function literals in parens is unnecessary."),
-	W069: $._("['{a}'] is better written in dot notation."),
-	W070: $._("Extra comma. (it breaks older versions of IE)"),
-	W071: $._("This function has too many statements. ({a})"),
-	W072: $._("This function has too many parameters. ({a})"),
-	W073: $._("Blocks are nested too deeply. ({a})"),
-	W074: $._("This function's cyclomatic complexity is too high. ({a})"),
-	W075: $._("Duplicate key '{a}'."),
-	W076: $._("Unexpected parameter '{a}' in get {b} function."),
-	W077: $._("Expected a single parameter in set {a} function."),
-	W078: $._("Setter is defined without getter."),
-	W079: $._("Redefinition of '{a}'."),
-	W080: $._("It's not necessary to initialize '{a}' to 'undefined'."),
-	W081: $._("Too many var statements."),
-	W082: $._("Function declarations should not be placed in blocks. " +
+	W063: i18n._("Math is not a function."),
+	W064: i18n._("I think you're missing using 'new' to call a constructor."),
+	W065: i18n._("It looks like you're missing a radix parameter."),
+	W066: i18n._("Implied eval. Consider passing a function instead of a string."),
+	W067: i18n._("Bad invocation."),
+	W068: i18n._("Wrapping non-IIFE function literals in parens is unnecessary."),
+	W069: i18n._("['{a}'] is better written in dot notation."),
+	W070: i18n._("Extra comma. (it breaks older versions of IE)"),
+	W071: i18n._("This function has too many statements. ({a})"),
+	W072: i18n._("This function has too many parameters. ({a})"),
+	W073: i18n._("Blocks are nested too deeply. ({a})"),
+	W074: i18n._("This function's cyclomatic complexity is too high. ({a})"),
+	W075: i18n._("Duplicate key '{a}'."),
+	W076: i18n._("Unexpected parameter '{a}' in get {b} function."),
+	W077: i18n._("Expected a single parameter in set {a} function."),
+	W078: i18n._("Setter is defined without getter."),
+	W079: i18n._("Redefinition of '{a}'."),
+	W080: i18n._("It's not necessary to initialize '{a}' to 'undefined'."),
+	W081: i18n._("Too many var statements."),
+	W082: i18n._("Function declarations should not be placed in blocks. " +
 		"Use a function expression or move the statement to the top of " +
 		"the outer function."),
-	W083: $._("It's not a good idea to define functions within a loop. " +
+	W083: i18n._("It's not a good idea to define functions within a loop. " +
 		"Can you define them outside instead?"),
-	W084: $._("I thought you were going to type a conditional expression " +
+	W084: i18n._("I thought you were going to type a conditional expression " +
 		"but you typed an assignment instead."),
-	W085: $._("Don't use 'with'."),
-	W086: $._("Did you forget a 'break' statement before '{a}'?"),
-	W087: $._("Forgotten 'debugger' statement?"),
-	W088: $._("Creating global 'for' variable. Should be 'for (var {a} ...'."),
-	W089: $._("The body of a for in should be wrapped in an if statement to filter " +
+	W085: i18n._("Don't use 'with'."),
+	W086: i18n._("Did you forget a 'break' statement before '{a}'?"),
+	W087: i18n._("Forgotten 'debugger' statement?"),
+	W088: i18n._("Creating global 'for' variable. Should be 'for (var {a} ...'."),
+	W089: i18n._("The body of a for in should be wrapped in an if statement to filter " +
 		"unwanted properties from the prototype."),
-	W090: $._("'{a}' is not a statement label."),
-	W091: $._("'{a}' is out of scope."),
-	W092: $._("Wrap the /regexp/ literal in parens to disambiguate the slash operator."),
-	W093: $._("Did you mean to return a conditional instead of an assignment?"),
-	W094: $._("Unexpected comma."),
-	W095: $._("I thought you were going to type a string but you typed {a}."),
-	W096: $._("The '{a}' key may produce unexpected results."),
-	W097: $._("Use the function form of \"use strict\"."),
-	W098: $._("'{a}' is defined but never used."),
-	W099: $._("Mixed spaces and tabs."),
-	W100: $._("This character may get silently deleted by one or more browsers."),
-	W101: $._("Line is too long."),
-	W102: $._("Trailing whitespace."),
-	W103: $._("The '{a}' property is deprecated."),
-	W104: $._("'{a}' is only available in JavaScript 1.7."),
-	W105: $._("Unexpected {a} in '{b}'."),
-	W106: $._("Identifier '{a}' is not in camel case."),
-	W107: $._("Script URL."),
-	W108: $._("Strings must use doublequote."),
-	W109: $._("Strings must use singlequote."),
-	W110: $._("Mixed double and single quotes."),
-	W112: $._("Unclosed string! Make sure you end your string with a quote."),
-	W113: $._("Control character in string: {a}."),
-	W114: $._("Avoid {a}."),
-	W115: $._("Octal literals are not allowed in strict mode."),
-	W116: $._("I thought you were going to type \"{a}\" but you typed \"{b}\"."),
-	W117: $._("\"{a}\" is not defined. Make sure you're spelling it correctly " +
+	W090: i18n._("'{a}' is not a statement label."),
+	W091: i18n._("'{a}' is out of scope."),
+	W092: i18n._("Wrap the /regexp/ literal in parens to disambiguate the slash operator."),
+	W093: i18n._("Did you mean to return a conditional instead of an assignment?"),
+	W094: i18n._("Unexpected comma."),
+	W095: i18n._("I thought you were going to type a string but you typed {a}."),
+	W096: i18n._("The '{a}' key may produce unexpected results."),
+	W097: i18n._("Use the function form of \"use strict\"."),
+	W098: i18n._("'{a}' is defined but never used."),
+	W099: i18n._("Mixed spaces and tabs."),
+	W100: i18n._("This character may get silently deleted by one or more browsers."),
+	W101: i18n._("Line is too long."),
+	W102: i18n._("Trailing whitespace."),
+	W103: i18n._("The '{a}' property is deprecated."),
+	W104: i18n._("'{a}' is only available in ES6 which is not supported by " + 
+        "this environment."),
+	W105: i18n._("Unexpected {a} in '{b}'."),
+	W106: i18n._("Identifier '{a}' is not in camel case."),
+	W107: i18n._("Script URL."),
+	W108: i18n._("Strings must use doublequote."),
+	W109: i18n._("Strings must use singlequote."),
+	W110: i18n._("Mixed double and single quotes."),
+	W112: i18n._("Unclosed string! Make sure you end your string with a quote."),
+	W113: i18n._("Control character in string: {a}."),
+	W114: i18n._("Avoid {a}."),
+	W115: i18n._("Octal literals are not allowed in strict mode."),
+	W116: i18n._("I thought you were going to type \"{a}\" but you typed \"{b}\"."),
+	W117: i18n._("\"{a}\" is not defined. Make sure you're spelling it correctly " +
 		"and that you declared it."),
-	W118: $._("'{a}' is only available in Mozilla JavaScript extensions (use moz option)."),
-	W119: $._("'{a}' is only available in ES6 (use esnext option)."),
-	W120: $._("You might be leaking a variable ({a}) here."),
-	W121: $._("Extending prototype of native object: '{a}'."),
-	W122: $._("Invalid typeof value '{a}'"),
-	W123: $._("'{a}' is already defined in outer scope."),
-	W124: $._("I thought you were going to type a conditional expression " +
+	W118: i18n._("'{a}' is only available in Mozilla JavaScript extensions (use moz option)."),
+	W119: i18n._("'{a}' is only available in ES6 which is not supported by " + 
+        "this environment."),
+	W120: i18n._("You might be leaking a variable ({a}) here."),
+	W121: i18n._("Extending prototype of native object: '{a}'."),
+	W122: i18n._("Invalid typeof value '{a}'"),
+	W123: i18n._("'{a}' is already defined in outer scope."),
+	W124: i18n._("I thought you were going to type a conditional expression " +
 		"but you typed an assignment instead. Maybe you meant to type === instead of =?")
 };
 
 var info = {
-	I001: $._("Comma warnings can be turned off with 'laxcomma'."),
-	I002: $._("Reserved words as properties can be used under the 'es5' option."),
-	I003: $._("ES5 option is now set per default")
+	I001: i18n._("Comma warnings can be turned off with 'laxcomma'."),
+	I002: i18n._("Reserved words as properties can be used under the 'es5' option."),
+	I003: i18n._("ES5 option is now set per default")
 };
 
 exports.errors = {};
@@ -79416,6 +79513,7 @@ exports.yui = {
 JSHINT = require('jshint').JSHINT;
 if (typeof exports === 'object' && exports) exports.JSHINT = JSHINT;
 }());
+
 /*
   Copyright (C) 2013 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2013 Thaddee Tyl <thaddee.tyl@gmail.com>
@@ -83155,6 +83253,2988 @@ parseStatement: true, parseSourceElement: true */
 
 }));
 /* vim: set sw=4 ts=4 et tw=80 : */
+// Generated by browserify
+(function(){var require = function (file, cwd) {
+    var resolved = require.resolve(file, cwd || '/');
+    var mod = require.modules[resolved];
+    if (!mod) throw new Error(
+        'Failed to resolve module ' + file + ', tried ' + resolved
+    );
+    var cached = require.cache[resolved];
+    var res = cached? cached.exports : mod();
+    return res;
+};
+
+require.paths = [];
+require.modules = {};
+require.cache = {};
+require.extensions = [".js",".coffee",".json"];
+
+require._core = {
+    'assert': true,
+    'events': true,
+    'fs': true,
+    'path': true,
+    'vm': true
+};
+
+require.resolve = (function () {
+    return function (x, cwd) {
+        if (!cwd) cwd = '/';
+        
+        if (require._core[x]) return x;
+        var path = require.modules.path();
+        cwd = path.resolve('/', cwd);
+        var y = cwd || '/';
+        
+        if (x.match(/^(?:\.\.?\/|\/)/)) {
+            var m = loadAsFileSync(path.resolve(y, x))
+                || loadAsDirectorySync(path.resolve(y, x));
+            if (m) return m;
+        }
+        
+        var n = loadNodeModulesSync(x, y);
+        if (n) return n;
+        
+        throw new Error("Cannot find module '" + x + "'");
+        
+        function loadAsFileSync (x) {
+            x = path.normalize(x);
+            if (require.modules[x]) {
+                return x;
+            }
+            
+            for (var i = 0; i < require.extensions.length; i++) {
+                var ext = require.extensions[i];
+                if (require.modules[x + ext]) return x + ext;
+            }
+        }
+        
+        function loadAsDirectorySync (x) {
+            x = x.replace(/\/+$/, '');
+            var pkgfile = path.normalize(x + '/package.json');
+            if (require.modules[pkgfile]) {
+                var pkg = require.modules[pkgfile]();
+                var b = pkg.browserify;
+                if (typeof b === 'object' && b.main) {
+                    var m = loadAsFileSync(path.resolve(x, b.main));
+                    if (m) return m;
+                }
+                else if (typeof b === 'string') {
+                    var m = loadAsFileSync(path.resolve(x, b));
+                    if (m) return m;
+                }
+                else if (pkg.main) {
+                    var m = loadAsFileSync(path.resolve(x, pkg.main));
+                    if (m) return m;
+                }
+            }
+            
+            return loadAsFileSync(x + '/index');
+        }
+        
+        function loadNodeModulesSync (x, start) {
+            var dirs = nodeModulesPathsSync(start);
+            for (var i = 0; i < dirs.length; i++) {
+                var dir = dirs[i];
+                var m = loadAsFileSync(dir + '/' + x);
+                if (m) return m;
+                var n = loadAsDirectorySync(dir + '/' + x);
+                if (n) return n;
+            }
+            
+            var m = loadAsFileSync(x);
+            if (m) return m;
+        }
+        
+        function nodeModulesPathsSync (start) {
+            var parts;
+            if (start === '/') parts = [ '' ];
+            else parts = path.normalize(start).split('/');
+            
+            var dirs = [];
+            for (var i = parts.length - 1; i >= 0; i--) {
+                if (parts[i] === 'node_modules') continue;
+                var dir = parts.slice(0, i + 1).join('/') + '/node_modules';
+                dirs.push(dir);
+            }
+            
+            return dirs;
+        }
+    };
+})();
+
+require.alias = function (from, to) {
+    var path = require.modules.path();
+    var res = null;
+    try {
+        res = require.resolve(from + '/package.json', '/');
+    }
+    catch (err) {
+        res = require.resolve(from, '/');
+    }
+    var basedir = path.dirname(res);
+    
+    var keys = (Object.keys || function (obj) {
+        var res = [];
+        for (var key in obj) res.push(key);
+        return res;
+    })(require.modules);
+    
+    for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        if (key.slice(0, basedir.length + 1) === basedir + '/') {
+            var f = key.slice(basedir.length);
+            require.modules[to + f] = require.modules[basedir + f];
+        }
+        else if (key === basedir) {
+            require.modules[to] = require.modules[basedir];
+        }
+    }
+};
+
+(function () {
+    var process = {};
+    var global = typeof window !== 'undefined' ? window : {};
+    var definedProcess = false;
+    
+    require.define = function (filename, fn) {
+        if (!definedProcess && require.modules.__browserify_process) {
+            process = require.modules.__browserify_process();
+            definedProcess = true;
+        }
+        
+        var dirname = require._core[filename]
+            ? ''
+            : require.modules.path().dirname(filename)
+        ;
+        
+        var require_ = function (file) {
+            var requiredModule = require(file, dirname);
+            var cached = require.cache[require.resolve(file, dirname)];
+
+            if (cached && cached.parent === null) {
+                cached.parent = module_;
+            }
+
+            return requiredModule;
+        };
+        require_.resolve = function (name) {
+            return require.resolve(name, dirname);
+        };
+        require_.modules = require.modules;
+        require_.define = require.define;
+        require_.cache = require.cache;
+        var module_ = {
+            id : filename,
+            filename: filename,
+            exports : {},
+            loaded : false,
+            parent: null
+        };
+        
+        require.modules[filename] = function () {
+            require.cache[filename] = module_;
+            fn.call(
+                module_.exports,
+                require_,
+                module_,
+                module_.exports,
+                dirname,
+                filename,
+                process,
+                global
+            );
+            module_.loaded = true;
+            return module_.exports;
+        };
+    };
+})();
+
+
+require.define("path",function(require,module,exports,__dirname,__filename,process,global){function filter (xs, fn) {
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (fn(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length; i >= 0; i--) {
+    var last = parts[i];
+    if (last == '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Regex to split a filename into [*, dir, basename, ext]
+// posix version
+var splitPathRe = /^(.+\/(?!$)|\/)?((?:.+?)?(\.[^.]*)?)$/;
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+var resolvedPath = '',
+    resolvedAbsolute = false;
+
+for (var i = arguments.length; i >= -1 && !resolvedAbsolute; i--) {
+  var path = (i >= 0)
+      ? arguments[i]
+      : process.cwd();
+
+  // Skip empty and invalid entries
+  if (typeof path !== 'string' || !path) {
+    continue;
+  }
+
+  resolvedPath = path + '/' + resolvedPath;
+  resolvedAbsolute = path.charAt(0) === '/';
+}
+
+// At this point the path should be resolved to a full absolute path, but
+// handle relative paths to be safe (might happen when process.cwd() fails)
+
+// Normalize the path
+resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+var isAbsolute = path.charAt(0) === '/',
+    trailingSlash = path.slice(-1) === '/';
+
+// Normalize the path
+path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+  
+  return (isAbsolute ? '/' : '') + path;
+};
+
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    return p && typeof p === 'string';
+  }).join('/'));
+};
+
+
+exports.dirname = function(path) {
+  var dir = splitPathRe.exec(path)[1] || '';
+  var isWindows = false;
+  if (!dir) {
+    // No dirname
+    return '.';
+  } else if (dir.length === 1 ||
+      (isWindows && dir.length <= 3 && dir.charAt(1) === ':')) {
+    // It is just a slash or a drive letter with a slash
+    return dir;
+  } else {
+    // It is a full dirname, strip trailing slash
+    return dir.substring(0, dir.length - 1);
+  }
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPathRe.exec(path)[2] || '';
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPathRe.exec(path)[3] || '';
+};
+
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+});
+
+require.define("__browserify_process",function(require,module,exports,__dirname,__filename,process,global){var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+        && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+        && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            if (ev.source === window && ev.data === 'browserify-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('browserify-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+process.binding = function (name) {
+    if (name === 'evals') return (require)('vm')
+    else throw new Error('No such module. (Possibly not yet loaded)')
+};
+
+(function () {
+    var cwd = '/';
+    var path;
+    process.cwd = function () { return cwd };
+    process.chdir = function (dir) {
+        if (!path) path = require('path');
+        cwd = path.resolve(dir, cwd);
+    };
+})();
+
+});
+
+require.define("/package.json",function(require,module,exports,__dirname,__filename,process,global){module.exports = {"main":"escodegen.js"}
+});
+
+require.define("/escodegen.js",function(require,module,exports,__dirname,__filename,process,global){/*
+  Copyright (C) 2012 Michael Ficarra <escodegen.copyright@michael.ficarra.me>
+  Copyright (C) 2012 Robert Gust-Bardon <donate@robert.gust-bardon.org>
+  Copyright (C) 2012 John Freeman <jfreeman08@gmail.com>
+  Copyright (C) 2011-2012 Ariya Hidayat <ariya.hidayat@gmail.com>
+  Copyright (C) 2012 Mathias Bynens <mathias@qiwi.be>
+  Copyright (C) 2012 Joost-Wim Boekesteijn <joost-wim@boekesteijn.nl>
+  Copyright (C) 2012 Kris Kowal <kris.kowal@cixar.com>
+  Copyright (C) 2012 Yusuke Suzuki <utatane.tea@gmail.com>
+  Copyright (C) 2012 Arpad Borsos <arpad.borsos@googlemail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/*jslint bitwise:true */
+/*global escodegen:true, exports:true, generateStatement:true, generateExpression:true, generateFunctionBody:true, process:true, require:true, define:true*/
+(function () {
+    'use strict';
+
+    var Syntax,
+        Precedence,
+        BinaryPrecedence,
+        Regex,
+        VisitorKeys,
+        VisitorOption,
+        SourceNode,
+        isArray,
+        base,
+        indent,
+        json,
+        renumber,
+        hexadecimal,
+        quotes,
+        escapeless,
+        newline,
+        space,
+        parentheses,
+        semicolons,
+        safeConcatenation,
+        directive,
+        extra,
+        parse,
+        sourceMap,
+        traverse;
+
+    traverse = require('estraverse').traverse;
+
+    Syntax = {
+        AssignmentExpression: 'AssignmentExpression',
+        ArrayExpression: 'ArrayExpression',
+        ArrayPattern: 'ArrayPattern',
+        BlockStatement: 'BlockStatement',
+        BinaryExpression: 'BinaryExpression',
+        BreakStatement: 'BreakStatement',
+        CallExpression: 'CallExpression',
+        CatchClause: 'CatchClause',
+        ComprehensionBlock: 'ComprehensionBlock',
+        ComprehensionExpression: 'ComprehensionExpression',
+        ConditionalExpression: 'ConditionalExpression',
+        ContinueStatement: 'ContinueStatement',
+        DirectiveStatement: 'DirectiveStatement',
+        DoWhileStatement: 'DoWhileStatement',
+        DebuggerStatement: 'DebuggerStatement',
+        EmptyStatement: 'EmptyStatement',
+        ExpressionStatement: 'ExpressionStatement',
+        ForStatement: 'ForStatement',
+        ForInStatement: 'ForInStatement',
+        FunctionDeclaration: 'FunctionDeclaration',
+        FunctionExpression: 'FunctionExpression',
+        Identifier: 'Identifier',
+        IfStatement: 'IfStatement',
+        Literal: 'Literal',
+        LabeledStatement: 'LabeledStatement',
+        LogicalExpression: 'LogicalExpression',
+        MemberExpression: 'MemberExpression',
+        NewExpression: 'NewExpression',
+        ObjectExpression: 'ObjectExpression',
+        ObjectPattern: 'ObjectPattern',
+        Program: 'Program',
+        Property: 'Property',
+        ReturnStatement: 'ReturnStatement',
+        SequenceExpression: 'SequenceExpression',
+        SwitchStatement: 'SwitchStatement',
+        SwitchCase: 'SwitchCase',
+        ThisExpression: 'ThisExpression',
+        ThrowStatement: 'ThrowStatement',
+        TryStatement: 'TryStatement',
+        UnaryExpression: 'UnaryExpression',
+        UpdateExpression: 'UpdateExpression',
+        VariableDeclaration: 'VariableDeclaration',
+        VariableDeclarator: 'VariableDeclarator',
+        WhileStatement: 'WhileStatement',
+        WithStatement: 'WithStatement',
+        YieldExpression: 'YieldExpression',
+
+    };
+
+    Precedence = {
+        Sequence: 0,
+        Assignment: 1,
+        Conditional: 2,
+        LogicalOR: 3,
+        LogicalAND: 4,
+        BitwiseOR: 5,
+        BitwiseXOR: 6,
+        BitwiseAND: 7,
+        Equality: 8,
+        Relational: 9,
+        BitwiseSHIFT: 10,
+        Additive: 11,
+        Multiplicative: 12,
+        Unary: 13,
+        Postfix: 14,
+        Call: 15,
+        New: 16,
+        Member: 17,
+        Primary: 18
+    };
+
+    BinaryPrecedence = {
+        '||': Precedence.LogicalOR,
+        '&&': Precedence.LogicalAND,
+        '|': Precedence.BitwiseOR,
+        '^': Precedence.BitwiseXOR,
+        '&': Precedence.BitwiseAND,
+        '==': Precedence.Equality,
+        '!=': Precedence.Equality,
+        '===': Precedence.Equality,
+        '!==': Precedence.Equality,
+        'is': Precedence.Equality,
+        'isnt': Precedence.Equality,
+        '<': Precedence.Relational,
+        '>': Precedence.Relational,
+        '<=': Precedence.Relational,
+        '>=': Precedence.Relational,
+        'in': Precedence.Relational,
+        'instanceof': Precedence.Relational,
+        '<<': Precedence.BitwiseSHIFT,
+        '>>': Precedence.BitwiseSHIFT,
+        '>>>': Precedence.BitwiseSHIFT,
+        '+': Precedence.Additive,
+        '-': Precedence.Additive,
+        '*': Precedence.Multiplicative,
+        '%': Precedence.Multiplicative,
+        '/': Precedence.Multiplicative
+    };
+
+    Regex = {
+        NonAsciiIdentifierPart: new RegExp('[\xaa\xb5\xba\xc0-\xd6\xd8-\xf6\xf8-\u02c1\u02c6-\u02d1\u02e0-\u02e4\u02ec\u02ee\u0300-\u0374\u0376\u0377\u037a-\u037d\u0386\u0388-\u038a\u038c\u038e-\u03a1\u03a3-\u03f5\u03f7-\u0481\u0483-\u0487\u048a-\u0527\u0531-\u0556\u0559\u0561-\u0587\u0591-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7\u05d0-\u05ea\u05f0-\u05f2\u0610-\u061a\u0620-\u0669\u066e-\u06d3\u06d5-\u06dc\u06df-\u06e8\u06ea-\u06fc\u06ff\u0710-\u074a\u074d-\u07b1\u07c0-\u07f5\u07fa\u0800-\u082d\u0840-\u085b\u08a0\u08a2-\u08ac\u08e4-\u08fe\u0900-\u0963\u0966-\u096f\u0971-\u0977\u0979-\u097f\u0981-\u0983\u0985-\u098c\u098f\u0990\u0993-\u09a8\u09aa-\u09b0\u09b2\u09b6-\u09b9\u09bc-\u09c4\u09c7\u09c8\u09cb-\u09ce\u09d7\u09dc\u09dd\u09df-\u09e3\u09e6-\u09f1\u0a01-\u0a03\u0a05-\u0a0a\u0a0f\u0a10\u0a13-\u0a28\u0a2a-\u0a30\u0a32\u0a33\u0a35\u0a36\u0a38\u0a39\u0a3c\u0a3e-\u0a42\u0a47\u0a48\u0a4b-\u0a4d\u0a51\u0a59-\u0a5c\u0a5e\u0a66-\u0a75\u0a81-\u0a83\u0a85-\u0a8d\u0a8f-\u0a91\u0a93-\u0aa8\u0aaa-\u0ab0\u0ab2\u0ab3\u0ab5-\u0ab9\u0abc-\u0ac5\u0ac7-\u0ac9\u0acb-\u0acd\u0ad0\u0ae0-\u0ae3\u0ae6-\u0aef\u0b01-\u0b03\u0b05-\u0b0c\u0b0f\u0b10\u0b13-\u0b28\u0b2a-\u0b30\u0b32\u0b33\u0b35-\u0b39\u0b3c-\u0b44\u0b47\u0b48\u0b4b-\u0b4d\u0b56\u0b57\u0b5c\u0b5d\u0b5f-\u0b63\u0b66-\u0b6f\u0b71\u0b82\u0b83\u0b85-\u0b8a\u0b8e-\u0b90\u0b92-\u0b95\u0b99\u0b9a\u0b9c\u0b9e\u0b9f\u0ba3\u0ba4\u0ba8-\u0baa\u0bae-\u0bb9\u0bbe-\u0bc2\u0bc6-\u0bc8\u0bca-\u0bcd\u0bd0\u0bd7\u0be6-\u0bef\u0c01-\u0c03\u0c05-\u0c0c\u0c0e-\u0c10\u0c12-\u0c28\u0c2a-\u0c33\u0c35-\u0c39\u0c3d-\u0c44\u0c46-\u0c48\u0c4a-\u0c4d\u0c55\u0c56\u0c58\u0c59\u0c60-\u0c63\u0c66-\u0c6f\u0c82\u0c83\u0c85-\u0c8c\u0c8e-\u0c90\u0c92-\u0ca8\u0caa-\u0cb3\u0cb5-\u0cb9\u0cbc-\u0cc4\u0cc6-\u0cc8\u0cca-\u0ccd\u0cd5\u0cd6\u0cde\u0ce0-\u0ce3\u0ce6-\u0cef\u0cf1\u0cf2\u0d02\u0d03\u0d05-\u0d0c\u0d0e-\u0d10\u0d12-\u0d3a\u0d3d-\u0d44\u0d46-\u0d48\u0d4a-\u0d4e\u0d57\u0d60-\u0d63\u0d66-\u0d6f\u0d7a-\u0d7f\u0d82\u0d83\u0d85-\u0d96\u0d9a-\u0db1\u0db3-\u0dbb\u0dbd\u0dc0-\u0dc6\u0dca\u0dcf-\u0dd4\u0dd6\u0dd8-\u0ddf\u0df2\u0df3\u0e01-\u0e3a\u0e40-\u0e4e\u0e50-\u0e59\u0e81\u0e82\u0e84\u0e87\u0e88\u0e8a\u0e8d\u0e94-\u0e97\u0e99-\u0e9f\u0ea1-\u0ea3\u0ea5\u0ea7\u0eaa\u0eab\u0ead-\u0eb9\u0ebb-\u0ebd\u0ec0-\u0ec4\u0ec6\u0ec8-\u0ecd\u0ed0-\u0ed9\u0edc-\u0edf\u0f00\u0f18\u0f19\u0f20-\u0f29\u0f35\u0f37\u0f39\u0f3e-\u0f47\u0f49-\u0f6c\u0f71-\u0f84\u0f86-\u0f97\u0f99-\u0fbc\u0fc6\u1000-\u1049\u1050-\u109d\u10a0-\u10c5\u10c7\u10cd\u10d0-\u10fa\u10fc-\u1248\u124a-\u124d\u1250-\u1256\u1258\u125a-\u125d\u1260-\u1288\u128a-\u128d\u1290-\u12b0\u12b2-\u12b5\u12b8-\u12be\u12c0\u12c2-\u12c5\u12c8-\u12d6\u12d8-\u1310\u1312-\u1315\u1318-\u135a\u135d-\u135f\u1380-\u138f\u13a0-\u13f4\u1401-\u166c\u166f-\u167f\u1681-\u169a\u16a0-\u16ea\u16ee-\u16f0\u1700-\u170c\u170e-\u1714\u1720-\u1734\u1740-\u1753\u1760-\u176c\u176e-\u1770\u1772\u1773\u1780-\u17d3\u17d7\u17dc\u17dd\u17e0-\u17e9\u180b-\u180d\u1810-\u1819\u1820-\u1877\u1880-\u18aa\u18b0-\u18f5\u1900-\u191c\u1920-\u192b\u1930-\u193b\u1946-\u196d\u1970-\u1974\u1980-\u19ab\u19b0-\u19c9\u19d0-\u19d9\u1a00-\u1a1b\u1a20-\u1a5e\u1a60-\u1a7c\u1a7f-\u1a89\u1a90-\u1a99\u1aa7\u1b00-\u1b4b\u1b50-\u1b59\u1b6b-\u1b73\u1b80-\u1bf3\u1c00-\u1c37\u1c40-\u1c49\u1c4d-\u1c7d\u1cd0-\u1cd2\u1cd4-\u1cf6\u1d00-\u1de6\u1dfc-\u1f15\u1f18-\u1f1d\u1f20-\u1f45\u1f48-\u1f4d\u1f50-\u1f57\u1f59\u1f5b\u1f5d\u1f5f-\u1f7d\u1f80-\u1fb4\u1fb6-\u1fbc\u1fbe\u1fc2-\u1fc4\u1fc6-\u1fcc\u1fd0-\u1fd3\u1fd6-\u1fdb\u1fe0-\u1fec\u1ff2-\u1ff4\u1ff6-\u1ffc\u200c\u200d\u203f\u2040\u2054\u2071\u207f\u2090-\u209c\u20d0-\u20dc\u20e1\u20e5-\u20f0\u2102\u2107\u210a-\u2113\u2115\u2119-\u211d\u2124\u2126\u2128\u212a-\u212d\u212f-\u2139\u213c-\u213f\u2145-\u2149\u214e\u2160-\u2188\u2c00-\u2c2e\u2c30-\u2c5e\u2c60-\u2ce4\u2ceb-\u2cf3\u2d00-\u2d25\u2d27\u2d2d\u2d30-\u2d67\u2d6f\u2d7f-\u2d96\u2da0-\u2da6\u2da8-\u2dae\u2db0-\u2db6\u2db8-\u2dbe\u2dc0-\u2dc6\u2dc8-\u2dce\u2dd0-\u2dd6\u2dd8-\u2dde\u2de0-\u2dff\u2e2f\u3005-\u3007\u3021-\u302f\u3031-\u3035\u3038-\u303c\u3041-\u3096\u3099\u309a\u309d-\u309f\u30a1-\u30fa\u30fc-\u30ff\u3105-\u312d\u3131-\u318e\u31a0-\u31ba\u31f0-\u31ff\u3400-\u4db5\u4e00-\u9fcc\ua000-\ua48c\ua4d0-\ua4fd\ua500-\ua60c\ua610-\ua62b\ua640-\ua66f\ua674-\ua67d\ua67f-\ua697\ua69f-\ua6f1\ua717-\ua71f\ua722-\ua788\ua78b-\ua78e\ua790-\ua793\ua7a0-\ua7aa\ua7f8-\ua827\ua840-\ua873\ua880-\ua8c4\ua8d0-\ua8d9\ua8e0-\ua8f7\ua8fb\ua900-\ua92d\ua930-\ua953\ua960-\ua97c\ua980-\ua9c0\ua9cf-\ua9d9\uaa00-\uaa36\uaa40-\uaa4d\uaa50-\uaa59\uaa60-\uaa76\uaa7a\uaa7b\uaa80-\uaac2\uaadb-\uaadd\uaae0-\uaaef\uaaf2-\uaaf6\uab01-\uab06\uab09-\uab0e\uab11-\uab16\uab20-\uab26\uab28-\uab2e\uabc0-\uabea\uabec\uabed\uabf0-\uabf9\uac00-\ud7a3\ud7b0-\ud7c6\ud7cb-\ud7fb\uf900-\ufa6d\ufa70-\ufad9\ufb00-\ufb06\ufb13-\ufb17\ufb1d-\ufb28\ufb2a-\ufb36\ufb38-\ufb3c\ufb3e\ufb40\ufb41\ufb43\ufb44\ufb46-\ufbb1\ufbd3-\ufd3d\ufd50-\ufd8f\ufd92-\ufdc7\ufdf0-\ufdfb\ufe00-\ufe0f\ufe20-\ufe26\ufe33\ufe34\ufe4d-\ufe4f\ufe70-\ufe74\ufe76-\ufefc\uff10-\uff19\uff21-\uff3a\uff3f\uff41-\uff5a\uff66-\uffbe\uffc2-\uffc7\uffca-\uffcf\uffd2-\uffd7\uffda-\uffdc]')
+    };
+
+    function getDefaultOptions() {
+        // default options
+        return {
+            indent: null,
+            base: null,
+            parse: null,
+            comment: false,
+            format: {
+                indent: {
+                    style: '    ',
+                    base: 0,
+                    adjustMultilineComment: false
+                },
+                json: false,
+                renumber: false,
+                hexadecimal: false,
+                quotes: 'single',
+                escapeless: false,
+                compact: false,
+                parentheses: true,
+                semicolons: true,
+                safeConcatenation: false
+            },
+            moz: {
+                starlessGenerator: false,
+                parenthesizedComprehensionBlock: false
+            },
+            sourceMap: null,
+            sourceMapRoot: null,
+            sourceMapWithCode: false,
+            directive: false,
+            verbatim: null
+        };
+    }
+
+    function stringToArray(str) {
+        var length = str.length,
+            result = [],
+            i;
+        for (i = 0; i < length; i += 1) {
+            result[i] = str.charAt(i);
+        }
+        return result;
+    }
+
+    function stringRepeat(str, num) {
+        var result = '';
+
+        for (num |= 0; num > 0; num >>>= 1, str += str) {
+            if (num & 1) {
+                result += str;
+            }
+        }
+
+        return result;
+    }
+
+    isArray = Array.isArray;
+    if (!isArray) {
+        isArray = function isArray(array) {
+            return Object.prototype.toString.call(array) === '[object Array]';
+        };
+    }
+
+    // Fallback for the non SourceMap environment
+    function SourceNodeMock(line, column, filename, chunk) {
+        var result = [];
+
+        function flatten(input) {
+            var i, iz;
+            if (isArray(input)) {
+                for (i = 0, iz = input.length; i < iz; ++i) {
+                    flatten(input[i]);
+                }
+            } else if (input instanceof SourceNodeMock) {
+                result.push(input);
+            } else if (typeof input === 'string' && input) {
+                result.push(input);
+            }
+        }
+
+        flatten(chunk);
+        this.children = result;
+    }
+
+    SourceNodeMock.prototype.toString = function toString() {
+        var res = '', i, iz, node;
+        for (i = 0, iz = this.children.length; i < iz; ++i) {
+            node = this.children[i];
+            if (node instanceof SourceNodeMock) {
+                res += node.toString();
+            } else {
+                res += node;
+            }
+        }
+        return res;
+    };
+
+    SourceNodeMock.prototype.replaceRight = function replaceRight(pattern, replacement) {
+        var last = this.children[this.children.length - 1];
+        if (last instanceof SourceNodeMock) {
+            last.replaceRight(pattern, replacement);
+        } else if (typeof last === 'string') {
+            this.children[this.children.length - 1] = last.replace(pattern, replacement);
+        } else {
+            this.children.push(''.replace(pattern, replacement));
+        }
+        return this;
+    };
+
+    SourceNodeMock.prototype.join = function join(sep) {
+        var i, iz, result;
+        result = [];
+        iz = this.children.length;
+        if (iz > 0) {
+            for (i = 0, iz -= 1; i < iz; ++i) {
+                result.push(this.children[i], sep);
+            }
+            result.push(this.children[iz]);
+            this.children = result;
+        }
+        return this;
+    };
+
+    function hasLineTerminator(str) {
+        return /[\r\n]/g.test(str);
+    }
+
+    function endsWithLineTerminator(str) {
+        var ch = str.charAt(str.length - 1);
+        return ch === '\r' || ch === '\n';
+    }
+
+    function shallowCopy(obj) {
+        var ret = {}, key;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                ret[key] = obj[key];
+            }
+        }
+        return ret;
+    }
+
+    function deepCopy(obj) {
+        var ret = {}, key, val;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                val = obj[key];
+                if (typeof val === 'object' && val !== null) {
+                    ret[key] = deepCopy(val);
+                } else {
+                    ret[key] = val;
+                }
+            }
+        }
+        return ret;
+    }
+
+    function updateDeeply(target, override) {
+        var key, val;
+
+        function isHashObject(target) {
+            return typeof target === 'object' && target instanceof Object && !(target instanceof RegExp);
+        }
+
+        for (key in override) {
+            if (override.hasOwnProperty(key)) {
+                val = override[key];
+                if (isHashObject(val)) {
+                    if (isHashObject(target[key])) {
+                        updateDeeply(target[key], val);
+                    } else {
+                        target[key] = updateDeeply({}, val);
+                    }
+                } else {
+                    target[key] = val;
+                }
+            }
+        }
+        return target;
+    }
+
+    function generateNumber(value) {
+        var result, point, temp, exponent, pos;
+
+        if (value !== value) {
+            throw new Error('Numeric literal whose value is NaN');
+        }
+        if (value < 0 || (value === 0 && 1 / value < 0)) {
+            throw new Error('Numeric literal whose value is negative');
+        }
+
+        if (value === 1 / 0) {
+            return json ? 'null' : renumber ? '1e400' : '1e+400';
+        }
+
+        result = '' + value;
+        if (!renumber || result.length < 3) {
+            return result;
+        }
+
+        point = result.indexOf('.');
+        if (!json && result.charAt(0) === '0' && point === 1) {
+            point = 0;
+            result = result.slice(1);
+        }
+        temp = result;
+        result = result.replace('e+', 'e');
+        exponent = 0;
+        if ((pos = temp.indexOf('e')) > 0) {
+            exponent = +temp.slice(pos + 1);
+            temp = temp.slice(0, pos);
+        }
+        if (point >= 0) {
+            exponent -= temp.length - point - 1;
+            temp = +(temp.slice(0, point) + temp.slice(point + 1)) + '';
+        }
+        pos = 0;
+        while (temp.charAt(temp.length + pos - 1) === '0') {
+            pos -= 1;
+        }
+        if (pos !== 0) {
+            exponent -= pos;
+            temp = temp.slice(0, pos);
+        }
+        if (exponent !== 0) {
+            temp += 'e' + exponent;
+        }
+        if ((temp.length < result.length ||
+                    (hexadecimal && value > 1e12 && Math.floor(value) === value && (temp = '0x' + value.toString(16)).length < result.length)) &&
+                +temp === value) {
+            result = temp;
+        }
+
+        return result;
+    }
+
+    function escapeAllowedCharacter(ch, next) {
+        var code = ch.charCodeAt(0), hex = code.toString(16), result = '\\';
+
+        switch (ch) {
+        case '\b':
+            result += 'b';
+            break;
+        case '\f':
+            result += 'f';
+            break;
+        case '\t':
+            result += 't';
+            break;
+        default:
+            if (json || code > 0xff) {
+                result += 'u' + '0000'.slice(hex.length) + hex;
+            } else if (ch === '\u0000' && '0123456789'.indexOf(next) < 0) {
+                result += '0';
+            } else if (ch === '\v') {
+                result += 'v';
+            } else {
+                result += 'x' + '00'.slice(hex.length) + hex;
+            }
+            break;
+        }
+
+        return result;
+    }
+
+    function escapeDisallowedCharacter(ch) {
+        var result = '\\';
+        switch (ch) {
+        case '\\':
+            result += '\\';
+            break;
+        case '\n':
+            result += 'n';
+            break;
+        case '\r':
+            result += 'r';
+            break;
+        case '\u2028':
+            result += 'u2028';
+            break;
+        case '\u2029':
+            result += 'u2029';
+            break;
+        default:
+            throw new Error('Incorrectly classified character');
+        }
+
+        return result;
+    }
+
+    function escapeDirective(str) {
+        var i, iz, ch, single, buf, quote;
+
+        buf = str;
+        if (typeof buf[0] === 'undefined') {
+            buf = stringToArray(buf);
+        }
+
+        quote = quotes === 'double' ? '"' : '\'';
+        for (i = 0, iz = buf.length; i < iz; i += 1) {
+            ch = buf[i];
+            if (ch === '\'') {
+                quote = '"';
+                break;
+            } else if (ch === '"') {
+                quote = '\'';
+                break;
+            } else if (ch === '\\') {
+                i += 1;
+            }
+        }
+
+        return quote + str + quote;
+    }
+
+    function escapeString(str) {
+        var result = '', i, len, ch, next, singleQuotes = 0, doubleQuotes = 0, single;
+
+        if (typeof str[0] === 'undefined') {
+            str = stringToArray(str);
+        }
+
+        for (i = 0, len = str.length; i < len; i += 1) {
+            ch = str[i];
+            if (ch === '\'') {
+                singleQuotes += 1;
+            } else if (ch === '"') {
+                doubleQuotes += 1;
+            } else if (ch === '/' && json) {
+                result += '\\';
+            } else if ('\\\n\r\u2028\u2029'.indexOf(ch) >= 0) {
+                result += escapeDisallowedCharacter(ch);
+                continue;
+            } else if ((json && ch < ' ') || !(json || escapeless || (ch >= ' ' && ch <= '~'))) {
+                result += escapeAllowedCharacter(ch, str[i + 1]);
+                continue;
+            }
+            result += ch;
+        }
+
+        single = !(quotes === 'double' || (quotes === 'auto' && doubleQuotes < singleQuotes));
+        str = result;
+        result = single ? '\'' : '"';
+
+        if (typeof str[0] === 'undefined') {
+            str = stringToArray(str);
+        }
+
+        for (i = 0, len = str.length; i < len; i += 1) {
+            ch = str[i];
+            if ((ch === '\'' && single) || (ch === '"' && !single)) {
+                result += '\\';
+            }
+            result += ch;
+        }
+
+        return result + (single ? '\'' : '"');
+    }
+
+    function isWhiteSpace(ch) {
+        return '\t\v\f \xa0'.indexOf(ch) >= 0 || (ch.charCodeAt(0) >= 0x1680 && '\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\ufeff'.indexOf(ch) >= 0);
+    }
+
+    function isLineTerminator(ch) {
+        return '\n\r\u2028\u2029'.indexOf(ch) >= 0;
+    }
+
+    function isIdentifierPart(ch) {
+        return (ch === '$') || (ch === '_') || (ch === '\\') ||
+            (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+            ((ch >= '0') && (ch <= '9')) ||
+            ((ch.charCodeAt(0) >= 0x80) && Regex.NonAsciiIdentifierPart.test(ch));
+    }
+
+    function toSourceNode(generated, node) {
+        if (node == null) {
+            if (generated instanceof SourceNode) {
+                return generated;
+            } else {
+                node = {};
+            }
+        }
+        if (node.loc == null) {
+            return new SourceNode(null, null, sourceMap, generated);
+        }
+        return new SourceNode(node.loc.start.line, node.loc.start.column, (sourceMap === true ? node.loc.source || null : sourceMap), generated);
+    }
+
+    function join(left, right) {
+        var leftSource = toSourceNode(left).toString(),
+            rightSource = toSourceNode(right).toString(),
+            leftChar = leftSource.charAt(leftSource.length - 1),
+            rightChar = rightSource.charAt(0);
+
+        if (((leftChar === '+' || leftChar === '-') && leftChar === rightChar) || (isIdentifierPart(leftChar) && isIdentifierPart(rightChar))) {
+            return [left, ' ', right];
+        } else if (isWhiteSpace(leftChar) || isLineTerminator(leftChar) || isWhiteSpace(rightChar) || isLineTerminator(rightChar)) {
+            return [left, right];
+        }
+        return [left, space, right];
+    }
+
+    function addIndent(stmt) {
+        return [base, stmt];
+    }
+
+    function withIndent(fn) {
+        var previousBase, result;
+        previousBase = base;
+        base += indent;
+        result = fn.call(this, base);
+        base = previousBase;
+        return result;
+    }
+
+    function calculateSpaces(str) {
+        var i;
+        for (i = str.length - 1; i >= 0; i -= 1) {
+            if (isLineTerminator(str.charAt(i))) {
+                break;
+            }
+        }
+        return (str.length - 1) - i;
+    }
+
+    function adjustMultilineComment(value, specialBase) {
+        var array, i, len, line, j, ch, spaces, previousBase;
+
+        array = value.split(/\r\n|[\r\n]/);
+        spaces = Number.MAX_VALUE;
+
+        // first line doesn't have indentation
+        for (i = 1, len = array.length; i < len; i += 1) {
+            line = array[i];
+            j = 0;
+            while (j < line.length && isWhiteSpace(line[j])) {
+                j += 1;
+            }
+            if (spaces > j) {
+                spaces = j;
+            }
+        }
+
+        if (typeof specialBase !== 'undefined') {
+            // pattern like
+            // {
+            //   var t = 20;  /*
+            //                 * this is comment
+            //                 */
+            // }
+            previousBase = base;
+            if (array[1][spaces] === '*') {
+                specialBase += ' ';
+            }
+            base = specialBase;
+        } else {
+            if (spaces & 1) {
+                // /*
+                //  *
+                //  */
+                // If spaces are odd number, above pattern is considered.
+                // We waste 1 space.
+                spaces -= 1;
+            }
+            previousBase = base;
+        }
+
+        for (i = 1, len = array.length; i < len; i += 1) {
+            array[i] = toSourceNode(addIndent(array[i].slice(spaces))).join('');
+        }
+
+        base = previousBase;
+
+        return array.join('\n');
+    }
+
+    function generateComment(comment, specialBase) {
+        if (comment.type === 'Line') {
+            if (endsWithLineTerminator(comment.value)) {
+                return '//' + comment.value;
+            } else {
+                // Always use LineTerminator
+                return '//' + comment.value + '\n';
+            }
+        }
+        if (extra.format.indent.adjustMultilineComment && /[\n\r]/.test(comment.value)) {
+            return adjustMultilineComment('/*' + comment.value + '*/', specialBase);
+        }
+        return '/*' + comment.value + '*/';
+    }
+
+    function addCommentsToStatement(stmt, result) {
+        var i, len, comment, save, node, tailingToStatement, specialBase, fragment;
+
+        if (stmt.leadingComments && stmt.leadingComments.length > 0) {
+            save = result;
+
+            comment = stmt.leadingComments[0];
+            result = [];
+            if (safeConcatenation && stmt.type === Syntax.Program && stmt.body.length === 0) {
+                result.push('\n');
+            }
+            result.push(generateComment(comment));
+            if (!endsWithLineTerminator(toSourceNode(result).toString())) {
+                result.push('\n');
+            }
+
+            for (i = 1, len = stmt.leadingComments.length; i < len; i += 1) {
+                comment = stmt.leadingComments[i];
+                fragment = [generateComment(comment)];
+                if (!endsWithLineTerminator(toSourceNode(fragment).toString())) {
+                    fragment.push('\n');
+                }
+                result.push(addIndent(fragment));
+            }
+
+            result.push(addIndent(save));
+        }
+
+        if (stmt.trailingComments) {
+            tailingToStatement = !endsWithLineTerminator(toSourceNode(result).toString());
+            specialBase = stringRepeat(' ', calculateSpaces(toSourceNode([base, result, indent]).toString()));
+            for (i = 0, len = stmt.trailingComments.length; i < len; i += 1) {
+                comment = stmt.trailingComments[i];
+                if (tailingToStatement) {
+                    // We assume target like following script
+                    //
+                    // var t = 20;  /**
+                    //               * This is comment of t
+                    //               */
+                    if (i === 0) {
+                        // first case
+                        result = [result, indent];
+                    } else {
+                        result = [result, specialBase];
+                    }
+                    result.push(generateComment(comment, specialBase));
+                } else {
+                    result = [result, addIndent(generateComment(comment))];
+                }
+                if (i !== len - 1 && !endsWithLineTerminator(toSourceNode(result).toString())) {
+                    result = [result, '\n'];
+                }
+            }
+        }
+
+        return result;
+    }
+
+    function parenthesize(text, current, should) {
+        if (current < should) {
+            return ['(', text, ')'];
+        }
+        return text;
+    }
+
+    function maybeBlock(stmt, semicolonOptional, functionBody) {
+        var result, noLeadingComment;
+
+        noLeadingComment = !extra.comment || !stmt.leadingComments;
+
+        if (stmt.type === Syntax.BlockStatement && noLeadingComment) {
+            return [space, generateStatement(stmt, { functionBody: functionBody })];
+        }
+
+        if (stmt.type === Syntax.EmptyStatement && noLeadingComment) {
+            return ';';
+        }
+
+        withIndent(function () {
+            result = [newline, addIndent(generateStatement(stmt, { semicolonOptional: semicolonOptional, functionBody: functionBody }))];
+        });
+
+        return result;
+    }
+
+    function maybeBlockSuffix(stmt, result) {
+        var ends = endsWithLineTerminator(toSourceNode(result).toString());
+        if (stmt.type === Syntax.BlockStatement && (!extra.comment || !stmt.leadingComments) && !ends) {
+            return [result, space];
+        }
+        if (ends) {
+            return [result, base];
+        }
+        return [result, newline, base];
+    }
+
+    function generateVerbatim(expr, option) {
+        var i, result;
+        result = expr[extra.verbatim].split(/\r\n|\n/);
+        for (i = 1; i < result.length; i++) {
+            result[i] = newline + base + result[i];
+        }
+
+        result = parenthesize(result, Precedence.Sequence, option.precedence);
+        return toSourceNode(result, expr);
+    }
+
+    function generateFunctionBody(node) {
+        var result, i, len, expr;
+        result = ['('];
+        for (i = 0, len = node.params.length; i < len; i += 1) {
+            result.push(node.params[i].name);
+            if (i + 1 < len) {
+                result.push(',' + space);
+            }
+        }
+        result.push(')');
+
+        if (node.expression) {
+            result.push(space);
+            expr = generateExpression(node.body, {
+                precedence: Precedence.Assignment,
+                allowIn: true,
+                allowCall: true
+            });
+            if (expr.toString().charAt(0) === '{') {
+                expr = ['(', expr, ')'];
+            }
+            result.push(expr);
+        } else {
+            result.push(maybeBlock(node.body, false, true));
+        }
+        return result;
+    }
+
+    function generateExpression(expr, option) {
+        var result, precedence, type, currentPrecedence, i, len, raw, fragment, multiline, leftChar, leftSource, rightChar, rightSource, allowIn, allowCall, allowUnparenthesizedNew, property, key, value;
+
+        precedence = option.precedence;
+        allowIn = option.allowIn;
+        allowCall = option.allowCall;
+        type = expr.type || option.type;
+
+        if (extra.verbatim && expr.hasOwnProperty(extra.verbatim)) {
+            return generateVerbatim(expr, option);
+        }
+
+        switch (type) {
+        case Syntax.SequenceExpression:
+            result = [];
+            allowIn |= (Precedence.Sequence < precedence);
+            for (i = 0, len = expr.expressions.length; i < len; i += 1) {
+                result.push(generateExpression(expr.expressions[i], {
+                    precedence: Precedence.Assignment,
+                    allowIn: allowIn,
+                    allowCall: true
+                }));
+                if (i + 1 < len) {
+                    result.push(',' + space);
+                }
+            }
+            result = parenthesize(result, Precedence.Sequence, precedence);
+            break;
+
+        case Syntax.AssignmentExpression:
+            allowIn |= (Precedence.Assignment < precedence);
+            result = parenthesize(
+                [
+                    generateExpression(expr.left, {
+                        precedence: Precedence.Call,
+                        allowIn: allowIn,
+                        allowCall: true
+                    }),
+                    space + expr.operator + space,
+                    generateExpression(expr.right, {
+                        precedence: Precedence.Assignment,
+                        allowIn: allowIn,
+                        allowCall: true
+                    })
+                ],
+                Precedence.Assignment,
+                precedence
+            );
+            break;
+
+        case Syntax.ConditionalExpression:
+            allowIn |= (Precedence.Conditional < precedence);
+            result = parenthesize(
+                [
+                    generateExpression(expr.test, {
+                        precedence: Precedence.LogicalOR,
+                        allowIn: allowIn,
+                        allowCall: true
+                    }),
+                    space + '?' + space,
+                    generateExpression(expr.consequent, {
+                        precedence: Precedence.Assignment,
+                        allowIn: allowIn,
+                        allowCall: true
+                    }),
+                    space + ':' + space,
+                    generateExpression(expr.alternate, {
+                        precedence: Precedence.Assignment,
+                        allowIn: allowIn,
+                        allowCall: true
+                    })
+                ],
+                Precedence.Conditional,
+                precedence
+            );
+            break;
+
+        case Syntax.LogicalExpression:
+        case Syntax.BinaryExpression:
+            currentPrecedence = BinaryPrecedence[expr.operator];
+
+            allowIn |= (currentPrecedence < precedence);
+
+            result = join(
+                generateExpression(expr.left, {
+                    precedence: currentPrecedence,
+                    allowIn: allowIn,
+                    allowCall: true
+                }),
+                expr.operator
+            );
+
+            fragment = generateExpression(expr.right, {
+                precedence: currentPrecedence + 1,
+                allowIn: allowIn,
+                allowCall: true
+            });
+
+            if (expr.operator === '/' && fragment.toString().charAt(0) === '/') {
+                // If '/' concats with '/', it is interpreted as comment start
+                result.push(' ', fragment);
+            } else {
+                result = join(result, fragment);
+            }
+
+            if (expr.operator === 'in' && !allowIn) {
+                result = ['(', result, ')'];
+            } else {
+                result = parenthesize(result, currentPrecedence, precedence);
+            }
+
+            break;
+
+        case Syntax.CallExpression:
+            result = [generateExpression(expr.callee, {
+                precedence: Precedence.Call,
+                allowIn: true,
+                allowCall: true,
+                allowUnparenthesizedNew: false
+            })];
+
+            result.push('(');
+            for (i = 0, len = expr['arguments'].length; i < len; i += 1) {
+                result.push(generateExpression(expr['arguments'][i], {
+                    precedence: Precedence.Assignment,
+                    allowIn: true,
+                    allowCall: true
+                }));
+                if (i + 1 < len) {
+                    result.push(',' + space);
+                }
+            }
+            result.push(')');
+
+            if (!allowCall) {
+                result = ['(', result, ')'];
+            } else {
+                result = parenthesize(result, Precedence.Call, precedence);
+            }
+            break;
+
+        case Syntax.NewExpression:
+            len = expr['arguments'].length;
+            allowUnparenthesizedNew = option.allowUnparenthesizedNew === undefined || option.allowUnparenthesizedNew;
+
+            result = join(
+                'new',
+                generateExpression(expr.callee, {
+                    precedence: Precedence.New,
+                    allowIn: true,
+                    allowCall: false,
+                    allowUnparenthesizedNew: allowUnparenthesizedNew && !parentheses && len === 0
+                })
+            );
+
+            if (!allowUnparenthesizedNew || parentheses || len > 0) {
+                result.push('(');
+                for (i = 0; i < len; i += 1) {
+                    result.push(generateExpression(expr['arguments'][i], {
+                        precedence: Precedence.Assignment,
+                        allowIn: true,
+                        allowCall: true
+                    }));
+                    if (i + 1 < len) {
+                        result.push(',' + space);
+                    }
+                }
+                result.push(')');
+            }
+
+            result = parenthesize(result, Precedence.New, precedence);
+            break;
+
+        case Syntax.MemberExpression:
+            result = [generateExpression(expr.object, {
+                precedence: Precedence.Call,
+                allowIn: true,
+                allowCall: allowCall,
+                allowUnparenthesizedNew: false
+            })];
+
+            if (expr.computed) {
+                result.push('[', generateExpression(expr.property, {
+                    precedence: Precedence.Sequence,
+                    allowIn: true,
+                    allowCall: allowCall
+                }), ']');
+            } else {
+                if (expr.object.type === Syntax.Literal && typeof expr.object.value === 'number') {
+                    if (result.indexOf('.') < 0) {
+                        if (!/[eExX]/.test(result) && !(result.length >= 2 && result[0] === '0')) {
+                            result.push('.');
+                        }
+                    }
+                }
+                result.push('.' + expr.property.name);
+            }
+
+            result = parenthesize(result, Precedence.Member, precedence);
+            break;
+
+        case Syntax.UnaryExpression:
+            fragment = generateExpression(expr.argument, {
+                precedence: Precedence.Unary,
+                allowIn: true,
+                allowCall: true
+            });
+
+            if (space === '') {
+                result = join(expr.operator, fragment);
+            } else {
+                result = [expr.operator];
+                if (expr.operator.length > 2) {
+                    // delete, void, typeof
+                    // get `typeof []`, not `typeof[]`
+                    result = join(result, fragment);
+                } else {
+                    // Prevent inserting spaces between operator and argument if it is unnecessary
+                    // like, `!cond`
+                    leftSource = toSourceNode(result).toString();
+                    leftChar = leftSource.charAt(leftSource.length - 1);
+                    rightChar = fragment.toString().charAt(0);
+
+                    if (((leftChar === '+' || leftChar === '-') && leftChar === rightChar) || (isIdentifierPart(leftChar) && isIdentifierPart(rightChar))) {
+                        result.push(' ', fragment);
+                    } else {
+                        result.push(fragment);
+                    }
+                }
+            }
+            result = parenthesize(result, Precedence.Unary, precedence);
+            break;
+
+        case Syntax.YieldExpression:
+            if (expr.delegate) {
+                result = 'yield*';
+            } else {
+                result = 'yield';
+            }
+            if (expr.argument) {
+                result = join(
+                    result,
+                    generateExpression(expr.argument, {
+                        precedence: Precedence.Assignment,
+                        allowIn: true,
+                        allowCall: true
+                    })
+                );
+            }
+            break;
+
+        case Syntax.UpdateExpression:
+            if (expr.prefix) {
+                result = parenthesize(
+                    [
+                        expr.operator,
+                        generateExpression(expr.argument, {
+                            precedence: Precedence.Unary,
+                            allowIn: true,
+                            allowCall: true
+                        })
+                    ],
+                    Precedence.Unary,
+                    precedence
+                );
+            } else {
+                result = parenthesize(
+                    [
+                        generateExpression(expr.argument, {
+                            precedence: Precedence.Postfix,
+                            allowIn: true,
+                            allowCall: true
+                        }),
+                        expr.operator
+                    ],
+                    Precedence.Postfix,
+                    precedence
+                );
+            }
+            break;
+
+        case Syntax.FunctionExpression:
+            result = 'function';
+            if (expr.id) {
+                result += ' ' + expr.id.name;
+            } else {
+                result += space;
+            }
+
+            result = [result, generateFunctionBody(expr)];
+            break;
+
+        case Syntax.ArrayPattern:
+        case Syntax.ArrayExpression:
+            if (!expr.elements.length) {
+                result = '[]';
+                break;
+            }
+            multiline = expr.elements.length > 1;
+            result = ['[', multiline ? newline : ''];
+            withIndent(function (indent) {
+                for (i = 0, len = expr.elements.length; i < len; i += 1) {
+                    if (!expr.elements[i]) {
+                        if (multiline) {
+                            result.push(indent);
+                        }
+                        if (i + 1 === len) {
+                            result.push(',');
+                        }
+                    } else {
+                        result.push(multiline ? indent : '', generateExpression(expr.elements[i], {
+                            precedence: Precedence.Assignment,
+                            allowIn: true,
+                            allowCall: true
+                        }));
+                    }
+                    if (i + 1 < len) {
+                        result.push(',' + (multiline ? newline : space));
+                    }
+                }
+            });
+            if (multiline && !endsWithLineTerminator(toSourceNode(result).toString())) {
+                result.push(newline);
+            }
+            result.push(multiline ? base : '', ']');
+            break;
+
+        case Syntax.Property:
+            if (expr.kind === 'get' || expr.kind === 'set') {
+                result = [
+                    expr.kind + ' ',
+                    generateExpression(expr.key, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    }),
+                    generateFunctionBody(expr.value)
+                ];
+            } else {
+                if (expr.shorthand) {
+                    result = generateExpression(expr.key, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    });
+                } else if (expr.method) {
+                    result = [];
+                    if (expr.value.generator) {
+                        result.push('*');
+                    }
+                    result.push(generateExpression(expr.key, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    }), generateFunctionBody(expr.value));
+                } else {
+                    result = [
+                        generateExpression(expr.key, {
+                            precedence: Precedence.Sequence,
+                            allowIn: true,
+                            allowCall: true
+                        }),
+                        ':' + space,
+                        generateExpression(expr.value, {
+                            precedence: Precedence.Assignment,
+                            allowIn: true,
+                            allowCall: true
+                        })
+                    ];
+                }
+            }
+            break;
+
+        case Syntax.ObjectExpression:
+            if (!expr.properties.length) {
+                result = '{}';
+                break;
+            }
+            multiline = expr.properties.length > 1;
+
+            withIndent(function (indent) {
+                fragment = generateExpression(expr.properties[0], {
+                    precedence: Precedence.Sequence,
+                    allowIn: true,
+                    allowCall: true,
+                    type: Syntax.Property
+                });
+            });
+
+            if (!multiline) {
+                // issues 4
+                // Do not transform from
+                //   dejavu.Class.declare({
+                //       method2: function () {}
+                //   });
+                // to
+                //   dejavu.Class.declare({method2: function () {
+                //       }});
+                if (!hasLineTerminator(toSourceNode(fragment).toString())) {
+                    result = [ '{', space, fragment, space, '}' ];
+                    break;
+                }
+            }
+
+            withIndent(function (indent) {
+                result = [ '{', newline, indent, fragment ];
+
+                if (multiline) {
+                    result.push(',' + newline);
+                    for (i = 1, len = expr.properties.length; i < len; i += 1) {
+                        result.push(indent, generateExpression(expr.properties[i], {
+                            precedence: Precedence.Sequence,
+                            allowIn: true,
+                            allowCall: true,
+                            type: Syntax.Property
+                        }));
+                        if (i + 1 < len) {
+                            result.push(',' + newline);
+                        }
+                    }
+                }
+            });
+
+            if (!endsWithLineTerminator(toSourceNode(result).toString())) {
+                result.push(newline);
+            }
+            result.push(base, '}');
+            break;
+
+        case Syntax.ObjectPattern:
+            if (!expr.properties.length) {
+                result = '{}';
+                break;
+            }
+
+            multiline = false;
+            if (expr.properties.length === 1) {
+                property = expr.properties[0];
+                if (property.value.type !== Syntax.Identifier) {
+                    multiline = true;
+                }
+            } else {
+                for (i = 0, len = expr.properties.length; i < len; i += 1) {
+                    property = expr.properties[i];
+                    if (!property.shorthand) {
+                        multiline = true;
+                        break;
+                    }
+                }
+            }
+            result = ['{', multiline ? newline : '' ];
+
+            withIndent(function (indent) {
+                for (i = 0, len = expr.properties.length; i < len; i += 1) {
+                    result.push(multiline ? indent : '', generateExpression(expr.properties[i], {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    }));
+                    if (i + 1 < len) {
+                        result.push(',' + (multiline ? newline : space));
+                    }
+                }
+            });
+
+            if (multiline && !endsWithLineTerminator(toSourceNode(result).toString())) {
+                result.push(newline);
+            }
+            result.push(multiline ? base : '', '}');
+            break;
+
+        case Syntax.ThisExpression:
+            result = 'this';
+            break;
+
+        case Syntax.Identifier:
+            result = expr.name;
+            break;
+
+        case Syntax.Literal:
+            if (expr.hasOwnProperty('raw') && parse) {
+                try {
+                    raw = parse(expr.raw).body[0].expression;
+                    if (raw.type === Syntax.Literal) {
+                        if (raw.value === expr.value) {
+                            result = expr.raw;
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    // not use raw property
+                }
+            }
+
+            if (expr.value === null) {
+                result = 'null';
+                break;
+            }
+
+            if (typeof expr.value === 'string') {
+                result = escapeString(expr.value);
+                break;
+            }
+
+            if (typeof expr.value === 'number') {
+                result = generateNumber(expr.value);
+                break;
+            }
+
+            result = expr.value.toString();
+            break;
+
+        case Syntax.ComprehensionExpression:
+            result = [
+                '[',
+                generateExpression(expr.body, {
+                    precedence: Precedence.Assignment,
+                    allowIn: true,
+                    allowCall: true
+                })
+            ];
+
+            if (expr.blocks) {
+                for (i = 0, len = expr.blocks.length; i < len; i += 1) {
+                    fragment = generateExpression(expr.blocks[i], {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    });
+                    result = join(result, fragment);
+                }
+            }
+
+            if (expr.filter) {
+                result = join(result, 'if' + space);
+                fragment = generateExpression(expr.filter, {
+                    precedence: Precedence.Sequence,
+                    allowIn: true,
+                    allowCall: true
+                });
+                if (extra.moz.parenthesizedComprehensionBlock) {
+                    result = join(result, [ '(', fragment, ')' ]);
+                } else {
+                    result = join(result, fragment);
+                }
+            }
+            result.push(']');
+            break;
+
+        case Syntax.ComprehensionBlock:
+            if (expr.left.type === Syntax.VariableDeclaration) {
+                fragment = [
+                    expr.left.kind + ' ',
+                    generateStatement(expr.left.declarations[0], {
+                        allowIn: false
+                    })
+                ];
+            } else {
+                fragment = generateExpression(expr.left, {
+                    precedence: Precedence.Call,
+                    allowIn: true,
+                    allowCall: true
+                });
+            }
+
+            fragment = join(fragment, expr.of ? 'of' : 'in');
+            fragment = join(fragment, generateExpression(expr.right, {
+                precedence: Precedence.Sequence,
+                allowIn: true,
+                allowCall: true
+            }));
+
+            if (extra.moz.parenthesizedComprehensionBlock) {
+                result = [ 'for' + space + '(', fragment, ')' ];
+            } else {
+                result = join('for' + space, fragment);
+            }
+            break;
+
+        default:
+            throw new Error('Unknown expression type: ' + expr.type);
+        }
+
+        return toSourceNode(result, expr);
+    }
+
+    function generateStatement(stmt, option) {
+        var i, len, result, node, allowIn, functionBody, directiveContext, fragment, semicolon;
+
+        allowIn = true;
+        semicolon = ';';
+        functionBody = false;
+        directiveContext = false;
+        if (option) {
+            allowIn = option.allowIn === undefined || option.allowIn;
+            if (!semicolons && option.semicolonOptional === true) {
+                semicolon = '';
+            }
+            functionBody = option.functionBody;
+            directiveContext = option.directiveContext;
+        }
+
+        switch (stmt.type) {
+        case Syntax.BlockStatement:
+            result = ['{', newline];
+
+            withIndent(function () {
+                for (i = 0, len = stmt.body.length; i < len; i += 1) {
+                    fragment = addIndent(generateStatement(stmt.body[i], {
+                        semicolonOptional: i === len - 1,
+                        directiveContext: functionBody
+                    }));
+                    result.push(fragment);
+                    if (!endsWithLineTerminator(toSourceNode(fragment).toString())) {
+                        result.push(newline);
+                    }
+                }
+            });
+
+            result.push(addIndent('}'));
+            break;
+
+        case Syntax.BreakStatement:
+            if (stmt.label) {
+                result = 'break ' + stmt.label.name + semicolon;
+            } else {
+                result = 'break' + semicolon;
+            }
+            break;
+
+        case Syntax.ContinueStatement:
+            if (stmt.label) {
+                result = 'continue ' + stmt.label.name + semicolon;
+            } else {
+                result = 'continue' + semicolon;
+            }
+            break;
+
+        case Syntax.DirectiveStatement:
+            if (stmt.raw) {
+                result = stmt.raw + semicolon;
+            } else {
+                result = escapeDirective(stmt.directive) + semicolon;
+            }
+            break;
+
+        case Syntax.DoWhileStatement:
+            // Because `do 42 while (cond)` is Syntax Error. We need semicolon.
+            result = join('do', maybeBlock(stmt.body));
+            result = maybeBlockSuffix(stmt.body, result);
+            result = join(result, [
+                'while' + space + '(',
+                generateExpression(stmt.test, {
+                    precedence: Precedence.Sequence,
+                    allowIn: true,
+                    allowCall: true
+                }),
+                ')' + semicolon
+            ]);
+            break;
+
+        case Syntax.CatchClause:
+            withIndent(function () {
+                result = [
+                    'catch' + space + '(',
+                    generateExpression(stmt.param, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    }),
+                    ')'
+                ];
+            });
+            result.push(maybeBlock(stmt.body));
+            break;
+
+        case Syntax.DebuggerStatement:
+            result = 'debugger' + semicolon;
+            break;
+
+        case Syntax.EmptyStatement:
+            result = ';';
+            break;
+
+        case Syntax.ExpressionStatement:
+            result = [generateExpression(stmt.expression, {
+                precedence: Precedence.Sequence,
+                allowIn: true,
+                allowCall: true
+            })];
+            // 12.4 '{', 'function' is not allowed in this position.
+            // wrap expression with parentheses
+            if (result.toString().charAt(0) === '{' || (result.toString().slice(0, 8) === 'function' && " (".indexOf(result.toString().charAt(8)) >= 0) || (directive && directiveContext && stmt.expression.type === Syntax.Literal && typeof stmt.expression.value === 'string')) {
+                result = ['(', result, ')' + semicolon];
+            } else {
+                result.push(semicolon);
+            }
+            break;
+
+        case Syntax.VariableDeclarator:
+            if (stmt.init) {
+                result = [
+                    generateExpression(stmt.id, {
+                        precedence: Precedence.Assignment,
+                        allowIn: allowIn,
+                        allowCall: true
+                    }) + space + '=' + space,
+                    generateExpression(stmt.init, {
+                        precedence: Precedence.Assignment,
+                        allowIn: allowIn,
+                        allowCall: true
+                    })
+                ];
+            } else {
+                result = stmt.id.name;
+            }
+            break;
+
+        case Syntax.VariableDeclaration:
+            result = [stmt.kind];
+            // special path for
+            // var x = function () {
+            // };
+            if (stmt.declarations.length === 1 && stmt.declarations[0].init &&
+                    stmt.declarations[0].init.type === Syntax.FunctionExpression) {
+                result.push(' ', generateStatement(stmt.declarations[0], {
+                    allowIn: allowIn
+                }));
+            } else {
+                // VariableDeclarator is typed as Statement,
+                // but joined with comma (not LineTerminator).
+                // So if comment is attached to target node, we should specialize.
+                withIndent(function () {
+                    node = stmt.declarations[0];
+                    if (extra.comment && node.leadingComments) {
+                        result.push('\n', addIndent(generateStatement(node, {
+                            allowIn: allowIn
+                        })));
+                    } else {
+                        result.push(' ', generateStatement(node, {
+                            allowIn: allowIn
+                        }));
+                    }
+
+                    for (i = 1, len = stmt.declarations.length; i < len; i += 1) {
+                        node = stmt.declarations[i];
+                        if (extra.comment && node.leadingComments) {
+                            result.push(',' + newline, addIndent(generateStatement(node, {
+                                allowIn: allowIn
+                            })));
+                        } else {
+                            result.push(',' + space, generateStatement(node, {
+                                allowIn: allowIn
+                            }));
+                        }
+                    }
+                });
+            }
+            result.push(semicolon);
+            break;
+
+        case Syntax.ThrowStatement:
+            result = [join(
+                'throw',
+                generateExpression(stmt.argument, {
+                    precedence: Precedence.Sequence,
+                    allowIn: true,
+                    allowCall: true
+                })
+            ), semicolon];
+            break;
+
+        case Syntax.TryStatement:
+            result = ['try', maybeBlock(stmt.block)];
+            result = maybeBlockSuffix(stmt.block, result);
+            for (i = 0, len = stmt.handlers.length; i < len; i += 1) {
+                result = join(result, generateStatement(stmt.handlers[i]));
+                if (stmt.finalizer || i + 1 !== len) {
+                    result = maybeBlockSuffix(stmt.handlers[i].body, result);
+                }
+            }
+            if (stmt.finalizer) {
+                result = join(result, ['finally', maybeBlock(stmt.finalizer)]);
+            }
+            break;
+
+        case Syntax.SwitchStatement:
+            withIndent(function () {
+                result = [
+                    'switch' + space + '(',
+                    generateExpression(stmt.discriminant, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    }),
+                    ')' + space + '{' + newline
+                ];
+            });
+            if (stmt.cases) {
+                for (i = 0, len = stmt.cases.length; i < len; i += 1) {
+                    fragment = addIndent(generateStatement(stmt.cases[i], {semicolonOptional: i === len - 1}));
+                    result.push(fragment);
+                    if (!endsWithLineTerminator(toSourceNode(fragment).toString())) {
+                        result.push(newline);
+                    }
+                }
+            }
+            result.push(addIndent('}'));
+            break;
+
+        case Syntax.SwitchCase:
+            withIndent(function () {
+                if (stmt.test) {
+                    result = [
+                        join('case', generateExpression(stmt.test, {
+                            precedence: Precedence.Sequence,
+                            allowIn: true,
+                            allowCall: true
+                        })),
+                        ':'
+                    ];
+                } else {
+                    result = ['default:'];
+                }
+
+                i = 0;
+                len = stmt.consequent.length;
+                if (len && stmt.consequent[0].type === Syntax.BlockStatement) {
+                    fragment = maybeBlock(stmt.consequent[0]);
+                    result.push(fragment);
+                    i = 1;
+                }
+
+                if (i !== len && !endsWithLineTerminator(toSourceNode(result).toString())) {
+                    result.push(newline);
+                }
+
+                for (; i < len; i += 1) {
+                    fragment = addIndent(generateStatement(stmt.consequent[i], {semicolonOptional: i === len - 1 && semicolon === ''}));
+                    result.push(fragment);
+                    if (i + 1 !== len && !endsWithLineTerminator(toSourceNode(fragment).toString())) {
+                        result.push(newline);
+                    }
+                }
+            });
+            break;
+
+        case Syntax.IfStatement:
+            withIndent(function () {
+                result = [
+                    'if' + space + '(',
+                    generateExpression(stmt.test, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    }),
+                    ')'
+                ];
+            });
+            if (stmt.alternate) {
+                result.push(maybeBlock(stmt.consequent));
+                result = maybeBlockSuffix(stmt.consequent, result);
+                if (stmt.alternate.type === Syntax.IfStatement) {
+                    result = join(result, ['else ', generateStatement(stmt.alternate, {semicolonOptional: semicolon === ''})]);
+                } else {
+                    result = join(result, join('else', maybeBlock(stmt.alternate, semicolon === '')));
+                }
+            } else {
+                result.push(maybeBlock(stmt.consequent, semicolon === ''));
+            }
+            break;
+
+        case Syntax.ForStatement:
+            withIndent(function () {
+                result = ['for' + space + '('];
+                if (stmt.init) {
+                    if (stmt.init.type === Syntax.VariableDeclaration) {
+                        result.push(generateStatement(stmt.init, {allowIn: false}));
+                    } else {
+                        result.push(generateExpression(stmt.init, {
+                            precedence: Precedence.Sequence,
+                            allowIn: false,
+                            allowCall: true
+                        }), ';');
+                    }
+                } else {
+                    result.push(';');
+                }
+
+                if (stmt.test) {
+                    result.push(space, generateExpression(stmt.test, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    }), ';');
+                } else {
+                    result.push(';');
+                }
+
+                if (stmt.update) {
+                    result.push(space, generateExpression(stmt.update, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    }), ')');
+                } else {
+                    result.push(')');
+                }
+            });
+
+            result.push(maybeBlock(stmt.body, semicolon === ''));
+            break;
+
+        case Syntax.ForInStatement:
+            result = ['for' + space + '('];
+            withIndent(function () {
+                if (stmt.left.type === Syntax.VariableDeclaration) {
+                    withIndent(function () {
+                        result.push(stmt.left.kind + ' ', generateStatement(stmt.left.declarations[0], {
+                            allowIn: false
+                        }));
+                    });
+                } else {
+                    result.push(generateExpression(stmt.left, {
+                        precedence: Precedence.Call,
+                        allowIn: true,
+                        allowCall: true
+                    }));
+                }
+
+                result = join(result, 'in');
+                result = [join(
+                    result,
+                    generateExpression(stmt.right, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    })
+                ), ')'];
+            });
+            result.push(maybeBlock(stmt.body, semicolon === ''));
+            break;
+
+        case Syntax.LabeledStatement:
+            result = [stmt.label.name + ':', maybeBlock(stmt.body, semicolon === '')];
+            break;
+
+        case Syntax.Program:
+            len = stmt.body.length;
+            result = [safeConcatenation && len > 0 ? '\n' : ''];
+            for (i = 0; i < len; i += 1) {
+                fragment = addIndent(
+                    generateStatement(stmt.body[i], {
+                        semicolonOptional: !safeConcatenation && i === len - 1,
+                        directiveContext: true
+                    })
+                );
+                result.push(fragment);
+                if (i + 1 < len && !endsWithLineTerminator(toSourceNode(fragment).toString())) {
+                    result.push(newline);
+                }
+            }
+            break;
+
+        case Syntax.FunctionDeclaration:
+            result = [(stmt.generator && !extra.moz.starlessGenerator ? 'function* ' : 'function ') + stmt.id.name, generateFunctionBody(stmt)];
+            break;
+
+        case Syntax.ReturnStatement:
+            if (stmt.argument) {
+                result = [join(
+                    'return',
+                    generateExpression(stmt.argument, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    })
+                ), semicolon];
+            } else {
+                result = ['return' + semicolon];
+            }
+            break;
+
+        case Syntax.WhileStatement:
+            withIndent(function () {
+                result = [
+                    'while' + space + '(',
+                    generateExpression(stmt.test, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    }),
+                    ')'
+                ];
+            });
+            result.push(maybeBlock(stmt.body, semicolon === ''));
+            break;
+
+        case Syntax.WithStatement:
+            withIndent(function () {
+                result = [
+                    'with' + space + '(',
+                    generateExpression(stmt.object, {
+                        precedence: Precedence.Sequence,
+                        allowIn: true,
+                        allowCall: true
+                    }),
+                    ')'
+                ];
+            });
+            result.push(maybeBlock(stmt.body, semicolon === ''));
+            break;
+
+        default:
+            throw new Error('Unknown statement type: ' + stmt.type);
+        }
+
+        // Attach comments
+
+        if (extra.comment) {
+            result = addCommentsToStatement(stmt, result);
+        }
+
+        fragment = toSourceNode(result).toString();
+        if (stmt.type === Syntax.Program && !safeConcatenation && newline === '' &&  fragment.charAt(fragment.length - 1) === '\n') {
+            result = toSourceNode(result).replaceRight(/\s+$/, '');
+        }
+
+        return toSourceNode(result, stmt);
+    }
+
+    function generate(node, options) {
+        var defaultOptions = getDefaultOptions(), result, pair;
+
+        if (options != null) {
+            // Obsolete options
+            //
+            //   `options.indent`
+            //   `options.base`
+            //
+            // Instead of them, we can use `option.format.indent`.
+            if (typeof options.indent === 'string') {
+                defaultOptions.format.indent.style = options.indent;
+            }
+            if (typeof options.base === 'number') {
+                defaultOptions.format.indent.base = options.base;
+            }
+            options = updateDeeply(defaultOptions, options);
+            indent = options.format.indent.style;
+            if (typeof options.base === 'string') {
+                base = options.base;
+            } else {
+                base = stringRepeat(indent, options.format.indent.base);
+            }
+        } else {
+            options = defaultOptions;
+            indent = options.format.indent.style;
+            base = stringRepeat(indent, options.format.indent.base);
+        }
+        json = options.format.json;
+        renumber = options.format.renumber;
+        hexadecimal = json ? false : options.format.hexadecimal;
+        quotes = json ? 'double' : options.format.quotes;
+        escapeless = options.format.escapeless;
+        if (options.format.compact) {
+            newline = space = indent = base = '';
+        } else {
+            newline = '\n';
+            space = ' ';
+        }
+        parentheses = options.format.parentheses;
+        semicolons = options.format.semicolons;
+        safeConcatenation = options.format.safeConcatenation;
+        directive = options.directive;
+        parse = json ? null : options.parse;
+        sourceMap = options.sourceMap;
+        extra = options;
+
+        if (sourceMap) {
+            if (!exports.browser) {
+                // We assume environment is node.js
+                // And prevent from including source-map by browserify
+                SourceNode = require('source-map').SourceNode;
+            } else {
+                SourceNode = global.sourceMap.SourceNode;
+            }
+        } else {
+            SourceNode = SourceNodeMock;
+        }
+
+        switch (node.type) {
+        case Syntax.BlockStatement:
+        case Syntax.BreakStatement:
+        case Syntax.CatchClause:
+        case Syntax.ContinueStatement:
+        case Syntax.DirectiveStatement:
+        case Syntax.DoWhileStatement:
+        case Syntax.DebuggerStatement:
+        case Syntax.EmptyStatement:
+        case Syntax.ExpressionStatement:
+        case Syntax.ForStatement:
+        case Syntax.ForInStatement:
+        case Syntax.FunctionDeclaration:
+        case Syntax.IfStatement:
+        case Syntax.LabeledStatement:
+        case Syntax.Program:
+        case Syntax.ReturnStatement:
+        case Syntax.SwitchStatement:
+        case Syntax.SwitchCase:
+        case Syntax.ThrowStatement:
+        case Syntax.TryStatement:
+        case Syntax.VariableDeclaration:
+        case Syntax.VariableDeclarator:
+        case Syntax.WhileStatement:
+        case Syntax.WithStatement:
+            result = generateStatement(node);
+            break;
+
+        case Syntax.AssignmentExpression:
+        case Syntax.ArrayExpression:
+        case Syntax.ArrayPattern:
+        case Syntax.BinaryExpression:
+        case Syntax.CallExpression:
+        case Syntax.ConditionalExpression:
+        case Syntax.FunctionExpression:
+        case Syntax.Identifier:
+        case Syntax.Literal:
+        case Syntax.LogicalExpression:
+        case Syntax.MemberExpression:
+        case Syntax.NewExpression:
+        case Syntax.ObjectExpression:
+        case Syntax.ObjectPattern:
+        case Syntax.Property:
+        case Syntax.SequenceExpression:
+        case Syntax.ThisExpression:
+        case Syntax.UnaryExpression:
+        case Syntax.UpdateExpression:
+        case Syntax.YieldExpression:
+
+            result = generateExpression(node, {
+                precedence: Precedence.Sequence,
+                allowIn: true,
+                allowCall: true
+            });
+            break;
+
+        default:
+            throw new Error('Unknown node type: ' + node.type);
+        }
+
+        if (!sourceMap) {
+            return result.toString();
+        }
+
+        pair = result.toStringWithSourceMap({
+            file: options.sourceMap,
+            sourceRoot: options.sourceMapRoot
+        });
+
+        if (options.sourceMapWithCode) {
+            return pair;
+        }
+        return pair.map.toString();
+    }
+
+    // simple visitor implementation
+
+    VisitorKeys = {
+        AssignmentExpression: ['left', 'right'],
+        ArrayExpression: ['elements'],
+        ArrayPattern: ['elements'],
+        BlockStatement: ['body'],
+        BinaryExpression: ['left', 'right'],
+        BreakStatement: ['label'],
+        CallExpression: ['callee', 'arguments'],
+        CatchClause: ['param', 'body'],
+        ConditionalExpression: ['test', 'consequent', 'alternate'],
+        ContinueStatement: ['label'],
+        DirectiveStatement: [],
+        DoWhileStatement: ['body', 'test'],
+        DebuggerStatement: [],
+        EmptyStatement: [],
+        ExpressionStatement: ['expression'],
+        ForStatement: ['init', 'test', 'update', 'body'],
+        ForInStatement: ['left', 'right', 'body'],
+        FunctionDeclaration: ['id', 'params', 'body'],
+        FunctionExpression: ['id', 'params', 'body'],
+        Identifier: [],
+        IfStatement: ['test', 'consequent', 'alternate'],
+        Literal: [],
+        LabeledStatement: ['label', 'body'],
+        LogicalExpression: ['left', 'right'],
+        MemberExpression: ['object', 'property'],
+        NewExpression: ['callee', 'arguments'],
+        ObjectExpression: ['properties'],
+        ObjectPattern: ['properties'],
+        Program: ['body'],
+        Property: ['key', 'value'],
+        ReturnStatement: ['argument'],
+        SequenceExpression: ['expressions'],
+        SwitchStatement: ['discriminant', 'cases'],
+        SwitchCase: ['test', 'consequent'],
+        ThisExpression: [],
+        ThrowStatement: ['argument'],
+        TryStatement: ['block', 'handlers', 'finalizer'],
+        UnaryExpression: ['argument'],
+        UpdateExpression: ['argument'],
+        VariableDeclaration: ['declarations'],
+        VariableDeclarator: ['id', 'init'],
+        WhileStatement: ['test', 'body'],
+        WithStatement: ['object', 'body'],
+        YieldExpression: ['argument']
+    };
+
+    VisitorOption = {
+        Break: 1,
+        Skip: 2
+    };
+
+    // based on LLVM libc++ upper_bound / lower_bound
+    // MIT License
+
+    function upperBound(array, func) {
+        var diff, len, i, current;
+
+        len = array.length;
+        i = 0;
+
+        while (len) {
+            diff = len >>> 1;
+            current = i + diff;
+            if (func(array[current])) {
+                len = diff;
+            } else {
+                i = current + 1;
+                len -= diff + 1;
+            }
+        }
+        return i;
+    }
+
+    function lowerBound(array, func) {
+        var diff, len, i, current;
+
+        len = array.length;
+        i = 0;
+
+        while (len) {
+            diff = len >>> 1;
+            current = i + diff;
+            if (func(array[current])) {
+                i = current + 1;
+                len -= diff + 1;
+            } else {
+                len = diff;
+            }
+        }
+        return i;
+    }
+
+    function extendCommentRange(comment, tokens) {
+        var target, token;
+
+        target = upperBound(tokens, function search(token) {
+            return token.range[0] > comment.range[0];
+        });
+
+        comment.extendedRange = [comment.range[0], comment.range[1]];
+
+        if (target !== tokens.length) {
+            comment.extendedRange[1] = tokens[target].range[0];
+        }
+
+        target -= 1;
+        if (target >= 0) {
+            if (target < tokens.length) {
+                comment.extendedRange[0] = tokens[target].range[1];
+            } else if (token.length) {
+                comment.extendedRange[1] = tokens[tokens.length - 1].range[0];
+            }
+        }
+
+        return comment;
+    }
+
+    function attachComments(tree, providedComments, tokens) {
+        // At first, we should calculate extended comment ranges.
+        var comments = [], comment, len, i;
+
+        if (!tree.range) {
+            throw new Error('attachComments needs range information');
+        }
+
+        // tokens array is empty, we attach comments to tree as 'leadingComments'
+        if (!tokens.length) {
+            if (providedComments.length) {
+                for (i = 0, len = providedComments.length; i < len; i += 1) {
+                    comment = deepCopy(providedComments[i]);
+                    comment.extendedRange = [0, tree.range[0]];
+                    comments.push(comment);
+                }
+                tree.leadingComments = comments;
+            }
+            return tree;
+        }
+
+        for (i = 0, len = providedComments.length; i < len; i += 1) {
+            comments.push(extendCommentRange(deepCopy(providedComments[i]), tokens));
+        }
+
+        // This is based on John Freeman's implementation.
+        traverse(tree, {
+            cursor: 0,
+            enter: function (node) {
+                var comment;
+
+                while (this.cursor < comments.length) {
+                    comment = comments[this.cursor];
+                    if (comment.extendedRange[1] > node.range[0]) {
+                        break;
+                    }
+
+                    if (comment.extendedRange[1] === node.range[0]) {
+                        if (!node.leadingComments) {
+                            node.leadingComments = [];
+                        }
+                        node.leadingComments.push(comment);
+                        comments.splice(this.cursor, 1);
+                    } else {
+                        this.cursor += 1;
+                    }
+                }
+
+                // already out of owned node
+                if (this.cursor === comments.length) {
+                    return VisitorOption.Break;
+                }
+
+                if (comments[this.cursor].extendedRange[0] > node.range[1]) {
+                    return VisitorOption.Skip;
+                }
+            }
+        });
+
+        traverse(tree, {
+            cursor: 0,
+            leave: function (node) {
+                var comment;
+
+                while (this.cursor < comments.length) {
+                    comment = comments[this.cursor];
+                    if (node.range[1] < comment.extendedRange[0]) {
+                        break;
+                    }
+
+                    if (node.range[1] === comment.extendedRange[0]) {
+                        if (!node.trailingComments) {
+                            node.trailingComments = [];
+                        }
+                        node.trailingComments.push(comment);
+                        comments.splice(this.cursor, 1);
+                    } else {
+                        this.cursor += 1;
+                    }
+                }
+
+                // already out of owned node
+                if (this.cursor === comments.length) {
+                    return VisitorOption.Break;
+                }
+
+                if (comments[this.cursor].extendedRange[0] > node.range[1]) {
+                    return VisitorOption.Skip;
+                }
+            }
+        });
+
+        return tree;
+    }
+
+    // Sync with package.json.
+    exports.version = '0.0.16-dev';
+
+    exports.generate = generate;
+    exports.attachComments = attachComments;
+    exports.browser = false;
+}());
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+});
+
+require.define("/node_modules/estraverse/package.json",function(require,module,exports,__dirname,__filename,process,global){module.exports = {"main":"estraverse.js"}
+});
+
+require.define("/node_modules/estraverse/estraverse.js",function(require,module,exports,__dirname,__filename,process,global){/*
+  Copyright (C) 2012 Yusuke Suzuki <utatane.tea@gmail.com>
+  Copyright (C) 2012 Ariya Hidayat <ariya.hidayat@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/*jslint bitwise:true */
+/*global exports:true, define:true, window:true */
+(function (factory) {
+    'use strict';
+
+    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
+    // and plain browser loading,
+    if (typeof define === 'function' && define.amd) {
+        define(['exports'], factory);
+    } else if (typeof exports !== 'undefined') {
+        factory(exports);
+    } else {
+        factory((window.estraverse = {}));
+    }
+}(function (exports) {
+    'use strict';
+
+    var Syntax,
+        isArray,
+        VisitorOption,
+        VisitorKeys,
+        wrappers;
+
+    Syntax = {
+        AssignmentExpression: 'AssignmentExpression',
+        ArrayExpression: 'ArrayExpression',
+        BlockStatement: 'BlockStatement',
+        BinaryExpression: 'BinaryExpression',
+        BreakStatement: 'BreakStatement',
+        CallExpression: 'CallExpression',
+        CatchClause: 'CatchClause',
+        ConditionalExpression: 'ConditionalExpression',
+        ContinueStatement: 'ContinueStatement',
+        DebuggerStatement: 'DebuggerStatement',
+        DirectiveStatement: 'DirectiveStatement',
+        DoWhileStatement: 'DoWhileStatement',
+        EmptyStatement: 'EmptyStatement',
+        ExpressionStatement: 'ExpressionStatement',
+        ForStatement: 'ForStatement',
+        ForInStatement: 'ForInStatement',
+        FunctionDeclaration: 'FunctionDeclaration',
+        FunctionExpression: 'FunctionExpression',
+        Identifier: 'Identifier',
+        IfStatement: 'IfStatement',
+        Literal: 'Literal',
+        LabeledStatement: 'LabeledStatement',
+        LogicalExpression: 'LogicalExpression',
+        MemberExpression: 'MemberExpression',
+        NewExpression: 'NewExpression',
+        ObjectExpression: 'ObjectExpression',
+        Program: 'Program',
+        Property: 'Property',
+        ReturnStatement: 'ReturnStatement',
+        SequenceExpression: 'SequenceExpression',
+        SwitchStatement: 'SwitchStatement',
+        SwitchCase: 'SwitchCase',
+        ThisExpression: 'ThisExpression',
+        ThrowStatement: 'ThrowStatement',
+        TryStatement: 'TryStatement',
+        UnaryExpression: 'UnaryExpression',
+        UpdateExpression: 'UpdateExpression',
+        VariableDeclaration: 'VariableDeclaration',
+        VariableDeclarator: 'VariableDeclarator',
+        WhileStatement: 'WhileStatement',
+        WithStatement: 'WithStatement'
+    };
+
+    isArray = Array.isArray;
+    if (!isArray) {
+        isArray = function isArray(array) {
+            return Object.prototype.toString.call(array) === '[object Array]';
+        };
+    }
+
+    VisitorKeys = {
+        AssignmentExpression: ['left', 'right'],
+        ArrayExpression: ['elements'],
+        BlockStatement: ['body'],
+        BinaryExpression: ['left', 'right'],
+        BreakStatement: ['label'],
+        CallExpression: ['callee', 'arguments'],
+        CatchClause: ['param', 'body'],
+        ConditionalExpression: ['test', 'consequent', 'alternate'],
+        ContinueStatement: ['label'],
+        DebuggerStatement: [],
+        DirectiveStatement: [],
+        DoWhileStatement: ['body', 'test'],
+        EmptyStatement: [],
+        ExpressionStatement: ['expression'],
+        ForStatement: ['init', 'test', 'update', 'body'],
+        ForInStatement: ['left', 'right', 'body'],
+        FunctionDeclaration: ['id', 'params', 'body'],
+        FunctionExpression: ['id', 'params', 'body'],
+        Identifier: [],
+        IfStatement: ['test', 'consequent', 'alternate'],
+        Literal: [],
+        LabeledStatement: ['label', 'body'],
+        LogicalExpression: ['left', 'right'],
+        MemberExpression: ['object', 'property'],
+        NewExpression: ['callee', 'arguments'],
+        ObjectExpression: ['properties'],
+        Program: ['body'],
+        Property: ['key', 'value'],
+        ReturnStatement: ['argument'],
+        SequenceExpression: ['expressions'],
+        SwitchStatement: ['discriminant', 'cases'],
+        SwitchCase: ['test', 'consequent'],
+        ThisExpression: [],
+        ThrowStatement: ['argument'],
+        TryStatement: ['block', 'handlers', 'finalizer'],
+        UnaryExpression: ['argument'],
+        UpdateExpression: ['argument'],
+        VariableDeclaration: ['declarations'],
+        VariableDeclarator: ['id', 'init'],
+        WhileStatement: ['test', 'body'],
+        WithStatement: ['object', 'body']
+    };
+
+    VisitorOption = {
+        Break: 1,
+        Skip: 2
+    };
+
+    wrappers = {
+        PropertyWrapper: 'Property'
+    };
+
+    function traverse(top, visitor) {
+        var worklist, leavelist, node, nodeType, ret, current, current2, candidates, candidate, marker = {};
+
+        worklist = [ top ];
+        leavelist = [ null ];
+
+        while (worklist.length) {
+            node = worklist.pop();
+            nodeType = node.type;
+
+            if (node === marker) {
+                node = leavelist.pop();
+                if (visitor.leave) {
+                    ret = visitor.leave(node, leavelist[leavelist.length - 1]);
+                } else {
+                    ret = undefined;
+                }
+                if (ret === VisitorOption.Break) {
+                    return;
+                }
+            } else if (node) {
+                if (wrappers.hasOwnProperty(nodeType)) {
+                    node = node.node;
+                    nodeType = wrappers[nodeType];
+                }
+
+                if (visitor.enter) {
+                    ret = visitor.enter(node, leavelist[leavelist.length - 1]);
+                } else {
+                    ret = undefined;
+                }
+
+                if (ret === VisitorOption.Break) {
+                    return;
+                }
+
+                worklist.push(marker);
+                leavelist.push(node);
+
+                if (ret !== VisitorOption.Skip) {
+                    candidates = VisitorKeys[nodeType];
+                    current = candidates.length;
+                    while ((current -= 1) >= 0) {
+                        candidate = node[candidates[current]];
+                        if (candidate) {
+                            if (isArray(candidate)) {
+                                current2 = candidate.length;
+                                while ((current2 -= 1) >= 0) {
+                                    if (candidate[current2]) {
+                                        if(nodeType === Syntax.ObjectExpression && 'properties' === candidates[current] && null == candidates[current].type) {
+                                            worklist.push({type: 'PropertyWrapper', node: candidate[current2]});
+                                        } else {
+                                            worklist.push(candidate[current2]);
+                                        }
+                                    }
+                                }
+                            } else {
+                                worklist.push(candidate);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function replace(top, visitor) {
+        var worklist, leavelist, node, nodeType, target, tuple, ret, current, current2, candidates, candidate, marker = {}, result;
+
+        result = {
+            top: top
+        };
+
+        tuple = [ top, result, 'top' ];
+        worklist = [ tuple ];
+        leavelist = [ tuple ];
+
+        function notify(v) {
+            ret = v;
+        }
+
+        while (worklist.length) {
+            tuple = worklist.pop();
+
+            if (tuple === marker) {
+                tuple = leavelist.pop();
+                ret = undefined;
+                if (visitor.leave) {
+                    node = tuple[0];
+                    target = visitor.leave(tuple[0], leavelist[leavelist.length - 1][0], notify);
+                    if (target !== undefined) {
+                        node = target;
+                    }
+                    tuple[1][tuple[2]] = node;
+                }
+                if (ret === VisitorOption.Break) {
+                    return result.top;
+                }
+            } else if (tuple[0]) {
+                ret = undefined;
+                node = tuple[0];
+
+                nodeType = node.type;
+                if (wrappers.hasOwnProperty(nodeType)) {
+                    tuple[0] = node = node.node;
+                    nodeType = wrappers[nodeType];
+                }
+
+                if (visitor.enter) {
+                    target = visitor.enter(tuple[0], leavelist[leavelist.length - 1][0], notify);
+                    if (target !== undefined) {
+                        node = target;
+                    }
+                    tuple[1][tuple[2]] = node;
+                    tuple[0] = node;
+                }
+
+                if (ret === VisitorOption.Break) {
+                    return result.top;
+                }
+
+                if (tuple[0]) {
+                    worklist.push(marker);
+                    leavelist.push(tuple);
+
+                    if (ret !== VisitorOption.Skip) {
+                        candidates = VisitorKeys[nodeType];
+                        current = candidates.length;
+                        while ((current -= 1) >= 0) {
+                            candidate = node[candidates[current]];
+                            if (candidate) {
+                                if (isArray(candidate)) {
+                                    current2 = candidate.length;
+                                    while ((current2 -= 1) >= 0) {
+                                        if (candidate[current2]) {
+                                            if(nodeType === Syntax.ObjectExpression && 'properties' === candidates[current] && null == candidates[current].type) {
+                                                worklist.push([{type: 'PropertyWrapper', node: candidate[current2]}, candidate, current2]);
+                                            } else {
+                                                worklist.push([candidate[current2], candidate, current2]);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    worklist.push([candidate, node, candidates[current]]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result.top;
+    }
+
+    exports.version = '0.0.4';
+    exports.Syntax = Syntax;
+    exports.traverse = traverse;
+    exports.replace = replace;
+    exports.VisitorKeys = VisitorKeys;
+    exports.VisitorOption = VisitorOption;
+}));
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+});
+
+require.define("/tools/entry-point.js",function(require,module,exports,__dirname,__filename,process,global){/*
+  Copyright (C) 2012 Yusuke Suzuki <utatane.tea@gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+(function () {
+    'use strict';
+    var escodegen;
+    escodegen = global.escodegen = require('../escodegen');
+    escodegen.browser = true;
+}());
+
+});
+require("/tools/entry-point.js");
+})();
+
+
 /*
  * StructuredJS provides an API for static analysis of code based on an abstract
  * syntax tree generated by Esprima (compliant with the Mozilla Parser
@@ -84102,1125 +87182,672 @@ parseStatement: true, parseSourceElement: true */
     exports.prettify = prettyHtml;
 })(typeof window !== "undefined" ? window : global);
 
-/*
- TraceKit - Cross brower stack traces - github.com/occ/TraceKit
- MIT license
-*/
+window.ASTBuilder = {
+    /**
+     * @param {Expression} left
+     * @param {string} operator: "=", "+=", "-=", "*=", "/=", etc.
+     * @param {Expression} right
+     */
+    AssignmentExpression: function AssignmentExpression(left, operator, right) {
+        return {
+            type: "AssignmentExpression",
+            left: left,
+            operator: operator,
+            right: right
+        };
+    },
+    /**
+     * @param {Expression} left
+     * @param {string} operator: "+", "-", "*", "/", "<", ">", "<=", ">=", etc.
+     * @param {Expression} right
+     */
+    BinaryExpression: function BinaryExpression(left, operator, right) {
+        return {
+            type: "BinaryExpression",
+            left: left,
+            operator: operator,
+            right: right
+        };
+    },
+    /**
+     * @param {Array} body: an array of Expressions
+     */
+    BlockStatement: function BlockStatement(body) {
+        return {
+            type: "BlockStatement",
+            body: body
+        };
+    },
+    /**
+     * @param {Expression} callee
+     * @param {Array} args
+     */
+    CallExpression: function CallExpression(callee, args) {
+        return {
+            type: "CallExpression",
+            callee: callee,
+            arguments: args
+        };
+    },
+    /**
+     * @param {Expression} expression
+     */
+    ExpressionStatement: function ExpressionStatement(expression) {
+        return {
+            type: "ExpressionStatement",
+            expression: expression
+        };
+    },
+    /**
+     * @param {string} name
+     */
+    Identifier: function Identifier(name) {
+        return {
+            type: "Identifier",
+            name: name
+        };
+    },
+    /**
+     * @param {Expression} test
+     * @param {Statement} consequent: usually a BlockStatement
+     * @param {Statement?} alternate: usually a BlockStatement when not omitted
+     */
+    IfStatement: function IfStatement(test, consequent) {
+        var alternate = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
 
-(function(window, undefined) {
+        return {
+            type: "IfStatement",
+            test: test,
+            consequent: consequent,
+            alternate: alternate
+        };
+    },
+    /**
+     * @param {Number|String|null|RegExp} value
+     */
+    Literal: function Literal(value) {
+        return {
+            type: "Literal",
+            value: value
+        };
+    },
+    /**
+     * @param {Expression} object
+     * @param {Expression} property
+     * @param {Boolean?} computed - true => obj[prop], false => obj.prop
+     */
+    MemberExpression: function MemberExpression(object, property) {
+        var computed = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
 
-
-var TraceKit = {};
-var _oldTraceKit = window.TraceKit;
-
-// global reference to slice
-var _slice = [].slice;
-var UNKNOWN_FUNCTION = '?';
-
-
-/**
- * _has, a better form of hasOwnProperty
- * Example: _has(MainHostObject, property) === true/false
- *
- * @param {Object} host object to check property
- * @param {string} key to check
- */
-function _has(object, key) {
-    return Object.prototype.hasOwnProperty.call(object, key);
-}
-
-function _isUndefined(what) {
-    return typeof what === 'undefined';
-}
-
-/**
- * TraceKit.noConflict: Export TraceKit out to another variable
- * Example: var TK = TraceKit.noConflict()
- */
-TraceKit.noConflict = function noConflict() {
-    window.TraceKit = _oldTraceKit;
-    return TraceKit;
+        return {
+            type: "MemberExpression",
+            object: object,
+            property: property,
+            computed: computed
+        };
+    },
+    /**
+     * @param {Expression} argument
+     * @param {string} operator: "++" or "--"
+     * @param {Boolean} prefix: true => ++argument, false => argument++
+     */
+    UpdateExpression: function UpdateExpression(argument, operator, prefix) {
+        return {
+            type: "UpdateExpression",
+            argument: argument,
+            operator: operator,
+            prefix: prefix
+        };
+    },
+    /**
+     * @param {Array} declarations
+     * @param {string} kind: "var", "let", "const"
+     */
+    VariableDeclaration: function VariableDeclaration(declarations, kind) {
+        return {
+            type: "VariableDeclaration",
+            declarations: declarations,
+            kind: kind
+        };
+    }
 };
-
 /**
- * TraceKit.wrap: Wrap any function in a TraceKit reporter
- * Example: func = TraceKit.wrap(func);
+ * Traverses an AST and calls visitor methods on each of the visitors.
  *
- * @param {Function} func Function to be wrapped
- * @return {Function} The wrapped func
+ * @param node: The root of the AST to walk.
+ * @param path: An array containing all of the ancestors and the current node.
+ *              Callers should pass in null.
+ * @param visitors: One or more objects containing 'enter' and/or 'leave'
+ *                  methods which accept a single AST node as an argument.
  */
-TraceKit.wrap = function traceKitWrapper(func) {
-    function wrapped() {
-        try {
-            return func.apply(this, arguments);
-        } catch (e) {
-            TraceKit.report(e);
-            throw e;
-        }
+window.walkAST = function (node, path, visitors) {
+    if (path === null) {
+        path = [node];
+    } else {
+        path.push(node);
     }
-    return wrapped;
-};
-
-/**
- * TraceKit.report: cross-browser processing of unhandled exceptions
- *
- * Syntax:
- *   TraceKit.report.subscribe(function(stackInfo) { ... })
- *   TraceKit.report.unsubscribe(function(stackInfo) { ... })
- *   TraceKit.report(exception)
- *   try { ...code... } catch(ex) { TraceKit.report(ex); }
- *
- * Supports:
- *   - Firefox: full stack trace with line numbers, plus column number
- *              on top frame; column number is not guaranteed
- *   - Opera:   full stack trace with line and column numbers
- *   - Chrome:  full stack trace with line and column numbers
- *   - Safari:  line and column number for the top frame only; some frames
- *              may be missing, and column number is not guaranteed
- *   - IE:      line and column number for the top frame only; some frames
- *              may be missing, and column number is not guaranteed
- *
- * In theory, TraceKit should work on all of the following versions:
- *   - IE5.5+ (only 8.0 tested)
- *   - Firefox 0.9+ (only 3.5+ tested)
- *   - Opera 7+ (only 10.50 tested; versions 9 and earlier may require
- *     Exceptions Have Stacktrace to be enabled in opera:config)
- *   - Safari 3+ (only 4+ tested)
- *   - Chrome 1+ (only 5+ tested)
- *   - Konqueror 3.5+ (untested)
- *
- * Requires TraceKit.computeStackTrace.
- *
- * Tries to catch all unhandled exceptions and report them to the
- * subscribed handlers. Please note that TraceKit.report will rethrow the
- * exception. This is REQUIRED in order to get a useful stack trace in IE.
- * If the exception does not reach the top of the browser, you will only
- * get a stack trace from the point where TraceKit.report was called.
- *
- * Handlers receive a stackInfo object as described in the
- * TraceKit.computeStackTrace docs.
- */
-TraceKit.report = (function reportModuleWrapper() {
-    var handlers = [],
-        lastException = null,
-        lastExceptionStack = null;
-
-    /**
-     * Add a crash handler.
-     * @param {Function} handler
-     */
-    function subscribe(handler) {
-        installGlobalHandler();
-        handlers.push(handler);
-    }
-
-    /**
-     * Remove a crash handler.
-     * @param {Function} handler
-     */
-    function unsubscribe(handler) {
-        for (var i = handlers.length - 1; i >= 0; --i) {
-            if (handlers[i] === handler) {
-                handlers.splice(i, 1);
-            }
+    visitors.forEach(function (visitor) {
+        if (visitor.enter) {
+            visitor.enter(node, path);
         }
-    }
+    });
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
 
-    /**
-     * Dispatch stack information to all handlers.
-     * @param {Object.<string, *>} stack
-     */
-    function notifyHandlers(stack, windowError) {
-        var exception = null;
-        if (windowError && !TraceKit.collectWindowErrors) {
-          return;
-        }
-        for (var i in handlers) {
-            if (_has(handlers, i)) {
-                try {
-                    handlers[i].apply(null, [stack].concat(_slice.call(arguments, 2)));
-                } catch (inner) {
-                    exception = inner;
+    try {
+        for (var _iterator = Object.keys(node)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var prop = _step.value;
+
+            if (node.hasOwnProperty(prop) && node[prop] instanceof Object) {
+                if (Array.isArray(node[prop])) {
+                    var i = 0;
+                    while (i < node[prop].length) {
+                        var child = node[prop][i];
+                        // Skip over the number of replacements.  This is usually
+                        // just 1, but in situations involving multiple variable
+                        // declarations we end up replacing one statement with
+                        // multiple statements and we need to step over all of them.
+                        i += walkAST(child, path, visitors);
+                    }
+                } else if (node[prop].type) {
+                    // don't walk metadata props like "loc"
+                    walkAST(node[prop], path, visitors);
                 }
             }
         }
-
-        if (exception) {
-            throw exception;
+    } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion && _iterator["return"]) {
+                _iterator["return"]();
+            }
+        } finally {
+            if (_didIteratorError) {
+                throw _iteratorError;
+            }
         }
     }
 
-    var _oldOnerrorHandler, _onErrorHandlerInstalled;
+    var step = 1;
+    visitors.forEach(function (visitor) {
+        if (visitor.leave) {
+            (function () {
+                var replacement = visitor.leave(node, path);
+                if (replacement) {
+                    if (replacement instanceof Array) {
+                        var _parent = path[path.length - 2];
+                        if (_parent.body) {
+                            var index = _parent.body.findIndex(function (child) {
+                                return child === node;
+                            });
+                            Array.prototype.splice.apply(_parent.body, [index, 1].concat(replacement));
+                            // Since we replaced one statement with multiple statements
+                            // we'll want to skip over all of them so set 'step' to
+                            // the number of replacements.
+                            step = replacement.length;
+                        }
+                    } else {
+                        Object.keys(node).forEach(function (key) {
+                            delete node[key];
+                        });
+                        Object.keys(replacement).forEach(function (key) {
+                            node[key] = replacement[key];
+                        });
+                    }
+                }
+            })();
+        }
+    });
+    path.pop();
+    return step;
+};
+/**
+ * Creates a new LoopProtector object.
+ *
+ * @param callback: called whenever a loop takes more than <timeout>ms to complete.
+ * @param timeouts: an object containing initialTimeout and frameTimeout used
+ *                  to control how long before the loop protector is triggered
+ *                  on initial run during draw functions (or when responding to
+ *                  user events)
+ * @param reportLocation: true if the location of the long running loop should be
+ *                        passed to the callback. TODO(kevinb) use this for webpages
+ * @constructor
+ */
+window.LoopProtector = function (callback, timeouts, reportLocation) {
+    var _this = this;
 
-    /**
-     * Ensures all global unhandled exceptions are recorded.
-     * Supported by Gecko and IE.
-     * @param {string} message Error message.
-     * @param {string} url URL of script that generated the exception.
-     * @param {(number|string)} lineNo The line number at which the error
-     * occurred.
-     */
-    function traceKitWindowOnError(message, url, lineNo) {
-        var stack = null;
+    this.callback = callback || function () {};
+    this.timeout = 200;
+    this.branchStartTime = 0;
+    this.loopCounts = {};
+    this.reportLocation = reportLocation;
 
-        if (lastExceptionStack) {
-            TraceKit.computeStackTrace.augmentStackTraceWithInitialElement(lastExceptionStack, url, lineNo, message);
-            stack = lastExceptionStack;
-            lastExceptionStack = null;
-            lastException = null;
+    this.loopBreak = esprima.parse("KAInfiniteLoopProtect()").body[0];
+
+    if (timeouts) {
+        this.mainTimeout = timeouts.initialTimeout;
+        this.asyncTimeout = timeouts.frameTimeout;
+    }
+
+    this.KAInfiniteLoopProtect = this._KAInfiniteLoopProtect.bind(this);
+    this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
+
+    document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+            _this.visible = true;
+            _this.branchStartTime = 0;
         } else {
-            var location = {
-                'url': url,
-                'line': lineNo
-            };
-            location.func = TraceKit.computeStackTrace.guessFunctionName(location.url, location.line);
-            location.context = TraceKit.computeStackTrace.gatherContext(location.url, location.line);
-            stack = {
-                'mode': 'onerror',
-                'message': message,
-                'url': document.location.href,
-                'stack': [location],
-                'useragent': navigator.userAgent
-            };
+            _this.visible = false;
+        }
+    });
+
+    this.visible = !document.hidden;
+};
+
+window.LoopProtector.prototype = {
+    /**
+     * Throws 'KA_INFINITE_LOOP' if the difference between the current time
+     * and this.brancStartTime is greater than this.timeout.
+     *
+     * The difference grows as long as this method is called synchronously.  As
+     * soon as the current execution stack completes and the browser grabs the
+     * next task off the event queue this.branchStartTime will be reset by the
+     * timeout.
+     *
+     * In order to use this correctly, you must add a reference to this function
+     * to the global scope where the user code is being run.  See the exec()
+     * method in pjs-output.js for an example of how to do this.
+     *
+     * @private
+     */
+    _KAInfiniteLoopProtect: function _KAInfiniteLoopProtect(location) {
+        var _this2 = this;
+
+        if (location) {
+            if (!this.loopCounts[location]) {
+                this.loopCounts[location] = 0;
+            }
+            this.loopCounts[location] += 1;
+        }
+        var now = new Date().getTime();
+        if (!this.branchStartTime) {
+            this.branchStartTime = now;
+            setTimeout((function () {
+                this.branchStartTime = 0;
+            }).bind(this), 0);
+        } else if (now - this.branchStartTime > this.timeout) {
+            if (this.visible) {
+                (function () {
+                    if (!_this2.reportLocation) {
+                        var _error = new Error("KA_INFINITE_LOOP");
+                        _this2.callback(_error);
+                        throw _error;
+                    }
+
+                    // Determine which of KAInfiniteLoopProtect's callsites has
+                    // the most calls.
+                    var max = 0; // current max count
+                    var hotLocation = null; // callsite with most calls
+                    Object.keys(_this2.loopCounts).forEach(function (location) {
+                        if (_this2.loopCounts[location] > max) {
+                            max = _this2.loopCounts[location];
+                            hotLocation = location;
+                        }
+                    });
+
+                    hotLocation = JSON.parse(hotLocation);
+
+                    var error = {
+                        infiniteLoopNodeType: hotLocation.type,
+                        row: hotLocation.loc.start.line - 1 // ace uses 0-indexed rows
+                    };
+
+                    _this2.callback(error);
+
+                    // We throw here to interrupt communication but also to
+                    throw error;
+                })();
+            }
+        }
+    },
+
+    _KAInfiniteLoopSetTimeout: function _KAInfiniteLoopSetTimeout(timeout) {
+        this.timeout = timeout;
+        this.branchStartTime = 0;
+    },
+
+    riskyStatements: ["DoWhileStatement", "WhileStatement", "ForStatement", "FunctionExpression", "FunctionDeclaration"],
+
+    // Called by walkAST whenever it leaves a node so AST mutations are okay
+    leave: function leave(node) {
+        var b = window.ASTBuilder;
+
+        if (this.riskyStatements.indexOf(node.type) !== -1) {
+            if (this.reportLocation) {
+                var _location = {
+                    type: node.type,
+                    loc: node.loc
+                };
+
+                // Inserts the following code at the start of riskt statements:
+                //
+                // KAInfiniteLoopCount++;
+                // if (KAInfiniteLoopCount > 1000) {
+                //     KAInfiniteLoopProtect();
+                //     KAInfiniteLoopCount = 0;
+                // }
+                node.body.body.unshift(b.IfStatement(b.BinaryExpression(b.Identifier("KAInfiniteLoopCount"), ">", b.Literal(1000)), b.BlockStatement([b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopProtect"), [b.Literal(JSON.stringify(_location))])), b.ExpressionStatement(b.AssignmentExpression(b.Identifier("KAInfiniteLoopCount"), "=", b.Literal(0)))])));
+                node.body.body.unshift(b.ExpressionStatement(b.UpdateExpression(b.Identifier("KAInfiniteLoopCount"), "++", false)));
+            } else {
+                node.body.body.unshift(this.loopBreak);
+            }
         }
 
-        notifyHandlers(stack, 'from window.onerror');
+        if (node.type === "Program") {
+            // Many pjs programs take a while to start up because they're generating
+            // terrain or textures or whatever.  Instead of complaining about all of
+            // those programs taking too long, we allow the main program body to take
+            // a little longer to run.  We call KAInfiniteLoopSetTimeout and set
+            // the timeout to mainTimeout just to reset the value when the program
+            // is re-run.
+            if (this.mainTimeout) {
+                node.body.unshift(b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopSetTimeout"), [b.Literal(this.mainTimeout)])));
+            }
 
-        if (_oldOnerrorHandler) {
-            return _oldOnerrorHandler.apply(this, arguments);
+            // Any asynchronous calls such as mouseClicked() or calls to draw()
+            // should take much less time so that the app (and the browser) remain
+            // responsive as the app is running so we call KAInfiniteLoopSetTimeout
+            // at the end of main and set timeout to be asyncTimeout
+            if (this.asyncTimeout) {
+                node.body.push(b.ExpressionStatement(b.CallExpression(b.Identifier("KAInfiniteLoopSetTimeout"), [b.Literal(this.asyncTimeout)])));
+            }
         }
+    },
 
+    // Convenience method used by webpage-output.js
+    protect: function protect(code) {
+        var ast = esprima.parse(code, { loc: true });
+
+        walkAST(ast, null, [this]);
+
+        return escodegen.generate(ast);
+    }
+};
+window.ASTTransforms = {};
+
+var b = window.ASTBuilder;
+
+/**
+ * Visitor object which adds line and column information as additional args,
+ * e.g. Program.assertEqual(a, b) => Program.assertEqual(a, b, <line>, <column>)
+ * where <line> and <column> are number literals.
+ */
+ASTTransforms.rewriteAssertEquals = {
+    leave: function leave(node, path) {
+        if (node.type === "Identifier" && node.name === "Program") {
+            var _parent = path[path.length - 2];
+            if (_parent.type === "MemberExpression" && _parent.object === node && _parent.property.type === "Identifier" && _parent.property.name === "assertEqual") {
+
+                var grandparent = path[path.length - 3];
+                if (grandparent.type === "CallExpression") {
+                    grandparent.arguments.push(b.Literal(grandparent.loc.start.line), b.Literal(grandparent.loc.start.column));
+                }
+            }
+        }
+    }
+};
+
+var isReference = function isReference(node, parent) {
+    // we're a property key so we aren't referenced
+    if (parent.type === "Property" && parent.key === node) {
         return false;
     }
 
-    function installGlobalHandler ()
-    {
-        if (_onErrorHandlerInstalled === true) {
-            return;
-        }
-        _oldOnerrorHandler = window.onerror;
-        window.onerror = traceKitWindowOnError;
-        _onErrorHandlerInstalled = true;
+    // we're a variable declarator id so we aren't referenced
+    if (parent.type === "VariableDeclarator" && parent.id === node) {
+        return false;
     }
 
-    /**
-     * Reports an unhandled Error to TraceKit.
-     * @param {Error} ex
-     */
-    function report(ex) {
-        var args = _slice.call(arguments, 1);
-        if (lastExceptionStack) {
-            if (lastException === ex) {
-                return; // already caught by an inner catch block, ignore
-            } else {
-                var s = lastExceptionStack;
-                lastExceptionStack = null;
-                lastException = null;
-                notifyHandlers.apply(null, [s, null].concat(args));
-            }
-        }
+    var isMemberExpression = parent.type === "MemberExpression";
 
-        var stack = TraceKit.computeStackTrace(ex);
-        lastExceptionStack = stack;
-        lastException = ex;
+    // we're in a member expression and we're the computed property so we're referenced
+    var isComputedProperty = isMemberExpression && parent.property === node && parent.computed;
 
-        // If the stack trace is incomplete, wait for 2 seconds for
-        // slow slow IE to see if onerror occurs or not before reporting
-        // this exception; otherwise, we will end up with an incomplete
-        // stack trace
-        window.setTimeout(function () {
-            if (lastException === ex) {
-                lastExceptionStack = null;
-                lastException = null;
-                notifyHandlers.apply(null, [stack, null].concat(args));
-            }
-        }, (stack.incomplete ? 2000 : 0));
+    // we're in a member expression and we're the object so we're referenced
+    var isObject = isMemberExpression && parent.object === node;
 
-        throw ex; // re-throw to propagate to the top level (and cause window.onerror)
-    }
+    // we are referenced
+    return !isMemberExpression || isComputedProperty || isObject;
+};
 
-    report.subscribe = subscribe;
-    report.unsubscribe = unsubscribe;
-    return report;
-}());
+var drawLoopMethods = ["draw", "mouseClicked", "mouseDragged", "mouseMoved", "mousePressed", "mouseReleased", "mouseScrolled", "mouseOver", "mouseOut", "touchStart", "touchEnd", "touchMove", "touchCancel", "keyPressed", "keyReleased", "keyTyped"];
+
+var scopes = [{}];
 
 /**
- * TraceKit.computeStackTrace: cross-browser stack traces in JavaScript
+ * Returns a visitor object that will rewrite all global variable references to
+ * be references to properties on an object identified by envName.
  *
- * Syntax:
- *   s = TraceKit.computeStackTrace.ofCaller([depth])
- *   s = TraceKit.computeStackTrace(exception) // consider using TraceKit.report instead (see below)
- * Returns:
- *   s.name              - exception name
- *   s.message           - exception message
- *   s.stack[i].url      - JavaScript or HTML file URL
- *   s.stack[i].func     - function name, or empty for anonymous functions (if guessing did not work)
- *   s.stack[i].args     - arguments passed to the function, if known
- *   s.stack[i].line     - line number, if known
- *   s.stack[i].column   - column number, if known
- *   s.stack[i].context  - an array of source code lines; the middle element corresponds to the correct line#
- *   s.mode              - 'stack', 'stacktrace', 'multiline', 'callers', 'onerror', or 'failed' -- method used to collect the stack trace
+ * e.g. fill(200,124,93) => __env__19283123.fill(200,124,93)
  *
- * Supports:
- *   - Firefox:  full stack trace with line numbers and unreliable column
- *               number on top frame
- *   - Opera 10: full stack trace with line and column numbers
- *   - Opera 9-: full stack trace with line numbers
- *   - Chrome:   full stack trace with line and column numbers
- *   - Safari:   line and column number for the topmost stacktrace element
- *               only
- *   - IE:       no line numbers whatsoever
- *
- * Tries to guess names of anonymous functions by looking for assignments
- * in the source code. In IE and Safari, we have to guess source file names
- * by searching for function bodies inside all page scripts. This will not
- * work for scripts that are loaded cross-domain.
- * Here be dragons: some function names may be guessed incorrectly, and
- * duplicate functions may be mismatched.
- *
- * TraceKit.computeStackTrace should only be used for tracing purposes.
- * Logging of unhandled exceptions should be done with TraceKit.report,
- * which builds on top of TraceKit.computeStackTrace and provides better
- * IE support by utilizing the window.onerror event to retrieve information
- * about the top of the stack.
- *
- * Note: In IE and Safari, no stack trace is recorded on the Error object,
- * so computeStackTrace instead walks its *own* chain of callers.
- * This means that:
- *  * in Safari, some methods may be missing from the stack trace;
- *  * in IE, the topmost function in the stack trace will always be the
- *    caller of computeStackTrace.
- *
- * This is okay for tracing (because you are likely to be calling
- * computeStackTrace from the function you want to be the topmost element
- * of the stack trace anyway), but not okay for logging unhandled
- * exceptions (because your catch block will likely be far away from the
- * inner function that actually caused the exception).
- *
- * Tracing example:
- *     function trace(message) {
- *         var stackInfo = TraceKit.computeStackTrace.ofCaller();
- *         var data = message + "\n";
- *         for(var i in stackInfo.stack) {
- *             var item = stackInfo.stack[i];
- *             data += (item.func || '[anonymous]') + "() in " + item.url + ":" + (item.line || '0') + "\n";
- *         }
- *         if (window.console)
- *             console.info(data);
- *         else
- *             alert(data);
- *     }
+ * @param {string} envName
+ * @returns {Object}
  */
-TraceKit.computeStackTrace = (function computeStackTraceWrapper() {
-    var debug = false,
-        sourceCache = {};
-
-    /**
-     * Attempts to retrieve source code via XMLHttpRequest, which is used
-     * to look up anonymous function names.
-     * @param {string} url URL of source code.
-     * @return {string} Source contents.
-     */
-    function loadSource(url) {
-        if (!TraceKit.remoteFetching) { //Only attempt request if remoteFetching is on.
-            return '';
-        }
-        try {
-            var getXHR = function() {
-                try {
-                    return new window.XMLHttpRequest();
-                } catch (e) {
-                    // explicitly bubble up the exception if not found
-                    return new window.ActiveXObject('Microsoft.XMLHTTP');
-                }
-            };
-
-            var request = getXHR();
-            request.open('GET', url, false);
-            request.send('');
-            return request.responseText;
-        } catch (e) {
-            return '';
-        }
-    }
-
-    /**
-     * Retrieves source code from the source code cache.
-     * @param {string} url URL of source code.
-     * @return {Array.<string>} Source contents.
-     */
-    function getSource(url) {
-        if (!_has(sourceCache, url)) {
-            // URL needs to be able to fetched within the acceptable domain.  Otherwise,
-            // cross-domain errors will be triggered.
-            var source = '';
-            if (url.indexOf(document.domain) !== -1) {
-                source = loadSource(url);
+ASTTransforms.rewriteContextVariables = function (envName, context) {
+    return {
+        enter: function enter(node, path) {
+            // Create a new scope whenever we encounter a function declaration/expression
+            // and add all of its paramters to this new scope.
+            if (/^Function/.test(node.type)) {
+                (function () {
+                    var scope = {};
+                    node.params.forEach(function (param) {
+                        scope[param.name] = true;
+                    });
+                    scopes.push(scope);
+                })();
             }
-            sourceCache[url] = source ? source.split('\n') : [];
-        }
-
-        return sourceCache[url];
-    }
-
-    /**
-     * Tries to use an externally loaded copy of source code to determine
-     * the name of a function by looking at the name of the variable it was
-     * assigned to, if any.
-     * @param {string} url URL of source code.
-     * @param {(string|number)} lineNo Line number in source code.
-     * @return {string} The function name, if discoverable.
-     */
-    function guessFunctionName(url, lineNo) {
-        var reFunctionArgNames = /function ([^(]*)\(([^)]*)\)/,
-            reGuessFunction = /['"]?([0-9A-Za-z$_]+)['"]?\s*[:=]\s*(function|eval|new Function)/,
-            line = '',
-            maxLines = 10,
-            source = getSource(url),
-            m;
-
-        if (!source.length) {
-            return UNKNOWN_FUNCTION;
-        }
-
-        // Walk backwards from the first line in the function until we find the line which
-        // matches the pattern above, which is the function definition
-        for (var i = 0; i < maxLines; ++i) {
-            line = source[lineNo - i] + line;
-
-            if (!_isUndefined(line)) {
-                if ((m = reGuessFunction.exec(line))) {
-                    return m[1];
-                } else if ((m = reFunctionArgNames.exec(line))) {
-                    return m[1];
-                }
+            // Add any variables declared to the current scope.  This handles
+            // variable declarations with multiple declarators, e.g. var x = 5, y = 10;
+            // because we are handling all of the declarators directly (as opposed
+            // to iterating over node.declarators when node.type === "VariableDeclaration").
+            if (node.type === "VariableDeclarator") {
+                var scope = scopes[scopes.length - 1];
+                scope[node.id.name] = true;
             }
-        }
+        },
+        leave: function leave(node, path) {
+            var parent = path[path.length - 2];
 
-        return UNKNOWN_FUNCTION;
-    }
-
-    /**
-     * Retrieves the surrounding lines from where an exception occurred.
-     * @param {string} url URL of source code.
-     * @param {(string|number)} line Line number in source code to centre
-     * around for context.
-     * @return {?Array.<string>} Lines of source code.
-     */
-    function gatherContext(url, line) {
-        var source = getSource(url);
-
-        if (!source.length) {
-            return null;
-        }
-
-        var context = [],
-            // linesBefore & linesAfter are inclusive with the offending line.
-            // if linesOfContext is even, there will be one extra line
-            //   *before* the offending line.
-            linesBefore = Math.floor(TraceKit.linesOfContext / 2),
-            // Add one extra line if linesOfContext is odd
-            linesAfter = linesBefore + (TraceKit.linesOfContext % 2),
-            start = Math.max(0, line - linesBefore - 1),
-            end = Math.min(source.length, line + linesAfter - 1);
-
-        line -= 1; // convert to 0-based index
-
-        for (var i = start; i < end; ++i) {
-            if (!_isUndefined(source[i])) {
-                context.push(source[i]);
-            }
-        }
-
-        return context.length > 0 ? context : null;
-    }
-
-    /**
-     * Escapes special characters, except for whitespace, in a string to be
-     * used inside a regular expression as a string literal.
-     * @param {string} text The string.
-     * @return {string} The escaped string literal.
-     */
-    function escapeRegExp(text) {
-        return text.replace(/[\-\[\]{}()*+?.,\\\^$|#]/g, '\\$&');
-    }
-
-    /**
-     * Escapes special characters in a string to be used inside a regular
-     * expression as a string literal. Also ensures that HTML entities will
-     * be matched the same as their literal friends.
-     * @param {string} body The string.
-     * @return {string} The escaped string.
-     */
-    function escapeCodeAsRegExpForMatchingInsideHTML(body) {
-        return escapeRegExp(body).replace('<', '(?:<|&lt;)').replace('>', '(?:>|&gt;)').replace('&', '(?:&|&amp;)').replace('"', '(?:"|&quot;)').replace(/\s+/g, '\\s+');
-    }
-
-    /**
-     * Determines where a code fragment occurs in the source code.
-     * @param {RegExp} re The function definition.
-     * @param {Array.<string>} urls A list of URLs to search.
-     * @return {?Object.<string, (string|number)>} An object containing
-     * the url, line, and column number of the defined function.
-     */
-    function findSourceInUrls(re, urls) {
-        var source, m;
-        for (var i = 0, j = urls.length; i < j; ++i) {
-            // console.log('searching', urls[i]);
-            if ((source = getSource(urls[i])).length) {
-                source = source.join('\n');
-                if ((m = re.exec(source))) {
-                    // console.log('Found function in ' + urls[i]);
-
-                    return {
-                        'url': urls[i],
-                        'line': source.substring(0, m.index).split('\n').length,
-                        'column': m.index - source.lastIndexOf('\n', m.index) - 1
-                    };
-                }
-            }
-        }
-
-        // console.log('no match');
-
-        return null;
-    }
-
-    /**
-     * Determines at which column a code fragment occurs on a line of the
-     * source code.
-     * @param {string} fragment The code fragment.
-     * @param {string} url The URL to search.
-     * @param {(string|number)} line The line number to examine.
-     * @return {?number} The column number.
-     */
-    function findSourceInLine(fragment, url, line) {
-        var source = getSource(url),
-            re = new RegExp('\\b' + escapeRegExp(fragment) + '\\b'),
-            m;
-
-        line -= 1;
-
-        if (source && source.length > line && (m = re.exec(source[line]))) {
-            return m.index;
-        }
-
-        return null;
-    }
-
-    /**
-     * Determines where a function was defined within the source code.
-     * @param {(Function|string)} func A function reference or serialized
-     * function definition.
-     * @return {?Object.<string, (string|number)>} An object containing
-     * the url, line, and column number of the defined function.
-     */
-    function findSourceByFunctionBody(func) {
-        var urls = [window.location.href],
-            scripts = document.getElementsByTagName('script'),
-            body,
-            code = '' + func,
-            codeRE = /^function(?:\s+([\w$]+))?\s*\(([\w\s,]*)\)\s*\{\s*(\S[\s\S]*\S)\s*\}\s*$/,
-            eventRE = /^function on([\w$]+)\s*\(event\)\s*\{\s*(\S[\s\S]*\S)\s*\}\s*$/,
-            re,
-            parts,
-            result;
-
-        for (var i = 0; i < scripts.length; ++i) {
-            var script = scripts[i];
-            if (script.src) {
-                urls.push(script.src);
-            }
-        }
-
-        if (!(parts = codeRE.exec(code))) {
-            re = new RegExp(escapeRegExp(code).replace(/\s+/g, '\\s+'));
-        }
-
-        // not sure if this is really necessary, but I don’t have a test
-        // corpus large enough to confirm that and it was in the original.
-        else {
-            var name = parts[1] ? '\\s+' + parts[1] : '',
-                args = parts[2].split(',').join('\\s*,\\s*');
-
-            body = escapeRegExp(parts[3]).replace(/;$/, ';?'); // semicolon is inserted if the function ends with a comment.replace(/\s+/g, '\\s+');
-            re = new RegExp('function' + name + '\\s*\\(\\s*' + args + '\\s*\\)\\s*{\\s*' + body + '\\s*}');
-        }
-
-        // look for a normal function definition
-        if ((result = findSourceInUrls(re, urls))) {
-            return result;
-        }
-
-        // look for an old-school event handler function
-        if ((parts = eventRE.exec(code))) {
-            var event = parts[1];
-            body = escapeCodeAsRegExpForMatchingInsideHTML(parts[2]);
-
-            // look for a function defined in HTML as an onXXX handler
-            re = new RegExp('on' + event + '=[\\\'"]\\s*' + body + '\\s*[\\\'"]', 'i');
-
-            if ((result = findSourceInUrls(re, urls[0]))) {
-                return result;
-            }
-
-            // look for ???
-            re = new RegExp(body);
-
-            if ((result = findSourceInUrls(re, urls))) {
-                return result;
-            }
-        }
-
-        return null;
-    }
-
-    // Contents of Exception in various browsers.
-    //
-    // SAFARI:
-    // ex.message = Can't find variable: qq
-    // ex.line = 59
-    // ex.sourceId = 580238192
-    // ex.sourceURL = http://...
-    // ex.expressionBeginOffset = 96
-    // ex.expressionCaretOffset = 98
-    // ex.expressionEndOffset = 98
-    // ex.name = ReferenceError
-    //
-    // FIREFOX:
-    // ex.message = qq is not defined
-    // ex.fileName = http://...
-    // ex.lineNumber = 59
-    // ex.stack = ...stack trace... (see the example below)
-    // ex.name = ReferenceError
-    //
-    // CHROME:
-    // ex.message = qq is not defined
-    // ex.name = ReferenceError
-    // ex.type = not_defined
-    // ex.arguments = ['aa']
-    // ex.stack = ...stack trace...
-    //
-    // INTERNET EXPLORER:
-    // ex.message = ...
-    // ex.name = ReferenceError
-    //
-    // OPERA:
-    // ex.message = ...message... (see the example below)
-    // ex.name = ReferenceError
-    // ex.opera#sourceloc = 11  (pretty much useless, duplicates the info in ex.message)
-    // ex.stacktrace = n/a; see 'opera:config#UserPrefs|Exceptions Have Stacktrace'
-
-    /**
-     * Computes stack trace information from the stack property.
-     * Chrome and Gecko use this property.
-     * @param {Error} ex
-     * @return {?Object.<string, *>} Stack trace information.
-     */
-    function computeStackTraceFromStackProp(ex) {
-        if (!ex.stack) {
-            return null;
-        }
-
-        var url = "\\(?((?:file|http|https):.*?):(\\d+)(?::(\\d+))?\\)?";
-        var chrome = new RegExp("^\\s*at (?:((?:\\[object object\\])?\\S+(?: \\[as \\S+\\])?) )?(?:\\(eval at \\S+ " + url + ", (.*?):(\\d+)(?::(\\d+))?\\)|" + url + ")\\s*$", i),
-            gecko = /^\s*(\S*)(?:\((.*?)\))?@((?:file|http|https).*?):(\d+)(?::(\d+))?\s*$/i,
-            lines = ex.stack.split('\n'),
-            stack = [],
-            parts,
-            element,
-            reference = /^(.*) is undefined$/.exec(ex.message);
-
-        for (var i = 0, j = lines.length; i < j; ++i) {
-            if ((parts = gecko.exec(lines[i]))) {
-                element = {
-                    'url': parts[3],
-                    'func': parts[1] || UNKNOWN_FUNCTION,
-                    'args': parts[2] ? parts[2].split(',') : '',
-                    'line': +parts[4],
-                    'column': parts[5] ? +parts[5] : null
-                };
-            } else if ((parts = chrome.exec(lines[i]))) {
-               if(parts[5] !== undefined) {
-                  element = {
-                    'url': parts[5],
-                    'func': parts[1] || 'unknown',
-                    'line': +parts[6],
-                    'column': parts[7] ? +parts[7] : null
-                  };
-                } else {
-                  element = {
-                    'url': parts[8],
-                    'func': parts[1] || 'unknown',
-                    'line': +parts[9],
-                    'column': parts[10] ? +parts[10] : null
-                  };
-               }
-            } else {
-                continue;
-            }
-
-            if (!element.func && element.line) {
-                element.func = guessFunctionName(element.url, element.line);
-            }
-
-            if (element.line) {
-                element.context = gatherContext(element.url, element.line);
-            }
-
-            stack.push(element);
-        }
-
-        if (stack[0] && stack[0].line && !stack[0].column && reference) {
-            stack[0].column = findSourceInLine(reference[1], stack[0].url, stack[0].line);
-        }
-
-        if (!stack.length) {
-            return null;
-        }
-
-        return {
-            'mode': 'stack',
-            'name': ex.name,
-            'message': ex.message,
-            'url': document.location.href,
-            'stack': stack,
-            'useragent': navigator.userAgent
-        };
-    }
-
-    /**
-     * Computes stack trace information from the stacktrace property.
-     * Opera 10 uses this property.
-     * @param {Error} ex
-     * @return {?Object.<string, *>} Stack trace information.
-     */
-    function computeStackTraceFromStacktraceProp(ex) {
-        // Access and store the stacktrace property before doing ANYTHING
-        // else to it because Opera is not very good at providing it
-        // reliably in other circumstances.
-        var stacktrace = ex.stacktrace;
-
-        var testRE = / line (\d+), column (\d+) in (?:<anonymous function: ([^>]+)>|([^\)]+))\((.*)\) in (.*):\s*$/i,
-            lines = stacktrace.split('\n'),
-            stack = [],
-            parts;
-
-        for (var i = 0, j = lines.length; i < j; i += 2) {
-            if ((parts = testRE.exec(lines[i]))) {
-                var element = {
-                    'line': +parts[1],
-                    'column': +parts[2],
-                    'func': parts[3] || parts[4],
-                    'args': parts[5] ? parts[5].split(',') : [],
-                    'url': parts[6]
-                };
-
-                if (!element.func && element.line) {
-                    element.func = guessFunctionName(element.url, element.line);
-                }
-                if (element.line) {
-                    try {
-                        element.context = gatherContext(element.url, element.line);
-                    } catch (exc) {}
-                }
-
-                if (!element.context) {
-                    element.context = [lines[i + 1]];
-                }
-
-                stack.push(element);
-            }
-        }
-
-        if (!stack.length) {
-            return null;
-        }
-
-        return {
-            'mode': 'stacktrace',
-            'name': ex.name,
-            'message': ex.message,
-            'url': document.location.href,
-            'stack': stack,
-            'useragent': navigator.userAgent
-        };
-    }
-
-    /**
-     * NOT TESTED.
-     * Computes stack trace information from an error message that includes
-     * the stack trace.
-     * Opera 9 and earlier use this method if the option to show stack
-     * traces is turned on in opera:config.
-     * @param {Error} ex
-     * @return {?Object.<string, *>} Stack information.
-     */
-    function computeStackTraceFromOperaMultiLineMessage(ex) {
-        // Opera includes a stack trace into the exception message. An example is:
-        //
-        // Statement on line 3: Undefined variable: undefinedFunc
-        // Backtrace:
-        //   Line 3 of linked script file://localhost/Users/andreyvit/Projects/TraceKit/javascript-client/sample.js: In function zzz
-        //         undefinedFunc(a);
-        //   Line 7 of inline#1 script in file://localhost/Users/andreyvit/Projects/TraceKit/javascript-client/sample.html: In function yyy
-        //           zzz(x, y, z);
-        //   Line 3 of inline#1 script in file://localhost/Users/andreyvit/Projects/TraceKit/javascript-client/sample.html: In function xxx
-        //           yyy(a, a, a);
-        //   Line 1 of function script
-        //     try { xxx('hi'); return false; } catch(ex) { TraceKit.report(ex); }
-        //   ...
-
-        var lines = ex.message.split('\n');
-        if (lines.length < 4) {
-            return null;
-        }
-
-        var lineRE1 = /^\s*Line (\d+) of linked script ((?:file|http|https)\S+)(?:: in function (\S+))?\s*$/i,
-            lineRE2 = /^\s*Line (\d+) of inline#(\d+) script in ((?:file|http|https)\S+)(?:: in function (\S+))?\s*$/i,
-            lineRE3 = /^\s*Line (\d+) of function script\s*$/i,
-            stack = [],
-            scripts = document.getElementsByTagName('script'),
-            inlineScriptBlocks = [],
-            parts,
-            i,
-            len,
-            source;
-
-        for (i in scripts) {
-            if (_has(scripts, i) && !scripts[i].src) {
-                inlineScriptBlocks.push(scripts[i]);
-            }
-        }
-
-        for (i = 2, len = lines.length; i < len; i += 2) {
-            var item = null;
-            if ((parts = lineRE1.exec(lines[i]))) {
-                item = {
-                    'url': parts[2],
-                    'func': parts[3],
-                    'line': +parts[1]
-                };
-            } else if ((parts = lineRE2.exec(lines[i]))) {
-                item = {
-                    'url': parts[3],
-                    'func': parts[4]
-                };
-                var relativeLine = (+parts[1]); // relative to the start of the <SCRIPT> block
-                var script = inlineScriptBlocks[parts[2] - 1];
-                if (script) {
-                    source = getSource(item.url);
-                    if (source) {
-                        source = source.join('\n');
-                        var pos = source.indexOf(script.innerText);
-                        if (pos >= 0) {
-                            item.line = relativeLine + source.substring(0, pos).split('\n').length;
+            if (node.type === "Identifier") {
+                if (isReference(node, parent)) {
+                    var scopeIndex = -1;
+                    for (var i = scopes.length - 1; i > -1; i--) {
+                        if (scopes[i][node.name]) {
+                            scopeIndex = i;
+                            break;
                         }
                     }
-                }
-            } else if ((parts = lineRE3.exec(lines[i]))) {
-                var url = window.location.href.replace(/#.*$/, ''),
-                    line = parts[1];
-                var re = new RegExp(escapeCodeAsRegExpForMatchingInsideHTML(lines[i + 1]));
-                source = findSourceInUrls(re, [url]);
-                item = {
-                    'url': url,
-                    'line': source ? source.line : line,
-                    'func': ''
-                };
-            }
 
-            if (item) {
-                if (!item.func) {
-                    item.func = guessFunctionName(item.url, item.line);
-                }
-                var context = gatherContext(item.url, item.line);
-                var midline = (context ? context[Math.floor(context.length / 2)] : null);
-                if (context && midline.replace(/^\s*/, '') === lines[i + 1].replace(/^\s*/, '')) {
-                    item.context = context;
-                } else {
-                    // if (context) alert("Context mismatch. Correct midline:\n" + lines[i+1] + "\n\nMidline:\n" + midline + "\n\nContext:\n" + context.join("\n") + "\n\nURL:\n" + item.url);
-                    item.context = [lines[i + 1]];
-                }
-                stack.push(item);
-            }
-        }
-        if (!stack.length) {
-            return null; // could not parse multiline exception message as Opera stack trace
-        }
+                    // Don't rewrite function parameters.
+                    var isParam = /^Function/.test(parent.type) && parent.params.includes(node);
+                    if (isParam) {
+                        return;
+                    }
 
-        return {
-            'mode': 'multiline',
-            'name': ex.name,
-            'message': lines[0],
-            'url': document.location.href,
-            'stack': stack,
-            'useragent': navigator.userAgent
-        };
-    }
+                    // Don't catch clause parameters.
+                    if (parent.type === "CatchClause") {
+                        return;
+                    }
 
-    /**
-     * Adds information about the first frame to incomplete stack traces.
-     * Safari and IE require this to get complete data on the first frame.
-     * @param {Object.<string, *>} stackInfo Stack trace information from
-     * one of the compute* methods.
-     * @param {string} url The URL of the script that caused an error.
-     * @param {(number|string)} lineNo The line number of the script that
-     * caused an error.
-     * @param {string=} message The error generated by the browser, which
-     * hopefully contains the name of the object that caused the error.
-     * @return {boolean} Whether or not the stack information was
-     * augmented.
-     */
-    function augmentStackTraceWithInitialElement(stackInfo, url, lineNo, message) {
-        var initial = {
-            'url': url,
-            'line': lineNo
-        };
+                    // These values show up a Identifiers in the AST.  We don't
+                    // want to prefix them so return.
+                    if (["undefined", "Infinity", "NaN", "arguments"].includes(node.name)) {
+                        return;
+                    }
 
-        if (initial.url && initial.line) {
-            stackInfo.incomplete = false;
-
-            if (!initial.func) {
-                initial.func = guessFunctionName(initial.url, initial.line);
-            }
-
-            if (!initial.context) {
-                initial.context = gatherContext(initial.url, initial.line);
-            }
-
-            var reference = / '([^']+)' /.exec(message);
-            if (reference) {
-                initial.column = findSourceInLine(reference[1], initial.url, initial.line);
-            }
-
-            if (stackInfo.stack.length > 0) {
-                if (stackInfo.stack[0].url === initial.url) {
-                    if (stackInfo.stack[0].line === initial.line) {
-                        return false; // already in stack trace
-                    } else if (!stackInfo.stack[0].line && stackInfo.stack[0].func === initial.func) {
-                        stackInfo.stack[0].line = initial.line;
-                        stackInfo.stack[0].context = initial.context;
-                        return false;
+                    // Prefix identifiers that exist in the context object and
+                    // have not been defined in any scope.
+                    // Also, prefix any other identifers that
+                    // exist at the global scope.
+                    if (node.name in context && scopeIndex === -1 || scopeIndex === 0) {
+                        return b.MemberExpression(b.Identifier(envName), b.Identifier(node.name));
                     }
                 }
-            }
+            } else if (node.type === "VariableDeclaration") {
+                if (node.declarations.length === 1) {
+                    // Single VariableDeclarators
 
-            stackInfo.stack.unshift(initial);
-            stackInfo.partial = true;
-            return true;
-        } else {
-            stackInfo.incomplete = true;
-        }
+                    var decl = node.declarations[0];
 
-        return false;
-    }
+                    // If the current variable declaration has an "init" value of null
+                    //  (IE. no init value given to parser), and the current node type
+                    //  doesn't match "ForInStatement" (a for-in loop), exit the
+                    //  function.
+                    if (decl.init === null && parent.type !== "ForInStatement") {
+                        return;
+                    }
 
-    /**
-     * Computes stack trace information by walking the arguments.caller
-     * chain at the time the exception occurred. This will cause earlier
-     * frames to be missed but is the only way to get any stack trace in
-     * Safari and IE. The top frame is restored by
-     * {@link augmentStackTraceWithInitialElement}.
-     * @param {Error} ex
-     * @return {?Object.<string, *>} Stack trace information.
-     */
-    function computeStackTraceByWalkingCallerChain(ex, depth) {
-        var functionName = /function\s+([_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*)?\s*\(/i,
-            stack = [],
-            funcs = {},
-            recursion = false,
-            parts,
-            item,
-            source;
+                    // Rewrite all function declarations, e.g.
+                    // var foo = function () {} => __env__.foo = function () {}
+                    // that appear in the global scope. Draw loop methods aren't
+                    // special, they should be treated in the exact same way.
+                    if (scopes.length === 1) {
+                        if (["Program", "BlockStatement", "SwitchCase"].includes(parent.type)) {
+                            return b.ExpressionStatement(b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init));
+                        } else {
+                            if (["ForStatement"].includes(parent.type)) {
+                                // Handle variables declared inside a 'for' statement
+                                // occurring in the global scope.
+                                //
+                                // e.g. for (var i = 0; i < 10; i++) { ... } =>
+                                //      for (__env__.i = 0; __env__.i < 10; __env__.i++)
+                                return b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init);
+                            } else if (["ForInStatement"].includes(parent.type)) {
+                                // Handle variables declared inside a 'for in' statement,
+                                //  occuring in the global scope.
+                                // Example:
+                                //  for (var i in obj) { ... }
+                                //  for (__env__.i in __env__.obj) { ... }
+                                return b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name));
+                            }
+                        }
+                    }
+                } else {
+                    // Multiple VariableDeclarators
 
-        for (var curr = computeStackTraceByWalkingCallerChain.caller; curr && !recursion; curr = curr.caller) {
-            if (curr === computeStackTrace || curr === TraceKit.report) {
-                // console.log('skipping internal function');
-                continue;
-            }
+                    if (scopes.length === 1) {
 
-            item = {
-                'url': null,
-                'func': UNKNOWN_FUNCTION,
-                'line': null,
-                'column': null
-            };
+                        if (["Program", "BlockStatement"].includes(parent.type)) {
+                            // Before: var x = 5, y = 10, z;
+                            // After: __env__.x = 5; __env__.y = 10;
 
-            if (curr.name) {
-                item.func = curr.name;
-            } else if ((parts = functionName.exec(curr.toString()))) {
-                item.func = parts[1];
-            }
+                            return node.declarations.filter(function (decl) {
+                                return decl.init !== null;
+                            }).map(function (decl) {
+                                return b.ExpressionStatement(b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init));
+                            });
+                        } else {
+                            // Before: for (var i = 0, j = 0; i * j < 100; i++, j++) { ... }
+                            // After: for (__env__.i = 0, __env__.j = 0; __env__.i * __env__.j < 100; ...) { ... }
 
-            if ((source = findSourceByFunctionBody(curr))) {
-                item.url = source.url;
-                item.line = source.line;
+                            return {
+                                type: "SequenceExpression",
+                                expressions: node.declarations.filter(function (decl) {
+                                    return decl.init !== null;
+                                }).map(function (decl) {
+                                    return b.AssignmentExpression(b.MemberExpression(b.Identifier(envName), b.Identifier(decl.id.name)), "=", decl.init);
+                                })
+                            };
+                        }
+                    } else if (node.declarations.some(function (decl) {
+                        return drawLoopMethods.includes(decl.id.name);
+                    })) {
+                        // this is super edge case, it handles things that look like
+                        // var draw = function() {
+                        //     var x = 5, mouseClicked = function () { ... }, y = 10;
+                        // };
+                        // It should convert them to something like this:
+                        // __env__.draw = function() {
+                        //     var x = 5;
+                        //     var mouseClicked = function () { ... };
+                        //     var y = 10;
+                        // };
 
-                if (item.func === UNKNOWN_FUNCTION) {
-                    item.func = guessFunctionName(item.url, item.line);
+                        return node.declarations.filter(function (decl) {
+                            return decl.init !== null;
+                        }).map(function (decl) {
+                            return b.VariableDeclaration([decl], node.kind);
+                        });
+                    }
                 }
-
-                var reference = / '([^']+)' /.exec(ex.message || ex.description);
-                if (reference) {
-                    item.column = findSourceInLine(reference[1], source.url, source.line);
-                }
-            }
-
-            if (funcs['' + curr]) {
-                recursion = true;
-            }else{
-                funcs['' + curr] = true;
-            }
-
-            stack.push(item);
-        }
-
-        if (depth) {
-            // console.log('depth is ' + depth);
-            // console.log('stack is ' + stack.length);
-            stack.splice(0, depth);
-        }
-
-        var result = {
-            'mode': 'callers',
-            'name': ex.name,
-            'message': ex.message,
-            'url': document.location.href,
-            'stack': stack,
-            'useragent': navigator.userAgent
-        };
-        augmentStackTraceWithInitialElement(result, ex.sourceURL || ex.fileName, ex.line || ex.lineNumber, ex.message || ex.description);
-        return result;
-    }
-
-    /**
-     * Computes a stack trace for an exception.
-     * @param {Error} ex
-     * @param {(string|number)=} depth
-     */
-    function computeStackTrace(ex, depth) {
-        var stack = null;
-        depth = (depth == null ? 0 : +depth);
-
-        try {
-            // This must be tried first because Opera 10 *destroys*
-            // its stacktrace property if you try to access the stack
-            // property first!!
-            stack = computeStackTraceFromStacktraceProp(ex);
-            if (stack) {
-                return stack;
-            }
-        } catch (e) {
-            if (debug) {
-                throw e;
+            } else if (/^Function/.test(node.type)) {
+                // Remove all local variables from the scopes stack as we exit
+                // the function expression/declaration.
+                scopes.pop();
             }
         }
+    };
+};
 
-        try {
-            stack = computeStackTraceFromStackProp(ex);
-            if (stack) {
-                return stack;
-            }
-        } catch (e) {
-            if (debug) {
-                throw e;
-            }
-        }
-
-        try {
-            stack = computeStackTraceFromOperaMultiLineMessage(ex);
-            if (stack) {
-                return stack;
-            }
-        } catch (e) {
-            if (debug) {
-                throw e;
+ASTTransforms.checkForBannedProps = function (bannedProps) {
+    return {
+        leave: function leave(node, path) {
+            if (node.type === "Identifier" && bannedProps.includes(node.name)) {
+                throw {
+                    row: node.loc.start.line - 1,
+                    html: "Use of <code>" + node.name + "</code> as an identifier is prohibited."
+                };
             }
         }
-
-        try {
-            stack = computeStackTraceByWalkingCallerChain(ex, depth + 1);
-            if (stack) {
-                return stack;
-            }
-        } catch (e) {
-            if (debug) {
-                throw e;
-            }
-        }
-
-        return {
-            'mode': 'failed'
-        };
-    }
-
-    /**
-     * Logs a stacktrace starting from the previous call and working down.
-     * @param {(number|string)=} depth How many frames deep to trace.
-     * @return {Object.<string, *>} Stack trace information.
-     */
-    function computeStackTraceOfCaller(depth) {
-        depth = (depth == null ? 0 : +depth) + 1; // "+ 1" because "ofCaller" should drop one frame
-        try {
-            throw new Error();
-        } catch (ex) {
-            return computeStackTrace(ex, depth + 1);
-        }
-    }
-
-    computeStackTrace.augmentStackTraceWithInitialElement = augmentStackTraceWithInitialElement;
-    computeStackTrace.guessFunctionName = guessFunctionName;
-    computeStackTrace.gatherContext = gatherContext;
-    computeStackTrace.ofCaller = computeStackTraceOfCaller;
-
-    return computeStackTrace;
-}());
+    };
+};
 
 /**
- * Extends support for global error handling for asynchronous browser
- * functions. Adopted from Closure Library's errorhandler.js
+ * Searches for strings containing the name of any image or sound we provide for
+ * users and adds them to `resources` as a key.
+ *
+ * @param {Object} resources An empty Object.
+ * @returns {Object} An AST Visitor.
  */
-(function extendToAsynchronousCallbacks() {
-    var _helper = function _helper(fnName) {
-        var originalFn = window[fnName];
-        window[fnName] = function traceKitAsyncExtension() {
-            // Make a copy of the arguments
-            var args = _slice.call(arguments);
-            var originalCallback = args[0];
-            if (typeof (originalCallback) === 'function') {
-                args[0] = TraceKit.wrap(originalCallback);
+ASTTransforms.findResources = function (resources) {
+    return {
+        leave: function leave(node, path) {
+            if (node.type === "Literal" && typeof node.value === "string") {
+
+                AllImages.forEach(function (group) {
+                    group.images.forEach(function (image) {
+                        if (node.value.indexOf(image) !== -1) {
+                            resources[group.groupName + "/" + image + ".png"] = true;
+                        }
+                    });
+                });
+
+                OutputSounds.forEach(function (cls) {
+                    cls.groups.forEach(function (group) {
+                        group.sounds.forEach(function (sound) {
+                            if (node.value.indexOf(sound) !== -1) {
+                                resources[group.groupName + "/" + sound + ".mp3"] = true;
+                            }
+                        });
+                    });
+                });
             }
-            // IE < 9 doesn't support .call/.apply on setInterval/setTimeout, but it
-            // also only supports 2 argument and doesn't care what "this" is, so we
-            // can just call the original function directly.
-            if (originalFn.apply) {
-                return originalFn.apply(this, args);
-            } else {
-                return originalFn(args[0], args[1]);
-            }
-        };
+        }
     };
+};
 
-    _helper('setTimeout');
-    _helper('setInterval');
-}());
+ASTTransforms.rewriteNewExpressions = function (envName) {
+    return {
+        leave: function leave(node, path) {
+            if (node.type === "NewExpression") {
+                var _name = escodegen.generate(node.callee);
 
-//Default options:
-if (!TraceKit.remoteFetching) {
-  TraceKit.remoteFetching = true;
-}
-if (!TraceKit.collectWindowErrors) {
-  TraceKit.collectWindowErrors = true;
-}
-if (!TraceKit.linesOfContext || TraceKit.linesOfContext < 1) {
-  // 5 lines before, the offending line, 5 lines after
-  TraceKit.linesOfContext = 11;
-}
-
-
-
-// Export to global object
-window.TraceKit = TraceKit;
-
-}(window));
+                return b.CallExpression(b.CallExpression(b.MemberExpression(b.MemberExpression(b.Identifier(envName), b.Identifier("PJSCodeInjector")), b.Identifier("applyInstance")), [node.callee, b.Literal(_name)]), node.arguments);
+            }
+        }
+    };
+};

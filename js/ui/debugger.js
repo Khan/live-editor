@@ -149,7 +149,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
         // set/clear breakpoints by clicking in the gutter
         this.editor.on("guttermousedown", function(e) {
             var target = e.domEvent.target;
-            if (target.className.indexOf("ace_gutter-cell") == -1) {
+            if (target.className.indexOf("ace_gutter-cell") === -1) {
                 return;
             }
 
@@ -191,7 +191,7 @@ window.ScratchpadDebugger = Backbone.View.extend({
 
             var delta = e.data;
             var range = delta.range;
-            if (range.end.row == range.start.row) {
+            if (range.end.row === range.start.row) {
                 return;
             }
 
@@ -227,6 +227,11 @@ window.ScratchpadDebugger = Backbone.View.extend({
     },
 
     listenMessages: function(e) {
+        // DANGER!  The data coming in from the iframe could be anything,
+        // because with some cleverness the author of the program can send an
+        // arbitrary message up to us.  We need to be careful to sanitize it
+        // before doing anything with it, to avoid XSS attacks.  For more
+        // information, see the comment in handleMessages in live-editor.js.
         var event = e.originalEvent;
         var data;
 
@@ -250,9 +255,10 @@ window.ScratchpadDebugger = Backbone.View.extend({
             this.disableButtons();
             editor.setHighlightActiveLine(false);
         } else if (data.action === "step") {
-            if (data.line > 0) {
+            // Coerce to number just in case
+            if (+data.line > 0) {
                 this.enableButtons();
-                editor.gotoLine(data.line);
+                editor.gotoLine(+data.line);
                 editor.setHighlightActiveLine(true);
                 this.overlay.pause();
             } else {
