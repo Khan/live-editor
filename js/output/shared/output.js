@@ -1,9 +1,10 @@
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
+import _ from "lodash";
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
 
-const PooledWorker = require("./pooled-worker.js");
-const ScratchpadConfig = require("../../shared/config.js");
+import PooledWorker from "./pooled-worker.js";
+import ScratchpadConfig from "../../shared/config.js";
 
 const LiveEditorOutput = Backbone.View.extend({
     recording: false,

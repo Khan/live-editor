@@ -1,5 +1,7 @@
 import _ from "lodash";
 
+import i18n from "../../shared/i18n.js";
+
 import Structured from "../../../external/structuredjs/structured.js";
 import OutputTester from "../shared/output-tester.js";
 import PJSTester from "../pjs/pjs-tester.js";

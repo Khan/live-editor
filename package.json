@@ -4,7 +4,7 @@
   "description": "Live Code Editor",
   "main": "dist/live-editor.js",
   "scripts": {
-    "build": "webpack --mode development",
+    "build": "webpack && webpack --config webpack-workers.config.js",
     "test": "gulp test",
     "build:add": "git add build/"
   },
@@ -20,7 +20,7 @@
   "homepage": "https://github.com/Khan/live-editor",
   "devDependencies": {
     "async": "^0.9.0",
-    "babel-core": "5.6.18",
+    "babel-core": "^6",
     "babel-loader": "^7.1.5",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
@@ -31,7 +31,6 @@
     "copy-webpack-plugin": "^4.5.2",
     "eslint": "3.10.2",
     "expect.js": "^0.3.1",
-    "expose-loader": "^0.7.5",
     "gulp": "3.9.1",
     "gulp-bower": "0.0.7",
     "gulp-changed": "^0.4.1",
@@ -47,7 +46,6 @@
     "gulp-symlink": "^2.0.1",
     "gulp-uglify": "^0.3.1",
     "gulp-util": "^3.0.6",
-    "handlebars": "4.0.11",
     "mocha": "^1.21.4",
     "node-static": "^0.7.4",
     "object-assign": "^3.0.0",
@@ -70,13 +68,13 @@
     "escodegen": "^1.10.0",
     "escope": "^1.0.0",
     "esprima": "^4.0.0",
+    "handlebars": "4.0.11",
     "handlebars-loader": "^1.7.0",
     "jed": "^0.5.0",
     "jquery": "^2.1.1",
     "popper.js": "^1.14.3",
     "soundmanager2": "2.97.20170602",
-    "sql.js": "^0.5.0",
-    "underscore": "^1.4.4"
+    "sql.js": "^0.5.0"
   },
   "pre-commit": [
     "build",

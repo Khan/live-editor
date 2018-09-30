@@ -1,7 +1,8 @@
-/* globals i18n */
 import _ from "lodash";
 import * as esprima from "esprima";
 import escodegen from "escodegen";
+
+import i18n from "../../shared/i18n.js";
 
 import LoopProtector from "../shared/loop-protect.js";
 import OutputSounds from "../../shared/sounds.js";
@@ -104,7 +105,7 @@ export default class PJSCodeInjector {
          * The worker that analyzes the user's code.
          */
         this.hintWorker = new PooledWorker(
-            "js/live-editor.jshint_worker.js",
+            "live-editor.jshint_worker.js",
             function(hintCode, callback) {
                 // Fallback in case of no worker support
                 if (!window.Worker) {
@@ -1058,7 +1059,8 @@ export default class PJSCodeInjector {
 
         // TODO(kevinb) generate this code once (once webpack is in place)
         helperCode += `var resources = ${JSON.stringify(resources)};\n`;
-        // We rename it to OutputSounds2 so that webpack doesn't rewrite it
+        // If we name this OutputSounds, webpack rewrites the later reference,
+        // so we rename this variable to OutputSounds2.
         helperCode += `var OutputSounds2 = ${JSON.stringify(OutputSounds)};\n`;
         helperCode += PJSUtils.cleanupCode(
             PJSUtils.codeFromFunction(function () {

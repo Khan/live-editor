@@ -4,21 +4,13 @@ const webpack = require("webpack");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 const config = {
-    performance: {hints: false},
     entry: {
-        i18n: ["./js/shared/i18n.js"],
         output_pjs_deps: [
             "./external/processing-js/processing.js",
             "./external/jshint/jshint.js",
         ],
         output_webpage_deps: ["./external/html2canvas/html2canvas.js"],
         output_sql_deps: ["./external/html2canvas/html2canvas.js"],
-        test_worker: [
-            "./js/shared/i18n.js",
-            "./js/workers/pjs/underscore-exposed.js",
-            "./js/workers/pjs/test-worker.js",
-        ],
-        jshint_worker: ["./js/workers/pjs/jshint-worker.js"],
         // Used for demos
         demos_pjs_output: ["./demos/simple/output_pjs.js"],
         demos_webpage_output: ["./demos/simple/output_webpage.js"],
@@ -44,8 +36,6 @@ const config = {
             fs: true,
             // Bundling this results in an asm error
             "sql.js": "SQL",
-            // Separated into its own build file (to mirror webapp)
-            i18n: "i18n",
         },
     ],
     output: {
@@ -75,15 +65,6 @@ const config = {
                     ]
                 }
             },
-            {
-                test: require.resolve("underscore"),
-                use: [
-                    {
-                        loader: "expose-loader",
-                        options: "_",
-                    },
-                ],
-            }
         ],
     },
     plugins: [

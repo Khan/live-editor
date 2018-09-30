@@ -1,7 +1,7 @@
-/* globals i18n */
 import _ from "lodash";
 import * as esprima from "esprima";
 
+import i18n from "../../shared/i18n.js";
 import OutputSounds from "../../shared/sounds.js";
 import walkAST from "../shared/ast-walker.js";
 

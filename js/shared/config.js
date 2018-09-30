@@ -1,4 +1,4 @@
-const Backbone = require("backbone");
+import Backbone from "backbone";
 
 // Maintain all of the configuration options and settings for the site.
 // Have them be versioned and attached to the ScratchpadRevision so that

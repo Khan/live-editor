@@ -1,16 +1,7 @@
 import PJSCodeInjector from "../../../js/output/pjs/pjs-code-injector.js";
 
-const getCodeFromOptions = function(code) {
-    // Assume the code is a string, by default
-    // If not then we assume that it's a function so we need to
-    // extract the code to run from the serialized function
-    if (code && typeof code !== "string") {
-        code = code.toString();
-        code = code.substr(code.indexOf("{") + 1);
-        code = code.substr(0, code.length - 1);
-    }
-    return code;
-};
+import {getCodeFromOptions} from "./test_utils.js";
+
 
 var cleanupCode = function(code) {
     var lines = code.split("\n").filter(function(line) {

@@ -55,7 +55,7 @@ StateScrubber.prototype = {
     },
 
     clearTimeoutsAndIntervals: function() {
-    	// Intervals are acutally also timeouts under the hood, so clearing all the
+    	// Intervals are actually also timeouts under the hood, so clearing all the
     	// timeouts since last time is sufficient.
     	// (If you're interested intervals are timeouts with the repeat flag set to true:
     	// www.w3.org/TR/html5/webappapis.html#timers)

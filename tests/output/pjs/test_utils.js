@@ -43,7 +43,7 @@ export function runTest(options) {
     itFunc(displayTitle, function(done) {
         var output = new LiveEditorOutput({
             outputType: "pjs",
-            workersDir: "../../../build/",
+            workersDir: "../../../build/workers/",
             externalsDir: "../../../build/external/",
             imagesDir: "../../../build/images/",
             soundsDir: "../../../sounds/",
@@ -258,7 +258,7 @@ export function simulateClick(output) {
 export function createLiveEditorOutput() {
     return new LiveEditorOutput({
         outputType: "pjs",
-        workersDir: "../../../build/",
+        workersDir: "../../../build/workers/",
         externalsDir: "../../../build/external/",
         imagesDir: "../../../build/images/",
         soundsDir: "../../../sounds/",

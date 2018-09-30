@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -101,11 +101,11 @@ eval("var require;// 2.4.0\nvar JSHINT;\nif (typeof window === 'undefined') wind
 /*!*****************************************!*\
   !*** ./js/workers/pjs/jshint-worker.js ***!
   \*****************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("\n\n__webpack_require__(/*! es5-shim */ \"./node_modules/es5-shim/es5-shim.js\");\n\nvar _externalJshintJshintJs = __webpack_require__(/*! ../../../external/jshint/jshint.js */ \"./external/jshint/jshint.js\");\n\nvar init = false;\n\nself.onmessage = function (event) {\n    // We don't import JSHint on load as we need to know which language\n    // the user is visiting the site in. If there is no language then\n    // we just use the normal file.\n    if (!init) {\n        init = true;\n    }\n\n    // Evaluate the code using JSHint\n    (0, _externalJshintJshintJs.JSHINT)(event.data.code);\n\n    // Return the JSHint results to the main code\n    self.postMessage({\n        type: \"jshint\",\n        message: {\n            hintData: JSON.parse(JSON.stringify(_externalJshintJshintJs.JSHINT.data())),\n            hintErrors: _externalJshintJshintJs.JSHINT.errors\n        }\n    });\n};\n\n//# sourceURL=webpack:///./js/workers/pjs/jshint-worker.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var es5_shim__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! es5-shim */ \"./node_modules/es5-shim/es5-shim.js\");\n/* harmony import */ var es5_shim__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(es5_shim__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _external_jshint_jshint_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../external/jshint/jshint.js */ \"./external/jshint/jshint.js\");\n/* harmony import */ var _external_jshint_jshint_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_external_jshint_jshint_js__WEBPACK_IMPORTED_MODULE_1__);\n\n\n\n\nvar init = false;\n\nself.onmessage = function (event) {\n    // We don't import JSHint on load as we need to know which language\n    // the user is visiting the site in. If there is no language then\n    // we just use the normal file.\n    if (!init) {\n        init = true;\n    }\n\n    // Evaluate the code using JSHint\n    Object(_external_jshint_jshint_js__WEBPACK_IMPORTED_MODULE_1__[\"JSHINT\"])(event.data.code);\n\n    // Return the JSHint results to the main code\n    self.postMessage({\n        type: \"jshint\",\n        message: {\n            hintData: JSON.parse(JSON.stringify(_external_jshint_jshint_js__WEBPACK_IMPORTED_MODULE_1__[\"JSHINT\"].data())),\n            hintErrors: _external_jshint_jshint_js__WEBPACK_IMPORTED_MODULE_1__[\"JSHINT\"].errors\n        }\n    });\n};\n\n//# sourceURL=webpack:///./js/workers/pjs/jshint-worker.js?");
 
 /***/ }),
 
@@ -120,7 +120,7 @@ eval("var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!\n * 
 
 /***/ }),
 
-/***/ 4:
+/***/ 1:
 /*!***********************************************!*\
   !*** multi ./js/workers/pjs/jshint-worker.js ***!
   \***********************************************/

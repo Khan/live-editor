@@ -1,6 +1,9 @@
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
+import _ from "lodash";
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
+
+import i18n from "../../shared/i18n.js";
 
 import LoopProtector from "../shared/loop-protect.js";
 import Slowparse from "../../../external/slowparse/slowparse.js";

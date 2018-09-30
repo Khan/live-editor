@@ -3,16 +3,16 @@ import WebpageOutput from "../../../js/output/webpage/webpage-output.js";
 
 LiveEditorOutput.registerOutput("webpage", WebpageOutput);
 
-export function createLiveEditorOutput(extraOptions) {
+export function createLiveEditorOutput(extraOptions = {}) {
 
     const options = Object.assign({}, {
         el: document.getElementById("live-editor-output"),
         outputType: "webpage",
-        workersDir: "../../../build/",
+        workersDir: "../../../build/workers/",
         externalsDir: "../../../build/external/",
         imagesDir: "../../../build/images/",
         redirectUrl: "http://ka.org/r",
-    }, extraOptions || {});
+    }, extraOptions);
 
     return new LiveEditorOutput(options);
 };

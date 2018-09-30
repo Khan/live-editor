@@ -1,11 +1,13 @@
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
-const Handlebars = require("handlebars/runtime");
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
+import Handlebars from "handlebars/runtime";
+
+import i18n from "../../shared/i18n.js";
 
 import SQLTester from "./sql-tester.js";
 
-const sqlResultsTemplate = require("../../../tmpl/sql-results.handlebars");
+import sqlResultsTemplate from "../../../tmpl/sql-results.handlebars";
 
 const SQLOutput = Backbone.View.extend({
     initialize: function(options) {

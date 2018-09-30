@@ -1,12 +1,14 @@
-const $ = require("jquery");
-const Backbone = require("backbone");
-Backbone.$ = require("jquery");
+import _ from "lodash";
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
 
-const PJSCodeInjector = require("./pjs-code-injector.js");
-const PJSDebugger = require("./pjs-debugger.js");
-const PJSResourceCache = require("./pjs-resource-cache.js");
-const PJSTester = require("./pjs-tester.js");
-const BabyHint = require("./babyhint.js");
+import i18n from "../../shared/i18n.js";
+
+import PJSCodeInjector from "./pjs-code-injector.js";
+import PJSResourceCache from "./pjs-resource-cache.js";
+import PJSTester from "./pjs-tester.js";
+import BabyHint from "./babyhint.js";
 
 const PJSOutput = Backbone.View.extend({
     // Canvas mouse events to track
@@ -27,7 +29,7 @@ const PJSOutput = Backbone.View.extend({
         this.output = options.output;
 
         this.tester = new PJSTester(_.extend(options, {
-            workerFile: "js/live-editor.test_worker.js",
+            workerFile: "live-editor.test_worker.js",
         }));
 
         this.render();

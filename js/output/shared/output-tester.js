@@ -1,6 +1,7 @@
-/* We list i18n and lodash as globals instead of importing them
-  due to how we load this file in the test-worker */
-/* global i18n, _ */
+import _ from "lodash";
+
+import i18n from "../../shared/i18n.js";
+
 import PooledWorker from "./pooled-worker.js";
 
 const OutputTester = function() {};
@@ -142,6 +143,8 @@ OutputTester.prototype = {
         if (!code) {
             return true;
         }
+        // The KA challenges use $._ for strings to translate instead of i18n._
+        // $ is no longer a global, so we replace $._ with i18n._
         code = code.replace(/\$\._/g, "i18n._");
         code = "with(arguments[0]){\n" + code + "\n}";
         (new Function(code)).call({}, this.testContext);

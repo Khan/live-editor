@@ -315,3 +315,5 @@ if (typeof Handlebars !== "undefined") {
     Handlebars.registerHelper("ngettext",
         i18n.handlebars_ngettext);
 }
+
+export default i18n;

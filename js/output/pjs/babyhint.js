@@ -14,9 +14,10 @@
  *                      the same line)
  * }
  */
-
-/* globals i18n */
 import _ from "lodash";
+
+import i18n from "../../shared/i18n.js";
+
 const BabyHint = {
 
     EDIT_DISTANCE_THRESHOLD: 2,
