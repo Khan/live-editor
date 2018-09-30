@@ -50,8 +50,8 @@ const config = {
     module: {
         rules: [
             {
-                test: /\.(js|jsx)$/,
-                exclude: /(node_modules|external|tests|\.(test)\.(js|jsx)$)/,
+                test: /\.js$/,
+                exclude: /(node_modules|external|ast_transform_test\.js$)/,
                 use: {
                     loader: "babel-loader",
                 },
