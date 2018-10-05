@@ -6,16 +6,11 @@
 </head>
 <body>
     <div id="live-editor-output"></div>
-
-    <script src="../../build/js/live-editor.core_deps.js"></script>
-    <script src="../../build/js/live-editor.shared.js"></script>
-    <script src="../../build/js/live-editor.output.js"></script>
+    <!-- Exposes html2canvas as global -->
     <script src="../../build/js/live-editor.output_sql_deps.js"></script>
-    <script src="../../build/js/live-editor.output_sql.js"></script>
-    <script>
-    new LiveEditorOutput({
-        el: $("#live-editor-output")[0]
-    });
-    </script>
+    <!-- Exposes SQL as global -->
+    <script src="../../external/sqlitejs/sql.js"></script>
+    <!-- Demo-specific: Sets up the LiveEditorOutput with SQL output type-->
+    <script src="../../build/js/live-editor.demos_sql_output.js"></script>
 </body>
 </html>

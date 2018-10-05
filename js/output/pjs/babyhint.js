@@ -14,8 +14,11 @@
  *                      the same line)
  * }
  */
+import _ from "lodash";
 
-var BabyHint = {
+import i18n from "../../shared/i18n.js";
+
+const BabyHint = {
 
     EDIT_DISTANCE_THRESHOLD: 2,
 
@@ -708,5 +711,4 @@ var BabyHint = {
         return errors;
     }
 };
-// TODO(jlfwong): Stop globalizing BabyHint
-window.BabyHint = BabyHint;
+export default BabyHint;

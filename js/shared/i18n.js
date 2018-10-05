@@ -1,4 +1,6 @@
-(function() {
+import Jed from "jed";
+
+(function(global) {
     // If no language is specified, or if an unknown language is specified,
     // then fall back to using "en" as the base language
     var defaultLang = "en";
@@ -301,8 +303,8 @@
             options.inverse(this);
     };
 
-    window.i18n = i18n;
-})();
+    global.i18n = i18n;
+})(typeof window !== "undefined" ? window : global);
 
 if (typeof Handlebars !== "undefined") {
     Handlebars.registerHelper("_", i18n.handlebars_underscore);
@@ -313,3 +315,5 @@ if (typeof Handlebars !== "undefined") {
     Handlebars.registerHelper("ngettext",
         i18n.handlebars_ngettext);
 }
+
+export default i18n;

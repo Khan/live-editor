@@ -1,4 +1,11 @@
-window.PJSTester = function(options) {
+import _ from "lodash";
+
+import i18n from "../../shared/i18n.js";
+
+import OutputTester from "../shared/output-tester.js";
+import Structured from "../../../external/structuredjs/structured.js";
+
+const PJSTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
 };
@@ -460,3 +467,5 @@ PJSTester.prototype.testMethods = {
         });
     }
 };
+
+export default PJSTester;

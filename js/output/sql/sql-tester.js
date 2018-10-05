@@ -1,4 +1,9 @@
-var SQLTester = function(options) {
+import _ from "lodash";
+import SQL from "sql.js";
+
+import OutputTester from "../shared/output-tester.js";
+
+const SQLTester = function(options) {
     this.initialize(options);
     this.bindTestContext();
 };
@@ -666,4 +671,4 @@ SQLTester.prototype.testMethods = {
     },
 };
 
-
+export default SQLTester;

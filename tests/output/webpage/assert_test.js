@@ -1,4 +1,7 @@
+import {assertTest, createLiveEditorOutput, runTest} from "./test_utils.js";
+
 // TODO(kevinb) remove after challenges have been converted to use i18n._
+const $ = {};
 $._ = i18n._;
 
 describe("Challenge Assertions - HTML", function() {
@@ -73,7 +76,7 @@ describe("Challenge Assertions - HTML Scripting", function() {
     var xTest = (function() {
         staticTest("Set X", function() {
             var result = pass();
-            if ($("iframe")[0].contentWindow.x !== 4) {
+            if (document.querySelector("iframe").contentWindow.x !== 4) {
                 result = fail("Did you set x to 4?");
             }
             var descrip = "I don't really care";
@@ -198,14 +201,7 @@ describe("CSS selector matching with wildcards", function() {
     var output;
 
     before(function() {
-        output = new LiveEditorOutput({
-            el: $("#output-area")[0],
-            outputType: "webpage",
-            workersDir: "../../../build/workers/",
-            externalsDir: "../../../build/external/",
-            imagesDir: "../../../build/images/",
-            jshintFile: "../../../build/external/jshint/jshint.js"
-        });
+        output = createLiveEditorOutput();
     });
 
     var selectorTests = [

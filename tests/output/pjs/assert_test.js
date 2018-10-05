@@ -1,3 +1,5 @@
+import {assertTest} from "./test_utils.js";
+
 describe("Challenge Assertions", function() {
     var hopperTest = (function() {
         staticTest("Start the H!", function() {
@@ -33,7 +35,7 @@ describe("Challenge Assertions", function() {
         validate: hopperTest,
         reason: "\"reect\" is not defined. Maybe you meant to type \"rect\", or you\'re using a variable you didn\'t define.",
         babyhint: true
-    }); 
+    });
 
     assertTest({
         title: "Getting a JSHint syntax error",
@@ -47,7 +49,7 @@ describe("Challenge Assertions", function() {
         title: "Doing the step with no errors",
         code: "rect(20, 20, 10, 20);",
         validate: hopperTest
-    });    
+    });
 
     // This has assertMatch with syntaxChecks array as final argument
     var syntaxChecksTests = (function() {
@@ -104,11 +106,11 @@ describe("Challenge Assertions", function() {
             };
             var callback = constraint(["$a", "$b"], function(a, b) {
                 return a.value > b.value;
-            });        
+            });
             var result = match(structure(pattern, callback));
             if (fails(result)) {
                 result = fail("Make your X bigger than your Y");
-            }    
+            }
             assertMatch(result, "", "");
         });
     }.toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
@@ -135,11 +137,11 @@ describe("Challenge Assertions", function() {
             };
             var callback = function($a, $b) {
                 return $a.value > $b.value;
-            };        
+            };
             var result = match(structure(pattern, callback));
             if (fails(result)) {
                 result = fail("Make your X bigger than your Y");
-            }    
+            }
             assertMatch(result, "", "");
         });
     }.toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");

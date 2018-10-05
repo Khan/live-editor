@@ -1,3 +1,5 @@
+/* globals i18n */
+
 if (!i18n._) {
     i18n._ = function(msg) {
         return msg;
@@ -7,7 +9,7 @@ if (!i18n._) {
 // The master list of acceptable sounds
 // Build a list of all the available sounds
 // TODO(kevinb) add methods to help query for sounds
-window.OutputSounds = [{
+const OutputSounds = [{
     className: "Sound effects",
     groups: [{
         groupName: "rpg",
@@ -22,3 +24,5 @@ window.OutputSounds = [{
         citeLink: "https://www.khanacademy.org/profile/spongejr/"
     }]
 }];
+
+export default OutputSounds;

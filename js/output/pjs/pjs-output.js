@@ -1,4 +1,16 @@
-window.PJSOutput = Backbone.View.extend({
+import _ from "lodash";
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
+
+import i18n from "../../shared/i18n.js";
+
+import PJSCodeInjector from "./pjs-code-injector.js";
+import PJSResourceCache from "./pjs-resource-cache.js";
+import PJSTester from "./pjs-tester.js";
+import BabyHint from "./babyhint.js";
+
+const PJSOutput = Backbone.View.extend({
     // Canvas mouse events to track
     // Tracking: mousemove, mouseover, mouseout, mousedown, and mouseup
     trackedMouseEvents: ["move", "over", "out", "down", "up"],
@@ -17,7 +29,7 @@ window.PJSOutput = Backbone.View.extend({
         this.output = options.output;
 
         this.tester = new PJSTester(_.extend(options, {
-            workerFile: "pjs/test-worker.js"
+            workerFile: "live-editor.test_worker.js",
         }));
 
         this.render();
@@ -52,7 +64,11 @@ window.PJSOutput = Backbone.View.extend({
             var windowMethods = ["alert", "open", "showModalDialog",
                 "confirm", "prompt", "eval"];
             for (var i = 0, l = windowMethods.length; i < l; i++) {
-                window.constructor.prototype[windowMethods[i]] = $.noop;
+                try {
+                    window.constructor.prototype[windowMethods[i]] = _.noop;
+                } catch (e) {
+                    // In tests, it can't assign them after they've been frozen
+                }
             }
         }
 
@@ -477,9 +493,4 @@ window.PJSOutput = Backbone.View.extend({
     }
 });
 
-// Add in some static helper methods
-_.extend(PJSOutput, {
-
-});
-
-LiveEditorOutput.registerOutput("pjs", PJSOutput);
+export default PJSOutput;

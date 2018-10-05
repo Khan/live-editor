@@ -1,5 +1,15 @@
-/* global SQLTester */
-window.SQLOutput = Backbone.View.extend({
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
+import Handlebars from "handlebars/runtime";
+
+import i18n from "../../shared/i18n.js";
+
+import SQLTester from "./sql-tester.js";
+
+import sqlResultsTemplate from "../../../tmpl/sql-results.handlebars";
+
+const SQLOutput = Backbone.View.extend({
     initialize: function(options) {
         this.config = options.config;
         this.output = options.output;
@@ -215,7 +225,7 @@ window.SQLOutput = Backbone.View.extend({
             return deferred;
         }
 
-        if (!window.SQLOutput.isSupported()) {
+        if (!SQLOutput.isSupported()) {
             deferred.resolve({
               errors: [{
                   row: -1,
@@ -377,7 +387,7 @@ window.SQLOutput = Backbone.View.extend({
     },
 
     runCode: function(userCode, callback) {
-        if (!window.SQLOutput.isSupported()) {
+        if (!SQLOutput.isSupported()) {
             return callback([], userCode);
         }
 
@@ -387,7 +397,7 @@ window.SQLOutput = Backbone.View.extend({
         var tables = SQLTester.Util.getTables(db);
         db.close();
 
-        var output = Handlebars.templates["sql-results"]({
+        var output = sqlResultsTemplate({
             tables: tables,
             results: results,
             databaseMsg: i18n._("Database Schema"),
@@ -402,10 +412,10 @@ window.SQLOutput = Backbone.View.extend({
         // If a new result set was added, scroll to the bottom
         if (results && results.length) {
             // Ignore the first time the scratchpad loads
-            if (window.SQLOutput.lastResultsLen !== undefined) {
+            if (SQLOutput.lastResultsLen !== undefined) {
                 $(doc).scrollTop($(doc).height());
             }
-            window.SQLOutput.lastResultsLen = results.length;
+            SQLOutput.lastResultsLen = results.length;
         }
 
         this.postProcessing();
@@ -422,9 +432,9 @@ window.SQLOutput = Backbone.View.extend({
     }
 });
 
-window.SQLOutput.isSupported = function() {
+SQLOutput.isSupported = function() {
     // Check to make sure the typed arrays dependency is supported.
     return "Uint8ClampedArray" in window;
 };
 
-LiveEditorOutput.registerOutput("sql", SQLOutput);
+export default SQLOutput;

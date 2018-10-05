@@ -1,4 +1,8 @@
+import {assertTest, runTest} from "./test_utils.js";
+
 describe("Challenge Assertions - SQL Tables", function() {
+    let userCode;
+
     var basicTest = function() {
         staticTest($._("Create a table and insert some values"), function() {
             var description = $._("Now let's add 3 books into our bookshelf");
@@ -8,7 +12,7 @@ describe("Challenge Assertions - SQL Tables", function() {
                 "INSERT INTO _$1 VALUES(1, \"book2\", 4);" +
                 "INSERT INTO _$1 VALUES(2, \"book3\", 5);";
             var templateDB = initTemplateDB(template);
-            
+
             var result = allPass(matchTableCount(templateDB),
                 matchTableRowCount(templateDB),
                 matchTableColumnCount(templateDB));
@@ -35,7 +39,7 @@ describe("Challenge Assertions - SQL Tables", function() {
     }.toString().replace(/^function.*?{([\s\S]*?)}$/, "$1");
 
     // No code should not be accepted
-    var userCode = "";
+    userCode = "";
     assertTest({
         title: "No code not accepted",
         code: userCode,
@@ -129,6 +133,8 @@ describe("Challenge Assertions - SQL Tables", function() {
 
 
 describe("Challenge Assertions - SQL Results", function() {
+    let userCode;
+
     var basicTest = function() {
         staticTest($._("Query a table of values"), function() {
             var description = $._("Now let's add 3 books into our bookshelf");
@@ -136,7 +142,7 @@ describe("Challenge Assertions - SQL Results", function() {
                 "INTEGER);" +
                 "INSERT INTO _$1 VALUES(1, \"book1\", 5);" +
                 "INSERT INTO _$1 VALUES(1, \"book2\", 4);" +
-                "INSERT INTO _$1 VALUES(2, \"book3\", 5);" + 
+                "INSERT INTO _$1 VALUES(2, \"book3\", 5);" +
                 "SELECT name FROM _$1";
             var templateDB = initTemplateDB(template);
 
@@ -181,7 +187,7 @@ describe("Challenge Assertions - SQL Results", function() {
             "INTEGER);" +
             "INSERT INTO books VALUES(1, \"book1\", 5);" +
             "INSERT INTO books VALUES(1, \"book2\", 4);" +
-            "INSERT INTO books VALUES(2, \"book3\", 5);" + 
+            "INSERT INTO books VALUES(2, \"book3\", 5);" +
             "SELECT name FROM books LIMIT 2;";
     assertTest({
         title: "It should show failing message for result row count",
@@ -198,7 +204,7 @@ describe("Challenge Assertions - SQL Results", function() {
             "INTEGER);" +
             "INSERT INTO books VALUES(1, \"book1\", 5);" +
             "INSERT INTO books VALUES(1, \"book2\", 4);" +
-            "INSERT INTO books VALUES(2, \"book3\", 5);" + 
+            "INSERT INTO books VALUES(2, \"book3\", 5);" +
             "SELECT * FROM books";
     assertTest({
         title: "It should show failing message for result column count",
@@ -215,7 +221,7 @@ describe("Challenge Assertions - SQL Results", function() {
             "INTEGER);" +
             "INSERT INTO books VALUES(1, \"book1\", 5);" +
             "INSERT INTO books VALUES(2, \"book2\", 4);" +
-            "INSERT INTO books VALUES(3, \"book3\", 5);" + 
+            "INSERT INTO books VALUES(3, \"book3\", 5);" +
             "SELECT name FROM books ORDER BY name ASC";
     assertTest({
         title: "It should show that you got values but in wrong order ",
@@ -232,7 +238,7 @@ describe("Challenge Assertions - SQL Results", function() {
             "INTEGER);" +
             "INSERT INTO books VALUES(1, \"book1\", 5);" +
             "INSERT INTO books VALUES(1, \"book2\", 4);" +
-            "INSERT INTO books VALUES(2, \"book3\", 5);" + 
+            "INSERT INTO books VALUES(2, \"book3\", 5);" +
             "SELECT id FROM books";
     assertTest({
         title: "It should show failing message for result row values",
@@ -249,7 +255,7 @@ describe("Challenge Assertions - SQL Results", function() {
             "INTEGER);" +
             "INSERT INTO books VALUES(1, \"book1\", 5);" +
             "INSERT INTO books VALUES(1, \"book2\", 4);" +
-            "INSERT INTO books VALUES(2, \"book3\", 5);" + 
+            "INSERT INTO books VALUES(2, \"book3\", 5);" +
             "SELECT name AS book_name FROM books";
     assertTest({
         title: "It should show failing message for result column names",
@@ -266,7 +272,7 @@ describe("Challenge Assertions - SQL Results", function() {
             "INTEGER);" +
             "INSERT INTO books VALUES(1, \"book1\", 5);" +
             "INSERT INTO books VALUES(1, \"book2\", 4);" +
-            "INSERT INTO books VALUES(2, \"book3\", 5);" + 
+            "INSERT INTO books VALUES(2, \"book3\", 5);" +
             "SELECT name FROM books;";
     assertTest({
         title: "Everything should match",

@@ -1,24 +1,32 @@
-/* jshint unused:false */
-var runTest = function(options) {
-    if (options.version === undefined) {
-        options.version = ScratchpadConfig.prototype.latestVersion();
-    }
+import LiveEditorOutput from "../../../js/output/shared/output.js";
+import SQLOutput from "../../../js/output/sql/sql-output.js";
 
-    var displayTitle = options.title +
-        " (Version: " + options.version + ")";
+LiveEditorOutput.registerOutput("sql", SQLOutput);
+
+export function createLiveEditorOutput(extraOptions) {
+
+    const options = Object.assign({}, {
+        el: document.getElementById("live-editor-output"),
+        outputType: "sql",
+        workersDir: "../../../build/",
+        externalsDir: "../../../build/external/",
+        imagesDir: "../../../build/images/",
+    }, extraOptions || {});
+
+    return new LiveEditorOutput(options);
+};
+
+/* jshint unused:false */
+export function runTest(options) {
+
+    var displayTitle = options.title;
 
     // Assume the code is a string, by default
     var code = options.code;
 
     // Start an asynchronous test
     it(displayTitle, function(done) {
-        var output = new LiveEditorOutput({
-            el: $("#output-area")[0],
-            outputType: "sql",
-            workersDir: "../../../build/workers/",
-            externalsDir: "../../../build/external/",
-            imagesDir: "../../../build/images/",
-        });
+        var output = createLiveEditorOutput({validate: options.validate})
 
         // Switch to the Scratchpad's version
         output.config.switchVersion(options.version);
@@ -34,7 +42,7 @@ var runTest = function(options) {
                 });
                 return;
             }
-            
+
             if (options.pass) {
                 expect(errors).to.have.length(0);
             } else {
@@ -48,7 +56,7 @@ var runTest = function(options) {
     });
 };
 
-var test = function(title, code) {
+export function test(title, code) {
     if (typeof code === "object") {
         code.forEach(function(userCode) {
             test(title, userCode);
@@ -64,17 +72,17 @@ var test = function(title, code) {
     });
 };
 
-var failingTest = function(title, code, errors) {
+export function failingTest(title, code, errors) {
     runTest({
         title: title,
         code: code,
         expected: false,
         pass: false,
-        expectedErrors: errors
+        expectedErrors: errors || []
     });
 };
 
-var assertTest = function(options) {
+export function assertTest(options) {
     options.test = function(output, errors, testResults, callback) {
         if (!options.reason) {
             expect(errors.length).to.be.equal(0);
@@ -86,14 +94,6 @@ var assertTest = function(options) {
                     .to.be.equal(options.reason);
             } else {
                 expect(errors).to.not.equal([]);
-                if (options.jshint) {
-                    expect(errors[0].lint).to.be.ok();
-                    expect(errors[0].lint.reason)
-                        .to.be.equal(options.reason);
-                } else {
-                    var $html = $("<div>" + errors[0].text + "</div>");
-                    expect($html.text()).to.be.equal(options.reason);
-                }
             }
         }
         callback();

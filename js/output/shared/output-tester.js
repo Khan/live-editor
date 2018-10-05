@@ -1,4 +1,10 @@
-window.OutputTester = function() {};
+import _ from "lodash";
+
+import i18n from "../../shared/i18n.js";
+
+import PooledWorker from "./pooled-worker.js";
+
+const OutputTester = function() {};
 
 OutputTester.prototype = {
     initialize: function(options) {
@@ -19,8 +25,9 @@ OutputTester.prototype = {
             }
         }
 
-        // This won't be defined inside a web worker itself (that's ok)
-        if (typeof PooledWorker === "undefined") {
+        // When we call this from a worker, we don't specify a workerFile,
+        // and that signifies that we don't need to spawn a worker
+        if (!options || !options.workerFile) {
             return;
         }
 
@@ -136,7 +143,9 @@ OutputTester.prototype = {
         if (!code) {
             return true;
         }
-
+        // The KA challenges use $._ for strings to translate instead of i18n._
+        // $ is no longer a global, so we replace $._ with i18n._
+        code = code.replace(/\$\._/g, "i18n._");
         code = "with(arguments[0]){\n" + code + "\n}";
         (new Function(code)).call({}, this.testContext);
 
@@ -265,3 +274,5 @@ OutputTester.prototype = {
         }
     }
 };
+
+export default OutputTester;

@@ -1,3 +1,7 @@
+import "es5-shim";
+
+import { JSHINT } from "../../../external/jshint/jshint.js";
+
 var init = false;
 
 self.onmessage = function(event) {
@@ -6,15 +10,6 @@ self.onmessage = function(event) {
     // we just use the normal file.
     if (!init) {
         init = true;
-
-        importScripts(event.data.externalsDir +
-            "es5-shim/es5-shim.js?cachebust=" + (new Date()).toDateString());
-
-        importScripts(event.data.jshintFile +
-            "?cachebust=" + (new Date()).toDateString());
-
-        importScripts(event.data.externalsDir +
-            "underscore/underscore.js?cachebust=" + (new Date()).toDateString());
     }
 
     // Evaluate the code using JSHint

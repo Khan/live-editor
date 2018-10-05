@@ -1,10 +1,25 @@
+import _ from "lodash";
+import * as esprima from "esprima";
+import escodegen from "escodegen";
+
+import i18n from "../../shared/i18n.js";
+
+import LoopProtector from "../shared/loop-protect.js";
+import OutputSounds from "../../shared/sounds.js";
+import PooledWorker from "../shared/pooled-worker.js";
+import walkAST from "../shared/ast-walker.js";
+
+import ASTTransforms from "./pjs-ast-transforms.js";
+import PJSResourceCache from "./pjs-resource-cache.js";
+import PJSUtils from "./pjs-utils.js";
+
 /**
  * The CodeInjector object is responsible for running code, determining what
  * code to inject when the user code has been updated, and maintaining the
  * appropriate state in the processing object in order to make live editing
  * of processing-js programs work correctly.
  */
-class PJSCodeInjector {
+export default class PJSCodeInjector {
 
     /**
      * Create a new processing-js code injector.
@@ -90,7 +105,7 @@ class PJSCodeInjector {
          * The worker that analyzes the user's code.
          */
         this.hintWorker = new PooledWorker(
-            "pjs/jshint-worker.js",
+            "live-editor.jshint_worker.js",
             function(hintCode, callback) {
                 // Fallback in case of no worker support
                 if (!window.Worker) {
@@ -116,7 +131,6 @@ class PJSCodeInjector {
                 worker.postMessage({
                     code: hintCode,
                     externalsDir: this.externalsDir,
-                    jshintFile: this.jshintFile
                 });
             }
         );
@@ -1045,6 +1059,9 @@ class PJSCodeInjector {
 
         // TODO(kevinb) generate this code once (once webpack is in place)
         helperCode += `var resources = ${JSON.stringify(resources)};\n`;
+        // If we name this OutputSounds, webpack rewrites the later reference,
+        // so we rename this variable to OutputSounds2.
+        helperCode += `var OutputSounds2 = ${JSON.stringify(OutputSounds)};\n`;
         helperCode += PJSUtils.cleanupCode(
             PJSUtils.codeFromFunction(function () {
                 var resourceCache = [];
@@ -1076,13 +1093,16 @@ class PJSCodeInjector {
                         resourceCache[filename] = img;
                     });
                 };
-
+                var findWhere = function(array, criteria) {
+                    return array.find(item => Object.keys(criteria).every(
+                        key => item[key] === criteria[key]));
+                };
                 var loadSound = function(filename) {
                     return new Promise((resolve) => {
                         var audio = document.createElement("audio");
                         var parts = filename.split("/");
 
-                        var group = _.findWhere(OutputSounds[0].groups, { groupName: parts[0] });
+                        var group = findWhere(OutputSounds2[0].groups, { groupName: parts[0] });
                         if (!group || group.sounds.indexOf(parts[1].replace(".mp3", "")) === -1) {
                             resolve();
                             return;
@@ -1309,6 +1329,3 @@ class PJSCodeInjector {
 }
 
 PJSCodeInjector.instances = [];
-
-// TODO(kevinb) convert to a commonjs module at somepoint in the future
-window.PJSCodeInjector = PJSCodeInjector;

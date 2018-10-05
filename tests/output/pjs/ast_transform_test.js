@@ -1,3 +1,8 @@
+import PJSCodeInjector from "../../../js/output/pjs/pjs-code-injector.js";
+
+import {getCodeFromOptions} from "./test_utils.js";
+
+
 var cleanupCode = function(code) {
     var lines = code.split("\n").filter(function(line) {
         return line !== "";
