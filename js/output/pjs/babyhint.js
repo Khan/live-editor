@@ -156,7 +156,7 @@ const BabyHint = {
             if (typeof options.context[f] === "function") {
                 BabyHint.keywords.push(f);
                 if (!(f in BabyHint.functionParamCount) &&
-                    !_.includes(BabyHint.functionParamBlacklist, f)) {
+                    !_.include(BabyHint.functionParamBlacklist, f)) {
                     BabyHint.functionParamCount[f] = options.context[f].length;
                 }
             }
@@ -653,7 +653,7 @@ const BabyHint = {
             }
 
             // ignore functions of objects
-            if (!_.includes(objectFunctions, functions[i])) {
+            if (!_.include(objectFunctions, functions[i])) {
                 // check if parameters passed matches the expected number
                 functionName = functionName.replace(/\s/g, "");
 
@@ -670,7 +670,7 @@ const BabyHint = {
                         text = i18n.ngettext("%(name)s takes 1 parameter, not %(given)s!", "%(name)s takes %(num)s parameters, not %(given)s!", expectedParams, {name: functionCall, given: numParams});
 
                     } else if (typeof expectedParams !== "number" &&
-                                !_.includes(expectedParams, numParams)) {
+                                !_.include(expectedParams, numParams)) {
 
                         var listOfParams = "" + expectedParams[0];
 
