@@ -1,4 +1,9 @@
-window.ScratchpadDrawCanvas = Backbone.View.extend({
+import _ from "underscore";
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
+
+const ScratchpadDrawCanvas = Backbone.View.extend({
     initialize: function(options) {
         this.record = options.record;
 
@@ -211,3 +216,5 @@ window.ScratchpadDrawCanvas = Backbone.View.extend({
         this.trigger("drawEnded");
     }
 });
+
+export default ScratchpadDrawCanvas;

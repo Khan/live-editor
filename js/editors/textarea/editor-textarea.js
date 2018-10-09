@@ -1,4 +1,8 @@
-window.TextareaEditor = Backbone.View.extend({
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
+
+const TextareaEditor = Backbone.View.extend({
     initialize: function(options) {
         this.defaultCode = options.code;
         this.autoFocus = options.autoFocus;
@@ -107,4 +111,4 @@ window.TextareaEditor = Backbone.View.extend({
     undo: function() {}
 });
 
-LiveEditor.registerEditor("textarea_document", TextareaEditor);
+export default TextareaEditor;

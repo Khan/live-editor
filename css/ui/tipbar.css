@@ -23,7 +23,7 @@
     width: 260px;
 }
 .tipbar .error-buddy {
-    background: url(../images/scratchpads/error-buddy.png);
+    background: url(../../images/scratchpads/error-buddy.png);
     cursor: move;
     height: 116px;
     left: -140px;
@@ -33,7 +33,7 @@
     width: 130px;
 }
 .tipbar .speech-arrow {
-    background-image: url(../images/scratchpads/speech-arrow.png);
+    background-image: url(../../images/scratchpads/speech-arrow.png);
     background-repeat: no-repeat;
     height: 24px;
     left: -14px;
@@ -95,7 +95,7 @@
     padding: 1px 3px 1px 1px;
 }
 .tipbar .tipnav a .ui-icon {
-    background-image: url(../images/scratchpads/ui-icons_808080_256x240.png);
+    background-image: url(../../images/scratchpads/ui-icons_808080_256x240.png);
     background-repeat: no-repeat;
     display: inline-block;
     height: 16px;

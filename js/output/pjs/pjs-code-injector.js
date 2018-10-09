@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from "underscore";
 import * as esprima from "esprima";
 import escodegen from "escodegen";
 

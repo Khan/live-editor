@@ -1,5 +1,8 @@
+import _ from "underscore";
+import Backbone from "backbone";
+
 // Note: All time measurements are handled in milliseconds
-window.ScratchpadRecord = Backbone.Model.extend({
+const ScratchpadRecord = Backbone.Model.extend({
     initialize: function() {
         // Instance variables, not attributes.
         // Recording handlers, handle both recording and playback
@@ -363,7 +366,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
             // Specifically this applies to replace (which is a remove and an insert back to back)
             if (this.synchronizedTime === undefined) {
                 this.synchronizedTime = Math.floor((new Date).getTime() - this.startTime);
-                setTimeout(function() { 
+                setTimeout(function() {
                     this.synchronizedTime = undefined;
                 }.bind(this), 0);
             }
@@ -384,3 +387,5 @@ window.ScratchpadRecord = Backbone.Model.extend({
         this.recording = this.oldRecording;
     }
 });
+
+export default ScratchpadRecord;

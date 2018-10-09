@@ -214,7 +214,7 @@ describe("CSS selector matching with wildcards", function() {
         [true, "$1 div, $1 li, _ div", ".home div, #foo li, #foo div"],
         [false, "_", "table, li"],
     ];
-    _.each(selectorTests, function(test) {
+    selectorTests.forEach(function(test) {
         var goal = test[0];
         var pattern = test[1];
         var selector = test[2];
@@ -368,7 +368,7 @@ describe("Full CSS matching with wildcards", function() {
         html: "<style>h1{color: red}</style><style>h1{color: black}</style>"
     }];
 
-    _.each(CSSTests, function(options) {
+    CSSTests.forEach(function(options) {
         if (!options.title) {
             options.title = "\"" + options.pat.substring(0, 50) + "\" " + (options.res ? "=" : "!") + "= \"" +
                   options.css.substring(0, 50) + "\"" + (options.callbacks ? "+ callbacks" : "");

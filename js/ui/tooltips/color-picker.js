@@ -1,5 +1,15 @@
-// A description of general tooltip flow can be found in tooltip-engine.js
-TooltipEngine.classes.colorPicker = TooltipBase.extend({
+import _ from "underscore";
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
+
+import "../../../external/colorpicker/colorpicker.js";
+import "../../../css/ui/colorpicker.css";
+
+import TooltipBase from "../../ui/tooltip-base.js";
+import TooltipEngine from "../../ui/tooltip-engine.js";
+
+const ColorPicker = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
@@ -108,8 +118,8 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             addSemicolon = true;
         }
 
-        if (event.source && event.source.action === "insertText" &&
-            event.source.text.length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
+        if (event.source && event.source.action === "insert" &&
+            event.source.lines[0].length === 1 && this.parent.options.type === "ace_pjs" && this.autofill) {
             // Auto-close
             if (body.length === 0 && this.closing.length === 0) {
                 this.closing = ")" + (addSemicolon ? ";" : "");
@@ -133,7 +143,6 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.updateTooltip(rgb);
         this.placeOnScreen();
         event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
     },
 
     updateTooltip: function(rgb) {
@@ -162,3 +171,7 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }
 });
+
+TooltipEngine.registerTooltip("colorPicker", ColorPicker);
+
+export default ColorPicker;

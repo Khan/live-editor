@@ -1,4 +1,19 @@
-window.AceEditor = Backbone.View.extend({
+import _ from "underscore";
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
+
+import LiveEditor from "../../live-editor.js";
+import ScratchpadAutosuggest from "../../ui/autosuggest.js";
+import TooltipEngine from "../../ui/tooltip-engine.js";
+import "../../ui/tooltips/color-picker.js";
+import "../../ui/tooltips/number-scrubber.js";
+import "../../ui/tooltips/number-scrubber-click.js";
+import "../../ui/tooltips/image-picker.js";
+import "../../ui/tooltips/image-modal.js";
+import "../../ui/tooltips/auto-suggest.js";
+
+const AceEditor = Backbone.View.extend({
     dom: {
         ACTIVE_LINE: ".ace_active_line",
         TEXT_INPUT: "textarea",
@@ -68,18 +83,6 @@ window.AceEditor = Backbone.View.extend({
         if (this.tooltips[this.type].indexOf("autoSuggest") !== -1) {
             ScratchpadAutosuggest.init(this.editor);
         }
-
-        // Override ACE gutter tooltip positioning due to bugginess
-        ace.require("ace/tooltip").Tooltip.prototype.setPosition = function (x, y) {
-            // Calculate x & y, relative to editor & scrolled window
-            var editorOffset = $(this.$parentNode).offset();
-            var xOffset = editorOffset.left - $(window).scrollLeft();
-            var yOffset = editorOffset.top - $(window).scrollTop();
-            x -= xOffset;
-            y -= yOffset;
-            this.getElement().style.left = x + "px";
-            this.getElement().style.top = y + "px";
-        };
 
         // Make the editor vertically resizable
         if (this.$el.resizable) {
@@ -167,16 +170,16 @@ window.AceEditor = Backbone.View.extend({
         var doc = editor.session.doc;
 
         // Track text change events
-        doc.on("change", function(e) {
-            var start = e.data.range.start;
-            var end = e.data.range.end;
+        doc.on("change", function(eventInfo) {
+            var start = eventInfo.start;
+            var end = eventInfo.end;
 
-            if (e.data.action.indexOf("insert") === 0) {
-                var insert = e.data.lines || e.data.text;
-                self.record.log(e.data.action,
+            if (eventInfo.action.indexOf("insert") === 0) {
+                var insert = eventInfo.lines || eventInfo.text;
+                self.record.log(eventInfo.action,
                     start.row, start.column, end.row, end.column, insert);
             } else {
-                self.record.log(e.data.action,
+                self.record.log(eventInfo.action,
                     start.row, start.column, end.row, end.column);
             }
         }, true);
@@ -203,22 +206,28 @@ window.AceEditor = Backbone.View.extend({
                     data) {
                 var delta = {
                     action: op,
-                    range: {
-                        start: {
-                            row: startRow,
-                            column: startCol
-                        },
-                        end: {
-                            row: endRow,
-                            column: endCol
-                        }
-                    }
+                    start: {
+                        row: startRow,
+                        column: startCol,
+                    },
+                    end: {
+                        row: endRow,
+                        column: endCol,
+                    },
                 };
 
                 if (op === "insertText") {
-                    delta.text = data;
+                    delta.action = "insert";
+                    delta.lines = [data];
+                    if (data === "\n") {
+                        delta.lines = ["", ""];
+                    }
                 } else if (op === "insertLines") {
                     delta.lines = data;
+                    delta.action = "insert";
+                }
+                if (op === "removeText" || op === "removeLines") {
+                    delta.action = "remove";
                 }
 
                 doc.applyDeltas([delta]);
@@ -466,3 +475,5 @@ window.AceEditor = Backbone.View.extend({
 LiveEditor.registerEditor("ace_pjs", AceEditor);
 LiveEditor.registerEditor("ace_webpage", AceEditor);
 LiveEditor.registerEditor("ace_sql", AceEditor);
+
+export default AceEditor;

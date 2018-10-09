@@ -1,4 +1,7 @@
-TooltipEngine.classes.numberScrubberClick = TooltipBase.extend({
+import TooltipBase from "../../ui/tooltip-base.js";
+import TooltipEngine from "../../ui/tooltip-engine.js";
+
+const NumberScrubberClick = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
@@ -19,3 +22,5 @@ TooltipEngine.classes.numberScrubberClick = TooltipBase.extend({
         }
     },
 });
+
+TooltipEngine.registerTooltip("numberScrubberClick", NumberScrubberClick);

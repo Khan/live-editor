@@ -1,4 +1,7 @@
-window.TooltipUtils = {
+import _ from "underscore";
+import $ from "jquery";
+
+const TooltipUtils = {
     /**
      * This is a KA specific implementation of lazy loading:
      * It is targetted specifically at the modal in soundModal/imageModal
@@ -109,3 +112,5 @@ window.TooltipUtils = {
         $(active).closest("li").addClass("active");
     }
 };
+
+export default TooltipUtils;

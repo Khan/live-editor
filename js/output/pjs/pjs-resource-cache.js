@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from "underscore";
 import * as esprima from "esprima";
 
 import i18n from "../../shared/i18n.js";

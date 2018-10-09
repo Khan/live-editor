@@ -1,12 +1,21 @@
-// A description of general tooltip flow can be found in tooltip-engine.js
-TooltipEngine.classes.autoSuggest = TooltipBase.extend({
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
+
+import ScratchpadAutosuggest from "../autosuggest.js";
+import TooltipBase from "../../ui/tooltip-base.js";
+import TooltipEngine from "../../ui/tooltip-engine.js";
+
+import "../../../css/ui/autosuggest.css";
+
+const AutoSuggest = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
         this.render();
         this.bind();
         this.mouse = false;
-        
+
         document.addEventListener("mousedown", () => {
             this.mouse = true;
         });
@@ -43,7 +52,6 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
             this.updateTooltip(lookupParams);
             this.placeOnScreen();
             event.stopPropagation();
-            ScratchpadAutosuggest.enableLiveCompletion(false);
         }
     },
 
@@ -78,3 +86,5 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
         this.$el.find(".hotsuggest").empty().append(content);
     }
 });
+
+TooltipEngine.registerTooltip("autoSuggest", AutoSuggest);

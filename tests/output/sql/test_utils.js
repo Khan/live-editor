@@ -47,7 +47,7 @@ export function runTest(options) {
                 expect(errors).to.have.length(0);
             } else {
                 expect(errors).to.not.have.length(0);
-                _.each(options.expectedErrors, function(expectedError, i) {
+                options.expectedErrors.forEach(function(expectedError, i) {
                     expect(errors[i].text.indexOf(expectedError)).to.not.be(-1);
                 });
             }

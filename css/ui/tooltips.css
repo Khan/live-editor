@@ -275,7 +275,7 @@ html.playing .tooltip.hide-while-playing {
     position: absolute;
     top: 14px;
     left: 50%;
-    margin-left: -9px; 
+    margin-left: -9px;
 }
 
 .tooltip .ui-slider-handle {
@@ -288,11 +288,11 @@ html.playing .tooltip.hide-while-playing {
 
 /** Media picker CSS: Used for both an image and audio picker **/
 .mediapicker-modal {
+    background-color: #fff;
     width: 520px;
-    margin-left: -250px;
     padding: 0;
-    top: 50%;
-    margin-top: -225px;
+    top: 10%;
+    left: 50%;
 }
 
 .mediapicker-modal h3 {

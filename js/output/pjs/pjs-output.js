@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from "underscore";
 import $ from "jquery";
 import Backbone from "backbone";
 Backbone.$ = $;
@@ -376,7 +376,7 @@ const PJSOutput = Backbone.View.extend({
         // Only use baby errors if JSHint also broke on those lines OR
         // we want to prevent the user from making this mistake.
         babyErrors = babyErrors.filter((error) =>
-            (_.include(brokenLines, error.row) || error.breaksCode) &&
+            (_.includes(brokenLines, error.row) || error.breaksCode) &&
             (!prioritizedChars[error.row] || prioritizedChars[error.row] > error.column)
         ).map(error => {
             return {

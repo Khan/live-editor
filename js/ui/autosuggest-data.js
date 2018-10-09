@@ -1,5 +1,7 @@
+import i18n from "../shared/i18n.js";
+
 // Helper functionality for the Scratchpad auto suggest feature
-window.ScratchpadAutosuggestData = {
+const AutosuggestData = {
     _keywords: {
         type: i18n._("keyword"),
         whitelist: ["break", "case", "catch", "continue", "default", "delete",
@@ -906,3 +908,5 @@ window.ScratchpadAutosuggestData = {
             "keyPressed", "keyReleased", "keyTyped"]
     },
 };
+
+export default AutosuggestData;

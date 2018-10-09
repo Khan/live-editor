@@ -5,112 +5,12 @@ var path = require("path");
 
 var gulp = require("gulp");
 
-var concat = require("gulp-concat");
-var uglify = require("gulp-uglify");
-var newer = require("gulp-newer");
-var changed = require("gulp-changed");
-var handlebars = require("gulp-handlebars");
-var defineModule = require("gulp-define-module");
-var declare = require("gulp-declare");
 var runSequence = require("run-sequence");
 var mochaChrome = require("gulp-mocha-chrome");
 var staticServe = require("node-static");
 var request = require("request");
-var gutil = require("gulp-util");
-var babel = require("./babel-plugin.js");
-var gulpIf = require("gulp-if");
-var chmod = require("gulp-chmod");
-var eol = require("gulp-eol");
 
 var mochaRunner = require("./testutil/gulp-mocha-runner.js");
-var check = require("./check.js");
-var paths = require("./build-paths.json");
-
-gulp.task("templates", function() {
-    gulp.src(paths.templates)
-        .pipe(changed("build/tmpl", {extension: ".js"}))
-        .pipe(handlebars({
-            handlebars: require("handlebars")
-        }))
-        .pipe(defineModule("plain"))
-        .pipe(declare({
-            namespace: "Handlebars.templates"
-        }))
-        .pipe(gulp.dest("build/tmpl"));
-});
-
-var firstBuild = true;
-var scriptTypes = Object.keys(paths.scripts);
-
-scriptTypes.forEach(function(type) {
-    gulp.task("script_" + type, ["templates"], function() {
-        var outputFileName = "live-editor." + type + ".js";
-        var srcPath = path.join(__dirname, "js");
-
-        return gulp.src(paths.scripts[type])
-            .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
-            .pipe(gulpIf(function (file) {
-                // transform source files but not dependencies
-                return file.path.indexOf(srcPath) === 0;
-            }, babel({ blacklist: ["strict"] })))
-            .pipe(concat(outputFileName))
-            .pipe(chmod(644))
-            .pipe(eol("\n"))
-            .pipe(gulp.dest("build/js"));
-    });
-
-    gulp.task("script_" + type + "_min", ["script_" + type], function() {
-        var outputFileName = "live-editor." + type + ".min.js";
-        return gulp.src(["build/js/live-editor." + type + ".js"])
-            .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
-            .pipe(uglify())
-            .pipe(concat(outputFileName))
-            .pipe(chmod(644))
-            .pipe(eol("\n"))
-            .pipe(gulp.dest("build/js"));
-    });
-});
-
-gulp.task("scripts", scriptTypes.map(function(type) {
-    return "script_" + type;
-}));
-
-gulp.task("scripts_min", scriptTypes.map(function(type) {
-    return "script_" + type + "_min";
-}));
-
-gulp.task("externals", function() {
-    gulp.src(paths.externals, {base: "./"})
-        .pipe(gulp.dest("build/"));
-});
-
-var styleTypes = Object.keys(paths.styles);
-
-styleTypes.forEach(function(type) {
-    gulp.task("style_" + type, function() {
-        var outputFileName = "live-editor." + type + ".css";
-        return gulp.src(paths.styles[type])
-            .pipe(firstBuild ? gutil.noop() : newer("build/css/" + outputFileName))
-            .pipe(concat(outputFileName))
-            .pipe(gulp.dest("build/css"));
-    });
-});
-
-gulp.task("styles", styleTypes.map(function(type) {
-    return "style_" + type;
-}));
-
-gulp.task("watch", function() {
-    scriptTypes.forEach(function(type) {
-        gulp.watch(paths.scripts[type], ["script_" + type]);
-    });
-
-    styleTypes.forEach(function(type) {
-        gulp.watch(paths.styles[type], ["style_" + type]);
-    });
-
-    gulp.watch(paths.templates, ["templates"]);
-});
 
 var runTest = function(fileName) {
     return function() {
@@ -125,7 +25,7 @@ var runTest = function(fileName) {
         });
         server.listen(11537);
 
-        // We then run the Mocha tests in a headless PhantomJS
+        // We then run the Mocha tests in a headless Chrome
         var stream = mochaChrome();
         stream.write({
             path: "http://localhost:11537/tests/" + fileName
@@ -229,22 +129,3 @@ gulp.task("test", function(callback) {
     runSequence("test_output_pjs", "test_output_webpage", "test_output_sql",
         "test_tooltips", "check_errors", callback);
 });
-
-// Check to make sure all source files and dependencies exist before building.
-gulp.task("check", function() {
-    var missing = check();
-    if (missing.length > 0) {
-        console.log("Aborting build");
-        process.exit();
-    } else {
-        console.log("all files exist");
-    }
-});
-
-gulp.task("build",
-    ["check", "templates", "scripts", "styles", "externals"],
-    function() {
-        firstBuild = false;
-    });
-
-gulp.task("default", ["watch", "build"]);

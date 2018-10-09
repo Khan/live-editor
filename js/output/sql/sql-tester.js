@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from "underscore";
 import SQL from "sql.js";
 
 import OutputTester from "../shared/output-tester.js";

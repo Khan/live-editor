@@ -1,3 +1,5 @@
+import {getTooltipRequestEvent, typeLine, uniqueEditor} from "./shared.js";
+
 describe("tooltips_test - test ACE anti-undo hack", function() {
     var editor, tte, session;
 

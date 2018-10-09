@@ -1,5 +1,10 @@
-// A description of general tooltip flow can be found in tooltip-engine.js
-TooltipEngine.classes.numberScrubber = TooltipBase.extend({
+import $ from "jquery";
+import "webpack-jquery-ui/draggable";
+
+import TooltipBase from "../../ui/tooltip-base.js";
+import TooltipEngine from "../../ui/tooltip-engine.js";
+
+const NumberScrubber = TooltipBase.extend({
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
@@ -232,7 +237,6 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
         this.updateTooltip(parseFloat(number), this.decimalCount(number));
         this.placeOnScreen();
         event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
     },
 
     updateTooltip: function(value, decimals) {
@@ -248,3 +252,6 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
     }
 });
 
+TooltipEngine.registerTooltip("numberScrubber", NumberScrubber);
+
+export default NumberScrubber;

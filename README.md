@@ -33,18 +33,10 @@ You can use the pre-built copies of everything inside the `build/` directory. If
 
     git submodule update --init --recursive
     npm install
-    bower install
-
-    # Build the Ace editor files (This is usually *not* needed)
-    cd bower_components/ace
-    npm install
-    node Makefile.dryice.js -nc
 
 At this point you can make a fresh build, using [Gulp](http://gulpjs.com/):
 
     npm run build
-
-If you have an issue with "this.merge" is undefined, then `rm -rf node_modules/gulp-handlebars/node_modules/handlebars`.
 
 ## Testing
 

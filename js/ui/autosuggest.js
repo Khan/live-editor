@@ -1,8 +1,12 @@
+import _ from "underscore";
+
+import ScratchpadAutosuggestData from "./autosuggest-data.js";
+
 /**
  * Helper functionality for the Scratchpad auto suggest feature,
  * parameter information and live documentation.
  */
-window.ScratchpadAutosuggest = {
+const ScratchpadAutosuggest = {
     /**
      * Initializes the autosuggest functionality and adds/modifies the
      * completers to be applicable to KA.
@@ -297,3 +301,5 @@ window.ScratchpadAutosuggest = {
                            .append(autosuggestDescription);
     }
 };
+
+export default ScratchpadAutosuggest;

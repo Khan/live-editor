@@ -3,5 +3,4 @@ languages:
 exclude_paths:
   - "build/*"
   - "external/*"
-  - "bower_components/*"
   - "node_modules/*"

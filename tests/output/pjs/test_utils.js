@@ -1,4 +1,6 @@
 /*jshint unused: false*/
+import _ from "underscore";
+
 import LiveEditorOutput from "../../../js/output/shared/output.js";
 import PJSOutput from "../../../js/output/pjs/pjs-output.js";
 

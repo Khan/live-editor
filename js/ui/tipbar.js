@@ -4,8 +4,16 @@
  * canvas. Now it just powers the error reporting mechanism, which no longer
  * looks like a bar
  */
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
 
-window.TipBar = Backbone.View.extend({
+import i18n from "../shared/i18n.js";
+import tipBarTemplate from "../../tmpl/tipbar.handlebars";
+
+import "../../css/ui/tipbar.css";
+
+const TipBar = Backbone.View.extend({
     initialize: function(options) {
         this.liveEditor = options.liveEditor;
         this.pos = 0;
@@ -16,7 +24,7 @@ window.TipBar = Backbone.View.extend({
 
     render: function() {
         this.$overlay = $("<div class=\"overlay error-overlay\" style=\"display: none\"></div>").appendTo(this.$el);
-        this.$el.append(Handlebars.templates["tipbar"]({
+        this.$el.append(tipBarTemplate({
             ohNoesMsg: i18n._("Oh noes!"),
             showMeMsg: i18n._("Show me where"),
             prevMsg: i18n._("Previous error"),
@@ -119,3 +127,5 @@ window.TipBar = Backbone.View.extend({
         this.update(true);
     }
 });
+
+export default TipBar;

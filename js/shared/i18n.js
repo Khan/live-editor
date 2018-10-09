@@ -82,7 +82,7 @@ import Jed from "jed";
         // Replace the substitutions with the appropriate option
         for (var i = 1; i < split.length; i += 2) {
             var replaceWith = options[split[i]];
-            split[i] = _.isUndefined(replaceWith) ?
+            split[i] = (replaceWith === undefined) ?
                 "%(" + split[i] + ")s" :
                 replaceWith;
         }
@@ -138,7 +138,7 @@ import Jed from "jed";
      * this.props.children
      */
     i18n.$_ = function(options, str) {
-        if (arguments.length !== 2 || !_.isString(str)) {
+        if (arguments.length !== 2 || typeof str !== "string") {
             return "<$_> must have exactly one child, which must be a string";
         }
         return interpolateStringToArray(str, options);

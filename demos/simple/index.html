@@ -2,9 +2,6 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Live Editor Simple Demo</title>
-    <link rel="stylesheet" href="../../build/css/live-editor.core_deps.css"/>
-    <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
-    <link rel="stylesheet" href="../../build/css/live-editor.tooltips.css"/>
     <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
     <style>
         body {
@@ -23,59 +20,11 @@
 <body>
     <h1>Live Editor Example</h1>
     <div id="sample-live-editor"></div>
-
-    <script src="../../build/js/live-editor.core_deps.js"></script>
+    <!-- Exposes 'ace' as a global -->
     <script src="../../build/js/live-editor.editor_ace_deps.js"></script>
+    <!-- Exposes 'SoundManager2' as a global -->
     <script src="../../build/js/live-editor.audio.js"></script>
-    <script src="../../build/js/live-editor.shared.js"></script>
-    <script src="../../build/js/live-editor.tooltips.js"></script>
-    <script src="../../build/js/live-editor.ui.js"></script>
-    <script src="../../build/js/live-editor.editor_ace.js"></script>
-
-    <script>
-    var outputUrl = "output.html";
-
-    var code = window.localStorage["test-code"] || "rect(10, 10, 100, 100);";
-
-    var search = location.search.substring(1);
-    var params = {};
-    search.split("&").forEach(function(param) {
-        var tokens = param.split("=");
-        params[tokens[0]] = tokens[1];
-    });
-
-    if (params.scratchpad) {
-        var xhr = new XMLHttpRequest();
-        var baseUrl = "https://www.khanacademy.org/api/internal/scratchpads/";
-        xhr.open("GET", baseUrl + params.scratchpad, false);
-        xhr.addEventListener("load", function() {
-            var scratchpad = JSON.parse(this.responseText);
-            code = scratchpad.revision.code;
-            var h1 = document.querySelector('h1');
-            h1.innerText = scratchpad.title;
-        });
-        xhr.send();
-    }
-
-    window.liveEditor = new LiveEditor({
-        el: $("#sample-live-editor"),
-        code: code,
-        width: 400,
-        height: 400,
-        editorHeight: "80%",
-        autoFocus: true,
-        workersDir: "../../build/workers/",
-        externalsDir: "../../build/external/",
-        imagesDir: "../../build/images/",
-        soundsDir: "../../sounds/",
-        execFile: outputUrl,
-        jshintFile: "../../build/external/jshint/jshint.js",
-        newErrorExperience: true,
-    });
-    liveEditor.editor.on("change", function() {
-        window.localStorage["test-code"] = liveEditor.editor.text();
-    });
-    ScratchpadAutosuggest.init(liveEditor.editor.editor);
-    </script>
+    <!-- Demo-specific: Sets up the LiveEditor with ace_pjs ACE editor -->
+    <script src="../../build/js/live-editor.demos_pjs.js"></script>
 </body>
 </html>

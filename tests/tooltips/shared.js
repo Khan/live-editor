@@ -1,13 +1,18 @@
-var mockObject = function(obj, mocks) {
+import _ from "underscore";
+
+import AceEditor from "../../js/editors/ace/editor-ace.js";
+import ScratchpadConfig from "../../js/shared/config.js";
+import ScratchpadRecord from "../../js/shared/record.js";
+import TooltipEngine from "../../js/ui/tooltip-engine.js";
+
+var mockObject = function(sandbox, obj, mocks) {
     _.each(mocks, function(method) {
-        obj[method] = sinon.spy();
+        obj[method] = sandbox.spy();
     });
     return obj;
 };
 
-window.tooltipClasses = TooltipEngine.classes;
-
-var uniqueEditor = function() {
+export function uniqueEditor() {
     var elem = document.createElement('div');
     document.body.appendChild(elem);
     var ace = new AceEditor({ //Initializes TooltipEngine internally
@@ -22,7 +27,7 @@ var uniqueEditor = function() {
         record: new ScratchpadRecord(),
         type: "ace_pjs"
     });
-    ScratchpadAutosuggest.init(ace.editor);
+    //ScratchpadAutosuggest.init(ace.editor);
     ace.editor.focus();
     ace.setSelection({
         start: {
@@ -55,21 +60,21 @@ var TTEoptions = {
     }
 };
 
-var getMockedTooltip = function(Tooltip, whiteList, blackList) {
+export function getMockedTooltip(sandbox, Tooltip, whiteList, blackList) {
     if (whiteList) {
         blackList = [];
-        for (method in Tooltip.prototype) {
+        for (let method in Tooltip.prototype) {
             if (!_.contains(whiteList, method) && method !== "constructor") {
                 blackList.push(method);
             }
         }
     }
     var oldPrototype = Tooltip.prototype;
-    Tooltip.prototype = mockObject(_.clone(Tooltip.prototype), blackList);
+    Tooltip.prototype = mockObject(sandbox, _.clone(Tooltip.prototype), blackList);
     Tooltip.prototype.render = function () {
         this.modal = {
-            show: sinon.spy(),
-            selectImg: sinon.spy()
+            show: sandbox.spy(),
+            selectImg: sandbox.spy()
         };
     };
     var tooltip = new Tooltip(TTEoptions);
@@ -77,7 +82,12 @@ var getMockedTooltip = function(Tooltip, whiteList, blackList) {
     return tooltip;
 };
 
-var getTooltipRequestEvent = function(line, pre) {
+export function getTooltip(Tooltip) {
+    var tooltip = new Tooltip(TTEoptions);
+    return tooltip;
+}
+
+export function getTooltipRequestEvent(line, pre) {
     expect(line.slice(0, pre.length)).to.be.equal(pre);
     return {
         line: line,
@@ -102,18 +112,18 @@ var getTooltipRequestEvent = function(line, pre) {
 };
 
 
-var testMockedTooltipDetection = function(tooltip, line, pre) {
+export function testMockedTooltipDetection (sandbox, tooltip, line, pre) {
     var event = getTooltipRequestEvent(line, pre);
-    tooltip.placeOnScreen = sinon.spy();
+    tooltip.placeOnScreen = sandbox.spy();
     tooltip.detector(event);
     return !!tooltip.placeOnScreen.called;
 };
 
-function testReplace(tooltip, line, pre, updates, result) {
+export function testReplace(sandbox, tooltip, line, pre, updates, result) {
     var event = getTooltipRequestEvent(line, pre);
     var newLine = line;
     var oldReplace = editor.session.replace;
-    editor.session.replace = sinon.spy(function(range, newText) {
+    editor.session.replace = sandbox.spy(function(range, newText) {
         newLine = applyReplace(newLine, range, newText);
     });
 
@@ -150,13 +160,13 @@ function typeChars(text) {
 }
 /**/
 
-function typeLine(text) {
+export function typeLine(text) {
     editor.gotoLine(Infinity);
     editor.onTextInput("\n");
     typeChars(text);
 }
 
-function getLine() {
+export function getLine() {
     return editor.session.getDocument().getLine(editor.selection.getCursor().row);
 }
 

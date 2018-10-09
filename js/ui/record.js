@@ -1,5 +1,10 @@
+import _ from "underscore";
+import $ from "jquery";
+import Backbone from "backbone";
+Backbone.$ = $;
+
 /* Manages the audio chunks as we build up this recording. */
-window.ScratchpadAudioChunks = Backbone.Model.extend({
+const ScratchpadAudioChunks = Backbone.Model.extend({
 
     initialize: function(options) {
         // The saved audio chunks
@@ -48,7 +53,7 @@ window.ScratchpadAudioChunks = Backbone.Model.extend({
  *  restore state after a discard, and so any Record bugs also cause bugs in
  *  recording in chunks.
  */
-window.ScratchpadRecordView = Backbone.View.extend({
+const ScratchpadRecordView = Backbone.View.extend({
     initialize: function(options) {
         this.render();
         this.$recordButton = options.recordButton;
@@ -307,3 +312,5 @@ window.ScratchpadRecordView = Backbone.View.extend({
     }
 
 });
+
+export default ScratchpadRecordView;

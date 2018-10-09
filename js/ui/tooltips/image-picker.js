@@ -1,7 +1,14 @@
-// A description of general tooltip flow can be found in tooltip-engine.js
-TooltipEngine.classes.imagePicker = TooltipBase.extend({
+import _ from "underscore";
+import $ from "jquery";
+
+import imagePickerTemplate from "../../../tmpl/image-picker.handlebars";
+import {OutputImages} from "../../shared/images.js";
+import TooltipBase from "../../ui/tooltip-base.js";
+import TooltipEngine from "../../ui/tooltip-engine.js";
+
+const ImagePicker = TooltipBase.extend({
     defaultImage: "cute/None",
-    
+
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
@@ -32,7 +39,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
 
         // TODO(kevinb) extract this into a method on TooltipBase
         if (leadingPadding.length === 0 && path.length === 0 && this.closing.length === 0 &&
-            event.source && event.source.action === "insertText" && event.source.text.length === 1 && this.autofill) {
+            event.source && event.source.action === "insert" && event.source.lines[0].length === 1 && this.autofill) {
 
             this.closing = ")" + (this.isAfterAssignment(event.pre.slice(0, functionStart)) ? ";" : "");
             this.insert({
@@ -46,13 +53,12 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         this.updateTooltip(path);
         this.placeOnScreen();
         event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
     },
 
     render: function() {
         var imagesDir = this.options.imagesDir;
 
-        var results = Handlebars.templates["image-picker"]({
+        var results = imagePickerTemplate({
             imagesDir: imagesDir,
             groups: _.map(OutputImages, function(data) {
                 data.imagesDir = imagesDir;
@@ -127,3 +133,7 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         this.aceLocation.tooltipCursor = this.aceLocation.start + this.aceLocation.length + this.closing.length;
     }
 });
+
+TooltipEngine.registerTooltip("imagePicker", ImagePicker);
+
+export default ImagePicker;
