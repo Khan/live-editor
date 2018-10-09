@@ -190,21 +190,6 @@ const LiveEditor = Backbone.View.extend({
             liveEditor: this
         });
 
-        // Set up the debugger;
-        if (options.useDebugger) {
-            this.debugger = new ScratchpadDebugger({
-                liveEditor: this,
-                editor: this.editor.editor
-            });
-            this.debugger.on("enabled", function (enabled) {
-                if (enabled) {
-                    this.$el.find(this.dom.RESTART_BUTTON).attr("disabled", "");
-                } else {
-                    this.$el.find(this.dom.RESTART_BUTTON).removeAttr("disabled");
-                }
-            }, this);
-        }
-
         var code = options.code;
 
         // Load the text into the editor
@@ -280,8 +265,7 @@ const LiveEditor = Backbone.View.extend({
         });
 
         this.editor.on("userChangedCode", () => {
-            if (!this.record ||
-                (!this.record.recording && !this.record.playing)) {
+            if (!this.record.recording && !this.record.playing) {
               this.trigger("userChangedCode");
             }
         });
@@ -460,7 +444,7 @@ const LiveEditor = Backbone.View.extend({
 
         // Handle the restart button
         $el.on("click", this.dom.RESTART_BUTTON, function() {
-            self.record && self.record.log("restart");
+            self.record.log("restart");
         });
 
         // Handle the gutter errors
@@ -1061,11 +1045,6 @@ const LiveEditor = Backbone.View.extend({
         }
 
         if (typeof data !== "object") {
-            return;
-        }
-
-        if (data.type === "debugger") {
-            // these messages are handled by ui/debugger.js:listenMessages
             return;
         }
 
