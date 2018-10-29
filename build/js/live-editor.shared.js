@@ -374,7 +374,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
 
     play: function play() {
         // Don't play if we're already playing or recording
-        if (this.recording || this.playing || this.seeking || !this.commands || this.commands.length === 0) {
+        if (this.recording || this.playing || this.runningSeek || !this.commands || this.commands.length === 0) {
             return;
         }
 
