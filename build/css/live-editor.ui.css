@@ -282,7 +282,7 @@
 }
 
 .scratchpad-ace-editor .ace_problem_line {
-    border-bottom: 1px dashed orange;
+    border-bottom: 1px dotted orange;
     position: absolute;
 }
 

@@ -1160,12 +1160,6 @@ window.LiveEditor = Backbone.View.extend({
             self.record.log("restart");
         });
 
-        // Handle the gutter errors
-        $el.on("click", this.dom.GUTTER_ERROR, function () {
-            var lineNum = parseInt($(this).text(), 10);
-            self.setErrorPosition(this.gutterDecorations[lineNum]);
-        });
-
         // Handle clicks on the thinking Error Buddy
         $el.on("click", this.dom.ERROR_BUDDY_THINKING, function () {
             self.setErrorPosition(0);
@@ -1862,15 +1856,6 @@ window.LiveEditor = Backbone.View.extend({
         });
     },
 
-    removeGutterDecorations: function removeGutterDecorations() {
-        // Remove old gutter decorations
-        var session = this.editor.editor.session;
-        _.each(this.gutterDecorations, function (errorOffset, errorRow) {
-            session.removeGutterDecoration(errorRow - 1, "ace_error");
-        });
-    },
-
-    gutterDecorations: [],
     errorCursorRow: null,
     showError: null,
 
@@ -1902,32 +1887,13 @@ window.LiveEditor = Backbone.View.extend({
 
             // Remove old gutter markers and decorations
             this.removeMarkers();
-            this.removeGutterDecorations();
-
-            // Add gutter decorations
-            var gutterDecorations = [];
-            _.each(errors, function (error, index) {
-                // Create a log of which row corresponds with which error
-                // message so that when the user clicks a gutter marker they
-                // are shown the relevant error message.
-                if (gutterDecorations[error.row + 1] === null) {
-                    gutterDecorations[error.row + 1] = index;
-                    session.addGutterDecoration(error.row, "ace_error");
-                }
-
-                this.addUnderlineMarker(error.row);
-            }, this);
-
-            this.gutterDecorations = gutterDecorations;
 
             // Set the errors
             this.setErrors(errors);
 
             this.maybeShowErrors();
         } else {
-            // If there are no errors, remove the gutter decorations that marked
-            // the errors and reset our state.
-            this.removeGutterDecorations();
+            // If there are no errors, reset our state.
             this.setErrors([]);
             this.setHappyState();
             this.showError = false;
