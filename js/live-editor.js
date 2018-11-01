@@ -1067,8 +1067,7 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         if (this.editorType.indexOf("ace_") === 0 && data.results) {
-            // Remove previously added markers
-            this.removeMarkers();
+            this.removeUnderlineMarkers();
             if (data.results.assertions || data.results.warnings) {
                 // Add gutter warning markers in the editor.
                 // E.g. Add `Program.assertEqual(2, 4);` to the live editor to see
@@ -1149,11 +1148,10 @@ window.LiveEditor = Backbone.View.extend({
            "ace_problem_line", "text", false);
     },
 
-    removeMarkers: function() {
-        // Remove previously added markers and decorations
+    removeUnderlineMarkers: function() {
         var session = this.editor.editor.session;
         var markers = session.getMarkers();
-        _.each(markers, function(marker, markerId) {
+        Object.keys(markers).forEach((markerId) => {
             session.removeMarker(markerId);
         });
     },
@@ -1187,8 +1185,7 @@ window.LiveEditor = Backbone.View.extend({
             // There is an error
             var session = this.editor.editor.session;
 
-            // Remove old gutter markers and decorations
-            this.removeMarkers();
+            this.removeUnderlineMarkers();
 
             // Set the errors
             this.setErrors(errors);
