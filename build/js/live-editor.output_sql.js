@@ -23,7 +23,9 @@ this["Handlebars"]["templates"]["sql-results"] = Handlebars.template({"1":functi
     + alias4(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"name","hash":{},"data":data}) : helper)))
     + "</a> <span class=\"row-count\">"
     + alias4(((helper = (helper = helpers.rowCount || (depth0 != null ? depth0.rowCount : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"rowCount","hash":{},"data":data}) : helper)))
-    + " row</span></th>\n";
+    + " "
+    + alias4(((helper = (helper = helpers.rowMsg || (depth0 != null ? depth0.rowMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"rowMsg","hash":{},"data":data}) : helper)))
+    + "</span></th>\n";
 },"6":function(container,depth0,helpers,partials,data) {
     var helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=container.escapeExpression;
 
@@ -31,7 +33,9 @@ this["Handlebars"]["templates"]["sql-results"] = Handlebars.template({"1":functi
     + alias4(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"name","hash":{},"data":data}) : helper)))
     + "</a> <span class=\"row-count\">"
     + alias4(((helper = (helper = helpers.rowCount || (depth0 != null ? depth0.rowCount : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"rowCount","hash":{},"data":data}) : helper)))
-    + " rows</span></th>\n";
+    + " "
+    + alias4(((helper = (helper = helpers.rowsMsg || (depth0 != null ? depth0.rowsMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"rowsMsg","hash":{},"data":data}) : helper)))
+    + "</span></th>\n";
 },"8":function(container,depth0,helpers,partials,data) {
     var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=container.escapeExpression;
 
@@ -1065,7 +1069,9 @@ window.SQLOutput = Backbone.View.extend({
             tables: tables,
             results: results,
             databaseMsg: i18n._("Database Schema"),
-            resultsMsg: i18n._("Query results")
+            resultsMsg: i18n._("Query results"),
+            rowMsg: i18n._("row"),
+            rowsMsg: i18n._("rows")
         });
 
         var doc = this.getDocument();
