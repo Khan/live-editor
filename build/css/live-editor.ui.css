@@ -402,12 +402,3 @@
     opacity: 0;
     z-index: 880;
 }
-
-button {
-    transition: box-shadow 200ms ease-in-out;
-    box-shadow: 0 0 0px green;
-}
-
-button.hilite {
-    box-shadow: 0 0 20px green;
-}
