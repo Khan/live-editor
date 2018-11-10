@@ -24,7 +24,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
 
         // True when we actively seeking to a new position and potentially
         // building the cache.
-        this.seeking = false;
+        this.runningSeek = false;
     },
 
     setActualInitData: function(actualData) {
@@ -145,11 +145,11 @@ window.ScratchpadRecord = Backbone.Model.extend({
     // Seek to a given position in the playback, executing all the
     // commands in the interim
     seekTo: function(time) {
-        if (this.seeking) {
+        if (this.runningSeek) {
             return;
         }
 
-        this.seeking = true;
+        this.runningSeek = true;
 
         // Initialize and seek to the desired position
         this.pauseTime = (new Date()).getTime();
@@ -216,11 +216,10 @@ window.ScratchpadRecord = Backbone.Model.extend({
             if (currentOffset <= seekPos) {
                 window.requestAnimationFrame(buildCache);
             } else {
-                this.seeking = false;
+                this.runningSeek = false;
                 this.trigger("seekDone");
             }
         }
-
         window.requestAnimationFrame(buildCache);
     },
 
@@ -259,7 +258,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
 
     play: function() {
         // Don't play if we're already playing or recording
-        if (this.recording || this.playing || this.seeking || !this.commands ||
+        if (this.recording || this.playing || this.runningSeek || !this.commands ||
                 this.commands.length === 0) {
             return;
         }
@@ -363,7 +362,7 @@ window.ScratchpadRecord = Backbone.Model.extend({
             // Specifically this applies to replace (which is a remove and an insert back to back)
             if (this.synchronizedTime === undefined) {
                 this.synchronizedTime = Math.floor((new Date).getTime() - this.startTime);
-                setTimeout(function() { 
+                setTimeout(function() {
                     this.synchronizedTime = undefined;
                 }.bind(this), 0);
             }
