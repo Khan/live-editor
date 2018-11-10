@@ -1,6 +1,5 @@
 window.AceEditor = Backbone.View.extend({
     dom: {
-        ACTIVE_LINE: ".ace_active_line",
         TEXT_INPUT: "textarea",
         CONTENT: "div.ace_content"
     },
@@ -276,20 +275,7 @@ window.AceEditor = Backbone.View.extend({
 
     // Set the cursor position on the editor
     setErrorHighlight: function setErrorHighlight(shouldHighlight) {
-        var self = this;
-
         this.editor.setHighlightActiveLine(shouldHighlight);
-
-        // Delay adding a flash until the active line is shown
-        setTimeout(function () {
-            // Add the hilite flash
-            var line = self.$(self.dom.ACTIVE_LINE).addClass("hilite");
-
-            // And quickly remove it again (to give a nice flash animation)
-            setTimeout(function () {
-                line.removeClass("hilite");
-            }, 100);
-        }, 1);
     },
 
     // Allow for toggling of the editor gutter
