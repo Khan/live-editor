@@ -1,55 +1,78 @@
 describe("colorPicker - detection", function() {
-    var mockedColorPicker = getMockedTooltip(tooltipClasses.colorPicker, ["detector", "initialize"]);
+
+    let sandbox;
+    let mockedColorPicker;
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+        mockedColorPicker = getMockedTooltip(sandbox, tooltipClasses.colorPicker, ["detector", "initialize"])
+    });
+
+    after(function () {
+        sandbox.restore();
+        mockedColorPicker.remove();
+    });
 
     it("! Before open Paren", function() {
         var line = "fill(255, 244, 0, 21);";
         var pre = "fill";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(false);
+        expect(testMockedTooltipDetection(sandbox, mockedColorPicker, line, pre)).to.be(false);
     });
 
     it("After open Paren", function() {
         var line = "fill(255, 244, 0, 21);";
         var pre = "fill(";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(true);
+        expect(testMockedTooltipDetection(sandbox, mockedColorPicker, line, pre)).to.be(true);
     });
 
     it("Middle", function() {
         var line = "fill(255, 244, 0, 21);";
         var pre = "fill(255, ";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(true);
+        expect(testMockedTooltipDetection(sandbox, mockedColorPicker, line, pre)).to.be(true);
     });
 
     it("Before close paren", function() {
         var line = "fill(255, 244, 0, 21);";
         var pre = "fill(255, 244, 0, 21";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(true);
+        expect(testMockedTooltipDetection(sandbox, mockedColorPicker, line, pre)).to.be(true);
     });
 
     it("! After close paren", function() {
         var line = "fill(255, 244, 0, 21);";
         var pre = "fill(255, 244, 0, 21)";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(false);
+        expect(testMockedTooltipDetection(sandbox, mockedColorPicker, line, pre)).to.be(false);
     });
 
     it("All function names", function() {
-        _.each(["fill", "background", "stroke", "color"], function(fn) {
+        ["fill", "background", "stroke", "color"].forEach(function(fn) {
             var line = fn + "();";
             var pre = fn + "(";
-            expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(true);
+            expect(testMockedTooltipDetection(sandbox, mockedColorPicker, line, pre)).to.be(true);
         });
     });
 
     it("! Different function name", function() {
         var line = "rect(255, 244, 0, 21);";
         var pre = "rect(255, ";
-        expect(testMockedTooltipDetection(mockedColorPicker, line, pre)).to.be(false);
+        expect(testMockedTooltipDetection(sandbox, mockedColorPicker, line, pre)).to.be(false);
     });
 });
 
 
 
 describe("colorPicker - selection (what it replaces)", function() {
-    var mockedColorPicker = getMockedTooltip(tooltipClasses.colorPicker, ["detector", "updateText", "initialize"]);
+    let sandbox;
+    let colorPicker;
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+        colorPicker = getTooltip(tooltipClasses.colorPicker);
+    });
+
+    after(function () {
+        sandbox.restore();
+        colorPicker.remove();
+    });
 
     it("Basic", function() {
         var line = "fill(255, 0, 0);";
@@ -60,7 +83,7 @@ describe("colorPicker - selection (what it replaces)", function() {
             b: 60
         }];
         var result = "fill(40, 50, 60);";
-        testReplace(mockedColorPicker, line, pre, updates, result);
+        testReplace(sandbox, colorPicker, line, pre, updates, result);
     });
 
     it("Many replaces", function() {
@@ -80,7 +103,7 @@ describe("colorPicker - selection (what it replaces)", function() {
             b: 253
         }];
         var result = "fill(255, 254, 253);";
-        testReplace(mockedColorPicker, line, pre, updates, result);
+        testReplace(sandbox, colorPicker, line, pre, updates, result);
     });
 
     it("Alpha", function() {
@@ -92,7 +115,7 @@ describe("colorPicker - selection (what it replaces)", function() {
             b: 60
         }];
         var result = "fill(40, 50, 60, 100);";
-        testReplace(mockedColorPicker, line, pre, updates, result);
+        testReplace(sandbox, colorPicker, line, pre, updates, result);
     });
 
     it("Not preserving garbage", function() {
@@ -104,7 +127,7 @@ describe("colorPicker - selection (what it replaces)", function() {
             b: 60
         }];
         var result = "fill(40, 50, 60);";
-        testReplace(mockedColorPicker, line, pre, updates, result);
+        testReplace(sandbox, colorPicker, line, pre, updates, result);
     });
 });
 
