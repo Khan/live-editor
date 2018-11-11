@@ -132,37 +132,6 @@ window.LiveEditor = Backbone.View.extend({
             type: this.editorType
         });
 
-        var tooltipEngine = this.config.editor.tooltipEngine;
-        if (tooltipEngine.setEnabledStatus) {
-            // Looks to see if "autosuggestToggle=yes" is in the url,
-            //  if it is, then we disable the live autosuggestions.
-            if (window.location.search.indexOf("autosuggestToggle=yes") !== -1) {
-
-                // Overrides whatever is in localStorage.
-                // TODO (anyone) remove this when the URL param is removed.
-                window.localStorage["autosuggest"] = "true";
-
-                // Allows toggling of the autosuggestions.
-                this.editor.editor.commands.addCommand({
-                    name: 'toggleAutosuggest',
-                    bindKey: {
-                        win: 'Ctrl+Alt+A',
-                        mac: 'Command+Option+A'
-                    },
-                    exec: function(editor) {
-                        var status = window.localStorage["autosuggest"] === "true";
-
-                        tooltipEngine.setEnabledStatus(status !== true);
-
-                        window.localStorage.setItem("autosuggest", String(status !== true));
-                    }
-                });
-            } else {
-                // since we load the enabled value from localStorage...
-                tooltipEngine.setEnabledStatus("true");
-            }
-        }
-
         // linting in the webpage environment generates slowparseResults which
         // is used in the runCode step so skipping linting won't work in that
         // environment without some more work

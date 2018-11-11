@@ -2,7 +2,6 @@ window.TooltipEngine = Backbone.View.extend({
     initialize: function(options) {
         this.options = options;
         this.editor = options.editor;
-        this.enabled = true;
         var record = this.options.record;
 
         this.tooltips = {};
@@ -75,9 +74,7 @@ window.TooltipEngine = Backbone.View.extend({
             target: this.editor.session.getDocument(),
             event: "change",
             fn: function(e) {
-                if (this.enabled) {
-                    this.doRequestTooltip(e.data);
-                }
+                this.doRequestTooltip(e.data);
             }.bind(this)
         }, {
             target: this.editor.session,
@@ -110,20 +107,11 @@ window.TooltipEngine = Backbone.View.extend({
         });
 
 
-        this.requestTooltipDefaultCallback = function() {  //Fallback to hiding
-            // We are disabling autosuggest for now until issue #408 is fixed
-            // We may also consider doing A/B tests with partial lists of
-            // commands in the autocomplete to new programmers
-            ScratchpadAutosuggest.enableLiveCompletion(false);
+        this.requestTooltipDefaultCallback = function() {
             if (this.currentTooltip && this.currentTooltip.$el) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
             }
-        }.bind(this);
-
-        // Sets the live completion status to whatever value is passed in.
-        this.setEnabledStatus = function(status) {
-            this.enabled = status;
         }.bind(this);
 
         this.editor.on("requestTooltip", this.requestTooltipDefaultCallback);

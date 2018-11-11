@@ -535,125 +535,11 @@
  */
 window.ScratchpadAutosuggest = {
     /**
-     * Initializes the autosuggest functionality and adds/modifies the
-     * completers to be applicable to KA.
-     */
-    init: function init(editor) {
-        this.initialized = true;
-        this.editor = editor;
-        this.enableLiveCompletion(window.localStorage["autosuggest"] || true);
-        var langTools = ace.require("ace/ext/language_tools");
-
-        var customCompleters = [ScratchpadAutosuggestData._keywords, ScratchpadAutosuggestData._pjsFunctions, ScratchpadAutosuggestData._pjsVariables, ScratchpadAutosuggestData._pjsCallbacks, ScratchpadAutosuggestData._pjsObjectConstructors, ScratchpadAutosuggestData._pjsObjects];
-
-        // Remove the default keywords completer, it includes a ton of
-        // things we don't want to expose to the user like window,
-        // document, etc...
-        // Also remove the textCompleter. We'll use this wraped up in
-        // our own completer for local variables.
-        for (var i = editor.completers.length - 1; i >= 0; i--) {
-            if (editor.completers[i] === langTools.keyWordCompleter) {
-                editor.completers.splice(i, 1);
-            } else if (editor.completers[i] === langTools.textCompleter) {
-                this.internalTextCompleter = editor.completers[i];
-                editor.completers.splice(i, 1);
-            }
-        }
-
-        /*
-        // Local completer is currently disabled because it doesn't work
-        // perfectly, even with wrapping it.  I think implementing a custom
-        // one before enabling would be best.
-         // The internal local completer thinks numbers are identifiers
-        // and suggests them if they are used, get rid of that by
-        // wrapping the internal local completer in our own!
-        this.localVariableCompleter = {
-            getCompletions: function(editor, session, pos, prefix,
-                                     callback) {
-                if (prefix && isNaN(prefix[0])) {
-                    this.internalTextCompleter.getCompletions(editor,
-                        session, pos, prefix, callback);
-                    return;
-                }
-                 if (prefix.length === 0) {
-                    callback(null, []);
-                }
-            }.bind(this)
-        };
-        langTools.addCompleter(this.localVariableCompleter);
-        */
-
-        // Completer for keywords and pjs
-        this.customCompleter = {
-            getCompletions: function getCompletions(editor, session, pos, prefix, callback) {
-                if (prefix.length === 0) {
-                    callback(null, []);
-                    return;
-                }
-
-                var completions = [];
-                customCompleters.forEach((function (c) {
-                    c.whitelist.forEach((function (o) {
-                        // Completer entries can be simple strings or objects.
-                        // If it's an object it usually has live documentation
-                        // info inside of it.  Extract the name here.
-                        var f = o;
-                        if (_.isObject(o)) {
-                            f = o.name;
-                        }
-
-                        // Only return a result if it's a prefix.
-                        var funcName = f.split("(")[0];
-                        if (funcName.indexOf(prefix) === -1) {
-                            return;
-                        }
-                        completions.push({
-                            // name can be anything unique
-                            name: f + "-name",
-                            // value is what's used for showing/autocompleting
-                            value: funcName,
-                            // We just rate everything the same for now. There's
-                            // some basic internal matching based on keystrokes.
-                            score: 299,
-                            // The type to display next to the autosuggest
-                            // This is a human readable short descriptive name
-                            // such as: pjs function.
-                            meta: c.type
-                        });
-                    }).bind(this));
-                }).bind(this));
-                callback(null, completions);
-            }
-        };
-
-        langTools.addCompleter(this.customCompleter);
-    },
-    /**
-     * It's sometimes useful to not have live completion. So expose a way to
-     * enable and disable it. This is used for example when entering text
-     * within a comment. The tooltips code tells us not to do autosuggest.
-     * @param enable true to enable autosuggest
-     */
-    enableLiveCompletion: function enableLiveCompletion(enable) {
-        // Ignore enableLiveCompletion calls if we're not initialized
-        if (!this.initialized) {
-            return;
-        }
-        this.editor.setOptions({
-            // enable live popping up of the autosuggest
-            enableLiveAutocompletion: enable
-        });
-    },
-    /**
      * Returns the list of parameters for the specified function
      * This is used for the parameter info popup within lookupParamsSafeHTML.
      * @param lookup The function to lookup
      */
     lookupParams: function lookupParams(lookup) {
-        // Ignore lookupParams calls if we're not initialized
-        if (!this.initialized) {
-            return;
-        }
         var found = _.find(ScratchpadAutosuggestData._pjsFunctions.whitelist, function (o) {
             var f = o;
             if (_.isObject(o)) {
@@ -1324,7 +1210,6 @@ window.TooltipEngine = Backbone.View.extend({
     initialize: function initialize(options) {
         this.options = options;
         this.editor = options.editor;
-        this.enabled = true;
         var record = this.options.record;
 
         this.tooltips = {};
@@ -1396,9 +1281,7 @@ window.TooltipEngine = Backbone.View.extend({
             target: this.editor.session.getDocument(),
             event: "change",
             fn: (function (e) {
-                if (this.enabled) {
-                    this.doRequestTooltip(e.data);
-                }
+                this.doRequestTooltip(e.data);
             }).bind(this)
         }, {
             target: this.editor.session,
@@ -1431,20 +1314,10 @@ window.TooltipEngine = Backbone.View.extend({
         });
 
         this.requestTooltipDefaultCallback = (function () {
-            //Fallback to hiding
-            // We are disabling autosuggest for now until issue #408 is fixed
-            // We may also consider doing A/B tests with partial lists of
-            // commands in the autocomplete to new programmers
-            ScratchpadAutosuggest.enableLiveCompletion(false);
             if (this.currentTooltip && this.currentTooltip.$el) {
                 this.currentTooltip.$el.hide();
                 this.currentTooltip = undefined;
             }
-        }).bind(this);
-
-        // Sets the live completion status to whatever value is passed in.
-        this.setEnabledStatus = (function (status) {
-            this.enabled = status;
         }).bind(this);
 
         this.editor.on("requestTooltip", this.requestTooltipDefaultCallback);
@@ -1715,7 +1588,6 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
             this.updateTooltip(lookupParams);
             this.placeOnScreen();
             event.stopPropagation();
-            ScratchpadAutosuggest.enableLiveCompletion(false);
         }
     },
 
@@ -1875,7 +1747,6 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.updateTooltip(rgb);
         this.placeOnScreen();
         event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
     },
 
     updateTooltip: function updateTooltip(rgb) {
@@ -2093,7 +1964,6 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             this.updateTooltip(url);
             this.placeOnScreen();
             event.stopPropagation();
-            ScratchpadAutosuggest.enableLiveCompletion(false);
         },
 
         updateTooltip: function updateTooltip(url) {
@@ -2209,7 +2079,6 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
             this.updateTooltip(path);
             this.placeOnScreen();
             event.stopPropagation();
-            ScratchpadAutosuggest.enableLiveCompletion(false);
         },
 
         updateTooltip: function updateTooltip(partialPath) {
@@ -2293,7 +2162,6 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         this.updateTooltip(path);
         this.placeOnScreen();
         event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
     },
 
     render: function render() {
@@ -2611,7 +2479,6 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
         this.updateTooltip(parseFloat(number), this.decimalCount(number));
         this.placeOnScreen();
         event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
     },
 
     updateTooltip: function updateTooltip(value, decimals) {

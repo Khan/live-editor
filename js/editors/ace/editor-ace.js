@@ -63,11 +63,6 @@ window.AceEditor = Backbone.View.extend({
             this.trigger("scrubbingEnded", name);
         }.bind(this));
 
-        // TODO(bbondy): Support multiple content types for autosuggest.
-        if (this.tooltips[this.type].indexOf("autoSuggest") !== -1) {
-            ScratchpadAutosuggest.init(this.editor);
-        }
-
         // Override ACE gutter tooltip positioning due to bugginess
         ace.require("ace/tooltip").Tooltip.prototype.setPosition = function (x, y) {
             // Calculate x & y, relative to editor & scrolled window

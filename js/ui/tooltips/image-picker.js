@@ -1,7 +1,7 @@
 // A description of general tooltip flow can be found in tooltip-engine.js
 TooltipEngine.classes.imagePicker = TooltipBase.extend({
     defaultImage: "cute/None",
-    
+
     initialize: function(options) {
         this.options = options;
         this.parent = options.parent;
@@ -46,7 +46,6 @@ TooltipEngine.classes.imagePicker = TooltipBase.extend({
         this.updateTooltip(path);
         this.placeOnScreen();
         event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
     },
 
     render: function() {

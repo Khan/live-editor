@@ -232,7 +232,6 @@ TooltipEngine.classes.numberScrubber = TooltipBase.extend({
         this.updateTooltip(parseFloat(number), this.decimalCount(number));
         this.placeOnScreen();
         event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
     },
 
     updateTooltip: function(value, decimals) {

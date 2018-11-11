@@ -6,7 +6,7 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
         this.render();
         this.bind();
         this.mouse = false;
-        
+
         document.addEventListener("mousedown", () => {
             this.mouse = true;
         });
@@ -43,7 +43,6 @@ TooltipEngine.classes.autoSuggest = TooltipBase.extend({
             this.updateTooltip(lookupParams);
             this.placeOnScreen();
             event.stopPropagation();
-            ScratchpadAutosuggest.enableLiveCompletion(false);
         }
     },
 

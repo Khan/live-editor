@@ -133,7 +133,6 @@ TooltipEngine.classes.colorPicker = TooltipBase.extend({
         this.updateTooltip(rgb);
         this.placeOnScreen();
         event.stopPropagation();
-        ScratchpadAutosuggest.enableLiveCompletion(false);
     },
 
     updateTooltip: function(rgb) {

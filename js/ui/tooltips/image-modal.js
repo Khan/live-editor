@@ -198,7 +198,6 @@
             this.updateTooltip(url);
             this.placeOnScreen();
             event.stopPropagation();
-            ScratchpadAutosuggest.enableLiveCompletion(false);
         },
 
         updateTooltip: function(url) {
@@ -328,7 +327,6 @@
             this.updateTooltip(path);
             this.placeOnScreen();
             event.stopPropagation();
-            ScratchpadAutosuggest.enableLiveCompletion(false);
         },
 
         updateTooltip: function(partialPath) {

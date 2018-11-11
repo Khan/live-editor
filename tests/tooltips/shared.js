@@ -22,7 +22,6 @@ var uniqueEditor = function() {
         record: new ScratchpadRecord(),
         type: "ace_pjs"
     });
-    ScratchpadAutosuggest.init(ace.editor);
     ace.editor.focus();
     ace.setSelection({
         start: {
