@@ -392,6 +392,8 @@ window.SQLOutput = Backbone.View.extend({
             results: results,
             databaseMsg: i18n._("Database Schema"),
             resultsMsg: i18n._("Query results"),
+            rowMsg: i18n._("row"),
+            rowsMsg: i18n._("rows"),
         });
 
         var doc = this.getDocument();

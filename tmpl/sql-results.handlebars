@@ -92,9 +92,9 @@ table.sql-schema-table .row-count {
         <table class="sql-schema-table" data-table-name="{{name}}">
         <thead>
         {{#if hasSingleRow}}
-            <th><a href="javascript:void(0)">{{name}}</a> <span class="row-count">{{rowCount}} row</span></th>
+            <th><a href="javascript:void(0)">{{name}}</a> <span class="row-count">{{rowCount}} {{rowMsg}}</span></th>
         {{else}}
-            <th><a href="javascript:void(0)">{{name}}</a> <span class="row-count">{{rowCount}} rows</span></th>
+            <th><a href="javascript:void(0)">{{name}}</a> <span class="row-count">{{rowCount}} {{rowsMsg}}</span></th>
         {{/if}}
         </thead>
         <tbody>

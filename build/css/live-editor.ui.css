@@ -271,36 +271,18 @@
     z-index: 2;
 }
 
-/* Style overrides for the ace editor */
-.scratchpad-ace-editor .ace_gutter {
-    background: #F5F3E5;
-}
-
 .scratchpad-ace-editor .ace_tooltip {
     max-width: 550px; /* Ensures tooltip isn't cut off */
     white-space: normal; /* Allows multi-lines to wrap */
 }
 
 .scratchpad-ace-editor .ace_problem_line {
-    border-bottom: 1px dashed orange;
+    border-bottom: 1px dotted orange;
     position: absolute;
 }
 
 .scratchpad-ace-editor .ace_scroller {
     overflow-x: hidden;
-}
-
-.scratchpad-ace-editor .ace_sb {
-    overflow-y: auto;
-}
-
-.scratchpad-ace-editor .ace_active_line {
-    background: rgba(255, 207, 207, 0.9);
-    transition: background 200ms ease-in-out;
-}
-
-.scratchpad-ace-editor .ace_active_line.hilite {
-    background: rgba(255, 100, 100, 1);
 }
 
 .scratchpad-ace-editor .ace_line {
