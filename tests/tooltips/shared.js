@@ -1,6 +1,6 @@
-var mockObject = function(obj, mocks) {
+var mockObject = function(sandbox, obj, mocks) {
     _.each(mocks, function(method) {
-        obj[method] = sinon.spy();
+        obj[method] = sandbox.spy();
     });
     return obj;
 };
@@ -55,7 +55,7 @@ var TTEoptions = {
     }
 };
 
-var getMockedTooltip = function(Tooltip, whiteList, blackList) {
+var getMockedTooltip = function(sandbox, Tooltip, whiteList, blackList) {
     if (whiteList) {
         blackList = [];
         for (method in Tooltip.prototype) {
@@ -65,17 +65,22 @@ var getMockedTooltip = function(Tooltip, whiteList, blackList) {
         }
     }
     var oldPrototype = Tooltip.prototype;
-    Tooltip.prototype = mockObject(_.clone(Tooltip.prototype), blackList);
+    Tooltip.prototype = mockObject(sandbox, _.clone(Tooltip.prototype), blackList);
     Tooltip.prototype.render = function () {
         this.modal = {
-            show: sinon.spy(),
-            selectImg: sinon.spy()
+            show: sandbox.spy(),
+            selectImg: sandbox.spy()
         };
     };
     var tooltip = new Tooltip(TTEoptions);
     Tooltip.prototype = oldPrototype;
     return tooltip;
 };
+
+function getTooltip(Tooltip) {
+    var tooltip = new Tooltip(TTEoptions);
+    return tooltip;
+}
 
 var getTooltipRequestEvent = function(line, pre) {
     expect(line.slice(0, pre.length)).to.be.equal(pre);
@@ -102,18 +107,18 @@ var getTooltipRequestEvent = function(line, pre) {
 };
 
 
-var testMockedTooltipDetection = function(tooltip, line, pre) {
+var testMockedTooltipDetection = function(sandbox, tooltip, line, pre) {
     var event = getTooltipRequestEvent(line, pre);
     tooltip.placeOnScreen = sinon.spy();
     tooltip.detector(event);
     return !!tooltip.placeOnScreen.called;
 };
 
-function testReplace(tooltip, line, pre, updates, result) {
+function testReplace(sandbox, tooltip, line, pre, updates, result) {
     var event = getTooltipRequestEvent(line, pre);
     var newLine = line;
     var oldReplace = editor.session.replace;
-    editor.session.replace = sinon.spy(function(range, newText) {
+    editor.session.replace = sandbox.spy(function(range, newText) {
         newLine = applyReplace(newLine, range, newText);
     });
 
