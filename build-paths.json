@@ -21,8 +21,7 @@
             "bower_components/ace-builds/src-noconflict/mode-html.js",
             "bower_components/ace-builds/src-noconflict/ext-static_highlight.js",
             "bower_components/ace-builds/src-noconflict/mode-sql.js",
-            "bower_components/ace-builds/src-noconflict/ext-searchbox.js",
-            "bower_components/ace-builds/src-noconflict/ext-language_tools.js"
+            "bower_components/ace-builds/src-noconflict/ext-searchbox.js"
         ],
         "editor_ace": [
             "js/editors/ace/editor-ace.js"
