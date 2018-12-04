@@ -1,6 +1,6 @@
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["tipbar"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
+window["Handlebars"] = window["Handlebars"] || {};
+window["Handlebars"]["templates"] = window["Handlebars"]["templates"] || {};
+window["Handlebars"]["templates"]["tipbar"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
     return "&times;";
 },"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1, helper, options, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=container.escapeExpression, buffer = 
@@ -134,9 +134,9 @@ window.TipBar = Backbone.View.extend({
         this.update(true);
     }
 });
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["live-editor"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
+window["Handlebars"] = window["Handlebars"] || {};
+window["Handlebars"]["templates"] = window["Handlebars"]["templates"] || {};
+window["Handlebars"]["templates"]["live-editor"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
     return " no-output";
 },"3":function(container,depth0,helpers,partials,data) {
     var helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3="function", alias4=container.escapeExpression;
@@ -2309,5 +2309,9 @@ window.LiveEditor = Backbone.View.extend({
 LiveEditor.registerEditor = function (name, editor) {
     LiveEditor.prototype.editors[name] = editor;
 };
+
+if (typeof exports !== "undefined") {
+    exports.LiveEditor = LiveEditor;
+}
 
 // Malformed JSON, we don't care about it

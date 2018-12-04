@@ -425,3 +425,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 LiveEditorOutput.registerOutput = function(name, output) {
     LiveEditorOutput.prototype.outputs[name] = output;
 };
+
+if (typeof exports !== "undefined") {
+    exports.LiveEditorOutput = LiveEditorOutput;
+}

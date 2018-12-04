@@ -1,6 +1,6 @@
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["debugger"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
+window["Handlebars"] = window["Handlebars"] || {};
+window["Handlebars"]["templates"] = window["Handlebars"]["templates"] || {};
+window["Handlebars"]["templates"]["debugger"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
     return "Debug Mode";
 },"3":function(container,depth0,helpers,partials,data) {
     return "Level";

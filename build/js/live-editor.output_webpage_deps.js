@@ -11571,7 +11571,9 @@ require("/tools/entry-point.js");
   //
   // `Slowparse` is the object that holds all exported symbols from
   // this library.
-  var Slowparse = {
+  // NOTE(jeresig): We need to always expose Slowparse as a global to be
+  // used by the Webpage output.
+  var Slowparse = window.Slowparse = {
     // We export our list of recognized HTML elements and CSS properties
     // for clients to use if needed.
     HTML_ELEMENT_NAMES: HTMLParser.prototype.voidHtmlElements.concat(

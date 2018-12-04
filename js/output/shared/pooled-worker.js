@@ -1,4 +1,4 @@
-var PooledWorker = function(filename, onExec) {
+window.PooledWorker = function(filename, onExec) {
     this.pool = [];
     this.curID = 0;
     this.filename = filename;

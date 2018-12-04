@@ -252,6 +252,7 @@ window.WebpageOutput = Backbone.View.extend({
         _.extend(this.tester.testContext, {
             $doc: $(this.frameDoc),
             docSP: this.slowparseResults.document,
+            $docSP: $(this.slowparseResults.document),
             cssRules: this.slowparseResults.rules
         });
 

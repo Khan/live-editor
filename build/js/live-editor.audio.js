@@ -6404,9 +6404,9 @@ if (typeof module === 'object' && module && typeof module.exports === 'object') 
 
 })(window);
 
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["dev-record"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
+window["Handlebars"] = window["Handlebars"] || {};
+window["Handlebars"]["templates"] = window["Handlebars"]["templates"] || {};
+window["Handlebars"]["templates"]["dev-record"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
     return "Start New Chunk";
 },"3":function(container,depth0,helpers,partials,data) {
     return "Discard Recorded Chunk";
