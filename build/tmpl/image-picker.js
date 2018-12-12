@@ -1,6 +1,6 @@
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["image-picker"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data,blockParams,depths) {
+window["Handlebars"] = window["Handlebars"] || {};
+window["Handlebars"]["templates"] = window["Handlebars"]["templates"] || {};
+window["Handlebars"]["templates"]["image-picker"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data,blockParams,depths) {
     var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {});
 
   return "        <div class=\"media-group\">\n            <h3>"

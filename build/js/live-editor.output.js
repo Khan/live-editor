@@ -1,4 +1,4 @@
-var PooledWorker = function PooledWorker(filename, onExec) {
+window.PooledWorker = function (filename, onExec) {
     this.pool = [];
     this.curID = 0;
     this.filename = filename;
@@ -730,3 +730,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 LiveEditorOutput.registerOutput = function (name, output) {
     LiveEditorOutput.prototype.outputs[name] = output;
 };
+
+if (typeof exports !== "undefined") {
+    exports.LiveEditorOutput = LiveEditorOutput;
+}
