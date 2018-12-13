@@ -2604,9 +2604,9 @@ window.TooltipUtils = {
         $(active).closest("li").addClass("active");
     }
 };
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["image-picker"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data,blockParams,depths) {
+window["Handlebars"] = window["Handlebars"] || {};
+window["Handlebars"]["templates"] = window["Handlebars"]["templates"] || {};
+window["Handlebars"]["templates"]["image-picker"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data,blockParams,depths) {
     var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {});
 
   return "        <div class=\"media-group\">\n            <h3>"
@@ -2649,9 +2649,9 @@ this["Handlebars"]["templates"]["image-picker"] = Handlebars.template({"1":funct
     + ((stack1 = helpers.each.call(alias1,(depth0 != null ? depth0.groups : depth0),{"name":"each","hash":{},"fn":container.program(1, data, 0, blockParams, depths),"inverse":container.noop,"data":data})) != null ? stack1 : "")
     + "    </div>\n</div>";
 },"useData":true,"useDepths":true});;
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["mediapicker-preview"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
+window["Handlebars"] = window["Handlebars"] || {};
+window["Handlebars"]["templates"] = window["Handlebars"]["templates"] || {};
+window["Handlebars"]["templates"]["mediapicker-preview"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
     return "mediapicker__sound";
 },"3":function(container,depth0,helpers,partials,data) {
     return "mediapicker__image";
@@ -2670,9 +2670,9 @@ this["Handlebars"]["templates"]["mediapicker-preview"] = Handlebars.template({"1
     + container.escapeExpression(((helper = (helper = helpers.pickMsg || (depth0 != null ? depth0.pickMsg : depth0)) != null ? helper : helpers.helperMissing),(typeof helper === "function" ? helper.call(alias1,{"name":"pickMsg","hash":{},"data":data}) : helper)))
     + "\n		</button>\n	</div>\n	<div class=\"arrow\"></div>\n</div>";
 },"useData":true});;
-this["Handlebars"] = this["Handlebars"] || {};
-this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
-this["Handlebars"]["templates"]["mediapicker-modal"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
+window["Handlebars"] = window["Handlebars"] || {};
+window["Handlebars"]["templates"] = window["Handlebars"]["templates"] || {};
+window["Handlebars"]["templates"]["mediapicker-modal"] = Handlebars.template({"1":function(container,depth0,helpers,partials,data) {
     var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=helpers.helperMissing, alias3=container.escapeExpression;
 
   return "      <li "

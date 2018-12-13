@@ -1594,3 +1594,7 @@ window.LiveEditor = Backbone.View.extend({
 LiveEditor.registerEditor = function(name, editor) {
     LiveEditor.prototype.editors[name] = editor;
 };
+
+if (typeof exports !== "undefined") {
+    exports.LiveEditor = LiveEditor;
+}
