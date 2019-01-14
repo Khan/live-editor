@@ -34,7 +34,8 @@ gulp.task("templates", function() {
         }))
         .pipe(defineModule("plain"))
         .pipe(declare({
-            namespace: "Handlebars.templates"
+            namespace: "Handlebars.templates",
+            root: "window"
         }))
         .pipe(gulp.dest("build/tmpl"));
 });

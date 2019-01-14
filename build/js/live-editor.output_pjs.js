@@ -76,6 +76,7 @@ var PJSCodeInjector = (function () {
         Object.assign(this, defaultOptions, options);
         this.DUMMY = this.processing.draw; // initially draw is a DUMMY method
         this.seed = null;
+        this.globals = {};
 
         this.addMethods(this.additionalMethods);
         this.reseedRandom();

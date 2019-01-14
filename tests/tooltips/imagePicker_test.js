@@ -1,61 +1,83 @@
-
 describe("imagePicker - detection", function() {
-    var mockedImagePicker = getMockedTooltip(tooltipClasses.imagePicker, ["detector"]);
+
+    let sandbox;
+    let mockedImagePicker;
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+        mockedImagePicker = getMockedTooltip(sandbox, tooltipClasses.imagePicker, ["detector"])
+    });
+
+    after(function () {
+        sandbox.restore();
+        mockedImagePicker.remove();
+    });
 
     it("Doesn't match cursor before open paren", function() {
         var line = 'getImage("cute/Blank");';
         var pre = 'getImage';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(false);
+        expect(testMockedTooltipDetection(sandbox, mockedImagePicker, line, pre)).to.be(false);
     });
 
     it("Does match cursor after open paren", function() {
         var line = 'getImage("cute/Blank");';
         var pre = 'getImage(';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(true);
+        expect(testMockedTooltipDetection(sandbox, mockedImagePicker, line, pre)).to.be(true);
     });
 
     it("Does match cursor in middle of filename", function() {
         var line = 'getImage("cute/Blank");';
         var pre = 'getImage("cute';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(true);
+        expect(testMockedTooltipDetection(sandbox, mockedImagePicker, line, pre)).to.be(true);
     });
 
     it("Does match cursor before close paren", function() {
         var line = 'getImage("cute/Blank");';
         var pre = 'getImage("cute/Blank"';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(true);
+        expect(testMockedTooltipDetection(sandbox, mockedImagePicker, line, pre)).to.be(true);
     });
 
     it("Doesn't match cursor after close paren", function() {
         var line = 'getImage("cute/Blank");';
         var pre = 'getImage("cute/Blank")';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(false);
+        expect(testMockedTooltipDetection(sandbox, mockedImagePicker, line, pre)).to.be(false);
     });
 
     it("Doesn't match cursor in random code", function() {
         var line = 'randomGibberish';
         var pre = 'rand';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(false);
+        expect(testMockedTooltipDetection(sandbox, mockedImagePicker, line, pre)).to.be(false);
     });
 
     it("Doesn't match cursor in different function name", function() {
         var line = 'color("hi");';
         var pre = 'color("hi"';
-        expect(testMockedTooltipDetection(mockedImagePicker, line, pre)).to.be(false);
+        expect(testMockedTooltipDetection(sandbox, mockedImagePicker, line, pre)).to.be(false);
     });
 });
 
 
 
 describe("imagePicker - selection (what it replaces)", function() {
-    var mockedImagePicker = getMockedTooltip(tooltipClasses.imagePicker, ["detector", "updateText", "initialize"]);
+    let sandbox;
+    let imagePicker;
+
+    before(function () {
+        sandbox = sinon.sandbox.create();
+        imagePicker = getTooltip(tooltipClasses.imagePicker);
+    });
+
+    after(function () {
+        sandbox.restore();
+        imagePicker.remove();
+    });
 
     it("Basic", function() {
         var line = 'getImage("blank/None");';
         var pre = 'getImage("b';
         var updates = ['avatars-blueleaf'];
         var result = 'getImage("avatars-blueleaf");';
-        testReplace(mockedImagePicker, line, pre, updates, result);
+        testReplace(sandbox, imagePicker, line, pre, updates, result);
     });
 
     it("Many replaces", function() {
@@ -63,7 +85,7 @@ describe("imagePicker - selection (what it replaces)", function() {
         var pre = 'getImage("b';
         var updates = ['bob', 'teddy', 'johnathan'];
         var result = 'getImage("johnathan");';
-        testReplace(mockedImagePicker, line, pre, updates, result);
+        testReplace(sandbox, imagePicker, line, pre, updates, result);
     });
 
     it("Garbled initial state", function() {
@@ -71,7 +93,7 @@ describe("imagePicker - selection (what it replaces)", function() {
         var pre = 'getImage(';
         var updates = ['pearl'];
         var result = 'getImage("pearl"';
-        testReplace(mockedImagePicker, line, pre, updates, result);
+        testReplace(sandbox, imagePicker, line, pre, updates, result);
     });
 });
 
@@ -93,4 +115,3 @@ describe("imagePicker - Integration tests (running on a real editor)", function(
         expect(TTE.currentTooltip).to.be.equal(TTE.tooltips.imagePicker);
     });
 });
-

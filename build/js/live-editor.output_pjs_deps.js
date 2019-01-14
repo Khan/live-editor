@@ -78548,7 +78548,7 @@ var warnings = {
 	W033: i18n._("It looks like you're missing a semicolon."),
 	W034: i18n._("Unnecessary directive \"{a}\"."),
 	W035: i18n._("Empty block."),
-	W036: i18n._("Unexpected /*member '{a}'."),
+	W036: i18n._("Unexpected /" + "*member '{a}'."),
 	W037: i18n._("'{a}' is a statement label."),
 	W038: i18n._("'{a}' used out of scope."),
 	W039: i18n._("'{a}' is not allowed."),
