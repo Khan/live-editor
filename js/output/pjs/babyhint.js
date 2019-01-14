@@ -139,7 +139,8 @@ var BabyHint = {
         location: true,
         document: true,
         ownerDocument: true,
-        createElement: true
+        createElement: true,
+        constructor: true // Can be used to bypass some circumventions
     },
 
     variables: [],
