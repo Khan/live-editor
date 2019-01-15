@@ -108,6 +108,13 @@ describe("Scratchpad Output - BabyHint checks", function() {
         babyhint: true,
         code: "rect(100, 200, 300);"
     });
+    
+    assertTest({   
+        title: "Banned properties test",
+        reason: "constructor is a reserved word.",
+        babyhint: true,
+        code: "[].constructor.constructor('return 1');"
+    });
 });
 
 // Syntax errors - not controlled by JSHint options.
@@ -147,6 +154,7 @@ describe("Scratchpad Output - JSHint syntax errors", function() {
         code: "10"
     });
 
+    
     assertTest({
         title: "Not closing a string",
         reason: "Unclosed string! Make sure you end your string with a quote.",
