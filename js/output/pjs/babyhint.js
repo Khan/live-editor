@@ -547,6 +547,52 @@ var BabyHint = {
         return variables;
     },
 
+    countCommas: function(str) {
+        var pairs = {
+            "(": ")",
+            "{": "}",
+            "[": "]"
+        }, revPairs = {
+            ")": "(",
+            "}": "{",
+            "]": "["
+        };
+
+        var stack = [];
+        var indexStack = [];
+        var commaCount = 0;
+
+        for (var i = 0; i < str.length; i++) {
+            if (pairs.hasOwnProperty(str[i])) {
+                stack.push(str[i]);
+                indexStack.push(i);
+            } else if (revPairs.hasOwnProperty(str[i])) {
+                if (revPairs[str[i]] === stack[stack.length - 1]) {
+                    stack.pop();
+                    indexStack.pop();
+                } else {
+                    return {
+                        error: {
+                            message: i18n._("Unexpected \"%(token)s\"", { token: str[i] }),
+                            index: i
+                        }
+                    };
+                }
+            } else if (stack.length === 0 && str[i] === ",") {
+                commaCount++;
+            }
+        }
+
+        return stack.length > 0 ? {
+            error: {
+                message: i18n._("Unmatched \"%(token)s\"", { token: stack.pop() }),
+                index: indexStack.pop()
+            }
+        } : {
+            count: commaCount
+        };
+    },
+
     checkFunctionParams: function(line, lineNumber) {
         // Many Processing functions don't break if passed the wrong
         // number of parameters, but they also don't work.
@@ -641,10 +687,23 @@ var BabyHint = {
             }
 
             // count the parameters passed
-            var numParams;
-            var numCommas = params.match(/,/g);
-            if (numCommas) {
-                numParams = numCommas.length + 1;
+            var numParams, rawCount = this.countCommas(params.substring(1, params.length - 1));
+
+            // push in an error if an error occurs while parsing the param list
+            if (rawCount.error) {
+                errors.push({
+                    row: lineNumber,
+                    column: index + 2 + rawCount.error.index,
+                    text: rawCount.error.message,
+                    breaksCode: false,
+                    source: "paramschecker",
+                    context: {}
+                });
+                return errors;
+            }
+
+            if (rawCount.count) {
+                numParams = rawCount.count + 1;
             } else {
                 numParams = params.match(/[^\s()]/g) ? 1 : 0;
             }
