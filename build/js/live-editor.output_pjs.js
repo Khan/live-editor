@@ -2814,6 +2814,9 @@ window.PJSOutput = Backbone.View.extend({
 
         this.processing = new Processing(canvas, function (instance) {
             instance.draw = _this.DUMMY;
+            if (_this.options.logFullScreen) {
+                instance.println("FULLSCREENLOG");
+            }
         });
 
         // The reason why we're passing the whole "output" object instead of
@@ -2872,6 +2875,7 @@ window.PJSOutput = Backbone.View.extend({
             // Restart execution
             this.output.restart();
         }
+        if (this.processing) {}
     },
 
     messageHandlers: {
@@ -3120,3 +3124,5 @@ LiveEditorOutput.registerOutput("pjs", PJSOutput);
 // Couldn't access property for permissions reasons,
 //  like window.frame
 // Only happens on prod where it's cross-origin
+
+// find log

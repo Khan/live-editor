@@ -327,7 +327,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.config = new ScratchpadConfig({});
 
         if (options.outputType) {
-            this.setOutput(options.outputType, true, options.loopProtectTimeouts);
+            this.setOutput(options.outputType, true, options.loopProtectTimeouts, options.logFullScreen);
         }
 
         // Add a timestamp property to the lintErrors and runtimeErrors arrays
@@ -354,7 +354,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         window.addEventListener("message", this.handleMessage.bind(this), false);
     },
 
-    setOutput: function setOutput(outputType, enableLoopProtect, loopProtectTimeouts) {
+    setOutput: function setOutput(outputType, enableLoopProtect, loopProtectTimeouts, logFullScreen) {
         var OutputClass = this.outputs[outputType];
         this.output = new OutputClass({
             el: this.$el.find(".output"),
@@ -362,7 +362,8 @@ window.LiveEditorOutput = Backbone.View.extend({
             output: this,
             type: outputType,
             enableLoopProtect: enableLoopProtect,
-            loopProtectTimeouts: loopProtectTimeouts
+            loopProtectTimeouts: loopProtectTimeouts,
+            logFullScreen: logFullScreen
         });
     },
 
@@ -421,6 +422,7 @@ window.LiveEditorOutput = Backbone.View.extend({
         if (!this.output) {
             var outputType = data.outputType || _.keys(this.outputs)[0];
             var enableLoopProtect = true;
+            var logFullScreen = false;
             if (data.enableLoopProtect != null) {
                 enableLoopProtect = data.enableLoopProtect;
             }
@@ -431,7 +433,10 @@ window.LiveEditorOutput = Backbone.View.extend({
             if (data.loopProtectTimeouts != null) {
                 loopProtectTimeouts = data.loopProtectTimeouts;
             }
-            this.setOutput(outputType, enableLoopProtect, loopProtectTimeouts);
+            if (data.logFullScreen != null) {
+                logFullScreen = data.logFullScreen;
+            }
+            this.setOutput(outputType, enableLoopProtect, loopProtectTimeouts, logFullScreen);
         }
 
         // Set the paths from the incoming data, if they exist

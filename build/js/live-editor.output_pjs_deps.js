@@ -19715,7 +19715,8 @@
               if (height < 0) {
                 height = 0;
               } else if (height + resizerHeight > viewHeight) {
-                height = viewHeight - resizerHeight;
+                // subtract resizer height and bottom padding
+                height = viewHeight - resizerHeight - 5;
               }
 
               containerStyle.height = height / viewHeight * 100 + "%";
@@ -19792,6 +19793,11 @@
           docElem.insertBefore(container, docElem.firstChild);
 
           tinylogLite[log] = function(message) {
+            // If we intercept special message, display full-screen log
+            if (message === "FULLSCREENLOG") {
+              setContainerHeight(Infinity);
+              return;
+            }
             if (messages === logLimit) {
               output.removeChild(output.firstChild);
             } else {

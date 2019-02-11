@@ -843,6 +843,7 @@ window.LiveEditor = Backbone.View.extend({
         } else {
             this.enableLoopProtect = true;
         }
+        this.logFullScreen = !!options.logFullScreen;
 
         // Set up the editor
         this.editor = new this.editors[this.editorType]({
@@ -2022,7 +2023,8 @@ window.LiveEditor = Backbone.View.extend({
             redirectUrl: this.redirectUrl,
             jshintFile: this.jshintFile,
             outputType: this.outputType,
-            enableLoopProtect: this.enableLoopProtect
+            enableLoopProtect: this.enableLoopProtect,
+            logFullScreen: this.logFullScreen
         };
 
         this.trigger("runCode", options);
