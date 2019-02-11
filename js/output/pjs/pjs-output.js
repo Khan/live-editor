@@ -229,10 +229,6 @@ window.PJSOutput = Backbone.View.extend({
             // Restart execution
             this.output.restart();
         }
-        if (this.processing) {
-            // find log
-
-        }
     },
 
     messageHandlers: {
