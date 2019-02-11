@@ -71,7 +71,7 @@
         execFile: outputUrl,
         jshintFile: "../../build/external/jshint/jshint.js",
         newErrorExperience: true,
-        logFullScreen: true
+        logFullScreen: false
     });
     liveEditor.editor.on("change", function() {
         window.localStorage["test-code"] = liveEditor.editor.text();
