@@ -11973,6 +11973,7 @@ window.LoopProtector.prototype = {
                         _this2.callback(_error);
                         throw _error;
                     }
+
                     // Determine which of KAInfiniteLoopProtect's callsites has
                     // the most calls.
                     var max = 0; // current max count
