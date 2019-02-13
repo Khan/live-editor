@@ -87436,7 +87436,7 @@ window.LoopProtector = function (callback, timeouts, reportLocation) {
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
 
     document.addEventListener("visibilitychange", function () {
-        if (document.hidden) {
+        if (!document.hidden) {
             _this.visible = true;
             _this.branchStartTime = 0;
         } else {
@@ -87486,7 +87486,6 @@ window.LoopProtector.prototype = {
                         _this2.callback(_error);
                         throw _error;
                     }
-
                     // Determine which of KAInfiniteLoopProtect's callsites has
                     // the most calls.
                     var max = 0; // current max count
