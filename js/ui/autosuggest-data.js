@@ -47,7 +47,7 @@ window.ScratchpadAutosuggestData = {
                 exampleURL: "/cs/trianglex1-y1-x2-y2-x3-y3/839546599",
                 description: i18n._("Draws a triangle"),
                 params: [
-                    i18n._("x: the x-coordinate of the first vertex"),
+                    i18n._("x1: the x-coordinate of the first vertex"),
                     i18n._("y1: the y-coordinate of the first vertex"),
                     i18n._("x2: the x-coordinate of the second vertex"),
                     i18n._("y2: the y-coordinate of the second vertex"),
