@@ -143,6 +143,22 @@ describe("Scratchpad Output Exec", function() {
     });
 
     runTest({
+        title: "Empty slots in arrays",
+        code: function() {
+            var h = function() {
+                return [ , 2, , {}];
+            };
+            Program.assertEqual(h().length, 0);
+        },
+        errors: [],
+        assertions: [{
+            "row": 3,
+            "column": 0,
+            "text": "Assertion failed: 4 is not equal to 0."
+        }]
+    });
+
+    runTest({
         title: "inner scope variables supercede global variables",
         code: function() {
             var foo = 5;
