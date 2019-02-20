@@ -176,7 +176,7 @@ window.ScratchpadAutosuggestData = {
                 ]
             },
             {
-                name: "bezierTangent(a,b, c, d, t)",
+                name: "bezierTangent(a, b, c, d, t)",
                 exampleURL: "/cs/beziertangenta-b-c-d-t/4736929853603840",
                 description: i18n._("Calculates the tangent of a point on a bezier curve. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the tangent of a bezier curve at t."),
                 params: [
@@ -222,7 +222,7 @@ window.ScratchpadAutosuggestData = {
                 params: [
                     i18n._("a: the coordinate of the first point"),
                     i18n._("b: the coordinate of the first control point"),
-                    i18n._("c: the coordinate of the second point"),
+                    i18n._("c: the coordinate of the second control point"),
                     i18n._("d: the coordinate of the second point"),
                     i18n._("t: the a value between 0 and 1")
                 ]
@@ -230,11 +230,11 @@ window.ScratchpadAutosuggestData = {
             {
                 name: "curveTangent(a, b, c, d, t)",
                 exampleURL: "/cs/curvetangenta-b-c-d-t/4708940860358656",
-                description: i18n._("Calculates the tangent at a point the curve. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the tangent of a curve at t."),
+                description: i18n._("Calculates the tangent of a point on a curve. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the tangent of a curve at t."),
                 params: [
                     i18n._("a: the coordinate of the first point"),
                     i18n._("b: the coordinate of the first control point"),
-                    i18n._("c: the coordinate of the second point"),
+                    i18n._("c: the coordinate of the second control point"),
                     i18n._("d: the coordinate of the second point"),
                     i18n._("t: the a value between 0 and 1")
                 ]
@@ -250,7 +250,7 @@ window.ScratchpadAutosuggestData = {
             {
                 name: "curveVertex(x,y)",
                 exampleURL: "/cs/curvevertexx-y/6499542019080192",
-                description: i18n._("Used in conjunction with beginShape() and endShape() to draw shapes with bezier curves for sides. The first and last points in a series of curveVertex() lines will be used to guide the beginning and end of a the curve."),
+                description: i18n._("Used in conjunction with beginShape() and endShape() to draw shapes with bezier curves for sides. The first and last points in a series of curveVertex() lines will be used to guide the beginning and end of the curve."),
                 params: [
                     i18n._("x: the x-coordinate of the vertex"),
                     i18n._("y: the y-coordinate of the vertex")
