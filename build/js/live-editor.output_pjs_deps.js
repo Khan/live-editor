@@ -87922,10 +87922,7 @@ ASTTransforms.preserveUserCode = function (code) {
                 // toString reassignment
                 b.ExpressionStatement(b.AssignmentExpression(b.MemberExpression(b.Identifier(funcName), b.Identifier("toString")), "=", b.FunctionExpression([], [b.ReturnStatement({
                     type: "Literal",
-                    value: functionSource,
-                    raw: "\"" + functionSource.replace(/\n/g, "\\n").replace(/[\\"']/g, function (_, ch) {
-                        return "\\" + ch;
-                    }) + "\""
+                    value: functionSource
                 })]))), b.ReturnStatement(b.Identifier(funcName))]);
             }
         }

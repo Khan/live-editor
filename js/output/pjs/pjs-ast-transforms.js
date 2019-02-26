@@ -352,8 +352,7 @@ ASTTransforms.preserveUserCode = code => ({
                         b.FunctionExpression([], [
                             b.ReturnStatement({
                                 type: "Literal",
-                                value: functionSource,
-                                raw: `"${functionSource.replace(/\n/g, "\\n").replace(/[\\"']/g, (_, ch) => `\\${ch}`)}"`
+                                value: functionSource
                             })
                         ])
                     )
