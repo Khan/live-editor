@@ -87263,6 +87263,12 @@ window.ASTBuilder = {
         };
     },
     /**
+     * @param {Array} body: an array of Expressions
+     */
+    IIFunctionExpression: function IIFunctionExpression(body) {
+        return this.CallExpression(this.FunctionExpression([], body), []);
+    },
+    /**
      * @param {Number|String|null|RegExp} value
      */
     Literal: function Literal(value) {
@@ -87287,6 +87293,18 @@ window.ASTBuilder = {
         };
     },
     /**
+     * @param {Array} params
+     * @param {Array} body: an array of Expressions
+     */
+    FunctionExpression: function FunctionExpression(params, body) {
+        return {
+            type: "FunctionExpression",
+            id: null,
+            params: params,
+            body: this.BlockStatement(body)
+        };
+    },
+    /**
      * @param {Expression} argument
      * @param {string} operator: "++" or "--"
      * @param {Boolean} prefix: true => ++argument, false => argument++
@@ -87308,6 +87326,28 @@ window.ASTBuilder = {
             type: "VariableDeclaration",
             declarations: declarations,
             kind: kind
+        };
+    },
+
+    /**
+     * @param {string} ident
+     * @param {Object} init
+     */
+    VariableDeclarator: function VariableDeclarator(ident, init) {
+        return {
+            type: "VariableDeclarator",
+            id: this.Identifier(ident),
+            init: init
+        };
+    },
+
+    /**
+     * @param {object} argument
+     */
+    ReturnStatement: function ReturnStatement(argument) {
+        return {
+            type: "ReturnStatement",
+            argument: argument
         };
     }
 };
@@ -87850,6 +87890,43 @@ ASTTransforms.rewriteNewExpressions = function (envName) {
                 var _name = escodegen.generate(node.callee);
 
                 return b.CallExpression(b.CallExpression(b.MemberExpression(b.MemberExpression(b.Identifier(envName), b.Identifier("PJSCodeInjector")), b.Identifier("applyInstance")), [node.callee, b.Literal(_name)]), node.arguments);
+            }
+        }
+    };
+};
+
+/**
+ * Makes it so the `toString` method on function expressions returns user code rather than
+ * AST-mangled code
+ *
+ * @param {Array} code: an array containing each line of user code as an element
+ */
+ASTTransforms.preserveUserCode = function (code) {
+    return {
+        leave: function leave(node, _) {
+            if (node.type == "FunctionExpression") {
+                var functionSource = window.PJSUtils.getFunctionSource(code, node.loc);
+                var funcName = "KAFunctionTemp";
+
+                // Rewrites `function() { <CODE> }` as
+                // ```(function() {
+                //     var KAFunctionTemp = function() { <CODE> };
+                //     KAFunctionTemp.toString = function() { return "<CODE>"; };
+                //     return KAFunctionTemp;
+                // })()```
+                // so that learners get their own source code rather than the AST transformed
+                // code when they try printing the function out
+                return b.IIFunctionExpression([b.VariableDeclaration([
+                // The shallow copy is necessary in order to prevent a stack overflow
+                b.VariableDeclarator(funcName, Object.assign({}, node))], "var"),
+                // toString reassignment
+                b.ExpressionStatement(b.AssignmentExpression(b.MemberExpression(b.Identifier(funcName), b.Identifier("toString")), "=", b.FunctionExpression([], [b.ReturnStatement({
+                    type: "Literal",
+                    value: functionSource,
+                    raw: "\"" + functionSource.replace(/\n/g, "\\n").replace(/[\\"']/g, function (_, ch) {
+                        return "\\" + ch;
+                    }) + "\""
+                })]))), b.ReturnStatement(b.Identifier(funcName))]);
             }
         }
     };

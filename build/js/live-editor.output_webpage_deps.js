@@ -11750,6 +11750,12 @@ window.ASTBuilder = {
         };
     },
     /**
+     * @param {Array} body: an array of Expressions
+     */
+    IIFunctionExpression: function IIFunctionExpression(body) {
+        return this.CallExpression(this.FunctionExpression([], body), []);
+    },
+    /**
      * @param {Number|String|null|RegExp} value
      */
     Literal: function Literal(value) {
@@ -11774,6 +11780,18 @@ window.ASTBuilder = {
         };
     },
     /**
+     * @param {Array} params
+     * @param {Array} body: an array of Expressions
+     */
+    FunctionExpression: function FunctionExpression(params, body) {
+        return {
+            type: "FunctionExpression",
+            id: null,
+            params: params,
+            body: this.BlockStatement(body)
+        };
+    },
+    /**
      * @param {Expression} argument
      * @param {string} operator: "++" or "--"
      * @param {Boolean} prefix: true => ++argument, false => argument++
@@ -11795,6 +11813,28 @@ window.ASTBuilder = {
             type: "VariableDeclaration",
             declarations: declarations,
             kind: kind
+        };
+    },
+
+    /**
+     * @param {string} ident
+     * @param {Object} init
+     */
+    VariableDeclarator: function VariableDeclarator(ident, init) {
+        return {
+            type: "VariableDeclarator",
+            id: this.Identifier(ident),
+            init: init
+        };
+    },
+
+    /**
+     * @param {object} argument
+     */
+    ReturnStatement: function ReturnStatement(argument) {
+        return {
+            type: "ReturnStatement",
+            argument: argument
         };
     }
 };

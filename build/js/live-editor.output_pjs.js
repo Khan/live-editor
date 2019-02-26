@@ -27,6 +27,27 @@ window.PJSUtils = {
         return lines.map(function (line) {
             return line.substring(indent);
         }).join("\n").trim();
+    },
+
+    /**
+     * Extracts a function's source code from the learner's code
+     *
+     * @param {Array} codeLines: an array containing each line of user code as an element
+     * @param {Object} nodeLocation: an esprima location object
+     * @returns {string}
+     */
+    getFunctionSource: function getFunctionSource(codeLines, _ref) {
+        var start = _ref.start;
+        var end = _ref.end;
+
+        var lines = codeLines.slice(start.line - 1, end.line);
+        if (lines.length > 0) {
+            lines[0] = lines[0].slice(start.column);
+            lines[lines.length - 1] = lines[lines.length - 1].slice(0, end.column);
+        } else {
+            console.error("lines array empty");
+        }
+        return lines.join("\n");
     }
 };
 var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })();
@@ -994,6 +1015,8 @@ var PJSCodeInjector = (function () {
                 rewriteNewExpression = options.rewriteNewExpression;
             }
 
+            var preserveUserCode = options.hasOwnProperty("preserveUserCode") ? options.preserveUserCode : true;
+
             context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
             context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
             context.KAInfiniteLoopCount = 0;
@@ -1023,7 +1046,7 @@ var PJSCodeInjector = (function () {
             // transformed from a previous call to exec().
 
             if (!mutatingCalls) {
-                astTransformPasses.push(ASTTransforms.checkForBannedProps(["__env__", "KAInfiniteLoopCount", "KAInfiniteLoopProtect", "KAInfiniteLoopSetTimeout"]));
+                astTransformPasses.push(ASTTransforms.checkForBannedProps(["__env__", "KAInfiniteLoopCount", "KAInfiniteLoopProtect", "KAInfiniteLoopSetTimeout", "KAFunctionTemp"]));
             } else {
                 astTransformPasses.push(ASTTransforms.checkForBannedProps(["__env__"]));
             }
@@ -1041,6 +1064,10 @@ var PJSCodeInjector = (function () {
             // rewriteNewExpressions transforms NewExpressions into CallExpressions.
             if (rewriteNewExpression) {
                 astTransformPasses.push(ASTTransforms.rewriteNewExpressions(envName, context));
+            }
+
+            if (preserveUserCode) {
+                astTransformPasses.push(ASTTransforms.preserveUserCode(code.split("\n")));
             }
 
             try {

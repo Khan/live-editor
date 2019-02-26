@@ -942,6 +942,8 @@ class PJSCodeInjector {
             rewriteNewExpression = options.rewriteNewExpression;
         }
 
+        const preserveUserCode = options.hasOwnProperty("preserveUserCode") ? options.preserveUserCode : true;
+
         context.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         context.KAInfiniteLoopSetTimeout = this.loopProtector.KAInfiniteLoopSetTimeout;
         context.KAInfiniteLoopCount = 0;
@@ -975,7 +977,8 @@ class PJSCodeInjector {
                 "__env__",
                 "KAInfiniteLoopCount",
                 "KAInfiniteLoopProtect",
-                "KAInfiniteLoopSetTimeout"
+                "KAInfiniteLoopSetTimeout",
+                "KAFunctionTemp"
             ]));
         } else {
             astTransformPasses.push(ASTTransforms.checkForBannedProps([
@@ -996,6 +999,10 @@ class PJSCodeInjector {
         // rewriteNewExpressions transforms NewExpressions into CallExpressions.
         if (rewriteNewExpression) {
             astTransformPasses.push(ASTTransforms.rewriteNewExpressions(envName, context));
+        }
+
+        if (preserveUserCode) {
+            astTransformPasses.push(ASTTransforms.preserveUserCode(code.split("\n")));
         }
 
         try {

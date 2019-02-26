@@ -318,3 +318,48 @@ ASTTransforms.rewriteNewExpressions = function(envName) {
         }
     }
 };
+
+/**
+ * Makes it so the `toString` method on function expressions returns user code rather than
+ * AST-mangled code
+ *
+ * @param {Array} code: an array containing each line of user code as an element
+ */
+ASTTransforms.preserveUserCode = code => ({
+    leave(node, _) {
+        if (node.type == "FunctionExpression") {
+            const functionSource = window.PJSUtils.getFunctionSource(code, node.loc);
+            const funcName = "KAFunctionTemp";
+
+            // Rewrites `function() { <CODE> }` as
+            // ```(function() {
+            //     var KAFunctionTemp = function() { <CODE> };
+            //     KAFunctionTemp.toString = function() { return "<CODE>"; };
+            //     return KAFunctionTemp;
+            // })()```
+            // so that learners get their own source code rather than the AST transformed
+            // code when they try printing the function out
+            return b.IIFunctionExpression([
+                b.VariableDeclaration([
+                    // The shallow copy is necessary in order to prevent a stack overflow
+                    b.VariableDeclarator(funcName, Object.assign({}, node))
+                ], "var"),
+                // toString reassignment
+                b.ExpressionStatement(
+                    b.AssignmentExpression(
+                        b.MemberExpression(b.Identifier(funcName), b.Identifier("toString")),
+                        "=",
+                        b.FunctionExpression([], [
+                            b.ReturnStatement({
+                                type: "Literal",
+                                value: functionSource,
+                                raw: `"${functionSource.replace(/\n/g, "\\n").replace(/[\\"']/g, (_, ch) => `\\${ch}`)}"`
+                            })
+                        ])
+                    )
+                ),
+                b.ReturnStatement(b.Identifier(funcName))
+            ]);
+        }
+    }
+});

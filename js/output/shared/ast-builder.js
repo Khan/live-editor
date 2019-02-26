@@ -48,7 +48,7 @@ window.ASTBuilder = {
     /**
      * @param {Expression} expression
      */
-        ExpressionStatement(expression) {
+    ExpressionStatement(expression) {
         return {
             type: "ExpressionStatement",
             expression: expression
@@ -77,6 +77,12 @@ window.ASTBuilder = {
         };
     },
     /**
+     * @param {Array} body: an array of Expressions
+     */
+    IIFunctionExpression(body) {
+        return this.CallExpression(this.FunctionExpression([], body), []);
+    },
+    /**
      * @param {Number|String|null|RegExp} value
      */
     Literal(value) {
@@ -90,12 +96,24 @@ window.ASTBuilder = {
      * @param {Expression} property
      * @param {Boolean?} computed - true => obj[prop], false => obj.prop
      */
-        MemberExpression(object, property, computed = false) {
+    MemberExpression(object, property, computed = false) {
         return {
             type: "MemberExpression",
             object: object,
             property: property,
             computed: computed
+        };
+    },
+    /**
+     * @param {Array} params
+     * @param {Array} body: an array of Expressions
+     */
+    FunctionExpression(params, body) {
+        return {
+            type: "FunctionExpression",
+            id: null,
+            params,
+            body: this.BlockStatement(body)
         };
     },
     /**
@@ -120,6 +138,28 @@ window.ASTBuilder = {
             type: "VariableDeclaration",
             declarations: declarations,
             kind: kind
+        };
+    },
+
+    /**
+     * @param {string} ident
+     * @param {Object} init
+     */
+    VariableDeclarator(ident, init) {
+        return {
+            type: "VariableDeclarator",
+            id: this.Identifier(ident),
+            init
+        }
+    },
+
+    /**
+     * @param {object} argument
+     */
+    ReturnStatement(argument) {
+        return {
+            type: "ReturnStatement",
+            argument
         };
     }
 };
