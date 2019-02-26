@@ -38,10 +38,12 @@ window.PJSUtils = {
      */
     getFunctionSource(codeLines, { start, end }) {
         const lines = codeLines.slice(start.line - 1, end.line);
-        if (lines.length > 0) {
+        if (lines.length > 1) {
             lines[0] = lines[0].slice(start.column);
             lines[lines.length - 1] = lines[lines.length - 1].slice(0, end.column);
-        } else { console.error("lines array empty"); }
+        } else {
+            lines[0] = lines[0].slice(start.column, end.column);
+         }
         return lines.join("\n");
     }
 };

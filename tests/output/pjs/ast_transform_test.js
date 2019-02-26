@@ -277,6 +277,27 @@ describe("AST Transforms", function () {
         expect(expectedCode).to.equal(transformedCode);
     });
 
+    it("function toString transformation same line", function() {
+        var transformedCode = transformCode(getCodeFromOptions(function() {
+                    fill(0);  text(function() {/* AAAAAA */}, 100, 100);
+        }), {});
+
+        var expectedCode = cleanupCode(getCodeFromOptions(function() {
+            fill(0);
+            text(function () {
+                var KAFunctionTemp = function () {
+                };
+                KAFunctionTemp.toString = function () {
+                    return 'function() {/* AAAAAA */}';
+                };
+                return KAFunctionTemp;
+            }(), 100, 100);
+        }));
+
+        expect(expectedCode).to.equal(transformedCode);
+    });
+
+
     it("should substitute all 'NewExpression's with 'CallExpression's to '__env__.PJSCodeInjector.applyInstance'", function() {
         var transformedCode = transformCode(getCodeFromOptions(function() {
             var Obj = function (prop) {
