@@ -493,14 +493,13 @@ window.LiveEditorOutput = Backbone.View.extend({
         // Then we don't need to care about sending the messages anywhere!
         if (this.frameSource) {
             var parentWindow = this.frameSource;
-            // In Chrome on dev when postFrame is called from webapp's
-            // scratchpad package it is somehow executed from the iframe
-            // instead, so frameSource is not really the parent frame.  We
-            // detect that here and fix it.
-            // TODO(james): Figure out why this is and if there is a better
-            // place to put a fix.
+            // Ignore any attempts to send a message to the same window
+            // NOTE(jeresig): Ideally we'd queue up these messages until
+            // we have a valid frameSource & frameOrigin and then send all
+            // the messages at that time. In practice this doesn't seem to
+            // be a problem, however.
             if (this.frameSource === window) {
-                parentWindow = this.frameSource.parent;
+                return;
             }
 
             parentWindow.postMessage(typeof data === "string" ? data : JSON.stringify(data), this.frameOrigin);
