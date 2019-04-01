@@ -92,7 +92,7 @@ window.ScratchpadAutosuggestData = {
             {
                 name: "bezier(x1, y1, cx1, cy1, cx2, cy2, x2, y2)",
                 exampleURL: "/cs/bezierx1-y1-cx1-cy1-cx2-cy2-x2-y2/956920482",
-                description: i18n._("Draws a bezier curve. To extract points and tangents after drawing the curve, use bezierPoint() and bezierTangent."),
+                description: i18n._("Draws a bezier curve. To extract points and tangents after drawing the curve, use bezierPoint() and bezierTangent()."),
                 params: [
                     i18n._("x1: the x-coordinate of the first endpoint"),
                     i18n._("y1: the y-coordinate of the first endpoint"),
