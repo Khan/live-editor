@@ -92,7 +92,7 @@ window.ScratchpadAutosuggestData = {
             {
                 name: "bezier(x1, y1, cx1, cy1, cx2, cy2, x2, y2)",
                 exampleURL: "/cs/bezierx1-y1-cx1-cy1-cx2-cy2-x2-y2/956920482",
-                description: i18n._("Draws a bezier curve. To extract points and tangents after drawing the curve, use bezierPoint() and bezierTangent."),
+                description: i18n._("Draws a bezier curve. To extract points and tangents after drawing the curve, use bezierPoint() and bezierTangent()."),
                 params: [
                     i18n._("x1: the x-coordinate of the first endpoint"),
                     i18n._("y1: the y-coordinate of the first endpoint"),
@@ -166,7 +166,7 @@ window.ScratchpadAutosuggestData = {
             {
                 name: "bezierPoint(a, b, c, d, t)",
                 exampleURL: "/cs/bezierpointa-b-c-d-t/4551007698681856",
-                description: i18n._("Evaluates the Bezier at point t for points a, b, c, d. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the location of a bezier curve at t."),
+                description: i18n._("Evaluates the bezier curve at point t for points a, b, c, d. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the location of a bezier curve at t."),
                 params: [
                     i18n._("a: coordinate of first point on the curve"),
                     i18n._("b: coordinate of first control point"),
@@ -372,7 +372,7 @@ window.ScratchpadAutosuggestData = {
             {
                 name: "lerpColor(c1, c2, amount)",
                 exampleURL: "/cs/lerpcolorc1-c2-amount/4759935778816000",
-                description: i18n._("Calculates a color or colors between two color at a specific increment. The amount parameter is the amount to interpolate between the two values where 0.0 equal to the first point, 0.1 is very near the first point, 0.5 is half-way in between, etc."),
+                description: i18n._("Calculates a color between two colors at a specific increment. The amount parameter is the amount to interpolate between the two values where 0.0 equal to the first color, 0.1 is very near the first color, 0.5 is half-way in between, etc."),
                 params: [
                     i18n._("c1: Interpolate from this color"),
                     i18n._("c2: Interpolate to this color")
