@@ -491,12 +491,12 @@ window.ScratchpadAutosuggestData = {
             {
                 name: "textAscent()",
                 exampleURL: "/cs/textascent/5975406490419200",
-                description: i18n._("Returns the ascent of the current font at its current size. This information is useful for determining the height of the font above the baseline. For example, adding the textAscent() and textDescent() values will give you the total height of the line.")
+                description: i18n._("Returns the ascent of the current font at its current size. The ascent is the height of the font above the baseline.")
             },
             {
                 name: "textDescent()",
                 exampleURL: "/cs/textdescent/5638769772331008",
-                description: i18n._("Returns descent of the current font at its current size. This information is useful for determining the height of the font below the baseline. For example, adding the textAscent() and textDescent() values will give you the total height of the line.")
+                description: i18n._("Returns descent of the current font at its current size. The descent is the distance of the font below the baseline.")
             },
             {
                 name: "textLeading(dist)",
