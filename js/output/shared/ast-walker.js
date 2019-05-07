@@ -23,7 +23,10 @@ window.walkAST = function(node, path, visitors) {
             if (Array.isArray(node[prop])) {
                 let i = 0;
                 while (i < node[prop].length) {
-                    let child = node[prop][i];
+                    // Esprima represents empty slots as null, so set child to
+                    // a dummy node if the initial node is falsy in order to prevent
+                    // a silent crash
+                    let child = node[prop][i] || { type: "EmptySlot" };
                     // Skip over the number of replacements.  This is usually
                     // just 1, but in situations involving multiple variable
                     // declarations we end up replacing one statement with
