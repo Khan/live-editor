@@ -218,7 +218,7 @@ window.ScratchpadAutosuggestData = {
             {
                 name: "curvePoint(a, b, c, d, t)",
                 exampleURL: "/cs/curvepointa-b-c-d-t/5879387094253568",
-                description: i18n._("Evalutes the curve at point t for points a, b, c, d. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the location of a curve at t."),
+                description: i18n._("Evaluates the curve at point t for points a, b, c, d. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the location of a curve at t."),
                 params: [
                     i18n._("a: the coordinate of the first point"),
                     i18n._("b: the coordinate of the first control point"),
