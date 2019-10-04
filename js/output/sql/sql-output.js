@@ -96,6 +96,13 @@ window.SQLOutput = Backbone.View.extend({
             errorMessage = i18n._("You have multiple columns named \"%(colName)s\" - " +
                 "column names must be unique.", {colName});
         }
+        const ambColStr = "ambiguous column name:";
+        const ambColError = sqliteError.indexOf(ambColStr) > -1;
+        if (ambColError) {
+            const colName = errorMessage.split(ambColStr)[1].trim();
+            errorMessage = i18n._("Ambiguous column name \"%(colName)s\".",
+                {colName});
+        }
         const unknownColStr = "no such column:";
         const unknownColError = sqliteError.indexOf(unknownColStr) > -1;
         if (unknownColError) {
