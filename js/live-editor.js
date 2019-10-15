@@ -1295,8 +1295,10 @@ window.LiveEditor = Backbone.View.extend({
 
     postFrame: function(data) {
         // Send the data to the frame using postMessage
-        this.$el.find("#output-frame")[0].contentWindow.postMessage(
-            JSON.stringify(data), this.postFrameOrigin());
+        var outputFrameWindow = this.$el.find("#output-frame")[0].contentWindow;
+        if (outputFrameWindow) {
+            outputFrameWindow.postMessage(JSON.stringify(data), this.postFrameOrigin());
+        }
     },
 
     hasFrame: function() {
