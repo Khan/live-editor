@@ -1494,11 +1494,11 @@ window.LiveEditor = Backbone.View.extend({
 
     cleanErrors: function(errors) {
         var loopProtectMessages = {
-            "WhileStatement": i18n._("<code>while</code> loop"),
-            "DoWhileStatement": i18n._("<code>do-while</code> loop"),
-            "ForStatement": i18n._("<code>for</code> loop"),
-            "FunctionDeclaration": i18n._("<code>function</code>"),
-            "FunctionExpression": i18n._("<code>function</code>"),
+            "WhileStatement": i18n._("A <code>while</code> loop is taking too long to run."),
+            "DoWhileStatement": i18n._("A <code>do-while</code> loop is taking too long to run."),
+            "ForStatement": i18n._("A <code>for</code> loop is taking too long to run."),
+            "FunctionDeclaration": i18n._("A <code>function</code> is taking too long to run."),
+            "FunctionExpression": i18n._("A <code>function</code> is taking too long to run."),
         };
 
         errors = errors.map(function(error) {
@@ -1515,9 +1515,9 @@ window.LiveEditor = Backbone.View.extend({
             var loopNodeType = error.infiniteLoopNodeType;
             if (loopNodeType) {
                 error.html = i18n._(
-                    "A %(type)s is taking too long to run. " +
+                    "%(typeMessage)s " +
                     "Perhaps you have a mistake in your code?", {
-                        type: loopProtectMessages[loopNodeType]
+                        typeMessage: loopProtectMessages[loopNodeType]
                 });
             }
 
