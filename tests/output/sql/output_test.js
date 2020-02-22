@@ -56,6 +56,14 @@ describe("Linting", function() {
     failingTest("Inserting rows mismatching quote",
         "INSERT characters ('Summer);",
         ["There's a syntax error near \"characters\"."]);
+    failingTest("Inserting rows one column two values",
+        "CREATE TABLE characters (name TEXT);" +
+        "INSERT INTO characters VALUES (\"Beth\", \"Summer\");",
+        ["Table \"characters\" has 1 column but 2 values were supplied."]);
+    failingTest("Inserting rows two columns one value",
+        "CREATE TABLE characters (name TEXT, surname TEXT);" +
+        "INSERT INTO characters VALUES (\"Beth\");",
+        ["Table \"characters\" has 2 columns but 1 value was supplied."]);
 
     // Linting for select statements
     test("Simple select",
