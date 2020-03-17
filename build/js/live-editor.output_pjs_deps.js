@@ -87854,3 +87854,27 @@ ASTTransforms.rewriteNewExpressions = function (envName) {
         }
     };
 };
+
+ASTTransforms.rewriteFunctionDeclarations = {
+    leave: function leave(node, path) {
+        if (node.type === "FunctionDeclaration") {
+            var decl = {
+                type: "VariableDeclarator",
+                id: {
+                    type: "Identifier",
+                    name: node.id.name
+                },
+                init: {
+                    type: "FunctionExpression",
+                    id: null,
+                    params: node.params,
+                    body: node.body,
+                    generator: node.generator,
+                    expression: node.expression,
+                    async: node.async
+                }
+            };
+            return b.VariableDeclaration([decl], "var");
+        }
+    }
+};

@@ -1027,6 +1027,8 @@ var PJSCodeInjector = (function () {
             } else {
                 astTransformPasses.push(ASTTransforms.checkForBannedProps(["__env__"]));
             }
+            // rewriteFunctionDeclarations turns function x() into var x = function
+            astTransformPasses.push(ASTTransforms.rewriteFunctionDeclarations);
 
             // loopProtector adds LoopProtector code which checks how long it's
             // taking to run event loop and will throw if it's taking too long.
@@ -1973,8 +1975,6 @@ var BabyHint = {
 
             // Checks could detect new errors, thus must run on every line
             errors = errors
-            // check for incorrect function declarations
-            .concat(BabyHint.checkFunctionDecl(line, lineNumber))
             // we don't allow ending lines with "="
             .concat(BabyHint.checkTrailingEquals(line, lineNumber))
             // check for correct number of parameters
