@@ -268,14 +268,14 @@ describe("Linting", function() {
         // Chrome, Safari, and phantomjs.
         failingTest("Fatal slowparse error detected",
             "<li><a href='</li><img src='https://www.kasandbox.org'>", [
-                {row: 0, column: 7, lint: {type: "UNKNOWN_SLOWPARSE_ERROR"}}
+                {row: 0, column: 0, lint: {type: "UNKNOWN_SLOWPARSE_ERROR"}}
             ]
         );
     }
 
     if (isFirefox()) {
         // slowparse succeeds when parsing this HTML on Firefox.
-        failingTest("Slowparse error detected (Firefox)",
+        failingTest("Not so fatal slowparse error detected (Firefox)",
             "<li><a href='</li><img src='https://www.kasandbox.org'>", [
                 {row: 0, column: 7, lint: {type: "INVALID_ATTR_NAME"}}
             ]
