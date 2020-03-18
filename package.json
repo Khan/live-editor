@@ -41,7 +41,7 @@
     "gulp-symlink": "^2.0.1",
     "gulp-uglify": "^0.3.1",
     "gulp-util": "^3.0.6",
-    "handlebars": "4.0.11",
+    "handlebars": "4.3.0",
     "mocha": "^1.21.4",
     "node-static": "^0.7.4",
     "object-assign": "^3.0.0",
