@@ -982,6 +982,8 @@ class PJSCodeInjector {
                 "__env__"
             ]));
         }
+        // rewriteFunctionDeclarations turns function x() into var x = function
+        astTransformPasses.push(ASTTransforms.rewriteFunctionDeclarations);
 
         // loopProtector adds LoopProtector code which checks how long it's
         // taking to run event loop and will throw if it's taking too long.

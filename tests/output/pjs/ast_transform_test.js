@@ -285,6 +285,76 @@ describe("AST Transforms", function () {
             __env__.myInstance = __env__.makeObj(__env__.myObj);
         }));
     });
+
+    it("should handle function variables", function () {
+        var transformedCode = transformCode(getCodeFromOptions(function() {
+            var outerFunc = function(x, y) {
+                var innerFunc = function (x, y) {
+                    ellipse(x, y);
+                };
+                rect(x, y, 167, 137);
+                innerFunc(10, y + 10);
+            };
+            outerFunc(5, 15);
+        }));
+
+        var expectedCode = cleanupCode(getCodeFromOptions(function() {
+            __env__.outerFunc = function (x, y) {
+                var innerFunc = function (x, y) {
+                    __env__.ellipse(x, y);
+                };
+                rect(x, y, 167, 137);
+                innerFunc(10, y + 10);
+            };
+            __env__.outerFunc(5, 15);
+        }));
+
+        expect(transformedCode).to.equal(expectedCode);
+    });
+
+    it("should rewrite function declarations", function () {
+        var transformedCode = transformCode(getCodeFromOptions(function() {
+            function outerFunc(x, y) {
+                rect(x, y, 167, 137);
+            }
+            outerFunc(10, 20);
+        }));
+
+        var expectedCode = cleanupCode(getCodeFromOptions(function() {
+            __env__.outerFunc = function (x, y) {
+                rect(x, y, 167, 137);
+            };
+            __env__.outerFunc(10, 20);
+        }));
+
+        expect(transformedCode).to.equal(expectedCode);
+    });
+
+    it("should rewrite nested function declarations", function () {
+        var transformedCode = transformCode(getCodeFromOptions(function() {
+            function outerFunc(x, y) {
+                function innerFunc(x, y) {
+                    ellipse(x, y, 16, 13);
+                }
+                rect(x, y, 167, 137);
+                innerFunc(102, 88);
+            }
+            outerFunc(10, 20);
+        }));
+
+        var expectedCode = cleanupCode(getCodeFromOptions(function() {
+            __env__.outerFunc = function (x, y) {
+                var innerFunc = function (x, y) {
+                    __env__.ellipse(x, y, 16, 13);
+                };
+                rect(x, y, 167, 137);
+                innerFunc(102, 88);
+            };
+            __env__.outerFunc(10, 20);
+        }));
+
+        expect(transformedCode).to.equal(expectedCode);
+    });
 });
 
 describe("AST Transforms for exporting", function() {
