@@ -91,11 +91,7 @@ table.sql-schema-table .row-count {
     {{#each tables}}
         <table class="sql-schema-table" data-table-name="{{name}}">
         <thead>
-        {{#if hasSingleRow}}
-            <th><a href="javascript:void(0)">{{name}}</a> <span class="row-count">{{rowCount}} {{rowMsg}}</span></th>
-        {{else}}
-            <th><a href="javascript:void(0)">{{name}}</a> <span class="row-count">{{rowCount}} {{rowsMsg}}</span></th>
-        {{/if}}
+            <th><a href="javascript:void(0)">{{name}}</a> <span class="row-count">{{rowsMsg}}</span></th>
         </thead>
         <tbody>
         {{#each columns}}

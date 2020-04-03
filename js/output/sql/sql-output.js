@@ -397,10 +397,15 @@ window.SQLOutput = Backbone.View.extend({
         var output = Handlebars.templates["sql-results"]({
             tables: tables,
             results: results,
+            // I18N: Appears in the SQL course
             databaseMsg: i18n._("Database Schema"),
+            // I18N: Appears in database header in the SQL course
             resultsMsg: i18n._("Query results"),
-            rowMsg: i18n._("row"),
-            rowsMsg: i18n._("rows"),
+            // I18N: Appears in database header in the SQL course
+            rowsMsg: i18n.ngettext(
+                         "%(num)s row",
+                         "%(num)s rows",
+                         rowCount)
         });
 
         var doc = this.getDocument();
