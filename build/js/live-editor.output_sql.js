@@ -861,6 +861,32 @@ window.SQLOutput = Backbone.View.extend({
             var nearPhrase = errorMessage.split(syntaxErrStr)[0];
             errorMessage = i18n._("There's a syntax error near %(nearThing)s.", { nearThing: nearPhrase.substr(5) });
         }
+        var colValueMismatchReg = /has (\d+) columns but (\d+) values were supplied/;
+        var colMismatchError = sqliteError.match(colValueMismatchReg);
+        if (colMismatchError) {
+            var tableName = sqliteError.split(" ")[1];
+            var numCols = colMismatchError[1];
+            var numVals = colMismatchError[2];
+
+            // I18N: The first part of "Oh noes" error in the SQL course.
+            // I18N: "Table %(tableName)s has %(num)s columns"
+            // I18N: "but %(num)s values were supplied."
+            // I18N: You can reorder the parts in string "%(columns)s %(values)s"
+            var tableHasColumns = i18n.ngettext("Table \"%(tableName)s\" has %(num)s column", "Table \"%(tableName)s\" has %(num)s columns", numCols, { tableName: tableName });
+
+            // I18N: The second part of "Oh noes" error in the SQL course.
+            // I18N: "Table %(tableName)s has %(num)s columns"
+            // I18N: "but %(num)s values were supplied."
+            // I18N: You can reorder the parts in string "%(columns)s %(values)s"
+            var valuesSupplied = i18n.ngettext("but %(num)s value was supplied.", "but %(num)s values were supplied.", numVals);
+
+            // I18N: Oh noes error in the SQL course.
+            // I18N: %(columns)s = "Table %(tableName)s has %(num)s columns"
+            // I18N: %(values)s  = "but %(num)s values were supplied."
+            // I18N: The sentences are translated in two different Crowdin strings,
+            // I18N: but can be reordered here
+            errorMessage = i18n._("%(columns)s %(values)s", { columns: tableHasColumns, values: valuesSupplied });
+        }
 
         // Now that we've translated the base error messages,
         // we add on additional helper messages for common mistakes
