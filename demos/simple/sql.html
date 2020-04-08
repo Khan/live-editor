@@ -38,8 +38,8 @@
         " *   - students\n" +
         " *   - student_grades\n"+
         " */\n" +
-        "CREATE TABLE students (id INTEGER PRIMARY KEY AUTOINCREMENT, name char, grade_year int NOT NULL);\n" +
-        "CREATE TABLE student_grades (id INTEGER, grade int, FOREIGN KEY (id) REFERENCES students(id));\n\n" +
+        "CREATE TABLE students (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, grade_year INTEGER NOT NULL);\n" +
+        "CREATE TABLE student_grades (id INTEGER, grade INTEGER, FOREIGN KEY (id) REFERENCES students(id));\n\n" +
         "-- Insert some data\n" +
         "INSERT INTO students VALUES (1, \"Brian\", 3);\n" +
         "INSERT INTO students VALUES (2, \"kamil\", 4);\n" +
