@@ -843,6 +843,10 @@ window.SQLOutput = Backbone.View.extend({
         if (ambColError) {
             var colName = errorMessage.split(ambColStr)[1].trim();
             errorMessage = i18n._("Ambiguous column name \"%(colName)s\".", { colName: colName });
+            // Note(danielhollas): Added a more helpful text as a separate string
+            // to preserve existing translations.
+            // I18N: This Oh Noes message follows "Ambiguous column name" SQL error
+            errorMessage += " " + i18n._("Multiple tables that you're joining " + "contain a column with that name. Specify the name of the table that " + "contains the column, using the format \"tableName.columnName\".");
         }
         var unknownColStr = "no such column:";
         var unknownColError = sqliteError.indexOf(unknownColStr) > -1;
