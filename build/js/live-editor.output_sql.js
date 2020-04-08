@@ -846,8 +846,7 @@ window.SQLOutput = Backbone.View.extend({
             // Note(danielhollas): Added a more helpful text as a separate string
             // to preserve existing translations.
             // I18N: This Oh Noes message follows "Ambiguous column name" SQL error
-            // I18N: Keep the space at the beginning of string.
-            errorMessage += " " + i18n._("Multiple tables that you're joining " + "contain a column with that name. To use that column in your query, " + "specify the table of the column. Example: firstTable.\"%(colName)s\"", { colName: colName });
+            errorMessage += " " + i18n._("Multiple tables that you're joining " + "contain a column with that name. Specify the name of the table that " + "contains the column, using the format \"tableName.columnName\".");
         }
         var unknownColStr = "no such column:";
         var unknownColError = sqliteError.indexOf(unknownColStr) > -1;

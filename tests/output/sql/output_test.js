@@ -131,8 +131,8 @@ describe("Linting", function() {
 	"INSERT INTO student_grades VALUES (1, 95);" +
 	"SELECT id FROM students INNER JOIN student_grades on students.id = student_grades.id;",
 	["Ambiguous column name \"id\". Multiple tables that you're joining " +
-         "contain a column with that name. To use that column in your query, " +
-         "specify the table of the column. Example: firstTable.\"id\""]);
+         "contain a column with that name. Specify the name of the table that " +
+         "contains the column, using the format \"tableName.columnName\""]);
 
     // NOT NULL constraint
     test("NOT NULL constraints enabled",
