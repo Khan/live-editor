@@ -2092,7 +2092,7 @@ window.LiveEditor = Backbone.View.extend({
 
     updateCanvasSize: function updateCanvasSize(width, height) {
         width = width || this.defaultOutputWidth;
-        height = height || this.defaultOutputHeight;
+        height = height || this.editorHeight || this.defaultOutputHeight;
 
         this.$el.find(this.dom.CANVAS_WRAP).width(width);
         this.$el.find(this.dom.ALL_OUTPUT).height(height);
