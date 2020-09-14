@@ -1,6 +1,8 @@
-if (!i18n._) {
-    i18n._ = function(msg) {
-        return msg;
+if (!window.i18n) {
+    window.i18n = {
+        _: function(msg) {
+            return msg;
+        }
     };
 }
 
