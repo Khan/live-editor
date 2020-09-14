@@ -718,7 +718,7 @@ window.ScratchpadAutosuggestData = {
             name: "triangle(x1, y1, x2, y2, x3, y3)",
             exampleURL: "/cs/trianglex1-y1-x2-y2-x3-y3/839546599",
             description: i18n._("Draws a triangle"),
-            params: [i18n._("x: the x-coordinate of the first vertex"), i18n._("y1: the y-coordinate of the first vertex"), i18n._("x2: the x-coordinate of the second vertex"), i18n._("y2: the y-coordinate of the second vertex"), i18n._("x3: the x-coordinate of the third vertex"), i18n._("y3: the y-coordinate of the third vertex")]
+            params: [i18n._("x1: the x-coordinate of the first vertex"), i18n._("y1: the y-coordinate of the first vertex"), i18n._("x2: the x-coordinate of the second vertex"), i18n._("y2: the y-coordinate of the second vertex"), i18n._("x3: the x-coordinate of the third vertex"), i18n._("y3: the y-coordinate of the third vertex")]
         }, {
             name: "line(x1, y1, x2, y2)",
             exampleURL: "/cs/linex1-y1-x2-y2/827916099",
@@ -737,7 +737,7 @@ window.ScratchpadAutosuggestData = {
         }, {
             name: "bezier(x1, y1, cx1, cy1, cx2, cy2, x2, y2)",
             exampleURL: "/cs/bezierx1-y1-cx1-cy1-cx2-cy2-x2-y2/956920482",
-            description: i18n._("Draws a bezier curve. To extract points and tangents after drawing the curve, use bezierPoint() and bezierTangent."),
+            description: i18n._("Draws a bezier curve. To extract points and tangents after drawing the curve, use bezierPoint() and bezierTangent()."),
             params: [i18n._("x1: the x-coordinate of the first endpoint"), i18n._("y1: the y-coordinate of the first endpoint"), i18n._("cx1: the x-coordinate of the first control point"), i18n._("cy1: the y-coordinate of the first control point"), i18n._("cx2: the x-coordinate of the second control point"), i18n._("cy2: the y-coordinate of the second control point"), i18n._("x2: the x-coordinate of the second endpoint"), i18n._("y2: the y-coordinate of the second endpoint")]
         }, {
             name: "quad(x1, y1, x2, y2, x3, y3, x4, y4)",
@@ -772,10 +772,10 @@ window.ScratchpadAutosuggestData = {
         }, {
             name: "bezierPoint(a, b, c, d, t)",
             exampleURL: "/cs/bezierpointa-b-c-d-t/4551007698681856",
-            description: i18n._("Evaluates the Bezier at point t for points a, b, c, d. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the location of a bezier curve at t."),
+            description: i18n._("Evaluates the bezier curve at point t for points a, b, c, d. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the location of a bezier curve at t."),
             params: [i18n._("a: coordinate of first point on the curve"), i18n._("b: coordinate of first control point"), i18n._("c: coordinate of second control point"), i18n._("d: coordinate of second point on the curve"), i18n._("t: value between 0 and 1")]
         }, {
-            name: "bezierTangent(a,b, c, d, t)",
+            name: "bezierTangent(a, b, c, d, t)",
             exampleURL: "/cs/beziertangenta-b-c-d-t/4736929853603840",
             description: i18n._("Calculates the tangent of a point on a bezier curve. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the tangent of a bezier curve at t."),
             params: [i18n._("a: coordinate of first point on the curve"), i18n._("b: coordinate of first control point"), i18n._("c: coordinate of second control point"), i18n._("d: coordinate of second point on the curve"), i18n._("t: value between 0 and 1")]
@@ -792,13 +792,13 @@ window.ScratchpadAutosuggestData = {
         }, {
             name: "curvePoint(a, b, c, d, t)",
             exampleURL: "/cs/curvepointa-b-c-d-t/5879387094253568",
-            description: i18n._("Evalutes the curve at point t for points a, b, c, d. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the location of a curve at t."),
-            params: [i18n._("a: the coordinate of the first point"), i18n._("b: the coordinate of the first control point"), i18n._("c: the coordinate of the second point"), i18n._("d: the coordinate of the second point"), i18n._("t: the a value between 0 and 1")]
+            description: i18n._("Evaluates the curve at point t for points a, b, c, d. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the location of a curve at t."),
+            params: [i18n._("a: the coordinate of the first point"), i18n._("b: the coordinate of the first control point"), i18n._("c: the coordinate of the second control point"), i18n._("d: the coordinate of the second point"), i18n._("t: the a value between 0 and 1")]
         }, {
             name: "curveTangent(a, b, c, d, t)",
             exampleURL: "/cs/curvetangenta-b-c-d-t/4708940860358656",
-            description: i18n._("Calculates the tangent at a point the curve. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the tangent of a curve at t."),
-            params: [i18n._("a: the coordinate of the first point"), i18n._("b: the coordinate of the first control point"), i18n._("c: the coordinate of the second point"), i18n._("d: the coordinate of the second point"), i18n._("t: the a value between 0 and 1")]
+            description: i18n._("Calculates the tangent of a point on a curve. The parameter t varies between 0 and 1, a and d are points on the curve, and b and c are the control points. This can be done once with the x coordinates and a second time with the y coordinates to get the tangent of a curve at t."),
+            params: [i18n._("a: the coordinate of the first point"), i18n._("b: the coordinate of the first control point"), i18n._("c: the coordinate of the second control point"), i18n._("d: the coordinate of the second point"), i18n._("t: the a value between 0 and 1")]
         }, {
             name: "curveTightness(tightness)",
             exampleURL: "/cs/curvetightnesssquishy/4792873740402688",
@@ -807,7 +807,7 @@ window.ScratchpadAutosuggestData = {
         }, {
             name: "curveVertex(x,y)",
             exampleURL: "/cs/curvevertexx-y/6499542019080192",
-            description: i18n._("Used in conjunction with beginShape() and endShape() to draw shapes with bezier curves for sides. The first and last points in a series of curveVertex() lines will be used to guide the beginning and end of a the curve."),
+            description: i18n._("Used in conjunction with beginShape() and endShape() to draw shapes with bezier curves for sides. The first and last points in a series of curveVertex() lines will be used to guide the beginning and end of the curve."),
             params: [i18n._("x: the x-coordinate of the vertex"), i18n._("y: the y-coordinate of the vertex")]
         }, {
             name: "beginShape(MODE*)",
@@ -875,7 +875,7 @@ window.ScratchpadAutosuggestData = {
         }, {
             name: "lerpColor(c1, c2, amount)",
             exampleURL: "/cs/lerpcolorc1-c2-amount/4759935778816000",
-            description: i18n._("Calculates a color or colors between two color at a specific increment. The amount parameter is the amount to interpolate between the two values where 0.0 equal to the first point, 0.1 is very near the first point, 0.5 is half-way in between, etc."),
+            description: i18n._("Calculates a color between two colors at a specific increment. The amount parameter is the amount to interpolate between the two values where 0.0 equal to the first color, 0.1 is very near the first color, 0.5 is half-way in between, etc."),
             params: [i18n._("c1: Interpolate from this color"), i18n._("c2: Interpolate to this color")]
         }, {
             name: "colorMode(MODE)",
@@ -945,11 +945,11 @@ window.ScratchpadAutosuggestData = {
         }, {
             name: "textAscent()",
             exampleURL: "/cs/textascent/5975406490419200",
-            description: i18n._("Returns the ascent of the current font at its current size. This information is useful for determining the height of the font above the baseline. For example, adding the textAscent() and textDescent() values will give you the total height of the line.")
+            description: i18n._("Returns the ascent of the current font at its current size. The ascent is the height of the font above the baseline.")
         }, {
             name: "textDescent()",
             exampleURL: "/cs/textdescent/5638769772331008",
-            description: i18n._("Returns descent of the current font at its current size. This information is useful for determining the height of the font below the baseline. For example, adding the textAscent() and textDescent() values will give you the total height of the line.")
+            description: i18n._("Returns descent of the current font at its current size. The descent is the distance of the font below the baseline.")
         }, {
             name: "textLeading(dist)",
             exampleURL: "/cs/textleadingdist/6369013500215296",

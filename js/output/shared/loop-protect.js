@@ -28,7 +28,7 @@ window.LoopProtector = function(callback, timeouts, reportLocation) {
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
 
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
+        if (!document.hidden) {
             this.visible = true;
             this.branchStartTime = 0;
         } else {

@@ -78548,7 +78548,7 @@ var warnings = {
 	W033: i18n._("It looks like you're missing a semicolon."),
 	W034: i18n._("Unnecessary directive \"{a}\"."),
 	W035: i18n._("Empty block."),
-	W036: i18n._("Unexpected /*member '{a}'."),
+	W036: i18n._("Unexpected /" + "*member '{a}'."),
 	W037: i18n._("'{a}' is a statement label."),
 	W038: i18n._("'{a}' used out of scope."),
 	W039: i18n._("'{a}' is not allowed."),
@@ -87343,7 +87343,10 @@ window.walkAST = function (node, path, visitors) {
                 if (Array.isArray(node[prop])) {
                     var i = 0;
                     while (i < node[prop].length) {
-                        var child = node[prop][i];
+                        // Esprima represents empty slots as null, so set child to
+                        // a dummy node if the initial node is falsy in order to prevent
+                        // a silent crash
+                        var child = node[prop][i] || { type: "EmptySlot" };
                         // Skip over the number of replacements.  This is usually
                         // just 1, but in situations involving multiple variable
                         // declarations we end up replacing one statement with
@@ -87436,7 +87439,7 @@ window.LoopProtector = function (callback, timeouts, reportLocation) {
     this.KAInfiniteLoopSetTimeout = this._KAInfiniteLoopSetTimeout.bind(this);
 
     document.addEventListener("visibilitychange", function () {
-        if (document.hidden) {
+        if (!document.hidden) {
             _this.visible = true;
             _this.branchStartTime = 0;
         } else {
@@ -87850,4 +87853,28 @@ ASTTransforms.rewriteNewExpressions = function (envName) {
             }
         }
     };
+};
+
+ASTTransforms.rewriteFunctionDeclarations = {
+    leave: function leave(node, path) {
+        if (node.type === "FunctionDeclaration") {
+            var decl = {
+                type: "VariableDeclarator",
+                id: {
+                    type: "Identifier",
+                    name: node.id.name
+                },
+                init: {
+                    type: "FunctionExpression",
+                    id: null,
+                    params: node.params,
+                    body: node.body,
+                    generator: node.generator,
+                    expression: node.expression,
+                    async: node.async
+                }
+            };
+            return b.VariableDeclaration([decl], "var");
+        }
+    }
 };

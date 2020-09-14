@@ -37,26 +37,6 @@
 
     var code = window.localStorage["test-code"] || "rect(10, 10, 100, 100);";
 
-    var search = location.search.substring(1);
-    var params = {};
-    search.split("&").forEach(function(param) {
-        var tokens = param.split("=");
-        params[tokens[0]] = tokens[1];
-    });
-
-    if (params.scratchpad) {
-        var xhr = new XMLHttpRequest();
-        var baseUrl = "https://www.khanacademy.org/api/internal/scratchpads/";
-        xhr.open("GET", baseUrl + params.scratchpad, false);
-        xhr.addEventListener("load", function() {
-            var scratchpad = JSON.parse(this.responseText);
-            code = scratchpad.revision.code;
-            var h1 = document.querySelector('h1');
-            h1.innerText = scratchpad.title;
-        });
-        xhr.send();
-    }
-
     window.liveEditor = new LiveEditor({
         el: $("#sample-live-editor"),
         code: code,
