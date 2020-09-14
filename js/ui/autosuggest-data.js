@@ -520,7 +520,7 @@ window.ScratchpadAutosuggestData = {
                 exampleURL: "/cs/rotateangle/6386091934351360",
                 description: i18n._("Sets the rotation angle for any shapes drawn after the command. If called multiple times, the angle will be added to the previous angle (accumulative effect). To stop rotation, use pushMatrix()/popMatrix()."),
                 params: [
-                    i18n._("angle: The number of degrees to rotate by. To specify in radians, use the angleMode() function.")
+                    i18n._("angle: The number of degrees to rotate by. To specify in radians, set the angleMode global variable.")
                 ]
             },
             {
@@ -712,7 +712,7 @@ window.ScratchpadAutosuggestData = {
             {
                 name: "map(num, low1, high1, low2, high2)",
                 exampleURL: "/cs/mapvalue-low1-high1-low2-high2/4587974079545344",
-                description: i18n._("Re-maps a number from one range to another. Numbers outside the range are not clamped to 0 and 1, because out-of-range values are often intentional and useful."),
+                description: i18n._("Re-maps a number from one range to another. Numbers outside the range are not clamped to the target range, because out-of-range values are often intentional and useful."),
                 params: [
                     i18n._("num: The incoming value to be converted"),
                     i18n._("low1: Lower bound of the value's current range"),
@@ -724,11 +724,11 @@ window.ScratchpadAutosuggestData = {
             {
                 name: "norm(num, low, high)",
                 exampleURL: "/cs/normvalue-low-high/6581050767572992",
-                description: i18n._("Normalizes a number from another range into a value between 0 and 1. This is the same as using the map function with the last two parameters set to 0 and 1, i.e: map(value, low, high, 0, 1); Numbers outside the range are not clamped to 0 and 1, because out-of-range values are often intentional and useful."),
+                description: i18n._("Normalizes a number from another range into a value between 0 and 1. This is the same as using the map function with the last two parameters set to 0 and 1, i.e: map(num, low, high, 0, 1); Numbers outside the range are not clamped to 0 and 1, because out-of-range values are often intentional and useful."),
                 params: [
                     i18n._("num: The incoming value to be converted"),
-                    i18n._("low1: Lower bound of the value's current range"),
-                    i18n._("high1: Upper bound of the value's current range")
+                    i18n._("low: Lower bound of the value's current range"),
+                    i18n._("high: Upper bound of the value's current range")
                 ]
             },
             {
