@@ -3,7 +3,8 @@ var runTestFiles = function(defaultFiles) {
 
     mocha.setup({
         ui: 'bdd',
-        reporter: isHeadless ? jsonReporter : 'html'
+        reporter: isHeadless ? jsonReporter : 'html',
+        timeout: 5000
     });
 
     if (location.search.substring) {
