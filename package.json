@@ -57,9 +57,5 @@
     "build",
     "test",
     "build:add"
-  ],
-  "resolutions": {
-    "graceful-fs": "4.2.4",
-    "rimraf": "^3.0.2"
-  }
+  ]
 }
