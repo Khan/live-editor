@@ -218,8 +218,6 @@ var BabyHint = {
 
             // Checks could detect new errors, thus must run on every line
             errors = errors
-                // check for incorrect function declarations
-                .concat(BabyHint.checkFunctionDecl(line, lineNumber))
                 // we don't allow ending lines with "="
                 .concat(BabyHint.checkTrailingEquals(line, lineNumber))
                 // check for correct number of parameters

@@ -102,6 +102,12 @@ window.SQLOutput = Backbone.View.extend({
             const colName = errorMessage.split(ambColStr)[1].trim();
             errorMessage = i18n._("Ambiguous column name \"%(colName)s\".",
                 {colName});
+            // Note(danielhollas): Added a more helpful text as a separate string
+            // to preserve existing translations.
+            // I18N: This Oh Noes message follows "Ambiguous column name" SQL error
+            errorMessage += " " + i18n._("Multiple tables that you're joining " +
+               "contain a column with that name. Specify the name of the table that " +
+               "contains the column, using the format \"tableName.columnName\".");
         }
         const unknownColStr = "no such column:";
         const unknownColError = sqliteError.indexOf(unknownColStr) > -1;
@@ -121,6 +127,39 @@ window.SQLOutput = Backbone.View.extend({
             const nearPhrase = errorMessage.split(syntaxErrStr)[0];
             errorMessage = i18n._("There's a syntax error near %(nearThing)s.",
                 {nearThing: nearPhrase.substr(5)});
+        }
+        const colValueMismatchReg = /has (\d+) columns but (\d+) values were supplied/;
+        const colMismatchError = sqliteError.match(colValueMismatchReg);
+        if (colMismatchError) {
+          const tableName = sqliteError.split(" ")[1];
+          const numCols = colMismatchError[1];
+          const numVals = colMismatchError[2];
+
+          // I18N: The first part of "Oh noes" error in the SQL course.
+          // I18N: "Table %(tableName)s has %(num)s columns"
+          // I18N: "but %(num)s values were supplied."
+          // I18N: You can reorder the parts in string "%(columns)s %(values)s"
+          const tableHasColumns = i18n.ngettext(
+              "Table \"%(tableName)s\" has %(num)s column",
+              "Table \"%(tableName)s\" has %(num)s columns",
+              numCols, {tableName: tableName});
+
+          // I18N: The second part of "Oh noes" error in the SQL course.
+          // I18N: "Table %(tableName)s has %(num)s columns"
+          // I18N: "but %(num)s values were supplied."
+          // I18N: You can reorder the parts in string "%(columns)s %(values)s"
+          const valuesSupplied = i18n.ngettext(
+              "but %(num)s value was supplied.",
+              "but %(num)s values were supplied.",
+              numVals);
+
+          // I18N: Oh noes error in the SQL course.
+          // I18N: %(columns)s = "Table %(tableName)s has %(num)s columns"
+          // I18N: %(values)s  = "but %(num)s values were supplied."
+          // I18N: The sentences are translated in two different Crowdin strings,
+          // I18N: but can be reordered here
+          errorMessage = i18n._("%(columns)s %(values)s",
+              {columns: tableHasColumns, values: valuesSupplied});
         }
 
         // Now that we've translated the base error messages,
@@ -399,8 +438,6 @@ window.SQLOutput = Backbone.View.extend({
             results: results,
             databaseMsg: i18n._("Database Schema"),
             resultsMsg: i18n._("Query results"),
-            rowMsg: i18n._("row"),
-            rowsMsg: i18n._("rows"),
         });
 
         var doc = this.getDocument();

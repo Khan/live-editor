@@ -6,7 +6,6 @@ var path = require("path");
 var gulp = require("gulp");
 
 var concat = require("gulp-concat");
-var uglify = require("gulp-uglify");
 var newer = require("gulp-newer");
 var changed = require("gulp-changed");
 var handlebars = require("gulp-handlebars");
@@ -26,8 +25,8 @@ var mochaRunner = require("./testutil/gulp-mocha-runner.js");
 var check = require("./check.js");
 var paths = require("./build-paths.json");
 
-gulp.task("templates", function() {
-    gulp.src(paths.templates)
+function generateTemplates() {
+    return gulp.src(paths.templates)
         .pipe(changed("build/tmpl", {extension: ".js"}))
         .pipe(handlebars({
             handlebars: require("handlebars")
@@ -38,49 +37,38 @@ gulp.task("templates", function() {
             root: "window"
         }))
         .pipe(gulp.dest("build/tmpl"));
-});
+}
 
 var firstBuild = true;
 var scriptTypes = Object.keys(paths.scripts);
 
-scriptTypes.forEach(function(type) {
-    gulp.task("script_" + type, ["templates"], function() {
-        var outputFileName = "live-editor." + type + ".js";
-        var srcPath = path.join(__dirname, "js");
+function generateScripts(done) {
+    const tasks = scriptTypes.map((type) => {
+        function generateScript() {
+            var outputFileName = "live-editor." + type + ".js";
+            var srcPath = path.join(__dirname, "js");
 
-        return gulp.src(paths.scripts[type])
-            .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
-            .pipe(gulpIf(function (file) {
-                // transform source files but not dependencies
-                return file.path.indexOf(srcPath) === 0;
-            }, babel({ blacklist: ["strict"] })))
-            .pipe(concat(outputFileName))
-            .pipe(chmod(644))
-            .pipe(eol("\n"))
-            .pipe(gulp.dest("build/js"));
+            return gulp.src(paths.scripts[type])
+                .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
+                .pipe(gulpIf(function (file) {
+                    // transform source files but not dependencies
+                    return file.path.indexOf(srcPath) === 0;
+                }, babel({ blacklist: ["strict"] })))
+                .pipe(concat(outputFileName))
+                .pipe(chmod(644))
+                .pipe(eol("\n"))
+                .pipe(gulp.dest("build/js"));
+        }
+        generateScript.displayName = `generateScript_${type}`;
+        return generateScript;
     });
+    return gulp.parallel(...tasks, (tasksDone) => {
+        tasksDone();
+        done();
+    })();
+}
 
-    gulp.task("script_" + type + "_min", ["script_" + type], function() {
-        var outputFileName = "live-editor." + type + ".min.js";
-        return gulp.src(["build/js/live-editor." + type + ".js"])
-            .pipe(firstBuild ? gutil.noop() : newer("build/js/" + outputFileName))
-            .pipe(uglify())
-            .pipe(concat(outputFileName))
-            .pipe(chmod(644))
-            .pipe(eol("\n"))
-            .pipe(gulp.dest("build/js"));
-    });
-});
-
-gulp.task("scripts", scriptTypes.map(function(type) {
-    return "script_" + type;
-}));
-
-gulp.task("scripts_min", scriptTypes.map(function(type) {
-    return "script_" + type + "_min";
-}));
-
-gulp.task("workers", function() {
+function generateWorkerFiles(done) {
     gulp.src(paths.workers_webpage)
         .pipe(gulp.dest("build/workers/webpage"));
 
@@ -89,50 +77,110 @@ gulp.task("workers", function() {
 
     gulp.src(paths.workers_shared)
         .pipe(gulp.dest("build/workers/shared"));
-});
+    done();
+}
 
-gulp.task("externals", function() {
-    gulp.src(paths.externals, {base: "./"})
+function copyExternals() {
+    return gulp.src(paths.externals, {base: "./"})
         .pipe(gulp.dest("build/"));
-});
+}
 
 var styleTypes = Object.keys(paths.styles);
 
-styleTypes.forEach(function(type) {
-    gulp.task("style_" + type, function() {
-        var outputFileName = "live-editor." + type + ".css";
-        return gulp.src(paths.styles[type])
-            .pipe(firstBuild ? gutil.noop() : newer("build/css/" + outputFileName))
-            .pipe(concat(outputFileName))
-            .pipe(gulp.dest("build/css"));
+function generateStyles(done) {
+    const tasks = styleTypes.map((type) => {
+        function generateStyle() {
+            var outputFileName = "live-editor." + type + ".css";
+            return gulp.src(paths.styles[type])
+                .pipe(firstBuild ? gutil.noop() : newer("build/css/" + outputFileName))
+                .pipe(concat(outputFileName))
+                .pipe(gulp.dest("build/css"));
+        }
+        generateStyle.displayName = `generateStyle_${type}`;
+        return generateStyle;
     });
-});
+    return gulp.series(...tasks, (seriesDone) => {
+        seriesDone();
+        done();
+    })();
+}
 
-gulp.task("styles", styleTypes.map(function(type) {
-    return "style_" + type;
-}));
-
-gulp.task("images", function() {
-    gulp.src(paths.images)
+function copyImages() {
+    return gulp.src(paths.images)
         .pipe(gulp.dest("build/images"));
-});
+}
 
-gulp.task("watch", function() {
-    scriptTypes.forEach(function(type) {
-        gulp.watch(paths.scripts[type], ["script_" + type]);
+var failureCount = 0;
+
+// We run tests in groups so that we don't require as much memory to run them
+// in Travis-CI.
+var pjs_tests = ["jshint", "output", "assert", "ast_transform", "async"];
+
+function runPJSTests(done) {
+    const testTasks = pjs_tests.map((test) => {
+        function runTest() {
+            return gulp.src("tests/output/pjs/index.html")
+                .pipe(mochaRunner({ test: test + "_test.js"}))
+                .on("error", function (err) {
+                    failureCount += parseInt(err.message);
+                    this.emit("end");
+            });
+        }
+        runTest.displayName = `runPJSTest_${test}`;
+        return runTest;
     });
+    return gulp.series(...testTasks, (seriesDone) => {
+        seriesDone();
+        done();
+    })();
+}
 
-    styleTypes.forEach(function(type) {
-        gulp.watch(paths.styles[type], ["style_" + type]);
+var webpage_tests = ["assert", "output", "transform"];
+
+function runWebpageTests(done) {
+    const testTasks = webpage_tests.map((test) => {
+        function runTest() {
+            return gulp.src("tests/output/webpage/index.html")
+                .pipe(mochaRunner({ test: test + "_test.js" }))
+                .on("error", function (err) {
+                    failureCount += parseInt(err.message);
+                    this.emit("end");
+                });
+        }
+        runTest.displayName = `runWebpageTest_${test}`;
+        return runTest;
     });
+    return gulp.series(...testTasks, (seriesDone) => {
+        seriesDone();
+        done();
+    })();
+}
 
-    gulp.watch(paths.templates, ["templates"]);
+function runSQLTest() {
+   return gulp.src("tests/output/sql/index.html")
+       .pipe(mochaRunner());
+}
 
-    gulp.watch(paths.workers_pjs.concat(paths.workers_webpage)
-        .concat(paths.workers_shared), ["workers"]);
+function runTooltipsTest() {
+    return gulp.src("tests/tooltips/index.html")
+        .pipe(mochaRunner());
+}
 
-    gulp.watch(paths.images, ["images"]);
-});
+function checkForTestErrors(done) {
+    if (failureCount > 0) {
+        console.log("Found test errors");
+        process.exit();
+    } else {
+        done();
+    }
+}
+
+// NOTE(jeresig): We don't bundle this data as it's kind of big. Better to
+// download it dynamically, when we need it.
+var recordDataURL = "https://s3.amazonaws.com/ka-cs-scratchpad-audio/" +
+    "tests/recording-data.json.gz";
+var recordDataFile = "tests/record/recording-data.json";
+
 
 var runTest = function(fileName) {
     return function() {
@@ -147,7 +195,7 @@ var runTest = function(fileName) {
         });
         server.listen(11537);
 
-        // We then run the Mocha tests in a headless PhantomJS
+        // We then run the Mocha tests in a headless Chrome
         var stream = mochaChrome();
         stream.write({
             path: "http://localhost:11537/tests/" + fileName
@@ -163,73 +211,7 @@ var runTest = function(fileName) {
     };
 };
 
-var failureCount = 0;
-
-// We run tests in groups so that we don't require as much memory to run them
-// in Travis-CI.
-var pjs_tests = ["jshint", "output", "assert", "ast_transform", "async"];
-
-pjs_tests.forEach(function(test) {
-    gulp.task("test_output_pjs_" + test, ["script_output_pjs"], function() {
-        return gulp.src("tests/output/pjs/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js"}))
-            .on("error", function (err) {
-                failureCount += parseInt(err.message);
-                this.emit("end");
-            });
-    });
-});
-
-gulp.task("test_output_pjs", function(callback) {
-    var sequence = pjs_tests.map(function(test) {
-        return "test_output_pjs_" + test;
-    });
-    sequence.push(callback);
-    runSequence.apply(null, sequence);
-});
-
-var webpage_tests = ["assert", "output", "transform"];
-
-webpage_tests.forEach(function(test) {
-    gulp.task("test_output_webpage_" + test, ["script_output_pjs"], function() {
-        return gulp.src("tests/output/webpage/index.html")
-            .pipe(mochaRunner({ test: test + "_test.js" }))
-            .on("error", function (err) {
-                failureCount += parseInt(err.message);
-                this.emit("end");
-            });
-    });
-});
-
-gulp.task("test_output_webpage", ["script_output_webpage"], function(callback) {
-    var sequence = webpage_tests.map(function(test) {
-        return "test_output_webpage_" + test;
-    });
-    sequence.push(callback);
-    runSequence.apply(null, sequence);
-});
-
-gulp.task("test_output_sql", ["script_output_sql"], function() {
-   return gulp.src("tests/output/sql/index.html")
-       .pipe(mochaRunner());
-});
-
-gulp.task("test_tooltips", ["script_tooltips"], function() {
-    return gulp.src("tests/tooltips/index.html")
-        .pipe(mochaRunner());
-});
-
-gulp.task("check_errors", [], function() {
-    process.exit(failureCount);
-});
-
-// NOTE(jeresig): We don't bundle this data as it's kind of big. Better to
-// download it dynamically, when we need it.
-var recordDataURL = "https://s3.amazonaws.com/ka-cs-scratchpad-audio/" +
-    "tests/recording-data.json.gz";
-var recordDataFile = "tests/record/recording-data.json";
-
-gulp.task("test_record_data", function(done) {
+function testRecordData() {
     if (fs.existsSync(recordDataFile)) {
         return done();
     }
@@ -237,21 +219,17 @@ gulp.task("test_record_data", function(done) {
     return request(recordDataURL)
         .pipe(zlib.createGunzip())
         .pipe(fs.createWriteStream(recordDataFile));
-});
+}
 
 // NOTE(jeresig): Not included in the main tests yet, as they take a
 // long time to run.
 // TODO(kevinb) find out about recording-data.json
-gulp.task("test_record", ["test_record_data"],
-    runTest("record/index.html"));
-
-gulp.task("test", function(callback) {
-    runSequence("test_output_pjs", "test_output_webpage", "test_output_sql",
-        "test_tooltips", "check_errors", callback);
-});
+function testRecording() {
+    return gulp.series(testRecordData, runTest("record/index.html"));
+}
 
 // Check to make sure all source files and dependencies exist before building.
-gulp.task("check", function() {
+function checkMissing(done) {
     var missing = check();
     if (missing.length > 0) {
         console.log("Aborting build");
@@ -259,12 +237,23 @@ gulp.task("check", function() {
     } else {
         console.log("all files exist");
     }
-});
+    done();
+}
 
-gulp.task("build",
-    ["check", "templates", "scripts", "workers", "styles", "images", "externals"],
-    function() {
-        firstBuild = false;
-    });
+exports.build = gulp.series(
+    checkMissing,
+    generateTemplates,
+    generateScripts,
+    generateWorkerFiles,
+    generateStyles,
+    copyImages,
+    copyExternals
+);
 
-gulp.task("default", ["watch", "build"]);
+exports.test = gulp.series(
+    runPJSTests,
+    runWebpageTests,
+    runSQLTest,
+    runTooltipsTest,
+    checkForTestErrors
+);

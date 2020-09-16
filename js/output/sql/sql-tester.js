@@ -18,6 +18,7 @@ SQLTester.Util = {
      * @return An array of objects with the fields:
      *   - table: string
      *   - rowCount: number
+     *   - rowsMsg: i18n header string for handlebars
      *   - columns: array of object of extra properties on each column
      *      cid, name, type, notnul, dflt_value, pk
      */
@@ -31,13 +32,20 @@ SQLTester.Util = {
 
         tables = tables.map(function(table) {
             var rowCount = SQLTester.Util.getRowCount(db, table);
+            // NOTE(danielhollas): It seems we need to define this var here
+            // so that it's available in handlebars
+            // I18N: SQL table header
+            var rowsMsg = i18n.ngettext(
+                    "%(num)s row",
+                    "%(num)s rows",
+                    rowCount);
             var tablesInfoResult = db.exec("PRAGMA table_info(" + table + ")");
             var v = tablesInfoResult[0].values;
             // Return a table object which also contains each column info
             return {
                 name: table,
                 rowCount: rowCount,
-                hasSingleRow: rowCount === 1, // lame, for handlebars :(
+                rowsMsg: rowsMsg,
                 columns: v.map(function(v) {
                     return {
                         cid: v[0],

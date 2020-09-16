@@ -112,7 +112,6 @@
             "js/output/sql/sql-output.js"
         ],
         "output": [
-            "build/tmpl/output.js",
             "js/output/shared/pooled-worker.js",
             "js/output/shared/output-tester.js",
             "js/output/shared/output.js"
