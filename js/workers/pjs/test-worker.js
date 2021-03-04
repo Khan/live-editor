@@ -31,8 +31,10 @@ self.onmessage = function(event) {
             "structuredjs/structured.js?cachebust=A" + date);
 
         // Bring in the testing logic
-        importScripts("../shared/output-tester.js?cachebust=" + date);
-        importScripts("./pjs-tester.js?cachebust=" + date);
+        importScripts(event.data.workersDir +
+            "shared/output-tester.js?cachebust=" + date);
+        importScripts(event.data.workersDir +
+            "pjs/pjs-tester.js?cachebust=" + date);
 
         tester = new PJSTester();
     }

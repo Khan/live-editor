@@ -124,7 +124,8 @@ OutputTester.prototype = {
                 code: code,
                 validate: validate,
                 errors: errors,
-                externalsDir: this.externalsDir
+                externalsDir: this.externalsDir,
+                workersDir: this.workersDir
             });
         });
     },

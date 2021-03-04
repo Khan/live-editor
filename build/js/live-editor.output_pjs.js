@@ -150,6 +150,7 @@ var PJSCodeInjector = (function () {
             worker.postMessage({
                 code: hintCode,
                 externalsDir: this.externalsDir,
+                workersDir: this.workersDir,
                 jshintFile: this.jshintFile
             });
         });
