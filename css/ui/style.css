@@ -141,7 +141,7 @@
 }
 
 .scratchpad-playbar .scratchpad-playbar-play .ui-button-text {
-    // override default of .4em so play button will fit in an iframe
+    /* override default of .4em so play button will fit in an iframe */
     padding: 5px;
 }
 
