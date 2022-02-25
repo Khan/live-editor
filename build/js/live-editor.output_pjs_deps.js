@@ -14932,6 +14932,11 @@
       pimg = new PImage();
       var img = document.createElement('img');
 
+      // Fixes a security error when we attempt to extract image data from this
+      // canvas.
+      // https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/crossOrigin
+      img.crossOrigin = "anonymous";
+
       pimg.sourceImg = img;
 
       img.onload = (function(aImage, aPImage, aCallback) {
