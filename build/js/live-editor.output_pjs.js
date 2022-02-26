@@ -2563,6 +2563,11 @@ PJSResourceCache.prototype.loadImage = function (filename) {
         var path = _this2.output.imagesDir + filename;
         var img = document.createElement("img");
 
+        // Fixes a security error when we attempt to extract image data from this
+        // canvas.
+        // https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/crossOrigin
+        img.crossOrigin = "anonymous";
+
         img.onload = function () {
             _this2.cache[filename] = img;
             resolve();
