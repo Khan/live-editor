@@ -2572,6 +2572,10 @@ PJSResourceCache.prototype.loadImage = function (filename) {
         };
 
         img.src = path;
+        // Allow for cross-origin images to safely load (this will still be
+        // restricted by the CSP for the frame). More info:
+        // https://stackoverflow.com/questions/22097747/how-to-fix-getimagedata-error-the-canvas-has-been-tainted-by-cross-origin-data
+        img.setAttribute("crossOrigin", "");
         _this2.imageHolder.appendChild(img);
     });
 };
