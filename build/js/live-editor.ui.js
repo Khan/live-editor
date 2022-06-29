@@ -972,11 +972,6 @@ window.LiveEditor = Backbone.View.extend({
         this.handleMessagesBound = this.handleMessages.bind(this);
         $(window).on("message", this.handleMessagesBound);
 
-        $el.find("#output-frame").on("load", function () {
-            _this.outputState = "clean";
-            _this.markDirty();
-        });
-
         // Whenever the user changes code, execute the code
         this.editor.on("change", function () {
             _this.markDirty();
@@ -1835,6 +1830,13 @@ window.LiveEditor = Backbone.View.extend({
             // this, or at least make it more clear that the data coming in may
             // be unsanitized.
             this.record.log.apply(this.record, data.log);
+        }
+
+        // If the frame is ready to begin execution, we can start sending it
+        // code to run.
+        if (data.active) {
+            this.outputState = "clean";
+            this.markDirty();
         }
     },
 
