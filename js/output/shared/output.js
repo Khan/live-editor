@@ -185,7 +185,7 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         parentWindow.postMessage(
             typeof data === "string" ? data : JSON.stringify(data),
-            parentWindow.origin);
+            "*");
     },
 
     notifyActive: _.once(function() {

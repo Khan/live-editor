@@ -493,7 +493,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             return;
         }
 
-        parentWindow.postMessage(typeof data === "string" ? data : JSON.stringify(data), parentWindow.origin);
+        parentWindow.postMessage(typeof data === "string" ? data : JSON.stringify(data), "*");
     },
 
     notifyActive: _.once(function () {
