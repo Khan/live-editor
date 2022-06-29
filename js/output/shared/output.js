@@ -180,9 +180,11 @@ window.LiveEditorOutput = Backbone.View.extend({
         const parentWindow = window.parent;
         // Ignore any attempts to send a message to the same window
         if (parentWindow === window) {
+            console.log("NOT SENDING DUE TO PARENT === WINDOW");
             return;
         }
 
+        console.log("postParent", data, parentWindow, parentWindow.origin);
         parentWindow.postMessage(
             typeof data === "string" ? data : JSON.stringify(data),
             parentWindow.origin);
