@@ -403,9 +403,6 @@ window.LiveEditorOutput = Backbone.View.extend({
     handleMessage: function handleMessage(event) {
         var data;
 
-        this.frameSource = event.source;
-        this.frameOrigin = event.origin;
-
         // filter out events that are objects
         // currently the only messages that contain objects are messages
         // being sent by Poster instances being used by the iframeOverlay
@@ -490,21 +487,13 @@ window.LiveEditorOutput = Backbone.View.extend({
 
     // Send a message back to the parent frame
     postParent: function postParent(data) {
-        // If there is no frameSource (e.g. we're not embedded in another page)
-        // Then we don't need to care about sending the messages anywhere!
-        if (this.frameSource) {
-            var parentWindow = this.frameSource;
-            // Ignore any attempts to send a message to the same window
-            // NOTE(jeresig): Ideally we'd queue up these messages until
-            // we have a valid frameSource & frameOrigin and then send all
-            // the messages at that time. In practice this doesn't seem to
-            // be a problem, however.
-            if (this.frameSource === window) {
-                return;
-            }
-
-            parentWindow.postMessage(typeof data === "string" ? data : JSON.stringify(data), this.frameOrigin);
+        var parentWindow = window.parent;
+        // Ignore any attempts to send a message to the same window
+        if (parentWindow === window) {
+            return;
         }
+
+        parentWindow.postMessage(typeof data === "string" ? data : JSON.stringify(data), parentWindow.origin);
     },
 
     notifyActive: _.once(function () {

@@ -56,7 +56,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             output: this,
             type: outputType,
             enableLoopProtect: enableLoopProtect,
-            loopProtectTimeouts: loopProtectTimeouts
+            loopProtectTimeouts: loopProtectTimeouts,
         });
     },
 
@@ -93,9 +93,6 @@ window.LiveEditorOutput = Backbone.View.extend({
     handleMessage: function(event) {
         var data;
 
-        this.frameSource = event.source;
-        this.frameOrigin = event.origin;
-
         // filter out events that are objects
         // currently the only messages that contain objects are messages
         // being sent by Poster instances being used by the iframeOverlay
@@ -117,7 +114,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             }
             var loopProtectTimeouts = {
                 initialTimeout: 2000,
-                frameTimeout: 500
+                frameTimeout: 500,
             };
             if (data.loopProtectTimeouts != null) {
                 loopProtectTimeouts = data.loopProtectTimeouts;
@@ -180,23 +177,15 @@ window.LiveEditorOutput = Backbone.View.extend({
 
     // Send a message back to the parent frame
     postParent: function(data) {
-        // If there is no frameSource (e.g. we're not embedded in another page)
-        // Then we don't need to care about sending the messages anywhere!
-        if (this.frameSource) {
-            let parentWindow = this.frameSource;
-            // Ignore any attempts to send a message to the same window
-            // NOTE(jeresig): Ideally we'd queue up these messages until
-            // we have a valid frameSource & frameOrigin and then send all
-            // the messages at that time. In practice this doesn't seem to
-            // be a problem, however.
-            if (this.frameSource === window) {
-                return;
-            }
-
-            parentWindow.postMessage(
-                typeof data === "string" ? data : JSON.stringify(data),
-                this.frameOrigin);
+        const parentWindow = window.parent;
+        // Ignore any attempts to send a message to the same window
+        if (parentWindow === window) {
+            return;
         }
+
+        parentWindow.postMessage(
+            typeof data === "string" ? data : JSON.stringify(data),
+            parentWindow.origin);
     },
 
     notifyActive: _.once(function() {
@@ -266,7 +255,7 @@ window.LiveEditorOutput = Backbone.View.extend({
             code: userCode,
             errors: [],
             assertions: [],
-            warnings: []
+            warnings: [],
         };
 
         var skip = noLint && this.firstLint;
@@ -380,7 +369,7 @@ window.LiveEditorOutput = Backbone.View.extend({
      */
     phoneHome: function() {
         this.postParent({
-            results: this.results
+            results: this.results,
         });
     },
 
