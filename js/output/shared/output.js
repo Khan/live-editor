@@ -33,6 +33,9 @@ window.LiveEditorOutput = Backbone.View.extend({
         this.lintWarnings.timestamp = 0;
 
         this.bind();
+
+        // let the parent know we're up and running
+        this.notifyActive();
     },
 
     render: function() {
@@ -92,9 +95,6 @@ window.LiveEditorOutput = Backbone.View.extend({
 
         this.frameSource = event.source;
         this.frameOrigin = event.origin;
-
-        // let the parent know we're up and running
-        this.notifyActive();
 
         // filter out events that are objects
         // currently the only messages that contain objects are messages
