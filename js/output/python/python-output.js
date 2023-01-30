@@ -74,7 +74,7 @@ window.PythonOutput = Backbone.View.extend({
     postProcessing: function() {},
 
     runCode: function(userCode, callback) {
-        // TODO(hannah): Implement!
+        console.log("[Debug] Running code: " + userCode);
     },
 
     clear: function() {

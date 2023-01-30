@@ -21,6 +21,7 @@ window.LiveEditor = Backbone.View.extend({
         OUTPUT_FRAME: "#output-frame",
         OUTPUT_DIV: "#output",
         ALL_OUTPUT: "#output, #output-frame",
+        RUN_BUTTON: "#run-code",
         RESTART_BUTTON: "#restart-code",
         GUTTER_ERROR: ".ace_error",
         ERROR_BUDDY_HAPPY: ".error-buddy-happy",
@@ -182,6 +183,14 @@ window.LiveEditor = Backbone.View.extend({
             liveEditor: this
         });
 
+        this.isCompiled = options.isCompiled != undefined && options.isCompiled;
+
+        if (this.isCompiled) {
+            this.$el.find(this.dom.RUN_BUTTON).show();
+        } else {
+            this.$el.find(this.dom.RUN_BUTTON).hide();
+        }
+
         var code = options.code;
 
         // Load the text into the editor
@@ -246,10 +255,17 @@ window.LiveEditor = Backbone.View.extend({
         this.handleMessagesBound = this.handleMessages.bind(this);
         $(window).on("message", this.handleMessagesBound);
 
-        // Whenever the user changes code, execute the code
-        this.editor.on("change", () => {
-            this.markDirty();
-        });
+        if (this.isCompiled) {
+            // This makes the "live-editor" no longer live; the code is only
+            // run when the user hits the "run" button. This branching is a bit
+            // hacky...
+            this.$el.find(this.dom.RUN_BUTTON).click(() => this.markDirty());
+        } else {
+            // Whenever the user changes code, execute the code.
+            this.editor.on("change", () => {
+                this.markDirty();
+            });
+        }
 
         this.editor.on("userChangedCode", () => {
             if (!this.record.recording && !this.record.playing) {
@@ -1348,6 +1364,7 @@ window.LiveEditor = Backbone.View.extend({
     }, 20),
 
     markDirty: function() {
+        console.log("markDirty")
         // makeDirty is called when you type something in the editor. When this
         // happens, we want to run the code, but also want to throttle how often
         // we re-run so we can wait for the results of running it to come back.

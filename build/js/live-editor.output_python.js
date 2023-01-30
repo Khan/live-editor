@@ -69,7 +69,9 @@ window.PythonOutput = Backbone.View.extend({
 
     postProcessing: function postProcessing() {},
 
-    runCode: function runCode(userCode, callback) {},
+    runCode: function runCode(userCode, callback) {
+        console.log("[Debug] Running code: " + userCode);
+    },
 
     clear: function clear() {},
 
@@ -77,8 +79,6 @@ window.PythonOutput = Backbone.View.extend({
 });
 
 LiveEditorOutput.registerOutput("python", PythonOutput);
-
-// TODO(hannah): Implement!
 
 // Clear the output
 

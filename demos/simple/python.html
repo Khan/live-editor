@@ -63,7 +63,8 @@
         workersDir: "../../build/workers/",
         externalsDir: "../../build/external/",
         imagesDir: "../../build/images/",
-        execFile: "output_python.html"
+        execFile: "output_python.html",
+        isCompiled: true
     });
     liveEditor.editor.on("change", function() {
         window.localStorage["test-sql-code"] = liveEditor.editor.text();
