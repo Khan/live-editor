@@ -1,0 +1,85 @@
+window.PythonOutput = Backbone.View.extend({
+    initialize: function initialize(options) {
+        this.config = options.config;
+        this.output = options.output;
+
+        this.tester = null;
+
+        this.render();
+    },
+
+    render: function render() {
+        this.$el.empty();
+        this.$frame = $("<iframe>").css({ width: "100%", height: "100%", border: "0" }).appendTo(this.el).show();
+    },
+
+    getDocument: function getDocument() {
+        return this.$frame[0].contentWindow.document;
+    },
+
+    getScreenshot: function getScreenshot(screenshotSize, callback) {
+        html2canvas(this.getDocument().body, {
+            imagesDir: this.output.imagesDir,
+            onrendered: function onrendered(canvas) {
+                var width = screenshotSize;
+                var height = screenshotSize / canvas.width * canvas.height;
+
+                // We want to resize the image to a thumbnail,
+                // which we can do by creating a temporary canvas
+                var tmpCanvas = document.createElement("canvas");
+                tmpCanvas.width = screenshotSize;
+                tmpCanvas.height = screenshotSize;
+                tmpCanvas.getContext("2d").drawImage(canvas, 0, 0, width, height);
+
+                // Send back the screenshot data
+                callback(tmpCanvas.toDataURL("image/png"));
+            }
+        });
+    },
+
+    /**
+     * Given an SQLite error and the current statement, suggest a better
+     * error message.  SQLlite error messages aren't always very descriptive,
+     * this should make common syntax errors easier to understand.
+     */
+    getErrorMessage: function getErrorMessage(sqliteError, statement) {
+        return null;
+    },
+
+    lint: function lint(userCode, skip) {
+        // the deferred isn't required in this case, but we need to match the
+        // same API as the pjs-output.js' lint method.
+        var deferred = $.Deferred();
+        deferred.resolve({
+            errors: [],
+            warnings: []
+        });
+        return deferred;
+    },
+
+    initTests: function initTests(validate) {
+        if (!validate) {
+            return;
+        }
+
+        return;
+    },
+
+    test: function test(userCode, tests, errors, callback) {},
+
+    postProcessing: function postProcessing() {},
+
+    runCode: function runCode(userCode, callback) {},
+
+    clear: function clear() {},
+
+    kill: function kill() {}
+});
+
+LiveEditorOutput.registerOutput("python", PythonOutput);
+
+// TODO(hannah): Implement!
+
+// Clear the output
+
+// Completely stop and clear the output

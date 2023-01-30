@@ -1,0 +1,73 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Live Editor Simple Demo</title>
+    <link rel="stylesheet" href="../../build/css/live-editor.core_deps.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.audio.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.tooltips.css"/>
+    <link rel="stylesheet" href="../../build/css/live-editor.ui.css"/>
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        h1 {
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+        #sample-live-editor {
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Python Live Editor Example</h1>
+    <div id="sample-live-editor"></a>
+
+    <script src="../../build/js/live-editor.core_deps.js"></script>
+    <script src="../../build/js/live-editor.editor_ace_deps.js"></script>
+    <script src="../../build/js/live-editor.audio.js"></script>
+    <script src="../../build/js/live-editor.shared.js"></script>
+    <script src="../../build/js/live-editor.tooltips.js"></script>
+    <script src="../../build/js/live-editor.ui.js"></script>
+    <script src="../../build/js/live-editor.editor_ace.js"></script>
+
+    <script>
+    var defaultCode = `def is_safe_to_eat(seafood_type, days_frozen):
+    """ Returns true if the seafood is safe to eat: 
+    either the type is "mollusk" or it's been frozen for at least 7 days.
+
+    >>> is_safe_to_eat("tuna", 3)
+    False
+    >>> is_safe_to_eat("salmon", 6)
+    False
+    >>> is_safe_to_eat("salmon", 7)
+    True
+    >>> is_safe_to_eat("mollusk", 1)
+    True
+    >>> is_safe_to_eat("mollusk", 9)
+    True
+    """
+    return 0  # REPLACE THIS
+`;
+
+        window.liveEditor = new LiveEditor({
+        // editorType: "ace_python",
+        outputType: "python",
+        el: $("#sample-live-editor"),
+        code: window.localStorage["test-python-code"] || defaultCode,
+        width: 400,
+        height: 400,
+        editorHeight: "80%",
+        autoFocus: true,
+        workersDir: "../../build/workers/",
+        externalsDir: "../../build/external/",
+        imagesDir: "../../build/images/",
+        execFile: "output_python.html"
+    });
+    liveEditor.editor.on("change", function() {
+        window.localStorage["test-sql-code"] = liveEditor.editor.text();
+    });
+    </script>
+</body>
+</html>

@@ -111,6 +111,9 @@
             "js/output/sql/sql-tester.js",
             "js/output/sql/sql-output.js"
         ],
+        "output_python": [
+            "js/output/python/python-output.js"
+        ],
         "output": [
             "js/output/shared/pooled-worker.js",
             "js/output/shared/output-tester.js",
