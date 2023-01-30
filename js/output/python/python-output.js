@@ -74,7 +74,24 @@ window.PythonOutput = Backbone.View.extend({
     postProcessing: function() {},
 
     runCode: function(userCode, callback) {
+        if (!this.loadPyodide) {
+            // Caching this Pyodide load promise will make subsequecent loads faster, but
+            // it also re-uses the context.  I don't think we want this long-term, but
+            // creating the context takes some time... so I'm not sure which we want to use.
+            this.loadPyodide = loadPyodide();
+        }
+
         console.log("[Debug] Running code: " + userCode);
+        this.loadPyodide.then((pyodide) => {
+            const output = pyodide.runPython(userCode);
+
+            var doc = this.getDocument();
+            doc.open();
+            doc.write(output);
+            doc.close();
+
+            callback();
+        });
     },
 
     clear: function() {
