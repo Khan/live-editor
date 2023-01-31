@@ -12,11 +12,13 @@ window["Handlebars"]["templates"]["tipbar"] = Handlebars.template({"1":function(
     + alias4(((helper = (helper = helpers.ohNoesMsg || (depth0 != null ? depth0.ohNoesMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"ohNoesMsg","hash":{},"data":data}) : helper)))
     + "</div>\n        <div class=\"message\"></div>\n        <div class=\"show-me\"><a href>"
     + alias4(((helper = (helper = helpers.showMeMsg || (depth0 != null ? depth0.showMeMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"showMeMsg","hash":{},"data":data}) : helper)))
+    + "</a></div>\n        <div class=\"explain-more\"><a href>"
+    + alias4(((helper = (helper = helpers.explainMoreMsg || (depth0 != null ? depth0.explainMoreMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"explainMoreMsg","hash":{},"data":data}) : helper)))
     + "</a></div>\n        <div class=\"tipnav\">\n            <a href=\"javascript:void(0);\" class=\"prev\" title=\""
     + alias4(((helper = (helper = helpers.prevMsg || (depth0 != null ? depth0.prevMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"prevMsg","hash":{},"data":data}) : helper)))
     + "\">\n                <span class=\"ui-icon ui-icon-circle-triangle-w\"></span>\n            </a>\n            <span class=\"current-pos\"></span>\n            <a href=\"javascript:void(0);\" class=\"next\" title=\""
     + alias4(((helper = (helper = helpers.nextMsg || (depth0 != null ? depth0.nextMsg : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"nextMsg","hash":{},"data":data}) : helper)))
-    + "\">\n                <span class=\"ui-icon ui-icon-circle-triangle-e\"></span>\n            </a>\n        </div>\n    </div>\n</div>";
+    + "\">\n                <span class=\"ui-icon ui-icon-circle-triangle-e\"></span>\n            </a>\n        </div>\n    </div>\n</div>\n";
 },"useData":true});;
 /**
  * This is called tipbar for historical reasons.
@@ -39,6 +41,7 @@ window.TipBar = Backbone.View.extend({
         this.$el.append(Handlebars.templates["tipbar"]({
             ohNoesMsg: i18n._("Oh noes!"),
             showMeMsg: i18n._("Show me where"),
+            explainMoreMsg: i18n._("Explain more"),
             prevMsg: i18n._("Previous error"),
             nextMsg: i18n._("Next error")
         }));
@@ -78,6 +81,17 @@ window.TipBar = Backbone.View.extend({
             return false;
         });
 
+        this.$el.on("click", ".tipbar .explain-more a", function (e) {
+            e.preventDefault();
+
+            var error = self.errors[self.pos];
+            self.liveEditor.trigger("explain-more", error);
+            self.liveEditor.editor.setCursor(error);
+            self.liveEditor.editor.setErrorHighlight(true);
+
+            return false;
+        });
+
         this.$el.on("click", ".tipbar .close", function (e) {
             self.liveEditor.setThinkingState();
         });
@@ -99,6 +113,7 @@ window.TipBar = Backbone.View.extend({
 
         // it could be undefined, null, or -1
         this.$el.find(".show-me").toggle(errors[pos].row > -1);
+        this.$el.find(".explain-more").toggle(errors[pos].row > -1);
 
         this.$bar.find(".tipnav").toggle(errors.length > 1);
         if (show) {

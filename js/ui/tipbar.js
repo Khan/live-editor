@@ -19,6 +19,7 @@ window.TipBar = Backbone.View.extend({
         this.$el.append(Handlebars.templates["tipbar"]({
             ohNoesMsg: i18n._("Oh noes!"),
             showMeMsg: i18n._("Show me where"),
+            explainMoreMsg: i18n._("Explain more"),
             prevMsg: i18n._("Previous error"),
             nextMsg: i18n._("Next error"),
         }));
@@ -58,6 +59,17 @@ window.TipBar = Backbone.View.extend({
             return false;
         });
 
+        this.$el.on("click", ".tipbar .explain-more a", function(e) {
+            e.preventDefault();
+
+            var error = self.errors[self.pos];
+            self.liveEditor.trigger("explain-more", error);
+            self.liveEditor.editor.setCursor(error);
+            self.liveEditor.editor.setErrorHighlight(true);
+
+            return false;
+        });
+
         this.$el.on("click", ".tipbar .close", function(e) {
             self.liveEditor.setThinkingState();
         });
@@ -84,6 +96,7 @@ window.TipBar = Backbone.View.extend({
 
         // it could be undefined, null, or -1
         this.$el.find(".show-me").toggle(errors[pos].row > -1);
+        this.$el.find(".explain-more").toggle(errors[pos].row > -1);
 
         this.$bar.find(".tipnav").toggle(errors.length > 1);
         if (show) {

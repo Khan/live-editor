@@ -77,6 +77,17 @@
     color: #678D00;
     text-decoration: underline;
 }
+.tipbar .text-wrap .explain-more a {
+    color: #005987;
+    font-size: 14px;
+    font-weight: bold;
+    position: absolute;
+    right: 7px;
+}
+.tipbar .text-wrap .explain-more a:hover {
+    color: #678D00;
+    text-decoration: underline;
+}
 .tipbar .tipnav {
     right: 7px;
     position: absolute;
