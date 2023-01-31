@@ -14,6 +14,27 @@ window.PythonOutput = Backbone.View.extend({
             .css({width: "100%", height: "100%", border: "0"})
             .appendTo(this.el)
             .show();
+
+        const $body = $(this.getDocument().body);
+
+        $body.append(`
+            <div>
+                <div><strong>Output:</strong></div>
+                <div id="stdout" />
+            </div>
+            <div>
+                <div><strong>Errors:</strong></div>
+                <div id="stderr" />
+            </div>
+            <div>
+                <div><strong>Result:</strong></div>
+                <div id="result" />
+            </div>
+        `);
+
+        this.$stdout = $body.find("#stdout");
+        this.$stderr = $body.find("#stderr");
+        this.$result = $body.find("#result");
     },
 
     getDocument: function() {
@@ -74,15 +95,24 @@ window.PythonOutput = Backbone.View.extend({
     postProcessing: function() {},
 
     runCode: function(userCode, callback) {
+        // Clear out the stdout buffer:
+        this.$stdout.empty();
+        this.$stderr.empty();
+        this.$result.empty();
+
         if (!this.loadPyodide) {
             // Caching this Pyodide load promise will make subsequecent loads faster, but
             // it also re-uses the context.  I don't think we want this long-term, but
             // creating the context takes some time... so I'm not sure which we want to use.
-            this.output = [];
             this.loadPyodide = loadPyodide().then(pyodide => {
                 pyodide.setStdout({
                     batched: data => {
-                        this.output.push(data);
+                        this.$stdout.append(data + "<br />");
+                    }
+                });
+                pyodide.setStderr({
+                    batched: data => {
+                        this.$stderr.append(data + "<br />");
                     }
                 });
                 return pyodide;
@@ -91,21 +121,25 @@ window.PythonOutput = Backbone.View.extend({
 
         console.log("[Debug] Running code: " + userCode);
         this.loadPyodide.then((pyodide) => {
-            // Clear out the stdout buffer:
-            this.output = [];
             try {
                 var result = pyodide.runPython(userCode);
-                this.output.push(result);
+                this.$result.append(result);
 
-                var doc = this.getDocument();
-                doc.open();
-                doc.write(this.output.join("<br />"));
-                doc.close();
-
-                callback();
+                callback([]);
             } catch (e) {
                 //this.trigger("compileError", e);
-                console.error(e);
+                this.$stderr.append(JSON.stringify(e));
+
+                // {
+                //     type: "error",
+                //     source: "esprima",
+                //     column: 0,
+                //     row: parseInt(/[1-9][0-9]*/.exec(line), 10) - 1,
+                //     text: text
+                // }]
+
+                console.error([e]);
+                callback(e);
             }
         });
     },

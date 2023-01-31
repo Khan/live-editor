@@ -11,6 +11,14 @@ window.PythonOutput = Backbone.View.extend({
     render: function render() {
         this.$el.empty();
         this.$frame = $("<iframe>").css({ width: "100%", height: "100%", border: "0" }).appendTo(this.el).show();
+
+        var $body = $(this.getDocument().body);
+
+        $body.append("\n            <div>\n                <div><strong>Output:</strong></div>\n                <div id=\"stdout\" />\n            </div>\n            <div>\n                <div><strong>Errors:</strong></div>\n                <div id=\"stderr\" />\n            </div>\n            <div>\n                <div><strong>Result:</strong></div>\n                <div id=\"result\" />\n            </div>\n        ");
+
+        this.$stdout = $body.find("#stdout");
+        this.$stderr = $body.find("#stderr");
+        this.$result = $body.find("#result");
     },
 
     getDocument: function getDocument() {
@@ -72,15 +80,24 @@ window.PythonOutput = Backbone.View.extend({
     runCode: function runCode(userCode, callback) {
         var _this = this;
 
+        // Clear out the stdout buffer:
+        this.$stdout.empty();
+        this.$stderr.empty();
+        this.$result.empty();
+
         if (!this.loadPyodide) {
             // Caching this Pyodide load promise will make subsequecent loads faster, but
             // it also re-uses the context.  I don't think we want this long-term, but
             // creating the context takes some time... so I'm not sure which we want to use.
-            this.output = [];
             this.loadPyodide = loadPyodide().then(function (pyodide) {
                 pyodide.setStdout({
                     batched: function batched(data) {
-                        _this.output.push(data);
+                        _this.$stdout.append(data + "<br />");
+                    }
+                });
+                pyodide.setStderr({
+                    batched: function batched(data) {
+                        _this.$stderr.append(data + "<br />");
                     }
                 });
                 return pyodide;
@@ -89,21 +106,25 @@ window.PythonOutput = Backbone.View.extend({
 
         console.log("[Debug] Running code: " + userCode);
         this.loadPyodide.then(function (pyodide) {
-            // Clear out the stdout buffer:
-            _this.output = [];
             try {
                 var result = pyodide.runPython(userCode);
-                _this.output.push(result);
+                _this.$result.append(result);
 
-                var doc = _this.getDocument();
-                doc.open();
-                doc.write(_this.output.join("<br />"));
-                doc.close();
-
-                callback();
+                callback([]);
             } catch (e) {
                 //this.trigger("compileError", e);
-                console.error(e);
+                _this.$stderr.append(JSON.stringify(e));
+
+                // {
+                //     type: "error",
+                //     source: "esprima",
+                //     column: 0,
+                //     row: parseInt(/[1-9][0-9]*/.exec(line), 10) - 1,
+                //     text: text
+                // }]
+
+                console.error([e]);
+                callback(e);
             }
         });
     },
