@@ -93,14 +93,20 @@ window.PythonOutput = Backbone.View.extend({
         this.loadPyodide.then((pyodide) => {
             // Clear out the stdout buffer:
             this.output = [];
-            this.output.push(pyodide.runPython(userCode));
+            try {
+                var result = pyodide.runPython(userCode);
+                this.output.push(result);
 
-            var doc = this.getDocument();
-            doc.open();
-            doc.write(this.output.join("<br />"));
-            doc.close();
+                var doc = this.getDocument();
+                doc.open();
+                doc.write(this.output.join("<br />"));
+                doc.close();
 
-            callback();
+                callback();
+            } catch (e) {
+                //this.trigger("compileError", e);
+                console.error(e);
+            }
         });
     },
 

@@ -58,6 +58,9 @@ greet()
     liveEditor.editor.on("change", function() {
         window.localStorage["test-python-code"] = liveEditor.editor.text();
     });
+    liveEditor.on("compileError", (e) => {
+        console.log(e);
+    })
     </script>
 </body>
 </html>
