@@ -62,6 +62,10 @@ greet()
         console.log("EXPLAIN MORE!!!")
         console.log(e);
     });
+    liveEditor.on("runtime-error", (errors) => {
+        console.log("RUNTIME ERROR!!!")
+        console.log(errors);
+    });
 
     </script>
 </body>

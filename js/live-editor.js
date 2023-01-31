@@ -1124,6 +1124,9 @@ window.LiveEditor = Backbone.View.extend({
         }
 
         if (data.results && _.isArray(data.results.errors)) {
+            if (data.results.errors.length > 0) {
+                this.trigger("runtime-error", data.results.errors);
+            }
             this.handleErrors(this.cleanErrors(data.results.errors));
         }
 
