@@ -127,19 +127,12 @@ window.PythonOutput = Backbone.View.extend({
 
                 callback([]);
             } catch (e) {
+                const errorDetails = parsePyError(e);
+                this.$stderr.append(errorDetails.text);
+
                 //this.trigger("compileError", e);
-                this.$stderr.append(JSON.stringify(e));
 
-                // {
-                //     type: "error",
-                //     source: "esprima",
-                //     column: 0,
-                //     row: parseInt(/[1-9][0-9]*/.exec(line), 10) - 1,
-                //     text: text
-                // }]
-
-                console.error([e]);
-                callback(e);
+                callback([errorDetails]);
             }
         });
     },
@@ -152,5 +145,42 @@ window.PythonOutput = Backbone.View.extend({
         // Completely stop and clear the output
     }
 });
+
+function parsePyError(e) {
+    // This is an example of an error.  It has a lot of things we don't want to expose to the user:
+    // Traceback (most recent call last):
+    //   File "/lib/python3.10/_pyodide/_base.py", line 460, in eval_code
+    //     .run(globals, locals)
+    //   File "/lib/python3.10/_pyodide/_base.py", line 306, in run
+    //     coroutine = eval(self.code, globals, locals)
+    //   File "<exec>", line 9, in <module>
+    // NameError: name 'greetz' is not defined
+
+    // We want to extract the line number, the error kind, and the message, so something like this:
+    // {
+    //   source: "pyodide",
+    //   type: "NameError",
+    //   column: 0,
+    //   row: "9",
+    //   text: "name 'greetz' is not defined"
+    // }
+    const errorType = e.type;
+    const errorParts = e.message.split(`${errorType}: `);
+    const traceback = errorParts.length > 0 ? errorParts[0] : `File "<exec>", line 0, in <module>`;
+    const errorText = errorParts.length > 1 ? errorParts[1] : "unknown error";
+
+    const lineNumber = traceback.split(` File "<exec>", line `)[1].split(",")[0];
+
+    console.log(e)
+    return {
+      source: "pyodide",
+      type: errorType,
+      column: 0,
+      row: parseInt(lineNumber, 10) - 1,
+      text: errorText
+    };
+}
+
+
 
 LiveEditorOutput.registerOutput("python", PythonOutput);
