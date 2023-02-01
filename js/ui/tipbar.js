@@ -62,7 +62,9 @@ window.TipBar = Backbone.View.extend({
         this.$el.on("click", ".tipbar .explain-more a", function(e) {
             e.preventDefault();
 
-            var error = self.errors[self.pos];
+            var error = Object.assign({}, self.errors[self.pos]);
+            error.text = error.originalText;
+            delete error.originalText;
             self.liveEditor.trigger("explain-more", error);
             self.liveEditor.editor.setCursor(error);
             self.liveEditor.editor.setErrorHighlight(true);
@@ -112,6 +114,7 @@ window.TipBar = Backbone.View.extend({
     },
 
     toggleErrors: function(errors, delay) {
+        console.log("toggleErrors", errors)
         var hasErrors = errors.length > 0;
         if (!hasErrors) {
             this.hide();

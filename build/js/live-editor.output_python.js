@@ -112,10 +112,8 @@ window.PythonOutput = Backbone.View.extend({
 
                 callback([]);
             } catch (e) {
-                var errorDetails = parsePyError(e);
+                var errorDetails = parsePyError(e, userCode);
                 _this.$stderr.append(errorDetails.text);
-
-                //this.trigger("compileError", e);
 
                 callback([errorDetails]);
             }
@@ -127,7 +125,7 @@ window.PythonOutput = Backbone.View.extend({
     kill: function kill() {}
 });
 
-function parsePyError(e) {
+function parsePyError(e, userCode) {
     // This is an example of an error.  It has a lot of things we don't want to expose to the user:
     // Traceback (most recent call last):
     //   File "/lib/python3.10/_pyodide/_base.py", line 460, in eval_code
@@ -158,7 +156,8 @@ function parsePyError(e) {
         type: errorType,
         column: 0,
         row: parseInt(lineNumber, 10) - 1,
-        text: errorText
+        text: errorText,
+        userCode: userCode
     };
 }
 

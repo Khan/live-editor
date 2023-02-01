@@ -1543,7 +1543,10 @@ window.LiveEditor = Backbone.View.extend({
                 });
             }
 
-            const newError = {};
+            const newError = {
+                originalText: error.text,
+                userCode: error.userCode
+            };
 
             // error.html was cleared above, so if it exists it's because we
             // reset it, and it's safe.
