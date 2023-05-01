@@ -115,6 +115,12 @@ window.PythonOutput = Backbone.View.extend({
                         this.$stderr.append(data + "<br />");
                     }
                 });
+                // TODO: Figure out if we should be using globals() instead of sys.modules
+                var script = `
+                import sys
+                __initial_globals__ = sys.modules[__name__].__dict__.copy()
+                `;
+                pyodide.runPython(script);
                 return pyodide;
             });
         }
@@ -122,6 +128,17 @@ window.PythonOutput = Backbone.View.extend({
         console.log("[Debug] Running code: " + userCode);
         this.loadPyodide.then((pyodide) => {
             try {
+                var script = `
+                import sys
+                names = list(sys.modules[__name__].__dict__.keys())
+                for n in names:
+                    if n not in __initial_globals__ and n != "__initial_globals__":
+                        del sys.modules[__name__].__dict__[n]
+                del sys.modules[__name__].__dict__["sys"]
+                `;
+                pyodide.runPython(script);
+                // TODO: Figure out if we need to importlib.reload() the initial modules
+
                 var result = pyodide.runPython(userCode);
                 this.$result.append(result);
 
