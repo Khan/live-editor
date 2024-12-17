@@ -579,11 +579,7 @@ window.WebpageOutput = Backbone.View.extend({
         // Set up infinite loop protection
         this.loopProtector = new LoopProtector(this.infiniteLoopCallback.bind(this));
         this.$frame.contentWindow.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
-        // In case frame didn't load (like in IE10), this adds it
-        //  once the frame has loaded
-        this.$frame.addEventListener("load", (function () {
-            this.$frame.contentWindow.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
-        }).bind(this));
+
         // Do this at the end so variables I add to the global scope stay
         // i.e.  KAInfiniteLoopProtect
         this.stateScrubber = new StateScrubber(this.$frame.contentWindow);
@@ -877,8 +873,6 @@ window.WebpageOutput = Backbone.View.extend({
         this.KA_INFINITE_LOOP = false;
         this.foundRunTimeError = false;
         this.frameDoc.open();
-        // It's necessary in FF/IE to redefine it here
-        this.$frame.contentWindow.KAInfiniteLoopProtect = this.loopProtector.KAInfiniteLoopProtect;
         this.$frame.contentWindow.addEventListener("error", (function () {
             this.foundRunTimeError = true;
         }).bind(this));
